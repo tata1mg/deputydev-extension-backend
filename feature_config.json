@@ -1,0 +1,30 @@
+{
+  "refill_adoption": [
+  ],
+  "eta": [
+    {
+      "client": "android",
+      "op": "=",
+      "version": {
+        "number": "16.6.0",
+        "op": ">="
+      }
+    },
+    {
+      "client": "desktop",
+      "op": "="
+    },
+    {
+      "client": "ios",
+      "op": "=",
+      "version": {
+        "number": "15.5.0",
+        "op": ">="
+      }
+    },
+    {
+      "client": "mobileweb",
+      "op": "="
+    }
+  ]
+}
