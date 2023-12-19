@@ -1,118 +1,31 @@
 {
   "APM": {
-    "ENABLED": true,
-    "ENVIRONMENT": "{{ env_name }}",
+    "ENABLED": false,
+    "ENVIRONMENT": "",
     "SECRET_TOKEN": "",
     "SERVER_TIMEOUT": "30s",
     "SERVER_URL": "http://onemg-apm-server-apm-http.elastic-system.svc.cluster.local:8200",
     "SPAN_FRAMES_MIN_DURATION": "5ms",
     "TRANSACTION_SAMPLE_RATE": 1
   },
-    "DB_CONNECTIONS": {
-    "apps": {
-      "zeus": {
-        "default_connection": "default",
-        "models": [
-          "app.models"
-        ]
-      }
-    },
-    "connections": {
-      "default": {
-        "credentials": {
-          "database": "{{ env_name}}_zeus_service_db",
-          "host": "{{ env_name }}postgreslatest.1mginfra.com",
-          "password": "***REMOVED***",
-          "port": 5432,
-          "user": "zeus_service_user"
-        },
-        "engine": "tortoise.backends.asyncpg"
-      }
-    }
-  },
   "DEBUG": false,
   "ENABLE_WORKER": false,
-  "ENVIRONMENT": "{{ env_name }}",
+  "ENVIRONMENT": "local",
   "HOST": "0.0.0.0",
   "HTTP_VERSION": "1.0.0",
   "INTERSERVICE_TIMEOUT": 50,
-  "MINGLER": {
-    "HOST": "http://mingler-hydra.{{ env_name }}.svc.{{ cluster_domain }}",
-    "TIMEOUT": 10
-  },
-  "NAME": "zeus",
+  "NAME": "genai",
   "PORT": 8081,
-  "POSTGRES_DB": "{{ env_name}}_zeus_service_db",
-  "POSTGRES_HOST": "{{ env_name }}postgreslatest.1mginfra.com",
-  "POSTGRES_PASS": "***REMOVED***",
-  "POSTGRES_PORT": 5432,
-  "POSTGRES_USER": "zeus_service_user",
-  "REDIS_CACHE_HOSTS": {
-    "zeus": {
-      "LABEL": "global",
-      "REDIS_HOST": "pharma-redis-master.{{ env_name }}.svc.{{ cluster_domain }}",
-      "REDIS_PORT": 6379
-    },
-    "merch_service": {
-      "REDIS_HOST": "pharma-redis-master.{{ env_name }}.svc.{{ cluster_domain }}",
-      "REDIS_PORT": 6379,
-      "LABEL": "merch_service"
-    }
-  },
-  "REFILL_TEST_EXPERIMENT": {
-    "AB_VARIANTS": "45,45,10",
-    "EXP_NAME": "REFILL_TEST_EXPERIMENT"
-  },
-  "REORDER_WIDGET": {
-    "FREQ_FACTOR": 1,
-    "RECENCY_FACTOR": 1
-  },
   "SEARCH": {
     "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
     "TIMEOUT": 10
   },
   "SENTRY_DSN": "",
-  "SQS": {
-    "SQS_REGION": "ap-south-1",
-    "SUBSCRIBE": {
-      "REORDER_WIDGET": {
-        "QUEUE_NAME": "{{ env_name }}-zeus-reorder_widget"
-      }
-    }
-  },
   "WORKERS": 1,
   "CONCURRENCY_LIMIT": 500,
-  "TEST_DB_CONNECTIONS": {
-    "apps": {
-      "zeus": {
-        "default_connection": "default",
-        "models": [
-          "app.models"
-        ]
-      }
-    },
-    "connections": {
-      "default": {
-        "credentials": {
-          "database": "{{ env_name}}_zeus_service_db",
-          "host": "{{ env_name }}postgreslatest.1mginfra.com",
-          "password": "***REMOVED***",
-          "port": 5432,
-          "user": "zeus_service_user"
-        },
-        "engine": "tortoise.backends.asyncpg"
-      }
-    }
+  "DB_CONNECTION" : {
+    "CONNECTION_STRING" : "",
+    "LABS_COLLECTION" : "labs"
   },
-  "FLASH": {
-    "HOST": "http://flash.{{ env_name }}.svc.{{ cluster_domain }}",
-    "TIMEOUT": 10
-  },
-  "ADAM": {
-    "ENVIRONMENT": "{{ env_name }}",
-    "HOST": "http://adam.{{ env_name }}.svc.{{ cluster_domain }}",
-    "IS_ENABLED": true,
-    "SERVICE_KEY": "8dd90109-764a-4458-b7a7-0d141d07a5bb",
-    "SERVICE_NAME": "zeus"
-  }
+  "OPENAI_KEY" : ""
 }
