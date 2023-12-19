@@ -2,10 +2,17 @@ from enum import Enum
 
 from torpedo.common_utils import CONFIG, json_file_to_dict
 
-X_SHARED_CONTEXT = 'X-SHARED-CONTEXT'
-ENVIRONMENT = CONFIG.config['ENVIRONMENT']
+X_SHARED_CONTEXT='X-SHARED-CONTEXT'
+ENVIRONMENT=CONFIG.config['ENVIRONMENT']
 
-FEATURE_CONFIG = json_file_to_dict('./feature_config.json')
+FEATURE_CONFIG=json_file_to_dict('./feature_config.json')
+
+
+class ListenerEventTypes(Enum):
+    AFTER_SERVER_START="after_server_start"
+    BEFORE_SERVER_START="before_server_start"
+    BEFORE_SERVER_STOP="before_server_stop"
+    AFTER_SERVER_STOP="after_server_stop"
 
 
 class ExtendedEnum(Enum):
@@ -15,44 +22,44 @@ class ExtendedEnum(Enum):
 
 
 class DB(Enum):
-    FILTER_IN_BATCH_LIMIT = 40
+    FILTER_IN_BATCH_LIMIT=40
 
 
 class SQS(Enum):
-    SUBSCRIBE = {'MAX_MESSAGES': 2, 'WAIT_TIME_IN_SECONDS': 5}
-    LOG_LENGTH = 100
+    SUBSCRIBE={'MAX_MESSAGES': 2, 'WAIT_TIME_IN_SECONDS': 5}
+    LOG_LENGTH=100
 
 
 class ReorderWidget(Enum):
-    TYPES = ['minimal', 'detailed']
-    MINIMAL = 'minimal'
-    DETAILED = 'detailed'
-    PREVIOUS_SKUS_DAYS_LIMIT = 730
-    MAX_USER_SKU_LIMIT = 100
-    SUBSCRIBE = {'MAX_MESSAGES': 2, 'WAIT_TIME_IN_SECONDS': 5}
-    HEADER = 'Previously ordered items'
-    SUB_HEADER = 'Quickly re-order medicines and health products based on your previous purchases'
-    CTA_V2 = {'text': 'See all the items and order', 'url': '/reorder'}
-    CTA_V1 = {'view_all': 'View All Items', 'add_to_cart': 'REORDER', 'heading': 'Previously Ordered Items'}
-    TARGET_URL = 'onemg://www.1mg.com/poi_details'
-    MWEB_TARGET_URL = '/reorder'
-    NAVIGATION = {
+    TYPES=['minimal', 'detailed']
+    MINIMAL='minimal'
+    DETAILED='detailed'
+    PREVIOUS_SKUS_DAYS_LIMIT=730
+    MAX_USER_SKU_LIMIT=100
+    SUBSCRIBE={'MAX_MESSAGES': 2, 'WAIT_TIME_IN_SECONDS': 5}
+    HEADER='Previously ordered items'
+    SUB_HEADER='Quickly re-order medicines and health products based on your previous purchases'
+    CTA_V2={'text': 'See all the items and order', 'url': '/reorder'}
+    CTA_V1={'view_all': 'View All Items', 'add_to_cart': 'REORDER', 'heading': 'Previously Ordered Items'}
+    TARGET_URL='onemg://www.1mg.com/poi_details'
+    MWEB_TARGET_URL='/reorder'
+    NAVIGATION={
         'text': 'Previously ordered items',
         'icon': 'https://onemg.gumlet.io/image/upload/marketing/232d6440-f2ee-4e77-8497-2aab9a899020.png'
     }
-    ORDERED_QUANTITY_LABEL = 'Last ordered quantity : {quantity} {pack_form}'
-    DEFAULT_PAGE_SIZE = 10
-    DEFAULT_PAGE_SIZE_FOR_NON_PAGINATED_CLIENT = 50
-    VARIANT = 'Reorder Widget Shown, skus_count = {}'
-    VISIBLE_AT = {"home_page": True, "medicine_page": True, "my_orders_page": True}
-    FREQ_FACTOR = 0.8
-    RECENCY_FACTOR = 0.2
-    FALLBACK = {
+    ORDERED_QUANTITY_LABEL='Last ordered quantity : {quantity} {pack_form}'
+    DEFAULT_PAGE_SIZE=10
+    DEFAULT_PAGE_SIZE_FOR_NON_PAGINATED_CLIENT=50
+    VARIANT='Reorder Widget Shown, skus_count = {}'
+    VISIBLE_AT={"home_page": True, "medicine_page": True, "my_orders_page": True}
+    FREQ_FACTOR=0.8
+    RECENCY_FACTOR=0.2
+    FALLBACK={
         'header': "You haven't placed any order yet",
         'sub_header': 'When you place a medicine order, you can track it from here',
         'image': 'https://onemg.gumlet.io/image/upload/prifpovozciezkcvmseo.png'
     }
-    REFILL_NUDGE = {
+    REFILL_NUDGE={
         "values": [
             {
                 "display_text": "30 days",
@@ -131,26 +138,26 @@ class ReorderWidget(Enum):
 
 
 class Sku(Enum):
-    DEFAULT_MAX_ORDER_QUANTITY = 20
-    KNOW_MORE_HEADER = 'Minimum order quantity'
-    KNOW_MORE_DESCRIPTION = 'This offer price requires a minimum quantity of this product in your order. ' \
-                            'A minimum order quantity allows us to offer a lower price against the item that would ' \
-                            'otherwise be cost-prohibitive to ship.'
-    CTA_TEXT = {True: 'Add to cart', False: 'Not available'}
-    CTA_ACTION = {True: 'ADD_TO_CART', False: 'DISABLED'}
-    TAG = {'best_seller': {'text': 'Bestseller', 'bg_color': '#FECF7F', 'bd_color': '#FECF7F'},
-           'recommended': {'text': '1mg\'s choice', 'bg_color': '#FFCEAC', 'bd_color': '#FECF7F'}}
-    SALE = {'tag': 'Sale', 'pre_text': 'Ends in'}
-    ES_DLS_FIELDS = ['id', 'name', 'type', 'locations', 'price', 'product_form', 'discounted_price',
-                     'sale_price_validity', 'cropped_image_urls',
-                     'image_urls', 'attributes_obj.pack_size_label', 'attributes_obj.sku_pack_form_plural_name',
-                     'is_visible',
-                     'attributes_obj.pack_form', 'attributes_obj.item_size', 'best_seller_udp', 'recommended',
-                     'total_ratings',
-                     'average_rating', 'min_order_qty', 'order_limit_rule', 'units_in_pack', 'is_banned', 'saleable']
+    DEFAULT_MAX_ORDER_QUANTITY=20
+    KNOW_MORE_HEADER='Minimum order quantity'
+    KNOW_MORE_DESCRIPTION='This offer price requires a minimum quantity of this product in your order. ' \
+                          'A minimum order quantity allows us to offer a lower price against the item that would ' \
+                          'otherwise be cost-prohibitive to ship.'
+    CTA_TEXT={True: 'Add to cart', False: 'Not available'}
+    CTA_ACTION={True: 'ADD_TO_CART', False: 'DISABLED'}
+    TAG={'best_seller': {'text': 'Bestseller', 'bg_color': '#FECF7F', 'bd_color': '#FECF7F'},
+         'recommended': {'text': '1mg\'s choice', 'bg_color': '#FFCEAC', 'bd_color': '#FECF7F'}}
+    SALE={'tag': 'Sale', 'pre_text': 'Ends in'}
+    ES_DLS_FIELDS=['id', 'name', 'type', 'locations', 'price', 'product_form', 'discounted_price',
+                   'sale_price_validity', 'cropped_image_urls',
+                   'image_urls', 'attributes_obj.pack_size_label', 'attributes_obj.sku_pack_form_plural_name',
+                   'is_visible',
+                   'attributes_obj.pack_form', 'attributes_obj.item_size', 'best_seller_udp', 'recommended',
+                   'total_ratings',
+                   'average_rating', 'min_order_qty', 'order_limit_rule', 'units_in_pack', 'is_banned', 'saleable']
 
 
 class RefillAdoptionABVariants(Enum):
-    variant_a = 'control_1'
-    variant_b = 'control_2'
-    variant_c = 'test'
+    variant_a='control_1'
+    variant_b='control_2'
+    variant_c='test'
