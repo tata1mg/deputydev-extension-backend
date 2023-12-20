@@ -1,6 +1,6 @@
 import uuid
 
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, validator, Field, field_validator
 from typing import Optional, List
 
 
@@ -8,7 +8,7 @@ class ChatHistoryModel(BaseModel):
     role: str
     prompt: str
 
-    @validator("role")
+    @field_validator("role")
     def validate_my_field(cls, value):
         allowed_values = {"user", "assistant"}
 
@@ -23,7 +23,7 @@ class ChatModel(BaseModel):
     class ChatRequestModel(BaseModel):
         chat_id: Optional[str] = None
         chat_history: Optional[List[ChatHistoryModel]] = None
-        current_prompt: str
+        current_prompt: Optional[str] = None
 
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
