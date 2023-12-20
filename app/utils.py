@@ -1,7 +1,9 @@
-from sanic.log import logger
-import re, time
 import operator
+import re
+import time
+
 from packaging.version import Version
+from sanic.log import logger
 
 name_slug_pattern = re.compile(r'[^A-Za-z0-9.]')
 name_slug_replace_string = '-'
