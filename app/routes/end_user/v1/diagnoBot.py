@@ -34,7 +34,6 @@ async def get_diagnobot_response(request: Request, headers: dict, **kwargs):
 # TODO : pre-stag deployment of service.
 # TODO : How to handle context where chat_history comes in to play?
 # TODO : Validation - If current_prompt is present in payload then chat_id should also be present and vice-versa.
-# TODO : Change response model to have type key.
 
 
 @diagnoBot.websocket("/feed")

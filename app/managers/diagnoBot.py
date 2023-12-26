@@ -38,7 +38,7 @@ class DiagnoBotManager:
             )
 
         # Embedding
-        embedded_prompt = self.embedd_prompt(payload.current_prompt)
+        embedded_prompt = self.embedd_prompt(payload)
 
         # Retrieval
         docs = await self.store.amax_marginal_relevance_search_by_vector(
@@ -62,20 +62,27 @@ class DiagnoBotManager:
         llm_response = OpenAIServiceClient().get_diagnobot_response(
             final_prompt=final_prompt
         )
-        print(llm_response)
 
         return ChatModel.ChatResponseModel(
             chat_id=payload.chat_id, data=[ChatTypeMsg(**ujson.loads(llm_response))]
         )
 
     @staticmethod
-    def embedd_prompt(prompt: str) -> List[float]:
+    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 3) -> List[float]:
         """
         Create vector embeddings for a given prompt.
-        @param prompt: User's prompt.
-        @return: Vector embedding equivalent of user's prompt.
+        @param K: Number of historical messages to factor in while creating a prompt.
+        @param payload: Entire payload received from client
+        @return: Vector embedding equivalent of chat's history and user's prompt.
         """
         embeddings_model = OpenAIEmbeddingsCustom().get_openai_embeddings()
+        chat_history = payload.chat_history
+        result_list = []
+        for i in range(len(chat_history) - 1, max(-1, len(chat_history) - K - 1), -1):
+            current_item = chat_history[i]
+            result_list.append(current_item.prompt)
+        result_list.append(payload.current_prompt)
+        prompt = " ".join(result_list)
         embedding = embeddings_model.embed_query(prompt)
         return embedding
 
