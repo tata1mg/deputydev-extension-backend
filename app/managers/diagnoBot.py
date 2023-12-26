@@ -6,7 +6,7 @@ from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
 from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
-from app.models.chat import ChatModel
+from app.models.chat import ChatModel, ChatTypeMsg
 from app.service_clients.openai.openai import OpenAIServiceClient
 
 
@@ -33,7 +33,9 @@ class DiagnoBotManager:
         # For 1st time that the chatbot loads, Client sends empty chat_id to initiate the conversation.
         # Upon receiving empty chat_id, we return back with welcome message and a new chat_id.
         if not payload.chat_id:
-            return ChatModel.ChatResponseModel(**Augmentation.CHAT_START_MSG.value)
+            return ChatModel.ChatResponseModel(
+                data=[ChatTypeMsg(**Augmentation.CHAT_START_MSG.value)]
+            )
 
         # Embedding
         embedded_prompt = self.embedd_prompt(payload.current_prompt)
@@ -45,9 +47,13 @@ class DiagnoBotManager:
         if not docs:
             return ChatModel.ChatResponseModel(
                 chat_id=payload.chat_id,
-                **{
-                    "answer": ErrorMessages.RETRIEVAL_FAIL_MSG.value,
-                },
+                data=[
+                    ChatTypeMsg(
+                        **{
+                            "answer": ErrorMessages.RETRIEVAL_FAIL_MSG.value,
+                        }
+                    )
+                ],
             )
         # Augmentation
         final_prompt = self.generate_final_prompt(payload, docs)
@@ -56,9 +62,10 @@ class DiagnoBotManager:
         llm_response = OpenAIServiceClient().get_diagnobot_response(
             final_prompt=final_prompt
         )
+        print(llm_response)
 
         return ChatModel.ChatResponseModel(
-            chat_id=payload.chat_id, **ujson.loads(llm_response)
+            chat_id=payload.chat_id, data=[ChatTypeMsg(**ujson.loads(llm_response))]
         )
 
     @staticmethod
