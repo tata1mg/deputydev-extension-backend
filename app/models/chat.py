@@ -1,7 +1,7 @@
 import uuid
 
-from pydantic import BaseModel, validator, Field, field_validator
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Union
 
 
 class ChatHistoryModel(BaseModel):
@@ -19,6 +19,12 @@ class ChatHistoryModel(BaseModel):
         return value
 
 
+class ChatTypeMsg(BaseModel):
+    type:  str = "message"
+    answer: str
+    advice: Optional[str] = None
+
+
 class ChatModel(BaseModel):
     class ChatRequestModel(BaseModel):
         chat_id: Optional[str] = None
@@ -27,6 +33,4 @@ class ChatModel(BaseModel):
 
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
-        answer: str
-        advice: Optional[str] = None
-        followup: Optional[str] = None
+        data: List[Union[ChatTypeMsg, None]]
