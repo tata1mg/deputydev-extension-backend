@@ -38,7 +38,7 @@ class Augmentation(Enum):
     related queries.
     """
     CHAT_START_MSG = {
-        "answer": "I am a medical diagnostic agent. You can ask me any questions regarding TATA 1mg lab tests and its offering.",
+        "answer": "Welcome. I am DiagnoBot, a medical diagnostic agent. You can ask me any questions regarding TATA 1mg lab tests and its offering.",
         "advice": "You can ask me questions like `What is LFT`? or `Compare Women Wellness Premium Package with Women Wellness Basic Package etc.`",
     }
 
