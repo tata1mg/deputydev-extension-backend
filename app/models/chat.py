@@ -6,6 +6,7 @@ from typing import Optional, List, Union
 
 class ChatHistoryModel(BaseModel):
     role: str
+    type:  Optional[str] = None
     prompt: str
 
     @field_validator("role")
@@ -25,6 +26,17 @@ class ChatTypeMsg(BaseModel):
     advice: Optional[str] = None
 
 
+class ChatTypeSkuCard(BaseModel):
+    header: str
+    sub_header: str
+    report_eta: str
+    icon: str
+    price: str
+    sku_id: str
+    target_url: str
+    cta: str
+
+
 class ChatModel(BaseModel):
     class ChatRequestModel(BaseModel):
         chat_id: Optional[str] = None
@@ -33,4 +45,4 @@ class ChatModel(BaseModel):
 
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
-        data: List[Union[ChatTypeMsg, None]]
+        data: List[Union[ChatTypeMsg, ChatTypeSkuCard, None]]

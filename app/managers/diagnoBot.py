@@ -1,6 +1,7 @@
 from typing import List
 
 import ujson
+from openai.types.chat import ChatCompletionMessage
 
 from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
@@ -8,6 +9,7 @@ from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
 from app.models.chat import ChatModel, ChatTypeMsg
 from app.service_clients.openai.openai import OpenAIServiceClient
+import app.managers.openai_tools.openai_tools as OpenAITools
 
 
 class DiagnoBotManager:
@@ -38,7 +40,7 @@ class DiagnoBotManager:
             )
 
         # Embedding
-        embedded_prompt = self.embedd_prompt(payload)
+        embedded_prompt: List[float] = self.embedd_prompt(payload)
 
         # Retrieval
         docs = await self.store.amax_marginal_relevance_search_by_vector(
@@ -56,16 +58,15 @@ class DiagnoBotManager:
                 ],
             )
         # Augmentation
-        final_prompt = self.generate_final_prompt(payload, docs)
+        final_prompt: str = self.generate_final_prompt(payload, docs)
 
         # Generation/Synthesis
-        llm_response = OpenAIServiceClient().get_diagnobot_response(
-            final_prompt=final_prompt
+        llm_response: ChatCompletionMessage = (
+            OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
         )
 
-        return ChatModel.ChatResponseModel(
-            chat_id=payload.chat_id, data=[ChatTypeMsg(**ujson.loads(llm_response))]
-        )
+        # Serialization
+        return await self.generate_response(payload.chat_id, llm_response)
 
     @staticmethod
     def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 3) -> List[float]:
@@ -101,6 +102,7 @@ class DiagnoBotManager:
         final_instructions = Augmentation.INSTRUCTIONS.value
         final_context = DiagnoBotManager.generate_context(context)
         final_chat_history = ""
+        # TODO : Extract user's current location from headers and inject it here as part of final prompt.
         if payload.chat_history and payload.chat_id:
             final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
         final_prompt = (
@@ -141,3 +143,19 @@ class DiagnoBotManager:
             formed_chat = f"{chat.role}: {chat.prompt}\n"
             final_chat_history += formed_chat + "\n"
         return final_chat_history
+
+    @staticmethod
+    async def generate_response(chat_id: str, llm_response: ChatCompletionMessage) -> ChatModel.ChatResponseModel:
+        """
+        Generate response for LLM.
+        @param chat_id: Chat id of the conversation
+        @param llm_response: Response received from LLM
+        @return: Formatted response to be sent to client
+        """
+        _response = []
+        if llm_response.content:
+            _response.append(ChatTypeMsg(**ujson.loads(llm_response.content)))
+        if llm_response.tool_calls:
+            func = getattr(OpenAITools, llm_response.tool_calls[0].function.name)
+            _response.extend(await func(llm_response.tool_calls[0].function.arguments))
+        return ChatModel.ChatResponseModel(chat_id=chat_id, data=_response)
