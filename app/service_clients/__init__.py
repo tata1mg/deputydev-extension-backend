@@ -1,4 +1,4 @@
-__all__ = ['SearchClient', 'MinglerServiceClient']
+__all__ = ['SearchClient', 'OpenAIServiceClient']
 
 from .search import SearchClient
-from .mingler import MinglerServiceClient
+from .openai import OpenAIServiceClient
