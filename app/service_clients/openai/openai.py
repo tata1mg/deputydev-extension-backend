@@ -3,6 +3,8 @@ from torpedo import CONFIG
 from openai import OpenAI
 from commonutils.utils import Singleton
 
+from app.managers.openai_tools.util import get_openai_funcs
+
 config = CONFIG.config
 
 
@@ -15,31 +17,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             model="gpt-4-1106-preview",
             response_format={"type": "json_object"},
             messages=[{"role": "user", "content": final_prompt}],
-            # TODO: Converge tools definition using a single function call. Maybe use decorators for openai_tools functions
-            tools=[
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "show_lab_test_card",
-                        "description": "Get details of the lab test from API call and show a lab test card to "
-                        "user to increase add to cart",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "identifier": {
-                                    "type": "string",
-                                    "description": "The unique identifier of a test or Test ID",
-                                },
-                                "city": {
-                                    "type": "string",
-                                    "description": "The name of the city user is currently in or "
-                                    "for whichever city user ask for in their question",
-                                },
-                            },
-                            "required": ["identifier", "city"],
-                        },
-                    },
-                }
-            ],
+            tools=get_openai_funcs()
         )
         return completion.choices[0].message
