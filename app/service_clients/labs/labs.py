@@ -13,19 +13,15 @@ class LabsClient(Base):
 
     @classmethod
     @service_client_wrapper(service_name=_service_name)
-    async def get_lab_test_details(cls, test_details: dict):
+    async def get_lab_test_details(cls, identifier: str, city: str):
         """
         This Function is responsible for getting lab test
         details based on lab test_id and city
-
-        Args:
-            test_details: dict containing test_id and city
-
-        Returns:
-            Dict containing lab test details
-
+        @param identifier: Lab test ID
+        @param city: City name
+        @return:
         """
-        path = "/v1/test/{lab_id}".format(lab_id=test_details.pop("identifier"))
+        path = "/v1/test/{lab_id}".format(lab_id=identifier)
         headers = {
             "Content-Type": "application/json",
             # TODO: Why is this platform hardcoded here?
@@ -34,7 +30,7 @@ class LabsClient(Base):
         }
         try:
             result = await cls.get(
-                path=path, query_params=test_details, headers=headers
+                path=path, query_params={"city": city}, headers=headers
             )
             return result.data
 

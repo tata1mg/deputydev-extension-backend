@@ -160,5 +160,5 @@ class DiagnoBotManager:
             _response.append(ChatTypeMsg(**ujson.loads(llm_response.content)))
         if llm_response.tool_calls:
             func = getattr(OpenAITools, llm_response.tool_calls[0].function.name)
-            _response.extend(await func(llm_response.tool_calls[0].function.arguments))
+            _response.extend(await func(**ujson.loads(llm_response.tool_calls[0].function.arguments)))
         return ChatModel.ChatResponseModel(chat_id=chat_id, data=_response)
