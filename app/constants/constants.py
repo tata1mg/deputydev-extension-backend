@@ -40,6 +40,7 @@ class Augmentation(Enum):
     try to get more information about the lab test from API and show a lab test card.
     8. If user wants to know any lab test details for any non indian city, 
     Just say that TATA 1mg is not serviceable in that area.
+    9. When user ask for price - Respond back with value of discounted_price.
     
     """
     CHAT_START_MSG = {
