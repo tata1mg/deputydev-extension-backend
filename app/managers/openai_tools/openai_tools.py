@@ -8,18 +8,15 @@ from app.service_clients.labs import LabsClient
 
 
 async def show_lab_test_card(arguments: dict) -> List[any]:
-    # TODO : Call Labs API and return approprouate contract for SKU card
     print("Inside show_lab_test_card")
     test_details = await LabsClient.get_lab_test_details(ast.literal_eval(arguments))
     test_serialized_details = LabTestSerializer.format_lab_test_data(
         test_details.get("data")
     )
     response = [
-        ChatTypeMsg(
-            **{
+        ChatTypeMsg.model_validate({
                 "answer": "Here are more details. You can book the test directly from here.",
-            }
-        ),
-        ChatTypeSkuCard.parse_obj(test_serialized_details),
+            }),
+        ChatTypeSkuCard.model_validate(test_serialized_details),
     ]
     return response

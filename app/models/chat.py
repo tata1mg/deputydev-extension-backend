@@ -6,13 +6,21 @@ from typing import Optional, List, Union
 
 class ChatHistoryModel(BaseModel):
     role: str
-    type: Optional[str] = None
+    type: str
     prompt: str
 
     @field_validator("role")
-    def validate_my_field(cls, value):
+    def validate_role(cls, value):
         allowed_values = {"user", "assistant"}
+        if value not in allowed_values:
+            raise ValueError(
+                f"Invalid value: {value}. The allowed values are {allowed_values}"
+            )
+        return value
 
+    @field_validator("type")
+    def validate_type(cls, value):
+        allowed_values = {ChatTypeMsg.__name__, ChatTypeSkuCard.__name__}
         if value not in allowed_values:
             raise ValueError(
                 f"Invalid value: {value}. The allowed values are {allowed_values}"
@@ -21,7 +29,7 @@ class ChatHistoryModel(BaseModel):
 
 
 class ChatTypeMsg(BaseModel):
-    type: str = "message"
+    type: str = "ChatTypeMsg"
     answer: str
     advice: Optional[str] = None
 
@@ -54,6 +62,8 @@ class Price(BaseModel):
 
 
 class ChatTypeSkuCard(BaseModel):
+    # TODO : Any field for image icon?
+    type: str = "ChatTypeSkuCard"
     header: str
     sub_header: Optional[str] = None
     eta: Eta

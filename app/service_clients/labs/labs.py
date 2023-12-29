@@ -28,6 +28,7 @@ class LabsClient(Base):
         path = "/v1/test/{lab_id}".format(lab_id=test_details.pop("identifier"))
         headers = {
             "Content-Type": "application/json",
+            # TODO: Why is this platform hardcoded here?
             "X-Platform": "Android-17.9.0",
             "X-Access-Key": "1mg_client_access_key",
         }

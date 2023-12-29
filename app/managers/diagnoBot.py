@@ -38,7 +38,7 @@ class DiagnoBotManager:
         # Upon receiving empty chat_id, we return back with welcome message and a new chat_id.
         if not payload.chat_id:
             return ChatModel.ChatResponseModel(
-                data=[ChatTypeMsg(**Augmentation.CHAT_START_MSG.value)]
+                data=[ChatTypeMsg.model_validate(Augmentation.CHAT_START_MSG.value)]
             )
 
         # Embedding
@@ -52,11 +52,9 @@ class DiagnoBotManager:
             return ChatModel.ChatResponseModel(
                 chat_id=payload.chat_id,
                 data=[
-                    ChatTypeMsg(
-                        **{
+                    ChatTypeMsg.model_validate({
                             "answer": ErrorMessages.RETRIEVAL_FAIL_MSG.value,
-                        }
-                    )
+                        })
                 ],
             )
         # Augmentation
@@ -71,7 +69,7 @@ class DiagnoBotManager:
         return await self.generate_response(payload.chat_id, llm_response)
 
     @staticmethod
-    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 3) -> List[float]:
+    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 5) -> List[float]:
         """
         Create vector embeddings for a given prompt.
         @param K: Number of historical messages to factor in while creating a prompt.
@@ -106,8 +104,6 @@ class DiagnoBotManager:
         final_chat_history = ""
         city = "Delhi"  # Harcoded this for now
         user_location = Augmentation.USER_LOCATION.value.format(city)
-
-        # TODO : Extract user's current location from headers and inject it here as part of final prompt.
         if payload.chat_history and payload.chat_id:
             final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
         final_prompt = (
