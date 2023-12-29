@@ -2,8 +2,12 @@ from enum import Enum
 
 
 class ErrorMessages(Enum):
-    FIELD_REQUIRED = '{key} is required'
-    TYPE_CHECK = 'required {required_type}, received {received_type} for {key}'
-    IN_CHECK = '{key} should be equal to any of these {acceptable_values}, not {param_value}'
-    RETRIEVAL_FAIL_MSG = ("I don't understand what you are saying. "
-                          "I am a medical diagnostic agent and my knowledge is limited to this domain only.")
+    FIELD_REQUIRED = "{key} is required"
+    TYPE_CHECK = "required {required_type}, received {received_type} for {key}"
+    IN_CHECK = (
+        "{key} should be equal to any of these {acceptable_values}, not {param_value}"
+    )
+    RETRIEVAL_FAIL_MSG = (
+        "I don't understand what you are saying. "
+        "I am a medical diagnostic agent and my knowledge is limited to this domain only."
+    )

@@ -8,6 +8,7 @@ from app.dao.labsConn import LabsConn
 from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
 from app.models.chat import ChatModel, ChatTypeMsg
+from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
 
@@ -17,7 +18,7 @@ class DiagnoBotManager:
         self.store = LabsConn().get_store()
 
     async def get_diagnobot_response(
-        self, payload: ChatModel.ChatRequestModel
+        self, payload: ChatModel.ChatRequestModel, headers: Headers
     ) -> ChatModel.ChatResponseModel:
         """
         This function manages the responses of DiagnoBot.
@@ -29,6 +30,7 @@ class DiagnoBotManager:
         6. Returning the response to client.
 
         @param payload: Request received from client
+        @param headers: Headers
         @return: Response to client
         """
 
@@ -58,7 +60,7 @@ class DiagnoBotManager:
                 ],
             )
         # Augmentation
-        final_prompt: str = self.generate_final_prompt(payload, docs)
+        final_prompt: str = self.generate_final_prompt(payload, docs, headers.city())
 
         # Generation/Synthesis
         llm_response: ChatCompletionMessage = (
@@ -88,7 +90,7 @@ class DiagnoBotManager:
         return embedding
 
     @staticmethod
-    def generate_final_prompt(payload, context) -> str:
+    def generate_final_prompt(payload, context, city) -> str:
         """
         Generate final prompt for LLM.
         1. Add instructions.
@@ -102,12 +104,15 @@ class DiagnoBotManager:
         final_instructions = Augmentation.INSTRUCTIONS.value
         final_context = DiagnoBotManager.generate_context(context)
         final_chat_history = ""
+        city = "Delhi"  # Harcoded this for now
+        user_location = Augmentation.USER_LOCATION.value.format(city)
+
         # TODO : Extract user's current location from headers and inject it here as part of final prompt.
         if payload.chat_history and payload.chat_id:
             final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
         final_prompt = (
-            f"{final_instructions} \n {final_context} \n {final_chat_history} \n Given above context, "
-            f"please respond against this question - {payload.current_prompt}"
+            f"{final_instructions} \n {user_location} \n {final_context} \n {final_chat_history} \n"
+            f"Given above context, please respond against this question - {payload.current_prompt}"
         )
         return final_prompt
 
@@ -145,7 +150,9 @@ class DiagnoBotManager:
         return final_chat_history
 
     @staticmethod
-    async def generate_response(chat_id: str, llm_response: ChatCompletionMessage) -> ChatModel.ChatResponseModel:
+    async def generate_response(
+        chat_id: str, llm_response: ChatCompletionMessage
+    ) -> ChatModel.ChatResponseModel:
         """
         Generate response for LLM.
         @param chat_id: Chat id of the conversation

@@ -6,7 +6,7 @@ from typing import Optional, List, Union
 
 class ChatHistoryModel(BaseModel):
     role: str
-    type:  Optional[str] = None
+    type: Optional[str] = None
     prompt: str
 
     @field_validator("role")
@@ -21,20 +21,46 @@ class ChatHistoryModel(BaseModel):
 
 
 class ChatTypeMsg(BaseModel):
-    type:  str = "message"
+    type: str = "message"
     answer: str
     advice: Optional[str] = None
 
 
+class Image(BaseModel):
+    url: str
+    alt: str
+
+
+class Eta(BaseModel):
+    label: str
+    image: Image
+
+
+class Details(BaseModel):
+    target_url: str
+
+
+class Cta(BaseModel):
+    action: str
+    text: str
+    details: Details
+
+
+class Price(BaseModel):
+    mrp: Optional[str]
+    discount: Optional[str]
+    discounted_price: Optional[str]
+    price_suffix: Optional[str]
+
+
 class ChatTypeSkuCard(BaseModel):
     header: str
-    sub_header: str
-    report_eta: str
-    icon: str
-    price: str
+    sub_header: Optional[str] = None
+    eta: Eta
+    price: Price
     sku_id: str
-    target_url: str
-    cta: str
+    cta: Cta
+    slug_url: str
 
 
 class ChatModel(BaseModel):

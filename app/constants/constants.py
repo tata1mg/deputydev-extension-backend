@@ -41,10 +41,13 @@ class Augmentation(Enum):
     8. If user wants to know any lab test details for any non indian city, 
     Just say that TATA 1mg is not serviceable in that area.
     
-    
-    The user is currently located at meerut. 
     """
     CHAT_START_MSG = {
         "answer": "Welcome. I am DiagnoBot, a medical diagnostic agent.",
         "advice": "You can ask me any questions regarding TATA 1mg lab tests and its offering.",
     }
+    USER_LOCATION = "The user is currently located at {}"
+
+
+class CtaActions(Enum):
+    ADD_TO_CART = "ADD_TO_CART"
