@@ -1,6 +1,8 @@
+import ast
 from typing import List
-
+from app.managers.serializer.lab_test_serializer import LabTestSerializer
 from app.models.chat import ChatTypeMsg, ChatTypeSkuCard
+from app.service_clients.labs import LabsClient
 
 # TODO : Create a new function for calling an agent.
 
@@ -8,23 +10,16 @@ from app.models.chat import ChatTypeMsg, ChatTypeSkuCard
 async def show_lab_test_card(arguments: dict) -> List[any]:
     # TODO : Call Labs API and return approprouate contract for SKU card
     print("Inside show_lab_test_card")
+    test_details = await LabsClient.get_lab_test_details(ast.literal_eval(arguments))
+    test_serialized_details = LabTestSerializer.format_lab_test_data(
+        test_details.get("data")
+    )
     response = [
         ChatTypeMsg(
             **{
                 "answer": "Here are more details. You can book the test directly from here.",
             }
         ),
-        ChatTypeSkuCard(
-            **{
-                "header": "Liver function test (LFT)",
-                "sub_header": "Also known as LFT test",
-                "report_eta": "Get report in 72hrs",
-                "icon": "https://onemg.gumlet.io/assets/44a16856-6882-11ec-82c2-0a3c85ad997a.png?format=auto",
-                "price": "500",
-                "sku_id": "25166",
-                "target_url": "https://www.1mg.com/labs/test/lft-liver-function-test-2562",
-                "cta": "add2cart",
-            }
-        ),
+        ChatTypeSkuCard.parse_obj(test_serialized_details),
     ]
     return response
