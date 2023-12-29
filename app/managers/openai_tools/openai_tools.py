@@ -3,10 +3,8 @@ from typing import List
 
 from app.managers.openai_tools.util import openaifunc
 from app.managers.serializer.lab_test_serializer import LabTestSerializer
-from app.models.chat import ChatTypeMsg, ChatTypeSkuCard
+from app.models.chat import ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent
 from app.service_clients.labs import LabsClient
-
-# TODO : Create a new function for calling an agent.
 
 
 @openaifunc
@@ -27,5 +25,23 @@ async def show_lab_test_card(identifier: str, city: str) -> List[any]:
             }
         ),
         ChatTypeSkuCard.model_validate(test_serialized_details),
+    ]
+    return response
+
+
+@openaifunc
+async def show_agent_calling_card() -> List[any]:
+
+    """
+    Show call to agent card to user. Whenever user ask to speak to an agent, representative or a real human.
+    This function should execute.
+    """
+    response = [
+        ChatTypeMsg.model_validate(
+            {
+                "answer": "TATA 1mg labs is just a call away.",
+            }
+        ),
+        ChatTypeCallAgent()
     ]
     return response

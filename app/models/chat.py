@@ -20,7 +20,11 @@ class ChatHistoryModel(BaseModel):
 
     @field_validator("type")
     def validate_type(cls, value):
-        allowed_values = {ChatTypeMsg.__name__, ChatTypeSkuCard.__name__}
+        allowed_values = {
+            ChatTypeMsg.__name__,
+            ChatTypeSkuCard.__name__,
+            ChatTypeCallAgent.__name__,
+        }
         if value not in allowed_values:
             raise ValueError(
                 f"Invalid value: {value}. The allowed values are {allowed_values}"
@@ -73,6 +77,14 @@ class ChatTypeSkuCard(BaseModel):
     slug_url: str
 
 
+class ChatTypeCallAgent(BaseModel):
+    type: str = "ChatTypeCallAgent"
+    icon: str = "https://onemg.gumlet.io/574fdd07-582a-4052-a4f1-7a3a0b5a19b1.webp"
+    header: str = "Call our health advisor to book"
+    sub_header: str = "Our team of experts will guide you"
+    target_url: str = "tel://01206025703"
+
+
 class ChatModel(BaseModel):
     class ChatRequestModel(BaseModel):
         chat_id: Optional[str] = None
@@ -81,4 +93,4 @@ class ChatModel(BaseModel):
 
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
-        data: List[Union[ChatTypeMsg, ChatTypeSkuCard, None]]
+        data: List[Union[ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent, None]]
