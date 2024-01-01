@@ -136,7 +136,6 @@ class DiagnoBotManager:
         """
         final_context = "Here is the context - \n"
         for doc in context:
-            print(doc.metadata["source"] + "::::" + doc.page_content)
             formed_context = (
                 f"For Test ID {doc.metadata['identifier']}, the Test name is \"{doc.metadata['source']}\" "
                 f"and description is as follows \n"
