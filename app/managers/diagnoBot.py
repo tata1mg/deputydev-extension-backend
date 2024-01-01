@@ -45,20 +45,30 @@ class DiagnoBotManager:
         embedded_prompt: List[float] = self.embedd_prompt(payload)
 
         # Retrieval
-        docs = await self.store.amax_marginal_relevance_search_by_vector(
+        contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
             embedding=embedded_prompt
         )
-        if not docs:
+        current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
+            embedding=DiagnoBotManager.embedd(payload.current_prompt)
+        )
+
+        # Merging contextual docs with docs fetched against current prompt.
+        contextual_docs.extend(current_prompt_docs)
+        if not contextual_docs:
             return ChatModel.ChatResponseModel(
                 chat_id=payload.chat_id,
                 data=[
-                    ChatTypeMsg.model_validate({
+                    ChatTypeMsg.model_validate(
+                        {
                             "answer": ErrorMessages.RETRIEVAL_FAIL_MSG.value,
-                        })
+                        }
+                    )
                 ],
             )
         # Augmentation
-        final_prompt: str = self.generate_final_prompt(payload, docs, headers.city())
+        final_prompt: str = self.generate_final_prompt(
+            payload, contextual_docs, headers.city()
+        )
 
         # Generation/Synthesis
         llm_response: ChatCompletionMessage = (
@@ -69,21 +79,25 @@ class DiagnoBotManager:
         return await self.generate_response(payload.chat_id, llm_response)
 
     @staticmethod
-    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 5) -> List[float]:
+    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 3) -> List[float]:
         """
         Create vector embeddings for a given prompt.
         @param K: Number of historical messages to factor in while creating a prompt.
         @param payload: Entire payload received from client
         @return: Vector embedding equivalent of chat's history and user's prompt.
         """
-        embeddings_model = OpenAIEmbeddingsCustom().get_openai_embeddings()
+
         chat_history = payload.chat_history
         result_list = []
         for i in range(len(chat_history) - 1, max(-1, len(chat_history) - K - 1), -1):
             current_item = chat_history[i]
             result_list.append(current_item.prompt)
-        result_list.append(payload.current_prompt)
         prompt = " ".join(result_list)
+        return DiagnoBotManager.embedd(prompt)
+
+    @staticmethod
+    def embedd(prompt):
+        embeddings_model = OpenAIEmbeddingsCustom().get_openai_embeddings()
         embedding = embeddings_model.embed_query(prompt)
         return embedding
 
@@ -122,6 +136,7 @@ class DiagnoBotManager:
         """
         final_context = "Here is the context - \n"
         for doc in context:
+            print(doc.metadata["source"] + "::::" + doc.page_content)
             formed_context = (
                 f"For Test ID {doc.metadata['identifier']}, the Test name is \"{doc.metadata['source']}\" "
                 f"and description is as follows \n"
@@ -160,5 +175,7 @@ class DiagnoBotManager:
             _response.append(ChatTypeMsg(**ujson.loads(llm_response.content)))
         if llm_response.tool_calls:
             func = getattr(OpenAITools, llm_response.tool_calls[0].function.name)
-            _response.extend(await func(**ujson.loads(llm_response.tool_calls[0].function.arguments)))
+            _response.extend(
+                await func(**ujson.loads(llm_response.tool_calls[0].function.arguments))
+            )
         return ChatModel.ChatResponseModel(chat_id=chat_id, data=_response)

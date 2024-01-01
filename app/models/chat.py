@@ -3,6 +3,8 @@ import uuid
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Union
 
+from pydantic.v1 import root_validator
+
 
 class ChatHistoryModel(BaseModel):
     role: str
@@ -90,6 +92,12 @@ class ChatModel(BaseModel):
         chat_id: Optional[str] = None
         chat_history: Optional[List[ChatHistoryModel]] = None
         current_prompt: Optional[str] = None
+
+        # @root_validator
+        # def validate(cls, values):
+        #     if not values.get("current_prompt") or not values.get("name"):
+        #         raise ValueError("It's an error")
+        #     return values
 
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
