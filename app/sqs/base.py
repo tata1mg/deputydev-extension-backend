@@ -9,13 +9,12 @@ from ..constants import SQS as Constant
 from ..constants import ErrorMessages
 from ..constants import SuccessMessages
 
-'''
+"""
     implement get_queue_name function which will be returning queue name for every child class
-'''
+"""
 
 
 class Base:
-
     def __init__(self, config: dict, event_handler):
         self.config = config or {}
         self.sqs_manager = BaseSQSWrapper(config)
@@ -31,7 +30,9 @@ class Base:
     async def publish(self, payload: dict, attributes=None, **kwargs):
         await self.init()
         payload = json.dumps(payload)
-        response = await self.sqs_manager.publish_to_sqs(payload=payload, attributes=attributes, batch=False, **kwargs)
+        response = await self.sqs_manager.publish_to_sqs(
+            payload=payload, attributes=attributes, batch=False, **kwargs
+        )
         return response
 
     async def bulk_publish(self, data: list, **kwargs):
@@ -43,21 +44,28 @@ class Base:
         # '''
         await self.init()
         if len(data) > 10:
-            raise Exception('at max 10 messages can be send in a batch')
+            raise Exception("at max 10 messages can be send in a batch")
         for datum in data:
-            datum['payload'] = json.dumps(datum['payload'])
+            datum["payload"] = json.dumps(datum["payload"])
 
-        return (
-            await self.sqs_manager.publish_to_sqs(messages=data, batch=True, **kwargs))
+        return await self.sqs_manager.publish_to_sqs(
+            messages=data, batch=True, **kwargs
+        )
 
     async def subscribe(self, **kwargs):
-        max_no_of_messages = kwargs.get('max_no_of_messages', Constant.SUBSCRIBE.value['MAX_MESSAGES'])
-        wait_time_in_seconds = kwargs.get('wait_time_in_seconds', Constant.SUBSCRIBE.value['WAIT_TIME_IN_SECONDS'])
+        max_no_of_messages = kwargs.get(
+            "max_no_of_messages", Constant.SUBSCRIBE.value["MAX_MESSAGES"]
+        )
+        wait_time_in_seconds = kwargs.get(
+            "wait_time_in_seconds", Constant.SUBSCRIBE.value["WAIT_TIME_IN_SECONDS"]
+        )
         show_configured_log = True
         while True:
             try:
-                response = await self.receive_message(max_no_of_messages=max_no_of_messages,
-                                                      wait_time_in_seconds=wait_time_in_seconds)
+                response = await self.receive_message(
+                    max_no_of_messages=max_no_of_messages,
+                    wait_time_in_seconds=wait_time_in_seconds,
+                )
                 if response:
                     messages = response.messages
                     if messages:
@@ -73,7 +81,9 @@ class Base:
         await self.init()
         response = await self.sqs_manager.subscribe(**kwargs)
         response_model = Response(response)
-        response_model.messages = [self.decompress(message) for message in response_model.messages]
+        response_model.messages = [
+            self.decompress(message) for message in response_model.messages
+        ]
         return response_model
 
     async def handle_subscribe_event(self, message):
@@ -94,9 +104,9 @@ class Base:
         return response
 
     def enable_worker(self):
-        if 'ENABLE' in self.worker_config():
-            return self.worker_config()['ENABLE']
-        return self.config.get('ENABLE_WORKER')
+        if "ENABLE" in self.worker_config():
+            return self.worker_config()["ENABLE"]
+        return self.config.get("ENABLE_WORKER")
 
     @staticmethod
     def decompress(message):
@@ -106,12 +116,11 @@ class Base:
     def log_error(self, message, exception, payload=None):
         message = message.format(queue_name=self.get_queue_name())
         if payload:
-            message += ' Payload =  ' + json.dumps(payload)[:Constant.LOG_LENGTH.value]
+            message += " Payload =  " + json.dumps(payload)[: Constant.LOG_LENGTH.value]
         log_combined_exception(message, exception)
 
     def log_info(self, message, payload=None):
         message = message.format(queue_name=self.get_queue_name())
         if payload:
-            message += ' Payload = ' + json.dumps(payload)[:Constant.LOG_LENGTH.value]
+            message += " Payload = " + json.dumps(payload)[: Constant.LOG_LENGTH.value]
         logger.info(message)
-

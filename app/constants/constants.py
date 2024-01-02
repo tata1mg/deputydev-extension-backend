@@ -40,11 +40,26 @@ class Augmentation(Enum):
     try to get more information about the lab test from API and show a lab test card.
     8. If user wants to know any lab test details for any non indian city, 
     Just say that TATA 1mg is not serviceable in that area.
+    9. When user ask for price - Respond back with value of discounted_price.
     
-    
-    The user is currently located at meerut. 
     """
     CHAT_START_MSG = {
         "answer": "Welcome. I am DiagnoBot, a medical diagnostic agent.",
         "advice": "You can ask me any questions regarding TATA 1mg lab tests and its offering.",
     }
+    USER_LOCATION = "The user is currently located at {}"
+
+
+class CtaActions(Enum):
+    ADD_TO_CART = "ADD_TO_CART"
+
+
+class ExtendedEnum(Enum):
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+
+class ShowBoatExperiment(ExtendedEnum):
+    ControlSet1 = "ControlSet1"
+    ControlSet2 = "ControlSet2"

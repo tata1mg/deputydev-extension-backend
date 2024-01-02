@@ -1,2 +1,2 @@
-__all__ = ['ReorderWidgetWorker']
+__all__ = ["ReorderWidgetWorker"]
 from .order_service import ReorderWidgetWorker

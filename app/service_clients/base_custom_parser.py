@@ -40,4 +40,3 @@ class BaseCustomParser:
             return final_headers
 
         return final_headers
-
