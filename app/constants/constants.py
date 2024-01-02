@@ -50,22 +50,10 @@ class Augmentation(Enum):
     USER_LOCATION = "The user is currently located at {}"
 
 
-class InitializeBoatFields(Enum):
-    WELCOME_MESSAGE = "Hi, How can I help you?"
-    BOAT_NAME = "Jiva"
-    BOAT_LOGO = "https://onemg.gumlet.io/marketing/1c6d9a98-b76d-4906-b0ba-1647be7747fa.png"
-
-
 class CtaActions(Enum):
     ADD_TO_CART = "ADD_TO_CART"
 
 
-class ExtendedEnum(Enum):
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
-
-
-class ShowBoatExperiment(ExtendedEnum):
+class ShowJivaExperiment(ExtendedEnum):
     ControlSet1 = "ControlSet1"
     ControlSet2 = "ControlSet2"

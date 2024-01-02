@@ -1,3 +1,3 @@
-from app.managers.diagnoBot import DiagnoBotManager
+from app.managers.jiva import JivaManager
 
-__all__ = ["DiagnoBotManager"]
+__all__ = ["JivaManager"]
