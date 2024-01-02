@@ -102,3 +102,7 @@ class ChatModel(BaseModel):
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
         data: List[Union[ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent, None]]
+
+
+class ShowNudgeResponseModel(BaseModel):
+    show_nudge: bool

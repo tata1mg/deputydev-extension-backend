@@ -4,6 +4,7 @@ import time
 
 from packaging.version import Version
 from sanic.log import logger
+import mmh3
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
 name_slug_replace_string = "-"
@@ -139,3 +140,13 @@ def validate_eta_pincode(eta_pincode):
     if not eta_pincode or str(eta_pincode).lower() == "null":
         return False
     return True
+
+def ab_classification(experiment_id, experiment_set):
+    last_two_digit = (mmh3.hash(str(experiment_id))) % 100
+    set_count = len(experiment_set)
+    print(experiment_set)
+    try:
+        idx = int((last_two_digit * set_count) / 100)
+        return (experiment_set.list())[idx]
+    except ValueError:
+        return 0
