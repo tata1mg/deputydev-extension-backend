@@ -18,6 +18,11 @@ diagnoBot = Blueprint("diagnoBot")
 @diagnoBot.route("/chat", methods=["POST"])
 @openapi.definition(
     body=openapi.Component(ChatModel.ChatRequestModel),
+    response=Response(
+        {"application/json": openapi.Component(ChatModel.ChatResponseModel, name="CharResponseModel")},
+        description="This api returns Chatboat response",
+        status=200,
+    ),
 )
 @http_v4_wrapper
 @validate(json=ChatModel.ChatRequestModel)
