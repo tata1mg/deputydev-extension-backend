@@ -7,6 +7,7 @@ config = CONFIG.config
 
 
 class LabsConn(metaclass=Singleton):
+
     def __init__(self):
         conn_str = config.get("DB_CONNECTION").get("CONNECTION_STRING")
         collection_name = config.get("DB_CONNECTION").get("LABS_COLLECTION")
