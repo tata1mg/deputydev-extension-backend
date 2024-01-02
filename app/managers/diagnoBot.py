@@ -7,10 +7,11 @@ from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
 from app.constants.constants import Augmentation, ShowBoatExperiment
 from app.constants.error_messages import ErrorMessages
-from app.models.chat import ChatModel, ChatTypeMsg, ShowNudgeResponseModel
+from app.models.chat import ChatModel, ChatTypeMsg
 from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
+from app.managers.serializer.initialize_boat_serializer import InitializeBoatSerializer
 from app.utils import ab_classification
 
 
@@ -23,7 +24,7 @@ class DiagnoBotManager:
         show_nudge = False
         if ab_classification(headers.visitor_id(), ShowBoatExperiment) in [ShowBoatExperiment.ControlSet1.value]:
             show_nudge = True
-        return ShowNudgeResponseModel(show_nudge=show_nudge)
+        return InitializeBoatSerializer.format_boat(show_nudge)
 
     async def get_diagnobot_response(
         self, payload: ChatModel.ChatRequestModel, headers: Headers
