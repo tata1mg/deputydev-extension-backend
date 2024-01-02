@@ -10,10 +10,10 @@ from app.routes.end_user.headers import Headers
 from sanic import Websocket
 
 
-diagnoBot = Blueprint("diagnoBot")
+jiva = Blueprint("jiva")
 
 
-@diagnoBot.route("/chat", methods=["POST"])
+@jiva.route("/chat", methods=["POST"])
 @http_v4_wrapper
 @validate(json=ChatModel.ChatRequestModel)
 async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
@@ -35,14 +35,14 @@ async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
 # TODO : Create an NPS survey 4-5 (Promoters), 3 (Passives), 2-1 (Detractors)
 
 
-@diagnoBot.route("/initialize", methods=["GET"])
+@jiva.route("/initialize", methods=["GET"])
 @http_v4_wrapper
 async def show_boat(request: Request, headers: Headers):
     response = await JivaManager().show_boat_based_on_ab(headers)
     return response
 
 
-@diagnoBot.websocket("/feed")
+@jiva.websocket("/feed")
 async def feed(request: Request, ws: Websocket):
     while True:
         data = "hello!"
