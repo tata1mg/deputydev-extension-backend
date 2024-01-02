@@ -5,19 +5,28 @@ from openai.types.chat import ChatCompletionMessage
 
 from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
-from app.constants.constants import Augmentation
+from app.constants.constants import Augmentation, ShowBoatExperiment
 from app.constants.error_messages import ErrorMessages
-from app.models.chat import ChatModel, ChatTypeMsg
+from app.models.chat import ChatModel, ChatTypeMsg, ShowNudgeResponseModel
+from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
+from app.utils import ab_classification
 
 
 class DiagnoBotManager:
     def __init__(self):
         self.store = LabsConn().get_store()
 
+    @staticmethod
+    async def show_boat_based_on_ab(headers: Headers):
+        show_nudge = False
+        if ab_classification(headers.visitor_id(), ShowBoatExperiment) in [ShowBoatExperiment.ControlSet1.value]:
+            show_nudge = True
+        return ShowNudgeResponseModel(show_nudge=show_nudge)
+
     async def get_diagnobot_response(
-        self, payload: ChatModel.ChatRequestModel
+        self, payload: ChatModel.ChatRequestModel, headers: Headers
     ) -> ChatModel.ChatResponseModel:
         """
         This function manages the responses of DiagnoBot.
@@ -29,6 +38,7 @@ class DiagnoBotManager:
         6. Returning the response to client.
 
         @param payload: Request received from client
+        @param headers: Headers
         @return: Response to client
         """
 
@@ -36,29 +46,37 @@ class DiagnoBotManager:
         # Upon receiving empty chat_id, we return back with welcome message and a new chat_id.
         if not payload.chat_id:
             return ChatModel.ChatResponseModel(
-                data=[ChatTypeMsg(**Augmentation.CHAT_START_MSG.value)]
+                data=[ChatTypeMsg.model_validate(Augmentation.CHAT_START_MSG.value)]
             )
 
         # Embedding
         embedded_prompt: List[float] = self.embedd_prompt(payload)
 
         # Retrieval
-        docs = await self.store.amax_marginal_relevance_search_by_vector(
+        contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
             embedding=embedded_prompt
         )
-        if not docs:
+        current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
+            embedding=DiagnoBotManager.embedd(payload.current_prompt)
+        )
+
+        # Merging contextual docs with docs fetched against current prompt.
+        contextual_docs.extend(current_prompt_docs)
+        if not contextual_docs:
             return ChatModel.ChatResponseModel(
                 chat_id=payload.chat_id,
                 data=[
-                    ChatTypeMsg(
-                        **{
+                    ChatTypeMsg.model_validate(
+                        {
                             "answer": ErrorMessages.RETRIEVAL_FAIL_MSG.value,
                         }
                     )
                 ],
             )
         # Augmentation
-        final_prompt: str = self.generate_final_prompt(payload, docs)
+        final_prompt: str = self.generate_final_prompt(
+            payload, contextual_docs, headers.city()
+        )
 
         # Generation/Synthesis
         llm_response: ChatCompletionMessage = (
@@ -76,19 +94,23 @@ class DiagnoBotManager:
         @param payload: Entire payload received from client
         @return: Vector embedding equivalent of chat's history and user's prompt.
         """
-        embeddings_model = OpenAIEmbeddingsCustom().get_openai_embeddings()
+
         chat_history = payload.chat_history
         result_list = []
         for i in range(len(chat_history) - 1, max(-1, len(chat_history) - K - 1), -1):
             current_item = chat_history[i]
             result_list.append(current_item.prompt)
-        result_list.append(payload.current_prompt)
         prompt = " ".join(result_list)
+        return DiagnoBotManager.embedd(prompt)
+
+    @staticmethod
+    def embedd(prompt):
+        embeddings_model = OpenAIEmbeddingsCustom().get_openai_embeddings()
         embedding = embeddings_model.embed_query(prompt)
         return embedding
 
     @staticmethod
-    def generate_final_prompt(payload, context) -> str:
+    def generate_final_prompt(payload, context, city) -> str:
         """
         Generate final prompt for LLM.
         1. Add instructions.
@@ -102,12 +124,13 @@ class DiagnoBotManager:
         final_instructions = Augmentation.INSTRUCTIONS.value
         final_context = DiagnoBotManager.generate_context(context)
         final_chat_history = ""
-        # TODO : Extract user's current location from headers and inject it here as part of final prompt.
+        city = "Delhi"  # Harcoded this for now
+        user_location = Augmentation.USER_LOCATION.value.format(city)
         if payload.chat_history and payload.chat_id:
             final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
         final_prompt = (
-            f"{final_instructions} \n {final_context} \n {final_chat_history} \n Given above context, "
-            f"please respond against this question - {payload.current_prompt}"
+            f"{final_instructions} \n {user_location} \n {final_context} \n {final_chat_history} \n"
+            f"Given above context, please respond against this question - {payload.current_prompt}"
         )
         return final_prompt
 
@@ -145,7 +168,9 @@ class DiagnoBotManager:
         return final_chat_history
 
     @staticmethod
-    async def generate_response(chat_id: str, llm_response: ChatCompletionMessage) -> ChatModel.ChatResponseModel:
+    async def generate_response(
+        chat_id: str, llm_response: ChatCompletionMessage
+    ) -> ChatModel.ChatResponseModel:
         """
         Generate response for LLM.
         @param chat_id: Chat id of the conversation
@@ -157,5 +182,7 @@ class DiagnoBotManager:
             _response.append(ChatTypeMsg(**ujson.loads(llm_response.content)))
         if llm_response.tool_calls:
             func = getattr(OpenAITools, llm_response.tool_calls[0].function.name)
-            _response.extend(await func(llm_response.tool_calls[0].function.arguments))
+            _response.extend(
+                await func(**ujson.loads(llm_response.tool_calls[0].function.arguments))
+            )
         return ChatModel.ChatResponseModel(chat_id=chat_id, data=_response)
