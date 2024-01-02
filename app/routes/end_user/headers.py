@@ -56,3 +56,6 @@ class Headers:
 
     def user_cohort(self):
         return None
+
+    def visitor_id(self):
+        return self.user_context().get("visitor_id")

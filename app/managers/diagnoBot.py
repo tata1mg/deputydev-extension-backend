@@ -5,17 +5,25 @@ from openai.types.chat import ChatCompletionMessage
 
 from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
-from app.constants.constants import Augmentation
+from app.constants.constants import Augmentation, ShowBoatExperiment
 from app.constants.error_messages import ErrorMessages
-from app.models.chat import ChatModel, ChatTypeMsg
+from app.models.chat import ChatModel, ChatTypeMsg, ShowNudgeResponseModel
 from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
+from app.utils import ab_classification
 
 
 class DiagnoBotManager:
     def __init__(self):
         self.store = LabsConn().get_store()
+
+    @staticmethod
+    async def show_boat_based_on_ab(headers: Headers):
+        show_nudge = False
+        if ab_classification(headers.visitor_id(), ShowBoatExperiment) in [ShowBoatExperiment.ControlSet1.value]:
+            show_nudge = True
+        return ShowNudgeResponseModel(show_nudge=show_nudge)
 
     async def get_diagnobot_response(
         self, payload: ChatModel.ChatRequestModel, headers: Headers

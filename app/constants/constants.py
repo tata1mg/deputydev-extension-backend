@@ -52,3 +52,14 @@ class Augmentation(Enum):
 
 class CtaActions(Enum):
     ADD_TO_CART = "ADD_TO_CART"
+
+
+class ExtendedEnum(Enum):
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+
+class ShowBoatExperiment(ExtendedEnum):
+    ControlSet1 = "ControlSet1"
+    ControlSet2 = "ControlSet2"
