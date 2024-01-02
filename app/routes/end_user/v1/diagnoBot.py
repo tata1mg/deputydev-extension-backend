@@ -2,7 +2,7 @@ import time
 
 from sanic import Blueprint
 from sanic_ext import validate
-from torpedo import Request, send_response
+from torpedo import Request
 from app.managers.diagnoBot import DiagnoBotManager
 from app.models.chat import ChatModel
 from app.routes.end_user.wrapper import http_v4_wrapper
@@ -35,7 +35,7 @@ async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
 # TODO : Create an NPS survey 4-5 (Promoters), 3 (Passives), 2-1 (Detractors)
 
 
-@diagnoBot.route("/showboat", methods=["GET"])
+@diagnoBot.route("/initialize", methods=["GET"])
 @http_v4_wrapper
 async def show_boat(request: Request, headers: Headers):
     response = await DiagnoBotManager().show_boat_based_on_ab(headers)
