@@ -2,8 +2,6 @@ import time
 
 from sanic import Blueprint
 from sanic_ext import validate
-from sanic_ext import openapi
-from sanic_ext.extensions.openapi.definitions import Parameter, Response
 from torpedo import Request
 from app.managers.diagnoBot import DiagnoBotManager
 from app.models.chat import ChatModel
@@ -16,14 +14,6 @@ diagnoBot = Blueprint("diagnoBot")
 
 
 @diagnoBot.route("/chat", methods=["POST"])
-@openapi.definition(
-    body=openapi.Component(ChatModel.ChatRequestModel),
-    response=Response(
-        {"application/json": openapi.Component(ChatModel.ChatResponseModel, name="CharResponseModel")},
-        description="This api returns Chatboat response",
-        status=200,
-    ),
-)
 @http_v4_wrapper
 @validate(json=ChatModel.ChatRequestModel)
 async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
