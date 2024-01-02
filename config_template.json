@@ -27,5 +27,9 @@
     "CONNECTION_STRING" : "",
     "LABS_COLLECTION" : "labs"
   },
-  "OPENAI_KEY" : ""
+  "OPENAI_KEY" : "",
+  "LABS": {
+    "HOST": "https://api.1mg.com/api/labs/",
+    "TIMEOUT": 10
+  }
 }
