@@ -5,26 +5,26 @@ from openai.types.chat import ChatCompletionMessage
 
 from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
-from app.constants.constants import Augmentation, ShowBoatExperiment
+from app.constants.constants import Augmentation, ShowJivaExperiment
 from app.constants.error_messages import ErrorMessages
 from app.models.chat import ChatModel, ChatTypeMsg
 from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
-from app.managers.serializer.initialize_boat_serializer import InitializeBoatSerializer
+from app.managers.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.utils import ab_classification
 
 
-class DiagnoBotManager:
+class JivaManager:
     def __init__(self):
         self.store = LabsConn().get_store()
 
     @staticmethod
     async def show_boat_based_on_ab(headers: Headers):
         show_nudge = False
-        if ab_classification(headers.visitor_id(), ShowBoatExperiment) in [ShowBoatExperiment.ControlSet1.value]:
+        if ab_classification(headers.visitor_id(), ShowJivaExperiment) in [ShowJivaExperiment.ControlSet1.value]:
             show_nudge = True
-        return InitializeBoatSerializer.format_boat(show_nudge)
+        return InitializeJivaSerializer.format_jiva(show_nudge)
 
     async def get_diagnobot_response(
         self, payload: ChatModel.ChatRequestModel, headers: Headers
@@ -58,7 +58,7 @@ class DiagnoBotManager:
             embedding=embedded_prompt
         )
         current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
-            embedding=DiagnoBotManager.embedd(payload.current_prompt)
+            embedding=JivaManager.embedd(payload.current_prompt)
         )
 
         # Merging contextual docs with docs fetched against current prompt.
@@ -102,7 +102,7 @@ class DiagnoBotManager:
             current_item = chat_history[i]
             result_list.append(current_item.prompt)
         prompt = " ".join(result_list)
-        return DiagnoBotManager.embedd(prompt)
+        return JivaManager.embedd(prompt)
 
     @staticmethod
     def embedd(prompt):
@@ -123,12 +123,12 @@ class DiagnoBotManager:
         @return: A final prompt to be sent to LLM
         """
         final_instructions = Augmentation.INSTRUCTIONS.value
-        final_context = DiagnoBotManager.generate_context(context)
+        final_context = JivaManager.generate_context(context)
         final_chat_history = ""
         city = "Delhi"  # Harcoded this for now
         user_location = Augmentation.USER_LOCATION.value.format(city)
         if payload.chat_history and payload.chat_id:
-            final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
+            final_chat_history = JivaManager.generate_chat_memory(payload)
         final_prompt = (
             f"{final_instructions} \n {user_location} \n {final_context} \n {final_chat_history} \n"
             f"Given above context, please respond against this question - {payload.current_prompt}"

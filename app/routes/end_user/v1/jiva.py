@@ -3,7 +3,7 @@ import time
 from sanic import Blueprint
 from sanic_ext import validate
 from torpedo import Request
-from app.managers.diagnoBot import DiagnoBotManager
+from app.managers.jiva import JivaManager
 from app.models.chat import ChatModel
 from app.routes.end_user.wrapper import http_v4_wrapper
 from app.routes.end_user.headers import Headers
@@ -18,7 +18,7 @@ jiva = Blueprint("jiva")
 @validate(json=ChatModel.ChatRequestModel)
 async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
     payload = request.custom_json()
-    response = await DiagnoBotManager().get_diagnobot_response(
+    response = await JivaManager().get_diagnobot_response(
         ChatModel.ChatRequestModel(**payload), headers
     )
     return response
@@ -38,7 +38,7 @@ async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
 @jiva.route("/initialize", methods=["GET"])
 @http_v4_wrapper
 async def show_boat(request: Request, headers: Headers):
-    response = await DiagnoBotManager().show_boat_based_on_ab(headers)
+    response = await JivaManager().show_boat_based_on_ab(headers)
     return response
 
 
