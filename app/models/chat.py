@@ -104,5 +104,3 @@ class ChatModel(BaseModel):
         data: List[Union[ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent, None]]
 
 
-class ShowNudgeResponseModel(BaseModel):
-    show_nudge: bool

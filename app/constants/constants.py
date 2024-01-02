@@ -50,6 +50,12 @@ class Augmentation(Enum):
     USER_LOCATION = "The user is currently located at {}"
 
 
+class InitializeBoatFields(Enum):
+    WELCOME_MESSAGE = "Hi, How can I help you?"
+    BOAT_NAME = "Jiva"
+    BOAT_LOGO = ""
+
+
 class CtaActions(Enum):
     ADD_TO_CART = "ADD_TO_CART"
 
