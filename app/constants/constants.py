@@ -53,7 +53,7 @@ class Augmentation(Enum):
 class InitializeBoatFields(Enum):
     WELCOME_MESSAGE = "Hi, How can I help you?"
     BOAT_NAME = "Jiva"
-    BOAT_LOGO = ""
+    BOAT_LOGO = "https://onemg.gumlet.io/marketing/1c6d9a98-b76d-4906-b0ba-1647be7747fa.png"
 
 
 class CtaActions(Enum):
