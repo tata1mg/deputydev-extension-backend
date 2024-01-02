@@ -35,8 +35,7 @@ class LabsClient(Base):
             return result.data
 
         except Exception as e:
-            # TODO: What to return in case of exception?
             logger.error(
                 """Unable to get lab test details from Labs bcoz {} """.format(e)
             )
-            return {}
+            return None

@@ -1,4 +1,3 @@
-import ast
 from typing import List
 
 from app.managers.openai_tools.util import openaifunc
@@ -14,7 +13,11 @@ async def show_lab_test_card(identifier: str, city: str) -> List[any]:
     @param identifier: The unique identifier of a test or Test ID
     @param city: The name of the city user is currently in or for whichever city user ask for in their question
     """
-    test_details = await LabsClient.get_lab_test_details(identifier, city)
+    test_details = await LabsClient.get_lab_test_details('2558', city)
+    if not test_details:
+        return [ChatTypeMsg.model_validate({"answer": "You can know more about TATA 1mg lab tests here "
+                                                      "- https://1mg.com/labs"}),
+                ChatTypeCallAgent()]
     test_serialized_details = LabTestSerializer.format_lab_test_data(
         test_details.get("data")
     )
