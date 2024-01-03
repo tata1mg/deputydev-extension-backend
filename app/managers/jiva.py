@@ -13,6 +13,7 @@ from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
 from app.managers.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.utils import ab_classification
+from torpedo import Task, TaskExecutor
 
 
 class JivaManager:
@@ -52,8 +53,33 @@ class JivaManager:
 
         # Embedding
         embedded_prompt: List[float] = self.embedd_prompt(payload)
-
-        # Retrieval
+        tasks = [
+            Task(
+                self.store.amax_marginal_relevance_search_by_vector(
+                    embedding=embedded_prompt
+                ),
+                result_key="contextual_docs",
+            ),
+            Task(
+                self.store.amax_marginal_relevance_search_by_vector(
+                    embedding=JivaManager.embedd(payload.current_prompt)
+                ),
+                result_key="current_prompt_docs"
+            ),
+        ]
+        tasks_results = await TaskExecutor(tasks=tasks).submit()
+        contextual_docs, current_prompt_docs = [], []
+        for idx, result in enumerate(tasks_results):
+            if isinstance(result.result, Exception):
+                logger.info(
+                    "Exception while retrieving tests docs".format(
+                        result.result
+                    )
+                )
+            elif result.result_key == "contextual_docs":
+                contextual_docs = result.result
+            else:
+                current_prompt_docs = result.result
         contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
             embedding=embedded_prompt
         )
