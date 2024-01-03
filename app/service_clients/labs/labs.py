@@ -13,7 +13,7 @@ class LabsClient(Base):
 
     @classmethod
     @service_client_wrapper(service_name=_service_name)
-    async def get_lab_test_details(cls, identifier: str, city: str):
+    async def get_lab_sku_details(cls, identifier: str, city: str):
         """
         This Function is responsible for getting lab test
         details based on lab test_id and city

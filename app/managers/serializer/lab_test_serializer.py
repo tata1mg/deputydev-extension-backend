@@ -1,13 +1,14 @@
 from app.constants.constants import CtaActions
+from app.constants.constants import LabSkuCardImage
 
 
-class LabTestSerializer:
+class LabSkuSerializer:
     @classmethod
-    def get_test_relevant_data(cls, lab_test_details):
+    def get_test_relevant_data(cls, lab_test_data):
         test_basic_details = None
         test_price_details = None
         test_sku_ga_details = None
-        for data in lab_test_details:
+        for data in lab_test_data:
             if data["type"] == "basic_details":
                 test_basic_details = data.get("data")
             elif data["type"] == "lab_price":
@@ -23,11 +24,17 @@ class LabTestSerializer:
         }
 
     @classmethod
-    def format_lab_test_data(cls, lab_test_details):
-        lab_test_relevant_data = cls.get_test_relevant_data(lab_test_details)
+    def format_lab_sku_data(cls, lab_sku_details):
+        lab_test_relevant_data = cls.get_test_relevant_data(lab_sku_details.get("data"))
         lab_test_basic_details = lab_test_relevant_data.get("basic_details")
         lab_test_price_details = lab_test_relevant_data.get("price_details")
         lab_ga_details = lab_test_relevant_data.get("ga_details")
+        lab_sku_type = lab_sku_details.get("meta", {}).get("type")
+        lab_sku_image = (
+            LabSkuCardImage.Lab_Test.value
+            if lab_sku_type == "test"
+            else LabSkuCardImage.Lab_Package.value
+        )
 
         return {
             "header": lab_test_basic_details.get("title"),
@@ -45,4 +52,6 @@ class LabTestSerializer:
             "slug_url": lab_test_basic_details.get("pdp_slug_url"),
             "price": lab_test_price_details.get("price"),
             "sku_id": lab_ga_details.get("sku_id"),
+            "sku_type": lab_sku_type,
+            "sku_image": lab_sku_image,
         }
