@@ -44,7 +44,7 @@ class Augmentation(Enum):
     
     """
     CHAT_START_MSG = {
-        "answer": "Welcome. I am DiagnoBot, a medical diagnostic agent.",
+        "answer": "Welcome. I am Jiva, a medical diagnostic agent.",
         "advice": "You can ask me any questions regarding TATA 1mg lab tests and its offering.",
     }
     USER_LOCATION = "The user is currently located at {}"
@@ -57,3 +57,8 @@ class CtaActions(Enum):
 class ShowJivaExperiment(ExtendedEnum):
     ControlSet1 = "ControlSet1"
     ControlSet2 = "ControlSet2"
+
+
+class LabSkuCardImage(Enum):
+    Lab_Test = "https://onemg.gumlet.io/lab_test_03_01_24.png"
+    Lab_Package = "https://onemg.gumlet.io/lab_package_03_01_24.png"
