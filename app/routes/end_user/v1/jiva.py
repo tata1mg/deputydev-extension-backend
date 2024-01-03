@@ -28,9 +28,7 @@ async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
 # TODO : Test cases
 # TODO : Bitbucket pipeline creation
 # TODO : Explore websocket API
-# TODO : Ingest all docs in pre-stag DB after running `CREATE EXTENSION vector`
 # TODO : Front end development
-# TODO : pre-stag deployment of service.
 # TODO : Validation - If current_prompt is present in payload then chat_id should also be present and vice-versa.
 # TODO : Create an NPS survey 4-5 (Promoters), 3 (Passives), 2-1 (Detractors)
 

@@ -13,6 +13,8 @@ from app.service_clients.openai.openai import OpenAIServiceClient
 import app.managers.openai_tools.openai_tools as OpenAITools
 from app.managers.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.utils import ab_classification
+from torpedo import Task, TaskExecutor
+from sanic.log import logger
 
 
 class JivaManager:
@@ -30,7 +32,7 @@ class JivaManager:
         self, payload: ChatModel.ChatRequestModel, headers: Headers
     ) -> ChatModel.ChatResponseModel:
         """
-        This function manages the responses of DiagnoBot.
+        This function manages the responses of JivaBot.
         1. Embedding the user prompt.
         2. Retrieving the context from DB.
         3. Augmenting the context with user's prompt.
@@ -50,19 +52,7 @@ class JivaManager:
                 data=[ChatTypeMsg.model_validate(Augmentation.CHAT_START_MSG.value)]
             )
 
-        # Embedding
-        embedded_prompt: List[float] = self.embedd_prompt(payload)
-
-        # Retrieval
-        contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
-            embedding=embedded_prompt
-        )
-        current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
-            embedding=JivaManager.embedd(payload.current_prompt)
-        )
-
-        # Merging contextual docs with docs fetched against current prompt.
-        contextual_docs.extend(current_prompt_docs)
+        contextual_docs = await self.retrieve_docs_from_prompt(payload)
         if not contextual_docs:
             return ChatModel.ChatResponseModel(
                 chat_id=payload.chat_id,
@@ -86,6 +76,51 @@ class JivaManager:
 
         # Serialization
         return await self.generate_response(payload.chat_id, llm_response)
+
+    async def retrieve_docs_from_prompt(self, payload: ChatModel.ChatRequestModel):
+        """
+        This function performs the following steps:
+        1. Embeds the user chat_history using the embedd_prompt method.
+        2. Executes two parallel tasks to retrieve documents:
+            Retrieve documents based on the embedded user prompt.
+            Retrieve documents based on the current prompt from the payload.
+        3. Merges the results of both tasks into a single list of documents.
+        @param payload: Entire payload received from client
+        @return: A list of documents retrieved from the context and current prompt.
+
+        """
+        embedded_prompt: List[float] = self.embedd_prompt(payload)
+        tasks = [
+            Task(
+                self.store.amax_marginal_relevance_search_by_vector(
+                    embedding=embedded_prompt
+                ),
+                result_key="contextual_docs",
+            ),
+            Task(
+                self.store.amax_marginal_relevance_search_by_vector(
+                    embedding=JivaManager.embedd(payload.current_prompt)
+                ),
+                result_key="current_prompt_docs"
+            ),
+        ]
+        tasks_results = await TaskExecutor(tasks=tasks).submit()
+        contextual_docs, current_prompt_docs = [], []
+        for idx, result in enumerate(tasks_results):
+            if isinstance(result.result, Exception):
+                logger.info(
+                    "Exception while retrieving tests docs".format(
+                        result.result
+                    )
+                )
+            elif result.result_key == "contextual_docs":
+                contextual_docs = result.result
+            else:
+                current_prompt_docs = result.result
+
+        # Merging contextual docs with docs fetched against current prompt.
+        contextual_docs.extend(current_prompt_docs)
+        return contextual_docs
 
     @staticmethod
     def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 3) -> List[float]:
