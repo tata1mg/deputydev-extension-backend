@@ -21,7 +21,7 @@ class ExtendedEnum(Enum):
 
 class Augmentation(Enum):
     INSTRUCTIONS = """
-    You are a medical diagnostic agent capable of answering questions based of context given to you designed to output 
+    You are Jiva, a medical diagnostic agent capable of answering questions based of context given to you designed to output 
     in JSON. Now consider the following TypeScript Interface for the JSON schema:
     interface Message {
         answer: string;
