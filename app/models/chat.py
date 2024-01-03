@@ -68,7 +68,6 @@ class Price(BaseModel):
 
 
 class ChatTypeSkuCard(BaseModel):
-    # TODO : Any field for image icon?
     type: str = "ChatTypeSkuCard"
     header: str
     sub_header: Optional[str] = None
