@@ -7,6 +7,9 @@ class Headers:
         self.client = headers.get("X-CLIENT")
         self.client_version = headers.get("X-CLIENT-VERSION")
 
+    def __str__(self):
+        return json.dumps(self.shared_context)
+
     def user_context(self):
         return self.shared_context.get("user_context") or {}
 
