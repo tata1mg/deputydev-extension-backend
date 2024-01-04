@@ -18,7 +18,7 @@ jiva = Blueprint("jiva")
 @validate(json=ChatModel.ChatRequestModel)
 async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
     payload = request.custom_json()
-    print(headers)
+    print(headers.__str__())
     response = await JivaManager().get_diagnobot_response(
         ChatModel.ChatRequestModel(**payload), headers
     )
