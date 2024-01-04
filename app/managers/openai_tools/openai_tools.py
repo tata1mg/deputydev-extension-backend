@@ -4,6 +4,7 @@ from app.managers.openai_tools.util import openaifunc
 from app.managers.serializer.lab_test_serializer import LabSkuSerializer
 from app.models.chat import ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent
 from app.service_clients.labs import LabsClient
+from sanic.log import logger
 
 
 @openaifunc
@@ -14,6 +15,7 @@ async def show_lab_sku_card(identifier: str, city: str) -> List[any]:
     @param identifier: The unique identifier of a test or Test ID which is most relevant to the question asked by user
     @param city: The name of the city user is currently in or for whichever city user ask for in their question
     """
+    logger.info("Test identifier: {}  City: {}".format(identifier, city))
     sku_details = await LabsClient.get_lab_sku_details(identifier, city)
     if not sku_details:
         return [ChatTypeMsg.model_validate({"answer": "You can know more about TATA 1mg lab tests here "
