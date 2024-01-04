@@ -5,13 +5,12 @@ from app.constants.constants import LabSkuCardImage
 class LabSkuSerializer:
     @classmethod
     def get_test_relevant_data(cls, lab_test_data):
-        test_basic_details = None
-        test_price_details = None
+        test_basic_details, test_price_details = {}, {}
         for data in lab_test_data:
             if data["type"] == "basic_details":
-                test_basic_details = data.get("data", {})
+                test_basic_details = data.get("data")
             elif data["type"] == "lab_price":
-                test_price_details = data.get("data", {})
+                test_price_details = data.get("data")
         return {
             "basic_details": test_basic_details,
             "price_details": test_price_details,
@@ -44,8 +43,8 @@ class LabSkuSerializer:
             },
             "eta": lab_test_basic_details.get("eta"),
             "slug_url": lab_test_basic_details.get("pdp_slug_url"),
-            "price": lab_test_price_details.get("price", {}),
-            "sku_id": lab_ga_details.get("entity_id"),
+            "price": lab_test_price_details.get("price"),
+            "sku_id": str(lab_ga_details.get("entity_id")),
             "sku_type": lab_sku_type,
             "sku_image": lab_sku_image,
         }
