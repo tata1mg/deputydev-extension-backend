@@ -72,7 +72,7 @@ class ChatTypeSkuCard(BaseModel):
     header: str
     sub_header: Optional[str] = None
     eta: Eta
-    price: Price
+    price: Optional[Price] = None
     sku_id: str
     cta: Cta
     slug_url: str
