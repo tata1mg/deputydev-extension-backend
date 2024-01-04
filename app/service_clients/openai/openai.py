@@ -17,6 +17,10 @@ class OpenAIServiceClient(metaclass=Singleton):
             model="gpt-4-1106-preview",
             response_format={"type": "json_object"},
             messages=[{"role": "user", "content": final_prompt}],
-            tools=get_openai_funcs()
+            tools=get_openai_funcs(),
+            tool_choice="auto",
+            temperature=0.9,
+            seed=12345
+
         )
         return completion.choices[0].message

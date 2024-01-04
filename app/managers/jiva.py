@@ -64,6 +64,7 @@ class JivaManager:
         )
         # Merging contextual docs with docs fetched against current prompt.
         contextual_docs.extend(current_prompt_docs)
+        print(contextual_docs)
 
         # contextual_docs = await self.retrieve_docs_from_prompt(payload)
         if not contextual_docs:
