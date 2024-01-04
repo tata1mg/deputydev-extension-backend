@@ -64,7 +64,6 @@ class JivaManager:
         )
         # Merging contextual docs with docs fetched against current prompt.
         contextual_docs.extend(current_prompt_docs)
-        print(contextual_docs)
 
         # contextual_docs = await self.retrieve_docs_from_prompt(payload)
         if not contextual_docs:
@@ -129,7 +128,7 @@ class JivaManager:
         final_instructions = Augmentation.INSTRUCTIONS.value
         final_context = JivaManager.generate_context(context)
         final_chat_history = ""
-        city = "Delhi"  # Harcoded this for now
+        # city = "Delhi"  # Harcoded this for now
         user_location = Augmentation.USER_LOCATION.value.format(city)
         if payload.chat_history and payload.chat_id:
             final_chat_history = JivaManager.generate_chat_memory(payload)

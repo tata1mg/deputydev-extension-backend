@@ -18,7 +18,8 @@ class LabsConn(metaclass=Singleton):
             connection_string=conn_str,
             embedding_function=embeddings,
             engine_args={
-                "pool_pre_ping": True
+                "pool_pre_ping": True,
+                "echo_pool": True
             }
         )
         self.store = store
