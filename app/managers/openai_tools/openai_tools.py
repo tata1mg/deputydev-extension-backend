@@ -10,8 +10,9 @@ from sanic.log import logger
 @openaifunc
 async def show_lab_sku_card(identifier: str, city: str) -> List[any]:
     """
-    Get details of the lab test from API call and show a lab test card to user to increase add to cart.
-    @param identifier: The unique identifier of a test or Test ID
+    Get details of the lab test from API call and show a lab test card to user.
+    Should not be called when comparing 2 or more lab tests.
+    @param identifier: The unique identifier of a test or Test ID which is most relevant to the question asked by user
     @param city: The name of the city user is currently in or for whichever city user ask for in their question
     """
     logger.info("Test identifier: {}  City: {}".format(identifier, city))

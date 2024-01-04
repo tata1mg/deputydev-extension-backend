@@ -36,6 +36,6 @@ class LabsClient(Base):
 
         except Exception as e:
             logger.error(
-                """Unable to get lab test details from Labs bcoz {} """.format(e)
+                f"Unable to get lab test details from Labs for test id: {identifier} and city: {city}".format(identifier, city)
             )
             return None
