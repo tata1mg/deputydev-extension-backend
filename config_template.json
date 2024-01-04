@@ -31,5 +31,7 @@
   "LABS": {
     "HOST": "https://api.1mg.com/api/labs/",
     "TIMEOUT": 10
-  }
+  },
+  "EXPERIMENT": {
+   }
 }
