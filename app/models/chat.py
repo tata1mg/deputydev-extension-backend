@@ -71,7 +71,7 @@ class ChatTypeSkuCard(BaseModel):
     type: str = "ChatTypeSkuCard"
     header: str
     sub_header: Optional[str] = None
-    eta: Eta
+    eta: Optional[Eta] = None
     price: Optional[Price] = None
     sku_id: str
     cta: Cta
