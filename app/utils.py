@@ -5,6 +5,7 @@ import time
 from packaging.version import Version
 from sanic.log import logger
 import mmh3
+from torpedo.common_utils import CONFIG
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
 name_slug_replace_string = "-"
@@ -141,12 +142,38 @@ def validate_eta_pincode(eta_pincode):
         return False
     return True
 
-def ab_classification(experiment_id, experiment_set):
-    last_two_digit = (mmh3.hash(str(experiment_id))) % 100
-    set_count = len(experiment_set)
-    print(experiment_set)
-    try:
-        idx = int((last_two_digit * set_count) / 100)
-        return (experiment_set.list())[idx]
-    except ValueError:
-        return 0
+
+def get_ab_experiment_set(experiment_id, experiment_name):
+    """
+    This function required any experiment id (device id, user id, visitor id)
+    and the experiment name, and it will return the control set
+    it return null if experiment_id is null or last two digit not fall in any
+    configure set or experiment_data is not in config
+    @param experiment_id:
+    @param experiment_name:
+    @return:
+    """
+
+    if not experiment_id:
+        return None
+
+    experiment_data = CONFIG.config["EXPERIMENT"].get(experiment_name)
+
+    if not experiment_data:
+        return None  # Invalid experiment name
+
+    # Calculate the last two digits of the hashed user ID
+    last_two_digits = mmh3.hash(str(experiment_id)) % 100
+    # Initialize the percentage range
+    percent_range_start = 0
+
+    for data in experiment_data:
+        percent_range_end = percent_range_start + data["percent"]
+
+        # Check if the last two digits fall within the current range
+        if percent_range_start <= last_two_digits < percent_range_end:
+            return data.get("test") or data.get("control")
+
+        percent_range_start = percent_range_end
+
+    return None  # Fallback if no set is assigned
