@@ -45,6 +45,8 @@ class Headers:
 
     def city(self):
         city = self.pincode_context().get("city")
+        print(city)
+        print(self.pincode_context())
         return city.lower() if city else None
 
     def corporate_details(self):
