@@ -17,6 +17,10 @@ class LabsConn(metaclass=Singleton):
             collection_metadata={"email": "vishal.khare@1mg.com"},
             connection_string=conn_str,
             embedding_function=embeddings,
+            engine_args={
+                "pool_pre_ping": True,
+                "echo_pool": True
+            }
         )
         self.store = store
 
