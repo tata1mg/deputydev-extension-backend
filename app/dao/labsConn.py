@@ -19,7 +19,10 @@ class LabsConn(metaclass=Singleton):
             embedding_function=embeddings,
             engine_args={
                 "pool_pre_ping": True,
-                "echo_pool": True
+                "echo_pool": True,
+                "pool_size": 10,
+                "max_overflow": 5
+
             }
         )
         self.store = store
