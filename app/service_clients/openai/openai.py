@@ -1,5 +1,7 @@
 from openai.types.chat import ChatCompletionMessage
 from torpedo import CONFIG
+from openai import AsyncOpenAI
+client = AsyncOpenAI()
 from openai import OpenAI
 from commonutils.utils import Singleton
 
@@ -10,10 +12,10 @@ config = CONFIG.config
 
 class OpenAIServiceClient(metaclass=Singleton):
     def __init__(self):
-        self.client = OpenAI(api_key=config.get("OPENAI_KEY"))
+        self.client = AsyncOpenAI(api_key=config.get("OPENAI_KEY"))
 
-    def get_diagnobot_response(self, final_prompt) -> ChatCompletionMessage:
-        completion = self.client.chat.completions.create(
+    async def get_diagnobot_response(self, final_prompt) -> ChatCompletionMessage:
+        completion = await self.client.chat.completions.create(
             model="gpt-4-1106-preview",
             response_format={"type": "json_object"},
             messages=[{"role": "user", "content": final_prompt}],
