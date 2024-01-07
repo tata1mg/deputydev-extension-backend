@@ -84,7 +84,7 @@ class JivaManager:
 
         # Generation/Synthesis
         llm_response: ChatCompletionMessage = (
-            OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
+            await OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
         )
 
         # Serialization

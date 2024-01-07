@@ -6,7 +6,7 @@ from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 config = CONFIG.config
 
 
-class LabsConn():
+class LabsConn(metaclass=Singleton):
 
     def __init__(self):
         conn_str = config.get("DB_CONNECTION").get("CONNECTION_STRING")
@@ -22,7 +22,6 @@ class LabsConn():
                 "echo_pool": True,
                 "pool_size": 10,
                 "max_overflow": 5
-
             }
         )
 
