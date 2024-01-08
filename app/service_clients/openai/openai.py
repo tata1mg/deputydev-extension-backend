@@ -1,7 +1,6 @@
 from openai.types.chat import ChatCompletionMessage
 from torpedo import CONFIG
 from openai import AsyncOpenAI
-from openai import OpenAI
 from commonutils.utils import Singleton
 
 from app.managers.openai_tools.util import get_openai_funcs

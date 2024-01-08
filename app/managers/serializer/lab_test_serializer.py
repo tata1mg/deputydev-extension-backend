@@ -47,4 +47,5 @@ class LabSkuSerializer:
             "sku_id": str(lab_ga_details.get("entity_id")),
             "sku_type": lab_sku_type,
             "sku_image": lab_sku_image,
+            "target_url": lab_test_basic_details.get("cta").get("details").get("target_url"),
         }
