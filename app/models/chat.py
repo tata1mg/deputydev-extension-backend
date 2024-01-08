@@ -78,6 +78,7 @@ class ChatTypeSkuCard(BaseModel):
     slug_url: str
     sku_image: str
     sku_type: str
+    target_url: str
 
 
 class ChatTypeCallAgent(BaseModel):
