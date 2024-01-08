@@ -20,8 +20,8 @@ class LabsConn(metaclass=Singleton):
             engine_args={
                 "pool_pre_ping": True,
                 "echo_pool": True,
-                "pool_size": 10,
-                "max_overflow": 5
+                "pool_size": 100,
+                "max_overflow": 10
             }
         )
 

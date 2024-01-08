@@ -54,14 +54,20 @@ class JivaManager:
             )
 
         # Embedding
-        embedded_prompt: List[float] = self.embedd_prompt(payload)
-        # Retrieval
-        contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
-            embedding=embedded_prompt
-        )
-        current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
-            embedding=JivaManager.embedd(payload.current_prompt)
-        )
+        contextual_docs = []
+        current_prompt_docs = []
+        if payload.chat_history:
+            embedded_prompt: List[float] = self.embedd_prompt(payload)
+            # Retrieval
+            contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
+                embedding=embedded_prompt
+            )
+        if payload.current_prompt:
+            current_prompt_docs = (
+                await self.store.amax_marginal_relevance_search_by_vector(
+                    embedding=JivaManager.embedd(payload.current_prompt)
+                )
+            )
         # Merging contextual docs with docs fetched against current prompt.
         contextual_docs.extend(current_prompt_docs)
 
@@ -84,7 +90,9 @@ class JivaManager:
 
         # Generation/Synthesis
         llm_response: ChatCompletionMessage = (
-            await OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
+            await OpenAIServiceClient().get_diagnobot_response(
+                final_prompt=final_prompt
+            )
         )
 
         # Serialization
