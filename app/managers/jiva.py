@@ -91,7 +91,7 @@ class JivaManager:
         return await self.generate_response(payload.chat_id, llm_response)
 
     @staticmethod
-    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 3) -> List[float]:
+    def embedd_prompt(payload: ChatModel.ChatRequestModel, K: int = 6) -> List[float]:
         """
         Create vector embeddings for a given prompt.
         @param K: Number of historical messages to factor in while creating a prompt.
