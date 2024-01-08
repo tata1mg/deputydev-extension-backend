@@ -4,6 +4,7 @@ from openai import AsyncOpenAI
 from commonutils.utils import Singleton
 
 from app.managers.openai_tools.util import get_openai_funcs
+import httpx
 
 config = CONFIG.config
 
