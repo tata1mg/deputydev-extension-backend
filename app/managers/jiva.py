@@ -84,7 +84,7 @@ class JivaManager:
 
         # Generation/Synthesis
         llm_response: ChatCompletionMessage = (
-            OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
+            await OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
         )
 
         # Serialization
@@ -123,6 +123,7 @@ class JivaManager:
         4. Add user's prompt.
         @param payload: Request received from client
         @param context: Docs fetched from DB as per semantic search.
+        @param city: User's location
         @return: A final prompt to be sent to LLM
         """
         final_instructions = Augmentation.INSTRUCTIONS.value
