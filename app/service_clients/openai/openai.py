@@ -29,7 +29,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             messages=[{"role": "user", "content": final_prompt}],
             tools=get_openai_funcs(),
             tool_choice="auto",
-            temperature=0.9
+            temperature=0.5
 
         )
         return completion.choices[0].message
