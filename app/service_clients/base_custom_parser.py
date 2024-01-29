@@ -1,6 +1,6 @@
-from torpedo.task import AsyncTaskResponse
 from sanic.log import error_logger
 from torpedo.exceptions import HTTPInterServiceRequestException
+from torpedo.task import AsyncTaskResponse
 
 
 class BaseCustomParser:
@@ -8,6 +8,7 @@ class BaseCustomParser:
     This custom parser only checks for status_code to be in range of 200 <= status_code < 300
     This parser is to be used when there is no standardized response expected in response of an API.
     """
+
     def __init__(self, data, status_code, headers, response_headers_list):
         self._data = data
         self._status_code = status_code

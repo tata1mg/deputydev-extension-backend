@@ -1,9 +1,7 @@
 import uuid
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List, Union
-
-from pydantic.v1 import root_validator
 
 
 class ChatHistoryModel(BaseModel):
@@ -15,9 +13,7 @@ class ChatHistoryModel(BaseModel):
     def validate_role(cls, value):
         allowed_values = {"user", "assistant"}
         if value not in allowed_values:
-            raise ValueError(
-                f"Invalid value: {value}. The allowed values are {allowed_values}"
-            )
+            raise ValueError(f"Invalid value: {value}. The allowed values are {allowed_values}")
         return value
 
     @field_validator("type")
@@ -28,9 +24,7 @@ class ChatHistoryModel(BaseModel):
             ChatTypeCallAgent.__name__,
         }
         if value not in allowed_values:
-            raise ValueError(
-                f"Invalid value: {value}. The allowed values are {allowed_values}"
-            )
+            raise ValueError(f"Invalid value: {value}. The allowed values are {allowed_values}")
         return value
 
 
@@ -104,5 +98,3 @@ class ChatModel(BaseModel):
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
         data: List[Union[ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent, None]]
-
-

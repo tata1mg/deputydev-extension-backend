@@ -1,5 +1,5 @@
-import inspect
 import functools
+import inspect
 
 # Global variable to store all functions decorated with @openaifunc
 openai_functions = []
@@ -26,12 +26,14 @@ def get_type_mapping(param_type):
 def get_serialized_params(params, doc):
     response = {}
     for k, v in params.items():
-        response.update({
-            k: {
-                "type": get_type_mapping(str(v.annotation)),
-                "description": doc.split(f"{k}:")[1].split("\n")[0].strip(),
+        response.update(
+            {
+                k: {
+                    "type": get_type_mapping(str(v.annotation)),
+                    "description": doc.split(f"{k}:")[1].split("\n")[0].strip(),
+                }
             }
-        })
+        )
     return response
 
 

@@ -1,4 +1,4 @@
-from torpedo import send_response, Request
+from torpedo import Request, send_response
 
 from .headers import Headers
 

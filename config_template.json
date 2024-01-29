@@ -33,5 +33,9 @@
     "TIMEOUT": 10
   },
   "EXPERIMENT": {
-   }
+   },
+  "BITBUCKET_KEY": "",
+  "OPENAPI_API": "gpt3",
+  "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
+  "BITBUCKET_URL":"https://api.bitbucket.org/2.0/repositories"
 }

@@ -1,6 +1,7 @@
 from torpedo import CONFIG
-from ..base import Base
+
 from ...utils import service_client_wrapper
+from ..base import Base
 
 
 class SearchClient(Base):
