@@ -1,5 +1,4 @@
-from app.constants.constants import CtaActions
-from app.constants.constants import LabSkuCardImage
+from app.constants.constants import CtaActions, LabSkuCardImage
 
 
 class LabSkuSerializer:
@@ -23,11 +22,7 @@ class LabSkuSerializer:
         lab_test_price_details = lab_test_relevant_data.get("price_details")
         lab_ga_details = lab_sku_details.get("analytics_data", {}).get("event_properties")
         lab_sku_type = lab_sku_details.get("meta", {}).get("type")
-        lab_sku_image = (
-            LabSkuCardImage.Lab_Test.value
-            if lab_sku_type == "test"
-            else LabSkuCardImage.Lab_Package.value
-        )
+        lab_sku_image = LabSkuCardImage.Lab_Test.value if lab_sku_type == "test" else LabSkuCardImage.Lab_Package.value
 
         return {
             "header": lab_test_basic_details.get("title"),
@@ -35,11 +30,7 @@ class LabSkuSerializer:
             "cta": {
                 "action": CtaActions.ADD_TO_CART.value,
                 "text": "Book",
-                "details": {
-                    "target_url": lab_test_basic_details.get("cta")
-                    .get("details")
-                    .get("target_url")
-                },
+                "details": {"target_url": lab_test_basic_details.get("cta").get("details").get("target_url")},
             },
             "eta": lab_test_basic_details.get("eta"),
             "slug_url": lab_test_basic_details.get("pdp_slug_url"),

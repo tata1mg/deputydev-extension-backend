@@ -1,16 +1,15 @@
 import time
 
-from sanic import Blueprint
+from sanic import Blueprint, Websocket
 from sanic_ext import validate
 from torpedo import Request
+
 from app.managers.jiva import JivaManager
 from app.models.chat import ChatModel
-from app.routes.end_user.wrapper import http_v4_wrapper
 from app.routes.end_user.headers import Headers
-from sanic import Websocket
+from app.routes.end_user.wrapper import http_v4_wrapper
 
-
-jiva = Blueprint("jiva")
+jiva = Blueprint("jiva", url_prefix="/jiva")
 
 
 @jiva.route("/chat", methods=["POST"])
@@ -18,9 +17,7 @@ jiva = Blueprint("jiva")
 @validate(json=ChatModel.ChatRequestModel)
 async def get_diagnobot_response(request: Request, headers: Headers, **kwargs):
     payload = request.custom_json()
-    response = await JivaManager().get_diagnobot_response(
-        ChatModel.ChatRequestModel(**payload), headers
-    )
+    response = await JivaManager().get_diagnobot_response(ChatModel.ChatRequestModel(**payload), headers)
     return response
 
 

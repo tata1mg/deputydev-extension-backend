@@ -1,13 +1,14 @@
-import ujson as json
 import asyncio
+
+import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
 
-from .model import Response
 from app.utils import log_combined_exception
+
 from ..constants import SQS as Constant
-from ..constants import ErrorMessages
-from ..constants import SuccessMessages
+from ..constants import ErrorMessages, SuccessMessages
+from .model import Response
 
 """
     implement get_queue_name function which will be returning queue name for every child class
@@ -30,9 +31,7 @@ class Base:
     async def publish(self, payload: dict, attributes=None, **kwargs):
         await self.init()
         payload = json.dumps(payload)
-        response = await self.sqs_manager.publish_to_sqs(
-            payload=payload, attributes=attributes, batch=False, **kwargs
-        )
+        response = await self.sqs_manager.publish_to_sqs(payload=payload, attributes=attributes, batch=False, **kwargs)
         return response
 
     async def bulk_publish(self, data: list, **kwargs):
@@ -48,17 +47,11 @@ class Base:
         for datum in data:
             datum["payload"] = json.dumps(datum["payload"])
 
-        return await self.sqs_manager.publish_to_sqs(
-            messages=data, batch=True, **kwargs
-        )
+        return await self.sqs_manager.publish_to_sqs(messages=data, batch=True, **kwargs)
 
     async def subscribe(self, **kwargs):
-        max_no_of_messages = kwargs.get(
-            "max_no_of_messages", Constant.SUBSCRIBE.value["MAX_MESSAGES"]
-        )
-        wait_time_in_seconds = kwargs.get(
-            "wait_time_in_seconds", Constant.SUBSCRIBE.value["WAIT_TIME_IN_SECONDS"]
-        )
+        max_no_of_messages = kwargs.get("max_no_of_messages", Constant.SUBSCRIBE.value["MAX_MESSAGES"])
+        wait_time_in_seconds = kwargs.get("wait_time_in_seconds", Constant.SUBSCRIBE.value["WAIT_TIME_IN_SECONDS"])
         show_configured_log = True
         while True:
             try:
@@ -81,9 +74,7 @@ class Base:
         await self.init()
         response = await self.sqs_manager.subscribe(**kwargs)
         response_model = Response(response)
-        response_model.messages = [
-            self.decompress(message) for message in response_model.messages
-        ]
+        response_model.messages = [self.decompress(message) for message in response_model.messages]
         return response_model
 
     async def handle_subscribe_event(self, message):

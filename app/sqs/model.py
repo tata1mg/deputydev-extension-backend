@@ -16,8 +16,7 @@ class Message:
             self.body = message["Body"]
             message_attributes = message.get("MessageAttributes", {})
             self.attributes = [
-                Attribute(attribute_name, message_attributes[attribute_name])
-                for attribute_name in message_attributes
+                Attribute(attribute_name, message_attributes[attribute_name]) for attribute_name in message_attributes
             ]
             self.receipt_handle = message["ReceiptHandle"]
 

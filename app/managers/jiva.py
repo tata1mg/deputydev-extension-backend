@@ -3,18 +3,16 @@ from typing import List
 import ujson
 from openai.types.chat import ChatCompletionMessage
 
-from app.dao.openaiembedding import OpenAIEmbeddingsCustom
-from app.dao.labsConn import LabsConn
-from app.constants.constants import Augmentation, ShowJivaExperiment
+import app.managers.openai_tools.openai_tools as OpenAITools
+from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
+from app.dao.labsConn import LabsConn
+from app.dao.openaiembedding import OpenAIEmbeddingsCustom
+from app.managers.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.models.chat import ChatModel, ChatTypeMsg
 from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
-import app.managers.openai_tools.openai_tools as OpenAITools
-from app.managers.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.utils import get_ab_experiment_set
-from torpedo import Task, TaskExecutor
-from sanic.log import logger
 
 
 class JivaManager:
@@ -49,9 +47,7 @@ class JivaManager:
         # For 1st time that the chatbot loads, Client sends empty chat_id to initiate the conversation.
         # Upon receiving empty chat_id, we return back with welcome message and a new chat_id.
         if not payload.chat_id:
-            return ChatModel.ChatResponseModel(
-                data=[ChatTypeMsg.model_validate(Augmentation.CHAT_START_MSG.value)]
-            )
+            return ChatModel.ChatResponseModel(data=[ChatTypeMsg.model_validate(Augmentation.CHAT_START_MSG.value)])
 
         # Embedding
         contextual_docs = []
@@ -59,14 +55,10 @@ class JivaManager:
         if payload.chat_history:
             embedded_prompt: List[float] = self.embedd_prompt(payload)
             # Retrieval
-            contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
-                embedding=embedded_prompt
-            )
+            contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(embedding=embedded_prompt)
         if payload.current_prompt:
-            current_prompt_docs = (
-                await self.store.amax_marginal_relevance_search_by_vector(
-                    embedding=JivaManager.embedd(payload.current_prompt)
-                )
+            current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
+                embedding=JivaManager.embedd(payload.current_prompt)
             )
         # Merging contextual docs with docs fetched against current prompt.
         contextual_docs.extend(current_prompt_docs)
@@ -84,15 +76,11 @@ class JivaManager:
                 ],
             )
         # Augmentation
-        final_prompt: str = self.generate_final_prompt(
-            payload, contextual_docs, headers.city()
-        )
+        final_prompt: str = self.generate_final_prompt(payload, contextual_docs, headers.city())
 
         # Generation/Synthesis
-        llm_response: ChatCompletionMessage = (
-            await OpenAIServiceClient().get_diagnobot_response(
-                final_prompt=final_prompt
-            )
+        llm_response: ChatCompletionMessage = await OpenAIServiceClient().get_diagnobot_response(
+            final_prompt=final_prompt
         )
 
         # Serialization
@@ -181,9 +169,7 @@ class JivaManager:
         return final_chat_history
 
     @staticmethod
-    async def generate_response(
-        chat_id: str, llm_response: ChatCompletionMessage
-    ) -> ChatModel.ChatResponseModel:
+    async def generate_response(chat_id: str, llm_response: ChatCompletionMessage) -> ChatModel.ChatResponseModel:
         """
         Generate response for LLM.
         @param chat_id: Chat id of the conversation
@@ -195,7 +181,5 @@ class JivaManager:
             _response.append(ChatTypeMsg(**ujson.loads(llm_response.content)))
         if llm_response.tool_calls:
             func = getattr(OpenAITools, llm_response.tool_calls[0].function.name)
-            _response.extend(
-                await func(**ujson.loads(llm_response.tool_calls[0].function.arguments))
-            )
+            _response.extend(await func(**ujson.loads(llm_response.tool_calls[0].function.arguments)))
         return ChatModel.ChatResponseModel(chat_id=chat_id, data=_response)
