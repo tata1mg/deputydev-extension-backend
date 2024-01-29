@@ -2,9 +2,9 @@ import operator
 import re
 import time
 
+import mmh3
 from packaging.version import Version
 from sanic.log import logger
-import mmh3
 from torpedo.common_utils import CONFIG
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
@@ -20,17 +20,11 @@ def service_client_wrapper(service_name):
                 t1 = time.time() * 1000
                 response = await func(*args)
                 t2 = time.time() * 1000
-                logger.debug(
-                    "Time taken for {}-{} API - {} ms".format(
-                        service_name, func.__name__, t2 - t1
-                    )
-                )
+                logger.debug("Time taken for {}-{} API - {} ms".format(service_name, func.__name__, t2 - t1))
                 return response
             except Exception as exception:
                 log_combined_exception(
-                    "Unable to get response from {}-{} API".format(
-                        service_name, func.__name__
-                    ),
+                    "Unable to get response from {}-{} API".format(service_name, func.__name__),
                     exception,
                     "handled in service client wrapper",
                 )
@@ -48,9 +42,7 @@ def log_combined_error(title, error):
 
 
 def log_combined_exception(title, exception, meta_info: str = ""):
-    error = "Exception type {} , exception {} , meta_info {}".format(
-        type(exception), exception, str(meta_info)
-    )
+    error = "Exception type {} , exception {} , meta_info {}".format(type(exception), exception, str(meta_info))
     log_combined_error(title, error)
 
 
@@ -95,11 +87,7 @@ def check_feature_enabled_for_platform(feature_config, client_attributes):
         "<": operator.lt,
     }
     client = client_attributes["client"].lower()
-    app_version = (
-        client_attributes["client_version"]
-        if "client_version" in client_attributes
-        else "1.0.0"
-    )
+    app_version = client_attributes["client_version"] if "client_version" in client_attributes else "1.0.0"
 
     for criteria in feature_config:
         criteria_client = criteria["client"]
@@ -108,9 +96,7 @@ def check_feature_enabled_for_platform(feature_config, client_attributes):
             if criteria.get("version"):
                 version_criteria = criteria["version"]["op"]
                 version_required = criteria["version"]["number"]
-                if operations[version_criteria](
-                    Version(app_version), Version(version_required)
-                ):
+                if operations[version_criteria](Version(app_version), Version(version_required)):
                     return True
             else:
                 return True

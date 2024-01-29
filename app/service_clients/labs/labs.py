@@ -29,13 +29,13 @@ class LabsClient(Base):
             "X-Access-Key": "1mg_client_access_key",
         }
         try:
-            result = await cls.get(
-                path=path, query_params={"city": city}, headers=headers
-            )
+            result = await cls.get(path=path, query_params={"city": city}, headers=headers)
             return result.data
 
         except Exception as e:
             logger.error(
-                f"Unable to get lab test details from Labs for test id: {identifier} and city: {city}".format(identifier, city)
+                f"Unable to get lab test details from Labs for test id: {identifier} and city: {city} , Exception: {e}".format(
+                    identifier, city, e
+                )
             )
             return None

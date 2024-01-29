@@ -1,10 +1,8 @@
-import json
-from app.managers.db import DB
-
 import pytest
 from sanic import Sanic
 from torpedo import common_utils
 
+from app.managers.db import DB
 from app.routes import blueprints
 from app.tests.setup_test import setup_test
 

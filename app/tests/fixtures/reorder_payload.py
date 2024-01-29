@@ -399,6 +399,4 @@ corporate_user_headers = {
     "x-client-version": "15.0.1",
     "X-SHARED-CONTEXT": '{"user_context":{"user_id":"ad9780da-f16e-43b5-8640-dd7752580793","auth_token":"***REMOVED***","email":null,"name":null,"number":null,"visitor_id":"***REMOVED***","is_guest":true,"roles":[],"merchants":[],"affiliate_source":"","signup_source":null,"care_plan_info":{"name":null,"active":false},"corporate_details":{"name":"sbi"},"care_plan_in_cart":{},"profession":null,"has_delivered_order":false,"merchant_name":null,"merchant_key":null},"pincode_context":{"city":"gurgaon","pincode":"122001","cluster_id":1}}',
 }
-corporate_rule = [
-    (corporate_payload, es_data_payload_corporate, "detailed", corporate_user_headers)
-]
+corporate_rule = [(corporate_payload, es_data_payload_corporate, "detailed", corporate_user_headers)]

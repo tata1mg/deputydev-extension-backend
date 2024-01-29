@@ -1,7 +1,7 @@
+from redis_wrapper import RegisterRedis
 from sanic import Sanic
 from torpedo import Host
 from torpedo.common_utils import CONFIG
-from redis_wrapper import RegisterRedis
 
 
 async def setup_test(loop, sanic_client, app, blueprint_group):

@@ -1,4 +1,4 @@
-from torpedo import BaseApiRequest, CONFIG
+from torpedo import CONFIG, BaseApiRequest
 
 
 class Base(BaseApiRequest):

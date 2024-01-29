@@ -1,25 +1,27 @@
+import httpx
+from commonutils.utils import Singleton
+from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessage
 from torpedo import CONFIG
-from openai import AsyncOpenAI
-from commonutils.utils import Singleton
 
 from app.managers.openai_tools.util import get_openai_funcs
-import httpx
 
 config = CONFIG.config
 
 
 class OpenAIServiceClient(metaclass=Singleton):
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=config.get("OPENAI_KEY"),
-                                  timeout=60, http_client=httpx.AsyncClient(
+        self.client = AsyncOpenAI(
+            api_key=config.get("OPENAI_KEY"),
+            timeout=60,
+            http_client=httpx.AsyncClient(
                 timeout=60,
                 limits=httpx.Limits(
                     max_connections=1000,
                     max_keepalive_connections=100,
-                    keepalive_expiry=20
-                )
-            )
+                    keepalive_expiry=20,
+                ),
+            ),
         )
 
     async def get_diagnobot_response(self, final_prompt) -> ChatCompletionMessage:
@@ -29,7 +31,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             messages=[{"role": "user", "content": final_prompt}],
             tools=get_openai_funcs(),
             tool_choice="auto",
-            temperature=0.5
-
+            temperature=0.5,
         )
         return completion.choices[0].message
