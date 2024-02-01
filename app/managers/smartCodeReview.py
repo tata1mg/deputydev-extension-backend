@@ -1,6 +1,8 @@
 import asyncio
 from typing import Union
 
+from sanic.log import logger
+
 from app.managers.bitbucket.bitbucket_processor import BitbucketProcessor
 from app.managers.openai_tools.openai_assistance import (
     create_review_thread,
@@ -35,6 +37,10 @@ class SmartCodeManager:
     async def background_task(payload):
         print("Processing started.")
         diff = await BitbucketProcessor.get_pr_diff(payload)
+        if len(diff) > 32500:
+            logger.info("PR size is {}. unable to process this request.".format(len(diff)))
+            await BitbucketProcessor.create_comment_on_pr(payload)
+            return None
         thread = await create_review_thread(diff)
         run = await create_run_id(thread)
         response = await poll_for_success(thread, run)
