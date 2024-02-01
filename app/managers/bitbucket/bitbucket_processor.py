@@ -57,7 +57,7 @@ class BitbucketProcessor:
     async def create_comment_on_pr(payload):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
         payload = json.dumps(
-            {"content": {"raw": "size is PR is too long, kindly create a pr with less then 500 lines changes."}}
+            {"content": {"raw": "size is PR is too long, kindly create a pr with less then 3500 char."}}
         )
         response = requests.post(url, headers=HEADERS, json=payload)
         return response.json()
