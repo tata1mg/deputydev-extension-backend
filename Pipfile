@@ -13,6 +13,8 @@ pgvector = "==0.2.4"
 pandas = "==2.1.3"
 numpy = "==1.26.2"
 openai = "==1.5.0"
+pypdf = "*"
+pillow = "*"
 
 [dev-packages]
 
