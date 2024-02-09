@@ -94,6 +94,8 @@ class ChatModel(BaseModel):
         chat_id: Optional[str] = None
         chat_history: Optional[List[ChatHistoryModel]] = None
         current_prompt: Optional[str] = None
+        chat_type: Optional[str] = None
+        file_url: Optional[str] = None
 
         # @root_validator
         # def validate(cls, values):
