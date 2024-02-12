@@ -33,7 +33,6 @@ class OpenAiResponse:
         context = self.get_diagnostics_context(contextual_docs, headers.city())
         final_prompt = generate_prompt(payload, context)
         llm_response = await self.client.get_response(final_prompt)
-        print("xxxx")
         print(llm_response)
         return await self.generate_response(payload.chat_id, llm_response)
 

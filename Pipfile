@@ -13,8 +13,8 @@ pgvector = "==0.2.4"
 pandas = "==2.1.3"
 numpy = "==1.26.2"
 openai = "==1.5.0"
-pypdf = "*"
-pillow = "*"
+pypdf = "==4.0.1"
+pillow = "==10.2.0"
 google-generativeai = "==0.3.2"
 
 [dev-packages]
