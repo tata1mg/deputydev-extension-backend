@@ -20,6 +20,7 @@ class SmartCodeManager:
         }
         is_update_pr = await BitbucketProcessor.get_pr_details(payload)
         if "pr_type" not in data:
+            # TODO - Remove all print statements and replace them with loggers where it makes sense.
             print("pr_type is not present in your request.")
             return {
                 "status": "Bad Request",
@@ -37,16 +38,16 @@ class SmartCodeManager:
     async def background_task(payload):
         print("Processing started.")
         diff = await BitbucketProcessor.get_pr_diff(payload)
-        if len(diff) > 32500:
-            logger.info("PR size is {}. unable to process this request.".format(len(diff)))
+        if (diff.count("\n+") + diff.count("\n-")) > 10000:
+            logger.info("Diff count is {}. unable to process this request.".format(len(diff)))
             await BitbucketProcessor.create_comment_on_pr(payload)
-            return None
         thread = await create_review_thread(diff)
         run = await create_run_id(thread)
         response = await poll_for_success(thread, run)
         if response:
-            print(response)
-            for i in response:
-                await BitbucketProcessor.create_comment_on_line(payload, i)
+            for comment in response.get('comments'):
+                # TODO Get this confidence score threshold as a query param from customers.
+                if comment.get('confidence_score') > 0.72:
+                    await BitbucketProcessor.create_comment_on_line(payload, comment)
 
         return

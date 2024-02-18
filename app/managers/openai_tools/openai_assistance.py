@@ -11,7 +11,8 @@ assistant_id = config.get("ASSISTANT_ID")
 
 
 async def create_review_thread(diff):
-    context = f"review the following PR diff: {diff}"
+    context = f"Review the following code and add comments (if any) on any line: {diff}"
+    print(context)
     return client.beta.threads.create(messages=[{"role": "user", "content": context}])
 
 
@@ -32,6 +33,7 @@ async def poll_for_success(thread, run):
     response = None
     while attempts < max_attempts:
         run = await check_run_status(run, thread)
+        print(run.status)
         if run.status in ["queued", "in_progress"]:
             print(f"Attempt {attempts + 1} failed. Retrying in {current_interval} seconds.")
             time.sleep(current_interval)
@@ -44,6 +46,8 @@ async def poll_for_success(thread, run):
             "expired",
         ]:
             break
+            # TODO - Log this in sentry with service name and PR id.
+            # TODO - If by any reason, the code fails - The customer should be able to view what went wrong in sentry.
         elif run.status == "completed":
             response = await get_response(thread)
             break
@@ -54,6 +58,8 @@ async def poll_for_success(thread, run):
 
 
 async def get_response(thread):
+    # TODO - Since assistant API does not support JSON mode, what if it returns back with an invalid JSON
+    # TODO - There should be a way to gracefully handle such cases. Maybe log it or call the LLM again to expect correct format.
     return json.loads(
         client.beta.threads.messages.list(thread_id=thread.id).data[0].content[0].text.value.strip("```json")
     )
