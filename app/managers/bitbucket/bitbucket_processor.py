@@ -19,6 +19,7 @@ class BitbucketProcessor:
 
     @staticmethod
     async def get_pr_details(payload):
+        print(payload)
         print("payload", payload)
         diff_url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}"
         print("diff_url", diff_url)
@@ -26,6 +27,7 @@ class BitbucketProcessor:
             diff_url,
             headers=HEADERS,
         ).json()
+        print(response)
 
         created_time = datetime.fromisoformat(response["created_on"][:-6])
         updated_time = datetime.fromisoformat(response["updated_on"][:-6])
@@ -41,16 +43,16 @@ class BitbucketProcessor:
             return False
 
     @staticmethod
-    async def create_comment_on_line(payload, review_context: dict):
+    async def create_comment_on_line(payload, comment: dict):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
-        comment = {
-            "content": {"raw": review_context.get("COMMENTS")},
+        comment_payload = {
+            "content": {"raw": comment.get("comment") + "\n ```" + comment.get("corrective_code") + "```"},
             "inline": {
-                "path": review_context.get("FILE_PATH"),
-                "to": review_context.get("LINE_OF_CODE"),
+                "path": comment.get("file_path"),
+                "to": comment.get("line_number"),
             },
         }
-        response = requests.post(url, headers=HEADERS, json=comment)
+        response = requests.post(url, headers=HEADERS, json=comment_payload)
         return response.json()
 
     @staticmethod
