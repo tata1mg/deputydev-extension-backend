@@ -46,6 +46,7 @@ class BitbucketProcessor:
     async def create_comment_on_line(payload, comment: dict):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
         comment_payload = {
+            # TODO - Indcude tripple quotes only if there is any code. Add it behind an if check.
             "content": {"raw": comment.get("comment") + "\n ```" + comment.get("corrective_code") + "```"},
             "inline": {
                 "path": comment.get("file_path"),
