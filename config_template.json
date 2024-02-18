@@ -28,6 +28,7 @@
     "LABS_COLLECTION" : "labs"
   },
   "OPENAI_KEY" : "",
+  "GOOGLE_API_KEY" : "",
   "LABS": {
     "HOST": "https://api.1mg.com/api/labs/",
     "TIMEOUT": 10
