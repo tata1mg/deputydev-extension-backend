@@ -2,6 +2,7 @@ import json
 import time
 
 from openai import OpenAI
+from sanic.log import logger
 from torpedo import CONFIG
 
 config = CONFIG.config
@@ -14,6 +15,35 @@ async def create_review_thread(diff):
     context = f"Review the following code and add comments (if any) on any line: {diff}"
     print(context)
     return client.beta.threads.create(messages=[{"role": "user", "content": context}])
+
+
+async def create_gpt_request(context, data):
+    context = context + "\n" + data
+    response = client.completions.create(
+        engine="gpt-4-turbo-preview",  # You can choose a different engine based on your needs
+        prompt=context,
+        max_tokens=150,  # You can adjust this based on the desired response length
+    )
+    # Extract and return the generated response
+    return response.choices[0].text.strip()
+
+
+async def correct_json_response(data):
+    context = (
+        "Given a string that is supposed to represent JSON, the goal is to generate a revised version of the "
+        "string that adheres to the JSON format. The input string may contain errors or inconsistencies, "
+        "and the output should be a valid JSON representation. Focus on fixing any syntax issues, missing or "
+        "mismatched brackets, or other common problems found in JSON strings.: "
+    )
+    return create_gpt_request(context, data)
+
+
+async def comment_processor(data):
+    context = (
+        "In response to given comment by user, consider the analysis of the smart code review.additionally,"
+        "if the comment have any questions about code enhancements or other technical discussions,"
+    )
+    return create_gpt_request(context, data)
 
 
 async def create_run_id(thread):
@@ -35,7 +65,7 @@ async def poll_for_success(thread, run):
         run = await check_run_status(run, thread)
         print(run.status)
         if run.status in ["queued", "in_progress"]:
-            print(f"Attempt {attempts + 1} failed. Retrying in {current_interval} seconds.")
+            logger.info(f"Attempt {attempts + 1} failed. Retrying in {current_interval} seconds.")
             time.sleep(current_interval)
             attempts += 1
         elif run.status in [
@@ -45,9 +75,8 @@ async def poll_for_success(thread, run):
             "failed",
             "expired",
         ]:
+            logger.error(f"Run failed with status: {run.status}, error: {run.last_error}")
             break
-            # TODO - Log this in sentry with service name and PR id.
-            # TODO - If by any reason, the code fails - The customer should be able to view what went wrong in sentry.
         elif run.status == "completed":
             response = await get_response(thread)
             break
@@ -58,8 +87,13 @@ async def poll_for_success(thread, run):
 
 
 async def get_response(thread):
-    # TODO - Since assistant API does not support JSON mode, what if it returns back with an invalid JSON
-    # TODO - There should be a way to gracefully handle such cases. Maybe log it or call the LLM again to expect correct format.
-    return json.loads(
-        client.beta.threads.messages.list(thread_id=thread.id).data[0].content[0].text.value.strip("```json")
-    )
+    generated_response = ""
+    try:
+        response = client.beta.threads.messages.list(thread_id=thread.id)
+        generated_response = response.data[0].content[0].text.value
+        return json.loads(generated_response.strip("```json"))
+    except Exception as e:
+        # Log the error and handle it gracefully
+        logger.error(f"Error occurred while parsing JSON response: {e}")
+        # If needed, you can make additional calls or implement a fallback mechanism here
+        return json.loads(correct_json_response(generated_response))
