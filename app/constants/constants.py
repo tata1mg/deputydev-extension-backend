@@ -4,6 +4,8 @@ from torpedo.common_utils import CONFIG
 
 X_SHARED_CONTEXT = "X-SHARED-CONTEXT"
 ENVIRONMENT = CONFIG.config["ENVIRONMENT"]
+CONFIDENCE_SCORE = 7.00
+IGNORE_FILES = ["Pipfile", "Pipfile.lock"]
 
 
 class ListenerEventTypes(Enum):
