@@ -17,7 +17,7 @@ class Validator:
             try:
                 value = required_type(value)
             except Exception as e:
-                logger.log(f"Exception in param Check: {e}".format(e))
+                logger.error(f"Exception in param Check: {e}".format(e))
                 raise BadRequestException(
                     ErrorMessages.TYPE_CHECK.value.format(
                         required_type=required_type,

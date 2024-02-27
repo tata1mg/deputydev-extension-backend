@@ -163,3 +163,9 @@ def get_ab_experiment_set(experiment_id, experiment_name):
         percent_range_start = percent_range_end
 
     return None  # Fallback if no set is assigned
+
+
+def request_logger(_request) -> str:
+    headers = _request.headers
+    logger.info(f"Entry: For request ID: {headers.get('X-REQUEST-ID')}, " f"for smart_code_review")
+    return headers.get("X-REQUEST-ID")

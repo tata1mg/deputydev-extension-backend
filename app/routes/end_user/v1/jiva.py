@@ -1,6 +1,7 @@
 import time
 
 from sanic import Blueprint, Websocket
+from sanic.log import logger
 from sanic_ext import validate
 from torpedo import Request
 
@@ -41,9 +42,9 @@ async def show_boat(request: Request, headers: Headers):
 async def feed(request: Request, ws: Websocket):
     while True:
         data = "hello!"
-        print("Sending: " + data)
+        logger.info("Sending: " + data)
         for i in range(0, 20):
             time.sleep(1)
             await ws.send(data)
         data = await ws.recv()
-        print("Received: " + data)
+        logger.info("Received: " + data)
