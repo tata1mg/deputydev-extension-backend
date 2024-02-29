@@ -192,8 +192,16 @@ def validate_hash(payload) -> bool:
 
 def get_comment(payload):
     try:
-        raw_content = payload["comment"]["content"]["raw"]
-        return remove_special_char("\\", raw_content)
+        bb_payload = {}
+        comment = payload["comment"]
+        raw_content = remove_special_char("\\", comment["content"]["raw"])
+        if "parent" in comment and "inline" in comment:
+            bb_payload["comment"] = raw_content
+            bb_payload["parent"] = comment["parent"]["id"]
+            bb_payload["path"] = comment["inline"]["path"]
+            return bb_payload
+        else:
+            return {"comment": raw_content}
     except KeyError as e:
         raise f"Error: {e} not found in the JSON structure."
     except Exception as e:
