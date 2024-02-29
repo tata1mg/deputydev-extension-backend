@@ -2,9 +2,10 @@ from sanic import Blueprint
 from sanic_ext import validate
 from torpedo import Request, send_response
 
+from app.managers.smartCodeChat import SmartCodeChatManager
 from app.managers.smartCodeReview import SmartCodeManager
 from app.models.smart_code import SmartCodeReqeustModel
-from app.utils import request_logger
+from app.utils import get_comment, request_logger
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
 
@@ -18,10 +19,13 @@ async def pool_assistance_api(_request: Request, **kwargs):
     return send_response(message)
 
 
-@smart_code.route("/chat", methods=["GET"])
-@validate(query=SmartCodeReqeustModel)
+@smart_code.route("/chat", methods=["POST"])
 async def chat_assistance_api(_request: Request, **kwargs):
-    payload = _request.request_params()
-    request_id = request_logger(_request)
-    message = await SmartCodeManager.chat(payload, request_id)
+    payload = _request.custom_json()
+    comment = get_comment(payload)
+    # status = validate_hash(payload)
+    # if not status:
+    #     raise ValueError("Signatures do not match.")
+    # request_id = request_logger(_request)
+    message = await SmartCodeChatManager.chat(payload, comment)
     return send_response(message)

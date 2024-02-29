@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import operator
 import re
 import time
@@ -169,3 +171,34 @@ def request_logger(_request) -> str:
     headers = _request.headers
     logger.info(f"Entry: For request ID: {headers.get('X-REQUEST-ID')}, " f"for smart_code_review")
     return headers.get("X-REQUEST-ID")
+
+
+def validate_hash(payload) -> bool:
+    secret = "***REMOVED***"
+    given_signature = "sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9"
+
+    hash_object = hmac.new(
+        secret.encode("utf-8"),
+        msg=payload.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    )
+    calculated_signature = "sha256=" + hash_object.hexdigest()
+
+    if not hmac.compare_digest(calculated_signature, given_signature):
+        return False
+    else:
+        return True
+
+
+def get_comment(payload):
+    try:
+        raw_content = payload["comment"]["content"]["raw"]
+        return remove_special_char("\\", raw_content)
+    except KeyError as e:
+        raise f"Error: {e} not found in the JSON structure."
+    except Exception as e:
+        raise f"An unexpected error occurred: {e}"
+
+
+def remove_special_char(char, input_string):
+    return input_string.replace(char, "")

@@ -55,3 +55,7 @@ class SmartCodeManager:
     async def background_logical_task():
         logger.info("Logical processing started.")
         return
+
+    @classmethod
+    async def chat(cls, data):
+        return
