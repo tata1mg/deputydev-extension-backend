@@ -43,8 +43,10 @@ async def correct_json_response(data):
 
 async def comment_processor(data):
     context = (
-        "In response to given comment by user, consider the analysis of the smart code review.additionally,"
-        "if the comment have any questions about code enhancements or other technical discussions, with given PR diff. "
+        "Upon receiving a user's comment thread carefully examine the smart code review analysis. If the comment "
+        "involves inquiries about code improvements or other technical discussions, evaluate the provided pull "
+        "request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question "
+        "without delving into the PR diff."
     )
     return await create_gpt_request(context, data)
 

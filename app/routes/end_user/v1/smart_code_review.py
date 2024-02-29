@@ -1,4 +1,5 @@
 from sanic import Blueprint
+from sanic.log import logger
 from sanic_ext import validate
 from torpedo import Request, send_response
 
@@ -22,10 +23,11 @@ async def pool_assistance_api(_request: Request, **kwargs):
 @smart_code.route("/chat", methods=["POST"])
 async def chat_assistance_api(_request: Request, **kwargs):
     payload = _request.custom_json()
-    comment = get_comment(payload)
+    comment_payload = get_comment(payload)
+    logger.info(f"Comment payload: {comment_payload}")
     # status = validate_hash(payload)
     # if not status:
     #     raise ValueError("Signatures do not match.")
     # request_id = request_logger(_request)
-    message = await SmartCodeChatManager.chat(payload, comment)
+    message = await SmartCodeChatManager.chat(payload, comment_payload)
     return send_response(message)
