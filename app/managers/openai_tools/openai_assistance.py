@@ -13,19 +13,22 @@ assistant_id = config.get("ASSISTANT_ID")
 
 async def create_review_thread(diff):
     context = f"Review the following code and add comments (if any) on any line: {diff}"
-    print(context)
     return client.beta.threads.create(messages=[{"role": "user", "content": context}])
 
 
 async def create_gpt_request(context, data):
-    context = context + "\n" + data
-    response = client.completions.create(
-        engine="gpt-4-turbo-preview",  # You can choose a different engine based on your needs
-        prompt=context,
-        max_tokens=150,  # You can adjust this based on the desired response length
+    completion = client.chat.completions.create(
+        model="gpt-4-turbo-preview",
+        messages=[
+            {
+                "role": "system",
+                "content": context,
+            },
+            {"role": "user", "content": data},
+        ],
     )
     # Extract and return the generated response
-    return response.choices[0].text.strip()
+    return completion.choices[0].message.content
 
 
 async def correct_json_response(data):
@@ -35,15 +38,15 @@ async def correct_json_response(data):
         "and the output should be a valid JSON representation. Focus on fixing any syntax issues, missing or "
         "mismatched brackets, or other common problems found in JSON strings.: "
     )
-    return create_gpt_request(context, data)
+    return await create_gpt_request(context, data)
 
 
 async def comment_processor(data):
     context = (
         "In response to given comment by user, consider the analysis of the smart code review.additionally,"
-        "if the comment have any questions about code enhancements or other technical discussions,"
+        "if the comment have any questions about code enhancements or other technical discussions, with given PR diff. "
     )
-    return create_gpt_request(context, data)
+    return await create_gpt_request(context, data)
 
 
 async def create_run_id(thread):
@@ -63,7 +66,7 @@ async def poll_for_success(thread, run):
     response = None
     while attempts < max_attempts:
         run = await check_run_status(run, thread)
-        print(run.status)
+        logger.info(run.status)
         if run.status in ["queued", "in_progress"]:
             logger.info(f"Attempt {attempts + 1} failed. Retrying in {current_interval} seconds.")
             time.sleep(current_interval)

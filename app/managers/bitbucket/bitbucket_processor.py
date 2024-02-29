@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 import requests
@@ -26,8 +25,6 @@ class BitbucketProcessor:
             diff_url,
             headers=HEADERS,
         ).json()
-        print(response)
-
         if not response:
             raise ValueError("Invalid PR.")
 
@@ -36,8 +33,6 @@ class BitbucketProcessor:
 
         # Calculate the time difference in minutes
         time_difference = (updated_time - created_time).total_seconds() / 60
-
-        # Print the time difference in minutes
         if time_difference > 5:
             return True
         else:
@@ -62,13 +57,8 @@ class BitbucketProcessor:
     @staticmethod
     async def create_comment_on_pr(payload, comment):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
-        payload = json.dumps(
-            {"content": {"raw": "size is PR is too long, kindly create a pr with less then 3500 char."}}
-        )
-        comment_payload = {"content": {"raw": comment.get("comment")}}
-        comment_payload["content"]["raw"] += f"\n ```{comment.get('corrective_code')}```"
-
-        response = requests.post(url, headers=HEADERS, json=payload)
+        comment_payload = {"content": {"raw": comment}}
+        response = requests.post(url, headers=HEADERS, json=comment_payload)
         return response.json()
 
     @staticmethod
@@ -80,7 +70,6 @@ class BitbucketProcessor:
         )
         resp_text = ""
         for d in response.text.split("diff --git "):
-            print(d)
             if not any(keyword in d for keyword in IGNORE_FILES):
                 resp_text += d
         return resp_text
