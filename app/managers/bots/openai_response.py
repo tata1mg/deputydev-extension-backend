@@ -1,13 +1,17 @@
 from app.service_clients.openai.openai import OpenAIServiceClient
-from app.models.chat import ChatModel, ChatTypeMsg
+from app.models.chat import ChatModel, ChatTypeMsg, ChatTypeSkuCard, ChatHistoryModel
 from app.routes.end_user.headers import Headers
 from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.dao.labsConn import LabsConn
-from app.managers.bots.utils import generate_prompt
+from app.managers.bots.utils import generate_prompt, cache_user_chat_history, get_chat_history, generate_conversation
 from typing import List
-from app.constants.constants import Augmentation
+from app.constants.constants import Augmentation, JivaChatTypes
 import ujson
 import app.managers.openai_tools.openai_tools as OpenAITools
+from app.constants.error_messages import ErrorMessages
+from app.caches.jiva import Jiva
+import copy
+import json
 
 
 class OpenAiResponse:
@@ -15,9 +19,10 @@ class OpenAiResponse:
     def __init__(self):
         self.store = LabsConn().get_store()
         self.client = OpenAIServiceClient()
-
+        self.model = "gpt-4-1106-preview"
 
     async def get_response(self, payload: ChatModel.ChatRequestModel, headers: Headers):
+        payload.chat_history = await get_chat_history(payload)
         contextual_docs = await self.get_diagnostics_documents(payload)
         if not contextual_docs:
             return ChatModel.ChatResponseModel(
@@ -30,16 +35,22 @@ class OpenAiResponse:
                     )
                 ],
             )
-        context = self.get_diagnostics_context(contextual_docs, headers.city())
-        final_prompt = generate_prompt(payload, context)
-        llm_response = await self.client.get_response(final_prompt)
-        print(llm_response)
-        return await self.generate_response(payload.chat_id, llm_response)
+        context = self.get_context(contextual_docs, headers.city())
+        conversation_messages = generate_conversation(payload, context)
+        llm_response = await self.client.get_response(conversation_messages)
+        serialized_response = await self.generate_response(payload.chat_id, llm_response)
+        await cache_user_chat_history(payload, serialized_response)
 
-
-
+        return serialized_response
 
     async def get_diagnostics_documents(self, payload: ChatModel.ChatRequestModel):
+        """
+        Fetch lab documents from postgres database.
+        contextual_docs: Relevant docs based on user's chat history
+        current_prompt_docs: Relevant docs based on user's query
+        @param payload: Entire payload received from client
+        @return: List of Lab test documents based on user current prompt and user's chat history.
+        """
         contextual_docs = []
         current_prompt_docs = []
         if payload.chat_history:
@@ -69,7 +80,8 @@ class OpenAiResponse:
         result_list = []
         for i in range(len(chat_history) - 1, max(-1, len(chat_history) - K - 1), -1):
             current_item = chat_history[i]
-            result_list.append(current_item.prompt)
+            if current_item.type != JivaChatTypes.ChatTypeSkuCard.value:
+                result_list.append(current_item.prompt)
         prompt = " ".join(result_list)
         return self.embedd(prompt)
 
@@ -79,7 +91,7 @@ class OpenAiResponse:
         embedding = embeddings_model.embed_query(prompt)
         return embedding
 
-    def get_diagnostics_context(self, context_documents, city):
+    def get_context(self, context_documents, city):
         """
         Generate context for LLM. Iterating over docs fetched from DB and constructing relevant context to be
         appended to final_prompt which in turn will be sent to LLM

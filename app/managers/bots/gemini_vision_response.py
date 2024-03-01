@@ -2,6 +2,7 @@ from app.service_clients.gemini.gemini_vision import GeminiVisionServiceClient
 from app.models.chat import ChatModel, ChatTypeMsg
 from app.routes.end_user.headers import Headers
 from app.managers.bots.utils import generate_prompt
+from app.constants.error_messages import ErrorMessages
 import urllib.request
 from io import BytesIO
 from PIL import Image
@@ -48,11 +49,4 @@ class GeminiVisionAiResponse:
         @param llm_response: Response received from LLM
         @return: Formatted response to be sent to client
         """
-        _response = []
-        return ChatModel.ChatResponseModel(chat_id=chat_id, data=[
-                    ChatTypeMsg.model_validate(
-                        {
-                            "answer": llm_response,
-                        }
-                    )
-                ])
+        return ChatModel.ChatResponseModel(chat_id=chat_id, data=[ChatTypeMsg(**ujson.loads(llm_response))])
