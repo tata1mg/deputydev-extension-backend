@@ -61,6 +61,7 @@ class Augmentation(Enum):
                 d. Ask user that he/she can ask any specific query related to his/her lab test report
         3. If a user provides an invalid lab report, respond with a message like: "Please provide a valid lab report"
         4. If the user asks about the accuracy of the lab results, inform them that the accuracy is contingent on various factors and recommend consulting a healthcare professional for a comprehensive analysis
+        5. Response should be strictly in json format consisting two keys answer and advice
     Type: PNG
         In this case you will be provided with image of an X-Ray.
         Your task is to analyze the analyze the image and anwer the user prompt  and provide information in JSON format.
@@ -72,7 +73,7 @@ class Augmentation(Enum):
                 c. Ask user that he/she can ask any specific query related to his/her lab test report
         3. If a user provides an invalid image which is not linked with a xray, respond with a message like: "Please provide a valid X-ray image"
         4. If the user asks about the accuracy of the results, inform them that the accuracy is contingent on various factors and recommend consulting a healthcare professional for a comprehensive analysis.
-        5. Json should contain two key answer and advice 
+        5. Response should be strictly in json format consisting two keys answer and advice
     """
     CHAT_START_MSG = {
         "answer": "Welcome. I am Jiva, a medical diagnostic agent.",
@@ -93,3 +94,10 @@ class ShowJivaExperiment(ExtendedEnum):
 class LabSkuCardImage(Enum):
     Lab_Test = "https://onemg.gumlet.io/lab_test_03_01_24.png"
     Lab_Package = "https://onemg.gumlet.io/lab_package_03_01_24.png"
+
+
+class JivaChatTypes(Enum):
+    ChatTypeMsg = "ChatTypeMsg"
+    ChatTypeCallAgent = "ChatTypeCallAgent"
+    ChatTypeSkuCard = "ChatTypeSkuCard"
+    ChatTypePdf = "ChatTypePdf"

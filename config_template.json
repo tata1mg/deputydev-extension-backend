@@ -34,5 +34,8 @@
     "TIMEOUT": 10
   },
   "EXPERIMENT": {
-   }
+   },
+  "REDIS_CACHE_HOSTS": {
+
+  },
 }
