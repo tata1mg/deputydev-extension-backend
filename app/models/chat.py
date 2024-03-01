@@ -1,7 +1,7 @@
 import uuid
 
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Any
 
 from pydantic.v1 import root_validator
 
@@ -26,6 +26,7 @@ class ChatHistoryModel(BaseModel):
             ChatTypeMsg.__name__,
             ChatTypeSkuCard.__name__,
             ChatTypeCallAgent.__name__,
+            "ChatTypePdf"
         }
         if value not in allowed_values:
             raise ValueError(
@@ -71,10 +72,10 @@ class ChatTypeSkuCard(BaseModel):
     type: str = "ChatTypeSkuCard"
     header: str
     sub_header: Optional[str] = None
-    eta: Optional[Eta] = None
-    price: Optional[Price] = None
+    eta: Optional[Any] = None
+    price: Optional[Any] = None
     sku_id: str
-    cta: Cta
+    cta: Any
     slug_url: str
     sku_image: str
     sku_type: str
@@ -106,5 +107,3 @@ class ChatModel(BaseModel):
     class ChatResponseModel(BaseModel):
         chat_id: str = Field(default=str(uuid.uuid4()))
         data: List[Union[ChatTypeMsg, ChatTypeSkuCard, ChatTypeCallAgent, None]]
-
-
