@@ -95,7 +95,8 @@ class OpenAiResponse:
         """
         Generate context for LLM. Iterating over docs fetched from DB and constructing relevant context to be
         appended to final_prompt which in turn will be sent to LLM
-        @param context: Docs fetched from DB as per semantic search
+        @param context_documents: Docs fetched from DB as per semantic search
+        @param city: City if user from headers
         @return: Final context generated with use of docs fetched from DB
         """
         user_location = Augmentation.USER_LOCATION.value.format(city)
