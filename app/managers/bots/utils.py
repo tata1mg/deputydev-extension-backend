@@ -90,7 +90,7 @@ async def cache_user_chat_history(payload: ChatModel.ChatRequestModel, serialize
     user_current_prompt = {"type": JivaChatTypes.ChatTypeMsg.value, "role": "user", "prompt": payload.current_prompt}
     # Redis list doesn't have a support of expiring key, so explicitly setting up expire time
     if not cached_user_data:
-        await Jiva.rpush(chat_id, json.dumps([user_current_prompt]))
+        await Jiva.rpush(chat_id, [json.dumps(user_current_prompt)])
         await Jiva.expire(chat_id, Jiva.expiry_time)
     else:
         chat_history.append(user_current_prompt)
