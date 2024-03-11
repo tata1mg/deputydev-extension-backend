@@ -50,7 +50,7 @@ class BitbucketProcessor:
             },
         }
         # Check if there is corrective code before adding it to the payload
-        if comment.get("corrective_code"):
+        if comment.get("corrective_code") and len(comment.get("corrective_code")) > 0:
             comment_payload["content"]["raw"] += f"\n ```{comment.get('corrective_code')}```"
         response = requests.post(url, headers=HEADERS, json=comment_payload)
         return response.json()
