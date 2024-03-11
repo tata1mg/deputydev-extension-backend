@@ -24,11 +24,11 @@ class OpenAIServiceClient(metaclass=Singleton):
             ),
         )
 
-    async def get_diagnobot_response(self, final_prompt) -> ChatCompletionMessage:
+    async def get_response(self, conversation_messages) -> ChatCompletionMessage:
         completion = await self.client.chat.completions.create(
             model="gpt-4-1106-preview",
             response_format={"type": "json_object"},
-            messages=[{"role": "user", "content": final_prompt}],
+            messages=conversation_messages,
             tools=get_openai_funcs(),
             tool_choice="auto",
             temperature=0.5,

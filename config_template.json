@@ -31,7 +31,7 @@
     "CONNECTION_STRING": "",
     "LABS_COLLECTION": "labs"
   },
-  "OPENAI_KEY": "",
+  "OPENAI_KEY" : "",
   "GOOGLE_API_KEY": "",
   "LABS": {
     "HOST": "https://api.1mg.com/api/labs/",
@@ -43,4 +43,8 @@
   "OPENAPI_API": "gpt3",
   "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
   "BITBUCKET_URL": "https://api.bitbucket.org/2.0/repositories"
+   },
+  "REDIS_CACHE_HOSTS": {
+
+  },
 }

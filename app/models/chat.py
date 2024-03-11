@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -18,11 +18,7 @@ class ChatHistoryModel(BaseModel):
 
     @field_validator("type")
     def validate_type(cls, value):
-        allowed_values = {
-            ChatTypeMsg.__name__,
-            ChatTypeSkuCard.__name__,
-            ChatTypeCallAgent.__name__,
-        }
+        allowed_values = {ChatTypeMsg.__name__, ChatTypeSkuCard.__name__, ChatTypeCallAgent.__name__, "ChatTypePdf"}
         if value not in allowed_values:
             raise ValueError(f"Invalid value: {value}. The allowed values are {allowed_values}")
         return value
@@ -65,10 +61,10 @@ class ChatTypeSkuCard(BaseModel):
     type: str = "ChatTypeSkuCard"
     header: str
     sub_header: Optional[str] = None
-    eta: Optional[Eta] = None
-    price: Optional[Price] = None
+    eta: Optional[Any] = None
+    price: Optional[Any] = None
     sku_id: str
-    cta: Cta
+    cta: Any
     slug_url: str
     sku_image: str
     sku_type: str
@@ -88,6 +84,8 @@ class ChatModel(BaseModel):
         chat_id: Optional[str] = None
         chat_history: Optional[List[ChatHistoryModel]] = None
         current_prompt: Optional[str] = None
+        chat_type: Optional[str] = None
+        file_url: Optional[str] = None
 
         # @root_validator
         # def validate(cls, values):
