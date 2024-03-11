@@ -1,21 +1,21 @@
-import ujson as json
 import asyncio
+
+import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
 
-from .model import Response
 from app.utils import log_combined_exception
-from ..constants import SQS as Constant
-from ..constants import ErrorMessages
-from ..constants import SuccessMessages
 
-'''
+from ..constants import SQS as Constant
+from ..constants import ErrorMessages, SuccessMessages
+from .model import Response
+
+"""
     implement get_queue_name function which will be returning queue name for every child class
-'''
+"""
 
 
 class Base:
-
     def __init__(self, config: dict, event_handler):
         self.config = config or {}
         self.sqs_manager = BaseSQSWrapper(config)
@@ -43,21 +43,22 @@ class Base:
         # '''
         await self.init()
         if len(data) > 10:
-            raise Exception('at max 10 messages can be send in a batch')
+            raise Exception("at max 10 messages can be send in a batch")
         for datum in data:
-            datum['payload'] = json.dumps(datum['payload'])
+            datum["payload"] = json.dumps(datum["payload"])
 
-        return (
-            await self.sqs_manager.publish_to_sqs(messages=data, batch=True, **kwargs))
+        return await self.sqs_manager.publish_to_sqs(messages=data, batch=True, **kwargs)
 
     async def subscribe(self, **kwargs):
-        max_no_of_messages = kwargs.get('max_no_of_messages', Constant.SUBSCRIBE.value['MAX_MESSAGES'])
-        wait_time_in_seconds = kwargs.get('wait_time_in_seconds', Constant.SUBSCRIBE.value['WAIT_TIME_IN_SECONDS'])
+        max_no_of_messages = kwargs.get("max_no_of_messages", Constant.SUBSCRIBE.value["MAX_MESSAGES"])
+        wait_time_in_seconds = kwargs.get("wait_time_in_seconds", Constant.SUBSCRIBE.value["WAIT_TIME_IN_SECONDS"])
         show_configured_log = True
         while True:
             try:
-                response = await self.receive_message(max_no_of_messages=max_no_of_messages,
-                                                      wait_time_in_seconds=wait_time_in_seconds)
+                response = await self.receive_message(
+                    max_no_of_messages=max_no_of_messages,
+                    wait_time_in_seconds=wait_time_in_seconds,
+                )
                 if response:
                     messages = response.messages
                     if messages:
@@ -94,9 +95,9 @@ class Base:
         return response
 
     def enable_worker(self):
-        if 'ENABLE' in self.worker_config():
-            return self.worker_config()['ENABLE']
-        return self.config.get('ENABLE_WORKER')
+        if "ENABLE" in self.worker_config():
+            return self.worker_config()["ENABLE"]
+        return self.config.get("ENABLE_WORKER")
 
     @staticmethod
     def decompress(message):
@@ -106,12 +107,11 @@ class Base:
     def log_error(self, message, exception, payload=None):
         message = message.format(queue_name=self.get_queue_name())
         if payload:
-            message += ' Payload =  ' + json.dumps(payload)[:Constant.LOG_LENGTH.value]
+            message += " Payload =  " + json.dumps(payload)[: Constant.LOG_LENGTH.value]
         log_combined_exception(message, exception)
 
     def log_info(self, message, payload=None):
         message = message.format(queue_name=self.get_queue_name())
         if payload:
-            message += ' Payload = ' + json.dumps(payload)[:Constant.LOG_LENGTH.value]
+            message += " Payload = " + json.dumps(payload)[: Constant.LOG_LENGTH.value]
         logger.info(message)
-

@@ -1,30 +1,59 @@
 from typing import List
 
-from app.models.chat import ChatTypeMsg, ChatTypeSkuCard
+from sanic.log import logger
 
-# TODO : Create a new function for calling an agent.
+from app.managers.openai_tools.util import openaifunc
+from app.managers.serializer.lab_test_serializer import LabSkuSerializer
+from app.models.chat import ChatTypeCallAgent, ChatTypeMsg, ChatTypeSkuCard
+from app.service_clients.labs import LabsClient
 
 
-async def show_lab_test_card(arguments: dict) -> List[any]:
-    # TODO : Call Labs API and return approprouate contract for SKU card
-    print("Inside show_lab_test_card")
+@openaifunc
+async def show_lab_sku_card(identifier: str, city: str) -> List[any]:
+    """
+    Get details of the lab test from API call and show a lab test card to user.
+    Should not be called when comparing 2 or more lab tests.
+    @param identifier: The unique identifier of a test or Test ID which is most
+    relevant to the question asked by user
+    @param city: The name of the city user is currently in or for whichever city
+    user ask for in their question
+    """
+    city = "Delhi"
+    logger.info("Test identifier: {}  City: {}".format(identifier, city))
+    sku_details = await LabsClient.get_lab_sku_details(identifier, city)
+    if not sku_details:
+        return [
+            ChatTypeMsg.model_validate(
+                {"answer": "You can know more about TATA 1mg lab tests here " "- https://1mg.com/labs"}
+            ),
+            ChatTypeCallAgent(),
+        ]
+    lab_sku_serialized_details = LabSkuSerializer.format_lab_sku_data(sku_details)
+    print(lab_sku_serialized_details)
     response = [
-        ChatTypeMsg(
-            **{
+        ChatTypeMsg.model_validate(
+            {
                 "answer": "Here are more details. You can book the test directly from here.",
             }
         ),
-        ChatTypeSkuCard(
-            **{
-                "header": "Liver function test (LFT)",
-                "sub_header": "Also known as LFT test",
-                "report_eta": "Get report in 72hrs",
-                "icon": "https://onemg.gumlet.io/assets/44a16856-6882-11ec-82c2-0a3c85ad997a.png?format=auto",
-                "price": "500",
-                "sku_id": "25166",
-                "target_url": "https://www.1mg.com/labs/test/lft-liver-function-test-2562",
-                "cta": "add2cart",
+        ChatTypeSkuCard.model_validate(lab_sku_serialized_details),
+    ]
+    return response
+
+
+@openaifunc
+async def show_agent_calling_card() -> List[any]:
+    """
+    Show call to agent card to user. Whenever user ask to speak to an agent,
+     representative or a real human.
+    This function should execute.
+    """
+    response = [
+        ChatTypeMsg.model_validate(
+            {
+                "answer": "TATA 1mg labs is just a call away.",
             }
         ),
+        ChatTypeCallAgent(),
     ]
     return response

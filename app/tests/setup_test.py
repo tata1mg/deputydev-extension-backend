@@ -1,8 +1,8 @@
-
+from redis_wrapper import RegisterRedis
 from sanic import Sanic
 from torpedo import Host
 from torpedo.common_utils import CONFIG
-from redis_wrapper import RegisterRedis
+
 
 async def setup_test(loop, sanic_client, app, blueprint_group):
     """
@@ -34,7 +34,6 @@ async def setup_test(loop, sanic_client, app, blueprint_group):
     Host.register_app_blueprints(app)
     Host.setup_dynamic_methods()
     RegisterRedis.register_redis_cache(CONFIG.config["REDIS_CACHE_HOSTS"])
-   
 
     _cli = await loop.create_task(sanic_client(app))
     return _cli
