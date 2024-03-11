@@ -1,3 +1,3 @@
-__all__ = ['SearchClient']
+__all__ = ["SearchClient"]
 
 from .search import SearchClient
