@@ -1,10 +1,8 @@
-import json
-from app.managers.db import DB
-
 import pytest
 from sanic import Sanic
 from torpedo import common_utils
 
+from app.managers.db import DB
 from app.routes import blueprints
 from app.tests.setup_test import setup_test
 
@@ -61,10 +59,10 @@ class Base:
         """
         # TODO: use delete manager here
         # await Rules.all().delete()
-        
+
         await DB.raw_sql("DROP TABLE IF EXISTS user_delivered_skus_mapping")
 
-        sql_1 ='''CREATE TABLE user_delivered_skus_mapping(
+        sql_1 = """CREATE TABLE user_delivered_skus_mapping(
             ID SERIAL PRIMARY KEY,
             USER_ID TEXT NOT NULL,
             SKU_ID TEXT NOT NULL,
@@ -74,16 +72,16 @@ class Base:
             CREATED_AT TIMESTAMP NOT NULL,
             UPDATED_AT TIMESTAMP NOT NULL,
             MOST_RECENT_ORDER BIGINT NOT NULL
-        )'''
+        )"""
         await DB.raw_sql(sql_1)
 
         await DB.raw_sql("DROP TABLE IF EXISTS recency_logic_table")
 
-        sql_2 = '''CREATE TABLE recency_logic_table(
+        sql_2 = """CREATE TABLE recency_logic_table(
             ID SERIAL PRIMARY KEY,
             LOWER_LIMIT INT NOT NULL,
             VALUE DOUBLE PRECISION NOT NULL
-        )'''
+        )"""
         await DB.raw_sql(sql_2)
 
     @staticmethod
