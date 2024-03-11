@@ -4,8 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-torpedo = {editable = true, ref = "3.6.1-rc2", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git"}
-commonutils = {editable = true, ref = "1.6.0-rc1", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git"}
+torpedo = { editable = true, ref = "3.6.1-rc2", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
+commonutils = { editable = true, ref = "1.6.0-rc1", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git" }
+cache_wrapper = { editable = true, ref = "main", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git" }
 langchain = "==0.0.344"
 psycopg2-binary = "==2.9.9"
 tiktoken = "==0.5.1"
@@ -13,6 +14,9 @@ pgvector = "==0.2.4"
 pandas = "==2.1.3"
 numpy = "==1.26.2"
 openai = "==1.5.0"
+pypdf = "==4.0.1"
+pillow = "==10.2.0"
+google-generativeai = "==0.3.2"
 
 [dev-packages]
 

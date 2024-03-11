@@ -9,6 +9,7 @@
     "TRANSACTION_SAMPLE_RATE": 1
   },
   "DEBUG": false,
+  "ACCESS_LOG": true,
   "ENABLE_WORKER": false,
   "ENVIRONMENT": "local",
   "HOST": "0.0.0.0",
@@ -20,12 +21,30 @@
     "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
     "TIMEOUT": 10
   },
-  "SENTRY_DSN": "",
+  "SENTRY": {
+    "DSN": "",
+    "EM": ""
+  },
   "WORKERS": 1,
   "CONCURRENCY_LIMIT": 500,
-  "DB_CONNECTION" : {
-    "CONNECTION_STRING" : "",
-    "LABS_COLLECTION" : "labs"
+  "DB_CONNECTION": {
+    "CONNECTION_STRING": "",
+    "LABS_COLLECTION": "labs"
   },
-  "OPENAI_KEY" : ""
+  "OPENAI_KEY" : "",
+  "GOOGLE_API_KEY": "",
+  "LABS": {
+    "HOST": "https://api.1mg.com/api/labs/",
+    "TIMEOUT": 10
+  },
+  "EXPERIMENT": {
+  },
+  "BITBUCKET_KEY": "",
+  "OPENAPI_API": "gpt3",
+  "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
+  "BITBUCKET_URL": "https://api.bitbucket.org/2.0/repositories"
+   },
+  "REDIS_CACHE_HOSTS": {
+
+  },
 }

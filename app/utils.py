@@ -1,9 +1,13 @@
+import hashlib
+import hmac
 import operator
 import re
 import time
 
+import mmh3
 from packaging.version import Version
 from sanic.log import logger
+from torpedo.common_utils import CONFIG
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
 name_slug_replace_string = "-"
@@ -18,17 +22,11 @@ def service_client_wrapper(service_name):
                 t1 = time.time() * 1000
                 response = await func(*args)
                 t2 = time.time() * 1000
-                logger.debug(
-                    "Time taken for {}-{} API - {} ms".format(
-                        service_name, func.__name__, t2 - t1
-                    )
-                )
+                logger.debug("Time taken for {}-{} API - {} ms".format(service_name, func.__name__, t2 - t1))
                 return response
             except Exception as exception:
                 log_combined_exception(
-                    "Unable to get response from {}-{} API".format(
-                        service_name, func.__name__
-                    ),
+                    "Unable to get response from {}-{} API".format(service_name, func.__name__),
                     exception,
                     "handled in service client wrapper",
                 )
@@ -46,9 +44,7 @@ def log_combined_error(title, error):
 
 
 def log_combined_exception(title, exception, meta_info: str = ""):
-    error = "Exception type {} , exception {} , meta_info {}".format(
-        type(exception), exception, str(meta_info)
-    )
+    error = "Exception type {} , exception {} , meta_info {}".format(type(exception), exception, str(meta_info))
     log_combined_error(title, error)
 
 
@@ -93,11 +89,7 @@ def check_feature_enabled_for_platform(feature_config, client_attributes):
         "<": operator.lt,
     }
     client = client_attributes["client"].lower()
-    app_version = (
-        client_attributes["client_version"]
-        if "client_version" in client_attributes
-        else "1.0.0"
-    )
+    app_version = client_attributes["client_version"] if "client_version" in client_attributes else "1.0.0"
 
     for criteria in feature_config:
         criteria_client = criteria["client"]
@@ -106,9 +98,7 @@ def check_feature_enabled_for_platform(feature_config, client_attributes):
             if criteria.get("version"):
                 version_criteria = criteria["version"]["op"]
                 version_required = criteria["version"]["number"]
-                if operations[version_criteria](
-                    Version(app_version), Version(version_required)
-                ):
+                if operations[version_criteria](Version(app_version), Version(version_required)):
                     return True
             else:
                 return True
@@ -139,3 +129,84 @@ def validate_eta_pincode(eta_pincode):
     if not eta_pincode or str(eta_pincode).lower() == "null":
         return False
     return True
+
+
+def get_ab_experiment_set(experiment_id, experiment_name):
+    """
+    This function required any experiment id (device id, user id, visitor id)
+    and the experiment name, and it will return the control set
+    it return null if experiment_id is null or last two digit not fall in any
+    configure set or experiment_data is not in config
+    @param experiment_id:
+    @param experiment_name:
+    @return:
+    """
+
+    if not experiment_id:
+        return None
+
+    experiment_data = CONFIG.config["EXPERIMENT"].get(experiment_name)
+
+    if not experiment_data:
+        return None  # Invalid experiment name
+
+    # Calculate the last two digits of the hashed user ID
+    last_two_digits = mmh3.hash(str(experiment_id)) % 100
+    # Initialize the percentage range
+    percent_range_start = 0
+
+    for data in experiment_data:
+        percent_range_end = percent_range_start + data["percent"]
+
+        # Check if the last two digits fall within the current range
+        if percent_range_start <= last_two_digits < percent_range_end:
+            return data.get("test") or data.get("control")
+
+        percent_range_start = percent_range_end
+
+    return None  # Fallback if no set is assigned
+
+
+def request_logger(_request) -> str:
+    headers = _request.headers
+    logger.info(f"Entry: For request ID: {headers.get('X-REQUEST-ID')}, " f"for smart_code_review")
+    return headers.get("X-REQUEST-ID")
+
+
+def validate_hash(payload) -> bool:
+    secret = "kXckHC3Z7UIX6eVR"
+    given_signature = "sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9"
+
+    hash_object = hmac.new(
+        secret.encode("utf-8"),
+        msg=payload.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    )
+    calculated_signature = "sha256=" + hash_object.hexdigest()
+
+    if not hmac.compare_digest(calculated_signature, given_signature):
+        return False
+    else:
+        return True
+
+
+def get_comment(payload):
+    try:
+        bb_payload = {}
+        comment = payload["comment"]
+        raw_content = remove_special_char("\\", comment["content"]["raw"])
+        if "parent" in comment and "inline" in comment:
+            bb_payload["comment"] = raw_content
+            bb_payload["parent"] = comment["parent"]["id"]
+            bb_payload["path"] = comment["inline"]["path"]
+            return bb_payload
+        else:
+            return {"comment": raw_content}
+    except KeyError as e:
+        raise f"Error: {e} not found in the JSON structure."
+    except Exception as e:
+        raise f"An unexpected error occurred: {e}"
+
+
+def remove_special_char(char, input_string):
+    return input_string.replace(char, "")

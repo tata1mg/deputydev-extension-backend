@@ -1,4 +1,4 @@
-from torpedo import send_response, Request
+from torpedo import Request, send_response
 
 from .headers import Headers
 
@@ -8,4 +8,5 @@ def http_v4_wrapper(func):
         headers = Headers(request.headers)
         response = await func(request, headers)
         return send_response(response.model_dump())
+
     return wrapper
