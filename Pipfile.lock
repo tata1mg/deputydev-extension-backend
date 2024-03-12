@@ -2029,7 +2029,7 @@
             "version": "==4.0.0"
         },
         "pytest-sanic": {
-            "git": "git+https://github.com/dollardhingra/pytest-sanic@fix_sanic_after_22_12#egg=pytest-sanic",
+            "git": "git+https://github.com/dollardhingra/pytest-sanic",
             "markers": "python_version >= '3.7'",
             "ref": "5b406064219e648aa9b1633db6d7459a4927aa6c"
         },
