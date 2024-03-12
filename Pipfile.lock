@@ -573,7 +573,7 @@
             "version": "==6.3.2"
         },
         "cqa": {
-            "git": "git+ssh://git@bitbucket.org/tata1mg/cqa.git@v0.1.5",
+            "git": "ssh://git@bitbucket.org/tata1mg/cqa.git",
             "ref": "9c6ee50aa5e8543b7a11553f6dd36647e5db2954"
         },
         "cryptography": {
