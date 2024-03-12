@@ -573,7 +573,7 @@
             "version": "==6.3.2"
         },
         "cqa": {
-            "git": "git+ssh://git@bitbucket.org/tata1mg/cqa.git@v0.1.5",
+            "git": "ssh://git@bitbucket.org/tata1mg/cqa.git",
             "ref": "9c6ee50aa5e8543b7a11553f6dd36647e5db2954"
         },
         "cryptography": {
@@ -2029,7 +2029,7 @@
             "version": "==4.0.0"
         },
         "pytest-sanic": {
-            "git": "git+https://github.com/dollardhingra/pytest-sanic@fix_sanic_after_22_12#egg=pytest-sanic",
+            "git": "git+https://github.com/dollardhingra/pytest-sanic",
             "markers": "python_version >= '3.7'",
             "ref": "5b406064219e648aa9b1633db6d7459a4927aa6c"
         },
@@ -2608,7 +2608,7 @@
                 "sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475",
                 "sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb"
             ],
-            "markers": "python_version >= '3.8'",
+            "markers": "python_version < '3.10'",
             "version": "==4.10.0"
         },
         "typing-inspect": {
