@@ -1,50 +1,46 @@
 {
-  "APM": {
-    "ENABLED": false,
-    "ENVIRONMENT": "",
-    "SECRET_TOKEN": "",
-    "SERVER_TIMEOUT": "30s",
-    "SERVER_URL": "http://onemg-apm-server-apm-http.elastic-system.svc.cluster.local:8200",
-    "SPAN_FRAMES_MIN_DURATION": "5ms",
-    "TRANSACTION_SAMPLE_RATE": 1
-  },
-  "DEBUG": false,
-  "ACCESS_LOG": true,
-  "ENABLE_WORKER": false,
-  "ENVIRONMENT": "local",
-  "HOST": "0.0.0.0",
-  "HTTP_VERSION": "1.0.0",
-  "INTERSERVICE_TIMEOUT": 50,
-  "NAME": "genai",
-  "PORT": 8081,
-  "SEARCH": {
-    "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
-    "TIMEOUT": 10
-  },
-  "SENTRY": {
-    "DSN": "",
-    "EM": ""
-  },
-  "WORKERS": 1,
-  "CONCURRENCY_LIMIT": 500,
-  "DB_CONNECTION": {
-    "CONNECTION_STRING": "",
-    "LABS_COLLECTION": "labs"
-  },
-  "OPENAI_KEY" : "",
-  "GOOGLE_API_KEY": "",
-  "LABS": {
-    "HOST": "https://api.1mg.com/api/labs/",
-    "TIMEOUT": 10
-  },
-  "EXPERIMENT": {
-  },
-  "BITBUCKET_KEY": "",
-  "OPENAPI_API": "gpt3",
-  "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
-  "BITBUCKET_URL": "https://api.bitbucket.org/2.0/repositories"
-   },
-  "REDIS_CACHE_HOSTS": {
-
-  },
+    "APM": {
+        "ENABLED": false,
+        "ENVIRONMENT": "",
+        "SECRET_TOKEN": "",
+        "SERVER_TIMEOUT": "30s",
+        "SERVER_URL": "http://onemg-apm-server-apm-http.elastic-system.svc.cluster.local:8200",
+        "SPAN_FRAMES_MIN_DURATION": "5ms",
+        "TRANSACTION_SAMPLE_RATE": 1
+    },
+    "DEBUG": false,
+    "ACCESS_LOG": true,
+    "ENABLE_WORKER": false,
+    "ENVIRONMENT": "local",
+    "HOST": "0.0.0.0",
+    "HTTP_VERSION": "1.0.0",
+    "INTERSERVICE_TIMEOUT": 50,
+    "NAME": "genai",
+    "PORT": 8081,
+    "SEARCH": {
+        "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
+        "TIMEOUT": 10
+    },
+    "SENTRY": {
+        "DSN": "",
+        "EM": ""
+    },
+    "WORKERS": 1,
+    "CONCURRENCY_LIMIT": 500,
+    "DB_CONNECTION": {
+        "CONNECTION_STRING": "",
+        "LABS_COLLECTION": "labs"
+    },
+    "OPENAI_KEY": "",
+    "GOOGLE_API_KEY": "",
+    "LABS": {
+        "HOST": "https://api.1mg.com/api/labs/",
+        "TIMEOUT": 10
+    },
+    "EXPERIMENT": {},
+    "BITBUCKET_KEY": "",
+    "OPENAPI_API": "gpt3",
+    "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
+    "BITBUCKET_URL": "https://api.bitbucket.org/2.0/repositories",
+    "REDIS_CACHE_HOSTS": {}
 }
