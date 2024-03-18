@@ -15,7 +15,6 @@ smart_code = Blueprint("smart_code", "/smart_code_review")
 @validate(query=SmartCodeReqeustModel)
 async def pool_assistance_api(_request: Request, **kwargs):
     payload = _request.request_params()
-    # request_id = request_logger(_request)
     message = await SmartCodeManager.process_pr_review(payload)
     return send_response(message)
 
