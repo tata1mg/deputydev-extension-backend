@@ -87,7 +87,7 @@ async def poll_for_success(thread, run):
             break
         # Increase the interval exponentially, but cap it at max_interval_seconds
         current_interval = min(current_interval * 2, max_interval_seconds)
-
+        logger.info(f"AI Response: {response}")
     return response
 
 
