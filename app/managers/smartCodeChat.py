@@ -14,7 +14,7 @@ class SmartCodeChatManager:
 
     @classmethod
     async def identify_annotation(cls, payload, comment_payload: str):
-        tag = "#AI_CODE_REVIEW"
+        tag = "#SCRIT"
         comment = comment_payload["comment"]
         if comment.startswith(tag):
             remaining_text = comment[len(tag) :].strip()
