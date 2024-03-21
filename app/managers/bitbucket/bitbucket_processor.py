@@ -3,6 +3,7 @@ from datetime import datetime
 
 import requests
 from torpedo import CONFIG
+import re
 
 from app.constants.constants import IGNORE_FILES
 
@@ -16,6 +17,7 @@ HEADERS = {
 
 # TODO - This file should ideally be in service_client. This file is a service client for bitbucket.
 #  Extract as much logic as you can from this into manager files and move this to service_clients package.
+
 
 class BitbucketProcessor:
     def __init__(self):
@@ -47,7 +49,9 @@ class BitbucketProcessor:
         comment_payload = {
             "content": {"raw": comment.get("comment")},
             "inline": {
-                "path": comment.get("file_path"),
+                "path": comment.get("file_path")[2:]
+                if re.match(r"^[ab]", comment.get("file_path"))
+                else comment.get("file_path"),
                 "to": comment.get("line_number"),
             },
         }
