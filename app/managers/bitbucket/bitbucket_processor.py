@@ -3,6 +3,7 @@ from datetime import datetime
 
 import requests
 from torpedo import CONFIG
+import re
 
 from app.constants.constants import IGNORE_FILES
 
@@ -13,6 +14,9 @@ HEADERS = {
     "Content-Type": "application/json",
     "Authorization": config.get("BITBUCKET_KEY"),
 }
+
+# TODO - This file should ideally be in service_client. This file is a service client for bitbucket.
+#  Extract as much logic as you can from this into manager files and move this to service_clients package.
 
 
 class BitbucketProcessor:
@@ -45,7 +49,9 @@ class BitbucketProcessor:
         comment_payload = {
             "content": {"raw": comment.get("comment")},
             "inline": {
-                "path": comment.get("file_path"),
+                "path": comment.get("file_path")[2:]
+                if re.match(r"^[ab]", comment.get("file_path"))
+                else comment.get("file_path"),
                 "to": comment.get("line_number"),
             },
         }
@@ -58,6 +64,7 @@ class BitbucketProcessor:
     @staticmethod
     async def create_comment_on_comment(payload, comment, comment_payload):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
+        # TODO - Will this be able to add code blocks as part of comments?
         comment_payload = {
             "content": {"raw": comment},
             "parent": {"id": comment_payload["parent"]},
@@ -100,6 +107,7 @@ class BitbucketProcessor:
                 comment_thread += comment_data["content"]["raw"]
                 if "parent" in comment_data:
                     parent_comment_id = comment_data["parent"]["id"]
+                    # TODO - We should have a mechanism to stop this recursive call after let's say 7 times.
                     parent_thread = await BitbucketProcessor.fetch_comment_thread(payload, parent_comment_id)
                     comment_thread += "\n" + parent_thread
             return comment_thread

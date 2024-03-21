@@ -22,6 +22,7 @@ async def pool_assistance_api(_request: Request, **kwargs):
 @smart_code.route("/chat", methods=["POST"])
 async def chat_assistance_api(_request: Request, **kwargs):
     payload = _request.custom_json()
+    #TODO - This should moved to manager. Routes should act only as a proxy.
     comment_payload = get_comment(payload)
     logger.info(f"Comment payload: {comment_payload}")
     # status = validate_hash(payload)
