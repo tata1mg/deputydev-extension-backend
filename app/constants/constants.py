@@ -5,6 +5,7 @@ from torpedo.common_utils import CONFIG
 X_SHARED_CONTEXT = "X-SHARED-CONTEXT"
 ENVIRONMENT = CONFIG.config["ENVIRONMENT"]
 CONFIDENCE_SCORE = 0.7
+#TODO - Include bitbucket-pipeline.yml file as well in this. Provision a feature where users can define these files in the repo itself.
 IGNORE_FILES = ["Pipfile", "Pipfile.lock"]
 
 
