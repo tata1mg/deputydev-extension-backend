@@ -173,6 +173,7 @@ def request_logger(_request) -> str:
     return headers.get("X-REQUEST-ID")
 
 
+# TODO - What is this function for and why do we have secrets and signatures pushed in code like this?
 def validate_hash(payload) -> bool:
     secret = "kXckHC3Z7UIX6eVR"
     given_signature = "sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9"

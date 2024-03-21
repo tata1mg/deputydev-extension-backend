@@ -17,6 +17,7 @@
     "INTERSERVICE_TIMEOUT": 50,
     "NAME": "genai",
     "PORT": 8081,
+    "REDIS_CACHE_HOSTS": {},
     "SEARCH": {
         "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
         "TIMEOUT": 10
