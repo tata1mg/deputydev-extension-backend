@@ -102,7 +102,6 @@ class DiagnoBotManager:
         final_instructions = Augmentation.INSTRUCTIONS.value
         final_context = DiagnoBotManager.generate_context(context)
         final_chat_history = ""
-        # TODO : Extract user's current location from headers and inject it here as part of final prompt.
         if payload.chat_history and payload.chat_id:
             final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
         final_prompt = (
