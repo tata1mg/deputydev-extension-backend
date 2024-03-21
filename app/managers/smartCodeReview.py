@@ -45,6 +45,7 @@ class SmartCodeManager:
                 logger.info("Diff count is {}. unable to process this request.".format(len(diff)))
                 comment = "size is PR is too long, kindly create a pr with less then 3500 char"
                 await BitbucketProcessor.create_comment_on_pr(payload, comment)
+            # TODO - we should also add PR description in context we are providing to LLM.
             thread = await create_review_thread(diff)
             run = await create_run_id(thread)
             response = await poll_for_success(thread, run)
