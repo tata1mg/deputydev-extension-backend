@@ -9,16 +9,16 @@ from app.utils import get_comment
 
 class SmartCodeChatManager:
     @classmethod
-    async def chat(cls, payload: dict, comment):
+    async def chat(cls, payload: dict):
         comment_payload = get_comment(payload)
         logger.info(f"Comment payload: {comment_payload}")
-        asyncio.ensure_future(cls.identify_annotation(payload, comment))
+        asyncio.ensure_future(cls.identify_annotation(payload, comment_payload))
         return
 
     @classmethod
-    async def identify_annotation(cls, payload, comment_payload: str):
+    async def identify_annotation(cls, payload, comment_payload):
         tag = "#scrit"
-        comment = comment_payload["comment"].lower()
+        comment = comment_payload.get("comment").lower()
         if tag in comment:
             logger.info(f"Processing the comment: {comment} , with payload : {payload}")
             bb_payload = {"workspace": payload["repository"]["full_name"], "pr_id": payload["pullrequest"]["id"]}
