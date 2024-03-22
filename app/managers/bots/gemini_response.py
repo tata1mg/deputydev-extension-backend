@@ -1,17 +1,19 @@
-from app.service_clients.gemini.gemini_pro import GeminiProServiceClient
-from app.models.chat import ChatModel, ChatTypeMsg
-from app.routes.end_user.headers import Headers
-from app.managers.bots.utils import generate_prompt, cache_user_chat_history, get_chat_history
+import ujson
 from langchain.document_loaders import PyPDFLoader
+
 from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
-import ujson
-from app.caches.jiva import Jiva
-import json
+from app.managers.bots.utils import (
+    cache_user_chat_history,
+    generate_prompt,
+    get_chat_history,
+)
+from app.models.chat import ChatModel, ChatTypeMsg
+from app.routes.end_user.headers import Headers
+from app.service_clients.gemini.gemini_pro import GeminiProServiceClient
 
 
 class GeminiAiResponse:
-
     def __init__(self):
         self.client = GeminiProServiceClient()
 
@@ -49,22 +51,14 @@ class GeminiAiResponse:
     @staticmethod
     def get_context(lab_report_documents, city):
         user_location = Augmentation.USER_LOCATION.value.format(city)
-        final_context = (
-            f"{user_location} \n"
-            f"Here is the page wise context for lab_report- \n"
-        )
+        final_context = f"{user_location} \n" f"Here is the page wise context for lab_report- \n"
         for doc in lab_report_documents:
-            formed_context = (
-                f"For Page {doc.metadata['page']} \n"
-                f"Content is {doc.page_content} \n"
-            )
+            formed_context = f"For Page {doc.metadata['page']} \n" f"Content is {doc.page_content} \n"
             final_context += formed_context + "\n"
         return final_context
 
     @staticmethod
-    def generate_response(
-            chat_id: str, llm_response
-    ) -> ChatModel.ChatResponseModel:
+    def generate_response(chat_id: str, llm_response) -> ChatModel.ChatResponseModel:
         """
         Generate response for LLM.
         @param chat_id: Chat id of the conversation
@@ -72,6 +66,3 @@ class GeminiAiResponse:
         @return: Formatted response to be sent to client
         """
         return ChatModel.ChatResponseModel(chat_id=chat_id, data=[ChatTypeMsg(**ujson.loads(llm_response))])
-
-
-

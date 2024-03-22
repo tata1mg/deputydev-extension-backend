@@ -1,21 +1,23 @@
-from app.service_clients.openai.openai import OpenAIServiceClient
-from app.models.chat import ChatModel, ChatTypeMsg, ChatTypeSkuCard, ChatHistoryModel
-from app.routes.end_user.headers import Headers
-from app.dao.openaiembedding import OpenAIEmbeddingsCustom
-from app.dao.labsConn import LabsConn
-from app.managers.bots.utils import generate_prompt, cache_user_chat_history, get_chat_history, generate_conversation
 from typing import List
-from app.constants.constants import Augmentation, JivaChatTypes
+
 import ujson
+
 import app.managers.openai_tools.openai_tools as OpenAITools
+from app.constants.constants import Augmentation, JivaChatTypes
 from app.constants.error_messages import ErrorMessages
-from app.caches.jiva import Jiva
-import copy
-import json
+from app.dao.labsConn import LabsConn
+from app.dao.openaiembedding import OpenAIEmbeddingsCustom
+from app.managers.bots.utils import (
+    cache_user_chat_history,
+    generate_conversation,
+    get_chat_history,
+)
+from app.models.chat import ChatModel, ChatTypeMsg
+from app.routes.end_user.headers import Headers
+from app.service_clients.openai.openai import OpenAIServiceClient
 
 
 class OpenAiResponse:
-
     def __init__(self):
         self.store = LabsConn().get_store()
         self.client = OpenAIServiceClient()
@@ -56,14 +58,10 @@ class OpenAiResponse:
         if payload.chat_history:
             embedded_prompt: List[float] = self.embedd_prompt(payload)
             # Retrieval
-            contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(
-                embedding=embedded_prompt
-            )
+            contextual_docs = await self.store.amax_marginal_relevance_search_by_vector(embedding=embedded_prompt)
         if payload.current_prompt:
-            current_prompt_docs = (
-                await self.store.amax_marginal_relevance_search_by_vector(
-                    embedding=self.embedd(payload.current_prompt)
-                )
+            current_prompt_docs = await self.store.amax_marginal_relevance_search_by_vector(
+                embedding=self.embedd(payload.current_prompt)
             )
         contextual_docs.extend(current_prompt_docs)
         return contextual_docs
@@ -111,9 +109,7 @@ class OpenAiResponse:
         return final_context
 
     @staticmethod
-    async def generate_response(
-            chat_id: str, llm_response
-    ) -> ChatModel.ChatResponseModel:
+    async def generate_response(chat_id: str, llm_response) -> ChatModel.ChatResponseModel:
         """
         Generate response for LLM.
         @param chat_id: Chat id of the conversation
@@ -125,9 +121,5 @@ class OpenAiResponse:
             _response.append(ChatTypeMsg(**ujson.loads(llm_response.content)))
         if llm_response.tool_calls:
             func = getattr(OpenAITools, llm_response.tool_calls[0].function.name)
-            _response.extend(
-                await func(**ujson.loads(llm_response.tool_calls[0].function.arguments))
-            )
+            _response.extend(await func(**ujson.loads(llm_response.tool_calls[0].function.arguments)))
         return ChatModel.ChatResponseModel(chat_id=chat_id, data=_response)
-
-

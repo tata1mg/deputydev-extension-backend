@@ -8,8 +8,8 @@ from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
 from app.dao.labsConn import LabsConn
 from app.dao.openaiembedding import OpenAIEmbeddingsCustom
-from app.managers.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.models.chat import ChatModel, ChatTypeMsg
+from app.models.serializer.initialize_jiva_serializer import InitializeJivaSerializer
 from app.routes.end_user.headers import Headers
 from app.service_clients.openai.openai import OpenAIServiceClient
 from app.utils import get_ab_experiment_set
