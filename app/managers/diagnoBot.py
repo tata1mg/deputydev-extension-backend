@@ -3,22 +3,20 @@ from typing import List
 import ujson
 from openai.types.chat import ChatCompletionMessage
 
-from app.dao.openaiembedding import OpenAIEmbeddingsCustom
-from app.dao.labsConn import LabsConn
+import app.managers.openai_tools.openai_tools as OpenAITools
 from app.constants.constants import Augmentation
 from app.constants.error_messages import ErrorMessages
+from app.dao.labsConn import LabsConn
+from app.dao.openaiembedding import OpenAIEmbeddingsCustom
 from app.models.chat import ChatModel, ChatTypeMsg
 from app.service_clients.openai.openai import OpenAIServiceClient
-import app.managers.openai_tools.openai_tools as OpenAITools
 
 
 class DiagnoBotManager:
     def __init__(self):
         self.store = LabsConn().get_store()
 
-    async def get_diagnobot_response(
-        self, payload: ChatModel.ChatRequestModel
-    ) -> ChatModel.ChatResponseModel:
+    async def get_diagnobot_response(self, payload: ChatModel.ChatRequestModel) -> ChatModel.ChatResponseModel:
         """
         This function manages the responses of DiagnoBot.
         1. Embedding the user prompt.
@@ -35,17 +33,13 @@ class DiagnoBotManager:
         # For 1st time that the chatbot loads, Client sends empty chat_id to initiate the conversation.
         # Upon receiving empty chat_id, we return back with welcome message and a new chat_id.
         if not payload.chat_id:
-            return ChatModel.ChatResponseModel(
-                data=[ChatTypeMsg(**Augmentation.CHAT_START_MSG.value)]
-            )
+            return ChatModel.ChatResponseModel(data=[ChatTypeMsg(**Augmentation.CHAT_START_MSG.value)])
 
         # Embedding
         embedded_prompt: List[float] = self.embedd_prompt(payload)
 
         # Retrieval
-        docs = await self.store.amax_marginal_relevance_search_by_vector(
-            embedding=embedded_prompt
-        )
+        docs = await self.store.amax_marginal_relevance_search_by_vector(embedding=embedded_prompt)
         if not docs:
             return ChatModel.ChatResponseModel(
                 chat_id=payload.chat_id,
@@ -61,9 +55,7 @@ class DiagnoBotManager:
         final_prompt: str = self.generate_final_prompt(payload, docs)
 
         # Generation/Synthesis
-        llm_response: ChatCompletionMessage = (
-            OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
-        )
+        llm_response: ChatCompletionMessage = OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
 
         # Serialization
         return await self.generate_response(payload.chat_id, llm_response)
