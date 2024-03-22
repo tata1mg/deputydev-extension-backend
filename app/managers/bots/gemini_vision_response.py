@@ -1,15 +1,17 @@
-from app.service_clients.gemini.gemini_vision import GeminiVisionServiceClient
-from app.models.chat import ChatModel, ChatTypeMsg
-from app.routes.end_user.headers import Headers
-from app.managers.bots.utils import generate_prompt
-from app.constants.error_messages import ErrorMessages
 import urllib.request
 from io import BytesIO
-from PIL import Image
+
 import ujson
+from PIL import Image
+
+from app.constants.error_messages import ErrorMessages
+from app.managers.bots.utils import generate_prompt
+from app.models.chat import ChatModel, ChatTypeMsg
+from app.routes.end_user.headers import Headers
+from app.service_clients.gemini.gemini_vision import GeminiVisionServiceClient
+
 
 class GeminiVisionAiResponse:
-
     def __init__(self):
         self.client = GeminiVisionServiceClient()
 
@@ -36,13 +38,11 @@ class GeminiVisionAiResponse:
             with urllib.request.urlopen(image_url) as response:
                 image_data = response.read()
                 return Image.open(BytesIO(image_data))
-        except urllib.error.URLError as e:
+        except urllib.error.URLError:
             return None
 
     @staticmethod
-    def generate_response(
-            chat_id: str, llm_response
-    ) -> ChatModel.ChatResponseModel:
+    def generate_response(chat_id: str, llm_response) -> ChatModel.ChatResponseModel:
         """
         Generate response for LLM.
         @param chat_id: Chat id of the conversation
