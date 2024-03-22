@@ -34,9 +34,10 @@ class SmartCodeManager:
             diff_loc = calculate_total_diff(diff)
             logger.info(f"Total diff LOC is {diff_loc}")
             if diff_loc > 350:
-                logger.info("Diff count is {}. unable to process this request.".format(len(diff)))
+                logger.info("Diff count is {}. unable to process this request.".format(diff_loc))
                 comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
                 await BitbucketProcessor.create_comment_on_pr(payload, comment)
+                return
             thread = await create_review_thread(diff, pr_detail)
             run = await create_run_id(thread)
             response = await poll_for_success(thread, run)
