@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 
 import requests
+from sanic.log import logger
 from torpedo import CONFIG
 
 from app.constants.constants import COMMENTS_DEPTH
@@ -15,6 +16,7 @@ HEADERS = {
     "Content-Type": "application/json",
     "Authorization": config.get("BITBUCKET_KEY"),
 }
+
 
 # TODO - This file should ideally be in service_client. This file is a service client for bitbucket.
 #  Extract as much logic as you can from this into manager files and move this to service_clients package.
@@ -47,15 +49,18 @@ class BitbucketProcessor:
     @staticmethod
     async def create_comment_on_line(payload, comment: dict):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
+        if comment.get("file_path"):
+            comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
         comment_payload = {
             "content": {"raw": add_corrective_code(comment)},
             "inline": {
-                "path": comment.get("file_path")[2:]
-                if re.match(r"^[ab]", comment.get("file_path"))
+                "path": re.sub(r"^[ab]/\s*", "", comment["file_path"])
+                if re.match(r"^[ab]/\s*", comment.get("file_path"))
                 else comment.get("file_path"),
                 "to": comment.get("line_number"),
             },
         }
+        logger.info(f"Comment payload: {comment_payload}")
         response = requests.post(url, headers=HEADERS, json=comment_payload)
         return response.json()
 
@@ -68,6 +73,7 @@ class BitbucketProcessor:
             "parent": {"id": comment_payload["parent"]},
             "inline": {"path": comment_payload["path"]},
         }
+        logger.info(f"Comment payload:{comment_payload}")
         response = requests.post(url, headers=HEADERS, json=comment_payload)
         return response.json()
 
