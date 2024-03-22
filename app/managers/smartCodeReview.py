@@ -51,6 +51,7 @@ class SmartCodeManager:
             response = await poll_for_success(thread, run)
             if response:
                 for comment in response.get("comments"):
+                    # TODO - If there are no comments from LLM, just add a global comment saying `LGTM :)`
                     if comment.get("confidence_score") > float(payload.get("confidence_score")):
                         await BitbucketProcessor.create_comment_on_line(payload, comment)
             # TODO - I remember we decided to return requestId back to user. So that they can come back to us with
