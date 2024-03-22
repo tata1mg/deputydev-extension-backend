@@ -49,7 +49,7 @@ class SmartCodeManager:
                 logger.info("PR comments: {}".format(comments))
                 if len(comments) > 0:
                     for comment in response.get("comments"):
-                        if comment.get("confidence_score") > float(payload.get("confidence_score")):
+                        if float(comment.get("confidence_score")) > float(payload.get("confidence_score")):
                             await BitbucketProcessor.create_comment_on_line(payload, comment)
                 else:
                     logger.info("LGTM!")
