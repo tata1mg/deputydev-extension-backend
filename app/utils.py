@@ -199,7 +199,7 @@ def remove_special_char(char, input_string):
 def add_corrective_code(data):
     corrective_comment = data.get("comment")
     if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
-        corrective_comment += f" \n ```{data.get('corrective_code')}```"
+        corrective_comment += data.get("corrective_code")
     return corrective_comment
 
 
