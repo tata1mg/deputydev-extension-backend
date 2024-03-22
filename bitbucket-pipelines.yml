@@ -1,0 +1,39 @@
+image: python:3.9
+
+pipelines:
+  pull-requests:
+    'hotfix/*':
+      - step:
+          name: Skip bitbucket pipeline
+          script:
+            - echo "Skipping bitbucket pipeline for this branch"
+    '**': #this runs as default for any branch not elsewhere defined
+      - parallel:
+          fail-fast: true
+          steps:
+            - step:
+                name: Black Formatter Check
+                script:
+                  - pip install black=="22.3.0"
+                  # Enforce style consistency across Python projects https://flake8.pycqa.org/en/latest/manpage.html
+                  - black app/ --check
+            - step:
+                name: isort Check
+                script:
+                  - pip install isort=="5.10.1"
+                  - isort app/ --check --profile black
+            - step:
+                name: Flake8 Check
+                script:
+                  - pip install flake8=="4.0.1"
+                  - flake8 app/ --ignore=E501 --extend-exclude=dist,build --show-source --statistics
+
+            - step:
+                name: Smart code review
+                script:
+                  - echo "This is a PR creation event";
+                  - echo $BITBUCKET_PR_ID;
+                  - echo $BITBUCKET_REPO_FULL_NAME;
+                  - echo $BITBUCKET_BRANCH;
+                  - "curl --location https://api.1mg.com/api/v1/scrit/init?pr_id=$BITBUCKET_PR_ID&repo_name=$BITBUCKET_REPO_FULL_NAME&branch=$BITBUCKET_BRANCH&confidence_score=0.7&pr_type=created"
+                  - echo "Done"

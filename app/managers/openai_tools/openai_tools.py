@@ -3,8 +3,8 @@ from typing import List
 from sanic.log import logger
 
 from app.managers.openai_tools.util import openaifunc
-from app.managers.serializer.lab_test_serializer import LabSkuSerializer
 from app.models.chat import ChatTypeCallAgent, ChatTypeMsg, ChatTypeSkuCard
+from app.models.serializer.lab_test_serializer import LabSkuSerializer
 from app.service_clients.labs import LabsClient
 
 

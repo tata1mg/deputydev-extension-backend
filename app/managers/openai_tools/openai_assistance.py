@@ -11,8 +11,12 @@ client = OpenAI(api_key=config.get("OPENAI_KEY"))
 assistant_id = config.get("ASSISTANT_ID")
 
 
-async def create_review_thread(diff):
-    context = f"Review the following code and add comments (if any) on any line: {diff}"
+async def create_review_thread(diff, pr_detail):
+    context = (
+        f"Review this PR with Title: '{pr_detail.get('title')}', "
+        f"Description: '{pr_detail.get('description')}', "
+        f"PR_diff: {diff}"
+    )
     return client.beta.threads.create(messages=[{"role": "user", "content": context}])
 
 
@@ -43,9 +47,9 @@ async def correct_json_response(data):
 
 async def comment_processor(data):
     context = (
-        "Upon receiving a user's comment thread carefully examine the smart code review analysis. If the comment "
-        "involves inquiries about code improvements or other technical discussions, evaluate the provided pull "
-        "request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question "
+        "Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If "
+        "the comment involves inquiries about code improvements or other technical discussions, evaluate the provided "
+        "pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question "
         "without delving into the PR diff."
     )
     return await create_gpt_request(context, data)
@@ -85,9 +89,9 @@ async def poll_for_success(thread, run):
         elif run.status == "completed":
             response = await get_response(thread)
             break
-        # Increase the interval exponentially, but cap it at max_interval_seconds
-        current_interval = min(current_interval * 2, max_interval_seconds)
-        logger.info(f"AI Response: {response}")
+        # Increase the interval by 10 sec, but cap it at max_interval_seconds
+        current_interval = min(current_interval + 10, max_interval_seconds)
+    logger.info(f"AI Response: {response}")
     return response
 
 
