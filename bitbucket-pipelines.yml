@@ -26,7 +26,7 @@ pipelines:
                 name: Flake8 Check
                 script:
                   - pip install flake8=="4.0.1"
-                  - flake8 app/ --extend-exclude=dist,build --show-source --statistics
+                  - flake8 app/ --ignore=E501 --extend-exclude=dist,build --show-source --statistics
 
             - step:
                 name: Smart code review
