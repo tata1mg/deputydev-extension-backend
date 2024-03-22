@@ -1,5 +1,4 @@
 import asyncio
-from typing import Union
 
 from sanic.log import logger
 
