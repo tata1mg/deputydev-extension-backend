@@ -172,8 +172,6 @@ def request_logger(_request) -> str:
     logger.info(f"Entry: For request ID: {headers.get('X-REQUEST-ID')}, " f"for smart_code_review")
     return headers.get("X-REQUEST-ID")
 
-
-# TODO - What is this function for and why do we have secrets and signatures pushed in code like this?
 def get_comment(payload):
     try:
         bb_payload = {}
