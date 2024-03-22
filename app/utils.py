@@ -172,6 +172,7 @@ def request_logger(_request) -> str:
     logger.info(f"Entry: For request ID: {headers.get('X-REQUEST-ID')}, " f"for smart_code_review")
     return headers.get("X-REQUEST-ID")
 
+
 def get_comment(payload):
     try:
         bb_payload = {}
