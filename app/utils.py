@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import operator
 import re
 import time
@@ -8,6 +6,8 @@ import mmh3
 from packaging.version import Version
 from sanic.log import logger
 from torpedo.common_utils import CONFIG
+
+from app.constants.constants import IGNORE_FILES
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
 name_slug_replace_string = "-"
@@ -174,23 +174,6 @@ def request_logger(_request) -> str:
 
 
 # TODO - What is this function for and why do we have secrets and signatures pushed in code like this?
-def validate_hash(payload) -> bool:
-    secret = "***REMOVED***"
-    given_signature = "sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9"
-
-    hash_object = hmac.new(
-        secret.encode("utf-8"),
-        msg=payload.encode("utf-8"),
-        digestmod=hashlib.sha256,
-    )
-    calculated_signature = "sha256=" + hash_object.hexdigest()
-
-    if not hmac.compare_digest(calculated_signature, given_signature):
-        return False
-    else:
-        return True
-
-
 def get_comment(payload):
     try:
         bb_payload = {}
@@ -211,3 +194,31 @@ def get_comment(payload):
 
 def remove_special_char(char, input_string):
     return input_string.replace(char, "")
+
+
+def add_corrective_code(data):
+    corrective_comment = data.get("comment")
+    if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
+        corrective_comment += f" \n ```{data.get('corrective_code')}```"
+    return corrective_comment
+
+
+def ignore_files(response):
+    resp_text = ""
+    for d in response.text.split("diff --git "):
+        if not any(keyword in d for keyword in IGNORE_FILES):
+            resp_text += d
+    return resp_text
+
+
+def calculate_total_diff(diff):
+    total_lies = 0
+    chunks = diff.split("@@")
+    for chunk in chunks[1:]:
+        lines = chunk.split("\n")
+        for line in lines:
+            if line.startswith("+") and not line.startswith("+++"):
+                total_lies += 1
+            elif line.startswith("-") and not line.startswith("---"):
+                total_lies += 1
+    return total_lies

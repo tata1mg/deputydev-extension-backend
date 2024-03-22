@@ -1,13 +1,12 @@
 import time
 
-from sanic import Blueprint
+from sanic import Blueprint, Websocket
 from sanic_ext import validate
 from torpedo import Request
+
 from app.managers.diagnoBot import DiagnoBotManager
 from app.models.chat import ChatModel
 from app.routes.end_user.wrapper import http_v4_wrapper
-from sanic import Websocket
-
 
 diagnoBot = Blueprint("diagnoBot")
 
@@ -17,10 +16,9 @@ diagnoBot = Blueprint("diagnoBot")
 @validate(json=ChatModel.ChatRequestModel)
 async def get_diagnobot_response(request: Request, headers: dict, **kwargs):
     payload = request.custom_json()
-    response = await DiagnoBotManager().get_diagnobot_response(
-        ChatModel.ChatRequestModel(**payload)
-    )
+    response = await DiagnoBotManager().get_diagnobot_response(ChatModel.ChatRequestModel(**payload))
     return response
+
 
 @diagnoBot.websocket("/feed")
 async def feed(request: Request, ws: Websocket):
