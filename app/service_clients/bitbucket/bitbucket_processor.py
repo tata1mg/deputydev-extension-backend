@@ -65,13 +65,13 @@ class BitbucketProcessor:
         return response.json()
 
     @staticmethod
-    async def create_comment_on_comment(payload, comment, comment_payload):
+    async def create_comment_on_comment(payload, comment, comment_data):
         url = f"{URL}/{payload.get('workspace')}/pullrequests/{payload.get('pr_id')}/comments"
         # TODO - Will this be able to add code blocks as part of comments?
         comment_payload = {
             "content": {"raw": add_corrective_code(comment)},
-            "parent": {"id": comment_payload["parent"]},
-            "inline": {"path": comment_payload["path"]},
+            "parent": {"id": comment_data["parent"]},
+            "inline": {"path": comment_data["path"]},
         }
         logger.info(f"Comment payload:{comment_payload}")
         response = requests.post(url, headers=HEADERS, json=comment_payload)
