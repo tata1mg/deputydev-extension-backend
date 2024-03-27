@@ -196,10 +196,16 @@ def remove_special_char(char, input_string):
 
 
 def add_corrective_code(data):
-    corrective_comment = data.get("comment")
-    if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
-        corrective_comment += data.get("corrective_code")
-    return corrective_comment
+    # Check if corrective_code exists and is a dictionary
+    if isinstance(data, dict):
+        comment = data.get("comment", "")
+        if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
+            comment += data.get("corrective_code", "")
+        return comment
+    elif isinstance(data, str):
+        return data
+    else:
+        return ""
 
 
 def ignore_files(response):
