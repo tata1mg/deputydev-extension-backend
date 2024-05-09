@@ -227,3 +227,11 @@ def calculate_total_diff(diff):
             elif line.startswith("-") and not line.startswith("---"):
                 total_lies += 1
     return total_lies
+
+
+def parse_collection_name(name: str) -> str:
+    # Replace any non-alphanumeric characters with hyphens
+    name = re.sub(r"[^\w-]", "--", name)
+    # Ensure the name is between 3 and 63 characters and starts/ends with alphanumeric
+    name = re.sub(r"^(-*\w{0,61}\w)-*$", r"\1", name[:63].ljust(3, "x"))
+    return name

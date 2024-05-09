@@ -17,7 +17,6 @@
     "INTERSERVICE_TIMEOUT": 50,
     "NAME": "genai",
     "PORT": 8081,
-    "REDIS_CACHE_HOSTS": {},
     "SEARCH": {
         "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
         "TIMEOUT": 10
@@ -39,9 +38,12 @@
         "TIMEOUT": 10
     },
     "EXPERIMENT": {},
-    "BITBUCKET_KEY": "",
+    "BITBUCKET": {
+        "KEY": "",
+        "URL": "https://api.bitbucket.org/2.0/repositories"
+    },
     "OPENAPI_API": "gpt3",
     "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
-    "BITBUCKET_URL": "https://api.bitbucket.org/2.0/repositories",
-    "REDIS_CACHE_HOSTS": {}
+    "REDIS_CACHE_HOSTS": {},
+    "REPO_BASE_DIR": ""
 }

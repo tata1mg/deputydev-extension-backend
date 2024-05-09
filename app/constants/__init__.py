@@ -4,6 +4,7 @@ __all__ = [
     "ListenerEventTypes",
     "Augmentation",
     "CtaActions",
+    "RepoUrl",
     "ShowJivaExperiment",
     "LabSkuCardImage",
 ]
@@ -17,3 +18,4 @@ from .constants import (
 )
 from .error_messages import ErrorMessages
 from .success_messages import SuccessMessages
+from .repo import RepoUrl
