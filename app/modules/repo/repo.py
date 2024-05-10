@@ -42,7 +42,7 @@ class RepoModule:
             parse_collection_name(self.branch_name),
         )
 
-    def _clone(self) -> git.Repo:
+    def __clone(self) -> git.Repo:
         """
         This is a private method to clone the repository if it doesn't exist locally or pull updates if it does.
         """
@@ -82,7 +82,7 @@ class RepoModule:
         """
 
         subprocess.run(["git", "config", "--global", "http.postBuffer", "524288000"])
-        self.git_repo = self._clone()
+        self.git_repo = self.__clone()
 
     async def get_pr_details(self, pr_id: int):
         """
