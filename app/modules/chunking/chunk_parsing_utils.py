@@ -82,7 +82,7 @@ def filter_file(directory: str, file: str, chunk_config: ChunkConfig) -> bool:
         if file.endswith(ext):
             return False
     for dir_name in chunk_config.exclude_dirs:
-        if file[len(directory) + 1 :].startswith(dir_name):
+        if file[len(directory) + 1:].startswith(dir_name):
             return False
     try:
         if os.stat(file).st_size > 240000:
