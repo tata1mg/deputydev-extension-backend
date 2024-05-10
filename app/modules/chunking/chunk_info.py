@@ -31,7 +31,7 @@ class ChunkInfo(BaseModel):
         lines = self.content.splitlines()
         snippet = "\n".join(
             (f"{i + self.start}: {line}" if add_lines else line)
-            for i, line in enumerate(lines[max(self.start - 1, 0) : self.end])
+            for i, line in enumerate(lines[max(self.start - 1, 0): self.end])
         )
         if add_ellipsis:
             if self.start > 1:

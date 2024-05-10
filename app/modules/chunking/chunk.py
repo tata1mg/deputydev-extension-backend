@@ -101,7 +101,7 @@ class Span:
         Returns:
             str: The extracted substring.
         """
-        return s[self.start : self.end]
+        return s[self.start: self.end]
 
     def extract_lines(self, s: str) -> str:
         """
@@ -113,7 +113,7 @@ class Span:
         Returns:
             str: The extracted substring.
         """
-        return "\n".join(s.splitlines()[self.start : self.end + 1])
+        return "\n".join(s.splitlines()[self.start: self.end + 1])
 
     def __add__(self, other: Union["Span", int]) -> "Span":
         """
