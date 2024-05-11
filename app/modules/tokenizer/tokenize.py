@@ -1,5 +1,6 @@
+from collections import Counter
 import re
-from functools import cached_property
+from functools import cached_property, lru_cache
 from typing import List
 
 
@@ -91,16 +92,33 @@ class ContentTokenizer:
             prev_token = token
         return res
 
-    @cached_property
-    def get_all_tokens(self) -> List[str]:
+    @lru_cache(maxsize=None)
+    def get_all_tokens(self, include_bigrams: bool = True, include_trigrams: bool = True) -> List[str]:
         """
         Retrieves all tokens, bigrams, and trigrams.
 
+        Args:
+            include_bigrams (bool): Whether to include bigrams or not. Default is True.
+            include_trigrams (bool): Whether to include trigrams or not. Default is True.
+
         Returns:
-            list[str]: List of all tokens, bigrams, and trigrams.
+            List[str]: List of all tokens, bigrams, and trigrams.
         """
-        bigrams: List[str] = self.construct_bigrams
-        trigrams: List[str] = self.construct_trigrams
-        self.tokens.extend(bigrams)
-        self.tokens.extend(trigrams)
-        return self.tokens
+        tokens = self.tokens
+        if include_bigrams:
+            bigrams: List[str] = self.construct_bigrams
+            tokens.extend(bigrams)
+        if include_trigrams:
+            trigrams: List[str] = self.construct_trigrams
+            tokens.extend(trigrams)
+        return tokens
+
+    @cached_property
+    def compute_document_tokens(self) -> Counter:
+        """
+        Computes the count of each token in the document.
+
+        Returns:
+            Counter: Counter object containing the count of each token.
+        """
+        return Counter(self.get_all_tokens())
