@@ -14,7 +14,7 @@ class ContentTokenizer:
         """
         self.tokens: List[str] = self.__tokenize_call(content)
 
-    @cached_property
+    @lru_cache(maxsize=None)
     def __tokenize_call(self, content: str) -> List[str]:
         """
         Tokenizes the content into individual tokens.
@@ -113,12 +113,17 @@ class ContentTokenizer:
             tokens.extend(trigrams)
         return tokens
 
-    @cached_property
-    def compute_document_tokens(self) -> Counter:
-        """
-        Computes the count of each token in the document.
 
-        Returns:
-            Counter: Counter object containing the count of each token.
-        """
-        return Counter(self.get_all_tokens())
+@lru_cache(maxsize=None)
+def compute_document_tokens(content: str) -> Counter:
+    """
+    Computes the tokens and their counts in the given document content.
+
+    Args:
+        content (str): The document content to tokenize.
+
+    Returns:
+        Counter: Counter object containing the count of each token.
+    """
+    tokenizer = ContentTokenizer(content)
+    return Counter(tokenizer.get_all_tokens())
