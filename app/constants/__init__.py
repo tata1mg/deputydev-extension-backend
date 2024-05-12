@@ -7,8 +7,10 @@ __all__ = [
     "RepoUrl",
     "ShowJivaExperiment",
     "LabSkuCardImage",
+    "CacheExpiry",
 ]
 
+from .cache import CacheExpiry
 from .constants import (
     Augmentation,
     CtaActions,

@@ -41,5 +41,23 @@ class ChunkInfo(BaseModel):
         return snippet
 
     @property
-    def denotation(self):
+    def denotation(self) -> str:
+        """
+        Returns the denotation of the source chunk.
+
+        Returns:
+            str: The denotation of the source chunk in the format "{source}:{start}-{end}".
+        """
         return f"{self.source}:{self.start}-{self.end}"
+
+    def get_xml(self, add_lines: bool = True) -> str:
+        """
+        Returns the source chunk in XML format.
+
+        Args:
+            add_lines (bool): If True, adds line numbers to the chunk in XML.
+
+        Returns:
+            str: The source chunk in XML format.
+        """
+        return f"""<chunk source="{self.source}:{self.start}-{self.end}">\n{self.get_snippet(add_lines)}\n</chunk>"""

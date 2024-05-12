@@ -1,3 +1,4 @@
+import hashlib
 import operator
 import re
 import time
@@ -235,3 +236,7 @@ def parse_collection_name(name: str) -> str:
     # Ensure the name is between 3 and 63 characters and starts/ends with alphanumeric
     name = re.sub(r"^(-*\w{0,61}\w)-*$", r"\1", name[:63].ljust(3, "x"))
     return name
+
+
+def hash_sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", "ignore")).hexdigest()
