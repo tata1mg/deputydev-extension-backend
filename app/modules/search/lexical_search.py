@@ -2,6 +2,8 @@ from collections import Counter, defaultdict
 from math import log
 from typing import Any, Dict
 
+from sanic.log import logger
+
 
 class LexicalSearch:
     """
@@ -64,7 +66,7 @@ class LexicalSearch:
         )
         return idf * tf
 
-    def search_index(self, query_tokens: Counter) -> list[tuple[str, float, dict]]:
+    def search_document(self, query_tokens: Counter) -> list[tuple[str, float, dict]]:
         """
         Search the index for documents matching the query.
 
@@ -84,3 +86,36 @@ class LexicalSearch:
             (self.metadata[doc_id], score, self.metadata.get(doc_id, {})) for doc_id, score in sorted_scores
         ]
         return results_with_metadata
+
+    def search_index(self, query_tokens: Counter) -> Dict[int, float]:
+        """
+        Search the index based on a query.
+
+        This function takes a query_tokens as input and returns a dictionary of document IDs
+        and their corresponding scores.
+
+        Args:
+            query_tokens (Counter): The token frequency Counter for the query.
+
+        Returns:
+            Dict[int, float]: A dictionary containing document IDs and their scores.
+        """
+        try:
+            results_with_metadata = self.search_document(query_tokens)
+            # Search the index
+            res = {}
+            for doc_id, score, _ in results_with_metadata:
+                if doc_id not in res:
+                    res[doc_id] = score
+            # min max normalize scores from 0.5 to 1
+            if len(res) == 0:
+                max_score = 1
+                min_score = 0
+            else:
+                max_score = max(res.values())
+                min_score = min(res.values()) if min(res.values()) < max_score else 0
+            res = {k: (v - min_score) / (max_score - min_score) for k, v in res.items()}
+            return res
+        except Exception as e:
+            logger.exception(e)
+            return {}
