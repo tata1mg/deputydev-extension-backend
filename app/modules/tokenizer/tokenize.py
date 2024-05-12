@@ -1,5 +1,5 @@
-from collections import Counter
 import re
+from collections import Counter
 from functools import cached_property, lru_cache
 from typing import List
 

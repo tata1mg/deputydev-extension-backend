@@ -13,6 +13,7 @@ PR_SIZE_TOO_BIG_MESSAGE = (
     "quickly and have much lower chances of getting reverted. This PR was found to have a diff "
     "of {} lines. SCRIT will only review PRs having diff lines less than 350."
 )
+BATCH_SIZE = 24
 
 
 class ListenerEventTypes(Enum):

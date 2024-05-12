@@ -1,4 +1,4 @@
-CHARACTER_SIZE = 1200
+CHARACTER_SIZE = 4000
 
 EXTENSION_TO_LANGUAGE = {
     "js": "javascript",
