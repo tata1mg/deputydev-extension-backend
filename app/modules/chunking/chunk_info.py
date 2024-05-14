@@ -60,4 +60,4 @@ class ChunkInfo(BaseModel):
         Returns:
             str: The source chunk in XML format.
         """
-        return f"""<chunk source="{self.source}:{self.start}-{self.end}">\n{self.get_snippet(add_lines)}\n</chunk>"""
+        return f"""<chunk source="{self.denotation}">\n{self.get_chunk_content(add_lines)}\n</chunk>"""
