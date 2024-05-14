@@ -7,8 +7,10 @@ __all__ = [
     "RepoUrl",
     "ShowJivaExperiment",
     "LabSkuCardImage",
+    "ChunkFileSizeLimit",
 ]
 
+from .chunking import ChunkFileSizeLimit
 from .constants import (
     Augmentation,
     CtaActions,
