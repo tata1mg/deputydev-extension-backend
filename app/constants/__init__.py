@@ -8,8 +8,10 @@ __all__ = [
     "ShowJivaExperiment",
     "LabSkuCardImage",
     "CacheExpiry",
+    "ChunkFileSizeLimit"
 ]
 
+from .chunking import ChunkFileSizeLimit
 from .cache import CacheExpiry
 from .constants import (
     Augmentation,
