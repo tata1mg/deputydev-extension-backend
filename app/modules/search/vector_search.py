@@ -87,7 +87,7 @@ async def compute_vector_search_scores(query: str, chunks: List[ChunkInfo]) -> d
         dict: Dictionary mapping chunk denotations to similarity scores.
     """
     chunk_str_to_contents = {
-        chunk.denotation: chunk.get_snippet(add_ellipsis=False, add_lines=False) for chunk in chunks
+        chunk.denotation: chunk.get_chunk_content(add_ellipsis=False, add_lines=False) for chunk in chunks
     }
     chunk_contents_array = list(chunk_str_to_contents.values())
     query_snippet_similarities = await get_query_texts_similarity(query, chunk_contents_array)

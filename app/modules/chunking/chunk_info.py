@@ -17,9 +17,9 @@ class ChunkInfo(BaseModel):
     end: int
     source: str
 
-    def get_snippet(self, add_ellipsis: bool = True, add_lines: bool = True):
+    def get_chunk_content(self, add_ellipsis: bool = True, add_lines: bool = True):
         """
-        Get a snippet of the chunk.
+        Get a content of the chunk.
 
         Args:
             add_ellipsis (bool, optional): Whether to add ellipsis (...) at the beginning and end of the snippet. Defaults to True.
@@ -60,4 +60,4 @@ class ChunkInfo(BaseModel):
         Returns:
             str: The source chunk in XML format.
         """
-        return f"""<chunk source="{self.source}:{self.start}-{self.end}">\n{self.get_snippet(add_lines)}\n</chunk>"""
+        return f"""<chunk source="{self.denotation}">\n{self.get_chunk_content(add_lines)}\n</chunk>"""

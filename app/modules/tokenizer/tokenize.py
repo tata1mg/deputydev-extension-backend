@@ -115,15 +115,17 @@ class ContentTokenizer:
 
 
 @lru_cache(maxsize=None)
-def compute_document_tokens(content: str) -> Counter:
+def compute_document_tokens(content: str, include_bigrams: bool = True, include_trigrams: bool = True) -> Counter:
     """
     Computes the tokens and their counts in the given document content.
 
     Args:
         content (str): The document content to tokenize.
+        include_bigrams (bool): Whether to include bigrams or not. Default is True.
+        include_trigrams (bool): Whether to include trigrams or not. Default is True.
 
     Returns:
         Counter: Counter object containing the count of each token.
     """
     tokenizer = ContentTokenizer(content)
-    return Counter(tokenizer.get_all_tokens())
+    return Counter(tokenizer.get_all_tokens(include_bigrams, include_trigrams))
