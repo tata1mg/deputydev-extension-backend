@@ -54,7 +54,7 @@ def get_line_number(index: int, source_code: str) -> int:
     for line_number, line in enumerate(source_code.splitlines(keepends=True), start=1):
         total_chars += len(line)
         if total_chars > index:
-            return line_number
+            return line_number - 1
     return line_number
 
 
@@ -145,7 +145,7 @@ class Span:
         return self.end - self.start
 
 
-def chunk_tree(
+def chunk_code(
     tree,
     source_code: bytes,
     MAX_CHARS=CHARACTER_SIZE,
@@ -233,12 +233,12 @@ def chunk_tree(
     return line_chunks
 
 
-def naive_chunker(code: str, line_count: int = 30, overlap: int = 15):
+def chunk_content(content: str, line_count: int = 30, overlap: int = 15):
     """
-    Naive chunking of code based on line count and overlap.
+    Default chunking of content based on line count and overlap.
 
     Args:
-        code (str): The source code string.
+        content (str): The source content string.
         line_count (int): Number of lines per chunk.
         overlap (int): Overlap between chunks.
 
@@ -247,7 +247,7 @@ def naive_chunker(code: str, line_count: int = 30, overlap: int = 15):
     """
     if overlap >= line_count:
         raise ValueError("Overlap should be smaller than line_count.")
-    lines = code.split("\n")
+    lines = content.split("\n")
     total_lines = len(lines)
     chunks = []
 
@@ -283,10 +283,10 @@ def chunk_source(
     if ext in EXTENSION_TO_LANGUAGE:
         language = EXTENSION_TO_LANGUAGE[ext]
     else:
-        # Fallback to naive chunking if tree_sitter fails
+        # Fallback to default chunking if tree_sitter fails
         line_count = 50
         overlap = 0
-        get_chunks = naive_chunker(content, line_count, overlap)
+        get_chunks = chunk_content(content, line_count, overlap)
         chunks = []
         for idx, chunk in enumerate(get_chunks):
             end = min((idx + 1) * (line_count - overlap), len(content.split("\n")))
@@ -301,7 +301,7 @@ def chunk_source(
     try:
         parser = get_parser(language)
         tree = parser.parse(content.encode("utf-8"))
-        get_chunks = chunk_tree(tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce)
+        get_chunks = chunk_code(tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce)
         chunks = []
         for chunk in get_chunks:
             new_snippet = ChunkInfo(
