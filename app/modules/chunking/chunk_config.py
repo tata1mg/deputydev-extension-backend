@@ -3,10 +3,9 @@ from typing import List
 
 import git
 import yaml
-from pydantic import BaseModel
 
 
-class ChunkConfig(BaseModel):
+class ChunkConfig:
     """
     Configuration settings for chunking files.
     """
@@ -89,6 +88,9 @@ class ChunkConfig(BaseModel):
     ]
 
 
+# We are not currently using this function as of now, as this would require adding deputy_dev.yaml in the
+# existing repo, which we are not considering as part of initial release, but later on should be considered
+# to give more flexibility to the user to allow which files should be chunked.
 @lru_cache(maxsize=None)
 def get_blocked_dirs(repo: git.Repo) -> List[str]:
     """

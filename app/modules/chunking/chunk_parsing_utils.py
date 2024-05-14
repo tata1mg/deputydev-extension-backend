@@ -1,17 +1,18 @@
 import multiprocessing
 import os
-from typing import Generator, List, Optional, Set
+from typing import Generator, Set
 
 from sanic.log import logger
 from tqdm import tqdm
 
+from app.constants import ChunkFileSizeLimit
 from app.modules.chunking.chunk_info import ChunkInfo
 
 from .chunk import chunk_source
 from .chunk_config import ChunkConfig
 
 
-def dfs(file_path: str, visited: Set[str]) -> Generator[str, None, None]:
+def get_absolute_path(file_path: str, visited: Set[str]) -> Generator[str, None, None]:
     """
     Recursively traverses the directory structure starting from the given file path.
 
@@ -34,37 +35,31 @@ def dfs(file_path: str, visited: Set[str]) -> Generator[str, None, None]:
     visited.add(file_path)
     if os.path.isdir(file_path):
         for file_name in os.listdir(file_path):
-            for sub_file_path in dfs(os.path.join(file_path, file_name), visited):
+            for sub_file_path in get_absolute_path(os.path.join(file_path, file_name), visited):
                 yield sub_file_path
     else:
         yield file_path
 
 
-def read_file_with_fallback_encodings(source: str, encodings: Optional[List[str]] = None) -> str:
+def read_file_with_fallback_encodings(source: str) -> str:
     """
-    Reads the content of a file with fallback encodings if the default encoding fails.
+    Reads the content of a file with utf-8 encoding.
 
     Args:
         source (str): The path to the file to be read.
-        encodings (List[str], optional): List of encodings to try. Defaults to ["utf-8", "windows-1252", "iso-8859-1"].
 
     Returns:
         str: The content of the file.
 
     Raises:
-        UnicodeDecodeError: If the file cannot be decoded with any of the specified encodings.
+        UnicodeDecodeError: If the file cannot be decoded with utf-8 encoding.
     """
-    if encodings is None:
-        encodings = ["utf-8", "windows-1252", "iso-8859-1"]
 
-    for encoding in encodings:
-        try:
-            with open(source, "r", encoding=encoding) as file:
-                return file.read()
-        except UnicodeDecodeError:
-            continue
-
-    raise UnicodeDecodeError(f"Could not decode {source} with any of the specified encodings: {encodings}")
+    try:
+        with open(source, "r", encoding="utf-8") as file:
+            return file.read()
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"Could not decode {source} with utf-8 encoding")
 
 
 def filter_file(directory: str, file: str, chunk_config: ChunkConfig) -> bool:
@@ -84,42 +79,25 @@ def filter_file(directory: str, file: str, chunk_config: ChunkConfig) -> bool:
     for dir_name in chunk_config.exclude_dirs:
         if file[len(directory) + 1 :].startswith(dir_name):
             return False
+
+    # keeping the file size check for now, but need a discussion on whether we should have it
+    # or not in the first place
     try:
-        if os.stat(file).st_size > 240000:
+        if os.stat(file).st_size > ChunkFileSizeLimit.MAX.value:
             return False
-        if os.stat(file).st_size < 10:
+        if os.stat(file).st_size < ChunkFileSizeLimit.MIN.value:
             return False
     except FileNotFoundError as e:
         logger.error(f"File not found: {file}. Error: {e}")
         return False
     if not os.path.isfile(file):
         return False
-    with open(file, "rb") as f:
-        is_binary = False
-        for block in iter(lambda: f.read(1024), b""):
-            if b"\0" in block:
-                is_binary = True
-                break
-        if is_binary:
-            return False
-        f.close()
     try:
         # fetch file
-        data = read_file_with_fallback_encodings(file)
-        lines = data.split("\n")
+        read_file_with_fallback_encodings(file)
     except UnicodeDecodeError:
         logger.warning(f"UnicodeDecodeError: {file}, skipping")
         return False
-    line_count = len(lines)
-    # if average line length is greater than 200, then it is likely not human readable
-    if len(data) / line_count > 200:
-        return False
-    # # check token density, if it is greater than 2, then it is likely not human readable
-    # token_count = tiktoken_client.count(data)
-    # if token_count == 0:
-    #     return False
-    # if len(data)/token_count < 2:
-    #     return False
     return True
 
 
@@ -133,15 +111,9 @@ def is_dir_too_big(file_name: str, file_threshold: int = 240) -> bool:
 
     Returns:
         bool: True if the directory is considered too big, False otherwise.
-
-    Note:
-        Directories named 'node_modules', '.venv', 'build', 'venv', or 'patch' are considered too big.
     """
     dir_file_count = {}
     dir_name = os.path.dirname(file_name)
-    only_file_name = os.path.basename(dir_name)
-    if only_file_name in ("node_modules", ".venv", "build", "venv", "patch"):
-        return True
     if dir_name not in dir_file_count:
         dir_file_count[dir_name] = len(os.listdir(dir_name))
     return dir_file_count[dir_name] > file_threshold
@@ -198,7 +170,7 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
     chunk_config = config if config else ChunkConfig()
     logger.info(f"Reading files from {directory}")
     visited = set()
-    file_list = dfs(directory, visited)
+    file_list = get_absolute_path(directory, visited)
     file_list = [
         file_name
         for file_name in file_list

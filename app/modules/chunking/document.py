@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List
+
 from .chunk_info import ChunkInfo
 
 
@@ -33,7 +34,7 @@ def chunks_to_docs(chunks: List[ChunkInfo], len_dir: int) -> List[Document]:
         docs.append(
             Document(
                 title=f"{chunk.source[len_dir:]}:{chunk.start}-{chunk.end}",
-                content=chunk.get_snippet(add_ellipsis=False, add_lines=False),
+                content=chunk.get_chunk_content(add_ellipsis=False, add_lines=False),
             )
         )
     return docs

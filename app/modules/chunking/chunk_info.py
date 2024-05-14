@@ -17,9 +17,9 @@ class ChunkInfo(BaseModel):
     end: int
     source: str
 
-    def get_snippet(self, add_ellipsis: bool = True, add_lines: bool = True):
+    def get_chunk_content(self, add_ellipsis: bool = True, add_lines: bool = True):
         """
-        Get a snippet of the chunk.
+        Get a content of the chunk.
 
         Args:
             add_ellipsis (bool, optional): Whether to add ellipsis (...) at the beginning and end of the snippet. Defaults to True.
