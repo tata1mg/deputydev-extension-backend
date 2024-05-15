@@ -7,6 +7,7 @@ class LLMClient:
     """
     Client class for interacting with the Language Model (LLM) service.
     """
+
     def __init__(self) -> None:
         self.client_type: str = "openai"
 

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict
 
 import requests
 from torpedo import CONFIG
@@ -70,3 +71,18 @@ class BitBucketModule:
             raise ValueError("Unable to retrieve PR diff.")
         else:
             return ignore_files(response)
+
+    async def create_comment_on_pr(self, comment: str) -> Dict[str, Any]:
+        """
+        Create a comment on the pull request.
+
+        Parameters:
+        - comment (str): The content of the comment.
+
+        Returns:
+        - Dict[str, Any]: A dictionary containing the response from the server.
+        """
+        url = f"{self.bitbucket_url}/{self.workspace}/pullrequests/{self.pr_id}/comments"
+        comment_payload = {"content": {"raw": comment}}
+        response = requests.post(url, headers=self.headers, json=comment_payload)
+        return response.json()
