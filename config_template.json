@@ -15,6 +15,8 @@
     "HOST": "0.0.0.0",
     "HTTP_VERSION": "1.0.0",
     "INTERSERVICE_TIMEOUT": 50,
+    "BITBUCKET_KEY": "",
+    "BITBUCKET_URL": "",
     "NAME": "genai",
     "PORT": 8081,
     "SEARCH": {
@@ -45,7 +47,7 @@
     "OPENAPI_API": "gpt3",
     "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
     "REDIS_CACHE_HOSTS": {
-        "genai": {
+        "zeus": {
             "LABEL": "",
             "REDIS_HOST": "localhost",
             "REDIS_PORT": 6379
