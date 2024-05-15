@@ -180,8 +180,13 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
     ]
     logger.info("Done reading files")
     all_chunks = []
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as pool:
-        for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
+    if (multiprocessing.cpu_count() // 4) > 0:
+        # use 1/4 the max number of cores
+        with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as pool:
+            for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
+                all_chunks.extend(chunks)
+    else:
+        for chunks in tqdm((create_chunks, file_list), total=len(file_list)):
             all_chunks.extend(chunks)
     return all_chunks, file_list
 
