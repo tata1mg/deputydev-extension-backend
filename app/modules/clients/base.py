@@ -9,7 +9,7 @@ class BaseClient:
     Base client class for vector normalization.
     """
 
-    def normalize_l2(x: np.ndarray) -> np.ndarray:
+    def normalize_l2(self, x: np.ndarray) -> np.ndarray:
         """
         Normalize vectors using L2 normalization.
 

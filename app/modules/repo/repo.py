@@ -121,3 +121,18 @@ class RepoModule:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
         bitbucket_module = BitBucketModule(self.repo_full_name, pr_id)
         return await bitbucket_module.get_pr_diff()
+
+    async def create_comment_on_pr(self, pr_id: int, comment):
+        """
+        Create a comment on the pull request.
+
+        Parameters:
+        - pr_id (int): The ID of the pull request.
+
+        Returns:
+        - Dict[str, Any]: A dictionary containing the response from the server.
+        """
+        if self.vcs_type != "bitbucket":
+            raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
+        bitbucket_module = BitBucketModule(self.repo_full_name, pr_id)
+        return await bitbucket_module.create_comment_on_pr(comment)

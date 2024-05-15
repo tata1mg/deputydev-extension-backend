@@ -184,3 +184,12 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
         for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
             all_chunks.extend(chunks)
     return all_chunks, file_list
+
+
+def render_snippet_array(chunks):
+    joined_chunks = "\n".join([chunk.get_xml(add_lines=False) for chunk in chunks])
+    start_chunk_tag = "<relevant_chunks_in_repo>"
+    end_chunk_tag = "</relevant_chunks_in_repo>"
+    if joined_chunks.strip() == "":
+        return ""
+    return start_chunk_tag + "\n" + joined_chunks + "\n" + end_chunk_tag

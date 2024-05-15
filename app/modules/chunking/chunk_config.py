@@ -85,6 +85,8 @@ class ChunkConfig:
         "pnpm-lock.yaml",
         "LICENSE",
         "poetry.lock",
+        ".woff2",
+        ".otf",
     ]
 
 
