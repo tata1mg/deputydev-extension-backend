@@ -1,16 +1,14 @@
-from dataclasses import dataclass
 from typing import Any, List
 
 from .openai import OpenAIClient
 
 
-@dataclass
 class LLMClient:
     """
     Client class for interacting with the Language Model (LLM) service.
     """
-
-    client_type: str = "openai"
+    def __init__(self) -> None:
+        self.client_type: str = "openai"
 
     async def get_embeddings(self, input_data: List[Any]) -> List[List[float]]:
         """
