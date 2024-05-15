@@ -45,7 +45,7 @@ class CodeReviewManager:
         }
         repo = RepoModule(payload.get("repo_full_name"), payload.get("branch_name"))
         pr_detail = await repo.get_pr_details(payload.get("pr_id"))
-        if payload.get("pr_type") == "created" and not pr_detail.created:
+        if payload.get("pr_type") == "test" and not pr_detail.created:
             return
         else:
             logger.info("Processing started.")
@@ -64,10 +64,17 @@ class CodeReviewManager:
                 index = LexicalSearch()
                 all_tokens = []
                 try:
-                    # use 1/4 the max number of cores
-                    with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as p:
+                    if (multiprocessing.cpu_count() // 4) > 0:
+                        # use 1/4 the max number of cores
+                        with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as p:
+                            for i, document_token_freq in tqdm(
+                                enumerate(p.imap(compute_document_tokens, [doc.content for doc in all_docs])),
+                                total=len(all_docs),
+                            ):
+                                all_tokens.append(document_token_freq)
+                    else:
                         for i, document_token_freq in tqdm(
-                            enumerate(p.imap(compute_document_tokens, [doc.content for doc in all_docs])),
+                            enumerate(compute_document_tokens, [doc.content for doc in all_docs]),
                             total=len(all_docs),
                         ):
                             all_tokens.append(document_token_freq)
