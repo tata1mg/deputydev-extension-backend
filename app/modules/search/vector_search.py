@@ -1,10 +1,6 @@
-import math
-import multiprocessing
 from typing import List, Tuple
 
 import numpy as np
-from tqdm import tqdm
-
 from app.constants.constants import BATCH_SIZE
 from app.modules.chunking.chunk_info import ChunkInfo
 from app.modules.clients import LLMClient
@@ -23,18 +19,7 @@ async def embed_text_array(texts: Tuple[str]) -> List[np.ndarray]:
     embeddings = []
     texts = [text if text else " " for text in texts]
     batches = [texts[i : i + BATCH_SIZE] for i in range(0, len(texts), BATCH_SIZE)]
-    workers = min(max(1, math.ceil(multiprocessing.cpu_count() // 4)), 1)
-    if workers > 1:
-        with multiprocessing.Pool(processes=workers) as pool:
-            embeddings = list(
-                tqdm(
-                    pool.imap(await LLMClient().get_embeddings, batches),
-                    total=len(batches),
-                    desc="openai embedding",
-                )
-            )
-    else:
-        embeddings = [await LLMClient().get_embeddings(batch) for batch in tqdm(batches, desc="create embedding")]
+    embeddings = [await LLMClient().get_embeddings(batch) for batch in batches]
     return embeddings
 
 

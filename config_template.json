@@ -47,7 +47,7 @@
     "OPENAPI_API": "gpt3",
     "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
     "REDIS_CACHE_HOSTS": {
-        "zeus": {
+        "genai": {
             "LABEL": "",
             "REDIS_HOST": "localhost",
             "REDIS_PORT": 6379
