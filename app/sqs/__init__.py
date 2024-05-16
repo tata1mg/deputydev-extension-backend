@@ -1,2 +1,3 @@
-__all__ = ["ReorderWidgetWorker"]
-from .order_service import ReorderWidgetWorker
+__all__ = ["GenaiSubscriber"]
+
+from .genai_subscriber import GenaiSubscriber

@@ -15,13 +15,11 @@ from .model import Response
 """
 
 
-class Base:
-    def __init__(self, config: dict, event_handler):
+class BaseSubscriber:
+    def __init__(self, config: dict):
         self.config = config or {}
         self.sqs_manager = BaseSQSWrapper(config)
-        self._create_client_lock = asyncio.Semaphore(1)
         self.is_client_created = False
-        self.event_handler = event_handler
 
     async def init(self):
         if not self.is_client_created:

@@ -28,6 +28,11 @@ class CodeReviewManager:
     """Manager for processing Pull Request reviews."""
 
     @classmethod
+    async def handle_event(cls, data: Dict[str, Any]) -> None:
+        logger.info("Received SQS Message: {}".format(data))
+
+
+    @classmethod
     async def process_pr_review(cls, data: Dict[str, Any]) -> None:
         """Process a Pull Request review asynchronously."""
         asyncio.ensure_future(cls.background_task(data))
