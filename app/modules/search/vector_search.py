@@ -1,6 +1,7 @@
 from typing import List, Tuple
 
 import numpy as np
+
 from app.constants.constants import BATCH_SIZE
 from app.modules.chunking.chunk_info import ChunkInfo
 from app.modules.clients import LLMClient

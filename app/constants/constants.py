@@ -7,7 +7,7 @@ ENVIRONMENT = CONFIG.config["ENVIRONMENT"]
 CONFIDENCE_SCORE = 0.7
 MAX_LINE_CHANGES = 350
 # TODO - Provision a feature where users can define these files in the repo itself.
-IGNORE_FILES = ["Pipfile", "Pipfile.lock", "bitbucket-pipelines.yml"]
+IGNORE_FILES = ["Pipfile", "Pipfile.lock", "bitbucket-pipelines.yml", "package-lock.json"]
 COMMENTS_DEPTH = 7
 PR_SIZE_TOO_BIG_MESSAGE = (
     "Ideal pull requests are not more than 50 lines. PRs with smaller diff are merged relatively "
