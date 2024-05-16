@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -26,7 +27,7 @@ class RepoModule:
         Remove the cloned repo
         """
         try:
-            os.remove(self.repo_dir)
+            shutil.rmtree(self.repo_dir)
             return True
         except Exception as e:
             print('--------->>>> EEEE', e)
