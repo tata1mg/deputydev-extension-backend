@@ -8,6 +8,6 @@ from app.constants import CacheExpiry
 
 class Base(RedisCache):
     _service_prefix = "genai"
-    _host = CONFIG.config["REDIS_CACHE_HOSTS"]["zeus"]["LABEL"]
+    _host = CONFIG.config["REDIS_CACHE_HOSTS"]["genai"]["LABEL"]
     _key_prefix = ""
     _expire_in_sec = CacheExpiry.DEFAULT

@@ -1,10 +1,7 @@
-import math
 import asyncio
-import multiprocessing
 from typing import Any, Dict, List
 
 from sanic.log import logger
-from tqdm import tqdm
 
 from app.constants.constants import (
     CONFIDENCE_SCORE,
@@ -65,16 +62,10 @@ class CodeReviewManager:
                 index = LexicalSearch()
                 all_tokens = []
                 try:
-                    # use 1/4 the max number of cores
-                    with multiprocessing.Pool(processes=math.ceil(multiprocessing.cpu_count() // 4)) as p:
-                        for i, document_token_freq in tqdm(
-                            enumerate(p.imap(compute_document_tokens, [doc.content for doc in all_docs])),
-                            total=len(all_docs),
-                        ):
-                            all_tokens.append(document_token_freq)
-                    for doc, document_token_freq in tqdm(
-                        zip(all_docs, all_tokens), desc="Indexing", total=len(all_docs)
-                    ):
+                    for doc in all_docs:
+                        document_token_freq = compute_document_tokens(doc.content)
+                        all_tokens.append(document_token_freq)
+                    for doc, document_token_freq in zip(all_docs, all_tokens):
                         index.add_document(title=doc.title, token_freq=document_token_freq)
                 except FileNotFoundError as e:
                     logger.exception(e)
@@ -85,7 +76,7 @@ class CodeReviewManager:
                 search_tokens = ContentTokenizer(diff).get_all_tokens()
                 content_to_lexical_score_list = index.search_index(search_tokens)
                 files_to_scores_list = await compute_vector_search_scores(diff, all_chunks)
-                for chunk in tqdm(all_chunks):
+                for chunk in all_chunks:
                     vector_score = files_to_scores_list.get(chunk.denotation, 0.04)
                     chunk_score = 0.02
                     if chunk.denotation in content_to_lexical_score_list:
