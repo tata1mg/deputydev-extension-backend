@@ -1,10 +1,7 @@
-import multiprocessing
 import os
-import math
 from typing import Generator, Set
 
 from sanic.log import logger
-from tqdm import tqdm
 
 from app.constants import ChunkFileSizeLimit
 from app.modules.chunking.chunk_info import ChunkInfo
@@ -181,10 +178,8 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
     ]
     logger.info("Done reading files")
     all_chunks = []
-    # use 1/4 the max number of cores
-    with multiprocessing.Pool(processes=math.ceil(multiprocessing.cpu_count() // 4)) as pool:
-        for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
-            all_chunks.extend(chunks)
+    for file in file_list:
+        all_chunks.extend(create_chunks(file))
     return all_chunks, file_list
 
 
