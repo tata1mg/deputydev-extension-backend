@@ -21,14 +21,15 @@ class RepoModule:
     branch_name: str
     vcs_type: str = "bitbucket"
 
-    def __del__(self) -> bool:
+    def delete_repo(self) -> bool:
         """
         Remove the cloned repo
         """
         try:
             os.remove(self.repo_dir)
             return True
-        except Exception:
+        except Exception as e:
+            print('--------->>>> EEEE', e)
             return False
 
     @cached_property

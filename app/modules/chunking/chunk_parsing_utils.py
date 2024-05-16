@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import math
 from typing import Generator, Set
 
 from sanic.log import logger
@@ -180,13 +181,9 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
     ]
     logger.info("Done reading files")
     all_chunks = []
-    if (multiprocessing.cpu_count() // 4) > 0:
-        # use 1/4 the max number of cores
-        with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as pool:
-            for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
-                all_chunks.extend(chunks)
-    else:
-        for chunks in tqdm((create_chunks, file_list), total=len(file_list)):
+    # use 1/4 the max number of cores
+    with multiprocessing.Pool(processes=math.ceil(multiprocessing.cpu_count() // 4)) as pool:
+        for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
             all_chunks.extend(chunks)
     return all_chunks, file_list
 

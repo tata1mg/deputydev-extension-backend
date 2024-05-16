@@ -1,3 +1,4 @@
+import math
 import multiprocessing
 from typing import List, Tuple
 
@@ -22,7 +23,7 @@ async def embed_text_array(texts: Tuple[str]) -> List[np.ndarray]:
     embeddings = []
     texts = [text if text else " " for text in texts]
     batches = [texts[i : i + BATCH_SIZE] for i in range(0, len(texts), BATCH_SIZE)]
-    workers = min(max(1, multiprocessing.cpu_count() // 4), 1)
+    workers = min(max(1, math.ceil(multiprocessing.cpu_count() // 4)), 1)
     if workers > 1:
         with multiprocessing.Pool(processes=workers) as pool:
             embeddings = list(
