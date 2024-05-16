@@ -1,27 +1,26 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict
 
 import requests
 from torpedo import CONFIG
 
-from app.modules.repo.schemas import PullRequestResponse
+from app.dao.repo import PullRequestResponse
 from app.utils import ignore_files
 
 
-@dataclass
 class BitBucketModule:
     """
     A class for interacting with Bitbucket API.
     """
 
-    workspace: str
-    pr_id: int
-    bitbucket_url = CONFIG.config["BITBUCKET"]["URL"]
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": CONFIG.config["BITBUCKET"]["KEY"],
-    }
+    def __init__(self, workspace: str, pr_id: int) -> None:
+        self.workspace = workspace
+        self.pr_id = pr_id
+        self.bitbucket_url = CONFIG.config["BITBUCKET"]["URL"]
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": CONFIG.config["BITBUCKET"]["KEY"],
+        }
 
     async def get_pr_details(self) -> PullRequestResponse:
         """
@@ -39,7 +38,7 @@ class BitBucketModule:
             headers=self.headers,
         )
         if response.status_code != 200:
-            raise ValueError("Unable to process the PR")
+            raise ValueError(f"Unable to process PR - {self.pr_id}: {response._content}")
         else:
             data = response.json()
             created_time = datetime.fromisoformat(data["created_on"][:-6])
@@ -68,11 +67,11 @@ class BitBucketModule:
             headers=self.headers,
         )
         if response.status_code != 200:
-            raise ValueError("Unable to retrieve PR diff.")
+            raise ValueError(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
         else:
             return ignore_files(response)
 
-    async def create_comment_on_pr(self, comment: str) -> Dict[str, Any]:
+    async def create_comment_on_pr(self, comment: dict) -> Dict[str, Any]:
         """
         Create a comment on the pull request.
 
@@ -83,6 +82,5 @@ class BitBucketModule:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
         url = f"{self.bitbucket_url}/{self.workspace}/pullrequests/{self.pr_id}/comments"
-        comment_payload = {"content": {"raw": comment}}
-        response = requests.post(url, headers=self.headers, json=comment_payload)
+        response = requests.post(url, headers=self.headers, json=comment)
         return response.json()

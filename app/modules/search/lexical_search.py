@@ -1,8 +1,11 @@
 from collections import Counter, defaultdict
 from math import log
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from sanic.log import logger
+
+from app.modules.chunking.document import Document
+from app.modules.tokenizer.tokenize import ContentTokenizer, compute_document_tokens
 
 
 class LexicalSearch:
@@ -119,3 +122,57 @@ class LexicalSearch:
         except Exception as e:
             logger.exception(e)
             return {}
+
+
+def create_lexical_search_tokens(all_docs: List[Document]) -> LexicalSearch:
+    """
+    Create lexical search tokens from a list of documents.
+
+    Args:
+        all_docs (List[Document]): List of Document objects containing title and content.
+
+    Returns:
+        LexicalSearch: Lexical search index containing tokens for all documents.
+    """
+
+    # Initialize an empty LexicalSearch index
+    index = LexicalSearch()
+
+    # List to store token frequency dictionaries for all documents
+    all_tokens = []
+    try:
+        for doc in all_docs:
+            # Compute token frequency for each document
+            document_token_freq = compute_document_tokens(doc.content)
+            # Add the token frequency dictionary to the list
+            all_tokens.append(document_token_freq)
+
+        # Add documents and their token frequencies to the index
+        for doc, document_token_freq in zip(all_docs, all_tokens):
+            index.add_document(title=doc.title, token_freq=document_token_freq)
+    except FileNotFoundError as e:
+        logger.exception(e)
+
+    # Return the created index
+    return index
+
+
+def perform_lexical_search(query: str, index: LexicalSearch) -> Dict[int, float]:
+    """
+    Perform lexical search using a query and a lexical search index.
+
+    Args:
+        query (str): The search query.
+        index (LexicalSearch): The lexical search index.
+
+    Returns:
+        Dict[int, float]: A dictionary mapping document IDs to their lexical scores.
+    """
+    # Tokenize the query
+    search_tokens = ContentTokenizer(query).get_all_tokens()
+
+    # Search the index for the tokens and get document-to-score mappings
+    content_to_lexical_score_list = index.search_index(search_tokens)
+
+    # Return the document-to-score mappings
+    return content_to_lexical_score_list
