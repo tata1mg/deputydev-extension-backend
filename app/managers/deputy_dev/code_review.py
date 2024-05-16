@@ -1,3 +1,4 @@
+import math
 import asyncio
 import multiprocessing
 from typing import Any, Dict, List
@@ -64,17 +65,10 @@ class CodeReviewManager:
                 index = LexicalSearch()
                 all_tokens = []
                 try:
-                    if (multiprocessing.cpu_count() // 4) > 0:
-                        # use 1/4 the max number of cores
-                        with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as p:
-                            for i, document_token_freq in tqdm(
-                                enumerate(p.imap(compute_document_tokens, [doc.content for doc in all_docs])),
-                                total=len(all_docs),
-                            ):
-                                all_tokens.append(document_token_freq)
-                    else:
+                    # use 1/4 the max number of cores
+                    with multiprocessing.Pool(processes=math.ceil(multiprocessing.cpu_count() // 4)) as p:
                         for i, document_token_freq in tqdm(
-                            enumerate(compute_document_tokens, [doc.content for doc in all_docs]),
+                            enumerate(p.imap(compute_document_tokens, [doc.content for doc in all_docs])),
                             total=len(all_docs),
                         ):
                             all_tokens.append(document_token_freq)
@@ -128,4 +122,5 @@ class CodeReviewManager:
                     else:
                         logger.info("LGTM!")
                         await repo.create_comment_on_pr(payload.get("pr_id"), "LGTM!!")
-                    return
+                repo.delete_repo()
+                return
