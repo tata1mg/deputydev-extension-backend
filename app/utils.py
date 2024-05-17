@@ -7,6 +7,8 @@ import mmh3
 from packaging.version import Version
 from sanic.log import logger
 from torpedo.common_utils import CONFIG
+from torpedo import Task, TaskExecutor
+from typing import Any, Dict, List
 
 from app.constants.constants import IGNORE_FILES
 
@@ -240,3 +242,30 @@ def parse_collection_name(name: str) -> str:
 
 def hash_sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", "ignore")).hexdigest()
+
+
+def build_openai_conversation_message(system_message, user_message) -> list:
+    """
+    Build the conversation message list to be passed to openai.
+    """
+    message = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message}
+    ]
+    return message
+
+
+async def get_task_response(tasks: List[Task]) -> Dict[str, Any]:
+    response = {}
+    if tasks:
+        task_results = await TaskExecutor(tasks=tasks).submit()
+        for idx, result in enumerate(task_results):
+            if isinstance(result.result, Exception):
+                logger.info(
+                    "Exception while fetching task results, Details: {}".format(
+                        result.result
+                    )
+                )
+            else:
+                response[result.result_key] = result.result
+    return response

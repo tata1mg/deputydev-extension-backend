@@ -1,9 +1,9 @@
 import json
 from typing import List, Tuple
-
+import httpx
 import numpy as np
 import requests
-from openai import OpenAI
+from openai import AsyncOpenAI
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -12,16 +12,28 @@ from app.modules.tiktoken import TikToken
 from app.utils import hash_sha256
 
 from ..base import BaseClient
+from openai.types.chat import ChatCompletionMessage
 
 openai_key = CONFIG.config.get("OPENAI_KEY")
 
 
 class OpenAIClient(BaseClient):
     def __init__(self):
-        self.__client = OpenAI(api_key=openai_key)
+        self.__client = AsyncOpenAI(
+            api_key=openai_key,
+            timeout=60,
+            http_client=httpx.AsyncClient(
+                timeout=60,
+                limits=httpx.Limits(
+                    max_connections=1000,
+                    max_keepalive_connections=100,
+                    keepalive_expiry=20,
+                ),
+            ),
+        )
         self.tiktoken_client = TikToken()
 
-    def __call_embedding(self, batch: List[str]) -> np.ndarray:
+    async def __call_embedding(self, batch: List[str]) -> np.ndarray:
         """
         Calls OpenAI's embedding model to embed a batch of texts.
 
@@ -31,7 +43,7 @@ class OpenAIClient(BaseClient):
         Returns:
             np.ndarray: Embedded vectors.
         """
-        response = self.__client.embeddings.create(input=batch, model="text-embedding-3-small", encoding_format="float")
+        response = await self.__client.embeddings.create(input=batch, model="text-embedding-3-small", encoding_format="float")
         cut_dim = np.array([data.embedding for data in response.data])
         normalized_dim = self.normalize_l2(cut_dim)
         # save results to redis
@@ -49,7 +61,7 @@ class OpenAIClient(BaseClient):
             np.ndarray: Embedded vectors.
         """
         if len(batch) == 1:
-            embeddings = self.__call_embedding(batch)
+            embeddings = await self.__call_embedding(batch)
             return np.array(embeddings)
         embeddings: List[np.ndarray] = [None] * len(batch)
         cache_keys = [hash_sha256(text) for text in batch]
@@ -66,7 +78,7 @@ class OpenAIClient(BaseClient):
             return embeddings
 
         try:
-            new_embeddings = self.__call_embedding(batch)
+            new_embeddings = await self.__call_embedding(batch)
         except requests.exceptions.Timeout as e:
             logger.exception(f"Timeout error occurred while embedding: {e}")
         except Exception as e:
@@ -77,7 +89,7 @@ class OpenAIClient(BaseClient):
                     f"truncating down to 8192 tokens."
                 )
                 batch = [self.tiktoken_client.truncate_string(text) for text in batch]
-                new_embeddings = self.__call_embedding(batch)
+                new_embeddings = await self.__call_embedding(batch)
             else:
                 raise e
 
@@ -94,3 +106,22 @@ class OpenAIClient(BaseClient):
         except Exception:
             logger.error("Failed to store embeddings in cache, returning without storing")
         return embeddings
+
+    async def get_openai_response(self, conversation_messages: list, model: str) -> ChatCompletionMessage:
+        """
+        Retrieve a response from the OpenAI Chat API.
+        Args:
+            conversation_messages (list): A list of conversation messages, including both system and user messages.
+            model (str): The name or identifier of the GPT model to use for the completion.
+        Returns:
+            ChatCompletionMessage: The completed message returned by the OpenAI Chat API.
+        Raises:
+            OpenAIException: If there is an error while communicating with the OpenAI API or processing the response.
+        """
+        completion = await self.__client.chat.completions.create(
+            model=model,
+            response_format={"type": "json_object"},
+            messages=conversation_messages,
+            temperature=0.5,
+        )
+        return completion.choices[0].message
