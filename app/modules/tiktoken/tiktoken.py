@@ -17,7 +17,7 @@ class TikToken:
         ]
         self.llm_models = {model: tiktoken.encoding_for_model(model) for model in llm_models}
 
-    def count(self, text: str, model: str = "gpt-4") -> int:
+    def count(self, text: str, model: str = "gpt-3.5-turbo") -> int:
         """
         Count the number of tokens in the input text using the specified language model.
 
