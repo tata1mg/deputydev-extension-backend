@@ -9,6 +9,7 @@ __all__ = [
     "LabSkuCardImage",
     "CacheExpiry",
     "ChunkFileSizeLimit",
+    "SQS"
 ]
 
 from .cache import CacheExpiry
@@ -23,3 +24,4 @@ from .constants import (
 from .error_messages import ErrorMessages
 from .repo import RepoUrl
 from .success_messages import SuccessMessages
+from .sqs import SQS

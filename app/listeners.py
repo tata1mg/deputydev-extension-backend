@@ -1,5 +1,5 @@
 from torpedo.constants import ListenerEventTypes
-from app.sqs import GenaiSubscriber
+from app.sqs.genai_subscriber import GenaiSubscriber
 
 async def initialize_sqs_subscribes(_app, loop):
     """
