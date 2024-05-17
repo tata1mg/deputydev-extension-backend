@@ -24,6 +24,7 @@ from app.modules.chunking.chunk_parsing_utils import (
 )
 from app.modules.repo import RepoModule
 from app.modules.search import perform_search
+from app.modules.tiktoken.tiktoken import TikToken
 from app.utils import calculate_total_diff, get_task_response, build_openai_conversation_message
 from app.modules.clients.openai.openai_client import OpenAIClient
 from torpedo import Task, TaskExecutor
@@ -61,15 +62,11 @@ class CodeReviewManager:
 
         # Trigger the background task to handle further processing
         return asyncio.ensure_future(
-            cls.background_task(
-                repo=repo, pr_id=data.get("pr_id"), pr_detail=pr_detail, diff=diff
-            )
+            cls.background_task(repo=repo, pr_id=data.get("pr_id"), pr_detail=pr_detail, diff=diff)
         )
 
     @classmethod
-    async def background_task(
-        cls, repo: RepoModule, pr_id: int, pr_detail: PullRequestResponse, diff: str
-    ) -> None:
+    async def background_task(cls, repo: RepoModule, pr_id: int, pr_detail: PullRequestResponse, diff: str) -> None:
         """Background task for processing Pull Request reviews.
 
         Args:
@@ -100,23 +97,25 @@ class CodeReviewManager:
             # Clone the repository for further processing
             repo.clone_repo()
 
-            # # Process source code into chunks and documents
-            # all_chunks, all_docs = source_to_chunks(repo.repo_dir)
-            #
-            # # Perform a search based on the diff content to find relevant chunks
-            # content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
-            #
-            # # Rank relevant chunks based on lexical scores
-            # ranked_snippets_list = sorted(
-            #     all_chunks,
-            #     key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
-            #     reverse=True,
-            # )[:10]
-            #
-            # # Render relevant chunks into a single snippet
-            # relevant_chunk = render_snippet_array(ranked_snippets_list)
+            # Process source code into chunks and documents
+            all_chunks, all_docs = source_to_chunks(repo.repo_dir)
 
-            response = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, "")
+            # Perform a search based on the diff content to find relevant chunks
+            content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
+
+            # Rank relevant chunks based on lexical scores
+            ranked_snippets_list = sorted(
+                all_chunks,
+                key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
+                reverse=True,
+            )[:10]
+
+            # Render relevant chunks into a single snippet
+            relevant_chunk = render_snippet_array(ranked_snippets_list)
+            # tiktoken_client = TikToken()
+            # print('------ tokens pr diff', tiktoken_client.count(diff))
+            # print('------ tokens relevant_chunk', tiktoken_client.count(diff))
+            response = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
             # Send relevant chunks and Pull Request details to an external system
             # thread = await create_review_thread(diff, pr_detail, relevant_chunk)
             # run = await create_run_id(thread)
