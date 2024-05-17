@@ -91,6 +91,86 @@ class Augmentation(Enum):
         "advice": "You can ask me any questions regarding TATA 1mg lab tests and its offering.",
     }
     USER_LOCATION = "The user is currently located at {} \n"
+    SCRIT_PROMT = """
+        Please perform a code review of the following diff (produced by `git diff` on my code), and provide suggestions for improvement:
+        Relevant code chunks has also passed in the message that is relevant to PR diff changes.
+        Before providing the comment there are certain flows for processing data and pointers that needs to be considered to provide a comment.
+        ### Calculation of Line Numbers:
+        To determine line numbers based on the output of a git diff command for a specific file, follow these steps:
+        1) Understand the git diff Output Format:
+            - The output includes change chunks with headers like @@ -r,s +r,s @@, where:
+                * -r,s indicates the range in the original file (before changes), with r as the start line and s as the number of lines changed.
+                * +r,s indicates the range in the new file (after changes), with similar structure.
+                * Lines starting with - are in the original file, while lines starting with + are in the new file.
+            - Example git diff Output:
+            ```
+            @@ -1,4 +1,5 @@
+            Line 1 content
+            -Line 2 to be removed
+            +Line 2 modified content
+            +Line 2.5 added content
+            Line 3 content
+            ```
+        2) Calculate New Line Numbers:
+            - Begin with the starting line number in the new file (+r part of the chunk header).
+            - Increment the line number by 1 for each + or context line, while - lines are skipped.
+        3) Example Calculation:
+           The chunk starts at line 1 in both the old and new files (`@@ -1,4 +1,5 @@`).
+            - As per the diff, one line is modified and one new line is added before \"Line 3 content\", and one line is removed.
+            - Starting at line 1, increment by 1 for \"Line 1 content\", skip counting for the removed line since it's not in the new file, increment by 1 each for \"Line 2 modified content\" and \"Line 2.5 added content\". Now, \"Line 3 content\" is on line 4 in the new file.
+        4) Calculating line is one of the crucial step so that we can know the exact line where comment needs to be done, So make sure you calculate the line number accurately
+
+        ### Return Response Rules
+            Make sure to return only a valid JSON and not any other text. This JSON should have a key named `comments` which will be a list of dict.
+            The structure of `comments` list of dicts with field description will be as follows:
+            ```JSON
+            comments: [{
+            'file_path': '<path of the file on which comment is being made>',
+            'line_number' : <line number on which comment is relevant (Please be accurate to calculate the line from PR diff based on the stated rules)> ,
+            'comment': '<Comment on the code. Only comment if something can be improved. Don't describe the code.>',
+            'corrective_code': '<if applicable write only corrective python code as per suggested comment or else return empty string>',
+            'confidence_score': '<floating point confidence score of the comment>'
+            }]
+            ```
+        ### Rules to review the code and provide the comments:
+            1) Best Practices for Logger Formatting: 
+                - Review the use of log levels (e.g., info, warn, error) in log messages. Verify that log levels accurately reflect the severity of the events being logged.
+                - Avoid generic logging and examine if the log messages include sufficient information for understanding the context of the logged events.
+                - Examine how exceptions are handled in log messages.
+                - Look for hard coded strings in log messages. Recommend using variables or placeholders for dynamic information to enhance flexibility and maintainability.
+            2) Documentation: 
+                - Make sure documentation should be added for class, methods, functions.
+            3) Basic python code practices:
+                - Never commit sensitive information like api keys, secret key, secret tokens in code.
+                - Don't use hardcoded values in code except in test cases. If value is hardcoded suggest user to maintain them in constants file for better code organisation and readability.
+                - Avoidance of deep nesting and overly complex functions.
+                - We manage Pipfile and requirements to manage dependencies and their versions. Manage pipfile and requirements if any library is added or updated.
+                - All functions should contain response and Arguments type hints.
+                - Code pushed should not contain any secrets/credentials.
+                - Input validation to prevent injection attacks (e.g., SQL injection, XSS)
+            4) Suggest user to use inhouse libraries wherever applicable.
+               Our organisation uses certain inhouse libraries, suggest user to use them in case user is using some alternate library to perform the same function.
+               - Torpedo- It a wrapper written over sanic.
+               - cache_wrapper - Wrapper written over redis.
+               - mongoose - library to perform mongo operations
+            5) System stability and performance:
+                - Ask user to use TaskExecuter define in our in house torpedo library for parallel call in case of multiple task.
+                - make sure to handle exceptions if task fails in TaskExecuter.
+            6) Validate config changes:
+                - All secrets key should not be commited in code and it should either be a environment variable or should be a part of config file.
+            7) API  
+                - Api documentation using our our inhouse approach. We use a ADAM library which uses sanic_ext openapi library.
+                - Request and response validation using pydantic for api.
+                - No business logic in controller or routes file.
+                - use http methods like GET, POST, UPDATE, PATCH for thier recommended use case.
+            8) Error handling
+                - Proper handling of exceptions.
+                - Use of try-except blocks where necessary.
+                - Clear error messages for easier debugging.
+                - Logging of errors with relevant context information.
+                - prefer exception classes over generic exception handling. 
+            9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.   
+        """
 
 
 class CtaActions(Enum):
