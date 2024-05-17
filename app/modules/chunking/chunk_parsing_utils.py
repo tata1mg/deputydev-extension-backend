@@ -1,12 +1,11 @@
-import multiprocessing
 import os
-from typing import Generator, Set
+from typing import Generator, List, Set
 
 from sanic.log import logger
-from tqdm import tqdm
 
 from app.constants import ChunkFileSizeLimit
 from app.modules.chunking.chunk_info import ChunkInfo
+from app.modules.chunking.document import Document, chunks_to_docs
 
 from .chunk import chunk_source
 from .chunk_config import ChunkConfig
@@ -156,7 +155,7 @@ def create_chunks(source: str) -> list[str]:
     return chunks
 
 
-def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[ChunkInfo], list[str]]:
+def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[ChunkInfo], list[Document]]:
     """
     Converts code files within a directory into chunks of code.
 
@@ -165,25 +164,46 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
         config (ChunkConfig, optional): Configuration for chunking. Defaults to None.
 
     Returns:
-        tuple[list[ChunkInfo], list[str]]: A tuple containing a list of chunk information and a list of file paths.
+        tuple[list[ChunkInfo], list[Document]]: A tuple containing a list of chunk information and a list of docs.
     """
+    # If no configuration provided, use default ChunkConfig
     chunk_config = config if config else ChunkConfig()
+
     logger.info(f"Reading files from {directory}")
+
+    # Initialize a set to track visited directories
     visited = set()
+
+    # Get list of absolute file paths within the directory
     file_list = get_absolute_path(directory, visited)
+
+    # Filter the file list based on ChunkConfig and other conditions
     file_list = [
         file_name
         for file_name in file_list
         if filter_file(directory, file_name, chunk_config)
-        and os.path.isfile(file_name)
-        and not is_dir_too_big(file_name)
+        and os.path.isfile(file_name)  # Ensure it's a file
+        and not is_dir_too_big(file_name)  # Ensure file size is not too big
     ]
+
     logger.info("Done reading files")
+
+    # Initialize an empty list to store all code chunks
     all_chunks = []
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count() // 4) as pool:
-        for chunks in tqdm(pool.imap(create_chunks, file_list), total=len(file_list)):
-            all_chunks.extend(chunks)
-    return all_chunks, file_list
+
+    # Iterate over each file and create chunks
+    for file in file_list:
+        all_chunks.extend(create_chunks(file))
+
+    # Convert chunks to Document objects
+    all_docs: List[Document] = chunks_to_docs(all_chunks, len(directory) + 1)
+
+    # Adjust source paths in chunks to be relative to the directory
+    for chunk in all_chunks:
+        chunk.source = chunk.source[len(directory) + 1 :]
+
+    # Return both the list of chunk information and the list of file paths
+    return all_chunks, all_docs
 
 
 def render_snippet_array(chunks):

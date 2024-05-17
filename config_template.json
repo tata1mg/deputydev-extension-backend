@@ -15,6 +15,8 @@
     "HOST": "0.0.0.0",
     "HTTP_VERSION": "1.0.0",
     "INTERSERVICE_TIMEOUT": 50,
+    "BITBUCKET_KEY": "",
+    "BITBUCKET_URL": "",
     "NAME": "genai",
     "PORT": 8081,
     "SEARCH": {
@@ -51,6 +53,7 @@
             "REDIS_PORT": 6379
         }
     },
+    "REPO_BASE_DIR": "",
     "SQS": {
         "SUBSCRIBE": {
             "GENAI": {
@@ -61,5 +64,12 @@
             }
         }
     },
-    "REPO_BASE_DIR": ""
+    "FINETUNED_SCRIT_MODEL": {
+        "MODEL": "",
+        "CONFIDENCE_SCORE": 1
+    },
+    "SCRIT_MODEL": {
+        "MODEL": "",
+        "CONFIDENCE_SCORE": 1
+    }
 }
