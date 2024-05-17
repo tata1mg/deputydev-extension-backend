@@ -53,5 +53,13 @@
             "REDIS_PORT": 6379
         }
     },
-    "REPO_BASE_DIR": ""
+    "REPO_BASE_DIR": "",
+    "FINETUNED_SCRIT_MODEL": {
+        "MODEL": "",
+        "CONFIDENCE_SCORE": 1
+    },
+    "SCRIT_MODEL": {
+        "MODEL": "",
+        "CONFIDENCE_SCORE": 1
+      }
 }
