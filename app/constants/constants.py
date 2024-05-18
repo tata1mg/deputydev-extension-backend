@@ -4,7 +4,6 @@ from torpedo.common_utils import CONFIG
 
 X_SHARED_CONTEXT = "X-SHARED-CONTEXT"
 ENVIRONMENT = CONFIG.config["ENVIRONMENT"]
-CONFIDENCE_SCORE = 0.7
 MAX_LINE_CHANGES = 350
 # TODO - Provision a feature where users can define these files in the repo itself.
 IGNORE_FILES = ["Pipfile", "Pipfile.lock", "bitbucket-pipelines.yml", "package-lock.json"]
@@ -170,6 +169,9 @@ class Augmentation(Enum):
                 - Logging of errors with relevant context information.
                 - prefer exception classes over generic exception handling. 
             9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.   
+        """
+    SCRIT_SUMMARY_PROMPT = """
+        Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If the comment involves inquiries about code improvements or other technical discussions, evaluate the provided pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown"
         """
 
 

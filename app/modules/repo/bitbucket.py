@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 import requests
+from sanic.log import logger
 from torpedo import CONFIG
 
 from app.dao.repo import PullRequestResponse
@@ -38,7 +39,9 @@ class BitBucketModule:
             headers=self.headers,
         )
         if response.status_code != 200:
-            raise ValueError(f"Unable to process PR - {self.pr_id}: {response._content}")
+            response = f"Unable to process PR - {self.pr_id}: {response._content}"
+            logger.error(response)
+            raise ValueError(response)
         else:
             data = response.json()
             created_time = datetime.fromisoformat(data["created_on"][:-6])
@@ -67,7 +70,9 @@ class BitBucketModule:
             headers=self.headers,
         )
         if response.status_code != 200:
-            raise ValueError(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
+            response = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
+            logger.error(response)
+            raise ValueError(response)
         else:
             return ignore_files(response)
 

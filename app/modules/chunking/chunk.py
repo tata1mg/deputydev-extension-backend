@@ -5,12 +5,15 @@ from typing import Union
 
 import tree_sitter_javascript
 from sanic.log import logger
+from torpedo import CONFIG
 from tree_sitter import Language, Node, Parser
 from tree_sitter_languages import get_parser as tree_sitter_get_parser
 
-from app.constants.chunking import CHARACTER_SIZE, EXTENSION_TO_LANGUAGE
+from app.constants.chunking import EXTENSION_TO_LANGUAGE
 
 from .chunk_info import ChunkInfo
+
+CHARACTER_SIZE = CONFIG.config["CHUNKING"]["CHARACTER_SIZE"]
 
 
 def get_parser(language: str) -> Parser:

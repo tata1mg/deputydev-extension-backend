@@ -2,7 +2,7 @@ import asyncio
 
 from sanic.log import logger
 
-from app.constants.constants import CONFIDENCE_SCORE, PR_SIZE_TOO_BIG_MESSAGE
+from app.constants.constants import PR_SIZE_TOO_BIG_MESSAGE
 from app.managers.openai_tools.openai_assistance import (
     create_review_thread,
     create_run_id,
