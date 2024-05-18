@@ -169,8 +169,6 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
     # If no configuration provided, use default ChunkConfig
     chunk_config = config if config else ChunkConfig()
 
-    logger.info(f"Reading files from {directory}")
-
     # Initialize a set to track visited directories
     visited = set()
 
@@ -185,8 +183,6 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
         and os.path.isfile(file_name)  # Ensure it's a file
         and not is_dir_too_big(file_name)  # Ensure file size is not too big
     ]
-
-    logger.info("Done reading files")
 
     # Initialize an empty list to store all code chunks
     all_chunks = []

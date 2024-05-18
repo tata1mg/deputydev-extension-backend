@@ -1,75 +1,80 @@
 {
-    "APM": {
-        "ENABLED": false,
-        "ENVIRONMENT": "",
-        "SECRET_TOKEN": "",
-        "SERVER_TIMEOUT": "30s",
-        "SERVER_URL": "http://onemg-apm-server-apm-http.elastic-system.svc.cluster.local:8200",
-        "SPAN_FRAMES_MIN_DURATION": "5ms",
-        "TRANSACTION_SAMPLE_RATE": 1
-    },
-    "DEBUG": false,
-    "ACCESS_LOG": true,
-    "ENABLE_WORKER": false,
-    "ENVIRONMENT": "local",
-    "HOST": "0.0.0.0",
-    "HTTP_VERSION": "1.0.0",
-    "INTERSERVICE_TIMEOUT": 50,
-    "BITBUCKET_KEY": "",
-    "BITBUCKET_URL": "",
-    "NAME": "genai",
-    "PORT": 8081,
-    "SEARCH": {
-        "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
-        "TIMEOUT": 10
-    },
-    "SENTRY": {
-        "DSN": "",
-        "EM": ""
-    },
-    "WORKERS": 1,
-    "CONCURRENCY_LIMIT": 500,
-    "DB_CONNECTION": {
-        "CONNECTION_STRING": "",
-        "LABS_COLLECTION": "labs"
-    },
-    "OPENAI_KEY": "",
-    "GOOGLE_API_KEY": "",
-    "LABS": {
-        "HOST": "https://api.1mg.com/api/labs/",
-        "TIMEOUT": 10
-    },
-    "EXPERIMENT": {},
-    "BITBUCKET": {
-        "KEY": "",
-        "URL": "https://api.bitbucket.org/2.0/repositories"
-    },
-    "OPENAPI_API": "gpt3",
-    "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
-    "REDIS_CACHE_HOSTS": {
-        "genai": {
-            "LABEL": "",
-            "REDIS_HOST": "localhost",
-            "REDIS_PORT": 6379
-        }
-    },
-    "REPO_BASE_DIR": "",
-    "SQS": {
-        "SUBSCRIBE": {
-            "GENAI": {
-                "ENABLED": true,
-                "MAX_MESSAGES": 1,
-                "QUEUE_NAME": "{{env_name}}-content_service-dependant_entities.fifo",
-                "WAIT_TIME_IN_SECONDS": 2
-            }
-        }
-    },
-    "FINETUNED_SCRIT_MODEL": {
-        "MODEL": "",
-        "CONFIDENCE_SCORE": 1
-    },
-    "SCRIT_MODEL": {
-        "MODEL": "",
-        "CONFIDENCE_SCORE": 1
+  "APM": {
+    "ENABLED": false,
+    "ENVIRONMENT": "",
+    "SECRET_TOKEN": "",
+    "SERVER_TIMEOUT": "30s",
+    "SERVER_URL": "http://onemg-apm-server-apm-http.elastic-system.svc.cluster.local:8200",
+    "SPAN_FRAMES_MIN_DURATION": "5ms",
+    "TRANSACTION_SAMPLE_RATE": 1
+  },
+  "DEBUG": false,
+  "ACCESS_LOG": true,
+  "ENABLE_WORKER": false,
+  "ENVIRONMENT": "local",
+  "HOST": "0.0.0.0",
+  "HTTP_VERSION": "1.0.0",
+  "INTERSERVICE_TIMEOUT": 50,
+  "BITBUCKET_KEY": "",
+  "BITBUCKET_URL": "",
+  "NAME": "genai",
+  "PORT": 8081,
+  "SEARCH": {
+    "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
+    "TIMEOUT": 10
+  },
+  "SENTRY": {
+    "DSN": "",
+    "EM": ""
+  },
+  "WORKERS": 1,
+  "CONCURRENCY_LIMIT": 500,
+  "DB_CONNECTION": {
+    "CONNECTION_STRING": "",
+    "LABS_COLLECTION": "labs"
+  },
+  "OPENAI_KEY": "",
+  "GOOGLE_API_KEY": "",
+  "LABS": {
+    "HOST": "https://api.1mg.com/api/labs/",
+    "TIMEOUT": 10
+  },
+  "EXPERIMENT": {},
+  "BITBUCKET": {
+    "KEY": "",
+    "URL": "https://api.bitbucket.org/2.0/repositories"
+  },
+  "OPENAPI_API": "gpt3",
+  "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
+  "REDIS_CACHE_HOSTS": {
+    "genai": {
+      "LABEL": "",
+      "REDIS_HOST": "localhost",
+      "REDIS_PORT": 6379
     }
+  },
+  "REPO_BASE_DIR": "",
+  "SQS": {
+    "SUBSCRIBE": {
+      "GENAI": {
+        "ENABLED": true,
+        "MAX_MESSAGES": 1,
+        "QUEUE_NAME": "{{env_name}}-content_service-dependant_entities.fifo",
+        "WAIT_TIME_IN_SECONDS": 2
+      }
+    }
+  },
+  "FINETUNED_SCRIT_MODEL": {
+    "MODEL": "",
+    "CONFIDENCE_SCORE": 1
+  },
+  "SCRIT_MODEL": {
+    "MODEL": "",
+    "CONFIDENCE_SCORE": 1
+  },
+  "WHITELISTED_REPOS": [],
+  "CHUNKING": {
+    "CHARACTER_SIZE": 2000,
+    "NUMBER_OF_CHUNKS": 10
+  }
 }

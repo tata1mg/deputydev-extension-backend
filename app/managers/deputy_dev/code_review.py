@@ -1,38 +1,32 @@
-import asyncio
 import json
 import time
 from typing import Any, Dict
 
 from sanic.log import logger
+from torpedo import CONFIG, Task
 
 from app.constants.constants import (
-    CONFIDENCE_SCORE,
     MAX_LINE_CHANGES,
     PR_SIZE_TOO_BIG_MESSAGE,
     Augmentation,
 )
 from app.constants.repo import VCSTypes
-from app.dao.repo import PullRequestResponse
-from app.managers.openai_tools.openai_assistance import (
-    create_review_thread,
-    create_run_id,
-    poll_for_success,
-)
 from app.modules.chunking.chunk_parsing_utils import (
     render_snippet_array,
     source_to_chunks,
 )
+from app.modules.clients import LLMClient
 from app.modules.repo import RepoModule
 from app.modules.search import perform_search
-from app.modules.tiktoken.tiktoken import TikToken
-from app.utils import calculate_total_diff, get_task_response, build_openai_conversation_message
-from app.modules.clients.openai.openai_client import OpenAIClient
-from torpedo import Task, TaskExecutor
-from torpedo import CONFIG
-from typing import Any, Dict, List
+from app.utils import (
+    build_openai_conversation_message,
+    calculate_total_diff,
+    get_task_response,
+)
 
 finetuned_model_config = CONFIG.config.get("FINETUNED_SCRIT_MODEL")
 scrit_model_config = CONFIG.config.get("SCRIT_MODEL")
+NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
 
 class CodeReviewManager:
@@ -40,8 +34,7 @@ class CodeReviewManager:
 
     @classmethod
     async def handle_event(cls, data: Dict[str, Any]) -> None:
-        logger.info("Received SQS Message: {}".format(data))
-
+        await cls.process_pr_review(data=data)
 
     @classmethod
     async def process_pr_review(cls, data: Dict[str, Any]) -> None:
@@ -62,30 +55,9 @@ class CodeReviewManager:
         )
 
         # Retrieve Pull Request details and diff content asynchronously
+        pr_id = data.get("pr_id")
         pr_detail = await repo.get_pr_details(data.get("pr_id"))
         diff = await repo.get_pr_diff(data.get("pr_id"))
-
-        # Trigger the background task to handle further processing
-        return asyncio.ensure_future(
-            cls.background_task(repo=repo, pr_id=data.get("pr_id"), pr_detail=pr_detail, diff=diff)
-        )
-
-    @classmethod
-    async def background_task(cls, repo: RepoModule, pr_id: int, pr_detail: PullRequestResponse, diff: str) -> None:
-        """Background task for processing Pull Request reviews.
-
-        Args:
-            repo (RepoModule): Instance of RepoModule for repository operations.
-            pr_id (int): Pull Request ID.
-            pr_detail (PullRequestResponse): Details of the Pull Request.
-            diff (str): Diff content of the Pull Request.
-            confidence_score (float): Confidence score threshold for review comments.
-
-        Returns:
-            None
-        """
-        # Log the start of processing
-        logger.info("Processing started.")
 
         # Calculate the total lines of code changed in the diff content
         diff_loc = calculate_total_diff(diff)
@@ -113,31 +85,23 @@ class CodeReviewManager:
                 all_chunks,
                 key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
                 reverse=True,
-            )[:10]
+            )[:NO_OF_CHUNKS]
 
             # Render relevant chunks into a single snippet
             relevant_chunk = render_snippet_array(ranked_snippets_list)
-            # tiktoken_client = TikToken()
-            # print('------ tokens pr diff', tiktoken_client.count(diff))
-            # print('------ tokens relevant_chunk', tiktoken_client.count(diff))
-            response = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
-            # Send relevant chunks and Pull Request details to an external system
-            # thread = await create_review_thread(diff, pr_detail, relevant_chunk)
-            # run = await create_run_id(thread)
-            # response = await poll_for_success(thread, run)
-            #
+
+            response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
             if response:
                 # Extract comments from the response
                 comments = response.get("comments")
-                logger.info("PR comments: {}".format(comments))
-
                 if comments:
                     for comment in comments:
                         await repo.create_comment_on_pr(pr_id, comment)
                 else:
-                    logger.info("LGTM!")
                     # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
                     await repo.create_comment_on_pr(pr_id, "LGTM!!")
+            if pr_summary:
+                await repo.create_comment_on_pr(pr_id, pr_summary)
 
             # Clean up by deleting the cloned repository
             repo.delete_repo()
@@ -156,14 +120,17 @@ class CodeReviewManager:
         Returns:
             str: The formatted user message.
         """
-        context = (
+        pr_review_context = (
             "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <chunk></chunk> tags. "
             f"Use the relevant chunks of code to review the PR passed. Relevant code chunks: '{relevant_chunk}, "
             f"Review this PR with Title: '{pr_detail.title}', "
             f"Description: '{pr_detail.description}', "
             f"PR_diff: {pr_diff}"
         )
-        return context
+
+        pr_summary_context = f"What does the following PR do ? PR diff: {pr_diff}"
+
+        return pr_review_context, pr_summary_context
 
     @classmethod
     async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> list:
@@ -178,42 +145,62 @@ class CodeReviewManager:
         Returns:
             list: Combined OpenAI PR comments filtered by confidence_filter_score.
         """
-        user_message = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
-        conversation_message = build_openai_conversation_message(
-            system_message=Augmentation.SCRIT_PROMT.value, user_message=user_message
+        pr_review_context, pr_summary_context = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
+        pr_review_conversation_message = build_openai_conversation_message(
+            system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context
+        )
+        pr_review_summarisation_converstation_message = build_openai_conversation_message(
+            system_message=Augmentation.SCRIT_SUMMARY_PROMPT.value, user_message=pr_summary_context
         )
         # Create two parallel tasks to get PR reviewed by finetuned model and gpt4 model
         tasks = [
             Task(
-                cls.get_openai_pr_comments(
-                    conversation_message=conversation_message,
+                cls.get_client_pr_comments(
+                    conversation_message=pr_review_conversation_message,
                     model=finetuned_model_config.get("MODEL"),
+                    client_type="openai",
                     confidence_filter_score=finetuned_model_config.get("CONFIDENCE_SCORE"),
                     max_retry=2,
                 ),
                 result_key="finetuned_model",
             ),
             Task(
-                cls.get_openai_pr_comments(
-                    conversation_message=conversation_message,
+                cls.get_client_pr_comments(
+                    conversation_message=pr_review_conversation_message,
                     model=scrit_model_config.get("MODEL"),
                     confidence_filter_score=scrit_model_config.get("CONFIDENCE_SCORE"),
                     max_retry=2,
+                    client_type="openai",
                 ),
                 result_key="scrit_model",
+            ),
+            Task(
+                cls.get_client_pr_comments(
+                    conversation_message=pr_review_summarisation_converstation_message,
+                    model=scrit_model_config.get("MODEL"),
+                    confidence_filter_score=scrit_model_config.get("CONFIDENCE_SCORE"),
+                    max_retry=2,
+                    client_type="openai",
+                    response_type="text",
+                ),
+                result_key="scrit_model_pr_summarisation",
             ),
         ]
         task_response = await get_task_response(tasks)
         # combine finetuned and gpt4 filtered comments
         finetuned_model_comments = task_response.get("finetuned_model")
         scrit_model_comments = task_response.get("scrit_model")
+        scrit_model_pr_summarisation = task_response.get("scrit_model_pr_summarisation")
         combined_comments = {
             "comments": finetuned_model_comments.get("comments", []) + scrit_model_comments.get("comments", [])
         }
-        return combined_comments
+
+        return combined_comments, scrit_model_pr_summarisation
 
     @classmethod
-    async def get_openai_pr_comments(cls, conversation_message, model, confidence_filter_score, max_retry=2):
+    async def get_client_pr_comments(
+        cls, conversation_message, model, client_type, confidence_filter_score, response_type="json_object", max_retry=2
+    ):
         """
         Makes a call to OpenAI chat completion API with a specific model and conversation messages.
         Implements a retry mechanism in case of a failed request or improper response.
@@ -227,22 +214,30 @@ class CodeReviewManager:
         Returns:
            List of filtered comment objects.
         """
+        client = LLMClient(client_type=client_type)
         pr_comments = []
+        pr_summary = ""
         for _ in range(max_retry):
             try:
-                openai_response = await OpenAIClient().get_openai_response(conversation_message, model)
-                pr_comments = json.loads(openai_response.content)
+                response = await client.get_client_response(conversation_message, model, response_type)
+                if response_type == "text":
+                    pr_summary = response.content
+                    return pr_summary
+                pr_comments = json.loads(response.content)
                 if "comments" in pr_comments:
                     return pr_comments
                 else:
                     time.sleep(0.2)
             except Exception as e:
-                logger.info("Exception occured while fetching data from openai: {}".format(e))
+                logger.error("Exception occured while fetching data from openai: {}".format(e))
                 time.sleep(0.2)
-        return cls.filtered_comments(pr_comments, confidence_filter_score)
+        if response_type == "text":
+            return pr_summary
+        else:
+            return cls.filtered_comments(pr_comments, client, confidence_filter_score), pr_summary
 
     @staticmethod
-    def filtered_comments(pr_comments: dict, confidence_filter_score: float) -> list:
+    def filtered_comments(pr_comments: dict, client: LLMClient, confidence_filter_score: float) -> list:
         """
         Filters the comments based on the confidence score.
 
@@ -255,5 +250,6 @@ class CodeReviewManager:
         """
         filtered_comments = []
         for comment in pr_comments.get("comments"):
-            if float(comment.get("confidence_score")) >= float(confidence_filter_score):
+            if client.get_filtered_response(comment, confidence_filter_score):
                 filtered_comments.append(comment)
+        return filtered_comments
