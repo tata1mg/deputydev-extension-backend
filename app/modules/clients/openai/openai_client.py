@@ -1,9 +1,11 @@
 import json
 from typing import List, Tuple
+
 import httpx
 import numpy as np
 import requests
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessage
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -12,7 +14,6 @@ from app.modules.tiktoken import TikToken
 from app.utils import hash_sha256
 
 from ..base import BaseClient
-from openai.types.chat import ChatCompletionMessage
 
 openai_key = CONFIG.config.get("OPENAI_KEY")
 
@@ -43,7 +44,9 @@ class OpenAIClient(BaseClient):
         Returns:
             np.ndarray: Embedded vectors.
         """
-        response = await self.__client.embeddings.create(input=batch, model="text-embedding-3-small", encoding_format="float")
+        response = await self.__client.embeddings.create(
+            input=batch, model="text-embedding-3-small", encoding_format="float"
+        )
         cut_dim = np.array([data.embedding for data in response.data])
         normalized_dim = self.normalize_l2(cut_dim)
         # save results to redis
@@ -107,7 +110,9 @@ class OpenAIClient(BaseClient):
             logger.error("Failed to store embeddings in cache, returning without storing")
         return embeddings
 
-    async def get_openai_response(self, conversation_messages: list, model: str) -> ChatCompletionMessage:
+    async def get_openai_response(
+        self, conversation_messages: list, model: str, response_type: str = "json_object"
+    ) -> ChatCompletionMessage:
         """
         Retrieve a response from the OpenAI Chat API.
         Args:
@@ -120,7 +125,7 @@ class OpenAIClient(BaseClient):
         """
         completion = await self.__client.chat.completions.create(
             model=model,
-            response_format={"type": "json_object"},
+            response_format={"type": response_type},
             messages=conversation_messages,
             temperature=0.5,
         )

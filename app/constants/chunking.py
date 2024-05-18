@@ -1,7 +1,5 @@
 from enum import Enum
 
-CHARACTER_SIZE = 2000
-
 EXTENSION_TO_LANGUAGE = {
     "js": "javascript",
     "py": "python",

@@ -1,5 +1,3 @@
-import asyncio
-
 import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
@@ -29,8 +27,11 @@ class BaseSubscriber:
     async def publish(self, payload: dict, attributes=None, **kwargs):
         await self.init()
         payload = json.dumps(payload)
-        response = await self.sqs_manager.publish_to_sqs(payload=payload, attributes=attributes, batch=False, **kwargs)
-        return response
+        try:
+            await self.sqs_manager.publish_to_sqs(payload=payload, attributes=attributes, batch=False, **kwargs)
+        finally:
+            self.is_client_created = False
+            await self.sqs_manager.close()
 
     async def bulk_publish(self, data: list, **kwargs):
         # '''
