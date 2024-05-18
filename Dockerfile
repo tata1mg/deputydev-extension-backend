@@ -37,7 +37,7 @@ RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
     chmod 600 /root/.ssh/id_ed25519.pub
 
 
-RUN pip install --user pipenv==2022.8.15
+RUN pip install --user pipenv==2023.12.1
 RUN pip install --upgrade pip
 
 # Create home ubuntu service hydra
