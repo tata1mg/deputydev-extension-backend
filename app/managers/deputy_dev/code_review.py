@@ -34,6 +34,7 @@ class CodeReviewManager:
 
     @classmethod
     async def handle_event(cls, data: Dict[str, Any]) -> None:
+        logger.info("Received SQS Message: {}".format(data))
         await cls.process_pr_review(data=data)
 
     @classmethod
@@ -76,9 +77,11 @@ class CodeReviewManager:
 
             # Process source code into chunks and documents
             all_chunks, all_docs = source_to_chunks(repo.repo_dir)
+            logger.info("Completed chunk creation")
 
             # Perform a search based on the diff content to find relevant chunks
             content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
+            logger.info("Completed lexical and vector search")
 
             # Rank relevant chunks based on lexical scores
             ranked_snippets_list = sorted(
@@ -103,6 +106,7 @@ class CodeReviewManager:
             if pr_summary:
                 await repo.create_comment_on_pr(pr_id, pr_summary)
 
+            logger.info(f"Completed PR review for {data.get("repo_name")}, PR - {pr_id}")
             # Clean up by deleting the cloned repository
             repo.delete_repo()
             return

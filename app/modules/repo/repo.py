@@ -154,4 +154,5 @@ class RepoModule:
                         "to": comment.get("line_number"),
                     },
                 }
+                logger.info(f"Comment payload: {comment_payload}")
                 return await bitbucket_module.create_comment_on_pr(comment_payload)
