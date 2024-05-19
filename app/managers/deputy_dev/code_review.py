@@ -73,7 +73,7 @@ class CodeReviewManager:
             return
         else:
             # Clone the repository for further processing
-            repo.clone_repo()
+            await repo.clone_repo()
 
             # Process source code into chunks and documents
             all_chunks, all_docs = source_to_chunks(repo.repo_dir)
@@ -92,6 +92,8 @@ class CodeReviewManager:
 
             # Render relevant chunks into a single snippet
             relevant_chunk = render_snippet_array(ranked_snippets_list)
+
+            print(relevant_chunk)
 
             response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
             if response:
@@ -125,7 +127,7 @@ class CodeReviewManager:
             str: The formatted user message.
         """
         pr_review_context = (
-            "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <chunk></chunk> tags. "
+            "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
             f"Use the relevant chunks of code to review the PR passed. Relevant code chunks: '{relevant_chunk}, "
             f"Review this PR with Title: '{pr_detail.title}', "
             f"Description: '{pr_detail.description}', "
@@ -156,8 +158,9 @@ class CodeReviewManager:
         pr_review_summarisation_converstation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_SUMMARY_PROMPT.value, user_message=pr_summary_context
         )
-        # Create two parallel tasks to get PR reviewed by finetuned model and gpt4 model
+        # Create three parallel tasks to get PR reviewed by finetuned model and gpt4 model and also get the PR summarisation
         tasks = [
+            # PR review by finetuned model
             Task(
                 cls.get_client_pr_comments(
                     conversation_message=pr_review_conversation_message,
@@ -168,6 +171,7 @@ class CodeReviewManager:
                 ),
                 result_key="finetuned_model",
             ),
+            # PR review by scrit model
             Task(
                 cls.get_client_pr_comments(
                     conversation_message=pr_review_conversation_message,
@@ -178,6 +182,7 @@ class CodeReviewManager:
                 ),
                 result_key="scrit_model",
             ),
+            # PR summarisation by scrit model
             Task(
                 cls.get_client_pr_comments(
                     conversation_message=pr_review_summarisation_converstation_message,
