@@ -93,8 +93,6 @@ class CodeReviewManager:
             # Render relevant chunks into a single snippet
             relevant_chunk = render_snippet_array(ranked_snippets_list)
 
-            print(relevant_chunk)
-
             response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
             if response:
                 # Extract comments from the response
