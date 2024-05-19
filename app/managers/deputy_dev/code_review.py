@@ -106,7 +106,7 @@ class CodeReviewManager:
             if pr_summary:
                 await repo.create_comment_on_pr(pr_id, pr_summary)
 
-            logger.info(f"Completed PR review for {data.get("repo_name")}, PR - {pr_id}")
+            logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
             # Clean up by deleting the cloned repository
             repo.delete_repo()
             return
