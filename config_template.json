@@ -76,5 +76,13 @@
   "CHUNKING": {
     "CHARACTER_SIZE": 2000,
     "NUMBER_OF_CHUNKS": 10
-  }
+  },
+  "MAX_LINE_CHANGES": 350,
+  "IGNORE_FILES": [
+    "Pipfile",
+    "Pipfile.lock",
+    "bitbucket-pipelines.yml",
+    "package-lock.json"
+  ],
+  "BATCH_SIZE": 24
 }

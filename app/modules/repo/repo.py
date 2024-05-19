@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import shutil
@@ -44,7 +45,7 @@ class RepoModule:
             parse_collection_name(self.branch_name),
         )
 
-    def __clone(self) -> git.Repo:
+    async def __clone(self) -> git.Repo:
         """
         This is a private method to clone the repository if it doesn't exist locally or pull updates if it does.
         """
@@ -52,38 +53,29 @@ class RepoModule:
         if self.vcs_type != VCSTypes.bitbucket.value:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
 
-        if not os.path.exists(self.repo_dir):
-            logger.info("Cloning repo...")
-            if self.branch_name:
-                repo = git.Repo.clone_from(
-                    RepoUrl.BITBUCKET_URL.value.format(repo_name=self.repo_full_name),
-                    self.repo_dir,
-                    branch=self.branch_name,
-                )
-            else:
-                repo = git.Repo.clone_from(
-                    RepoUrl.BITBUCKET_URL.value.format(repo_name=self.repo_full_name), self.repo_dir
-                )
-            logger.info("Done cloning")
-        else:
-            try:
-                repo = git.Repo(self.repo_dir)
-                repo.remotes.origin.pull()
-            except Exception:
-                logger.error("Could not pull repo")
-                repo = git.Repo.clone_from(
-                    RepoUrl.BITBUCKET_URL.value.format(repo_name=self.repo_full_name), self.repo_dir
-                )
-            logger.info("Repo already cached, copying")
+        process = await asyncio.create_subprocess_exec(
+            "git",
+            "clone",
+            "--branch",
+            self.branch_name,
+            RepoUrl.BITBUCKET_URL.value.format(repo_name=self.repo_full_name),
+            self.repo_dir,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        sreturn_code = await process.wait()
+        if sreturn_code == 0:
+            logger.info("Cloning completed")
         repo = git.Repo(self.repo_dir)
         return repo
 
-    def clone_repo(self):
+    async def clone_repo(self):
         """
         Initialize the repository after dataclass initialization.
         """
 
-        self.git_repo = self.__clone()
+        self.git_repo = await self.__clone()
+        return self.git_repo
 
     async def get_pr_details(self, pr_id: int):
         """

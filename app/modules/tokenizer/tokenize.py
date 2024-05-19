@@ -101,10 +101,10 @@ class ContentTokenizer:
         """
         tokens = self.tokens
         if include_bigrams:
-            bigrams: List[str] = self.construct_bigrams
+            bigrams: List[str] = self.construct_bigrams()
             tokens.extend(bigrams)
         if include_trigrams:
-            trigrams: List[str] = self.construct_trigrams
+            trigrams: List[str] = self.construct_trigrams()
             tokens.extend(trigrams)
         return tokens
 

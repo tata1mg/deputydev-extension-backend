@@ -4,16 +4,15 @@ from torpedo.common_utils import CONFIG
 
 X_SHARED_CONTEXT = "X-SHARED-CONTEXT"
 ENVIRONMENT = CONFIG.config["ENVIRONMENT"]
-MAX_LINE_CHANGES = 350
-# TODO - Provision a feature where users can define these files in the repo itself.
-IGNORE_FILES = ["Pipfile", "Pipfile.lock", "bitbucket-pipelines.yml", "package-lock.json"]
+MAX_LINE_CHANGES = CONFIG.config["MAX_LINE_CHANGES"]
+IGNORE_FILES = CONFIG.config["IGNORE_FILES"]
 COMMENTS_DEPTH = 7
 PR_SIZE_TOO_BIG_MESSAGE = (
     "Ideal pull requests are not more than 50 lines. PRs with smaller diff are merged relatively "
     "quickly and have much lower chances of getting reverted. This PR was found to have a diff "
     "of {} lines. SCRIT will only review PRs having diff lines less than 350."
 )
-BATCH_SIZE = 24
+BATCH_SIZE = CONFIG.config["BATCH_SIZE"]
 
 
 class ListenerEventTypes(Enum):
