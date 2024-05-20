@@ -1,5 +1,5 @@
-from typing import Any, Dict
 from datetime import datetime
+from typing import Any, Dict
 
 import requests
 from sanic.log import logger

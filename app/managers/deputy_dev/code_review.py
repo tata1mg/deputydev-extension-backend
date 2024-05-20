@@ -1,7 +1,8 @@
 import json
 import time
-from typing import Any, Dict
 from datetime import datetime
+from typing import Any, Dict
+
 from sanic.log import logger
 from torpedo import CONFIG, Task
 
