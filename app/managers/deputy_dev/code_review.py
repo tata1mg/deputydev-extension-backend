@@ -1,7 +1,7 @@
 import json
 import time
 from typing import Any, Dict
-
+from datetime import datetime
 from sanic.log import logger
 from torpedo import CONFIG, Task
 
@@ -58,58 +58,67 @@ class CodeReviewManager:
         # Retrieve Pull Request details and diff content asynchronously
         pr_id = data.get("pr_id")
         pr_detail = await repo.get_pr_details(data.get("pr_id"))
-        diff = await repo.get_pr_diff(data.get("pr_id"))
-
-        # Calculate the total lines of code changed in the diff content
-        diff_loc = calculate_total_diff(diff)
-        logger.info(f"Total diff LOC is {diff_loc}")
-
-        # Check if diff size exceeds the maximum allowable changes
-        if diff_loc > MAX_LINE_CHANGES:
-            logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
-            # Add a comment to the Pull Request indicating the size is too large
-            comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
-            await repo.create_comment_on_pr(pr_id=pr_id, comment=comment)
-            return
+        created_on = pr_detail.created_on
+        request_time = datetime.strptime(data.get("request_time"), "%Y-%m-%dT%H:%M:%S.%f%z")
+        # Calculate the time difference in minutes
+        time_difference = (request_time - created_on).total_seconds() / 60
+        if data.get("pr_type") == "created" and time_difference > 5:
+            return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
         else:
-            # Clone the repository for further processing
-            await repo.clone_repo()
+            diff = await repo.get_pr_diff(data.get("pr_id"))
 
-            # Process source code into chunks and documents
-            all_chunks, all_docs = source_to_chunks(repo.repo_dir)
-            logger.info("Completed chunk creation")
+            # Calculate the total lines of code changed in the diff content
+            diff_loc = calculate_total_diff(diff)
+            logger.info(f"Total diff LOC is {diff_loc}")
 
-            # Perform a search based on the diff content to find relevant chunks
-            content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
-            logger.info("Completed lexical and vector search")
+            # Check if diff size exceeds the maximum allowable changes
+            if diff_loc > MAX_LINE_CHANGES:
+                logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
+                # Add a comment to the Pull Request indicating the size is too large
+                comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
+                await repo.create_comment_on_pr(pr_id=pr_id, comment=comment)
+                return
+            else:
+                # Clone the repository for further processing
+                await repo.clone_repo()
 
-            # Rank relevant chunks based on lexical scores
-            ranked_snippets_list = sorted(
-                all_chunks,
-                key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
-                reverse=True,
-            )[:NO_OF_CHUNKS]
+                # Process source code into chunks and documents
+                all_chunks, all_docs = source_to_chunks(repo.repo_dir)
+                logger.info("Completed chunk creation")
 
-            # Render relevant chunks into a single snippet
-            relevant_chunk = render_snippet_array(ranked_snippets_list)
+                # Perform a search based on the diff content to find relevant chunks
+                content_to_lexical_score_list = await perform_search(
+                    all_docs=all_docs, all_chunks=all_chunks, query=diff
+                )
+                logger.info("Completed lexical and vector search")
 
-            response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
-            if response:
-                # Extract comments from the response
-                comments = response.get("comments")
-                if comments:
-                    for comment in comments:
-                        await repo.create_comment_on_pr(pr_id, comment)
-                else:
-                    # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
-                    await repo.create_comment_on_pr(pr_id, "LGTM!!")
-            if pr_summary:
-                await repo.create_comment_on_pr(pr_id, pr_summary)
+                # Rank relevant chunks based on lexical scores
+                ranked_snippets_list = sorted(
+                    all_chunks,
+                    key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
+                    reverse=True,
+                )[:NO_OF_CHUNKS]
 
-            logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
-            # Clean up by deleting the cloned repository
-            repo.delete_repo()
-            return
+                # Render relevant chunks into a single snippet
+                relevant_chunk = render_snippet_array(ranked_snippets_list)
+
+                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
+                if response:
+                    # Extract comments from the response
+                    comments = response.get("comments")
+                    if comments:
+                        for comment in comments:
+                            await repo.create_comment_on_pr(pr_id, comment)
+                    else:
+                        # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
+                        await repo.create_comment_on_pr(pr_id, "LGTM!!")
+                if pr_summary:
+                    await repo.create_comment_on_pr(pr_id, pr_summary)
+
+                logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
+                # Clean up by deleting the cloned repository
+                repo.delete_repo()
+                return
 
     @staticmethod
     def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> str:
