@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sanic import Blueprint
 from sanic_ext import validate
 from torpedo import CONFIG, Request, send_response
-
+from sanic.log import logger
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
 from app.sqs.genai_subscriber import GenaiSubscriber
@@ -27,9 +27,11 @@ async def pool_assistance_api(_request: Request, **kwargs):
     payload["request_time"] = str(formatted_datetime_str)
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     if payload.get("repo_name") in config.get("WHITELISTED_REPOS"):
+        logger.info("Whitelisted request: {}".format(payload))
         await GenaiSubscriber(config=config).publish(payload=payload)
         return send_response(f"Processing Started with Request ID : {request_id}")
     else:
+        logger.info("Blocked request: {}".format(payload))
         return send_response(data=f'Currently we are not serving: {payload.get("repo_name")}')
 
 
