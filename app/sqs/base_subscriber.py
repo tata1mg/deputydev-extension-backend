@@ -74,6 +74,7 @@ class BaseSubscriber:
         response = await self.sqs_manager.subscribe(**kwargs)
         response_model = Response(response)
         response_model.messages = [self.decompress(message) for message in response_model.messages]
+        logger.info(f"subscribe response model SQS: {response_model.messages}")
         return response_model
 
     async def handle_subscribe_event(self, message):
