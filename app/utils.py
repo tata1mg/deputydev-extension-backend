@@ -186,6 +186,11 @@ def get_comment(payload):
             bb_payload["parent"] = comment["parent"]["id"]
             bb_payload["path"] = comment["inline"]["path"]
             return bb_payload
+        elif "inline" in comment:
+            bb_payload["comment"] = raw_content
+            bb_payload["path"] = comment["inline"]["path"]
+            bb_payload["line_number"] = comment["inline"]["to"]
+            return bb_payload
         else:
             return {"comment": raw_content}
     except KeyError as e:
