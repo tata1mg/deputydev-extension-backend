@@ -1,5 +1,5 @@
-from datetime import datetime
 from typing import Any, Dict
+from datetime import datetime
 
 import requests
 from sanic.log import logger
@@ -44,15 +44,9 @@ class BitBucketModule:
             raise ValueError(response)
         else:
             data = response.json()
-            created_time = datetime.fromisoformat(data["created_on"][:-6])
-            updated_time = datetime.fromisoformat(data["updated_on"][:-6])
-
-            # Calculate the time difference in minutes
-            time_difference = (updated_time - created_time).total_seconds() / 60
-            if time_difference > 5:
-                return PullRequestResponse(created=False, **data)
-            else:
-                return PullRequestResponse(created=True, **data)
+            data["created_on"] = datetime.fromisoformat(data["created_on"])
+            data["updated_on"] = datetime.fromisoformat(data["updated_on"])
+            return PullRequestResponse(**data)
 
     async def get_pr_diff(self) -> str:
         """

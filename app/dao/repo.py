@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 
 class PullRequestResponse(BaseModel):
-    created: bool
     title: str
     description: str
     created_on: datetime
