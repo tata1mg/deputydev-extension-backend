@@ -1,7 +1,7 @@
 from sanic import Blueprint
 from sanic_ext import validate
 from torpedo import CONFIG, Request, send_response
-
+from datetime import datetime, timezone
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
 from app.sqs.genai_subscriber import GenaiSubscriber
@@ -16,6 +16,13 @@ config = CONFIG.config
 async def pool_assistance_api(_request: Request, **kwargs):
     payload = _request.request_params()
     headers = _request.headers
+
+    # Get the current datetime in UTC timezone
+    current_datetime = datetime.now(timezone.utc)
+    # Format the datetime as per the specified format
+    formatted_datetime_str = current_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+
+    payload["request_time"] = str(formatted_datetime_str)
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     if payload.get("repo_name") in config.get("WHITELISTED_REPOS"):
         await GenaiSubscriber(config=config).publish(payload=payload)
