@@ -37,5 +37,11 @@ class SmartCodeChatManager:
         # such as whether it's a reply to an existing comment or a PR-level comment.
         if "parent" in comment_payload:
             await BitbucketProcessor.create_comment_on_comment(bb_payload, comment_response, comment_payload)
+        elif "line_number" in comment_payload:
+            inline_response = {}
+            inline_response["comment"] = comment_response
+            inline_response["file_path"] = comment_payload["path"]
+            inline_response["line_number"] = comment_payload["line_number"]
+            await BitbucketProcessor.create_comment_on_line(bb_payload, inline_response)
         else:
             await BitbucketProcessor.create_comment_on_pr(bb_payload, comment_response)
