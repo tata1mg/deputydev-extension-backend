@@ -1,5 +1,3 @@
-import asyncio
-
 import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
@@ -15,13 +13,11 @@ from .model import Response
 """
 
 
-class Base:
-    def __init__(self, config: dict, event_handler):
+class BaseSubscriber:
+    def __init__(self, config: dict):
         self.config = config or {}
         self.sqs_manager = BaseSQSWrapper(config)
-        self._create_client_lock = asyncio.Semaphore(1)
         self.is_client_created = False
-        self.event_handler = event_handler
 
     async def init(self):
         if not self.is_client_created:
@@ -31,8 +27,11 @@ class Base:
     async def publish(self, payload: dict, attributes=None, **kwargs):
         await self.init()
         payload = json.dumps(payload)
-        response = await self.sqs_manager.publish_to_sqs(payload=payload, attributes=attributes, batch=False, **kwargs)
-        return response
+        try:
+            await self.sqs_manager.publish_to_sqs(payload=payload, attributes=attributes, batch=False, **kwargs)
+        finally:
+            self.is_client_created = False
+            await self.sqs_manager.close()
 
     async def bulk_publish(self, data: list, **kwargs):
         # '''

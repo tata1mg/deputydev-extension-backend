@@ -11,10 +11,12 @@ client = OpenAI(api_key=config.get("OPENAI_KEY"))
 assistant_id = config.get("ASSISTANT_ID")
 
 
-async def create_review_thread(diff, pr_detail):
+async def create_review_thread(diff, pr_detail, relevant_chunk):
     context = (
-        f"Review this PR with Title: '{pr_detail.get('title')}', "
-        f"Description: '{pr_detail.get('description')}', "
+        "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <chunk></chunk> tags. "
+        f"Use the relevant chunks of code to review the PR passed. Relevant code chunks: '{relevant_chunk}, "
+        f"Review this PR with Title: '{pr_detail.title}', "
+        f"Description: '{pr_detail.description}', "
         f"PR_diff: {diff}"
     )
     return client.beta.threads.create(messages=[{"role": "user", "content": context}])
