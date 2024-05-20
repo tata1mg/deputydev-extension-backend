@@ -1,0 +1,57 @@
+{
+  "REDIS_CACHE_HOSTS": {
+    "genai": {
+      "LABEL": "global",
+      "REDIS_HOST": "production-genai-redis.1mginfra.com",
+      "REDIS_PORT": 6379
+    }
+  },
+  "REPO_BASE_DIR": "/home/ubuntu/1mg/cloned_repos",
+  "SQS": {
+    "SUBSCRIBE": {
+      "GENAI": {
+        "ENABLED": true,
+        "MAX_MESSAGES": 1,
+        "QUEUE_NAME": "production-genai-background",
+        "WAIT_TIME_IN_SECONDS": 2
+      }
+    }
+  },
+  "FINETUNED_SCRIT_MODEL": {
+    "MODEL": "ft:gpt-3.5-turbo-0125:tata-1mg-healthcare-solutions-private-limited:scrit:9PQdGX8P",
+    "CONFIDENCE_SCORE": 1
+  },
+  "SCRIT_MODEL": {
+    "MODEL": "gpt-4o",
+    "CONFIDENCE_SCORE": 0.9
+  },
+  "WHITELISTED_REPOS": [
+    "tata1mg/merch_service",
+    "tata1mg/athena_service",
+    "tata1mg/bifrost",
+    "tata1mg/groot",
+    "tata1mg/loki",
+    "tata1mg/poseidon"
+  ],
+  "CHUNKING": {
+    "CHARACTER_SIZE": 2000,
+    "NUMBER_OF_CHUNKS": 10
+  },
+  "MAX_LINE_CHANGES": 350,
+  "IGNORE_FILES": [
+    "Pipfile",
+    "Pipfile.lock",
+    "bitbucket-pipelines.yml",
+    "package-lock.json"
+  ],
+  "BATCH_SIZE": 24
+}
+
+
+
+{
+    "BITBUCKET": {
+        "KEY": "Bearer ATCTT3xFfGN0Zq6xUMrg9goEb_NII9sohAkecqfdnnwkoU-e1IlY7Q07KuuPxsc2a73XYki7KzfRjUZdKFZT57WBKCEg2Ga-rd4qUhqkNrr7hVzirQXwKO5Swur-r3HEKaVucwbCHiiyZOUP6ButBvvlMicf2CWJUxP-tJzIjeIajzaAtG5k3jI=D876FBCF",
+        "URL": "https://api.bitbucket.org/2.0/repositories"
+    },
+}

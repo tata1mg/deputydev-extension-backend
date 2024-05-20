@@ -11,10 +11,10 @@ from app.utils import add_corrective_code, ignore_files
 
 config = CONFIG.config
 
-URL = config.get("BITBUCKET_URL")
+URL = config["BITBUCKET"]["URL"]
 HEADERS = {
     "Content-Type": "application/json",
-    "Authorization": config.get("BITBUCKET_KEY"),
+    "Authorization": config["BITBUCKET"]["KEY"],
 }
 
 

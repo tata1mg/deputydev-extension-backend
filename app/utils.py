@@ -1,10 +1,13 @@
+import hashlib
 import operator
 import re
 import time
+from typing import Any, Dict, List
 
 import mmh3
 from packaging.version import Version
 from sanic.log import logger
+from torpedo import Task, TaskExecutor
 from torpedo.common_utils import CONFIG
 
 from app.constants.constants import IGNORE_FILES
@@ -183,6 +186,11 @@ def get_comment(payload):
             bb_payload["parent"] = comment["parent"]["id"]
             bb_payload["path"] = comment["inline"]["path"]
             return bb_payload
+        elif "inline" in comment:
+            bb_payload["comment"] = raw_content
+            bb_payload["path"] = comment["inline"]["path"]
+            bb_payload["line_number"] = comment["inline"]["to"]
+            return bb_payload
         else:
             return {"comment": raw_content}
     except KeyError as e:
@@ -227,3 +235,35 @@ def calculate_total_diff(diff):
             elif line.startswith("-") and not line.startswith("---"):
                 total_lies += 1
     return total_lies
+
+
+def parse_collection_name(name: str) -> str:
+    # Replace any non-alphanumeric characters with hyphens
+    name = re.sub(r"[^\w-]", "--", name)
+    # Ensure the name is between 3 and 63 characters and starts/ends with alphanumeric
+    name = re.sub(r"^(-*\w{0,61}\w)-*$", r"\1", name[:63].ljust(3, "x"))
+    return name
+
+
+def hash_sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", "ignore")).hexdigest()
+
+
+def build_openai_conversation_message(system_message, user_message) -> list:
+    """
+    Build the conversation message list to be passed to openai.
+    """
+    message = [{"role": "system", "content": system_message}, {"role": "user", "content": user_message}]
+    return message
+
+
+async def get_task_response(tasks: List[Task]) -> Dict[str, Any]:
+    response = {}
+    if tasks:
+        task_results = await TaskExecutor(tasks=tasks).submit()
+        for idx, result in enumerate(task_results):
+            if isinstance(result.result, Exception):
+                logger.info("Exception while fetching task results, Details: {}".format(result.result))
+            else:
+                response[result.result_key] = result.result
+    return response

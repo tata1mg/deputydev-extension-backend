@@ -55,7 +55,7 @@ class DiagnoBotManager:
         final_prompt: str = self.generate_final_prompt(payload, docs)
 
         # Generation/Synthesis
-        llm_response: ChatCompletionMessage = OpenAIServiceClient().get_diagnobot_response(final_prompt=final_prompt)
+        llm_response: ChatCompletionMessage = OpenAIServiceClient().get_response(final_prompt=final_prompt)
 
         # Serialization
         return await self.generate_response(payload.chat_id, llm_response)
