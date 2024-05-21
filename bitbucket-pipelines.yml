@@ -26,7 +26,7 @@ pipelines:
                 name: Flake8 Check
                 script:
                   - pip install flake8=="4.0.1"
-                  - flake8 app/ --ignore=E501 --extend-exclude=dist,build --show-source --statistics
+                  - flake8 app/ --show-source --statistics
 
             - step:
                 name: Smart code review
@@ -35,5 +35,5 @@ pipelines:
                   - echo $BITBUCKET_PR_ID;
                   - echo $BITBUCKET_REPO_FULL_NAME;
                   - echo $BITBUCKET_BRANCH;
-                  - "curl --location https://api.1mg.com/api/v1/scrit/init?pr_id=$BITBUCKET_PR_ID&repo_name=$BITBUCKET_REPO_FULL_NAME&branch=$BITBUCKET_BRANCH&confidence_score=0.7&pr_type=created"
+                  - curl --location "https://api.1mg.com/api/v1/scrit/init?pr_id=$BITBUCKET_PR_ID&repo_name=$BITBUCKET_REPO_FULL_NAME&branch=$BITBUCKET_BRANCH&confidence_score=0.7&pr_type=created"
                   - echo "Done"

@@ -1,6 +1,5 @@
 import json
 import time
-from datetime import datetime
 from typing import Any, Dict
 
 from sanic.log import logger
@@ -19,6 +18,7 @@ from app.modules.chunking.chunk_parsing_utils import (
 from app.modules.clients import LLMClient
 from app.modules.repo import RepoModule
 from app.modules.search import perform_search
+from app.modules.tiktoken import TikToken
 from app.utils import (
     build_openai_conversation_message,
     calculate_total_diff,
@@ -58,12 +58,8 @@ class CodeReviewManager:
 
         # Retrieve Pull Request details and diff content asynchronously
         pr_id = data.get("pr_id")
-        pr_detail = await repo.get_pr_details(data.get("pr_id"))
-        created_on = pr_detail.created_on
-        request_time = datetime.strptime(data.get("request_time"), "%Y-%m-%dT%H:%M:%S.%f%z")
-        # Calculate the time difference in minutes
-        time_difference = (request_time - created_on).total_seconds() / 60
-        if data.get("pr_type") == "created" and time_difference > 5:
+        pr_detail = await repo.get_pr_details(pr_id=data.get("pr_id"), request_time=data.get("request_time"))
+        if data.get("pr_type") == "created" and not pr_detail.created:
             return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
         else:
             diff = await repo.get_pr_diff(data.get("pr_id"))
@@ -162,6 +158,18 @@ class CodeReviewManager:
         Returns:
             list: Combined OpenAI PR comments filtered by confidence_filter_score.
         """
+        # using tiktoken to count the total tokens consumed by characters from relevant chunks and pr diff
+        tiktoken_client = TikToken()
+        pr_diff_token_count = tiktoken_client.count(text=pr_diff)
+        relevant_chunk_token_count = tiktoken_client.count(text=relevant_chunk)
+        total_token_count = pr_diff_token_count + relevant_chunk_token_count
+        logger.info(
+            f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}"
+        )
+        logger.info(
+            f"Total token count = {total_token_count} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}"
+        )
+
         pr_review_context, pr_summary_context = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
         pr_review_conversation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context

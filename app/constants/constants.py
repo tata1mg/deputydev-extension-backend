@@ -131,12 +131,12 @@ class Augmentation(Enum):
             }]
             ```
         ### Rules to review the code and provide the comments:
-            1) Best Practices for Logger Formatting: 
+            1) Best Practices for Logger Formatting:
                 - Review the use of log levels (e.g., info, warn, error) in log messages. Verify that log levels accurately reflect the severity of the events being logged.
                 - Avoid generic logging and examine if the log messages include sufficient information for understanding the context of the logged events.
                 - Examine how exceptions are handled in log messages.
                 - Look for hard coded strings in log messages. Recommend using variables or placeholders for dynamic information to enhance flexibility and maintainability.
-            2) Documentation: 
+            2) Documentation:
                 - Make sure documentation should be added for class, methods, functions.
             3) Basic python code practices:
                 - Never commit sensitive information like api keys, secret key, secret tokens in code.
@@ -156,7 +156,7 @@ class Augmentation(Enum):
                 - make sure to handle exceptions if task fails in TaskExecuter.
             6) Validate config changes:
                 - All secrets key should not be commited in code and it should either be a environment variable or should be a part of config file.
-            7) API  
+            7) API
                 - Api documentation using our our inhouse approach. We use a ADAM library which uses sanic_ext openapi library.
                 - Request and response validation using pydantic for api.
                 - No business logic in controller or routes file.
@@ -166,8 +166,8 @@ class Augmentation(Enum):
                 - Use of try-except blocks where necessary.
                 - Clear error messages for easier debugging.
                 - Logging of errors with relevant context information.
-                - prefer exception classes over generic exception handling. 
-            9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.   
+                - prefer exception classes over generic exception handling.
+            9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.
         """
     SCRIT_SUMMARY_PROMPT = """
         Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If the comment involves inquiries about code improvements or other technical discussions, evaluate the provided pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown"
