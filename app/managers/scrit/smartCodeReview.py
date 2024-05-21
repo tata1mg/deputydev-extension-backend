@@ -23,7 +23,7 @@ class SmartCodeManager:
         payload = {
             "workspace": data.get("repo_name").strip(),
             "pr_id": data.get("pr_id").strip(),
-            "confidence_score": data.get("confidence_score", CONFIDENCE_SCORE),
+            "confidence_score": data.get("confidence_score"),
         }
         pr_detail = await BitbucketProcessor.get_pr_details(payload)
         if data["pr_type"] == "created" and not pr_detail["created"]:
