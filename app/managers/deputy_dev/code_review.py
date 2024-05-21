@@ -67,7 +67,10 @@ class CodeReviewManager:
             return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
         else:
             diff = await repo.get_pr_diff(data.get("pr_id"))
-
+            if diff == "":
+                return logger.info(
+                    f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
+                )
             # Calculate the total lines of code changed in the diff content
             diff_loc = calculate_total_diff(diff)
             logger.info(f"Total diff LOC is {diff_loc}")
