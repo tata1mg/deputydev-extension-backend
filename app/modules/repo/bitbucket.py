@@ -46,6 +46,7 @@ class BitBucketModule:
             data = response.json()
             data["created_on"] = datetime.fromisoformat(data["created_on"])
             data["updated_on"] = datetime.fromisoformat(data["updated_on"])
+            data["repository_name"] = data["destination"]["repository"]["full_name"]
             return PullRequestResponse(**data)
 
     async def get_pr_diff(self) -> str:

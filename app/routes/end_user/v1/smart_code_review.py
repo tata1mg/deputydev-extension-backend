@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
 from sanic import Blueprint
+from sanic.log import logger
 from sanic_ext import validate
 from torpedo import CONFIG, Request, send_response
-from sanic.log import logger
+
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
 from app.sqs.genai_subscriber import GenaiSubscriber
