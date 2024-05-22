@@ -187,7 +187,7 @@ class CodeReviewManager:
             f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}, request_id - {request_id}"
         )
         logger.info(
-            f"Total token count = {pr_review_context} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}, request_id - {request_id}"
+            f"Total token count - {tiktoken_client.count(pr_review_context)} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}, request_id - {request_id}"
         )
 
         pr_review_conversation_message = build_openai_conversation_message(
