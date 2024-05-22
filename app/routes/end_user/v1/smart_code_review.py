@@ -35,7 +35,11 @@ async def pool_assistance_api(_request: Request, **kwargs):
     else:
         logger.info("Blocked request: {}".format(payload))
         return send_response(
-            body={"message": f'Currently we are not serving: {payload.get("repo_name")}', "status_code": 422}
+            body={
+                "error": {"message": f'Currently we are not serving: {payload.get("repo_name")}'},
+                "is_success": False,
+                "status_code": 422,
+            }
         )
 
 
