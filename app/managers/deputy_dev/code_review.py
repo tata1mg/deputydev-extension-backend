@@ -158,19 +158,20 @@ class CodeReviewManager:
         Returns:
             list: Combined OpenAI PR comments filtered by confidence_filter_score.
         """
+
+        pr_review_context, pr_summary_context = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
+
         # using tiktoken to count the total tokens consumed by characters from relevant chunks and pr diff
         tiktoken_client = TikToken()
         pr_diff_token_count = tiktoken_client.count(text=pr_diff)
         relevant_chunk_token_count = tiktoken_client.count(text=relevant_chunk)
-        total_token_count = pr_diff_token_count + relevant_chunk_token_count
         logger.info(
             f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}"
         )
         logger.info(
-            f"Total token count = {total_token_count} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}"
+            f"Total token count = {pr_review_context} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}"
         )
 
-        pr_review_context, pr_summary_context = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
         pr_review_conversation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context
         )
