@@ -93,7 +93,6 @@ class RepoModule:
         Raises:
             ValueError: If the pull request details are invalid or cannot be retrieved.
         """
-
         if self.vcs_type != VCSTypes.bitbucket.value:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
         bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)

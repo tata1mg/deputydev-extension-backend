@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime
 from typing import Any, Dict
 
 from sanic.log import logger
@@ -35,16 +36,19 @@ class CodeReviewManager:
 
     @classmethod
     async def handle_event(cls, data: Dict[str, Any]) -> None:
+        start_time = datetime.now()
         logger.info("Received SQS Message: {}".format(data))
-        await cls.process_pr_review(data=data)
+        await cls.process_pr_review(data=data, start_time=start_time)
 
     @classmethod
-    async def process_pr_review(cls, data: Dict[str, Any]) -> None:
+    async def process_pr_review(cls, data: Dict[str, Any], start_time: datetime) -> None:
         """Process a Pull Request review asynchronously.
 
         Args:
             data (Dict[str, Any]): Dictionary containing necessary data for processing the review.
                 Expected keys: 'repo_name', 'branch', 'vcs_type', 'pr_id', 'confidence_score'.
+
+            start_time (datetime): time when the PR request processing started
 
         Returns:
             None
@@ -55,25 +59,29 @@ class CodeReviewManager:
             branch_name=data.get("branch"),
             vcs_type=data.get("vcs_type", VCSTypes.bitbucket.value),
         )
-
+        request_id = data.get("request_id")
         # Retrieve Pull Request details and diff content asynchronously
         pr_id = data.get("pr_id")
         pr_detail = await repo.get_pr_details(pr_id=data.get("pr_id"), request_time=data.get("request_time"))
         if data.get("pr_type") == "created" and not pr_detail.created:
-            return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
+            return logger.info(
+                f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state, request_id - {request_id}"
+            )
         else:
             diff = await repo.get_pr_diff(data.get("pr_id"))
             if diff == "":
                 return logger.info(
-                    f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
+                    f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review, request_id - {request_id}"
                 )
             # Calculate the total lines of code changed in the diff content
             diff_loc = calculate_total_diff(diff)
-            logger.info(f"Total diff LOC is {diff_loc}")
+            logger.info(f"Total diff LOC is {diff_loc}, request_id - {request_id}")
 
             # Check if diff size exceeds the maximum allowable changes
             if diff_loc > MAX_LINE_CHANGES:
-                logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
+                logger.info(
+                    "Diff count is {}. Unable to process this request for request_id - {}.".format(diff_loc, request_id)
+                )
                 # Add a comment to the Pull Request indicating the size is too large
                 comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
                 await repo.create_comment_on_pr(pr_id=pr_id, comment=comment)
@@ -84,13 +92,13 @@ class CodeReviewManager:
 
                 # Process source code into chunks and documents
                 all_chunks, all_docs = source_to_chunks(repo.repo_dir)
-                logger.info("Completed chunk creation")
+                logger.info(f"Completed chunk creation, request_id - {request_id}")
 
                 # Perform a search based on the diff content to find relevant chunks
                 content_to_lexical_score_list = await perform_search(
                     all_docs=all_docs, all_chunks=all_chunks, query=diff
                 )
-                logger.info("Completed lexical and vector search")
+                logger.info(f"Completed lexical and vector search, request_id - {request_id}")
 
                 # Rank relevant chunks based on lexical scores
                 ranked_snippets_list = sorted(
@@ -102,7 +110,9 @@ class CodeReviewManager:
                 # Render relevant chunks into a single snippet
                 relevant_chunk = render_snippet_array(ranked_snippets_list)
 
-                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
+                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(
+                    diff, pr_detail, relevant_chunk, request_id
+                )
                 if response:
                     # Extract comments from the response
                     comments = response.get("comments")
@@ -115,9 +125,15 @@ class CodeReviewManager:
                 if pr_summary:
                     await repo.create_comment_on_pr(pr_id, pr_summary)
 
-                logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
                 # Clean up by deleting the cloned repository
                 repo.delete_repo()
+
+                # Calculate the difference between the current time and the start time
+                time_difference = datetime.now() - start_time
+                total_seconds = time_difference.total_seconds()
+                logger.info(
+                    f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}, request_id - {request_id}, total time elapsed (secs) - {total_seconds}"
+                )
                 return
 
     @staticmethod
@@ -146,7 +162,9 @@ class CodeReviewManager:
         return pr_review_context, pr_summary_context
 
     @classmethod
-    async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> list:
+    async def parallel_pr_review_with_gpt_models(
+        cls, pr_diff: str, pr_detail: str, relevant_chunk: str, request_id: str
+    ) -> list:
         """
         Runs a thread parallely to call normal GPT-4 and fine-tuned GPT model to review the PR and provide comments.
 
@@ -166,10 +184,10 @@ class CodeReviewManager:
         pr_diff_token_count = tiktoken_client.count(text=pr_diff)
         relevant_chunk_token_count = tiktoken_client.count(text=relevant_chunk)
         logger.info(
-            f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}"
+            f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}, request_id - {request_id}"
         )
         logger.info(
-            f"Total token count = {pr_review_context} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}"
+            f"Total token count = {pr_review_context} for PR - {pr_detail.id} and repo - {pr_detail.repository_name}, request_id - {request_id}"
         )
 
         pr_review_conversation_message = build_openai_conversation_message(
