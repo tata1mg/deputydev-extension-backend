@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import shutil
+from datetime import datetime
 from functools import cached_property
 from typing import Union
 
@@ -11,6 +12,7 @@ from torpedo import CONFIG
 
 from app.constants import RepoUrl
 from app.constants.repo import VCSTypes
+from app.dao.repo import PullRequestResponse
 from app.utils import add_corrective_code, parse_collection_name
 
 from .bitbucket import BitBucketModule
@@ -77,12 +79,13 @@ class RepoModule:
         self.git_repo = await self.__clone()
         return self.git_repo
 
-    async def get_pr_details(self, pr_id: int):
+    async def get_pr_details(self, pr_id: int, request_time: str) -> PullRequestResponse:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
 
         Args:
             pr_id (int): The ID of the pull request.
+            request_time (str): Time when request was generated
 
         Returns:
             PullRequestResponse: An object containing details of the pull request.
@@ -94,7 +97,13 @@ class RepoModule:
         if self.vcs_type != VCSTypes.bitbucket.value:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
         bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)
-        return await bitbucket_module.get_pr_details()
+        request_time = datetime.strptime(request_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+        pr_detail = await bitbucket_module.get_pr_details()
+        # Calculate the time difference in minutes
+        time_difference = (request_time - pr_detail.created_on).total_seconds() / 60
+        if time_difference > 5:
+            pr_detail.created = False
+        return await pr_detail
 
     async def get_pr_diff(self, pr_id: int):
         """
