@@ -103,7 +103,7 @@ class RepoModule:
         time_difference = (request_time - pr_detail.created_on).total_seconds() / 60
         if time_difference > 5:
             pr_detail.created = False
-        return await pr_detail
+        return pr_detail
 
     async def get_pr_diff(self, pr_id: int):
         """
