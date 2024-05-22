@@ -34,7 +34,9 @@ async def pool_assistance_api(_request: Request, **kwargs):
         return send_response(f"Processing Started with Request ID : {request_id}")
     else:
         logger.info("Blocked request: {}".format(payload))
-        return send_response(status_code=422, data=f'Currently we are not serving: {payload.get("repo_name")}')
+        return send_response(
+            body={"message": f'Currently we are not serving: {payload.get("repo_name")}', "status_code": 422}
+        )
 
 
 @smart_code.route("/chat", methods=["POST"])
