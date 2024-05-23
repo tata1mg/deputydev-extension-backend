@@ -1,6 +1,9 @@
+from torpedo import CONFIG
 from torpedo.constants import ListenerEventTypes
 
 from app.sqs.genai_subscriber import GenaiSubscriber
+
+config = CONFIG.config
 
 
 async def initialize_sqs_subscribes(_app, loop):
@@ -15,4 +18,10 @@ async def initialize_sqs_subscribes(_app, loop):
         _app.add_task(await genai_subscribe.subscribe())
 
 
-listeners = [(initialize_sqs_subscribes, ListenerEventTypes.AFTER_SERVER_START.value)]
+background_tasks = [
+    (initialize_sqs_subscribes, ListenerEventTypes.AFTER_SERVER_START.value),
+]
+
+
+# Initializing listeners with background task only if it the background worker flag is enabled.
+listeners = background_tasks if config.get("IS_BACKGROUND_WORKER_ENABLED") else []
