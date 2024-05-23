@@ -29,7 +29,7 @@ async def pool_assistance_api(_request: Request, **kwargs):
     payload["request_time"] = str(formatted_datetime_str)
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     payload["request_id"] = request_id
-    if payload.get("repo_name") in config.get("WHITELISTED_REPOS"):
+    if payload.get("repo_name") not in config.get("BLOCKED_REPOS"):
         logger.info("Whitelisted request: {}".format(payload))
         await GenaiSubscriber(config=config).publish(payload=payload)
         return send_response(f"Processing Started with Request ID : {request_id}")
