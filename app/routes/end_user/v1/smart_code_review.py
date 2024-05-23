@@ -4,6 +4,7 @@ from sanic import Blueprint
 from sanic.log import logger
 from sanic_ext import validate
 from torpedo import CONFIG, Request, send_response
+from torpedo.exceptions import BadRequestException
 
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
@@ -34,13 +35,7 @@ async def pool_assistance_api(_request: Request, **kwargs):
         return send_response(f"Processing Started with Request ID : {request_id}")
     else:
         logger.info("Blocked request: {}".format(payload))
-        return send_response(
-            body={
-                "error": {"message": f'Currently we are not serving: {payload.get("repo_name")}'},
-                "is_success": False,
-                "status_code": 422,
-            }
-        )
+        raise BadRequestException(error=f'Currently we are not serving: {payload.get("repo_name")}', status_code=422)
 
 
 @smart_code.route("/chat", methods=["POST"])
