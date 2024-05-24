@@ -64,11 +64,13 @@
   },
   "FINETUNED_SCRIT_MODEL": {
     "MODEL": "",
-    "CONFIDENCE_SCORE": 1
+    "CONFIDENCE_SCORE": 1,
+    "BITBUCKET_TOKEN": ""
   },
   "SCRIT_MODEL": {
     "MODEL": "",
-    "CONFIDENCE_SCORE": 1
+    "CONFIDENCE_SCORE": 1,
+    "BITBUCKET_TOKEN": ""
   },
   "WHITELISTED_REPOS": [],
   "CHUNKING": {
