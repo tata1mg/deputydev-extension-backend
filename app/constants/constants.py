@@ -100,23 +100,37 @@ class Augmentation(Enum):
                 * -r,s indicates the range in the original file (before changes), with r as the start line and s as the number of lines changed.
                 * +r,s indicates the range in the new file (after changes), with similar structure.
                 * Lines starting with - are in the original file, while lines starting with + are in the new file.
-            - Example git diff Output:
+            - Git diff Output examples:
+            Example 1:
             ```
-            @@ -1,4 +1,5 @@
-            Line 1 content
-            -Line 2 to be removed
-            +Line 2 modified content
-            +Line 2.5 added content
-            Line 3 content
+            @@ -10,3 +10,4 @@
+            Line 10 context line
+            +Line 11 modified content
+            +Line 12 added new line
+            Line 13 context line
             ```
-        2) Calculate New Line Numbers:
-            - Begin with the starting line number in the new file (+r part of the chunk header).
-            - Increment the line number by 1 for each + or context line, while - lines are skipped.
-        3) Example Calculation:
-           The chunk starts at line 1 in both the old and new files (`@@ -1,4 +1,5 @@`).
-            - As per the diff, one line is modified and one new line is added before \"Line 3 content\", and one line is removed.
-            - Starting at line 1, increment by 1 for \"Line 1 content\", skip counting for the removed line since it's not in the new file, increment by 1 each for \"Line 2 modified content\" and \"Line 2.5 added content\". Now, \"Line 3 content\" is on line 4 in the new file.
-        4) Calculating line is one of the crucial step so that we can know the exact line where comment needs to be done, So make sure you calculate the line number accurately
+            Description for example 1:
+            - The diff starts at line 10 in both the old and new files as indicated by -r and +r respectively in ```@@ -r,s +r,s @@``` header
+            - Line 11 & 13 are context lines since they don't have any of + and - prefix.
+            - Line 11 or 12 are either modified or newly added since they contain + prefix.
+            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.
+            
+            - Example 2 git diff Output:
+            ```
+            @@ -24,4 +24,4 @@
+            Line 24 content
+            -Line 25 to be removed
+            +Line 26 modified content
+            +Line 27 added content
+            Line 28 content
+            ```
+            Description for example 2:
+            - The diff starts at line 24 in both the old and new files as indicated by -r and +r respectively in ```@@ -r,s +r,s @@``` header
+            - Line 24 & 28 are context lines since they don't have any of + and - prefix.
+            - Line 26 & 27 are either modified or newly added since they contain + prefix.
+            - Line 25 is removed since it has - prefix.
+            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.
+        2) Calculating line is one of the crucial step so that we can know the exact line where comment needs to be done, So make sure you calculate the line number accurately
 
         ### Return Response Rules
             Make sure to return only a valid JSON and not any other text. This JSON should have a key named `comments` which will be a list of dict.
