@@ -168,6 +168,8 @@ class Augmentation(Enum):
                 - Logging of errors with relevant context information.
                 - prefer exception classes over generic exception handling. 
             9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.   
+            10) Strictly avoid suggesting duplicate comment for a particular line in a file.
+            11) Please only suggest comments for lines included in the PR diff. Do not suggest comments on code lines that are part of the relevant context.
         """
     SCRIT_SUMMARY_PROMPT = """
         Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If the comment involves inquiries about code improvements or other technical discussions, evaluate the provided pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown"
@@ -193,3 +195,9 @@ class JivaChatTypes(Enum):
     ChatTypeCallAgent = "ChatTypeCallAgent"
     ChatTypeSkuCard = "ChatTypeSkuCard"
     ChatTypePdf = "ChatTypePdf"
+
+
+class LLMModels(Enum):
+    Summarization = "SCRIT_MODEL"
+    FoundationModel = "SCRIT_MODEL"
+    FinetunedModel = "FINETUNED_SCRIT_MODEL"
