@@ -70,16 +70,21 @@ class BitBucketModule:
         else:
             return ignore_files(response)
 
-    async def create_comment_on_pr(self, comment: dict) -> Dict[str, Any]:
+    async def create_comment_on_pr(self, comment: dict, model: str) -> Dict[str, Any]:
         """
         Create a comment on the pull request.
 
         Parameters:
         - comment (str): The content of the comment.
+        - model(str): model which was used to receive comment. Helps identify the bot to post comment
 
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
+        comment_headers = {
+            "Content-Type": "application/json",
+            "Authorization": CONFIG.config[model]["BITBUCKET_TOKEN"],
+        }
         url = f"{self.bitbucket_url}/{self.workspace}/pullrequests/{self.pr_id}/comments"
-        response = requests.post(url, headers=self.headers, json=comment)
+        response = requests.post(url, headers=comment_headers, json=comment)
         return response.json()

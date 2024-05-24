@@ -3,15 +3,16 @@ import os
 import re
 import shutil
 from functools import cached_property
-from typing import Union
+from typing import List, Union
 
 import git
 from sanic.log import logger
-from torpedo import CONFIG
+from torpedo import CONFIG, Task
 
 from app.constants import RepoUrl
+from app.constants.constants import LLMModels
 from app.constants.repo import VCSTypes
-from app.utils import add_corrective_code, parse_collection_name
+from app.utils import add_corrective_code, get_task_response, parse_collection_name
 
 from .bitbucket import BitBucketModule
 
@@ -115,13 +116,14 @@ class RepoModule:
         bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)
         return await bitbucket_module.get_pr_diff()
 
-    async def create_comment_on_pr(self, pr_id: int, comment: Union[str, dict]):
+    async def create_comment_on_pr(self, pr_id: int, comment: Union[str, dict], model: str):
         """
         Create a comment on the pull request.
 
         Parameters:
         - pr_id (int): The ID of the pull request.
         - comment (str): The comment that needs to be added
+        - model(str): model which was used to retrieve comments. Helps identify the bot to post comment
 
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
@@ -131,7 +133,7 @@ class RepoModule:
         bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)
         if isinstance(comment, str):
             comment_payload = {"content": {"raw": comment}}
-            return await bitbucket_module.create_comment_on_pr(comment_payload)
+            return await bitbucket_module.create_comment_on_pr(comment_payload, model)
         else:
             if comment.get("file_path"):
                 comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
@@ -147,4 +149,54 @@ class RepoModule:
                     },
                 }
                 logger.info(f"Comment payload: {comment_payload}")
-                return await bitbucket_module.create_comment_on_pr(comment_payload)
+
+                return await bitbucket_module.create_comment_on_pr(comment_payload, model)
+
+    async def create_bulk_comments(self, pr_id: int, comments: List[Union[str, dict]], model: str) -> None:
+        """
+        Iterate over each comment in pull request and post that comment on PR.
+
+        Parameters:
+        - pr_id (int): The ID of the pull request.
+        - comments (List[Union[str, dict]]): A list of comments to be added
+        - model(str): model which was used to retrieve comments. Helps identify the bot to post comment
+
+        Returns:
+        - None
+        """
+        for comment in comments:
+            try:
+                await self.create_comment_on_pr(pr_id, comment, model)
+            except Exception as e:
+                logger.error(f"Unable to create comment on PR {pr_id}: {e}")
+
+    async def post_bots_comments(self, response, pr_id):
+        """
+        Create two parallel tasks to comment on PR using multiple bots
+
+        Args:
+            response(dict): dict of PR comments fetched from finetuned and foundation nodels
+            pr_id (int): PR ID
+
+        Returns:
+            None
+        """
+        tasks = [
+            Task(
+                self.create_bulk_comments(
+                    pr_id=pr_id,
+                    comments=response.get("finetuned_comments"),
+                    model=LLMModels.FinetunedModel.value,
+                ),
+                result_key="finetuned_comments",
+            ),
+            Task(
+                self.create_bulk_comments(
+                    pr_id=pr_id,
+                    comments=response.get("foundation_comments"),
+                    model=LLMModels.FoundationModel.value,
+                ),
+                result_key="foundation_comments",
+            ),
+        ]
+        await get_task_response(tasks)

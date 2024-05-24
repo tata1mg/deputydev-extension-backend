@@ -10,6 +10,7 @@ from app.constants.constants import (
     MAX_LINE_CHANGES,
     PR_SIZE_TOO_BIG_MESSAGE,
     Augmentation,
+    LLMModels,
 )
 from app.constants.repo import VCSTypes
 from app.modules.chunking.chunk_parsing_utils import (
@@ -80,7 +81,7 @@ class CodeReviewManager:
                 logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
                 # Add a comment to the Pull Request indicating the size is too large
                 comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
-                await repo.create_comment_on_pr(pr_id=pr_id, comment=comment)
+                await repo.create_comment_on_pr(pr_id=pr_id, comment=comment, model=LLMModels.FoundationModel.value)
                 return
             else:
                 # Clone the repository for further processing
@@ -107,17 +108,15 @@ class CodeReviewManager:
                 relevant_chunk = render_snippet_array(ranked_snippets_list)
 
                 response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
-                if response:
-                    # Extract comments from the response
-                    comments = response.get("comments")
-                    if comments:
-                        for comment in comments:
-                            await repo.create_comment_on_pr(pr_id, comment)
-                    else:
-                        # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
-                        await repo.create_comment_on_pr(pr_id, "LGTM!!")
+                if not response.get("finetuned_comments") and not response.get("foundation_comments"):
+                    # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
+                    await repo.create_comment_on_pr(pr_id, "LGTM!!", LLMModels.FoundationModel.value)
+                else:
+                    # parallel tasks to Post finetuned and foundation comments
+                    await repo.post_bots_comments(response, pr_id)
+
                 if pr_summary:
-                    await repo.create_comment_on_pr(pr_id, pr_summary)
+                    await repo.create_comment_on_pr(pr_id, pr_summary, LLMModels.FoundationModel.value)
 
                 logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
                 # Clean up by deleting the cloned repository
@@ -150,7 +149,7 @@ class CodeReviewManager:
         return pr_review_context, pr_summary_context
 
     @classmethod
-    async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> list:
+    async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> tuple:
         """
         Runs a thread parallely to call normal GPT-4 and fine-tuned GPT model to review the PR and provide comments.
 
@@ -160,7 +159,7 @@ class CodeReviewManager:
             relevant_chunk (str): Relevant chunks of code for the review.
 
         Returns:
-            list: Combined OpenAI PR comments filtered by confidence_filter_score.
+            Tuple[Dict, str]: Combined OpenAI PR comments filtered by confidence_filter_score and PR summary.
         """
         pr_review_context, pr_summary_context = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
         pr_review_conversation_message = build_openai_conversation_message(
@@ -191,7 +190,7 @@ class CodeReviewManager:
                     max_retry=2,
                     client_type="openai",
                 ),
-                result_key="scrit_model",
+                result_key="foundation_model",
             ),
             # PR summarisation by scrit model
             Task(
@@ -203,19 +202,17 @@ class CodeReviewManager:
                     client_type="openai",
                     response_type="text",
                 ),
-                result_key="scrit_model_pr_summarisation",
+                result_key="foundation_model_pr_summarisation",
             ),
         ]
         task_response = await get_task_response(tasks)
         # combine finetuned and gpt4 filtered comments
-        finetuned_model_comments = task_response.get("finetuned_model")
-        scrit_model_comments = task_response.get("scrit_model")
-        scrit_model_pr_summarisation = task_response.get("scrit_model_pr_summarisation")
+        foundation_model_pr_summarisation = task_response.get("foundation_model_pr_summarisation")
         combined_comments = {
-            "comments": finetuned_model_comments.get("comments", []) + scrit_model_comments.get("comments", [])
+            "finetuned_comments": task_response.get("finetuned_model").get("comments", []),
+            "foundation_comments": task_response.get("foundation_model").get("comments", []),
         }
-
-        return combined_comments, scrit_model_pr_summarisation
+        return combined_comments, foundation_model_pr_summarisation
 
     @classmethod
     async def get_client_pr_comments(
