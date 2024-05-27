@@ -64,7 +64,7 @@ class CodeReviewManager:
         request_time = datetime.strptime(data.get("request_time"), "%Y-%m-%dT%H:%M:%S.%f%z")
         # Calculate the time difference in minutes
         time_difference = (request_time - created_on).total_seconds() / 60
-        if data.get("pr_type") == "created" and time_difference > 5:
+        if data.get("pr_type") == "created" and time_difference > 15:
             return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
         else:
             diff = await repo.get_pr_diff(data.get("pr_id"))
