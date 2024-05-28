@@ -96,7 +96,7 @@ class RepoModule:
         PullRequestResponse: The updated pull request details with 'created' flag adjusted based on the time difference.
         """
         time_difference = get_time_difference(pr_detail.created_on, request_time)
-        if time_difference > 5:
+        if time_difference > 15:
             pr_detail.created = False
         return pr_detail
 
