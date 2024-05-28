@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from functools import wraps
-
+from app.constants import TimeFormat
 from sanic.log import logger
 
 from app.utils import get_time_difference
@@ -62,7 +62,7 @@ def log_time(func):
 
         end_time = datetime.now(timezone.utc)
         formatted_end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-        end_message = f"End: {func.__name__} at {formatted_end_time} - Elapsed: {get_time_difference(start_time, end_time):6f} seconds"
+        end_message = f"End: {func.__name__} at {formatted_end_time} - Elapsed: {get_time_difference(start_time, end_time, TimeFormat.SECONDS.value):6f} seconds"
         if request_id:
             end_message = end_message + f", for request ID - {request_id}"
         logger.info(end_message)
