@@ -1,9 +1,6 @@
-from torpedo import CONFIG
 from torpedo.constants import ListenerEventTypes
 
 from app.sqs.genai_subscriber import GenaiSubscriber
-
-config = CONFIG.config
 
 
 async def initialize_sqs_subscribes(_app, loop):
