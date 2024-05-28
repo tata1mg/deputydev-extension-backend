@@ -43,10 +43,10 @@ def log_time(func):
         formatted_start_time = start_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
         if kwargs["data"]["request_id"]:
             request_id = kwargs["data"]["request_id"]
-        start_messgae = f"Start: {func.__name__} at {formatted_start_time}"
+        start_message = f"Start: {func.__name__} at {formatted_start_time}"
         if request_id:
-            start_messgae.__add__(f", for request ID - {request_id}")
-        logger.info(start_messgae)
+            start_message = start_message + f", for request ID - {request_id}"
+        logger.info(start_message)
 
         try:
             result = await func(*args, **kwargs)
@@ -55,8 +55,8 @@ def log_time(func):
             formatted_end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
             exception_message = f"Error: {func.__name__} at {formatted_end_time}"
             if request_id:
-                exception_message.__add__(f", for request ID - {request_id}")
-            exception_message.__add__(f" - {e}")
+                exception_message = exception_message + f", for request ID - {request_id}"
+            exception_message = exception_message + f" - {e}"
             logger.error(exception_message)
             raise e
 
@@ -64,7 +64,7 @@ def log_time(func):
         formatted_end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
         end_message = f"End: {func.__name__} at {formatted_end_time} - Elapsed: {get_time_difference(start_time, end_time):6f} seconds"
         if request_id:
-            end_message.__add__(f", for request ID - {request_id}")
+            end_message = end_message + f", for request ID - {request_id}"
         logger.info(end_message)
 
         return result
