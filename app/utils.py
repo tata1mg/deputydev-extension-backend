@@ -12,7 +12,7 @@ from torpedo import Task, TaskExecutor
 from torpedo.common_utils import CONFIG
 
 from app.constants import IGNORE_FILES, TimeFormat
-from app.modules.tiktoken.tiktoken import TikToken
+from app.modules.tiktoken import TikToken
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
 name_slug_replace_string = "-"
