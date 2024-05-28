@@ -213,3 +213,8 @@ class LLMModels(Enum):
     Summarization = "SCRIT_MODEL"
     FoundationModel = "SCRIT_MODEL"
     FinetunedModel = "FINETUNED_SCRIT_MODEL"
+
+
+class TimeFormat(Enum):
+    SECONDS = "SECONDS"
+    MINUTES = "MINUTES"
