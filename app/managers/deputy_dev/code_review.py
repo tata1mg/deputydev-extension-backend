@@ -136,8 +136,18 @@ class CodeReviewManager:
         Returns:
             str: The formatted user message.
         """
+
+        user_story_description = """
+        Old logic:
+            We release redis lock on order key and booking id only for cancelled orders 
+        New logic:
+            We want to release redis lock on order key and booking id for both cancelled and delivered orders.
+            Please ensure that this change shouldn't impact any other flow.
+       """
+
         pr_review_context = (
             "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
+            f"Following is the user story description - {user_story_description}. You should use this to make comments around change in business logic that is not expected to do."
             f"Use the relevant chunks of code to review the PR passed. Relevant code chunks: '{relevant_chunk}, "
             f"Review this PR with Title: '{pr_detail.title}', "
             f"Description: '{pr_detail.description}', "
