@@ -1,4 +1,5 @@
-import time
+from datetime import datetime, timezone
+from app.utils import get_time_difference
 from functools import wraps
 
 from sanic.log import logger
@@ -36,10 +37,12 @@ def log_time(func):
         # difficult. This is a temporary check where we are checking if we are receiving request_id in payload or not and then
         # adding it into logs, will have to find a better alternative
         request_id = None
-        start_time = time.time()
+        start_time = datetime.now(timezone.utc)
+        # Format the datetime as per the specified format
+        formatted_start_time = start_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
         if kwargs["data"]["request_id"]:
             request_id = kwargs["data"]["request_id"]
-        start_messgae = f"Start: {func.__name__} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"
+        start_messgae = f"Start: {func.__name__} at {formatted_start_time}"
         if request_id:
             start_messgae.__add__(f", for request ID - {request_id}")
         logger.info(start_messgae)
@@ -47,18 +50,18 @@ def log_time(func):
         try:
             result = await func(*args, **kwargs)
         except Exception as e:
-            end_time = time.time()
-            exception_message = (
-                f"Error: {func.__name__} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}"
-            )
+            end_time = datetime.now(timezone.utc)
+            formatted_end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+            exception_message = f"Error: {func.__name__} at {formatted_end_time}"
             if request_id:
                 exception_message.__add__(f", for request ID - {request_id}")
             exception_message.__add__(f" - {e}")
             logger.error(exception_message)
             raise e
 
-        end_time = time.time()
-        end_message = f"End: {func.__name__} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))} - Elapsed: {end_time - start_time:.6f} seconds"
+        end_time = datetime.now(timezone.utc)
+        formatted_end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+        end_message = f"End: {func.__name__} at {formatted_end_time} - Elapsed: {get_time_difference(start_time, end_time):6f} seconds"
         if request_id:
             end_message.__add__(f", for request ID - {request_id}")
         logger.info(end_message)
