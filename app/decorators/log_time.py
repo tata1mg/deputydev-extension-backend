@@ -1,0 +1,68 @@
+import time
+from functools import wraps
+
+from sanic.log import logger
+
+
+def log_time(func):
+    """
+    Decorator to log the execution time of methods.
+
+    Args:
+        func: The asynchronous function to be decorated.
+
+    Returns:
+        The decorated function with logging.
+    """
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        """
+        Wrapper function to log the start time, end time, and any exceptions raised during execution.
+
+        Args:
+            args: Positional arguments for the decorated function.
+            kwargs: Keyword arguments for the decorated function.
+
+        Returns:
+            The result of the decorated function.
+
+        Raises:
+            Exception: Any exception raised by the decorated function.
+        """
+
+        # Currently we are checking request_id, if it is present in kwargs or not, it's not an ideal way to attach
+        # request_id but requests received in background doesn't have request_id which makes finding log traces
+        # difficult. This is a temporary check where we are checking if we are receiving request_id in payload or not and then
+        # adding it into logs, will have to find a better alternative
+        request_id = None
+        start_time = time.time()
+        if kwargs["data"]["request_id"]:
+            request_id = kwargs["data"]["request_id"]
+        start_messgae = f"Start: {func.__name__} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"
+        if request_id:
+            start_messgae.__add__(f", for request ID - {request_id}")
+        logger.info(start_messgae)
+
+        try:
+            result = await func(*args, **kwargs)
+        except Exception as e:
+            end_time = time.time()
+            exception_message = (
+                f"Error: {func.__name__} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}"
+            )
+            if request_id:
+                exception_message.__add__(f", for request ID - {request_id}")
+            exception_message.__add__(f" - {e}")
+            logger.error(exception_message)
+            raise e
+
+        end_time = time.time()
+        end_message = f"End: {func.__name__} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))} - Elapsed: {end_time - start_time:.6f} seconds"
+        if request_id:
+            end_message.__add__(f", for request ID - {request_id}")
+        logger.info(end_message)
+
+        return result
+
+    return wrapper
