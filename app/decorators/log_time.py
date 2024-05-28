@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
-from app.utils import get_time_difference
 from functools import wraps
 
 from sanic.log import logger
+
+from app.utils import get_time_difference
 
 
 def log_time(func):
