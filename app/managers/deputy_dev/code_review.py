@@ -109,6 +109,7 @@ class CodeReviewManager:
                 relevant_chunk = render_snippet_array(ranked_snippets_list)
 
                 response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
+
                 if not response.get("finetuned_comments") and not response.get("foundation_comments"):
                     # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
                     await repo.create_comment_on_pr(pr_id, "LGTM!!", LLMModels.FoundationModel.value)
@@ -137,11 +138,14 @@ class CodeReviewManager:
         Returns:
             str: The formatted user message.
         """
-        user_story_description = await JiraManager(issue_id = pr_detail.issue_id).get_description_text()
+        user_story_description = await JiraManager(issue_id=pr_detail.issue_id).get_description_text()
 
-        pr_review_context = (
-            "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
-            f"Following is the user story description - {user_story_description}. You should use this to make comments around change in business logic that is not expected to do."
+        pr_review_context = "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code and user story description. Relevant chunks of code are enclosed within <relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
+
+        if user_story_description:
+            pr_review_context += f"Following is the user story description - {user_story_description}. You should use this to make comments around change in business logic that is not expected to do."
+
+        pr_review_context += (
             f"Use the relevant chunks of code to review the PR passed. Relevant code chunks: '{relevant_chunk}, "
             f"Review this PR with Title: '{pr_detail.title}', "
             f"Description: '{pr_detail.description}', "
@@ -165,6 +169,7 @@ class CodeReviewManager:
         Returns:
             Tuple[Dict, str]: Combined OpenAI PR comments filtered by confidence_filter_score and PR summary.
         """
+
         pr_review_context, pr_summary_context = await cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
         pr_review_conversation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context
@@ -172,6 +177,7 @@ class CodeReviewManager:
         pr_review_summarisation_converstation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_SUMMARY_PROMPT.value, user_message=pr_summary_context
         )
+
         # Create three parallel tasks to get PR reviewed by finetuned model and gpt4 model and also get the PR summarisation
         tasks = [
             # PR review by finetuned model

@@ -3,11 +3,13 @@ from requests.auth import HTTPBasicAuth
 
 config = CONFIG.config
 
+
 class Base:
-    BASE_URL = config['ATLASSIAN']['HOST']
-    V3_PATH = config['ATLASSIAN']['V3_PATH']
-    AUTH_TOKEN = config['ATLASSIAN']['AUTH_TOKEN']
-    USERNAME = config['ATLASSIAN']['USERNAME']
+    BASE_URL = config["JIRA"]["HOST"]
+    V3_PATH = config["JIRA"]["V3_PATH"]
+    AUTH_TOKEN = config["JIRA"]["AUTH_TOKEN"]
+    USERNAME = config["JIRA"]["USERNAME"]
+    TIMEOUT = config["JIRA"]["TIMEOUT"] or 1
 
     @classmethod
     def auth(cls):
