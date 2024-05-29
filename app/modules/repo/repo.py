@@ -70,19 +70,27 @@ class RepoModule:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        sreturn_code = await process.wait()
-        if sreturn_code == 0:
+        return_code = await process.wait()
+
+        # we only get return code 0 or 1 from process, where 0 means everything is working fine and 1
+        # means something went wrong while performing the task, we don't get any specific error message,
+        # so we are adding our own custom message for the same
+        if return_code == 0:
             logger.info("Cloning completed")
-        repo = git.Repo(self.repo_dir)
-        return repo
+            repo = git.Repo(self.repo_dir)
+            return repo
+        else:
+            raise Exception("Something went wrong while cloning the repo")
 
     async def clone_repo(self):
         """
         Initialize the repository after dataclass initialization.
         """
-
-        self.git_repo = await self.__clone()
-        return self.git_repo
+        try:
+            self.git_repo = await self.__clone()
+            return self.git_repo
+        except Exception as e:
+            raise Exception(e)
 
     def parse_pr_detail(self, pr_detail: PullRequestResponse, request_time: str) -> PullRequestResponse:
         """
