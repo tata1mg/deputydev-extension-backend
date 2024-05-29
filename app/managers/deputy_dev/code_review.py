@@ -25,6 +25,7 @@ from app.utils import (
     calculate_total_diff,
     get_task_response,
 )
+from app.modules.jira.jira_manager import JiraManager
 
 finetuned_model_config = CONFIG.config.get("FINETUNED_SCRIT_MODEL")
 scrit_model_config = CONFIG.config.get("SCRIT_MODEL")
@@ -124,7 +125,7 @@ class CodeReviewManager:
                 return
 
     @staticmethod
-    def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> str:
+    async def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> str:
         """
         Creates the user message for the OpenAI chat completion API.
 
@@ -136,14 +137,7 @@ class CodeReviewManager:
         Returns:
             str: The formatted user message.
         """
-
-        user_story_description = """
-        Old logic:
-            We release redis lock on order key and booking id only for cancelled orders 
-        New logic:
-            We want to release redis lock on order key and booking id for both cancelled and delivered orders.
-            Please ensure that this change shouldn't impact any other flow.
-       """
+        user_story_description = await JiraManager(issue_id = pr_detail.issue_id).get_description_text()
 
         pr_review_context = (
             "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code. Relevant chunks of code are enclosed within <relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
@@ -171,7 +165,7 @@ class CodeReviewManager:
         Returns:
             Tuple[Dict, str]: Combined OpenAI PR comments filtered by confidence_filter_score and PR summary.
         """
-        pr_review_context, pr_summary_context = cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
+        pr_review_context, pr_summary_context = await cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
         pr_review_conversation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context
         )
