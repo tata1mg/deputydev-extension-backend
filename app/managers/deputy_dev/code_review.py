@@ -84,8 +84,14 @@ class CodeReviewManager:
                 await repo.create_comment_on_pr(pr_id=pr_id, comment=comment, model=LLMModels.FoundationModel.value)
                 return
             else:
-                # Clone the repository for further processing
-                await repo.clone_repo()
+                # Clone the repository for further processing. If something goes wrong, we terminate the review process
+                # and purge the SQS message and log the error
+                try:
+                    await repo.clone_repo()
+                except Exception as e:
+                    return logger.error(
+                        f"{e} - PR - {pr_id} for repo - {data.get('repo_name')}, branch_name - {data.get('branch')}"
+                    )
 
                 # Process source code into chunks and documents
                 all_chunks, all_docs = source_to_chunks(repo.repo_dir)
