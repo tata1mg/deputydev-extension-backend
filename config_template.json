@@ -84,11 +84,12 @@
     "bitbucket-pipelines.yml",
     "package-lock.json"
   ],
-  "ATLASSIAN": {
+  "JIRA": {
     "HOST": "https://1mgtech.atlassian.net",
     "V3_PATH": "/rest/api/3",
     "AUTH_TOKEN": "***REMOVED***",
-    "USERNAME": "sudhir.poodar@1mg.com"
+    "USERNAME": "sudhir.poodar@1mg.com",
+    "TIMEOUT": 0.1
   },
   "BATCH_SIZE": 24
 }

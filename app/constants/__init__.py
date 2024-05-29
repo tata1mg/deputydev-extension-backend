@@ -9,7 +9,7 @@ __all__ = [
     "LabSkuCardImage",
     "CacheExpiry",
     "ChunkFileSizeLimit",
-    "SQS"
+    "SQS",
 ]
 
 from .cache import CacheExpiry
