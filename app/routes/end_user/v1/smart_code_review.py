@@ -7,6 +7,7 @@ from torpedo import CONFIG, Request, send_response
 
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.managers.deputy_dev.code_review import CodeReviewManager
+from app.modules.jira.jira_manager import JiraManager
 from app.models.smart_code import SmartCodeReqeustModel
 from app.sqs.genai_subscriber import GenaiSubscriber
 
@@ -36,6 +37,7 @@ async def pool_assistance_api(_request: Request, **kwargs):
         logger.info("Blocked request: {}".format(payload))
         return send_response(data=f'Currently we are not serving: {payload.get("repo_name")}')
 
+
 # For testing directly on local without queue, not used in PRODUCTION
 @smart_code.route("/without_queue", methods=["GET"])
 @validate(query=SmartCodeReqeustModel)
@@ -57,6 +59,7 @@ async def review_pr_in_background(_request: Request, **kwargs):
     else:
         logger.info("Blocked request: {}".format(payload))
         return send_response(data=f'Currently we are not serving: {payload.get("repo_name")}')
+
 
 @smart_code.route("/chat", methods=["POST"])
 async def chat_assistance_api(_request: Request, **kwargs):
