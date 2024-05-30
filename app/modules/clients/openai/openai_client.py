@@ -22,7 +22,7 @@ class OpenAIClient(BaseClient):
     def __init__(self):
         self.__client = AsyncOpenAI(
             api_key=openai_key,
-            timeout=60,
+            timeout=600,
             http_client=httpx.AsyncClient(
                 timeout=60,
                 limits=httpx.Limits(

@@ -91,7 +91,11 @@ class Augmentation(Enum):
     USER_LOCATION = "The user is currently located at {} \n"
     SCRIT_PROMT = """
         Please perform a code review of the following diff (produced by `git diff` on my code), and provide suggestions for improvement:
-        Relevant code chunks has also passed in the message that is relevant to PR diff changes.
+        Relevant code chunks are also passed in the message that is relevant to PR diff changes.
+        Steps to analyse correctness of Business logic:
+            1. You will be provided the User story describing what change is expected out of this PR. 
+            2. It is very important to provide comments on business logic that is not adhering to the user story. 
+            3. Also, provide preventive comments for any extra logic being executed along with the expected one. 
         Before providing the comment there are certain flows for processing data and pointers that needs to be considered to provide a comment.
         ### Calculation of Line Numbers:
         To determine line numbers based on the output of a git diff command for a specific file, follow these steps:
