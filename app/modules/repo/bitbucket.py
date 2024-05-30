@@ -53,11 +53,12 @@ class BitBucketModule:
 
     def get_issue_id(self, title) -> str:
         title_html = title.get("html", "")
-        escaped_prefix = re.escape(ATLASSIAN_ISSUE_URL_PREFIX) + ISSUE_ID_REGEX
-        matched_text = re.search(escaped_prefix, title_html)
-        if matched_text is not None:
-            issue_url = matched_text.group()
-            return issue_url.replace(ATLASSIAN_ISSUE_URL_PREFIX, "")
+        if title_html:
+            escaped_prefix = re.escape(ATLASSIAN_ISSUE_URL_PREFIX) + ISSUE_ID_REGEX
+            matched_text = re.search(escaped_prefix, title_html)
+            if matched_text is not None:
+                issue_url = matched_text.group()
+                return issue_url.replace(ATLASSIAN_ISSUE_URL_PREFIX, "")
 
     async def get_pr_diff(self) -> str:
         """
