@@ -79,16 +79,15 @@ def filter_file(directory: str, file: str, chunk_config: ChunkConfig) -> bool:
         if file[len(directory) + 1 :].startswith(dir_name):
             return False
 
-    # keeping the file size check for now, but need a discussion on whether we should have it
-    # or not in the first place
-    try:
-        if os.stat(file).st_size > ChunkFileSizeLimit.MAX.value:
-            return False
-        if os.stat(file).st_size < ChunkFileSizeLimit.MIN.value:
-            return False
-    except FileNotFoundError as e:
-        logger.error(f"File not found: {file}. Error: {e}")
-        return False
+    # Removing file size check since we are chunking files
+    # try:
+    #     if os.stat(file).st_size > ChunkFileSizeLimit.MAX.value:
+    #         return False
+    #     if os.stat(file).st_size < ChunkFileSizeLimit.MIN.value:
+    #         return False
+    # except FileNotFoundError as e:
+    #     logger.error(f"File not found: {file}. Error: {e}")
+    #     return False
     if not os.path.isfile(file):
         return False
     try:
