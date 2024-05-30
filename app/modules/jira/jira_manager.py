@@ -1,4 +1,5 @@
 from app.service_clients.jira.issue import Issue
+
 from .jira_helper import JiraHelper
 
 

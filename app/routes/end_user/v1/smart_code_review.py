@@ -5,10 +5,10 @@ from sanic.log import logger
 from sanic_ext import validate
 from torpedo import CONFIG, Request, send_response
 
-from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.managers.deputy_dev.code_review import CodeReviewManager
-from app.modules.jira.jira_manager import JiraManager
+from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
+from app.modules.jira.jira_manager import JiraManager
 from app.sqs.genai_subscriber import GenaiSubscriber
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
