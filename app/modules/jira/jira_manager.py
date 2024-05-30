@@ -9,7 +9,7 @@ class JiraManager:
 
     async def get_description_text(self):
         response = await self.get_issue_details(fields=["description"])
-        return JiraHelper.parse_description(response.get("fields", {}).get("description", {}).get("content", {}))
+        return JiraHelper.parse_description(response.get("fields", {}).get("description", {}).get("content", []))
 
-    async def get_issue_details(self, fields: list[str]):
+    async def get_issue_details(self, fields: list[str] = None):
         return await Issue.get(self.issue_id, fields)
