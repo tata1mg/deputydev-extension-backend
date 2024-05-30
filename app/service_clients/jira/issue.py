@@ -1,6 +1,7 @@
-from .base import Base
-from sanic.log import logger
 import requests
+from sanic.log import logger
+
+from .base import Base
 
 
 class Issue(Base):

@@ -18,6 +18,7 @@ from app.modules.chunking.chunk_parsing_utils import (
     source_to_chunks,
 )
 from app.modules.clients import LLMClient
+from app.modules.jira.jira_manager import JiraManager
 from app.modules.repo import RepoModule
 from app.modules.search import perform_search
 from app.utils import (
@@ -25,7 +26,6 @@ from app.utils import (
     calculate_total_diff,
     get_task_response,
 )
-from app.modules.jira.jira_manager import JiraManager
 
 finetuned_model_config = CONFIG.config.get("FINETUNED_SCRIT_MODEL")
 scrit_model_config = CONFIG.config.get("SCRIT_MODEL")
