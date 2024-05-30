@@ -15,5 +15,5 @@ class Issue(Base):
             response = requests.get(url, auth=cls.auth(), params=query_params, timeout=cls.TIMEOUT)
             return response.json()
         except Exception as e:
-            logger.error("Exception occured while fetching issue details: {}".format(e))
+            logger.error("Exception occured while fetching issue details from jira: {}".format(e))
             return {}
