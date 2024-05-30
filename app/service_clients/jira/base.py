@@ -9,7 +9,7 @@ class Base:
     V3_PATH = config["JIRA"]["V3_PATH"]
     AUTH_TOKEN = config["JIRA"]["AUTH_TOKEN"]
     USERNAME = config["JIRA"]["USERNAME"]
-    TIMEOUT = config["JIRA"]["TIMEOUT"] or 1
+    TIMEOUT = config["JIRA"]["TIMEOUT"] or 5
 
     @classmethod
     def auth(cls):
