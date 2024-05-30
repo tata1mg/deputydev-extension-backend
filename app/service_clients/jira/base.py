@@ -1,5 +1,5 @@
-from torpedo import CONFIG
 from requests.auth import HTTPBasicAuth
+from torpedo import CONFIG
 
 config = CONFIG.config
 

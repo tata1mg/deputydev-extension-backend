@@ -1,14 +1,14 @@
+import re
 from datetime import datetime
 from typing import Any, Dict
 
 import requests
-import re
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.constants.jira import ATLASSIAN_ISSUE_URL_PREFIX, ISSUE_ID_REGEX
 from app.dao.repo import PullRequestResponse
 from app.utils import ignore_files
-from app.constants.jira import ATLASSIAN_ISSUE_URL_PREFIX, ISSUE_ID_REGEX
 
 
 class BitBucketModule:
