@@ -12,7 +12,8 @@ class Issue(Base):
         if issue_id:
             url = f"{cls.BASE_URL}{cls.V3_PATH}{cls.ISSUE_PATH}/{issue_id}"
             query_params = {}
-            if fields: query_params['fields'] = fields
+            if fields:
+                query_params["fields"] = fields
             try:
                 response = requests.get(url, auth=cls.auth(), params=query_params, timeout=cls.TIMEOUT)
                 return response.json()
