@@ -12,4 +12,4 @@ class ChunkFileSizeLimit(Enum):
     """
 
     MIN = 10
-    MAX = 240000
+    MAX = 260000
