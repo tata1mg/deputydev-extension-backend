@@ -49,25 +49,3 @@ class LLMClient:
             raise ValueError("Unsupported client type. Only OpenAI is supported as of now.")
 
         return await OpenAIClient().get_openai_response(conversation_message, model, response_type)
-
-    async def get_filtered_response(self, response: dict, confidence_filter_score: float) -> bool:
-        """
-        Filters the response based on the given confidence filter score.
-
-        Args:
-            response (Dict[str, Any]): The response dictionary containing a confidence score.
-            confidence_filter_score (float): The threshold confidence score for filtering.
-
-        Returns:
-            bool: whether the response passes check or not.
-
-        Raises:
-            ValueError: If the client type is not 'openai'.
-        """
-        if self.client_type != "openai":
-            raise ValueError("Unsupported client type. Only OpenAI is supported as of now.")
-
-        if float(response.get("confidence_score")) >= float(confidence_filter_score):
-            return True
-        else:
-            return False
