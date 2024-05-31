@@ -16,6 +16,9 @@ config = CONFIG.config
 @smart_code.route("/", methods=["POST"])
 async def pool_assistance_api(_request: Request, **kwargs):
     payload = _request.custom_json()
+    headers = _request.headers
+    request_id = headers.get("X-REQUEST-ID", "No request_id found")
+    payload["request_id"] = request_id
     response = await CodeReviewTrigger.perform_review(payload)
     return send_response(response)
 
