@@ -74,7 +74,7 @@
     "BITBUCKET_TOKEN": "",
     "ENABLED": true
   },
-  "WHITELISTED_REPOS": [],
+  "BLOCKED_REPOS": [],
   "CHUNKING": {
     "CHARACTER_SIZE": 2000,
     "NUMBER_OF_CHUNKS": 10
