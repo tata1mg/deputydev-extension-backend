@@ -315,3 +315,19 @@ def get_token_count(value: str) -> int:
     tiktoken_client = TikToken()
     token_count = tiktoken_client.count(text=value)
     return token_count
+
+
+def get_filtered_response(response: dict, confidence_filter_score: float) -> bool:
+    """
+    Filters the response based on the given confidence filter score.
+
+    Args:
+        response (Dict[str, Any]): The response dictionary containing a confidence score.
+        confidence_filter_score (float): The threshold confidence score for filtering.
+
+    Returns:
+        bool: whether the response passes check or not.
+
+    """
+    confidence_score = response.get("confidence_score")
+    return response.get("comment") and float(confidence_score) >= float(confidence_filter_score)

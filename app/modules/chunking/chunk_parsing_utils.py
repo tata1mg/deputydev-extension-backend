@@ -3,7 +3,6 @@ from typing import Generator, List, Set
 
 from sanic.log import logger
 
-from app.constants import ChunkFileSizeLimit
 from app.modules.chunking.chunk_info import ChunkInfo
 from app.modules.chunking.document import Document, chunks_to_docs
 
