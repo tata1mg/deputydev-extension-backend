@@ -13,12 +13,7 @@ from app.constants import RepoUrl
 from app.constants.constants import LLMModels
 from app.constants.repo import VCSTypes
 from app.dao.repo import PullRequestResponse
-from app.utils import (
-    add_corrective_code,
-    get_task_response,
-    get_time_difference,
-    parse_collection_name,
-)
+from app.utils import add_corrective_code, get_task_response, parse_collection_name
 
 from .bitbucket import BitBucketModule
 
@@ -26,10 +21,25 @@ from .bitbucket import BitBucketModule
 class RepoModule:
     """Represents a module for handling repositories."""
 
-    def __init__(self, repo_full_name: str, branch_name: str, vcs_type: VCSTypes) -> None:
+    def __init__(self, repo_full_name: str, pr_id: int, vcs_type: VCSTypes, branch_name: str = None) -> None:
         self.repo_full_name = repo_full_name
-        self.branch_name = branch_name
+        self.pr_id = pr_id
         self.vcs_type = vcs_type
+        self.branch_name = branch_name
+        self.pr_details = None
+
+    async def initialize(self):
+        self.pr_details = await self.get_pr_details()
+        self.branch_name = self.pr_details.branch_name
+
+    def get_pr_id(self):
+        return self.pr_id
+
+    def get_pr_creation_time(self):
+        return self.pr_details.created_on
+
+    def set_branch_name(self, branch_name):
+        self.branch_name = branch_name
 
     def delete_repo(self) -> bool:
         """
@@ -86,49 +96,26 @@ class RepoModule:
         except Exception as e:
             raise Exception(e)
 
-    def parse_pr_detail(self, pr_detail: PullRequestResponse, request_time: str) -> PullRequestResponse:
-        """
-        Parse pull request details to determine if it was created within a certain time threshold.
-
-        Parameters:
-        pr_detail (PullRequestResponse): The pull request details including creation time.
-        request_time (str): The time of the request.
-
-        Returns:
-        PullRequestResponse: The updated pull request details with 'created' flag adjusted based on the time difference.
-        """
-        time_difference = get_time_difference(pr_detail.created_on, request_time)
-        if time_difference > 15:
-            pr_detail.created = False
-        return pr_detail
-
-    async def get_pr_details(self, pr_id: int, request_time: str) -> PullRequestResponse:
+    async def get_pr_details(self) -> PullRequestResponse:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
-
         Args:
-            pr_id (int): The ID of the pull request.
-            request_time (str): Time when request was generated
-
         Returns:
             PullRequestResponse: An object containing details of the pull request.
-
         Raises:
             ValueError: If the pull request details are invalid or cannot be retrieved.
         """
+
         if self.vcs_type != VCSTypes.bitbucket.value:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
-        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)
-        pr_detail = await bitbucket_module.get_pr_details()
-        return self.parse_pr_detail(pr_detail, request_time)
+        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=self.pr_id)
+        return await bitbucket_module.get_pr_details()
 
-    async def get_pr_diff(self, pr_id: int):
+    async def get_pr_diff(self):
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.
 
         Args:
-            pr_id (int): The ID of the pull request.
-
         Returns:
             str: The diff of a pull request
 
@@ -138,10 +125,10 @@ class RepoModule:
 
         if self.vcs_type != VCSTypes.bitbucket.value:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
-        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)
+        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=self.pr_id)
         return await bitbucket_module.get_pr_diff()
 
-    async def create_comment_on_pr(self, pr_id: int, comment: Union[str, dict], model: str):
+    async def create_comment_on_pr(self, comment: Union[str, dict], model: str):
         """
         Create a comment on the pull request.
 
@@ -155,7 +142,7 @@ class RepoModule:
         """
         if self.vcs_type != VCSTypes.bitbucket.value:
             raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
-        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=pr_id)
+        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=self.pr_id)
         if isinstance(comment, str):
             comment_payload = {"content": {"raw": comment}}
             return await bitbucket_module.create_comment_on_pr(comment_payload, model)
@@ -177,7 +164,7 @@ class RepoModule:
 
                 return await bitbucket_module.create_comment_on_pr(comment_payload, model)
 
-    async def create_bulk_comments(self, pr_id: int, comments: List[Union[str, dict]], model: str) -> None:
+    async def create_bulk_comments(self, comments: List[Union[str, dict]], model: str) -> None:
         """
         Iterate over each comment in pull request and post that comment on PR.
 
@@ -191,25 +178,22 @@ class RepoModule:
         """
         for comment in comments:
             try:
-                await self.create_comment_on_pr(pr_id, comment, model)
+                await self.create_comment_on_pr(comment, model)
             except Exception as e:
-                logger.error(f"Unable to create comment on PR {pr_id}: {e}")
+                logger.error(f"Unable to create comment on PR {self.pr_id}: {e}")
 
-    async def post_bots_comments(self, response, pr_id):
+    async def post_bots_comments(self, response):
         """
         Create two parallel tasks to comment on PR using multiple bots
 
         Args:
             response(dict): dict of PR comments fetched from finetuned and foundation nodels
-            pr_id (int): PR ID
-
         Returns:
             None
         """
         tasks = [
             Task(
                 self.create_bulk_comments(
-                    pr_id=pr_id,
                     comments=response.get("finetuned_comments"),
                     model=LLMModels.FinetunedModel.value,
                 ),
@@ -217,7 +201,6 @@ class RepoModule:
             ),
             Task(
                 self.create_bulk_comments(
-                    pr_id=pr_id,
                     comments=response.get("foundation_comments"),
                     model=LLMModels.FoundationModel.value,
                 ),

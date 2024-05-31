@@ -1,42 +1,23 @@
-from datetime import datetime, timezone
-
 from sanic import Blueprint
 from sanic.log import logger
 from sanic_ext import validate
 from torpedo import CONFIG, Request, send_response
-from torpedo.exceptions import BadRequestException
 
-from app.managers.deputy_dev.code_review import CodeReviewManager
+from app.managers.deputy_dev import CodeReviewManager
+from app.managers.deputy_dev.code_review_trigger import CodeReviewTrigger
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
-from app.sqs.genai_subscriber import GenaiSubscriber
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
 
 config = CONFIG.config
 
 
-@smart_code.route("/", methods=["GET"])
-@validate(query=SmartCodeReqeustModel)
+@smart_code.route("/", methods=["POST"])
 async def pool_assistance_api(_request: Request, **kwargs):
-    payload = _request.request_params()
-    headers = _request.headers
-
-    # Get the current datetime in UTC timezone
-    current_datetime = datetime.now(timezone.utc)
-    # Format the datetime as per the specified format
-    formatted_datetime_str = current_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-
-    payload["request_time"] = str(formatted_datetime_str)
-    request_id = headers.get("X-REQUEST-ID", "No request_id found")
-    payload["request_id"] = request_id
-    if payload.get("repo_name") not in config.get("BLOCKED_REPOS"):
-        logger.info("Whitelisted request: {}".format(payload))
-        await GenaiSubscriber(config=config).publish(payload=payload)
-        return send_response(f"Processing Started with Request ID : {request_id}")
-    else:
-        logger.info("Blocked request: {}".format(payload))
-        raise BadRequestException(error=f'Currently we are not serving: {payload.get("repo_name")}', status_code=422)
+    payload = _request.custom_json()
+    response = await CodeReviewTrigger.perform_review(payload)
+    return send_response(response)
 
 
 # For testing directly on local without queue, not used in PRODUCTION
@@ -45,21 +26,12 @@ async def pool_assistance_api(_request: Request, **kwargs):
 async def review_pr_in_sync(_request: Request, **kwargs):
     payload = _request.request_params()
     headers = _request.headers
-
-    # Get the current datetime in UTC timezone
-    current_datetime = datetime.now(timezone.utc)
-    # Format the datetime as per the specified format
-    formatted_datetime_str = current_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-
-    payload["request_time"] = str(formatted_datetime_str)
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
-    if True:
-        logger.info("Whitelisted request: {}".format(payload))
-        await CodeReviewManager.handle_event(payload)
-        return send_response(f"Processing Started with Request ID : {request_id}")
-    else:
-        logger.info("Blocked request: {}".format(payload))
-        return send_response(data=f'Currently we are not serving: {payload.get("repo_name")}')
+    payload["request_id"] = request_id
+
+    logger.info("Whitelisted request: {}".format(payload))
+    await CodeReviewManager.handle_event(payload)
+    return send_response(f"Processing Started with Request ID : {request_id}")
 
 
 @smart_code.route("/chat", methods=["POST"])
