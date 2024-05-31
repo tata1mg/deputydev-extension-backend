@@ -10,4 +10,5 @@ class WebhookManager:
         """
         pr_id = bitbucket_payload["pullrequest"]["id"]
         repo_name = bitbucket_payload["pullrequest"]["source"]["repository"]["full_name"]
-        return {"pr_id": pr_id, "repo_name": repo_name}
+        request_id = bitbucket_payload["request_id"]
+        return {"pr_id": pr_id, "repo_name": repo_name, "request_id": request_id}
