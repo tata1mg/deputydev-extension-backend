@@ -3,7 +3,7 @@ import operator
 import re
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import mmh3
 from packaging.version import Version
@@ -11,7 +11,8 @@ from sanic.log import logger
 from torpedo import Task, TaskExecutor
 from torpedo.common_utils import CONFIG
 
-from app.constants.constants import IGNORE_FILES
+from app.constants import IGNORE_FILES, TimeFormat
+from app.modules.tiktoken import TikToken
 
 name_slug_pattern = re.compile(r"[^A-Za-z0-9.]")
 name_slug_replace_string = "-"
@@ -268,6 +269,52 @@ async def get_task_response(tasks: List[Task]) -> Dict[str, Any]:
             else:
                 response[result.result_key] = result.result
     return response
+
+
+def get_time_difference(
+    start_time: Union[datetime, str], end_time: Union[datetime, str], format: TimeFormat = TimeFormat.MINUTES.value
+) -> float:
+    """
+    Calculate the time difference between two datetime values.
+
+    Parameters:
+    start_time (Union[datetime, str]): The start time in datetime or ISO 8601 string format.
+    end_time (Union[datetime, str]): The end time in datetime or ISO 8601 string format.
+    format (TimeFormat): The format for the time difference ('seconds' or 'minutes'). Default is 'minutes'.
+
+    Returns:
+    float: The time difference in the specified format.
+    """
+    if isinstance(start_time, str):
+        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+    if start_time.tzinfo != timezone.utc:
+        start_time.astimezone(timezone.utc)
+
+    if isinstance(end_time, str):
+        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+    if end_time.tzinfo != timezone.utc:
+        end_time.astimezone(timezone.utc)
+
+    time_difference = (end_time - start_time).total_seconds()
+    if format == TimeFormat.MINUTES.value:
+        return time_difference / 60
+    else:
+        return time_difference
+
+
+def get_token_count(value: str) -> int:
+    """
+    Calculate the number of tokens in a given text.
+
+    Parameters:
+    value (str): The text for which to count the tokens.
+
+    Returns:
+    int: The number of tokens in the given text.
+    """
+    tiktoken_client = TikToken()
+    token_count = tiktoken_client.count(text=value)
+    return token_count
 
 
 def get_filtered_response(response: dict, confidence_filter_score: float) -> bool:

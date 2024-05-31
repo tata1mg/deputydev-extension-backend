@@ -93,9 +93,9 @@ class Augmentation(Enum):
         Please perform a code review of the following diff (produced by `git diff` on my code), and provide suggestions for improvement:
         Relevant code chunks are also passed in the message that is relevant to PR diff changes.
         Steps to analyse correctness of Business logic:
-            1. You will be provided the User story describing what change is expected out of this PR. 
-            2. It is very important to provide comments on business logic that is not adhering to the user story. 
-            3. Also, provide preventive comments for any extra logic being executed along with the expected one. 
+            1. You will be provided the User story describing what change is expected out of this PR.
+            2. It is very important to provide comments on business logic that is not adhering to the user story.
+            3. Also, provide preventive comments for any extra logic being executed along with the expected one.
         Before providing the comment there are certain flows for processing data and pointers that needs to be considered to provide a comment.
         ### Calculation of Line Numbers:
         To determine line numbers based on the output of a git diff command for a specific file, follow these steps:
@@ -117,7 +117,8 @@ class Augmentation(Enum):
             - The diff starts at line 10 in both the old and new files as indicated by -r and +r respectively in ```@@ -r,s +r,s @@``` header
             - Line 11 & 13 are context lines since they don't have any of + and - prefix.
             - Line 11 or 12 are either modified or newly added since they contain + prefix.
-            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.            
+            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.
+
             - Example 2 git diff Output:
             ```
             @@ -24,4 +24,4 @@
@@ -148,12 +149,12 @@ class Augmentation(Enum):
             }]
             ```
         ### Rules to review the code and provide the comments:
-            1) Best Practices for Logger Formatting: 
+            1) Best Practices for Logger Formatting:
                 - Review the use of log levels (e.g., info, warn, error) in log messages. Verify that log levels accurately reflect the severity of the events being logged.
                 - Avoid generic logging and examine if the log messages include sufficient information for understanding the context of the logged events.
                 - Examine how exceptions are handled in log messages.
                 - Look for hard coded strings in log messages. Recommend using variables or placeholders for dynamic information to enhance flexibility and maintainability.
-            2) Documentation: 
+            2) Documentation:
                 - Make sure documentation should be added for class, methods, functions.
             3) Basic python code practices:
                 - Never commit sensitive information like api keys, secret key, secret tokens in code.
@@ -173,7 +174,7 @@ class Augmentation(Enum):
                 - make sure to handle exceptions if task fails in TaskExecuter.
             6) Validate config changes:
                 - All secrets key should not be commited in code and it should either be a environment variable or should be a part of config file.
-            7) API  
+            7) API
                 - Api documentation using our our inhouse approach. We use a ADAM library which uses sanic_ext openapi library.
                 - Request and response validation using pydantic for api.
                 - No business logic in controller or routes file.
@@ -183,8 +184,8 @@ class Augmentation(Enum):
                 - Use of try-except blocks where necessary.
                 - Clear error messages for easier debugging.
                 - Logging of errors with relevant context information.
-                - prefer exception classes over generic exception handling. 
-            9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.   
+                - prefer exception classes over generic exception handling.
+            9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.
             10) Strictly avoid suggesting duplicate comment for a particular line in a file.
             11) Please only suggest comments for lines included in the PR diff. Do not suggest comments on code lines that are part of the relevant context.
             12) If you are suggesting or giving example of code in comment make sure you enclose code with triple backticks (```). Optionally, you can specify the language for syntax highlighting
@@ -219,3 +220,8 @@ class LLMModels(Enum):
     Summarization = "SCRIT_MODEL"
     FoundationModel = "SCRIT_MODEL"
     FinetunedModel = "FINETUNED_SCRIT_MODEL"
+
+
+class TimeFormat(Enum):
+    SECONDS = "SECONDS"
+    MINUTES = "MINUTES"

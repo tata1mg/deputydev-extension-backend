@@ -6,8 +6,6 @@ from torpedo.exceptions import BadRequestException
 from app.managers.bitbucket.webhook import WebhookManager
 from app.models.http_requests.code_review_request import CodeReviewRequest
 from app.sqs.genai_subscriber import GenaiSubscriber
-from app.utils import get_request_time
-from app.validator import Validator
 
 
 class CodeReviewTrigger:
@@ -32,7 +30,7 @@ class CodeReviewTrigger:
             logger.error(ex)
             raise BadRequestException(f"invalid request with error {ex.errors()}")
 
-        if payload.repo_name in config.get("WHITELISTED_REPOS"):
+        if payload.repo_name not in config.get("BLOCKED_REPOS"):
             logger.info("Whitelisted request: {}".format(payload))
             await GenaiSubscriber(config=config).publish(payload=payload.dict())
             return f"Processing Started with PR ID : {payload.pr_id}"

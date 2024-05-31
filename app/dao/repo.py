@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 
 class PullRequestResponse(BaseModel):
+    id: int
+    state: str
     title: str
     description: str
     issue_id: Optional[str]

@@ -12,6 +12,7 @@ from torpedo import CONFIG, Task
 from app.constants import RepoUrl
 from app.constants.constants import LLMModels
 from app.constants.repo import VCSTypes
+from app.dao.repo import PullRequestResponse
 from app.utils import add_corrective_code, get_task_response, parse_collection_name
 
 from .bitbucket import BitBucketModule
@@ -79,8 +80,8 @@ class RepoModule:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        sreturn_code = await process.wait()
-        if sreturn_code == 0:
+        return_code = await process.wait()
+        if return_code == 0:
             logger.info("Cloning completed")
         repo = git.Repo(self.repo_dir)
         return repo
@@ -89,11 +90,13 @@ class RepoModule:
         """
         Initialize the repository after dataclass initialization.
         """
+        try:
+            self.git_repo = await self.__clone()
+            return self.git_repo
+        except Exception as e:
+            raise Exception(e)
 
-        self.git_repo = await self.__clone()
-        return self.git_repo
-
-    async def get_pr_details(self):
+    async def get_pr_details(self) -> PullRequestResponse:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
