@@ -1,7 +1,8 @@
+import asyncio
 import json
-import time
+import re
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from sanic.log import logger
 from torpedo import CONFIG, Task
@@ -24,11 +25,10 @@ from app.modules.search import perform_search
 from app.utils import (
     build_openai_conversation_message,
     calculate_total_diff,
+    get_filtered_response,
     get_task_response,
 )
 
-finetuned_model_config = CONFIG.config.get("FINETUNED_SCRIT_MODEL")
-scrit_model_config = CONFIG.config.get("SCRIT_MODEL")
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
 
@@ -126,7 +126,7 @@ class CodeReviewManager:
                 return
 
     @staticmethod
-    async def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> str:
+    async def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> tuple:
         """
         Creates the user message for the OpenAI chat completion API.
 
@@ -136,7 +136,7 @@ class CodeReviewManager:
             relevant_chunk (str): Relevant chunks of code for the review.
 
         Returns:
-            str: The formatted user message.
+            tuple: PR review context, PR summary context.
         """
         user_story_description = await JiraManager(issue_id=pr_detail.issue_id).get_description_text()
 
@@ -184,9 +184,8 @@ class CodeReviewManager:
             Task(
                 cls.get_client_pr_comments(
                     conversation_message=pr_review_conversation_message,
-                    model=finetuned_model_config.get("MODEL"),
+                    model="FINETUNED_SCRIT_MODEL",
                     client_type="openai",
-                    confidence_filter_score=finetuned_model_config.get("CONFIDENCE_SCORE"),
                     max_retry=2,
                 ),
                 result_key="finetuned_model",
@@ -195,8 +194,7 @@ class CodeReviewManager:
             Task(
                 cls.get_client_pr_comments(
                     conversation_message=pr_review_conversation_message,
-                    model=scrit_model_config.get("MODEL"),
-                    confidence_filter_score=scrit_model_config.get("CONFIDENCE_SCORE"),
+                    model="SCRIT_MODEL",
                     max_retry=2,
                     client_type="openai",
                 ),
@@ -206,8 +204,7 @@ class CodeReviewManager:
             Task(
                 cls.get_client_pr_comments(
                     conversation_message=pr_review_summarisation_converstation_message,
-                    model=scrit_model_config.get("MODEL"),
-                    confidence_filter_score=scrit_model_config.get("CONFIDENCE_SCORE"),
+                    model="SCRIT_MODEL",
                     max_retry=2,
                     client_type="openai",
                     response_type="text",
@@ -219,52 +216,64 @@ class CodeReviewManager:
         # combine finetuned and gpt4 filtered comments
         foundation_model_pr_summarisation = task_response.get("foundation_model_pr_summarisation")
         combined_comments = {
-            "finetuned_comments": task_response.get("finetuned_model").get("comments", []),
-            "foundation_comments": task_response.get("foundation_model").get("comments", []),
+            "finetuned_comments": task_response.get("finetuned_model", {}).get("comments", []),
+            "foundation_comments": task_response.get("foundation_model", {}).get("comments", []),
         }
         return combined_comments, foundation_model_pr_summarisation
 
     @classmethod
     async def get_client_pr_comments(
-        cls, conversation_message, model, client_type, confidence_filter_score, response_type="json_object", max_retry=2
-    ):
+        cls, conversation_message, model, client_type, response_type="json_object", max_retry=2
+    ) -> Union[str, Dict]:
         """
         Makes a call to OpenAI chat completion API with a specific model and conversation messages.
         Implements a retry mechanism in case of a failed request or improper response.
 
         Args:
             conversation_message: System and user message object.
-            model: GPT model to be called.
-            confidence_filter_score: Score to filter the comments.
+            model: GPT model Name defined in config file.
+            client_type: llm clien we are using
             max_retry: Number of times OpenAI should be called in case of failure or improper response.
 
         Returns:
-           List of filtered comment objects.
+            Union[str, Dict] Pr summary or PR review comments
         """
         client = LLMClient(client_type=client_type)
-        pr_comments = []
+        pr_comments = {}
         pr_summary = ""
-        for _ in range(max_retry):
-            try:
-                response = await client.get_client_response(conversation_message, model, response_type)
-                if response_type == "text":
-                    pr_summary = response.content
-                    return pr_summary
-                pr_comments = json.loads(response.content)
-                if "comments" in pr_comments:
-                    return pr_comments
-                else:
-                    time.sleep(0.2)
-            except Exception as e:
-                logger.error("Exception occured while fetching data from openai: {}".format(e))
-                time.sleep(0.2)
-        if response_type == "text":
-            return pr_summary
-        else:
-            return cls.filtered_comments(pr_comments, client, confidence_filter_score), pr_summary
+        model_config = CONFIG.config.get(model)
 
-    @staticmethod
-    def filtered_comments(pr_comments: dict, client: LLMClient, confidence_filter_score: float) -> list:
+        if model_config.get("ENABLED"):
+            for _ in range(max_retry):
+                try:
+                    response = await client.get_client_response(
+                        conversation_message, model_config.get("MODEL"), response_type
+                    )
+                    # IN case of PR summary, just format the code blocks if present
+                    if response_type == "text":
+                        pr_summary = response.content
+                        return cls.format_code_blocks(pr_summary)
+
+                    # In case of PR review comments decode json, filter and format the comments
+                    pr_review_response = json.loads(response.content)
+                    if "comments" in pr_review_response:
+                        filtered_comments = cls.filtered_comments(
+                            pr_comments=pr_review_response,
+                            confidence_filter_score=model_config.get("CONFIDENCE_SCORE"),
+                        )
+                        pr_comments = {"comments": filtered_comments}
+                        return pr_comments
+
+                except json.JSONDecodeError as e:
+                    logger.error("JSON decode error while decoding PR review comments data: {}".format(e))
+                except Exception as e:
+                    logger.error("Exception occured while fetching data from openai: {}".format(e))
+                await asyncio.sleep(0.2)
+
+        return pr_summary if response_type == "text" else pr_comments
+
+    @classmethod
+    def filtered_comments(cls, pr_comments: dict, confidence_filter_score: float) -> dict:
         """
         Filters the comments based on the confidence score.
 
@@ -277,6 +286,23 @@ class CodeReviewManager:
         """
         filtered_comments = []
         for comment in pr_comments.get("comments"):
-            if client.get_filtered_response(comment, confidence_filter_score):
+            if get_filtered_response(comment, confidence_filter_score):
+                comment["comment"] = cls.format_code_blocks(comment.get("comment"))
                 filtered_comments.append(comment)
         return filtered_comments
+
+    @staticmethod
+    def format_code_blocks(comment: str) -> str:
+        """
+        Replace all occurrences of the pattern with triple backticks without preceding spaces and added a \n before ```
+        Args:
+            comment (string): Comment provided by llm
+
+        Returns:
+          string: formatted_comment without triple backticks without preceding spaces
+        """
+        pattern = re.compile(r"\s*```")
+
+        formatted_comment = pattern.sub("\n```", comment)
+
+        return formatted_comment
