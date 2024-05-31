@@ -9,7 +9,6 @@ from torpedo.exceptions import BadRequestException
 from app.managers.deputy_dev.code_review import CodeReviewManager
 from app.managers.scrit.smartCodeChat import SmartCodeChatManager
 from app.models.smart_code import SmartCodeReqeustModel
-from app.modules.jira.jira_manager import JiraManager
 from app.sqs.genai_subscriber import GenaiSubscriber
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
