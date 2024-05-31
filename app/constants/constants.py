@@ -117,8 +117,7 @@ class Augmentation(Enum):
             - The diff starts at line 10 in both the old and new files as indicated by -r and +r respectively in ```@@ -r,s +r,s @@``` header
             - Line 11 & 13 are context lines since they don't have any of + and - prefix.
             - Line 11 or 12 are either modified or newly added since they contain + prefix.
-            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.
-            
+            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.            
             - Example 2 git diff Output:
             ```
             @@ -24,4 +24,4 @@

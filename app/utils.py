@@ -2,6 +2,7 @@ import hashlib
 import operator
 import re
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import mmh3
@@ -283,3 +284,15 @@ def get_filtered_response(response: dict, confidence_filter_score: float) -> boo
     """
     confidence_score = response.get("confidence_score")
     return response.get("comment") and float(confidence_score) >= float(confidence_filter_score)
+
+
+def get_request_time() -> str:
+    """
+    Returns request time in str format
+    """
+    # Get the current datetime in UTC timezone
+    current_datetime = datetime.now(timezone.utc)
+    # Format the datetime as per the specified format
+    formatted_datetime_str = current_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+
+    return str(formatted_datetime_str)

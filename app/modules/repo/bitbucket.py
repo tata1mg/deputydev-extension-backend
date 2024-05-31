@@ -49,6 +49,7 @@ class BitBucketModule:
             data["issue_id"] = self.get_issue_id(data.get("rendered", {}).get("title", {}))
             data["created_on"] = datetime.fromisoformat(data["created_on"])
             data["updated_on"] = datetime.fromisoformat(data["updated_on"])
+            data["branch_name"] = data["source"]["branch"]["name"]
             return PullRequestResponse(**data)
 
     def get_issue_id(self, title) -> str:
