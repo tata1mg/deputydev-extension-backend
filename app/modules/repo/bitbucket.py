@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Any, Dict
 
@@ -5,6 +6,7 @@ import requests
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.constants.jira import ATLASSIAN_ISSUE_URL_PREFIX, ISSUE_ID_REGEX
 from app.dao.repo import PullRequestResponse
 from app.utils import ignore_files
 
@@ -44,10 +46,20 @@ class BitBucketModule:
             raise ValueError(response)
         else:
             data = response.json()
+            data["issue_id"] = self.get_issue_id(data.get("rendered", {}).get("title", {}))
             data["created_on"] = datetime.fromisoformat(data["created_on"])
             data["updated_on"] = datetime.fromisoformat(data["updated_on"])
             data["repository_name"] = data["destination"]["repository"]["full_name"]
             return PullRequestResponse(**data)
+
+    def get_issue_id(self, title) -> str:
+        title_html = title.get("html", "")
+        if title_html:
+            escaped_prefix = re.escape(ATLASSIAN_ISSUE_URL_PREFIX) + ISSUE_ID_REGEX
+            matched_text = re.search(escaped_prefix, title_html)
+            if matched_text is not None:
+                issue_url = matched_text.group()
+                return issue_url.replace(ATLASSIAN_ISSUE_URL_PREFIX, "")
 
     async def get_pr_diff(self) -> str:
         """
