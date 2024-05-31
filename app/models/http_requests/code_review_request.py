@@ -1,0 +1,6 @@
+from pydantic import BaseModel
+
+
+class CodeReviewRequest(BaseModel):
+    pr_id: int
+    repo_name: str
