@@ -54,21 +54,20 @@ class CodeReviewManager:
         # Initialize RepoModule with repository details
         repo = RepoModule(
             repo_full_name=data.get("repo_name"),
-            branch_name=data.get("branch"),
+            pr_id=data.get("pr_id"),
             vcs_type=data.get("vcs_type", VCSTypes.bitbucket.value),
         )
+        await repo.initialize()
 
-        # Retrieve Pull Request details and diff content asynchronously
-        pr_id = data.get("pr_id")
-        pr_detail = await repo.get_pr_details(data.get("pr_id"))
-        created_on = pr_detail.created_on
+        pr_id = repo.get_pr_id()
+        created_on = repo.get_pr_creation_time()
         request_time = datetime.strptime(data.get("request_time"), "%Y-%m-%dT%H:%M:%S.%f%z")
         # Calculate the time difference in minutes
         time_difference = (request_time - created_on).total_seconds() / 60
         if data.get("pr_type") == "created" and time_difference > 15:
             return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
         else:
-            diff = await repo.get_pr_diff(data.get("pr_id"))
+            diff = await repo.get_pr_diff()
             if diff == "":
                 return logger.info(
                     f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
@@ -82,7 +81,7 @@ class CodeReviewManager:
                 logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
                 # Add a comment to the Pull Request indicating the size is too large
                 comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
-                await repo.create_comment_on_pr(pr_id=pr_id, comment=comment, model=LLMModels.FoundationModel.value)
+                await repo.create_comment_on_pr(comment=comment, model=LLMModels.FoundationModel.value)
                 return
             else:
                 # Clone the repository for further processing
@@ -108,17 +107,19 @@ class CodeReviewManager:
                 # Render relevant chunks into a single snippet
                 relevant_chunk = render_snippet_array(ranked_snippets_list)
 
-                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
+                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(
+                    diff, repo.pr_details, relevant_chunk
+                )
 
                 if not response.get("finetuned_comments") and not response.get("foundation_comments"):
                     # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
-                    await repo.create_comment_on_pr(pr_id, "LGTM!!", LLMModels.FoundationModel.value)
+                    await repo.create_comment_on_pr("LGTM!!", LLMModels.FoundationModel.value)
                 else:
                     # parallel tasks to Post finetuned and foundation comments
-                    await repo.post_bots_comments(response, pr_id)
+                    await repo.post_bots_comments(response)
 
                 if pr_summary:
-                    await repo.create_comment_on_pr(pr_id, pr_summary, LLMModels.FoundationModel.value)
+                    await repo.create_comment_on_pr(pr_summary, LLMModels.FoundationModel.value)
 
                 logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
                 # Clean up by deleting the cloned repository
