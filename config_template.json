@@ -65,12 +65,14 @@
   "FINETUNED_SCRIT_MODEL": {
     "MODEL": "",
     "CONFIDENCE_SCORE": 1,
-    "BITBUCKET_TOKEN": ""
+    "BITBUCKET_TOKEN": "",
+    "ENABLED": true
   },
   "SCRIT_MODEL": {
     "MODEL": "",
     "CONFIDENCE_SCORE": 1,
-    "BITBUCKET_TOKEN": ""
+    "BITBUCKET_TOKEN": "",
+    "ENABLED": true
   },
   "WHITELISTED_REPOS": [],
   "CHUNKING": {

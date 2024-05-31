@@ -267,3 +267,19 @@ async def get_task_response(tasks: List[Task]) -> Dict[str, Any]:
             else:
                 response[result.result_key] = result.result
     return response
+
+
+def get_filtered_response(response: dict, confidence_filter_score: float) -> bool:
+    """
+    Filters the response based on the given confidence filter score.
+
+    Args:
+        response (Dict[str, Any]): The response dictionary containing a confidence score.
+        confidence_filter_score (float): The threshold confidence score for filtering.
+
+    Returns:
+        bool: whether the response passes check or not.
+
+    """
+    confidence_score = response.get("confidence_score")
+    return response.get("comment") and float(confidence_score) >= float(confidence_filter_score)
