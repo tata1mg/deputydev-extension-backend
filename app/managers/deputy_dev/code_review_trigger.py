@@ -30,7 +30,7 @@ class CodeReviewTrigger:
             logger.error(ex)
             raise BadRequestException(f"invalid request with error {ex.errors()}")
 
-        if payload.repo_name in config.get("WHITELISTED_REPOS"):
+        if payload.repo_name not in config.get("BLOCKED_REPOS"):
             logger.info("Whitelisted request: {}".format(payload))
             await GenaiSubscriber(config=config).publish(payload=payload.dict())
             return f"Processing Started with PR ID : {payload.pr_id}"
