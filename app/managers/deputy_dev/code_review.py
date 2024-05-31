@@ -56,73 +56,66 @@ class CodeReviewManager:
         # Initialize RepoModule with repository details
         repo = RepoModule(
             repo_full_name=data.get("repo_name"),
-            branch_name=data.get("branch"),
+            pr_id=data.get("pr_id"),
             vcs_type=data.get("vcs_type", VCSTypes.bitbucket.value),
         )
-        # Retrieve Pull Request details and diff content asynchronously
-        pr_id = data.get("pr_id")
-        pr_detail = await repo.get_pr_details(pr_id=data.get("pr_id"), request_time=data.get("request_time"))
+        await repo.initialize()
 
-        # This check is to verify whether the PR review request received type is in creation state or not and if
-        # in creation state, then we cross check the creation time against the request time
-        if data.get("pr_type") == "created" and not pr_detail.created:
-            return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
+        pr_id = repo.get_pr_id()
+        diff = await repo.get_pr_diff()
+        if diff == "":
+            return logger.info(
+                f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
+            )
+        # Calculate the total lines of code changed in the diff content
+        diff_loc = calculate_total_diff(diff)
+        logger.info(f"Total diff LOC is {diff_loc}")
+
+        # Check if diff size exceeds the maximum allowable changes
+        if diff_loc > MAX_LINE_CHANGES:
+            logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
+            # Add a comment to the Pull Request indicating the size is too large
+            comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
+            await repo.create_comment_on_pr(comment=comment, model=LLMModels.FoundationModel.value)
+            return
         else:
-            diff = await repo.get_pr_diff(data.get("pr_id"))
-            if diff == "":
-                return logger.info(
-                    f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
-                )
-            # Calculate the total lines of code changed in the diff content
-            diff_loc = calculate_total_diff(diff)
-            logger.info(f"Total diff LOC is {diff_loc}")
+            # clone the repo
+            await repo.clone_repo()
 
-            # Check if diff size exceeds the maximum allowable changes
-            if diff_loc > MAX_LINE_CHANGES:
-                logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
-                # Add a comment to the Pull Request indicating the size is too large
-                comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
-                await repo.create_comment_on_pr(pr_id=pr_id, comment=comment, model=LLMModels.FoundationModel.value)
-                return
+            # Process source code into chunks and documents
+            all_chunks, all_docs = source_to_chunks(repo.repo_dir)
+            logger.info("Completed chunk creation")
+
+            # Perform a search based on the diff content to find relevant chunks
+            content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
+            logger.info("Completed lexical and vector search")
+
+            # Rank relevant chunks based on lexical scores
+            ranked_snippets_list = sorted(
+                all_chunks,
+                key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
+                reverse=True,
+            )[:NO_OF_CHUNKS]
+
+            # Render relevant chunks into a single snippet
+            relevant_chunk = render_snippet_array(ranked_snippets_list)
+
+            response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, repo.pr_details, relevant_chunk)
+
+            if not response.get("finetuned_comments") and not response.get("foundation_comments"):
+                # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
+                await repo.create_comment_on_pr("LGTM!!", LLMModels.FoundationModel.value)
             else:
-                # clone the repo
-                await repo.clone_repo()
+                # parallel tasks to Post finetuned and foundation comments
+                await repo.post_bots_comments(response)
 
-                # Process source code into chunks and documents
-                all_chunks, all_docs = source_to_chunks(repo.repo_dir)
-                logger.info("Completed chunk creation")
+            if pr_summary:
+                await repo.create_comment_on_pr(pr_summary, LLMModels.FoundationModel.value)
 
-                # Perform a search based on the diff content to find relevant chunks
-                content_to_lexical_score_list = await perform_search(
-                    all_docs=all_docs, all_chunks=all_chunks, query=diff
-                )
-                logger.info("Completed lexical and vector search")
-
-                # Rank relevant chunks based on lexical scores
-                ranked_snippets_list = sorted(
-                    all_chunks,
-                    key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
-                    reverse=True,
-                )[:NO_OF_CHUNKS]
-
-                # Render relevant chunks into a single snippet
-                relevant_chunk = render_snippet_array(ranked_snippets_list)
-
-                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, pr_detail, relevant_chunk)
-
-                if not response.get("finetuned_comments") and not response.get("foundation_comments"):
-                    # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
-                    await repo.create_comment_on_pr(pr_id, "LGTM!!", LLMModels.FoundationModel.value)
-                else:
-                    # parallel tasks to Post finetuned and foundation comments
-                    await repo.post_bots_comments(response, pr_id)
-
-                if pr_summary:
-                    await repo.create_comment_on_pr(pr_id, pr_summary, LLMModels.FoundationModel.value)
-
-                # Clean up by deleting the cloned repository
-                repo.delete_repo()
-                return
+            # Clean up by deleting the cloned repository
+            repo.delete_repo()
+            logger.info(f"Completed PR review for pr id - {pr_id}, repo - {data.get('repo_name')}")
+            return
 
     @staticmethod
     async def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> tuple:
