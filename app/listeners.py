@@ -15,4 +15,5 @@ async def initialize_sqs_subscribes(_app, loop):
         _app.add_task(await genai_subscribe.subscribe())
 
 
+# Initializing listeners with background task only if it the background worker flag is enabled.
 listeners = [(initialize_sqs_subscribes, ListenerEventTypes.AFTER_SERVER_START.value)]

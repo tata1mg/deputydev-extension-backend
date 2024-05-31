@@ -1,7 +1,6 @@
 import asyncio
 import json
 import re
-from datetime import datetime
 from typing import Any, Dict, Union
 
 from sanic.log import logger
@@ -14,6 +13,7 @@ from app.constants.constants import (
     LLMModels,
 )
 from app.constants.repo import VCSTypes
+from app.decorators.log_time import log_time
 from app.modules.chunking.chunk_parsing_utils import (
     render_snippet_array,
     source_to_chunks,
@@ -27,6 +27,7 @@ from app.utils import (
     calculate_total_diff,
     get_filtered_response,
     get_task_response,
+    get_token_count,
 )
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
@@ -41,6 +42,7 @@ class CodeReviewManager:
         await cls.process_pr_review(data=data)
 
     @classmethod
+    @log_time
     async def process_pr_review(cls, data: Dict[str, Any]) -> None:
         """Process a Pull Request review asynchronously.
 
@@ -60,71 +62,60 @@ class CodeReviewManager:
         await repo.initialize()
 
         pr_id = repo.get_pr_id()
-        created_on = repo.get_pr_creation_time()
-        request_time = datetime.strptime(data.get("request_time"), "%Y-%m-%dT%H:%M:%S.%f%z")
-        # Calculate the time difference in minutes
-        time_difference = (request_time - created_on).total_seconds() / 60
-        if data.get("pr_type") == "created" and time_difference > 15:
-            return logger.info(f"PR - {pr_id} for repo - {data.get('repo_name')} is not in creation state")
+        diff = await repo.get_pr_diff()
+        if diff == "":
+            return logger.info(
+                f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
+            )
+        # Calculate the total lines of code changed in the diff content
+        diff_loc = calculate_total_diff(diff)
+        logger.info(f"Total diff LOC is {diff_loc}")
+
+        # Check if diff size exceeds the maximum allowable changes
+        if diff_loc > MAX_LINE_CHANGES:
+            logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
+            # Add a comment to the Pull Request indicating the size is too large
+            comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
+            await repo.create_comment_on_pr(comment=comment, model=LLMModels.FoundationModel.value)
+            return
         else:
-            diff = await repo.get_pr_diff()
-            if diff == "":
-                return logger.info(
-                    f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
-                )
-            # Calculate the total lines of code changed in the diff content
-            diff_loc = calculate_total_diff(diff)
-            logger.info(f"Total diff LOC is {diff_loc}")
+            # clone the repo
+            await repo.clone_repo()
 
-            # Check if diff size exceeds the maximum allowable changes
-            if diff_loc > MAX_LINE_CHANGES:
-                logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
-                # Add a comment to the Pull Request indicating the size is too large
-                comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
-                await repo.create_comment_on_pr(comment=comment, model=LLMModels.FoundationModel.value)
-                return
+            # Process source code into chunks and documents
+            all_chunks, all_docs = source_to_chunks(repo.repo_dir)
+            logger.info("Completed chunk creation")
+
+            # Perform a search based on the diff content to find relevant chunks
+            content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
+            logger.info("Completed lexical and vector search")
+
+            # Rank relevant chunks based on lexical scores
+            ranked_snippets_list = sorted(
+                all_chunks,
+                key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
+                reverse=True,
+            )[:NO_OF_CHUNKS]
+
+            # Render relevant chunks into a single snippet
+            relevant_chunk = render_snippet_array(ranked_snippets_list)
+
+            response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, repo.pr_details, relevant_chunk)
+
+            if not response.get("finetuned_comments") and not response.get("foundation_comments"):
+                # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
+                await repo.create_comment_on_pr("LGTM!!", LLMModels.FoundationModel.value)
             else:
-                # Clone the repository for further processing
-                await repo.clone_repo()
+                # parallel tasks to Post finetuned and foundation comments
+                await repo.post_bots_comments(response)
 
-                # Process source code into chunks and documents
-                all_chunks, all_docs = source_to_chunks(repo.repo_dir)
-                logger.info("Completed chunk creation")
+            if pr_summary:
+                await repo.create_comment_on_pr(pr_summary, LLMModels.FoundationModel.value)
 
-                # Perform a search based on the diff content to find relevant chunks
-                content_to_lexical_score_list = await perform_search(
-                    all_docs=all_docs, all_chunks=all_chunks, query=diff
-                )
-                logger.info("Completed lexical and vector search")
-
-                # Rank relevant chunks based on lexical scores
-                ranked_snippets_list = sorted(
-                    all_chunks,
-                    key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
-                    reverse=True,
-                )[:NO_OF_CHUNKS]
-
-                # Render relevant chunks into a single snippet
-                relevant_chunk = render_snippet_array(ranked_snippets_list)
-
-                response, pr_summary = await cls.parallel_pr_review_with_gpt_models(
-                    diff, repo.pr_details, relevant_chunk
-                )
-
-                if not response.get("finetuned_comments") and not response.get("foundation_comments"):
-                    # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
-                    await repo.create_comment_on_pr("LGTM!!", LLMModels.FoundationModel.value)
-                else:
-                    # parallel tasks to Post finetuned and foundation comments
-                    await repo.post_bots_comments(response)
-
-                if pr_summary:
-                    await repo.create_comment_on_pr(pr_summary, LLMModels.FoundationModel.value)
-
-                logger.info(f"Completed PR review for {data.get('repo_name')}, PR - {pr_id}")
-                # Clean up by deleting the cloned repository
-                repo.delete_repo()
-                return
+            # Clean up by deleting the cloned repository
+            repo.delete_repo()
+            logger.info(f"Completed PR review for pr id - {pr_id}, repo - {data.get('repo_name')}")
+            return
 
     @staticmethod
     async def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> tuple:
@@ -158,7 +149,7 @@ class CodeReviewManager:
         return pr_review_context, pr_summary_context
 
     @classmethod
-    async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> tuple:
+    async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> list:
         """
         Runs a thread parallely to call normal GPT-4 and fine-tuned GPT model to review the PR and provide comments.
 
@@ -172,6 +163,10 @@ class CodeReviewManager:
         """
 
         pr_review_context, pr_summary_context = await cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
+
+        # using tiktoken to count the total tokens consumed by characters from relevant chunks and pr diff
+        cls.log_token_counts(pr_diff, relevant_chunk, pr_review_context)
+
         pr_review_conversation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context
         )
@@ -293,6 +288,15 @@ class CodeReviewManager:
         return filtered_comments
 
     @staticmethod
+    def log_token_counts(pr_diff: str, relevant_chunk: str, reveiw_context: str):
+        pr_diff_token_count = get_token_count(pr_diff)
+        relevant_chunk_token_count = get_token_count(relevant_chunk)
+        pr_review_context_token_count = get_token_count(reveiw_context)
+        logger.info(
+            f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}, total token count - {pr_review_context_token_count}"
+        )
+        return pr_diff_token_count, relevant_chunk_token_count, pr_review_context_token_count
+
     def format_code_blocks(comment: str) -> str:
         """
         Replace all occurrences of the pattern with triple backticks without preceding spaces and added a \n before ```
