@@ -4,13 +4,14 @@ from torpedo.common_utils import CONFIG
 
 X_SHARED_CONTEXT = "X-SHARED-CONTEXT"
 ENVIRONMENT = CONFIG.config["ENVIRONMENT"]
-MAX_LINE_CHANGES = CONFIG.config["MAX_LINE_CHANGES"]
+MAX_PR_DIFF_TOKEN_LIMIT = CONFIG.config["MAX_PR_DIFF_TOKEN_LIMIT"]
 IGNORE_FILES = CONFIG.config["IGNORE_FILES"]
 COMMENTS_DEPTH = 7
 PR_SIZE_TOO_BIG_MESSAGE = (
     "Ideal pull requests are not more than 50 lines. PRs with smaller diff are merged relatively "
-    "quickly and have much lower chances of getting reverted. This PR was found to have a diff "
-    "of {} lines. SCRIT will only review PRs having diff lines less than 350."
+    "quickly and have much lower chances of getting reverted. This PR was found to have a diff token count "
+    "of {pr_diff_token_count} as a result of which it exceeded the max token count limit. SCRIT will only review PRs having total token count of not more than {max_token_limit}."
+    " Note :- Every 4 characters is equal to 1 token."
 )
 BATCH_SIZE = CONFIG.config["BATCH_SIZE"]
 
@@ -185,10 +186,11 @@ class Augmentation(Enum):
                 - Clear error messages for easier debugging.
                 - Logging of errors with relevant context information.
                 - prefer exception classes over generic exception handling.
-            9) The model that we are using is a finetuned model, which is finutened of mulitple PRs with system message as Prompt, user message as our organization PRs and assistant message as comment provided by us. Use the Knowledge of finetuned model to review the PR diff of PR passed on request.
-            10) Strictly avoid suggesting duplicate comment for a particular line in a file.
-            11) Please only suggest comments for lines included in the PR diff. Do not suggest comments on code lines that are part of the relevant context.
-            12) If you are suggesting or giving example of code in comment make sure you enclose code with triple backticks (```). Optionally, you can specify the language for syntax highlighting
+            9) Strictly avoid suggesting duplicate comment for a particular line in a file.
+            10) Please only suggest comments for lines included in the PR diff. Do not suggest comments on code lines that are part of the relevant context.
+            11) If you are suggesting or giving example of code in comment make sure you enclose code with triple backticks (```). Optionally, you can specify the language for syntax highlighting.
+
+            Note :- Relevant code chunks are included inside '<relevant_chunks_in_repo></relevant_chunks_in_repo>' tags. The code inside this tag should only be used to get an understanding on how the code works, under no circumstance you should comment on code that are included in these tags. Any comment that you make should only be on PR diff passed to you.
         """
     SCRIT_SUMMARY_PROMPT = """
         Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If the comment involves inquiries about code improvements or other technical discussions, evaluate the provided pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown"
