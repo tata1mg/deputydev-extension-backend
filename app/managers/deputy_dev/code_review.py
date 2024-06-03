@@ -7,7 +7,7 @@ from sanic.log import logger
 from torpedo import CONFIG, Task
 
 from app.constants.constants import (
-    MAX_LINE_CHANGES,
+    MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
     Augmentation,
     LLMModels,
@@ -24,7 +24,6 @@ from app.modules.repo import RepoModule
 from app.modules.search import perform_search
 from app.utils import (
     build_openai_conversation_message,
-    calculate_total_diff,
     get_filtered_response,
     get_task_response,
     get_token_count,
@@ -67,15 +66,15 @@ class CodeReviewManager:
             return logger.info(
                 f"PR - {pr_id} for repo - {data.get('repo_name')} doesn't contain any valid files to review"
             )
-        # Calculate the total lines of code changed in the diff content
-        diff_loc = calculate_total_diff(diff)
-        logger.info(f"Total diff LOC is {diff_loc}")
 
         # Check if diff size exceeds the maximum allowable changes
-        if diff_loc > MAX_LINE_CHANGES:
-            logger.info("Diff count is {}. Unable to process this request.".format(diff_loc))
+        pr_diff_token_count = get_token_count(diff)
+        if pr_diff_token_count > MAX_PR_DIFF_TOKEN_LIMIT:
+            logger.info("PR diff token count is {}. Unable to process this request.".format(pr_diff_token_count))
             # Add a comment to the Pull Request indicating the size is too large
-            comment = PR_SIZE_TOO_BIG_MESSAGE.format(diff_loc)
+            comment = PR_SIZE_TOO_BIG_MESSAGE.format(
+                pr_diff_token_count=pr_diff_token_count, max_token_limit=MAX_PR_DIFF_TOKEN_LIMIT
+            )
             await repo.create_comment_on_pr(comment=comment, model=LLMModels.FoundationModel.value)
             return
         else:

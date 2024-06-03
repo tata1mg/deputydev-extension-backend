@@ -79,7 +79,7 @@
     "CHARACTER_SIZE": 2000,
     "NUMBER_OF_CHUNKS": 10
   },
-  "MAX_LINE_CHANGES": 350,
+  "MAX_PR_DIFF_TOKEN_LIMIT": 8192,
   "IGNORE_FILES": [
     "Pipfile",
     "Pipfile.lock",
