@@ -210,12 +210,31 @@ def add_corrective_code(data):
     if isinstance(data, dict):
         comment = data.get("comment", "")
         if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
-            comment += data.get("corrective_code", "")
+            comment += "\n" + format_code_block(data.get("corrective_code"))
         return comment
     elif isinstance(data, str):
         return data
     else:
         return ""
+
+
+def format_code_block(code_block: str) -> str:
+    """
+    Formats a code block into the correct format by enclosing it with triple backticks if not already enclosed.
+
+    Parameters:
+    code_block (str): The input code block as a string.
+
+    Returns:
+    str: The formatted code block.
+    """
+    if not (code_block.startswith("```") and code_block.endswith("```")):
+        # Add triple backticks around the code block if its not formatted
+        formatted_code_block = f"```python\n{code_block}\n```"
+    else:
+        formatted_code_block = code_block
+
+    return formatted_code_block
 
 
 def ignore_files(response):
