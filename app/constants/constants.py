@@ -188,7 +188,14 @@ class Augmentation(Enum):
                 - prefer exception classes over generic exception handling.
             9) Strictly avoid suggesting duplicate comment for a particular line in a file.
             10) Please only suggest comments for lines included in the PR diff. Do not suggest comments on code lines that are part of the relevant context.
-            11) If you are suggesting or giving example of code in comment make sure you enclose code with triple backticks (```). Optionally, you can specify the language for syntax highlighting.
+            11) Proper formatting of Code present in comment:
+                - When suggesting or providing examples of code in comments, **always** include all the corrective_code inside ``` CODE ``` markdown.
+                - Optionally, specify the language for syntax highlighting by adding the language name after the opening triple backticks (e.g.,```python).
+                - Ensure that the code snippets are clearly separated from the rest of the text for better readability. # noqa : W293
+                               
+                Example:
+                Incorrect comment: "Instead of importing JivaManager inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.cfrom app.managers.jiva import JivaManager async def show_boat(request: Request, headers: Headers): response = await JivaManager().show_boat_based_on_ab(headers) return response"
+                Corrected version of comment: "Instead of importing `JivaManager` inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.\n\n```python\nfrom app.managers.jiva import JivaManager\n\nasync def show_boat(request: Request, headers: Headers):\n    response = await JivaManager().show_boat_based_on_ab(headers)\n    return response\n```\n"
 
             Note :- Relevant code chunks are included inside '<relevant_chunks_in_repo></relevant_chunks_in_repo>' tags. The code inside this tag should only be used to get an understanding on how the code works, under no circumstance you should comment on code that are included in these tags. Any comment that you make should only be on PR diff passed to you.
         """
