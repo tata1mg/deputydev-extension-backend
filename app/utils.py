@@ -362,3 +362,19 @@ def get_request_time() -> str:
     formatted_datetime_str = current_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
 
     return str(formatted_datetime_str)
+
+
+def format_code_blocks(comment: str) -> str:
+    """
+    Replace all occurrences of the pattern with triple backticks without preceding spaces and added a \n before ```
+    Args:
+        comment (string): Comment provided by llm
+
+    Returns:
+      string: formatted_comment without triple backticks without preceding spaces
+    """
+    pattern = re.compile(r"\s*```")
+
+    formatted_comment = pattern.sub("\n```", comment)
+
+    return formatted_comment
