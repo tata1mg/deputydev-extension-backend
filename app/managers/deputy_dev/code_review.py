@@ -24,6 +24,7 @@ from app.modules.repo import RepoModule
 from app.modules.search import perform_search
 from app.utils import (
     build_openai_conversation_message,
+    format_code_blocks,
     get_filtered_response,
     get_task_response,
     get_token_count,
@@ -247,7 +248,7 @@ class CodeReviewManager:
                     # IN case of PR summary, just format the code blocks if present
                     if response_type == "text":
                         pr_summary = response.content
-                        return cls.format_code_blocks(pr_summary)
+                        return format_code_blocks(pr_summary)
 
                     # In case of PR review comments decode json, filter and format the comments
                     pr_review_response = json.loads(response.content)
@@ -282,7 +283,7 @@ class CodeReviewManager:
         filtered_comments = []
         for comment in pr_comments.get("comments"):
             if get_filtered_response(comment, confidence_filter_score):
-                comment["comment"] = cls.format_code_blocks(comment.get("comment"))
+                comment["comment"] = format_code_blocks(comment.get("comment"))
                 filtered_comments.append(comment)
         return filtered_comments
 
@@ -295,18 +296,3 @@ class CodeReviewManager:
             f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}, total token count - {pr_review_context_token_count}"
         )
         return pr_diff_token_count, relevant_chunk_token_count, pr_review_context_token_count
-
-    def format_code_blocks(comment: str) -> str:
-        """
-        Replace all occurrences of the pattern with triple backticks without preceding spaces and added a \n before ```
-        Args:
-            comment (string): Comment provided by llm
-
-        Returns:
-          string: formatted_comment without triple backticks without preceding spaces
-        """
-        pattern = re.compile(r"\s*```")
-
-        formatted_comment = pattern.sub("\n```", comment)
-
-        return formatted_comment

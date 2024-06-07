@@ -101,3 +101,26 @@ class BitBucketModule:
         url = f"{self.bitbucket_url}/{self.workspace}/pullrequests/{self.pr_id}/comments"
         response = requests.post(url, headers=comment_headers, json=comment)
         return response.json()
+
+    async def get_comment_details(self, comment_id) -> str:
+        """
+        Get the comment details on PR from Bitbucket.
+
+        Returns:
+            Dict: Comment Details
+
+        Raises:
+            ValueError: If the diff cannot be retrieved.
+        """
+        url = f"{self.bitbucket_url}/{self.workspace}/pullrequests/{self.pr_id}/comments/{comment_id}"
+        response = requests.get(
+            url,
+            headers=self.headers,
+        )
+
+        if response.status_code != 200:
+            response = f"Unable to retrieve Comment details for comment: {comment_id} - PR ID: {self.pr_id}: {response._content}"
+            logger.error(response)
+            raise ValueError(response)
+        else:
+            return response

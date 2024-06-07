@@ -10,7 +10,7 @@ from sanic.log import logger
 from torpedo import CONFIG, Task
 
 from app.constants import RepoUrl
-from app.constants.constants import LLMModels
+from app.constants.constants import COMMENTS_DEPTH, LLMModels
 from app.constants.repo import VCSTypes
 from app.dao.repo import PullRequestResponse
 from app.utils import add_corrective_code, get_task_response, parse_collection_name
@@ -27,6 +27,10 @@ class RepoModule:
         self.vcs_type = vcs_type
         self.branch_name = branch_name
         self.pr_details = None
+        if self.vcs_type == VCSTypes.bitbucket.value:
+            self.bitbucket_module = BitBucketModule(workspace=repo_full_name, pr_id=pr_id)
+        else:
+            raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -106,10 +110,7 @@ class RepoModule:
             ValueError: If the pull request details are invalid or cannot be retrieved.
         """
 
-        if self.vcs_type != VCSTypes.bitbucket.value:
-            raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
-        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=self.pr_id)
-        return await bitbucket_module.get_pr_details()
+        return await self.bitbucket_module.get_pr_details()
 
     async def get_pr_diff(self):
         """
@@ -123,29 +124,22 @@ class RepoModule:
             ValueError: If the pull request diff cannot be retrieved.
         """
 
-        if self.vcs_type != VCSTypes.bitbucket.value:
-            raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
-        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=self.pr_id)
-        return await bitbucket_module.get_pr_diff()
+        return await self.bitbucket_module.get_pr_diff()
 
     async def create_comment_on_pr(self, comment: Union[str, dict], model: str):
         """
         Create a comment on the pull request.
 
         Parameters:
-        - pr_id (int): The ID of the pull request.
         - comment (str): The comment that needs to be added
         - model(str): model which was used to retrieve comments. Helps identify the bot to post comment
 
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
-        if self.vcs_type != VCSTypes.bitbucket.value:
-            raise ValueError("Unsupported VCS type. Only Bitbucket is supported.")
-        bitbucket_module = BitBucketModule(workspace=self.repo_full_name, pr_id=self.pr_id)
         if isinstance(comment, str):
             comment_payload = {"content": {"raw": comment}}
-            return await bitbucket_module.create_comment_on_pr(comment_payload, model)
+            return await self.bitbucket_module.create_comment_on_pr(comment_payload, model)
         else:
             if comment.get("file_path"):
                 comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
@@ -162,7 +156,7 @@ class RepoModule:
                 }
                 logger.info(f"Comment payload: {comment_payload}")
 
-                return await bitbucket_module.create_comment_on_pr(comment_payload, model)
+                return await self.bitbucket_module.create_comment_on_pr(comment_payload, model)
 
     async def create_bulk_comments(self, comments: List[Union[str, dict]], model: str) -> None:
         """
@@ -208,3 +202,75 @@ class RepoModule:
             ),
         ]
         await get_task_response(tasks)
+
+    async def fetch_comment_thread(self, comment_id, depth=0):
+        """
+        Create a comment on a parent comment in pull request.
+
+        Parameters:
+        - comment (str): The comment that needs to be added
+
+        Returns:
+        - Dict[str, Any]: A dictionary containing the response from the server.
+        """
+        try:
+            if depth >= COMMENTS_DEPTH:
+                return ""  # Stop recursion when depth exceeds 7
+
+            response = await self.bitbucket_module.get_comment_details(comment_id)
+            comment_thread = ""
+            if response.status_code == 200:
+                comment_data = response.json()
+                comment_thread += comment_data["content"]["raw"]
+                if "parent" in comment_data:
+                    parent_comment_id = comment_data["parent"]["id"]
+                    parent_thread = await self.fetch_comment_thread(parent_comment_id, depth + 1)
+                    comment_thread += "\n" + parent_thread
+            return comment_thread
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
+            return ""
+
+    async def create_comment_on_comment(self, comment, comment_data):
+        """
+        Create a comment on a parent comment in pull request.
+
+        Parameters:
+        - comment (str): The comment that needs to be added
+
+        Returns:
+        - Dict[str, Any]: A dictionary containing the response from the server.
+        """
+        comment_payload = {
+            "content": {"raw": add_corrective_code(comment)},
+            "parent": {"id": comment_data["parent"]},
+            "inline": {"path": comment_data["path"]},
+        }
+        logger.info(f"Comment payload:{comment_payload}")
+        response = await self.bitbucket_module.create_comment_on_pr(comment_payload, LLMModels.FoundationModel.value)
+        return response
+
+    async def create_comment_on_line(self, comment: dict):
+        """
+        Create a comment on a line in a file in pull request.
+
+        Parameters:
+        - comment (str): The comment that needs to be added
+
+        Returns:
+        - Dict[str, Any]: A dictionary containing the response from the server.
+        """
+        if comment.get("file_path"):
+            comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
+        comment_payload = {
+            "content": {"raw": add_corrective_code(comment)},
+            "inline": {
+                "path": re.sub(r"^[ab]/\s*", "", comment["file_path"])
+                if re.match(r"^[ab]/\s*", comment.get("file_path"))
+                else comment.get("file_path"),
+                "to": comment.get("line_number"),
+            },
+        }
+        logger.info(f"Comment payload: {comment_payload}")
+        response = await self.bitbucket_module.create_comment_on_pr(comment_payload, LLMModels.FoundationModel.value)
+        return response
