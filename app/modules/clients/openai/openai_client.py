@@ -102,7 +102,7 @@ class OpenAIClient(BaseClient):
             embeddings[index] = new_embeddings[i]
 
         try:
-            await DeputyDevCache.mset(
+            await DeputyDevCache.mset_with_expire(
                 {cache_key: json.dumps(embedding.tolist()) for cache_key, embedding in zip(cache_keys, embeddings)}
             )
             embeddings = np.array(embeddings)
