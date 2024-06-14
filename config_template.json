@@ -93,5 +93,6 @@
     "USERNAME": "sudhir.poodar@1mg.com",
     "TIMEOUT": 0.1
   },
-  "BATCH_SIZE": 24
+  "BATCH_SIZE": 24,
+  "EXECUTOR_MAX_WORKERS": 1
 }

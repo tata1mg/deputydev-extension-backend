@@ -1,10 +1,12 @@
-from typing import List, Tuple
+import asyncio
+from typing import Dict, List, Tuple
 
 import numpy as np
 
 from app.constants.constants import BATCH_SIZE
 from app.modules.chunking.chunk_info import ChunkInfo
 from app.modules.clients import LLMClient
+from app.modules.executor import executor
 
 
 async def embed_text_array(texts: Tuple[str]) -> List[np.ndarray]:
@@ -62,6 +64,23 @@ async def get_query_texts_similarity(query: str, texts: List[str]) -> List[float
     return similarity
 
 
+def create_chunk_str_to_contents(chunks: List[ChunkInfo]) -> Dict[str, str]:
+    """
+    Creates a dictionary mapping chunk denotations to their content.
+
+    This function iterates over a list of ChunkInfo objects and constructs a
+    dictionary where the keys are the denotations of the chunks and the values
+    are the content of the chunks obtained by calling the get_chunk_content method.
+
+    Args:
+        chunks (List[ChunkInfo]): A list of ChunkInfo objects.
+
+    Returns:
+        Dict[str, str]: A dictionary mapping each chunk's denotation to its content.
+    """
+    return {chunk.denotation: chunk.get_chunk_content(add_ellipsis=False, add_lines=False) for chunk in chunks}
+
+
 async def compute_vector_search_scores(query: str, chunks: List[ChunkInfo]) -> dict:
     """
     Computes vector search scores for a query and a list of ChunkInfo objects.
@@ -73,9 +92,10 @@ async def compute_vector_search_scores(query: str, chunks: List[ChunkInfo]) -> d
     Returns:
         dict: Dictionary mapping chunk denotations to similarity scores.
     """
-    chunk_str_to_contents = {
-        chunk.denotation: chunk.get_chunk_content(add_ellipsis=False, add_lines=False) for chunk in chunks
-    }
+    # Instantiate an event loop object for main thread
+    loop = asyncio.get_event_loop()
+    # Create a ProcessPoolExecutor
+    chunk_str_to_contents = await loop.run_in_executor(executor, create_chunk_str_to_contents, chunks)
     chunk_contents_array = list(chunk_str_to_contents.values())
     query_snippet_similarities = await get_query_texts_similarity(query, chunk_contents_array)
     chunk_denotations = [chunk.denotation for chunk in chunks]
