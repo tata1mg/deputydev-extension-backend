@@ -1,10 +1,56 @@
-from typing import Dict, List
+import asyncio
+from typing import Any, Dict, List
 
 from app.modules.chunking.chunk_info import ChunkInfo
 from app.modules.chunking.document import Document
+from app.modules.executor import executor
 
 from .lexical_search import create_lexical_search_tokens, perform_lexical_search
 from .vector_search import compute_vector_search_scores
+
+
+async def create_tokens(all_docs: List[Document]):
+    """
+    Asynchronously creates lexical search tokens from a list of documents.
+
+    This function uses a ProcessPoolExecutor to offload the token creation
+    process to a separate process, thus avoiding blocking the main event loop.
+
+    Args:
+        all_docs (List[Document]): A list of Document objects to process.
+
+    Returns:
+        index: The result of the token creation process.
+    """
+    # Instantiate an event loop object for main thread
+    loop = asyncio.get_event_loop()
+
+    index = await loop.run_in_executor(executor, create_lexical_search_tokens, all_docs)
+
+    return index
+
+
+async def lexical_search(query: str, index: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Asynchronously performs a lexical search on the provided index using the given query.
+
+    This function uses a ProcessPoolExecutor to offload the search process to a
+    separate process, thus avoiding blocking the main event loop.
+
+    Args:
+        query (str): The search query string.
+        index (Dict[str, Any]): The index to search against, typically a dictionary
+                                containing precomputed lexical tokens and their positions.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing the content and
+                              their corresponding lexical scores.
+    """
+    # Instantiate an event loop object for main thread
+    loop = asyncio.get_event_loop()
+
+    content_to_lexical_score_list = await loop.run_in_executor(executor, perform_lexical_search, query, index)
+    return content_to_lexical_score_list
 
 
 async def perform_search(all_docs: List[Document], all_chunks: List[ChunkInfo], query: str) -> Dict[int, float]:
@@ -19,14 +65,12 @@ async def perform_search(all_docs: List[Document], all_chunks: List[ChunkInfo], 
     Returns:
         Dict[int, float]: Search results containing scores for each document chunk.
     """
-    # Create lexical search index
-    index = create_lexical_search_tokens(all_docs)
+    # create tokens for search
+    index = await create_tokens(all_docs)
     # Perform lexical search
-    content_to_lexical_score_list = perform_lexical_search(query, index)
-
+    content_to_lexical_score_list = await lexical_search(query, index)
     # Compute vector search scores asynchronously
     files_to_scores_list = await compute_vector_search_scores(query, all_chunks)
-
     # Calculate scores for each chunk
     for chunk in all_chunks:
         # Default values for scores

@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 from typing import Any, Dict, Union
 
 from sanic.log import logger
@@ -14,10 +13,7 @@ from app.constants.constants import (
 )
 from app.constants.repo import VCSTypes
 from app.decorators.log_time import log_time
-from app.modules.chunking.chunk_parsing_utils import (
-    render_snippet_array,
-    source_to_chunks,
-)
+from app.modules.chunking.chunk_parsing_utils import get_chunks, render_snippet_array
 from app.modules.clients import LLMClient
 from app.modules.jira.jira_manager import JiraManager
 from app.modules.repo import RepoModule
@@ -82,8 +78,7 @@ class CodeReviewManager:
             # clone the repo
             await repo.clone_repo()
 
-            # Process source code into chunks and documents
-            all_chunks, all_docs = source_to_chunks(repo.repo_dir)
+            all_chunks, all_docs = await get_chunks(repo.repo_dir)
             logger.info("Completed chunk creation")
 
             # Perform a search based on the diff content to find relevant chunks

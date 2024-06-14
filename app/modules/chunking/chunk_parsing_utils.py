@@ -1,10 +1,12 @@
+import asyncio
 import os
-from typing import Generator, List, Set
+from typing import Generator, List, Set, Tuple
 
 from sanic.log import logger
 
 from app.modules.chunking.chunk_info import ChunkInfo
 from app.modules.chunking.document import Document, chunks_to_docs
+from app.modules.executor import executor
 
 from .chunk import chunk_source
 from .chunk_config import ChunkConfig
@@ -197,6 +199,30 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
         chunk.source = chunk.source[len(directory) + 1 :]
 
     # Return both the list of chunk information and the list of file paths
+    return all_chunks, all_docs
+
+
+async def get_chunks(directory: str) -> Tuple[List[ChunkInfo], List[Document]]:
+    """
+    Asynchronously retrieves chunks and documents from a given directory.
+
+    This function uses a ProcessPoolExecutor to offload the chunk retrieval process
+    to a separate process, thus avoiding blocking the main event loop.
+
+    Args:
+        directory (str): The directory from which to retrieve chunks and documents.
+
+    Returns:
+        Tuple[List[ChunkInfo], List[Document]]: A tuple containing two lists:
+            - A list of ChunkInfo objects.
+            - A list of Document objects.
+    """
+    # Instantiate an event loop object for main thread
+    loop = asyncio.get_event_loop()
+
+    result = await loop.run_in_executor(executor, source_to_chunks, directory)
+    all_chunks = result[0]
+    all_docs = result[1]
     return all_chunks, all_docs
 
 
