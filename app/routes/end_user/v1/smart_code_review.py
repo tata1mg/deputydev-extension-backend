@@ -24,10 +24,9 @@ async def pool_assistance_api(_request: Request, **kwargs):
 
 
 # For testing directly on local without queue, not used in PRODUCTION
-@smart_code.route("/without_queue", methods=["GET"])
-@validate(query=SmartCodeReqeustModel)
+@smart_code.route("/without_queue", methods=["POST"])
 async def review_pr_in_sync(_request: Request, **kwargs):
-    payload = _request.request_params()
+    payload = _request.custom_json()
     headers = _request.headers
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     payload["request_id"] = request_id
