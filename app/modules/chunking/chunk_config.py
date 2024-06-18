@@ -87,6 +87,13 @@ class ChunkConfig:
         "poetry.lock",
         ".woff2",
         ".otf",
+        # Below mentioned files and extensions are for /tata1mg/app-automation-suite repo, ideally we should give a functionality for the service
+        # owner to configure at their repo level, but for the time being placing a comment over here for future development
+        ".xml",
+        "chromedriver",
+        "emailable-report-template.html",
+        "local_execute.sh",
+        "local_build.sh",
     ]
 
 
