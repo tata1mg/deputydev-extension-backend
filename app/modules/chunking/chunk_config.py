@@ -21,8 +21,19 @@ class ChunkConfig:
         "dist",
         "Pipfile.lock",
         "package-lock.json",
+        ".vscode",
+        # emailable-report-template.html should be part of repo config and should not be handled here, will be taken care of
+        # in the future
+        "emailable-report-template.html",
+        # specific file handling for thanos, will be taken care of in future
+        ".docker",
+        "config.ru",
+        "Rakefile",
+        "config/brakeman.ignore"
     ]
     exclude_exts: list[str] = [
+        ".gitignore",
+        ".md",
         ".min.js",
         ".min.js.map",
         ".min.css",
@@ -87,13 +98,19 @@ class ChunkConfig:
         "poetry.lock",
         ".woff2",
         ".otf",
+        ".sh",
+        ".rspec",
+        ".keep",
+        ".ruby-version",
+        ".coverage",
         # Below mentioned files and extensions are for /tata1mg/app-automation-suite repo, ideally we should give a functionality for the service
         # owner to configure at their repo level, but for the time being placing a comment over here for future development
         ".xml",
         "chromedriver",
-        "emailable-report-template.html",
-        "local_execute.sh",
-        "local_build.sh",
+        ".lock",
+        # Ideally, we should not be excluding .yml file from chunking, this is temporary for odin ruby services and will be handled in future usecase
+        ".yml",
+        "Capfile",
     ]
 
 
