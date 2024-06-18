@@ -38,6 +38,60 @@ class CodeReviewManager:
         await cls.process_pr_review(data=data)
 
     @classmethod
+    def append_line_numbers(cls, pr_diff: str) -> str:
+        """Append line numbers to PR diff
+        Args:
+            pr_diff (str): pr diff returned from git diff
+        Returns:
+            str: pr_diff with line number
+        """
+
+        result = []
+        current_file = None
+        original_line_number = 0
+        new_line_number = 0
+
+        lines = pr_diff.split('\n')
+        for line in lines:
+            # Match the start of a new file diff
+            file_match = re.match(r'^\+\+\+ b/(.+)$', line)
+            if file_match:
+                current_file = file_match.group(1)
+                result.append(line)
+                continue
+
+            # Match the line number info
+            line_info_match = re.match(r'^@@ -(\d+),\d+ \+(\d+),\d+ @@', line)
+            if line_info_match:
+                original_line_number = int(line_info_match.group(1))
+                new_line_number = int(line_info_match.group(2))
+                result.append(line)
+                continue
+
+            # Handle added lines
+            if line.startswith('+') and not line.startswith('+++'):
+                if current_file:
+                    result.append(f'<+{new_line_number}>{line}')
+                new_line_number += 1
+                continue
+
+            # Handle removed lines
+            if line.startswith('-') and not line.startswith('---'):
+                if current_file:
+                    result.append(f'<-{original_line_number}>{line}')
+                original_line_number += 1
+                continue
+
+            # Handle unchanged lines
+            if not line.startswith('-') and not line.startswith('+') and not line.startswith('@@'):
+                if current_file:
+                    result.append(f'<+{new_line_number}>{line}')
+                new_line_number += 1
+                original_line_number += 1
+
+        return '\n'.join(result)
+
+    @classmethod
     @log_time
     async def process_pr_review(cls, data: Dict[str, Any]) -> None:
         """Process a Pull Request review asynchronously.
@@ -156,11 +210,12 @@ class CodeReviewManager:
         Returns:
             Tuple[Dict, str]: Combined OpenAI PR comments filtered by confidence_filter_score and PR summary.
         """
-
-        pr_review_context, pr_summary_context = await cls.create_user_message(pr_diff, pr_detail, relevant_chunk)
+        pr_diff_with_line_numbers = cls.append_line_numbers(pr_diff)
+        pr_review_context, pr_summary_context = await cls.create_user_message(pr_diff_with_line_numbers, pr_detail, relevant_chunk)
 
         # using tiktoken to count the total tokens consumed by characters from relevant chunks and pr diff
-        cls.log_token_counts(pr_diff, relevant_chunk, pr_review_context)
+
+        cls.log_token_counts(pr_diff_with_line_numbers, relevant_chunk, pr_review_context)
 
         pr_review_conversation_message = build_openai_conversation_message(
             system_message=Augmentation.SCRIT_PROMT.value, user_message=pr_review_context

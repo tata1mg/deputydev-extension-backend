@@ -150,12 +150,14 @@ class RepoModule:
                             re.sub(r"^[ab]/\s*", "", comment["file_path"])
                             if re.match(r"^[ab]/\s*", comment.get("file_path"))
                             else comment.get("file_path")
-                        ),
-                        "to": comment.get("line_number"),
-                    },
+                        )
+                    }
                 }
+                if int(comment.get("line_number")) >= 0:
+                    comment_payload["inline"]["to"] = int(comment.get("line_number"))
+                else:
+                    comment_payload["inline"]["from"] = -1*int(comment.get("line_number"))
                 logger.info(f"Comment payload: {comment_payload}")
-
                 return await self.bitbucket_module.create_comment_on_pr(comment_payload, model)
 
     async def create_bulk_comments(self, comments: List[Union[str, dict]], model: str) -> None:
