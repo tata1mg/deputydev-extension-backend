@@ -91,65 +91,55 @@ class Augmentation(Enum):
     }
     USER_LOCATION = "The user is currently located at {} \n"
     SCRIT_PROMT = """
-        Please perform a code review of the following diff (produced by `git diff` on my code), and provide suggestions for improvement:
-        Relevant code chunks are also passed in the message that is relevant to PR diff changes.
-        Steps to analyse correctness of Business logic:
-            1. You will be provided the User story describing what change is expected out of this PR.
-            2. It is very important to provide comments on business logic that is not adhering to the user story.
-            3. Also, provide preventive comments for any extra logic being executed along with the expected one.
-        Before providing the comment there are certain flows for processing data and pointers that needs to be considered to provide a comment.
-        ### Calculation of Line Numbers:
-        To determine line numbers based on the output of a git diff command for a specific file, follow these steps:
-        1) Understand the git diff Output Format:
-            - The output includes change chunks with headers like @@ -r,s +r,s @@, where:
-                * -r,s indicates the range in the original file (before changes), with r as the start line and s as the number of lines changed.
-                * +r,s indicates the range in the new file (after changes), with similar structure.
-                * Lines starting with - are in the original file, while lines starting with + are in the new file.
-            - Git diff Output examples:
-            Example 1:
-            ```
-            @@ -10,3 +10,4 @@
-            Line 10 context line
-            +Line 11 modified content
-            +Line 12 added new line
-            Line 13 context line
-            ```
-            Description for example 1:
-            - The diff starts at line 10 in both the old and new files as indicated by -r and +r respectively in ```@@ -r,s +r,s @@``` header
-            - Line 11 & 13 are context lines since they don't have any of + and - prefix.
-            - Line 11 or 12 are either modified or newly added since they contain + prefix.
-            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.
-
-            - Example 2 git diff Output:
-            ```
-            @@ -24,4 +24,4 @@
-            Line 24 content
-            -Line 25 to be removed
-            +Line 26 modified content
-            +Line 27 added content
-            Line 28 content
-            ```
-            Description for example 2:
-            - The diff starts at line 24 in both the old and new files as indicated by -r and +r respectively in ```@@ -r,s +r,s @@``` header
-            - Line 24 & 28 are context lines since they don't have any of + and - prefix.
-            - Line 26 & 27 are either modified or newly added since they contain + prefix.
-            - Line 25 is removed since it has - prefix.
-            - To calculate the line number to comment on - take the initial offset as value of r and increment the line number by 1 for each + or context line, while lines with - prefix are ignored.
-        2) Calculating line is one of the crucial step so that we can know the exact line where comment needs to be done, So make sure you calculate the line number accurately
-
-        ### Return Response Rules
-            Make sure to return only a valid JSON and not any other text. This JSON should have a key named `comments` which will be a list of dict.
-            The structure of `comments` list of dicts with field description will be as follows:
-            ```JSON
-            comments: [{
-            'file_path': '<path of the file on which comment is being made>',
-            'line_number' : <line number on which comment is relevant (Please be accurate to calculate the line from PR diff based on the stated rules)> ,
-            'comment': '<Comment on the code. Only comment if something can be improved. Don't describe the code.>',
-            'corrective_code': '<if applicable write only corrective python code as per suggested comment or else return empty string>',
-            'confidence_score': '<floating point confidence score of the comment>'
-            }]
-            ```
-        ### Rules to review the code and provide the comments:
+        Please perform a code review of the following diff (produced by `git diff` on my code), and provide suggestions for improvement. 
+        In addition to PR diff you will be also give you below context 
+        1. User story which will help you to understand what was expected from this PR.
+        2. Relevant code chunk as you don't have full repo access it will help you to get more context of code.
+        3. Line number of code in pr diff is provided in `<>` block. Line number can be positive or negative. 
+        4. Must make any comments specific to removed lines on old file line. 
+        
+        Relevant code chunks are included inside '<relevant_chunks_in_repo></relevant_chunks_in_repo>' tags.
+        The code inside this tag should only be used to get an understanding on how the code works, under no 
+        circumstance you should comment on code that are included in these tags. Any comment that you make should 
+        only be on PR diff passed to you.
+        
+        Steps to review PR diff
+        1.First understand the PR diff
+        analyze the PR from your intelligence considering standard pr diff format produced by `git diff` command. 
+        Each line of a pr diff is separated by a newline \n character.  
+        
+        2. The response structure 
+        Make sure to return only a valid JSON and not any other text. This JSON should have a key named `comments` which will be a list of dict.
+        The structure of `comments` list of dicts with field description will be as follows:
+        ```JSON
+        comments: [{
+        'file_path': '<path of the file on which comment is being made>',
+        'line_number' : <line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`>,
+        'comment': '<Comment on the code. Only comment if something can be improved. Don't describe the code.>',
+        'corrective_code': '<if applicable write only corrective python code as per suggested comment or else return empty string>',
+        'confidence_score': '<floating point confidence score of the comment>'
+        }]
+        ```
+        
+        3. Follow below guidelines while suggesting a comment
+        - Strictly avoid suggesting duplicate comment for a particular line in a file.
+        - Please only suggest comments for lines included in the PR diff means line starting with `-` or `+` 
+            a) -: Lines prefixed with - indicate removed lines.
+            b) +: Lines prefixed with + indicate added lines.
+        - Do not suggest comments on code lines that are part of the relevant context line not starting with  `-` or `+`.
+        - Proper formatting of Code present in comment:
+            a) When suggesting or providing examples of code in comments, **always** include all the corrective_code inside ``` CODE ``` markdown.
+            b) Optionally, specify the language for syntax highlighting by adding the language name after the opening triple backticks (e.g.,```python).
+            c) Ensure that the code snippets are clearly separated from the rest of the text for better readability. 
+            Example:
+            Incorrect comment: "Instead of importing JivaManager inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.cfrom app.managers.jiva import JivaManager async def show_boat(request: Request, headers: Headers): response = await JivaManager().show_boat_based_on_ab(headers) return response"
+            Corrected version of comment: "Instead of importing `JivaManager` inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.\n\n```python\nfrom app.managers.jiva import JivaManager\n\nasync def show_boat(request: Request, headers: Headers):\n    response = await JivaManager().show_boat_based_on_ab(headers)\n    return response\n```\n"
+        
+        4. First review the PR using user story 
+        - Verify if the changes align with the user story.
+        - Provide comments on any business logic that does not adhere to the user story.
+        
+        5. In the next step review the PR based on below rules  
             1) Best Practices for Logger Formatting:
                 - Review the use of log levels (e.g., info, warn, error) in log messages. Verify that log levels accurately reflect the severity of the events being logged.
                 - Avoid generic logging and examine if the log messages include sufficient information for understanding the context of the logged events.
@@ -186,19 +176,8 @@ class Augmentation(Enum):
                 - Clear error messages for easier debugging.
                 - Logging of errors with relevant context information.
                 - prefer exception classes over generic exception handling.
-            9) Strictly avoid suggesting duplicate comment for a particular line in a file.
-            10) Please only suggest comments for lines included in the PR diff. Do not suggest comments on code lines that are part of the relevant context.
-            11) Proper formatting of Code present in comment:
-                - When suggesting or providing examples of code in comments, **always** include all the corrective_code inside ``` CODE ``` markdown.
-                - Optionally, specify the language for syntax highlighting by adding the language name after the opening triple backticks (e.g.,```python).
-                - Ensure that the code snippets are clearly separated from the rest of the text for better readability. # noqa : W293
-                               
-                Example:
-                Incorrect comment: "Instead of importing JivaManager inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.cfrom app.managers.jiva import JivaManager async def show_boat(request: Request, headers: Headers): response = await JivaManager().show_boat_based_on_ab(headers) return response"
-                Corrected version of comment: "Instead of importing `JivaManager` inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.\n\n```python\nfrom app.managers.jiva import JivaManager\n\nasync def show_boat(request: Request, headers: Headers):\n    response = await JivaManager().show_boat_based_on_ab(headers)\n    return response\n```\n"
-
-            Note :- Relevant code chunks are included inside '<relevant_chunks_in_repo></relevant_chunks_in_repo>' tags. The code inside this tag should only be used to get an understanding on how the code works, under no circumstance you should comment on code that are included in these tags. Any comment that you make should only be on PR diff passed to you.
         """
+
     SCRIT_SUMMARY_PROMPT = """
         Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If the comment involves inquiries about code improvements or other technical discussions, evaluate the provided pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown"
         """
