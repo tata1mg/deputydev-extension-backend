@@ -230,11 +230,8 @@ def format_code_block(code_block: str) -> str:
     """
     if not (code_block.startswith("```") and code_block.endswith("```")):
         # Add triple backticks around the code block if its not formatted
-        formatted_code_block = f"```python\n{code_block}\n```"
-    else:
-        formatted_code_block = code_block
-
-    return formatted_code_block
+        return f"```\n{code_block}\n```"
+    return code_block
 
 
 def ignore_files(response):
