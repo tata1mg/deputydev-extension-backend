@@ -129,7 +129,7 @@ class Augmentation(Enum):
         - Do not suggest comments on code lines that are part of the relevant context line not starting with  `-` or `+`.
         - Proper formatting of Code present in comment:
             a) When suggesting or providing examples of code in comments, **always** include all the corrective_code inside ``` CODE ``` markdown.
-            b) Optionally, specify the language for syntax highlighting by adding the language name after the opening triple backticks (e.g.,```python).
+            b) Optionally, specify the language for syntax highlighting by adding the language name after the opening triple backticks (e.g.,```python, ```java).
             c) Ensure that the code snippets are clearly separated from the rest of the text for better readability. 
             Example:
             Incorrect comment: "Instead of importing JivaManager inside the function, it is better to import it at the top of the file to avoid redundant imports and improve readability.cfrom app.managers.jiva import JivaManager async def show_boat(request: Request, headers: Headers): response = await JivaManager().show_boat_based_on_ab(headers) return response"
@@ -147,29 +147,29 @@ class Augmentation(Enum):
                 - Look for hard coded strings in log messages. Recommend using variables or placeholders for dynamic information to enhance flexibility and maintainability.
             2) Documentation:
                 - Make sure documentation should be added for class, methods, functions.
-            3) Basic python code practices:
+            3) Basic code practices:
                 - Never commit sensitive information like api keys, secret key, secret tokens in code.
                 - Don't use hardcoded values in code except in test cases. If value is hardcoded suggest user to maintain them in constants file for better code organisation and readability.
                 - Avoidance of deep nesting and overly complex functions.
-                - We manage Pipfile and requirements to manage dependencies and their versions. Manage pipfile and requirements if any library is added or updated.
-                - All functions should contain response and Arguments type hints.
+                - Manage dependency files efficiently (e.g., Maven's pom.xml, Gradle's build.gradle, pipfile). 
+                - Ensure type hints or appropriate return types for functions/methods.
                 - Code pushed should not contain any secrets/credentials.
                 - Input validation to prevent injection attacks (e.g., SQL injection, XSS)
             4) Suggest user to use inhouse libraries wherever applicable.
-               Our organisation uses certain inhouse libraries, suggest user to use them in case user is using some alternate library to perform the same function.
-               - Torpedo- It a wrapper written over sanic.
+               Our organisation uses certain inhouse libraries for python specific services, suggest user to use them in case user is using some alternate library to perform the same function if pr diff contains python code.
+               - torpedo- It a wrapper written over sanic.
                - cache_wrapper - Wrapper written over redis.
                - mongoose - library to perform mongo operations
-            5) System stability and performance:
+            5) System stability and performance (For Pyton specific services):
                 - Ask user to use TaskExecuter define in our in house torpedo library for parallel call in case of multiple task.
                 - make sure to handle exceptions if task fails in TaskExecuter.
             6) Validate config changes:
-                - All secrets key should not be commited in code and it should either be a environment variable or should be a part of config file.
+                - All secrets key should not be commited in code and it should either be a environment variable or should be a part of config files.
             7) API
-                - Api documentation using our our inhouse approach. We use a ADAM library which uses sanic_ext openapi library.
-                - Request and response validation using pydantic for api.
+                - Ensure API documentation for newly created API's. Example: Use sanic_ext for OpenAPI documentation for python specific apis.
+                - Validate request and response using appropriate tools.
                 - No business logic in controller or routes file.
-                - use http methods like GET, POST, UPDATE, PATCH for thier recommended use case.
+                - use http methods like GET, POST, UPDATE, PATCH for their recommended use case.
             8) Error handling
                 - Proper handling of exceptions.
                 - Use of try-except blocks where necessary.
