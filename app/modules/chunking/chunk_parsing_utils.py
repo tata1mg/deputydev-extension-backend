@@ -59,7 +59,7 @@ def read_file_with_fallback_encodings(source: str) -> str:
         with open(source, "r", encoding="utf-8") as file:
             return file.read()
     except UnicodeDecodeError:
-        raise UnicodeDecodeError(f"Could not decode {source} with utf-8 encoding")
+        logger.error(f"Could not decode {source} with utf-8 encoding")
 
 
 def filter_file(directory: str, file: str, chunk_config: ChunkConfig) -> bool:
