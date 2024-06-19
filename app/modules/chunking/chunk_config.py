@@ -11,106 +11,137 @@ class ChunkConfig:
     """
 
     exclude_dirs: list[str] = [
+        # vcs / code editor folders
         ".git",
+        ".vscode",
+        # javascript / typescript
         "node_modules",
         "build",
+        "dist",
+        "package-lock.json",
+        # common
         ".venv",
         "venv",
         "patch",
         "packages/blobs",
-        "dist",
-        "Pipfile.lock",
-        "package-lock.json",
-        ".vscode",
         # emailable-report-template.html should be part of repo config and should not be handled here, will be taken care of
         # in the future
         "emailable-report-template.html",
-        # specific file handling for thanos, will be taken care of in future
+        # specific file handling for "tata1mg/thanos", will be taken care of in future
         ".docker",
         "config.ru",
         "Rakefile",
-        "config/brakeman.ignore"
+        "config/brakeman.ignore",
     ]
     exclude_exts: list[str] = [
+        # vcs files to ignore
         ".gitignore",
         ".md",
-        ".min.js",
-        ".min.js.map",
-        ".min.css",
-        ".min.css.map",
-        ".tfstate",
-        ".tfstate.backup",
-        ".jar",
-        ".ipynb",
+        "LICENSE",
+        ".sh",
+        ".patch",
+        ".patch.disabled",
+        # images types
         ".png",
         ".jpg",
         ".jpeg",
-        ".download",
         ".gif",
+        ".ico",
         ".bmp",
         ".tiff",
-        ".ico",
+        ".svg",
+        # audio / video types
         ".mp3",
-        ".wav",
-        ".wma",
-        ".ogg",
-        ".flac",
         ".mp4",
         ".avi",
         ".mkv",
         ".mov",
-        ".patch",
-        ".patch.disabled",
         ".wmv",
-        ".m4a",
-        ".m4v",
         ".3gp",
         ".3g2",
+        ".wav",
+        ".wma",
+        ".ogg",
+        ".flac",
         ".rm",
         ".swf",
         ".flv",
         ".iso",
         ".bin",
+        # fonts types
+        ".woff",
+        ".woff2",
+        ".eot",
+        ".otf",
+        ".m4a",
+        ".m4v",
+        ".ttf",
+        # javascript / typescript
+        ".min.js",
+        ".min.js.map",
+        ".npmrc",
+        ".eslintignore",
+        ".browserslistrc",
+        ".eslintrc",
+        # css / scss / less types
+        ".min.css",
+        ".min.css.map",
+        ".css",
+        ".scss",
+        ".less",
+        # python
+        ".pyc",
+        ".coverage",
+        "pnpm-lock.yaml",
+        ".lock",
+        # ruby
+        ".rspec",
+        ".keep",
+        ".ruby-version",
+        # teraform
+        ".tfstate",
+        ".tfstate.backup",
+        # java
+        ".jar",
+        # jupiter notebook extension
+        ".ipynb",
+        # extension for browser download file
+        ".download",
+        # compression types
         ".tar",
         ".zip",
         ".7z",
         ".gz",
         ".rar",
+        # pdf files types
         ".pdf",
+        ".pub",
+        # word / doc types
         ".doc",
         ".docx",
+        # sheet / excel type
         ".xls",
         ".xlsx",
         ".ppt",
         ".pptx",
-        ".svg",
         ".parquet",
-        ".pyc",
-        ".pub",
+        # aws file type ( for security keys, etc )
         ".pem",
-        ".ttf",
-        ".dfn",
+        # miscellaneous
         ".dfm",
+        ".dfn",
         ".feature",
         "deputy_dev.yaml",
-        "pnpm-lock.yaml",
-        "LICENSE",
-        "poetry.lock",
-        ".woff2",
-        ".otf",
-        ".sh",
-        ".rspec",
-        ".keep",
-        ".ruby-version",
-        ".coverage",
-        # Below mentioned files and extensions are for /tata1mg/app-automation-suite repo, ideally we should give a functionality for the service
+        # Below mentioned files and extensions are for "/tata1mg/app-automation-suite" repo, ideally we should give a functionality for the service
         # owner to configure at their repo level, but for the time being placing a comment over here for future development
         ".xml",
         "chromedriver",
-        ".lock",
-        # Ideally, we should not be excluding .yml file from chunking, this is temporary for odin ruby services and will be handled in future usecase
+        # Ideally, we should not be excluding .yml file from chunking, this is temporary for "tata1mg/thanos" ruby services and will be handled in future usecase
         ".yml",
         "Capfile",
+        # Jade was used earlier for server side rendering, back when React/Angular was not there, we use in "tata1mg/HKPSpydoc",
+        # but no active development has taken place over years, it's in maintainenece mode and can be excluded
+        ".jade",
     ]
 
 
