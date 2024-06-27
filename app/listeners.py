@@ -1,6 +1,6 @@
 from torpedo.constants import ListenerEventTypes
 
-from app.sqs.genai_subscriber import GenaiSubscriber
+from app.main.blueprints.deputy_dev.services.sqs.genai_subscriber import GenaiSubscriber
 
 
 async def initialize_sqs_subscribes(_app, loop):

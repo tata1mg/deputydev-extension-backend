@@ -1,0 +1,18 @@
+from app.common.service_clients.jira.issue import Issue
+
+from .jira_helper import JiraHelper
+
+
+class JiraManager:
+    def __init__(self, issue_id: str):
+        self.issue_id = issue_id
+
+    async def get_description_text(self):
+        response = await self.get_issue_details(fields=["description"])
+        if response.get("fields", {}).get("description"):
+            return JiraHelper.parse_description(response.get("fields").get("description").get("content", []))
+        else:
+            return ""
+
+    async def get_issue_details(self, fields: list[str] = None):
+        return await Issue.get(self.issue_id, fields)
