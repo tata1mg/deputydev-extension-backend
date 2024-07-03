@@ -19,7 +19,7 @@ from app.main.blueprints.deputy_dev.constants import (
     LLMModels,
 )
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
-    SCRIT_PROMPT,
+    SCRIT_PROMPT, SCRIT_SUMMARY_PROMPT,
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
@@ -233,7 +233,7 @@ class CodeReviewManager:
             system_message=SCRIT_PROMPT, user_message=pr_review_context
         )
         pr_review_summarisation_converstation_message = build_openai_conversation_message(
-            system_message=SCRIT_PROMPT, user_message=pr_summary_context
+            system_message=SCRIT_SUMMARY_PROMPT, user_message=pr_summary_context
         )
 
         # Create three parallel tasks to get PR reviewed by finetuned model and gpt4 model and also get the PR summarisation
