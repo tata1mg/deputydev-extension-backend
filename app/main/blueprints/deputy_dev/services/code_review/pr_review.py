@@ -22,6 +22,9 @@ from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     SCRIT_PROMPT, SCRIT_SUMMARY_PROMPT,
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
+from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
+    ConfluenceManager,
+)
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
@@ -189,12 +192,28 @@ class CodeReviewManager:
         Returns:
             tuple: PR review context, PR summary context.
         """
-        user_story_description = await JiraManager(issue_id=pr_detail.issue_id).get_description_text()
-
-        pr_review_context = "You are a great code reviewer who has been given a PR to review along with some relevant chunks of code and user story description. Relevant chunks of code are enclosed within <relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
-
+        jira_manager = JiraManager(issue_id=pr_detail.issue_id)
+        user_story_description = await jira_manager.get_description_text()
+        confluence_doc_id, confluence_data = await jira_manager.get_confluence_link_attached(), None
+        if confluence_doc_id:
+            confluence_data = await ConfluenceManager(confluence_doc_id).get_description_text()
+        pr_review_context = (
+            "You are a great code reviewer who has been given a PR to review along with some relevant"
+            " chunks of code and user story description. Relevant chunks of code are enclosed within "
+            "<relevant_chunks_in_repo></relevant_chunks_in_repo> tags. "
+        )
         if user_story_description:
-            pr_review_context += f"Following is the user story description - {user_story_description}. You should use this to make comments around change in business logic that is not expected to do."
+            pr_review_context += (
+                f"Following is the user story "
+                f"description - {user_story_description}. You should use this "
+                f"to make comments around change in business logic that is not expected to do."
+            )
+
+        if confluence_data:
+            pr_review_context += (
+                f"\n Following is the additional user story "
+                f"description primarily present in tags - {confluence_data}\n"
+            )
 
         pr_review_context += (
             f"Use the relevant chunks of code to review the PR passed. Relevant code chunks: '{relevant_chunk}, "

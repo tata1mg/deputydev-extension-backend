@@ -1,3 +1,6 @@
+import re
+
+
 class JiraHelper:
     @staticmethod
     def parse_description(content, indent_level=0):
@@ -41,3 +44,59 @@ class JiraHelper:
                 for sub_item in item.get("content", []):
                     text_output += JiraHelper.parse_description([sub_item], indent_level)
         return text_output
+
+    @staticmethod
+    def extract_confluence_id_from_description(content) -> str:
+        """
+        Extracts Confluence links from the given JIRA story description.
+
+        Args:
+            description (str): The description of the JIRA story.
+        Returns:
+            str: confluence id
+        """
+        confluence_links = JiraHelper.extract_confluence_ids(content)
+        if confluence_links:
+            confluence_id = JiraHelper.extract_confluence_id_from_link(confluence_links[0])
+            return confluence_id
+
+    @staticmethod
+    def extract_confluence_ids(data):
+        """
+        Extracts Confluence links from the given JIRA story description.
+
+        Args:
+            description (str): The description of the JIRA story.
+
+        Returns:
+            list: A list of Confluence links found in the description.
+        """
+        links = []
+
+        def traverse(content):
+            if isinstance(content, dict):
+                if (
+                    "type" in content
+                    and content["type"] == "inlineCard"
+                    and "attrs" in content
+                    and "url" in content["attrs"]
+                ):
+                    links.append(content["attrs"]["url"])
+                for key, value in content.items():
+                    traverse(value)
+            elif isinstance(content, list):
+                for item in content:
+                    traverse(item)
+
+        if "fields" in data and "description" in data["fields"] and "content" in data["fields"]["description"]:
+            traverse(data["fields"]["description"]["content"])
+        return links
+
+    @staticmethod
+    def extract_confluence_id_from_link(link):
+        pattern = r"/pages/(\d+)/"
+        if not link:
+            return
+        match = re.search(pattern, link)
+        if match:
+            return match.group(1)
