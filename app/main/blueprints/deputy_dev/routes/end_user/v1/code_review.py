@@ -21,9 +21,10 @@ config = CONFIG.config
 async def pool_assistance_api(_request: Request, **kwargs):
     payload = _request.custom_json()
     headers = _request.headers
+    query_params = _request.request_params()
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     payload["request_id"] = request_id
-    response = await CodeReviewTrigger.perform_review(payload)
+    response = await CodeReviewTrigger.perform_review(payload, prompt_version=query_params.get("prompt_version", "v2"))
     return send_response(response)
 
 

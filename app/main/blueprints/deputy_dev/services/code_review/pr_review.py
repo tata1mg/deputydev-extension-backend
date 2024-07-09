@@ -19,7 +19,11 @@ from app.main.blueprints.deputy_dev.constants import (
     LLMModels,
 )
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
-    SCRIT_PROMPT, SCRIT_SUMMARY_PROMPT,
+    SCRIT_PROMPT,
+    SCRIT_SUMMARY_PROMPT,
+)
+from app.main.blueprints.deputy_dev.constants.prompts.v2.system_prompts import (
+    SCRIT_PROMPT as SCRIT_PROMPT_V2,
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
@@ -161,8 +165,9 @@ class CodeReviewManager:
 
             # Render relevant chunks into a single snippet
             relevant_chunk = render_snippet_array(ranked_snippets_list)
-
-            response, pr_summary = await cls.parallel_pr_review_with_gpt_models(diff, repo.pr_details, relevant_chunk)
+            response, pr_summary = await cls.parallel_pr_review_with_gpt_models(
+                diff, repo.pr_details, relevant_chunk, prompt_version=data["prompt_version"]
+            )
 
             if not response.get("finetuned_comments") and not response.get("foundation_comments"):
                 # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
@@ -227,7 +232,9 @@ class CodeReviewManager:
         return pr_review_context, pr_summary_context
 
     @classmethod
-    async def parallel_pr_review_with_gpt_models(cls, pr_diff: str, pr_detail: str, relevant_chunk: str) -> list:
+    async def parallel_pr_review_with_gpt_models(
+        cls, pr_diff: str, pr_detail: str, relevant_chunk: str, prompt_version: str
+    ) -> list:
         """
         Runs a thread parallely to call normal GPT-4 and fine-tuned GPT model to review the PR and provide comments.
 
@@ -249,7 +256,7 @@ class CodeReviewManager:
         cls.log_token_counts(pr_diff_with_line_numbers, relevant_chunk, pr_review_context)
 
         pr_review_conversation_message = build_openai_conversation_message(
-            system_message=SCRIT_PROMPT, user_message=pr_review_context
+            system_message=cls.get_code_review_system_prompt(prompt_version), user_message=pr_review_context
         )
         pr_review_summarisation_converstation_message = build_openai_conversation_message(
             system_message=SCRIT_SUMMARY_PROMPT, user_message=pr_summary_context
@@ -377,3 +384,10 @@ class CodeReviewManager:
             f"PR diff token count - {pr_diff_token_count}, relevant Chunk token count - {relevant_chunk_token_count}, total token count - {pr_review_context_token_count}"
         )
         return pr_diff_token_count, relevant_chunk_token_count, pr_review_context_token_count
+
+    @classmethod
+    def get_code_review_system_prompt(cls, prompt_version: str):
+        if prompt_version == "v1":
+            return SCRIT_PROMPT
+        elif prompt_version == "v2":
+            return SCRIT_PROMPT_V2

@@ -14,7 +14,7 @@ class CodeReviewTrigger:
     """Triggers code review"""
 
     @classmethod
-    async def perform_review(cls, payload: dict):
+    async def perform_review(cls, payload: dict, prompt_version="v1"):
         """
         Triggers code review
         Args:
@@ -27,6 +27,7 @@ class CodeReviewTrigger:
         try:
             if payload.get("repository"):
                 payload = WebhookManager.parse_deputy_dev_payload(payload)
+            payload["prompt_version"] = prompt_version
             payload = CodeReviewRequest(**payload)
         except ValidationError as ex:
             logger.error(ex)

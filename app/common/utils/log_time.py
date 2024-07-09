@@ -42,7 +42,7 @@ def log_time(func):
         start_time = datetime.now(timezone.utc)
         # Format the datetime as per the specified format
         formatted_start_time = start_time.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-        if kwargs["data"]["request_id"]:
+        if kwargs.get("data") and kwargs["data"].get("request_id"):
             request_id = kwargs["data"]["request_id"]
         start_message = f"Start: {func.__name__} at {formatted_start_time}"
         if request_id:
