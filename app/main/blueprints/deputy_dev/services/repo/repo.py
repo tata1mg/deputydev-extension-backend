@@ -17,10 +17,7 @@ from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.atlassian.bitbucket.bitbucket import (
     BitBucketModule,
 )
-from app.main.blueprints.deputy_dev.utils import (
-    add_corrective_code,
-    parse_collection_name,
-)
+from app.main.blueprints.deputy_dev.utils import format_comment, parse_collection_name
 
 
 class RepoModule:
@@ -149,7 +146,7 @@ class RepoModule:
             if comment.get("file_path"):
                 comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
                 comment_payload = {
-                    "content": {"raw": add_corrective_code(comment)},
+                    "content": {"raw": format_comment(comment)},
                     "inline": {
                         "path": (
                             re.sub(r"^[ab]/\s*", "", comment["file_path"])
@@ -249,7 +246,7 @@ class RepoModule:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
         comment_payload = {
-            "content": {"raw": add_corrective_code(comment)},
+            "content": {"raw": format_comment(comment)},
             "parent": {"id": comment_data["parent"]},
             "inline": {"path": comment_data["path"]},
         }
@@ -270,7 +267,7 @@ class RepoModule:
         if comment.get("file_path"):
             comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
         comment_payload = {
-            "content": {"raw": add_corrective_code(comment)},
+            "content": {"raw": format_comment(comment)},
             "inline": {
                 "path": re.sub(r"^[ab]/\s*", "", comment["file_path"])
                 if re.match(r"^[ab]/\s*", comment.get("file_path"))

@@ -33,7 +33,7 @@ SCRIT_PROMPT = """
         'line_number' : <line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`>,
         'comment': '<Comment on the code. Only comment if something can be improved. Don't describe the code.>',
         'corrective_code': '<if applicable write only corrective python code as per suggested comment or else return empty string>',
-        'confidence_score': '<floating point confidence score of the comment>'
+        'confidence_score': '<floating point confidence score of the comment>',
         }]
         ```
         
