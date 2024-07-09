@@ -30,19 +30,6 @@ def get_comment(payload):
         raise f"An unexpected error occurred: {e}"
 
 
-def add_corrective_code(data):
-    # Check if corrective_code exists and is a dictionary
-    if isinstance(data, dict):
-        comment = data.get("comment", "")
-        if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
-            comment += "\n" + format_code_block(data.get("corrective_code"))
-        return comment
-    elif isinstance(data, str):
-        return data
-    else:
-        return ""
-
-
 def format_code_block(code_block: str) -> str:
     """
     Formats a code block into the correct format by enclosing it with triple backticks if not already enclosed.
@@ -105,3 +92,33 @@ def parse_collection_name(name: str) -> str:
     # Ensure the name is between 3 and 63 characters and starts/ends with alphanumeric
     name = re.sub(r"^(-*\w{0,61}\w)-*$", r"\1", name[:63].ljust(3, "x"))
     return name
+
+
+def get_corrective_code(data):
+    if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
+        format_code_block(data.get("corrective_code"))
+        return format_code_block(data.get("corrective_code"))
+    return ""
+
+
+def format_comment(data):
+    # Check if corrective_code exists and is a dictionary
+    if isinstance(data, dict):
+        comment = data.get("comment")
+        corrective_code = get_corrective_code(data)
+        bucket_name = get_bucket_name(data)
+        if bucket_name:
+            return f"**{bucket_name}**: {comment}\n{corrective_code} "
+        else:
+            return f"{comment}\n{corrective_code} "
+    elif isinstance(data, str):
+        return data
+    else:
+        return ""
+
+
+def get_bucket_name(data):
+    bucket_name = data.get("bucket_name")
+    if bucket_name:
+        return bucket_name
+    return ""
