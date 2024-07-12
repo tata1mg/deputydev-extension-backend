@@ -5,4 +5,6 @@ class CodeReviewRequest(BaseModel):
     pr_id: int
     repo_name: str
     request_id: str
+    workspace: str
     prompt_version: str
+    vcs_type: str

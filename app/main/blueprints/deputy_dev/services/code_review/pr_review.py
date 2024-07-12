@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 from typing import Any, Dict, Union
 
 from sanic.log import logger
@@ -36,9 +35,13 @@ from app.main.blueprints.deputy_dev.services.chunking.chunk_parsing_utils import
     get_chunks,
     render_snippet_array,
 )
-from app.main.blueprints.deputy_dev.services.repo import RepoModule
+from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
+    CommentFactory,
+)
+from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.deputy_dev.services.search import perform_search
 from app.main.blueprints.deputy_dev.utils import (
+    append_line_numbers,
     format_code_blocks,
     get_filtered_response,
 )
@@ -55,60 +58,6 @@ class CodeReviewManager:
         await cls.process_pr_review(data=data)
 
     @classmethod
-    def append_line_numbers(cls, pr_diff: str) -> str:
-        """Append line numbers to PR diff
-        Args:
-            pr_diff (str): pr diff returned from git diff
-        Returns:
-            str: pr_diff with line number
-        """
-
-        result = []
-        current_file = None
-        original_line_number = 0
-        new_line_number = 0
-
-        lines = pr_diff.split("\n")
-        for line in lines:
-            # Match the start of a new file diff
-            file_match = re.match(r"^\+\+\+ b/(.+)$", line)
-            if file_match:
-                current_file = file_match.group(1)
-                result.append(line)
-                continue
-
-            # Match the line number info
-            line_info_match = re.match(r"^@@ -(\d+),\d+ \+(\d+),\d+ @@", line)
-            if line_info_match:
-                original_line_number = int(line_info_match.group(1))
-                new_line_number = int(line_info_match.group(2))
-                result.append(line)
-                continue
-
-            # Handle added lines
-            if line.startswith("+") and not line.startswith("+++"):
-                if current_file:
-                    result.append(f"<+{new_line_number}>{line}")
-                new_line_number += 1
-                continue
-
-            # Handle removed lines
-            if line.startswith("-") and not line.startswith("---"):
-                if current_file:
-                    result.append(f"<-{original_line_number}>{line}")
-                original_line_number += 1
-                continue
-
-            # Handle unchanged lines
-            if not line.startswith("-") and not line.startswith("+") and not line.startswith("@@"):
-                if current_file:
-                    result.append(f"<+{new_line_number}>{line}")
-                new_line_number += 1
-                original_line_number += 1
-
-        return "\n".join(result)
-
-    @classmethod
     @log_time
     async def process_pr_review(cls, data: Dict[str, Any]) -> None:
         """Process a Pull Request review asynchronously.
@@ -120,15 +69,20 @@ class CodeReviewManager:
         Returns:
             None
         """
-        # Initialize RepoModule with repository details
-        repo = RepoModule(
-            repo_full_name=data.get("repo_name"),
-            pr_id=data.get("pr_id"),
-            vcs_type=data.get("vcs_type", VCSTypes.bitbucket.value),
+        # Initialize repo and comment service
+        vcs_type = data.get("vcs_type", VCSTypes.bitbucket.value)
+        repo_name, pr_id, workspace = data.get("repo_name"), data.get("pr_id"), data.get("workspace")
+        repo = await RepoFactory.repo(
+            vcs_type=vcs_type,
+            repo_name=repo_name,
+            pr_id=pr_id,
+            workspace=workspace,
         )
-        await repo.initialize()
 
-        pr_id = repo.get_pr_id()
+        comment_service = await CommentFactory.comment(
+            vcs_type=vcs_type, repo_name=repo_name, pr_id=pr_id, workspace=workspace, pr_details=repo.pr_details
+        )
+
         diff = await repo.get_pr_diff()
         if diff == "":
             return logger.info(
@@ -143,46 +97,24 @@ class CodeReviewManager:
             comment = PR_SIZE_TOO_BIG_MESSAGE.format(
                 pr_diff_token_count=pr_diff_token_count, max_token_limit=MAX_PR_DIFF_TOKEN_LIMIT
             )
-            await repo.create_comment_on_pr(comment=comment, model=LLMModels.FoundationModel.value)
-            return
+            await comment_service.create_pr_comment(comment=comment, model=LLMModels.FoundationModel.value)
         else:
-            # clone the repo
-            await repo.clone_repo()
-
-            all_chunks, all_docs = await get_chunks(repo.repo_dir)
-            logger.info("Completed chunk creation")
-
-            # Perform a search based on the diff content to find relevant chunks
-            content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
-            logger.info("Completed lexical and vector search")
-
-            # Rank relevant chunks based on lexical scores
-            ranked_snippets_list = sorted(
-                all_chunks,
-                key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
-                reverse=True,
-            )[:NO_OF_CHUNKS]
-
-            # Render relevant chunks into a single snippet
-            relevant_chunk = render_snippet_array(ranked_snippets_list)
             response, pr_summary = await cls.parallel_pr_review_with_gpt_models(
-                diff, repo.pr_details, relevant_chunk, prompt_version=data["prompt_version"]
+                diff, repo.pr_details, await cls.get_relevant_chunk(repo, diff), prompt_version=data["prompt_version"]
             )
-
             if not response.get("finetuned_comments") and not response.get("foundation_comments"):
                 # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
-                await repo.create_comment_on_pr("LGTM!!", LLMModels.FoundationModel.value)
+                await comment_service.create_pr_comment("LGTM!!", LLMModels.FoundationModel.value)
             else:
                 # parallel tasks to Post finetuned and foundation comments
-                await repo.post_bots_comments(response)
+                await comment_service.post_bots_comments(response)
 
             if pr_summary:
-                await repo.create_comment_on_pr(pr_summary, LLMModels.FoundationModel.value)
+                await comment_service.create_pr_comment(pr_summary, LLMModels.FoundationModel.value)
 
             # Clean up by deleting the cloned repository
             repo.delete_repo()
             logger.info(f"Completed PR review for pr id - {pr_id}, repo - {data.get('repo_name')}")
-            return
 
     @staticmethod
     async def create_user_message(pr_diff: str, pr_detail: str, relevant_chunk: str) -> tuple:
@@ -246,7 +178,7 @@ class CodeReviewManager:
         Returns:
             Tuple[Dict, str]: Combined OpenAI PR comments filtered by confidence_filter_score and PR summary.
         """
-        pr_diff_with_line_numbers = cls.append_line_numbers(pr_diff)
+        pr_diff_with_line_numbers = append_line_numbers(pr_diff)
         pr_review_context, pr_summary_context = await cls.create_user_message(
             pr_diff_with_line_numbers, pr_detail, relevant_chunk
         )
@@ -357,7 +289,7 @@ class CodeReviewManager:
         return pr_summary if response_type == "text" else pr_comments
 
     @classmethod
-    def filtered_comments(cls, pr_comments: dict, confidence_filter_score: float) -> dict:
+    def filtered_comments(cls, pr_comments: dict, confidence_filter_score: float) -> list:
         """
         Filters the comments based on the confidence score.
 
@@ -391,3 +323,25 @@ class CodeReviewManager:
             return SCRIT_PROMPT
         elif prompt_version == "v2":
             return SCRIT_PROMPT_V2
+
+    @classmethod
+    async def get_relevant_chunk(cls, repo, diff):
+        await repo.clone_repo()
+
+        all_chunks, all_docs = await get_chunks(repo.repo_dir)
+        logger.info("Completed chunk creation")
+
+        # Perform a search based on the diff content to find relevant chunks
+        content_to_lexical_score_list = await perform_search(all_docs=all_docs, all_chunks=all_chunks, query=diff)
+        logger.info("Completed lexical and vector search")
+
+        # Rank relevant chunks based on lexical scores
+        ranked_snippets_list = sorted(
+            all_chunks,
+            key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
+            reverse=True,
+        )[:NO_OF_CHUNKS]
+
+        # Render relevant chunks into a single snippet
+        relevant_chunk = render_snippet_array(ranked_snippets_list)
+        return relevant_chunk

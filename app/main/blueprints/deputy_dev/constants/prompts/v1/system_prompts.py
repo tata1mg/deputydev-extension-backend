@@ -101,3 +101,10 @@ SCRIT_SUMMARY_PROMPT = """
         the posed question without delving into the PR diff. 
         include all the corrective_code inside ``` CODE ``` markdown"
         """
+
+CHAT_COMMENT_PROMPT = """
+        Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If
+        the comment involves inquiries about code improvements or other technical discussions, evaluate the provided 
+        pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question 
+        without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown
+        """

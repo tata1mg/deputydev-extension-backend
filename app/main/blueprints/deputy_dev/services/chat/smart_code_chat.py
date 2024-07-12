@@ -6,65 +6,69 @@ from torpedo import CONFIG
 from app.common.services.openai.client import LLMClient
 from app.common.utils.app_utils import build_openai_conversation_message
 from app.main.blueprints.deputy_dev.constants import LLMModels
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
+from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
+    CHAT_COMMENT_PROMPT,
+)
+from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
-from app.main.blueprints.deputy_dev.services.repo import RepoModule
-from app.main.blueprints.deputy_dev.utils import format_code_blocks, get_comment
+from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
+    CommentFactory,
+)
+from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWebhook
+from app.main.blueprints.deputy_dev.utils import format_code_blocks
 
 
 class SmartCodeChatManager:
     @classmethod
-    async def chat(cls, payload: dict):
-        comment_payload = get_comment(payload)
+    async def chat(cls, payload: dict, vcs_type: str):
+        comment_payload = ChatWebhook.parse_payload(payload, vcs_type)
         logger.info(f"Comment payload: {comment_payload}")
-        asyncio.ensure_future(cls.identify_annotation(payload, comment_payload))
-        return
+        asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
 
     @classmethod
-    async def identify_annotation(cls, payload, comment_payload):
-        repo = RepoModule(
-            repo_full_name=payload["repository"]["full_name"],
-            pr_id=payload["pullrequest"]["id"],
-            vcs_type=VCSTypes.bitbucket.value,
+    async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type):
+        repo = await RepoFactory.repo(
+            vcs_type=vcs_type,
+            repo_name=chat_request.repo.repo_name,
+            pr_id=chat_request.repo.pr_id,
+            workspace=chat_request.repo.workspace,
         )
-        await repo.initialize()
+
+        comment_service = await CommentFactory.comment(
+            vcs_type=vcs_type,
+            repo_name=chat_request.repo.repo_name,
+            pr_id=chat_request.repo.pr_id,
+            workspace=chat_request.repo.workspace,
+            pr_details=repo.pr_details,
+        )
 
         tag = "#scrit"
-        comment = comment_payload.get("comment").lower()
+        comment = chat_request.comment.raw.lower()
         if tag in comment:
-            logger.info(f"Processing the comment: {comment} , with payload : {payload}")
+            logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
             diff = await repo.get_pr_diff()
             user_story_description = await JiraManager(issue_id=repo.pr_details.issue_id).get_description_text()
-            get_comment_thread = await repo.fetch_comment_thread(payload["comment"]["id"])
+            get_comment_thread = await comment_service.fetch_comment_thread(chat_request.comment.id)
 
             context = (
                 f"Comment Thread : {get_comment_thread} , questions: {comment}\n PR diff: {diff}\n"
                 f"User story description - {user_story_description}. Use this to get context of business logic for which change is made."
             )
-            await cls.process_chat_comment(context, comment_payload, repo)
+            await cls.get_chat_comments(context, chat_request, comment_service)
+            logger.info(f"Chat processing completed: {comment} , with payload : {chat_request}")
 
     @classmethod
-    async def process_chat_comment(cls, context, comment_payload, repo: RepoModule):
-        logger.info("process_chat_comment")
-        comment_response = await cls.comment_processor(context, LLMModels.FoundationModel.value)
-        logger.info(f"Process chat comment response: {comment_response}")
-        # This validation will determine the origin of the request,
-        # such as whether it's a reply to an existing comment or a PR-level comment.
-        if "parent" in comment_payload:
-            await repo.create_comment_on_comment(comment_response, comment_payload)
-        elif "line_number" in comment_payload:
-            inline_response = {}
-            inline_response["comment"] = comment_response
-            inline_response["file_path"] = comment_payload["path"]
-            inline_response["line_number"] = comment_payload["line_number"]
-            await repo.create_comment_on_line(inline_response)
-        else:
-            await repo.create_comment_on_pr(comment_response)
+    async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service):
+        llm_comment_response = await cls.get_comments_from_llm(context, LLMModels.FoundationModel.value)
+        logger.info(f"Process chat comment response: {llm_comment_response}")
+        await comment_service.process_chat_comment(comment=llm_comment_response, chat_request=chat_request)
 
-    async def comment_processor(comment_data: str, model: str) -> str:
+    @classmethod
+    async def get_comments_from_llm(cls, comment_data: str, model: str) -> str:
         """
         Makes a call to OpenAI chat completion API with a specific model and conversation messages.
 
@@ -75,15 +79,10 @@ class SmartCodeChatManager:
         Returns:
         - formatted_comment (str): Response from the llm server for the comment made on PR.
         """
-        client = LLMClient()
-        model_config = CONFIG.config.get(model)
-        context = (
-            "Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. If "
-            "the comment involves inquiries about code improvements or other technical discussions, evaluate the provided "
-            "pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to the posed question "
-            "without delving into the PR diff. include all the corrective_code inside ``` CODE ``` markdown"
-        )
+        client, model_config, context = LLMClient(), CONFIG.config.get(model), CHAT_COMMENT_PROMPT
+
         conversation_message = build_openai_conversation_message(system_message=context, user_message=comment_data)
+
         response = await client.get_client_response(
             conversation_message=conversation_message, model=model_config.get("MODEL"), response_type="text"
         )

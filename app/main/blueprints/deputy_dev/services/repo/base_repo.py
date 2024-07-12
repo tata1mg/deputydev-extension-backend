@@ -1,0 +1,112 @@
+import asyncio
+import os
+import shutil
+from abc import ABC, abstractmethod
+from functools import cached_property
+
+import git
+from sanic.log import logger
+from torpedo import CONFIG
+
+from app.main.blueprints.deputy_dev.constants.repo import VCS_REPO_URL_MAP
+from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
+from app.main.blueprints.deputy_dev.utils import parse_collection_name
+
+
+class BaseRepo(ABC):
+    def __init__(self, vcs_type: str, workspace: str, repo_name: str, pr_id: str):
+        self.vcs_type = vcs_type
+        self.workspace = workspace
+        self.pr_id = pr_id
+        self.repo_name = repo_name
+        self.pr_details: PullRequestResponse = None
+        self.branch_name = None
+        self.meta_data = f"repo: {repo_name}, pr_id: {pr_id}, user_name: {workspace}"
+        self.comment_helper = None
+
+    async def initialize(self):
+        self.pr_details = await self.get_pr_details()
+        if self.pr_details:
+            self.branch_name = self.pr_details.branch_name
+
+    def delete_repo(self) -> bool:
+        """
+        Remove the cloned repo
+        """
+        try:
+            shutil.rmtree(self.repo_dir)
+            return True
+        except Exception:
+            return False
+
+    def repo_full_name(self):
+        return f"{self.workspace}/{self.repo_name}"
+
+    @cached_property
+    def repo_dir(self) -> str:
+        """
+        Get the directory of the repository.
+        """
+        return os.path.join(
+            CONFIG.config.get("REPO_BASE_DIR"),
+            self.repo_full_name(),
+            parse_collection_name(self.branch_name),
+        )
+
+    async def __clone(self) -> git.Repo:
+        """
+        This is a private method to clone the repository if it doesn't exist locally or pull updates if it does.
+        """
+        process = await asyncio.create_subprocess_exec(
+            "git",
+            "clone",
+            "--branch",
+            self.get_branch_name(),
+            VCS_REPO_URL_MAP[self.vcs_type].format(repo_name=f"{self.workspace}/{self.repo_name}"),
+            self.repo_dir,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        return_code = await process.wait()
+        if return_code == 0:
+            logger.info("Cloning completed")
+        repo = git.Repo(self.repo_dir)
+        return repo
+
+    async def clone_repo(self):
+        """
+        Initialize the repository after dataclass initialization.
+        """
+        try:
+            self.git_repo = await self.__clone()
+            return self.git_repo
+        except Exception as e:
+            raise Exception(e)
+
+    def get_branch_name(self) -> str:
+        return self.branch_name
+
+    def get_pr_id(self):
+        return self.pr_id
+
+    @abstractmethod
+    async def get_pr_details(self) -> PullRequestResponse:
+        """
+        Get details of a pull request from Bitbucket, Github or Gitlab.
+        Args:
+        Returns:
+            PullRequestResponse: An object containing details of the pull request.
+        Raises:
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_pr_diff(self):
+        """
+        Get pr diff
+        Args:
+        Returns: str: PR diff
+            An object containing details of the pull request.
+        Raises:
+        """
+        raise NotImplementedError()

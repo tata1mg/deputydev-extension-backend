@@ -30,6 +30,19 @@ def get_comment(payload):
         raise f"An unexpected error occurred: {e}"
 
 
+def add_corrective_code(data):
+    # Check if corrective_code exists and is a dictionary
+    if isinstance(data, dict):
+        comment = data.get("comment", "")
+        if data.get("corrective_code") and len(data.get("corrective_code")) > 0:
+            comment += "\n" + format_code_block(data.get("corrective_code"))
+        return comment
+    elif isinstance(data, str):
+        return data
+    else:
+        return ""
+
+
 def format_code_block(code_block: str) -> str:
     """
     Formats a code block into the correct format by enclosing it with triple backticks if not already enclosed.
@@ -122,3 +135,57 @@ def get_bucket_name(data):
     if bucket_name:
         return bucket_name
     return ""
+
+
+def append_line_numbers(pr_diff: str) -> str:
+    """Append line numbers to PR diff
+    Args:
+        pr_diff (str): pr diff returned from git diff
+    Returns:
+        str: pr_diff with line number
+    """
+
+    result = []
+    current_file = None
+    original_line_number = 0
+    new_line_number = 0
+
+    lines = pr_diff.split("\n")
+    for line in lines:
+        # Match the start of a new file diff
+        file_match = re.match(r"^\+\+\+ b/(.+)$", line)
+        if file_match:
+            current_file = file_match.group(1)
+            result.append(line)
+            continue
+
+        # Match the line number info
+        line_info_match = re.match(r"^@@ -(\d+),\d+ \+(\d+),\d+ @@", line)
+        if line_info_match:
+            original_line_number = int(line_info_match.group(1))
+            new_line_number = int(line_info_match.group(2))
+            result.append(line)
+            continue
+
+        # Handle added lines
+        if line.startswith("+") and not line.startswith("+++"):
+            if current_file:
+                result.append(f"<+{new_line_number}>{line}")
+            new_line_number += 1
+            continue
+
+        # Handle removed lines
+        if line.startswith("-") and not line.startswith("---"):
+            if current_file:
+                result.append(f"<-{original_line_number}>{line}")
+            original_line_number += 1
+            continue
+
+        # Handle unchanged lines
+        if not line.startswith("-") and not line.startswith("+") and not line.startswith("@@"):
+            if current_file:
+                result.append(f"<+{new_line_number}>{line}")
+            new_line_number += 1
+            original_line_number += 1
+
+    return "\n".join(result)
