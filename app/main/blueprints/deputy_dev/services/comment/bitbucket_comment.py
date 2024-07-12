@@ -94,7 +94,7 @@ class BitbucketComment(BaseComment):
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
-        comment_payload = self.comment_helper.format_comment_thread(comment, chat_request)
+        comment_payload = self.comment_helper.format_chat_thread_comment(comment, chat_request)
         logger.info(f"Comment payload:{comment_payload}")
         response = await self.repo_client.create_comment_on_pr(comment_payload, LLMModels.FoundationModel.value)
         return response
