@@ -2,6 +2,7 @@ from sanic import Blueprint
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
 
+from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,
 )
@@ -24,7 +25,11 @@ async def pool_assistance_api(_request: Request, **kwargs):
     query_params = _request.request_params()
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     payload["request_id"] = request_id
-    response = await CodeReviewTrigger.perform_review(payload, prompt_version=query_params.get("prompt_version", "v2"))
+    response = await CodeReviewTrigger.perform_review(
+        payload,
+        prompt_version=query_params.get("prompt_version", "v2"),
+        vcs_type=query_params.get("vcs_type", VCSTypes.bitbucket.value),
+    )
     return send_response(response)
 
 
@@ -44,8 +49,9 @@ async def review_pr_in_sync(_request: Request, **kwargs):
 @smart_code.route("/chat", methods=["POST"])
 async def chat_assistance_api(_request: Request, **kwargs):
     payload = _request.custom_json()
+    query_params = _request.request_params()
     headers = _request.headers
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     # TODO - Unfulfilled parameter - comment
-    await SmartCodeChatManager.chat(payload)
+    await SmartCodeChatManager.chat(payload, vcs_type=query_params.get("vcs_type", VCSTypes.bitbucket.value))
     return send_response(f"Processing Started with Request ID : {request_id}")

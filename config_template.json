@@ -101,5 +101,9 @@
     "AUTH_TOKEN": "4mhozbHUgG111kFhHRVm6863",
     "USERNAME": "sudhir.poodar@1mg.com",
     "TIMEOUT": 0.1
+  },
+  "GITHUB": {
+    "BEARER_TOKEN": "github_pat_11AXHYWTA",
+    "HOST": "https://api.github.com"
   }
 }
