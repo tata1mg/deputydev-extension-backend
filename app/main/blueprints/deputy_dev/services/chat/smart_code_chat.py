@@ -5,7 +5,7 @@ from torpedo import CONFIG
 
 from app.common.services.openai.client import LLMClient
 from app.common.utils.app_utils import build_openai_conversation_message
-from app.main.blueprints.deputy_dev.constants import LLMModels
+from app.main.blueprints.deputy_dev.constants import LLMModels, TAGS
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     CHAT_COMMENT_PROMPT,
 )
@@ -45,9 +45,9 @@ class SmartCodeChatManager:
             pr_details=repo.pr_details,
         )
 
-        tag = "#scrit"
         comment = chat_request.comment.raw.lower()
-        if tag in comment:
+        # we are checking whether the comment starts with any of the tags or not
+        if any(comment.startswith(tag) for tag in TAGS):
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
             diff = await repo.get_pr_diff()

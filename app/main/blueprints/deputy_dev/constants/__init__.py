@@ -3,10 +3,14 @@ __all__ = [
     "LLMModels",
     "BATCH_SIZE",
     "MAX_PR_DIFF_TOKEN_LIMIT",
+    "SCRIT_DEPRECATION_NOTIFICATION",
+    "TAGS"
 ]
 from .constants import (
     BATCH_SIZE,
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
     LLMModels,
+    TAGS,
+    SCRIT_DEPRECATION_NOTIFICATION
 )

@@ -12,6 +12,10 @@ PR_SIZE_TOO_BIG_MESSAGE = (
     " Note :- Every 4 characters is equal to 1 token."
 )
 BATCH_SIZE = CONFIG.config["BATCH_SIZE"]
+TAGS = ["#scrit", "#deputydev", "#dd"]
+SCRIT_DEPRECATION_NOTIFICATION = (
+    "Note :- #scrit is deprecated and will be removed with next releases. Recommended to use - #deputydev or #dd"
+)
 
 
 class LLMModels(Enum):
