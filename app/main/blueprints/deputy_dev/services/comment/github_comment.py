@@ -71,6 +71,7 @@ class GithubComment(BaseComment):
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
+        comment = await super().process_chat_comment(comment, chat_request)
         if chat_request.comment.path:
             comment_payload = self.comment_helper.format_chat_comment(comment, chat_request)
             await self.create_pr_review_comment(comment_payload, model=LLMModels.FoundationModel.value)

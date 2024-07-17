@@ -76,6 +76,7 @@ class BitbucketComment(BaseComment):
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
 
     async def process_chat_comment(self, comment, chat_request: ChatRequest):
+        comment = await super().process_chat_comment(comment, chat_request)
         if chat_request.comment.parent:
             await self.create_comment_on_thread(comment, chat_request)
         elif chat_request.comment.line_number:

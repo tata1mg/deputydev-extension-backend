@@ -6,6 +6,7 @@ from torpedo import Task
 
 from app.common.utils.app_utils import get_task_response
 from app.main.blueprints.deputy_dev.constants import LLMModels
+from app.main.blueprints.deputy_dev.constants import SCRIT_DEPRECATION_NOTIFICATION
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 
@@ -44,7 +45,9 @@ class BaseComment(ABC):
     @abstractmethod
     async def process_chat_comment(self, comment, chat_request: ChatRequest):
         """process"""
-        raise NotImplementedError()
+        # This is a temporary addition to convey the user of the deprecation of #scrit
+        comment = f"{SCRIT_DEPRECATION_NOTIFICATION}\n\n{comment}"
+        return comment
 
     async def create_bulk_comments(self, comments: List[Union[str, dict]], model: str) -> None:
         """
