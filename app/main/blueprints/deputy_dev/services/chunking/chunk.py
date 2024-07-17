@@ -9,7 +9,7 @@ from torpedo import CONFIG
 from tree_sitter import Language, Node, Parser
 from tree_sitter_languages import get_parser as tree_sitter_get_parser
 
-from app.main.blueprints.deputy_dev.constants.chunking import EXTENSION_TO_LANGUAGE
+from app.main.blueprints.deputy_dev.constants.chunking import ALL_EXTENSIONS
 
 from .chunk_info import ChunkInfo
 
@@ -283,8 +283,8 @@ def chunk_source(
         List[ChunkInfo]: A list of ChunkInfo objects representing the chunks of content.
     """
     ext = path.split(".")[-1]
-    if ext in EXTENSION_TO_LANGUAGE:
-        language = EXTENSION_TO_LANGUAGE[ext]
+    if ext in ALL_EXTENSIONS:
+        language = ALL_EXTENSIONS[ext]
     else:
         # Fallback to default chunking if tree_sitter fails
         line_count = 50
