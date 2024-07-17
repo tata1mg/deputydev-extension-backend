@@ -81,6 +81,7 @@ class BaseRepo(ABC):
             error_message = stderr.decode().strip()
             if return_code != 128:
                 logger.error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
+                # we are raising runtime error for other status code, so that it can be retried from the SQS after sometime
                 raise RuntimeError(f"Git clone failed: {error_message}")
             # we return False, if we were unable to clone repo
             return None, False
