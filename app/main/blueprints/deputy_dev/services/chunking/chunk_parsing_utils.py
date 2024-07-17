@@ -82,16 +82,6 @@ def filter_file(directory: str, file: str, chunk_config: ChunkConfig) -> bool:
     for dir_name in chunk_config.exclude_dirs:
         if file[len(directory) + 1 :].startswith(dir_name):
             return False
-
-    # Removing file size check since we are chunking files
-    # try:
-    #     if os.stat(file).st_size > ChunkFileSizeLimit.MAX.value:
-    #         return False
-    #     if os.stat(file).st_size < ChunkFileSizeLimit.MIN.value:
-    #         return False
-    # except FileNotFoundError as e:
-    #     logger.error(f"File not found: {file}. Error: {e}")
-    #     return False
     if not os.path.isfile(file):
         return False
     try:

@@ -50,6 +50,7 @@ class ChunkConfig:
         ".bmp",
         ".tiff",
         ".svg",
+        ".webp",
         # audio / video types
         ".mp3",
         ".mp4",
@@ -68,6 +69,7 @@ class ChunkConfig:
         ".flv",
         ".iso",
         ".bin",
+        ".aiff",
         # fonts types
         ".woff",
         ".woff2",

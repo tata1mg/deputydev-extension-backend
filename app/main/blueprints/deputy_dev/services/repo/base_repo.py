@@ -62,16 +62,31 @@ class BaseRepo(ABC):
             "clone",
             "--branch",
             self.get_branch_name(),
+            "--depth",  # This creates a shallow clone with a history truncated to only the latest commit
+            "1",  # This is the value of --depth flag
+            "--single-branch",
+            "--no-tags",  # This prevents Git from downloading any tags from the remote repository
             VCS_REPO_URL_MAP[self.vcs_type].format(repo_name=f"{self.workspace}/{self.repo_name}"),
             self.repo_dir,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        return_code = await process.wait()
+        # get the outcome of cloning through stdout and stderr
+        stdout, stderr = await process.communicate()
+        # Get the return code
+        return_code = process.returncode
         if return_code == 0:
             logger.info("Cloning completed")
+        else:
+            error_message = stderr.decode().strip()
+            if return_code != 128:
+                logger.error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
+                raise RuntimeError(f"Git clone failed: {error_message}")
+            # we return False, if we were unable to clone repo
+            return None, False
+
         repo = git.Repo(self.repo_dir)
-        return repo
+        return repo, True
 
     async def clone_repo(self):
         """
