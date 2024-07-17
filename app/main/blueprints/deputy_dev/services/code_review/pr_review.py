@@ -99,8 +99,12 @@ class CodeReviewManager:
             )
             await comment_service.create_pr_comment(comment=comment, model=LLMModels.FoundationModel.value)
         else:
+            is_repo_cloned, relevant_chunk = await cls.get_relevant_chunk(repo, diff)
+            # if error code is 128, we successfully handle the SQS message
+            if not is_repo_cloned:
+                return
             response, pr_summary = await cls.parallel_pr_review_with_gpt_models(
-                diff, repo.pr_details, await cls.get_relevant_chunk(repo, diff), prompt_version=data["prompt_version"]
+                diff, repo.pr_details, relevant_chunk, prompt_version=data["prompt_version"]
             )
             if not response.get("finetuned_comments") and not response.get("foundation_comments"):
                 # Add a "Looks Good to Me" comment to the Pull Request if no comments meet the threshold
@@ -326,7 +330,12 @@ class CodeReviewManager:
 
     @classmethod
     async def get_relevant_chunk(cls, repo, diff):
-        await repo.clone_repo()
+        # clone the repo
+        _, is_repo_cloned = await repo.clone_repo()
+
+        # return code 128 signifies bad request to github (e.g. - If we are trying to clone a branch that does not exist in git)
+        if not is_repo_cloned:
+            return is_repo_cloned, None
 
         all_chunks, all_docs = await get_chunks(repo.repo_dir)
         logger.info("Completed chunk creation")
@@ -344,4 +353,4 @@ class CodeReviewManager:
 
         # Render relevant chunks into a single snippet
         relevant_chunk = render_snippet_array(ranked_snippets_list)
-        return relevant_chunk
+        return is_repo_cloned, relevant_chunk
