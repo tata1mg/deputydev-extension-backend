@@ -1,3 +1,4 @@
+import asyncio
 import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
@@ -61,8 +62,10 @@ class BaseSubscriber:
                 if response:
                     messages = response.messages
                     if messages:
-                        for message in messages:
-                            await self.handle_subscribe_event(message)
+                        # Process messages in parallel
+                        tasks = [asyncio.create_task(self.handle_subscribe_event(message)) for message in messages]
+                        await asyncio.gather(*tasks, return_exceptions=True)
+
                 if show_configured_log:
                     self.log_info(SuccessMessages.QUEUE_SUCCESSFULLY_CONFIGURED.value)
                 show_configured_log = False

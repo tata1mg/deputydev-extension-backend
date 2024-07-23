@@ -1,5 +1,5 @@
 import json
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import httpx
 import numpy as np
@@ -8,7 +8,7 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessage
 from sanic.log import logger
 from torpedo import CONFIG
-
+from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.common.caches import DeputyDevCache
 from app.common.services.openai.base import BaseClient
 from app.common.utils.app_utils import hash_sha256
@@ -62,11 +62,13 @@ class OpenAIClient(BaseClient):
         Returns:
             np.ndarray: Embedded vectors.
         """
+        # "identifier" will try to get the context value which was set, if not found, it will return None
+        key: Optional[str] = identifier.get(None)
         if len(batch) == 1:
             embeddings = await self.__call_embedding(batch)
             return np.array(embeddings)
         embeddings: List[np.ndarray] = [None] * len(batch)
-        cache_keys = [hash_sha256(text) for text in batch]
+        cache_keys = [f"{key}:{hash_sha256(text)}" if key else hash_sha256(text) for text in batch]
         try:
             for i, cache_value in enumerate(await DeputyDevCache.mget(cache_keys)):
                 if cache_value:

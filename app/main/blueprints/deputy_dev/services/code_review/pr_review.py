@@ -45,6 +45,7 @@ from app.main.blueprints.deputy_dev.utils import (
     format_code_blocks,
     get_filtered_response,
 )
+from app.main.blueprints.deputy_dev.services.context_var import identifier
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
@@ -56,6 +57,15 @@ class CodeReviewManager:
     async def handle_event(cls, data: Dict[str, Any]) -> None:
         logger.info("Received SQS Message: {}".format(data))
         await cls.process_pr_review(data=data)
+
+    @staticmethod
+    def set_identifier(value: str):
+        """Set repo_name or any other value to the contextvar identifier
+
+        Args:
+            value (str): value to set for the identifier
+        """
+        identifier.set(value)
 
     @classmethod
     @log_time
@@ -69,6 +79,8 @@ class CodeReviewManager:
         Returns:
             None
         """
+        # Initialize RepoModule with repository details and it's context var
+        cls.set_identifier(data.get("repo_name"))
         # Initialize repo and comment service
         vcs_type = data.get("vcs_type", VCSTypes.bitbucket.value)
         repo_name, pr_id, workspace = data.get("repo_name"), data.get("pr_id"), data.get("workspace")
