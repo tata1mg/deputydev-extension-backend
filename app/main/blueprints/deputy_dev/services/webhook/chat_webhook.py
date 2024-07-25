@@ -26,7 +26,8 @@ class ChatWebhook:
                 "raw": payload.get("comment"),
                 "parent": payload.get("parent"),
                 "path": payload.get("path"),
-                "line_number": payload.get("line_number"),
+                "line_number_from": payload.get("line_number_from"),
+                "line_number_to": payload.get("line_number_to"),
                 "id": payload.get("comment_id"),
             },
             "repo": {
@@ -79,7 +80,8 @@ class ChatWebhook:
             elif "inline" in comment:
                 bb_payload["comment"] = raw_content
                 bb_payload["path"] = comment["inline"]["path"]
-                bb_payload["line_number"] = comment["inline"]["from"]
+                bb_payload["line_number_from"] = comment["inline"]["from"]
+                bb_payload["line_number_to"] = comment["inline"]["to"]
                 bb_payload["comment_id"] = comment["id"]
                 return bb_payload
             else:

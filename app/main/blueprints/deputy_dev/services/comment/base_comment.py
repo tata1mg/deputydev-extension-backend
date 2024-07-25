@@ -5,8 +5,10 @@ from sanic.log import logger
 from torpedo import Task
 
 from app.common.utils.app_utils import get_task_response
-from app.main.blueprints.deputy_dev.constants import LLMModels
-from app.main.blueprints.deputy_dev.constants import SCRIT_DEPRECATION_NOTIFICATION
+from app.main.blueprints.deputy_dev.constants import (
+    SCRIT_DEPRECATION_NOTIFICATION,
+    LLMModels,
+)
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 
