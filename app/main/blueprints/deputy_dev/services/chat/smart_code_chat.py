@@ -5,7 +5,7 @@ from torpedo import CONFIG
 
 from app.common.services.openai.client import LLMClient
 from app.common.utils.app_utils import build_openai_conversation_message
-from app.main.blueprints.deputy_dev.constants import LLMModels, TAGS
+from app.main.blueprints.deputy_dev.constants import TAGS, LLMModels
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     CHAT_COMMENT_PROMPT,
 )

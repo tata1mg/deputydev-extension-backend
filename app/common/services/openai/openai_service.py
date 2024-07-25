@@ -8,10 +8,11 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessage
 from sanic.log import logger
 from torpedo import CONFIG
-from app.main.blueprints.deputy_dev.services.context_var import identifier
+
 from app.common.caches import DeputyDevCache
 from app.common.services.openai.base import BaseClient
 from app.common.utils.app_utils import hash_sha256
+from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 
 openai_key = CONFIG.config.get("OPENAI_KEY")

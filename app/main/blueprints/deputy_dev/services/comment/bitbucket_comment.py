@@ -79,7 +79,7 @@ class BitbucketComment(BaseComment):
         comment = await super().process_chat_comment(comment, chat_request)
         if chat_request.comment.parent:
             await self.create_comment_on_thread(comment, chat_request)
-        elif chat_request.comment.line_number:
+        elif chat_request.comment.line_number_from or chat_request.comment.line_number_to:
             comment_payload = self.comment_helper.format_chat_comment(comment, chat_request)
             await self.create_comment_on_line(comment_payload)
         else:
