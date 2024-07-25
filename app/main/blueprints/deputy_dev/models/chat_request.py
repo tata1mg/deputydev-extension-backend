@@ -7,7 +7,8 @@ class Comment(BaseModel):
     raw: str
     parent: Optional[int]
     path: Optional[str]
-    line_number: Optional[int]
+    line_number_from: Optional[int]
+    line_number_to: Optional[int]
     id: Optional[int]
 
 

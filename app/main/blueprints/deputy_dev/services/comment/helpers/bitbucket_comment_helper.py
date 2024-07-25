@@ -25,7 +25,8 @@ class BitbucketCommentHelper:
         comment_payload = {
             "comment": comment,
             "file_path": chat_request.comment.path,
-            "line_number": chat_request.comment.line_number,
+            "line_number_from": chat_request.comment.line_number_from,
+            "line_number_to": chat_request.comment.line_number_to,
         }
         return comment_payload
 
@@ -48,7 +49,10 @@ class BitbucketCommentHelper:
                 "path": re.sub(r"^[ab]/\s*", "", comment["file_path"])
                 if re.match(r"^[ab]/\s*", comment.get("file_path"))
                 else comment.get("file_path"),
-                "to": comment.get("line_number"),
             },
         }
+        if comment["line_number_from"]:
+            comment_payload["inline"]["from"] = comment["line_number_from"]
+        else:
+            comment_payload["inline"]["to"] = comment["line_number_to"]
         return comment_payload

@@ -38,6 +38,7 @@ from app.main.blueprints.deputy_dev.services.chunking.chunk_parsing_utils import
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
+from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.deputy_dev.services.search import perform_search
 from app.main.blueprints.deputy_dev.utils import (
@@ -45,7 +46,6 @@ from app.main.blueprints.deputy_dev.utils import (
     format_code_blocks,
     get_filtered_response,
 )
-from app.main.blueprints.deputy_dev.services.context_var import identifier
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
