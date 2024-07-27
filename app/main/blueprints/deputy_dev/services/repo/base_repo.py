@@ -9,12 +9,13 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.repo import VCS_REPO_URL_MAP
+from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.utils import parse_collection_name
 
 
 class BaseRepo(ABC):
-    def __init__(self, vcs_type: str, workspace: str, repo_name: str, pr_id: str):
+    def __init__(self, vcs_type: str, workspace: str, repo_name: str, pr_id: str, workspace_id: str):
         self.vcs_type = vcs_type
         self.workspace = workspace
         self.pr_id = pr_id
@@ -23,6 +24,9 @@ class BaseRepo(ABC):
         self.branch_name = None
         self.meta_data = f"repo: {repo_name}, pr_id: {pr_id}, user_name: {workspace}"
         self.comment_helper = None
+        self.pr_json_data = None
+        self.workspace_id = workspace_id
+        self.pr_diff = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -93,11 +97,7 @@ class BaseRepo(ABC):
         """
         Initialize the repository after dataclass initialization.
         """
-        try:
-            self.git_repo = await self.__clone()
-            return self.git_repo
-        except Exception as e:
-            raise Exception(e)
+        return await self.__clone()
 
     def get_branch_name(self) -> str:
         return self.branch_name
@@ -126,3 +126,15 @@ class BaseRepo(ABC):
         Raises:
         """
         raise NotImplementedError()
+
+    def pr_json(self):
+        return self.pr_json_data
+
+    def pr_model(self) -> BasePrModel:
+        pass
+
+    def scm_workspace_id(self) -> str:
+        return self.workspace_id
+
+    def vcs(self):
+        return self.vcs_type

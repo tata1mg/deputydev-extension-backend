@@ -11,7 +11,7 @@ class LLMClient:
     def __init__(self, client_type: str = "openai") -> None:
         self.client_type = client_type
 
-    async def get_embeddings(self, input_data: List[Any]) -> List[List[float]]:
+    async def get_embeddings(self, input_data: List[Any]) -> (List[List[float]], int):
         """
         Get embeddings from the Language Model service.
 
@@ -25,11 +25,11 @@ class LLMClient:
             raise ValueError("Unsupported client type. Only OpenAI is supported as of now.")
 
         try:
-            embeddings = await OpenAIClient().get_embeddings(input_data)
+            embeddings, input_tokens = await OpenAIClient().get_embeddings(input_data)
         except Exception as e:
             raise ValueError(f"Failed to get embeddings: {e}")
 
-        return embeddings
+        return embeddings, input_tokens
 
     async def get_client_response(self, conversation_message: list, model: str, response_type: str = "json_object"):
         """

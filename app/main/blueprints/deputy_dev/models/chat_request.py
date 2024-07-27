@@ -10,6 +10,7 @@ class Comment(BaseModel):
     line_number_from: Optional[int]
     line_number_to: Optional[int]
     id: Optional[int]
+    parent_comment_id: Optional[int]
 
 
 class Repo(BaseModel):
@@ -17,8 +18,16 @@ class Repo(BaseModel):
     pr_id: int
     repo_name: str
     commit_id: str
+    workspace_id: str
+
+
+class Author(BaseModel):
+    name: Optional[str]
+    email: Optional[str]
+    scm_author_id: str
 
 
 class ChatRequest(BaseModel):
     comment: Comment
     repo: Repo
+    author_info: Optional[Author]

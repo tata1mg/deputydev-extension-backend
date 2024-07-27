@@ -9,6 +9,7 @@ from app.main.blueprints.deputy_dev.constants import (
     SCRIT_DEPRECATION_NOTIFICATION,
     LLMModels,
 )
+from app.main.blueprints.deputy_dev.constants.constants import LLMCommentTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 
@@ -45,10 +46,11 @@ class BaseComment(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def process_chat_comment(self, comment, chat_request: ChatRequest):
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
         """process"""
-        # This is a temporary addition to convey the user of the deprecation of #scrit
-        comment = f"{SCRIT_DEPRECATION_NOTIFICATION}\n\n{comment}"
+        if add_note:
+            # This is a temporary addition to convey the user of the deprecation of #scrit
+            comment = f"{SCRIT_DEPRECATION_NOTIFICATION}\n\n{comment}"
         return comment
 
     async def create_bulk_comments(self, comments: List[Union[str, dict]], model: str) -> None:
@@ -81,17 +83,17 @@ class BaseComment(ABC):
         tasks = [
             Task(
                 self.create_bulk_comments(
-                    comments=response.get("finetuned_comments"),
+                    comments=response[LLMCommentTypes.FINE_TUNED_COMMENTS.value],
                     model=LLMModels.FinetunedModel.value,
                 ),
-                result_key="finetuned_comments",
+                result_key=LLMCommentTypes.FINE_TUNED_COMMENTS.value,
             ),
             Task(
                 self.create_bulk_comments(
-                    comments=response.get("foundation_comments"),
+                    comments=response[LLMCommentTypes.FOUNDATION_COMMENTS.value],
                     model=LLMModels.FoundationModel.value,
                 ),
-                result_key="foundation_comments",
+                result_key=LLMCommentTypes.FOUNDATION_COMMENTS.value,
             ),
         ]
         await get_task_response(tasks)

@@ -18,3 +18,5 @@ VCS_REPO_URL_MAP = {
     VCSTypes.github.value: RepoUrl.GITHUB_URL.value,
     VCSTypes.gitlab.value: RepoUrl.GITLAB_URL.value,
 }
+
+PR_NOT_FOUND = "PR does not exist"
