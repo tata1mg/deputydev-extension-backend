@@ -68,3 +68,5 @@ newrelic.ini
 .vscode
 .pytest_cache
 .env
+
+db/schema.sql
