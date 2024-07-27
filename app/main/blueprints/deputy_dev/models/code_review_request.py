@@ -8,3 +8,4 @@ class CodeReviewRequest(BaseModel):
     workspace: str
     prompt_version: str
     vcs_type: str
+    workspace_id: str

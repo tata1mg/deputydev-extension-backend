@@ -1,5 +1,7 @@
 import re
 
+from torpedo import CONFIG
+
 from app.main.blueprints.deputy_dev.constants.constants import IGNORE_FILES
 
 
@@ -189,3 +191,9 @@ def append_line_numbers(pr_diff: str) -> str:
             original_line_number += 1
 
     return "\n".join(result)
+
+
+def get_foundation_model_name():
+    model_config = CONFIG.config.get("SCRIT_MODEL")
+    model = model_config["MODEL"]
+    return model

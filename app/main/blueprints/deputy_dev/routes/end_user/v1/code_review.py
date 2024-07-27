@@ -9,8 +9,8 @@ from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
 from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger import (
     CodeReviewTrigger,
 )
-from app.main.blueprints.deputy_dev.services.code_review.pr_review import (
-    CodeReviewManager,
+from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
+    PRReviewManager,
 )
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
@@ -42,7 +42,7 @@ async def review_pr_in_sync(_request: Request, **kwargs):
     payload["request_id"] = request_id
 
     logger.info("Whitelisted request: {}".format(payload))
-    await CodeReviewManager.handle_event(payload)
+    await PRReviewManager.handle_event(payload)
     return send_response(f"Processing Started with Request ID : {request_id}")
 
 

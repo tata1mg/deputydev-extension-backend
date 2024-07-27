@@ -5,6 +5,7 @@ SCRIT_PROMPT = """
         1. User story which will help you to understand what was expected from this PR.
         2. Relevant code chunk as you don't have full repo access it will help you to get more context of code.
         3. Line number of code in pr diff is provided in `<>` block. Line number can be positive or negative. 
+        4. Must make any comments specific to removed lines on old file line. 
 
         Relevant code chunks are included inside '<relevant_chunks_in_repo></relevant_chunks_in_repo>' tags.
         The code inside this tag should only be used to get an understanding on how the code works, under no 
@@ -56,114 +57,5 @@ SCRIT_PROMPT = """
             3. Don't return L2 level bucket name only L1 level bucket name should be returned.
        
         Rules:
-            1. READABILITY: 
-                Clarity: Clarity of the code and its readability for other developers.
-                Complexity: Complexity of the code and suggestions for simplification.
-                Naming Conventions: Use of clear and descriptive names for variables, functions, and classes.
-                Type hint missing: Functions should have type hints for input and return types.  
-            
-            2. MAINTAINABILITY
-                Refactoring: Refactoring to improve code maintainability.
-                Technical Debt: Areas where technical debt has been identified and needs to be addressed.
-                Deep Nesting: Avoidance of deep nesting and overly complex functions.
-                Commented Code: Code should not have commented code.
-                
-            3. REUSABILITY
-               In house Libraries:  Suggest user to use in house libraries wherever applicable. Our organisation uses
-                                     certain in house libraries for python specific services, suggest user to 
-                                     use them in case user is using some alternate library to perform the 
-                                     same function if pr diff contains python code.
-                                     - torpedo- It a wrapper written over sanic. for python specific code.
-                                     - cache_wrapper - Wrapper written over redis. for python specific code.
-                                     - mongoose - library to perform mongo operations. for python specific code.
-                                     - tortoise_wrapper - library to perform sql operations. for python specific code.
-                                     - openapi - for API documentation. for python specific code.  
-               
-               Class and function reusability: Classes and functions should be reused for already present code.              
-            
-            4. SECURITY
-                Vulnerabilities: Identifying potential security vulnerabilities (e.g., SQL injection, cross-site scripting).
-                Data Privacy: Handling of sensitive data and compliance with privacy standards.
-                Sensitive Information: Verify sensitive information like auth tokens, credentials should not be present in code.
-                
-            5. DOCUMENTATION
-                Comments and Annotations: Quality and presence of inline comments and annotations in the code.
-                API Documentation: Documentation of APIs, including function descriptions and usage examples.
-                Readme and Guides: Quality and completeness of project documentation such as README files and user guides.
-                
-            6. DOCSTRING: 
-                Function docstring missing: Verify proper docstring is present for each newly added function. 
-                Class docstring missing: If class docstring is missing. 
-                Module docstring missing: If module docstring is missing. 
-            
-            7. TESTING
-                Test Coverage: Adequacy of test coverage and identification of untested code paths.
-                Test Quality: Feedback on the quality of test cases, including clarity, correctness, and thoroughness.
-            
-            8. ARCHITECTURE
-                Design Patterns: Feedback on the use of design patterns and overall software architecture.
-                Modularity: Modularity and reusability of the code.
-                Extensibility: Extensibility of the codebase and its components.
-            
-            9. DEPENDENCIES
-                Vulnerability through dependencies
-                Feedback around better dependency management
-            
-            10. ALGORITHM_EFFICIENCY
-                Time Complexity: Time complexity of algorithms and suggestions for optimization.
-                Space Complexity: Space complexity and recommendations to reduce memory usage.
-                Data Structures: Suggestions to use more efficient data structures to improve performance.
-            
-            11. RESOURCE_MANAGEMENT - [w.r.t the language and framework being used]
-                Memory Usage: Comments on memory allocation and suggestions to optimize memory usage.
-                CPU Utilization: Feedback on CPU-intensive operations 
-            
-            12. DATABASE_PERFORMANCE
-                Query Optimization: Efficiency of database queries and suggestions for optimization (e.g., indexing, query refactoring).
-                Connection Management: Database connection handling and pooling strategies.
-            
-            13. ERROR
-                Runtime Error: If code can produce run time errors.
-                Syntax Error: If code has syntext error.
-                Logical Error: Identifying logical errors in the code that affect functionality.
-                Edge Cases: Pointing out edge cases that the code does not handle properly.
-            
-            14. CODE_ROBUSTNESS
-                Exception Handling: Examine how exceptions are handled in log messages. Avoid using generic exceptions
-                                    and recommend proper exception handling. 
-                API Errors: We should have handling for downstream api errors.
-                Testing : Write unit tests for new features and bug fixes.
-                Fallback Mechanisms: Implement fallback mechanisms for critical operations, such as retrying failed
-                                     requests or using default values when necessary.
-                                     Use circuit breakers to prevent cascading failures in microservices architectures.
-                Timeouts and Retries: Set reasonable timeouts for API calls to prevent hanging requests.
-                                      Implement retry logic with exponential backoff for transient errors.
-                Handle API Errors: Handle downstream api errors.
-                
-                
-            
-            15. PERFORMANCE
-                Parallel calls: Ask user to execute multiple tasks parallely if tasks are not dependent.
-                Caching: - Make sure code caches the frequently accessed information if the information 
-                           is coming from downstream service apis, databases. 
-                Timeout: - Proper timeout should be added for api calls or any other network calls.
-                
-            16. LOGGING
-                Log Level: Review the use of log levels (e.g., info, warn, error) in log messages. Verify that 
-                            log levels accurately reflect the severity of the events being logged.
-                Generic logging: Avoid generic logging and examine if the log messages include sufficient information
-                            for understanding the context of the logged events.
-            
-            17. CODE_QUALITY: 
-                Code Style: Adherence to coding standards and style guides (e.g., naming conventions, formatting).
-                Best Practices: Suggestions to follow coding best practices (e.g., DRY principle, avoiding magic numbers).
-                                use http methods like GET, POST, UPDATE, PATCH for their recommended use case.
-                                No business logic inside api controller method.
-                                Validate request and response using appropriate tools.
-                
-            18. USER_STORY
-                Valid Implementation: Verify if the changes align with the user story. 
-        
-        6. Must make any comments specific to removed lines on old file line. 
         
 """

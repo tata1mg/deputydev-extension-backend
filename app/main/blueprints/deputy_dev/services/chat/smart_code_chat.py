@@ -5,13 +5,17 @@ from torpedo import CONFIG
 
 from app.common.services.openai.client import LLMClient
 from app.common.utils.app_utils import build_openai_conversation_message
-from app.main.blueprints.deputy_dev.constants import TAGS, LLMModels
+from app.main.blueprints.deputy_dev.constants import SCRIT_TAG, TAGS, LLMModels
+from app.main.blueprints.deputy_dev.constants.constants import MessageTypes
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     CHAT_COMMENT_PROMPT,
 )
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
+)
+from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_processer import (
+    CommentPreprocessor,
 )
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
@@ -35,6 +39,7 @@ class SmartCodeChatManager:
             repo_name=chat_request.repo.repo_name,
             pr_id=chat_request.repo.pr_id,
             workspace=chat_request.repo.workspace,
+            workspace_id=chat_request.repo.workspace_id,
         )
 
         comment_service = await CommentFactory.comment(
@@ -48,6 +53,18 @@ class SmartCodeChatManager:
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
         if any(comment.startswith(tag) for tag in TAGS):
+            # we are taking hastag_scrit as a flag to add a specific note to the comment before posting it
+            # through any VCS
+            add_note = False
+            if comment.startswith(SCRIT_TAG):
+                add_note = True
+
+        chat_type = await CommentPreprocessor.process_chat(chat_request, repo.pr_model())
+        if chat_type == MessageTypes.UNKNOWN.value:
+            logger.info(f"Chat processing rejected due to unknown tag with payload : {chat_request}")
+        elif chat_type == MessageTypes.CHAT.value:
+            comment = chat_request.comment.raw.lower()
+
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
             diff = await repo.get_pr_diff()
@@ -58,14 +75,16 @@ class SmartCodeChatManager:
                 f"Comment Thread : {get_comment_thread} , questions: {comment}\n PR diff: {diff}\n"
                 f"User story description - {user_story_description}. Use this to get context of business logic for which change is made."
             )
-            await cls.get_chat_comments(context, chat_request, comment_service)
+            await cls.get_chat_comments(context, chat_request, comment_service, add_note)
             logger.info(f"Chat processing completed: {comment} , with payload : {chat_request}")
 
     @classmethod
-    async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service):
+    async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service, add_note: bool = False):
         llm_comment_response = await cls.get_comments_from_llm(context, LLMModels.FoundationModel.value)
         logger.info(f"Process chat comment response: {llm_comment_response}")
-        await comment_service.process_chat_comment(comment=llm_comment_response, chat_request=chat_request)
+        await comment_service.process_chat_comment(
+            comment=llm_comment_response, chat_request=chat_request, add_note=add_note
+        )
 
     @classmethod
     async def get_comments_from_llm(cls, comment_data: str, model: str) -> str:
@@ -83,7 +102,7 @@ class SmartCodeChatManager:
 
         conversation_message = build_openai_conversation_message(system_message=context, user_message=comment_data)
 
-        response = await client.get_client_response(
+        response, tokens = await client.get_client_response(
             conversation_message=conversation_message, model=model_config.get("MODEL"), response_type="text"
         )
         formatted_comment = format_code_blocks(response.content)

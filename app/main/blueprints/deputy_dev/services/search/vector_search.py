@@ -9,7 +9,7 @@ from app.main.blueprints.deputy_dev.constants import BATCH_SIZE
 from app.main.blueprints.deputy_dev.services.chunking.chunk_info import ChunkInfo
 
 
-async def embed_text_array(texts: Tuple[str]) -> List[np.ndarray]:
+async def embed_text_array(texts: Tuple[str]) -> (List[np.ndarray], int):
     """
     Embeds a list of texts using OpenAI's embedding model.
 
@@ -20,10 +20,13 @@ async def embed_text_array(texts: Tuple[str]) -> List[np.ndarray]:
         list[np.ndarray]: List of embeddings for each text.
     """
     embeddings = []
+    input_tokens = 0
     texts = [text if text else " " for text in texts]
     batches = [texts[i : i + BATCH_SIZE] for i in range(0, len(texts), BATCH_SIZE)]
-    embeddings = [await LLMClient().get_embeddings(batch) for batch in batches]
-    return embeddings
+    for batch in batches:
+        embedding, input_token = await LLMClient().get_embeddings(batch)
+        embeddings.append(embedding)
+    return embeddings, input_tokens
 
 
 def cosine_similarity(a: np.ndarray, B: np.ndarray) -> np.ndarray:
@@ -43,7 +46,7 @@ def cosine_similarity(a: np.ndarray, B: np.ndarray) -> np.ndarray:
     return dot_product.flatten() / (norm_a * norm_B)
 
 
-async def get_query_texts_similarity(query: str, texts: List[str]) -> List[float]:
+async def get_query_texts_similarity(query: str, texts: List[str]) -> (List[float], int):
     """
     Computes the cosine similarity between a query and a list of texts.
 
@@ -55,13 +58,13 @@ async def get_query_texts_similarity(query: str, texts: List[str]) -> List[float
         list[float]: List of cosine similarity scores.
     """
     if not texts:
-        return []
-    embeddings = await embed_text_array(texts)
+        return [], None
+    embeddings, input_tokens = await embed_text_array(texts)
     embeddings = np.concatenate(embeddings)
-    query_embedding = await LLMClient().get_embeddings([query])
+    query_embedding, input_tokens = await LLMClient().get_embeddings([query])
     similarity = cosine_similarity(query_embedding, embeddings)
     similarity = similarity.tolist()
-    return similarity
+    return similarity, input_tokens
 
 
 def create_chunk_str_to_contents(chunks: List[ChunkInfo]) -> Dict[str, str]:
@@ -97,7 +100,7 @@ async def compute_vector_search_scores(query: str, chunks: List[ChunkInfo]) -> d
     # Create a ProcessPoolExecutor
     chunk_str_to_contents = await loop.run_in_executor(executor, create_chunk_str_to_contents, chunks)
     chunk_contents_array = list(chunk_str_to_contents.values())
-    query_snippet_similarities = await get_query_texts_similarity(query, chunk_contents_array)
+    query_snippet_similarities, input_tokens = await get_query_texts_similarity(query, chunk_contents_array)
     chunk_denotations = [chunk.denotation for chunk in chunks]
     chunk_denotation_to_scores = {chunk_denotations[i]: score for i, score in enumerate(query_snippet_similarities)}
-    return chunk_denotation_to_scores
+    return chunk_denotation_to_scores, input_tokens

@@ -73,10 +73,13 @@ class BitbucketComment(BaseComment):
         else:
             comment_payload["inline"]["from"] = -1 * int(comment.get("line_number"))
         logger.info(f"Comment payload: {comment_payload}")
-        return await self.repo_client.create_comment_on_pr(comment_payload, model)
+        result = await self.repo_client.create_comment_on_pr(comment_payload, model)
+        comment["scm_comment_id"] = result["id"]
+        comment["llm_source_model"] = model
+        return result
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest):
-        comment = await super().process_chat_comment(comment, chat_request)
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+        comment = await super().process_chat_comment(comment, chat_request, add_note)
         if chat_request.comment.parent:
             await self.create_comment_on_thread(comment, chat_request)
         elif chat_request.comment.line_number_from or chat_request.comment.line_number_to:

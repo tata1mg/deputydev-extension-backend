@@ -1,5 +1,7 @@
 import tiktoken
 
+from app.main.blueprints.deputy_dev.constants.constants import LLMModelNames
+
 
 class TikToken:
     """
@@ -10,14 +12,10 @@ class TikToken:
         """
         Initialize TikToken class with supported language models.
         """
-        llm_models = [
-            "gpt-3.5-turbo",
-            "gpt-4",
-            "gpt-4-1106-preview",
-        ]
+        llm_models = LLMModelNames.list()
         self.llm_models = {model: tiktoken.encoding_for_model(model) for model in llm_models}
 
-    def count(self, text: str, model: str = "gpt-3.5-turbo") -> int:
+    def count(self, text: str, model: str = LLMModelNames.GPT_3_5_TURBO.value) -> int:
         """
         Count the number of tokens in the input text using the specified language model.
 
