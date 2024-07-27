@@ -8,10 +8,10 @@ class RepoFactory:
     FACTORIES = {VCSTypes.bitbucket.value: BitbucketRepo, VCSTypes.github.value: GithubRepo}
 
     @classmethod
-    async def repo(cls, vcs_type: str, workspace, repo_name, pr_id) -> BaseRepo:
+    async def repo(cls, vcs_type: str, workspace, repo_name, pr_id, workspace_id) -> BaseRepo:
         if vcs_type not in cls.FACTORIES:
             raise ValueError("Incorrect vcs type passed")
         _klass = cls.FACTORIES[vcs_type]
-        _klass_obj = _klass(workspace=workspace, pr_id=pr_id, repo_name=repo_name)
+        _klass_obj = _klass(workspace=workspace, pr_id=pr_id, repo_name=repo_name, workspace_id=workspace_id)
         await _klass_obj.initialize()
         return _klass_obj

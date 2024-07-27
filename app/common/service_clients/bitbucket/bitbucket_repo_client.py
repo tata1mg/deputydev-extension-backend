@@ -29,7 +29,7 @@ class BitbucketRepoClient:
         Raises:
             ValueError: If the pull request details are invalid or cannot be retrieved.
         """
-        diff_url = f"{self.bitbucket_url}/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}"
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}"
         response = requests.get(
             diff_url,
             headers=self.headers,
@@ -46,14 +46,14 @@ class BitbucketRepoClient:
         Returns:
             str: The diff of the pull request.
         """
-        diff_url = f"{self.bitbucket_url}/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/diff"
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/diff"
         response = requests.get(
             diff_url,
             headers=self.headers,
         )
         if response.status_code != 200:
             logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
-        return response
+        return response, response.status_code
 
     async def create_comment_on_pr(self, comment: dict, model: str) -> Dict[str, Any]:
         """
@@ -70,7 +70,7 @@ class BitbucketRepoClient:
             "Content-Type": "application/json",
             "Authorization": CONFIG.config[model]["BITBUCKET_TOKEN"],
         }
-        url = f"{self.bitbucket_url}/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments"
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments"
         response = requests.post(url, headers=comment_headers, json=comment)
         return response.json()
 
@@ -84,7 +84,7 @@ class BitbucketRepoClient:
         Raises:
             ValueError: If the diff cannot be retrieved.
         """
-        url = f"{self.bitbucket_url}/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments/{comment_id}"
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments/{comment_id}"
         response = requests.get(
             url,
             headers=self.headers,

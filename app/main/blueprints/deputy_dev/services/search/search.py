@@ -70,7 +70,7 @@ async def perform_search(all_docs: List[Document], all_chunks: List[ChunkInfo], 
     # Perform lexical search
     content_to_lexical_score_list = await lexical_search(query, index)
     # Compute vector search scores asynchronously
-    files_to_scores_list = await compute_vector_search_scores(query, all_chunks)
+    files_to_scores_list, input_tokens = await compute_vector_search_scores(query, all_chunks)
     # Calculate scores for each chunk
     for chunk in all_chunks:
         # Default values for scores
@@ -85,4 +85,4 @@ async def perform_search(all_docs: List[Document], all_chunks: List[ChunkInfo], 
             # If denotation not found, calculate score based on vector search only
             content_to_lexical_score_list[chunk.denotation] = chunk_score * vector_score
     # Return search results
-    return content_to_lexical_score_list
+    return content_to_lexical_score_list, input_tokens

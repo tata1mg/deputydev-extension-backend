@@ -9,6 +9,7 @@ from torpedo import CONFIG, Task, TaskExecutor
 
 from app.common.constants.constants import TimeFormat
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
+from app.main.blueprints.deputy_dev.utils import get_foundation_model_name
 
 
 def service_client_wrapper(service_name):
@@ -67,7 +68,7 @@ def get_token_count(value: str) -> int:
     int: The number of tokens in the given text.
     """
     tiktoken_client = TikToken()
-    token_count = tiktoken_client.count(text=value)
+    token_count = tiktoken_client.count(text=value, model=get_foundation_model_name())
     return token_count
 
 

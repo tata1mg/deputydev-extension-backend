@@ -50,7 +50,7 @@ class OpenAIClient(BaseClient):
         cut_dim = np.array([data.embedding for data in response.data])
         normalized_dim = self.normalize_l2(cut_dim)
         # save results to redis
-        return normalized_dim
+        return normalized_dim, response.usage.prompt_tokens
 
     # We can make the get_embeddings function more generic as redis layer should not be part of openai class
     async def get_embeddings(self, batch: Tuple[str]) -> np.ndarray:
@@ -63,11 +63,12 @@ class OpenAIClient(BaseClient):
         Returns:
             np.ndarray: Embedded vectors.
         """
+        input_tokens = None
         # "identifier" will try to get the context value which was set, if not found, it will return None
         key: Optional[str] = identifier.get(None)
         if len(batch) == 1:
-            embeddings = await self.__call_embedding(batch)
-            return np.array(embeddings)
+            embeddings, input_tokens = await self.__call_embedding(batch)
+            return np.array(embeddings), input_tokens
         embeddings: List[np.ndarray] = [None] * len(batch)
         cache_keys = [f"{key}:{hash_sha256(text)}" if key else hash_sha256(text) for text in batch]
         try:
@@ -80,10 +81,10 @@ class OpenAIClient(BaseClient):
         batch = [text for i, text in enumerate(batch) if embeddings[i] is None]
         if len(batch) == 0:
             embeddings = np.array(embeddings)
-            return embeddings
+            return embeddings, input_tokens
 
         try:
-            new_embeddings = await self.__call_embedding(batch)
+            new_embeddings, input_tokens = await self.__call_embedding(batch)
         except requests.exceptions.Timeout as e:
             logger.exception(f"Timeout error occurred while embedding: {e}")
         except Exception as e:
@@ -94,7 +95,7 @@ class OpenAIClient(BaseClient):
                     f"truncating down to 8192 tokens."
                 )
                 batch = [self.tiktoken_client.truncate_string(text) for text in batch]
-                new_embeddings = await self.__call_embedding(batch)
+                new_embeddings, input_tokens = await self.__call_embedding(batch)
             else:
                 raise e
 
@@ -110,7 +111,7 @@ class OpenAIClient(BaseClient):
             embeddings = np.array(embeddings)
         except Exception:
             logger.error("Failed to store embeddings in cache, returning without storing")
-        return embeddings
+        return embeddings, input_tokens
 
     async def get_openai_response(
         self, conversation_messages: list, model: str, response_type: str = "json_object"
@@ -131,4 +132,4 @@ class OpenAIClient(BaseClient):
             messages=conversation_messages,
             temperature=0.5,
         )
-        return completion.choices[0].message
+        return completion.choices[0].message, completion.usage

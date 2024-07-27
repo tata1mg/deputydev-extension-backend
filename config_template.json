@@ -40,7 +40,7 @@
   "EXPERIMENT": {},
   "BITBUCKET": {
     "KEY": "",
-    "URL": "https://api.bitbucket.org/2.0/repositories"
+    "URL": "https://api.bitbucket.org"
   },
   "OPENAPI_API": "gpt3",
   "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
@@ -105,5 +105,32 @@
   "GITHUB": {
     "BEARER_TOKEN": "github_pat_11AXHYWTA",
     "HOST": "https://api.github.com"
-  }
+  },
+  "DB_CONNECTIONS": {
+    "connections": {
+      "default": {
+        "engine": "tortoise.backends.asyncpg",
+        "credentials": {
+          "host": "localhost",
+          "port": 5432,
+          "user": "anand",
+          "password": "",
+          "database": "scrit"
+        }
+      }
+    },
+    "apps": {
+      "dao": {
+        "models": [
+          "app.main.blueprints.deputy_dev.models.dao"
+        ],
+        "default_connection": "default"
+      }
+    }
+  },
+  "REVIEW_PR_EXPERIMENT": [
+    "TestSet",
+    "ControlSet1",
+    "ControlSet2"
+  ]
 }

@@ -22,15 +22,29 @@ class PRWebhook:
         repo_name = bitbucket_payload["repository"]["name"]
         request_id = bitbucket_payload["request_id"]
         workspace = bitbucket_payload["repository"]["workspace"]["slug"]
-        return {"pr_id": pr_id, "repo_name": repo_name, "request_id": request_id, "workspace": workspace}
+        workspace_id = bitbucket_payload["repository"]["workspace"]["uuid"]
+        return {
+            "pr_id": pr_id,
+            "repo_name": repo_name,
+            "request_id": request_id,
+            "workspace": workspace,
+            "workspace_id": workspace_id,
+        }
 
     @classmethod
     def __parse_github_payload(cls, github_payload):
         """
         Generates servable payload from github payload
         """
-        pr_id = github_payload["pull_request"]["id"]
+        pr_id = github_payload["pull_request"]["number"]
         repo_name = github_payload["pull_request"]["head"]["repo"]["name"]
         request_id = github_payload["request_id"]
-        workspace = github_payload["pull_request"]["head"]["repo"]["owner"]["login"]
-        return {"pr_id": pr_id, "repo_name": repo_name, "request_id": request_id, "workspace": workspace}
+        workspace = github_payload["organization"]["login"]
+        workspace_id = str(github_payload["organization"]["id"])
+        return {
+            "pr_id": pr_id,
+            "repo_name": repo_name,
+            "request_id": request_id,
+            "workspace": workspace,
+            "workspace_id": workspace_id,
+        }

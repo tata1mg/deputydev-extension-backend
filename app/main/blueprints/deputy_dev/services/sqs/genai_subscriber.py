@@ -1,6 +1,6 @@
 from app.common.services.sqs.base_subscriber import BaseSubscriber
 
-from ..code_review.pr_review import CodeReviewManager
+from ..code_review.pr_review_manager import PRReviewManager
 
 
 class GenaiSubscriber(BaseSubscriber):
@@ -9,4 +9,4 @@ class GenaiSubscriber(BaseSubscriber):
 
     @property
     def event_handler(self):
-        return CodeReviewManager
+        return PRReviewManager

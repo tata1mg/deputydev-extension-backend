@@ -37,6 +37,8 @@ class GithubComment(BaseComment):
         )
         if not response or response.status_code != 201:
             logger.error(f"unable to comment on github PR {self.meta_data}")
+        comment["scm_comment_id"] = str(response.json()["id"])
+        comment["llm_source_model"] = model
 
     async def fetch_comment_thread(self, comment_id, depth=0):
         """
@@ -61,7 +63,7 @@ class GithubComment(BaseComment):
             logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
         return comment_thread
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest):
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
         """
         Create a comment on a parent comment in pull request.
 
@@ -71,7 +73,7 @@ class GithubComment(BaseComment):
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
-        comment = await super().process_chat_comment(comment, chat_request)
+        comment = await super().process_chat_comment(comment, chat_request, add_note)
         if chat_request.comment.path:
             comment_payload = self.comment_helper.format_chat_comment(comment, chat_request)
             await self.create_pr_review_comment(comment_payload, model=LLMModels.FoundationModel.value)

@@ -28,13 +28,22 @@ class ChatWebhook:
                 "path": payload.get("path"),
                 "line_number_from": payload.get("line_number_from"),
                 "line_number_to": payload.get("line_number_to"),
-                "id": payload.get("comment_id"),
+                "id": request_payload["comment"]["id"],
+                "parent_comment_id": request_payload["comment"]["parent"].get("id")
+                if request_payload["comment"].get("parent")
+                else None,
             },
             "repo": {
                 "workspace": request_payload["repository"]["workspace"]["slug"],
                 "pr_id": request_payload["pullrequest"]["id"],
                 "repo_name": request_payload["repository"]["name"],
                 "commit_id": request_payload["pullrequest"]["destination"]["commit"]["hash"],
+                "workspace_id": request_payload["repository"]["workspace"]["uuid"],
+            },
+            "author_info": {
+                "name": request_payload["actor"]["display_name"],
+                "email": None,
+                "scm_author_id": request_payload["actor"]["uuid"],
             },
         }
         return ChatRequest(**final_payload)
@@ -55,12 +64,19 @@ class ChatWebhook:
                 if request_payload["comment"].get("subject_type") == "line"
                 else None,
                 "id": request_payload["comment"]["id"],
+                "parent_comment_id": None,
             },
             "repo": {
                 "workspace": request_payload["pull_request"]["head"]["repo"]["owner"]["login"],
                 "pr_id": request_payload["pull_request"]["number"],
                 "repo_name": request_payload["pull_request"]["head"]["repo"]["name"],
                 "commit_id": request_payload["comment"]["commit_id"],
+                "workspace_id": str(request_payload["organization"]["id"]),
+            },
+            "author_info": {
+                "name": request_payload["comment"]["user"]["login"],
+                "email": None,
+                "scm_author_id": str(request_payload["sender"]["id"]),
             },
         }
         return ChatRequest(**final_payload)
