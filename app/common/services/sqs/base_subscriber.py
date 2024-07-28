@@ -1,5 +1,5 @@
 import asyncio
-
+import botocore.exceptions
 import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
@@ -70,6 +70,10 @@ class BaseSubscriber:
                 if show_configured_log:
                     self.log_info(SuccessMessages.QUEUE_SUCCESSFULLY_CONFIGURED.value)
                 show_configured_log = False
+            except botocore.exceptions.ReadTimeoutError:
+                # We are simply passing this exception, since using return would break it out
+                # of the loop
+                continue
             except Exception as e:
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)
 
