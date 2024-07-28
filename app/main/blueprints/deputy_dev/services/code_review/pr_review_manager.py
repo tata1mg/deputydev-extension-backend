@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Union
 
 from pydantic import ValidationError
@@ -99,6 +99,7 @@ class PRReviewManager:
         try:
             tokens_data, execution_start_time = None, datetime.now()
             experiment_set, pr_dto = await PRReviewPreProcessor(repo_service, comment_service).pre_process_pr()
+            1 / 0
             if experiment_set != PRReviewExperimentSet.ReviewTest.value:
                 return
             llm_comments, tokens_data, meta_info_to_save = await cls.review_pr(
@@ -118,6 +119,7 @@ class PRReviewManager:
             logger.info(
                 f"PR review failed for pr - {repo_service.pr_id}, repo_service - {data.get('repo_name')} exception {ex}"
             )
+            logger.info(f"SCM creation time {pr_dto.scm_creation_time} -- {datetime.now(timezone.utc)}")
         finally:
             repo_service.delete_repo()
             logger.info(f"Completed PR review for pr id - {repo_service.pr_id}, repo_service - {data.get('repo_name')}")
