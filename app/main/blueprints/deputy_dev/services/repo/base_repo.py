@@ -138,3 +138,12 @@ class BaseRepo(ABC):
 
     def vcs(self):
         return self.vcs_type
+
+    async def get_pr_comments(self):
+        """
+        Get pr_comments.
+
+        Returns:
+            list: List of all comments for the pull request.
+        """
+        raise NotImplementedError()

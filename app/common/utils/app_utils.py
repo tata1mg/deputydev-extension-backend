@@ -149,3 +149,16 @@ async def get_task_response(tasks: List[Task]) -> Dict[str, Any]:
             else:
                 response[result.result_key] = result.result
     return response
+
+
+def convert_to_datetime(iso_string: str) -> datetime:
+    """
+    Convert an ISO 8601 formatted string to a datetime object.
+
+    Args:
+        iso_string (str): The ISO 8601 formatted string.
+
+    Returns:
+        datetime: The corresponding datetime object.
+    """
+    return datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
