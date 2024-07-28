@@ -39,6 +39,24 @@ class BitbucketRepoClient:
             return
         return response.json()
 
+    async def get_pr_comments(self) -> list:
+        """
+        Get all comments for the pull request, handling pagination.
+
+        Returns:
+            list: List of all comments for the pull request.
+        """
+        comments = []
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments"
+
+        while url:
+            response = requests.get(url, headers=self.headers)
+            data = response.json()
+            comments.extend(data.get("values", []))
+            url = data.get("next")
+
+        return comments
+
     async def get_pr_diff(self):
         """
         Get the diff of a pull request from Bitbucket.

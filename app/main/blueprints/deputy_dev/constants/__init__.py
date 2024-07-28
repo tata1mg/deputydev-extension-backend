@@ -8,6 +8,7 @@ __all__ = [
     "SCRIT_TAG",
     "PRReviewExperimentSet",
     "ExperimentStatusTypes",
+    "BitbucketBots",
 ]
 from .constants import (
     BATCH_SIZE,
@@ -16,6 +17,7 @@ from .constants import (
     SCRIT_DEPRECATION_NOTIFICATION,
     SCRIT_TAG,
     TAGS,
+    BitbucketBots,
     ExperimentStatusTypes,
     LLMModels,
     PRReviewExperimentSet,
