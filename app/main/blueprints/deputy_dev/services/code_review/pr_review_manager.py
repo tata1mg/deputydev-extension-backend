@@ -99,7 +99,6 @@ class PRReviewManager:
         try:
             tokens_data, execution_start_time = None, datetime.now()
             experiment_set, pr_dto = await PRReviewPreProcessor(repo_service, comment_service).pre_process_pr()
-            1 / 0
             if experiment_set != PRReviewExperimentSet.ReviewTest.value:
                 return
             llm_comments, tokens_data, meta_info_to_save = await cls.review_pr(
