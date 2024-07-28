@@ -59,8 +59,15 @@
         "MAX_MESSAGES": 1,
         "QUEUE_NAME": "{{env_name}}-content_service-dependant_entities.fifo",
         "WAIT_TIME_IN_SECONDS": 2
+      },
+      "METASYNC": {
+        "ENABLED": true,
+        "MAX_MESSAGES": 2,
+        "QUEUE_NAME": "{{env_name}}-deputydev-dependant_entities.fifo",
+        "WAIT_TIME_IN_SECONDS": 2
       }
-    }
+    },
+    "MESSAGE_RETENTION_TIME_SEC": 86400
   },
   "FINETUNED_SCRIT_MODEL": {
     "MODEL": "",

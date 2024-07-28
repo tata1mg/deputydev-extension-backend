@@ -48,6 +48,10 @@ class BitbucketRepo(BaseRepo):
             }
             return PullRequestResponse(**data)
 
+    async def get_pr_comments(self):
+        comments = await self.repo_client.get_pr_comments()
+        return comments
+
     async def get_pr_diff(self):
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.

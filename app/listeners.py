@@ -1,6 +1,7 @@
 from torpedo.constants import ListenerEventTypes
 
 from app.main.blueprints.deputy_dev.services.sqs.genai_subscriber import GenaiSubscriber
+from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 
 
 async def initialize_sqs_subscribes(_app, loop):
@@ -13,6 +14,10 @@ async def initialize_sqs_subscribes(_app, loop):
     if _app.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("ENABLED", False):
         genai_subscribe = GenaiSubscriber(_app.config)
         _app.add_task(await genai_subscribe.subscribe())
+
+    if _app.config.get("SQS", {}).get("SUBSCRIBE", {}).get("METASYNC", {}).get("ENABLED", False):
+        meta_subscribe = MetaSubscriber(_app.config)
+        _app.add_task(await meta_subscribe.subscribe())
 
 
 # Initializing listeners with background task only if it the background worker flag is enabled.
