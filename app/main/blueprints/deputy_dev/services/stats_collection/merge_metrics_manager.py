@@ -35,8 +35,8 @@ class MergeMetricsManager:
     async def handle_event(cls, data: Dict[str, Any]) -> None:
         logger.info("Received SQS Message metasync: {}".format(data))
         payload = data.get("payload")
-        query_params = data.get("query_params")
-        manager = MergeMetricsManager(payload, query_params.get("vcs_type"))
+        query_params = data.get("query_params") or {}
+        manager = MergeMetricsManager(payload, query_params.get("vcs_type", "bitbucket"))
         await manager.compute_merge_metrics()
 
     async def compute_merge_metrics(self):
