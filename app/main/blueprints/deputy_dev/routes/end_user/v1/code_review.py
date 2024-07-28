@@ -62,9 +62,6 @@ async def chat_assistance_api(_request: Request, **kwargs):
 async def compute_merge_metrics(_request: Request, **kwargs):
     payload = _request.custom_json()
     query_params = _request.request_params()
-    data = {
-        "payload": payload,
-        "query_params": query_params
-    }
+    data = {"payload": payload, "query_params": query_params}
     await MetaSubscriber(config=config).publish(data)
     return send_response("Success")

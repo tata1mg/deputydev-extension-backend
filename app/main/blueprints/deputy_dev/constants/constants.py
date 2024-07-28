@@ -126,5 +126,6 @@ class PRStatus(Enum):
     MERGED = "MERGED"
     DECLINED = "DECLINED"
 
+
 class BitbucketBots(ExtendedEnum):
     DEPUTY_DEV = "DeputyDev"

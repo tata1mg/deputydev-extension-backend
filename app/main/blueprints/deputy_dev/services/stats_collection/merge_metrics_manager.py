@@ -49,13 +49,16 @@ class MergeMetricsManager:
 
         pr_time_since_creation = (datetime.now(timezone.utc) - self.pr_dto.scm_creation_time).total_seconds()
 
-        if self.pr_dto.review_status == PrStatusTypes.FAILED.value and pr_time_since_creation < self.sqs_message_retention_time:
-            raise RetryException(f"PR: {self.merge_payload['pr_id']} is in sqs and still have a chance to be reviewed by Deputydev")
+        if (
+            self.pr_dto.review_status == PrStatusTypes.FAILED.value
+            and pr_time_since_creation < self.sqs_message_retention_time
+        ):
+            raise RetryException(
+                f"PR: {self.merge_payload['pr_id']} is in sqs and still have a chance to be reviewed by Deputydev"
+            )
 
         if self.pr_dto.review_status == PrStatusTypes.IN_PROGRESS.value:
-            raise RetryException(
-                f"PR: {self.merge_payload['pr_id']} is still in progress to be reviewed by Deputydev"
-            )
+            raise RetryException(f"PR: {self.merge_payload['pr_id']} is still in progress to be reviewed by Deputydev")
 
         if self.pr_dto.review_status not in [PrStatusTypes.COMPLETED.value, PrStatusTypes.REJECTED_EXPERIMENT.value]:
             return
