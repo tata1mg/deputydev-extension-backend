@@ -1,7 +1,8 @@
-from typing import Dict, List, Tuple, Any
 from datetime import datetime, timezone
-from torpedo import CONFIG
+from typing import Any, Dict, List, Tuple
+
 from sanic.log import logger
+from torpedo import CONFIG
 
 from app.common.exception import RetryException
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -93,7 +94,13 @@ class MergeMetricsManager:
             scm=pr_model.scm_type(),
             scm_workspace_id=pr_model.scm_workspace_id(),
         )
+        if not self.workspace_dto:
+            raise RetryException(f"Workspace not found in DB: SCM Workspace ID : {pr_model.scm_workspace_id()}")
         self.repo_dto = await RepoService.find(scm_repo_id=pr_model.scm_repo_id(), workspace_id=self.workspace_dto.id)
+        if not self.repo_dto:
+            raise RetryException(
+                f"PR: {self.merge_payload['pr_id']} not picked to be reviewed by Deputydev. Reason: Repository does not exist in our DB."
+            )
 
     async def initialize_repo_service(self):
         """

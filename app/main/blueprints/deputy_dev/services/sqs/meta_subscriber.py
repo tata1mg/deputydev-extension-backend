@@ -1,5 +1,7 @@
 from app.common.services.sqs.base_subscriber import BaseSubscriber
-from app.main.blueprints.deputy_dev.services.stats_collection.merge_metrics_manager import MergeMetricsManager
+from app.main.blueprints.deputy_dev.services.stats_collection.merge_metrics_manager import (
+    MergeMetricsManager,
+)
 
 
 class MetaSubscriber(BaseSubscriber):
