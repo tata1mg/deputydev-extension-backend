@@ -47,7 +47,9 @@ class MergeMetricsManager:
         if not self.pr_dto:
             raise RetryException(f"PR: {self.merge_payload['pr_id']} not picked to be reviewed by Deputydev")
 
-        pr_time_since_creation = (datetime.now(timezone.utc) - self.pr_dto.scm_creation_time).total_seconds()
+        pr_time_since_creation = (
+            datetime.now(timezone.utc) - self.pr_dto.scm_creation_time.astimezone(timezone.utc)
+        ).total_seconds()
 
         if (
             self.pr_dto.review_status == PrStatusTypes.FAILED.value
