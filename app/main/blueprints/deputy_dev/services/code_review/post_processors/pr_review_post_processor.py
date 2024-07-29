@@ -171,7 +171,9 @@ class PRReviewPostProcessor:
     def pr_meta_info(cls, pr_dto: PullRequestDTO, tokens_data, llm_comments: dict = None, extra_info: dict = None):
         llm_comments, extra_info = llm_comments or [], extra_info or {}
         return {
-            "pr_review_tat_in_secs": int((datetime.now(timezone.utc) - pr_dto.scm_creation_time).total_seconds()),
+            "pr_review_tat_in_secs": int(
+                (datetime.now(timezone.utc) - pr_dto.scm_creation_time.astimezone(timezone.utc)).total_seconds()
+            ),
             "execution_time_in_secs": int((datetime.now() - extra_info["execution_start_time"]).total_seconds()),
             "tokens": cls.format_token(tokens_data)["tokens"],
             "total_comments": len(llm_comments),
