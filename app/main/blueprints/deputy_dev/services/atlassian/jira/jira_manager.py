@@ -31,7 +31,7 @@ class JiraManager:
             links str: document id
         """
         jira_story = await self.get_issue_details()
-        if not jira_story:
-            return
-        document_id = JiraHelper.extract_confluence_id_from_description(jira_story)
-        return document_id
+        if jira_story.get("fields").get("description"):
+            document_id = JiraHelper.extract_confluence_id_from_description(jira_story)
+            return document_id
+        return
