@@ -74,5 +74,4 @@ async def compute_merge_metrics(_request: Request, **kwargs):
 async def compute_merge_metrics(_request: Request, **kwargs):
     app = Sanic.get_app(CONFIG.config["NAME"])
     app.add_task(PRDataManager().update_pr_data())
-    await PRDataManager().update_pr_data()
     return send_response("Success")
