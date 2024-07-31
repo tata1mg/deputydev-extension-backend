@@ -30,6 +30,12 @@ class BasePrModel:
     def scm_workspace_id(self):
         return self.meta_info.get("scm_workspace_id")
 
+    def loc_changed(self):
+        return self.meta_info.get("loc_changed")
+
+    def pr_diff_token_count(self):
+        return self.meta_info.get("pr_diff_token_count")
+
     def title(self):
         raise NotImplementedError()
 
@@ -89,5 +95,6 @@ class BasePrModel:
             "source_branch": self.source_branch(),
             "destination_branch": self.destination_branch(),
             "commit_id": self.commit_id(),
+            "loc_changed": self.loc_changed(),
         }
         return pr_details

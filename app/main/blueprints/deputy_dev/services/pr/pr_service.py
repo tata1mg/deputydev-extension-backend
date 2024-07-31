@@ -45,7 +45,9 @@ class PRService:
             )
 
     @classmethod
-    async def find_or_create(cls, pr_model: BasePrModel, pr_status) -> PullRequestDTO:
+    async def find_or_create(
+        cls, pr_model: BasePrModel, pr_status, loc_changed, meta_info: dict = None
+    ) -> PullRequestDTO:
         pr_dto = None
         workspace_dto = await WorkspaceService.find(
             scm_workspace_id=pr_model.scm_workspace_id(), scm=pr_model.scm_type()
@@ -65,6 +67,8 @@ class PRService:
                         "repo_id": repo_dto.id,
                     }
                     pr_dto = PullRequestDTO(**pr_model.get_pr_info())
+                    pr_dto.meta_info = meta_info
+                    pr_dto.loc_changed = loc_changed
                     pr_dto = await PRService.db_insert(pr_dto)
         return pr_dto
 

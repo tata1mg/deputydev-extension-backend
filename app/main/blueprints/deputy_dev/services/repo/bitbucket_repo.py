@@ -85,3 +85,31 @@ class BitbucketRepo(BaseRepo):
 
     def pr_model(self):
         return BitbucketPrModel(pr_detail=self.pr_json(), meta_info={"scm_workspace_id": self.scm_workspace_id()})
+
+    async def get_pr_stats(self):
+        if self.pr_stats:
+            return self.pr_stats
+        # compute stats
+        total_added, total_removed = (0, 0)
+        pr_diff_stats_response = await self.repo_client.get_pr_diff_stats()
+        if pr_diff_stats_response:
+            files_changed_data = pr_diff_stats_response.json()
+            if files_changed_data and files_changed_data.get("values"):
+                files_changed_data = files_changed_data["values"]
+                total_added = 0
+                total_removed = 0
+                for file_stat in files_changed_data:
+                    total_added += file_stat["lines_added"]
+                    total_removed += file_stat["lines_removed"]
+        self.pr_stats = {
+            "total_added": total_added,
+            "total_removed": total_removed,
+        }
+        return self.pr_stats
+
+    async def get_loc_changed_count(self):
+        stats = await self.get_pr_stats()
+        if stats:
+            return stats["total_added"] + stats["total_removed"]
+        else:
+            raise Exception("Pr stats data not present")
