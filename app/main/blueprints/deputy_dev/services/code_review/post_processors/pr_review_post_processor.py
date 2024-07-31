@@ -107,18 +107,16 @@ class PRReviewPostProcessor:
         for comment in comments:
             if comment["bucket_name"] not in all_buckets:
                 unique_buckets.add(comment["bucket_name"])
-        for comment in unique_buckets:
+        for bucket in unique_buckets:
             new_buckets.append(
-                new_buckets.append(
-                    BucketDTO(
-                        **{
-                            "name": comment["bucket_name"],
-                            "weight": 0,
-                            "bucket_type": BucketTypes.SUGGESTION.value,
-                            "status": BucketStatus.INACTIVE.value,
-                            "is_llm_suggested": True,
-                        }
-                    )
+                BucketDTO(
+                    **{
+                        "name": bucket,
+                        "weight": 0,
+                        "bucket_type": BucketTypes.SUGGESTION.value,
+                        "status": BucketStatus.INACTIVE.value,
+                        "is_llm_suggested": True,
+                    }
                 )
             )
 
