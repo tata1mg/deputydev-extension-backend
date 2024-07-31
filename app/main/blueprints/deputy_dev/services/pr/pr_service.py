@@ -77,8 +77,12 @@ class PRService:
         return await PRService.db_get({"scm_pr_id": scm_pr_id, "repo_id": repo_id})
 
     @classmethod
-    async def get_all(cls):
-        all_prs = await DB.raw_sql("SELECT * FROM pull_requests")
+    async def get_bulk_prs_by_filter(cls, query_params):
+        all_prs = await DB.raw_sql(
+            "SELECT * FROM pull_requests where id>={} and id<{}".format(
+                query_params.get("start"), query_params.get("end")
+            )
+        )
         return all_prs
 
     @classmethod
@@ -86,5 +90,6 @@ class PRService:
         pr_dto = await PRService.db_get({"id": id})
         if pr_dto:
             meta_info = pr_dto.meta_info or {}
-            meta_info["pr_diff_tokens"] = token_count
+            meta_info.pop("pr_diff_tokens", None)
+            meta_info.setdefault("tokens", {})["pr_diff_tokens"] = token_count
             await PRService.db_update(payload={"meta_info": meta_info, "loc_changed": loc_changed}, filters={"id": id})
