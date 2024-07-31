@@ -1,5 +1,5 @@
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.common.utils.app_utils import get_last_part
+from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 
 
 class PRWebhook:

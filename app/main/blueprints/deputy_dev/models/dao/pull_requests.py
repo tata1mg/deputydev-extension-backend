@@ -29,6 +29,8 @@ class PullRequests(Base):
         "scm_creation_time",
         "scm_merge_time",
         "commit_id",
+        "meta_info",
+        "loc_changed",
     }
 
     id = fields.BigIntField(pk=True)

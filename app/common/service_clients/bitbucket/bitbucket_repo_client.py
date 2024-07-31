@@ -133,3 +133,37 @@ class BitbucketRepoClient:
             )
             return None
         return response
+
+    async def fetch_diffstat(self, repo_name, scm_pr_id):
+        url = "https://api.bitbucket.org/2.0/repositories/tata1mg/{repo_name}/pullrequests/{scm_pr_id}/diffstat".format(
+            repo_name=repo_name, scm_pr_id=scm_pr_id
+        )
+        response = requests.get(
+            url,
+            headers=self.headers,
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return sum(file["lines_added"] + file["lines_removed"] for file in data["values"])
+        else:
+            return 0
+
+    async def get_pr_diff_v1(self, repo_name, scm_pr_id):
+        """
+        Get the diff of a pull request from Bitbucket.
+
+        Returns:
+            str: The diff of the pull request.
+        """
+        diff_url = (
+            "https://api.bitbucket.org/2.0/repositories/tata1mg/{repo_name}/pullrequests/{scm_pr_id}/diff".format(
+                repo_name=repo_name, scm_pr_id=scm_pr_id
+            )
+        )
+        response = requests.get(
+            diff_url,
+            headers=self.headers,
+        )
+        if response.status_code != 200:
+            logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
+        return response, response.status_code
