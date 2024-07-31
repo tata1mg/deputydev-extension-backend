@@ -106,6 +106,7 @@ class PRReviewManager:
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
             await PRReviewPostProcessor.post_process_pr(pr_dto, llm_comments, tokens_data, meta_info_to_save)
+            logger.info(f"Completed PR review for pr id - {repo_service.pr_id}, repo_service - {data.get('repo_name')}")
         except Exception as ex:
             # if PR is inserted in db then only we will update status
             if pr_dto:
@@ -121,7 +122,6 @@ class PRReviewManager:
             )
         finally:
             repo_service.delete_repo()
-            logger.info(f"Completed PR review for pr id - {repo_service.pr_id}, repo_service - {data.get('repo_name')}")
 
     @classmethod
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
