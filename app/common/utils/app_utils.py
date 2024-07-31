@@ -162,3 +162,17 @@ def convert_to_datetime(iso_string: str) -> datetime:
         datetime: The corresponding datetime object.
     """
     return datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
+
+
+def get_last_part(value: str, delimeter: str = '/') -> str:
+    """
+    gets the last part of the string based on the delimeter passed to it
+
+    Args:
+        value (str): string from which the value needs to be extracted.
+
+    Returns:
+        datetime: The corresponding datetime object.
+    """
+    parts = value.split(delimeter)
+    return parts[-1]
