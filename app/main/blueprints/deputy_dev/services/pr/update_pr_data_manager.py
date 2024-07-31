@@ -13,8 +13,8 @@ class PRDataManager:
     def __init__(self):
         self.bitbucket_client = BitbucketRepoClient("", "", "")
 
-    async def update_pr_data(self):
-        pr_rows = await PRService.get_all()
+    async def update_pr_data(self, query_params):
+        pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         count = 1
         for pr in pr_rows:
             scm_pr_id = pr["scm_pr_id"]
@@ -26,5 +26,5 @@ class PRDataManager:
                 pr_diff = ignore_files(pr_diff[0])
                 pr_diff_token_count = get_token_count(pr_diff)
                 await PRService.update_meta_info(pr["id"], loc_count, pr_diff_token_count)
-                logger.info("Data updated for PR-ID {}. Count: {}".format(scm_pr_id, count))
+                logger.info("Data updated for ID {}. Count: {}".format(pr["id"], count))
                 count += 1
