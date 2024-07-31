@@ -12,6 +12,9 @@ from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger imp
 from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
     PRReviewManager,
 )
+from app.main.blueprints.deputy_dev.services.pr.update_pr_data_manager import (
+    PRDataManager,
+)
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
@@ -64,4 +67,12 @@ async def compute_merge_metrics(_request: Request, **kwargs):
     query_params = _request.request_params()
     data = {"payload": payload, "query_params": query_params}
     await MetaSubscriber(config=config).publish(data)
+    return send_response("Success")
+
+
+@smart_code.route("/update_data", methods=["POST"])
+async def compute_merge_metrics(_request: Request, **kwargs):
+    payload = _request.custom_json()
+    query_params = _request.request_params()
+    await PRDataManager().update_pr_data()
     return send_response("Success")
