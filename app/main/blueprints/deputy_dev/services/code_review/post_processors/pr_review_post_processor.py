@@ -183,6 +183,7 @@ class PRReviewPostProcessor:
     def format_token(cls, tokens_data: dict):
         return {
             "tokens": {
+                "pr_diff_tokens": tokens_data.get(TokenTypes.PR_DIFF_TOKENS.value),
                 "pr_summary": {
                     "input": tokens_data.get(TokenTypes.PR_SUMMARY_MODEL_INPUT.value),
                     "output": tokens_data.get(TokenTypes.PR_SUMMARY_MODEL_OUTPUT.value),

@@ -1,4 +1,3 @@
-from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -30,12 +29,21 @@ class PRReviewPreProcessor:
         self.tokens_info = {}
         self.meta_info = {}
         self.pr_dto = None
+        self.pr_diff_token_count = None
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
-        self.pr_dto = await PRService.find_or_create(self.pr_model, PrStatusTypes.IN_PROGRESS.value)
+        await self.insert_pr_record()
         await self.run_validations()
         experiment_set = await self.get_experiment_set()
         return experiment_set, self.pr_dto
+
+    async def insert_pr_record(self):
+        self.pr_diff_token_count = await self.repo_service.get_pr_diff_token_count()
+        self.meta_info["tokens"] = {TokenTypes.PR_DIFF_TOKENS.value: self.pr_diff_token_count}
+        loc_changed = await self.repo_service.get_loc_changed_count()
+        self.pr_dto = await PRService.find_or_create(
+            self.pr_model, PrStatusTypes.IN_PROGRESS.value, loc_changed, self.meta_info
+        )
 
     async def run_validations(self):
         self.validate_pr_state_for_review()
@@ -55,15 +63,13 @@ class PRReviewPreProcessor:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_NO_DIFF.value
         else:
-            pr_diff_token_count = get_token_count(pr_diff)
-            if pr_diff_token_count > MAX_PR_DIFF_TOKEN_LIMIT:
+            if self.pr_diff_token_count > MAX_PR_DIFF_TOKEN_LIMIT:
                 comment = PR_SIZE_TOO_BIG_MESSAGE.format(
-                    pr_diff_token_count=pr_diff_token_count, max_token_limit=MAX_PR_DIFF_TOKEN_LIMIT
+                    pr_diff_token_count=self.pr_diff_token_count, max_token_limit=MAX_PR_DIFF_TOKEN_LIMIT
                 )
                 await self.comment_service.create_pr_comment(comment=comment, model=LLMModels.FoundationModel.value)
                 self.is_valid = False
                 self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
-                self.meta_info["tokens"] = {TokenTypes.PR_DIFF_TOKENS.value: pr_diff_token_count}
 
     def validate_pr_state_for_review(self):
         pr_state = self.pr_model.scm_state()

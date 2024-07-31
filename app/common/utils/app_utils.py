@@ -164,7 +164,7 @@ def convert_to_datetime(iso_string: str) -> datetime:
     return datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
 
 
-def get_last_part(value: str, delimeter: str = '/') -> str:
+def get_last_part(value: str, delimeter: str = "/") -> str:
     """
     gets the last part of the string based on the delimeter passed to it
 

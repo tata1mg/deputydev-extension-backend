@@ -72,6 +72,7 @@ class PullRequests(Base):
     scm_creation_time = NaiveDatetimeField(null=True)
     scm_merge_time = NaiveDatetimeField(null=True)
     commit_id = CITextField(max_length=1000)
+    loc_changed = fields.BigIntField(null=False)
 
     class Meta:
         table = "pull_requests"
@@ -103,3 +104,4 @@ class PullRequests(Base):
         scm_creation_time = ("scm_creation_time",)
         scm_merge_time = ("scm_merge_time",)
         commit_id = ("commit_id",)
+        loc_changed = ("loc_changed",)

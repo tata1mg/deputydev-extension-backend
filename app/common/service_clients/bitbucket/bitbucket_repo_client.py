@@ -112,3 +112,24 @@ class BitbucketRepoClient:
                 f"Unable to retrieve Comment details for comment: {comment_id} - PR ID: {self.pr_id}: {response._content}"
             )
         return response
+
+    async def get_pr_diff_stats(self):
+        """
+        Get the diff stat of pull request
+
+        Returns:
+            str: The diff of the pull request.
+        """
+        diff_url = (
+            f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/diffstat"
+        )
+        response = requests.get(
+            diff_url,
+            headers=self.headers,
+        )
+        if response.status_code != 200:
+            logger.error(
+                f"Unable to retrieve diff for PR - {self.pr_id} workspace " f"{self.workspace}: {response._content}"
+            )
+            return None
+        return response

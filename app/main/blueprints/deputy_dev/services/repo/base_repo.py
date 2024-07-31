@@ -8,7 +8,8 @@ import git
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.constants.repo import VCS_REPO_URL_MAP
+from app.common.utils.app_utils import get_token_count
+from app.main.blueprints.deputy_dev.constants.repo import VCS_REPO_URL_MAP, PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.utils import parse_collection_name
@@ -27,6 +28,7 @@ class BaseRepo(ABC):
         self.pr_json_data = None
         self.workspace_id = workspace_id
         self.pr_diff = None
+        self.pr_stats = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -147,3 +149,25 @@ class BaseRepo(ABC):
             list: List of all comments for the pull request.
         """
         raise NotImplementedError()
+
+    async def get_pr_stats(self) -> dict:
+        """
+        Returns PR stats
+
+        Returns:
+            dict:
+            sample value {
+                "total_added": "",
+                "total_removed": "",
+            }
+        """
+        raise NotImplementedError()
+
+    async def get_loc_changed_count(self) -> int:
+        raise NotImplementedError()
+
+    async def get_pr_diff_token_count(self) -> int:
+        pr_diff = await self.get_pr_diff()
+        if not pr_diff or pr_diff == PR_NOT_FOUND:
+            return 0
+        return get_token_count(pr_diff)
