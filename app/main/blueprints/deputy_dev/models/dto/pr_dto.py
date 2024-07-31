@@ -25,6 +25,7 @@ class PullRequestDTO(BaseModel):
     scm_creation_time: Optional[datetime] = None
     scm_merge_time: Optional[datetime] = None
     commit_id: str
+    loc_changed: Optional[int] = 0
 
     class Config:
         orm_mode = True
