@@ -1,3 +1,5 @@
+from sanic.log import logger
+
 from app.common.service_clients.bitbucket.bitbucket_repo_client import (
     BitbucketRepoClient,
 )
@@ -13,6 +15,7 @@ class PRDataManager:
 
     async def update_pr_data(self):
         pr_rows = await PRService.get_all()
+        count = 1
         for pr in pr_rows:
             scm_pr_id = pr["scm_pr_id"]
             repo_id = pr["repo_id"]
@@ -23,3 +26,5 @@ class PRDataManager:
                 pr_diff = ignore_files(pr_diff[0])
                 pr_diff_token_count = get_token_count(pr_diff)
                 await PRService.update_meta_info(pr["id"], loc_count, pr_diff_token_count)
+                logger.info("Data updated for PR-ID {}. Count: {}".format(scm_pr_id, count))
+                count += 1

@@ -9,7 +9,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.utils.app_utils import get_token_count
-from app.main.blueprints.deputy_dev.constants.repo import VCS_REPO_URL_MAP, PR_NOT_FOUND
+from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND, VCS_REPO_URL_MAP
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.utils import parse_collection_name
