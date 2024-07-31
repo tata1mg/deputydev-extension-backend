@@ -72,6 +72,7 @@ async def compute_merge_metrics(_request: Request, **kwargs):
 
 @smart_code.route("/update_data", methods=["POST"])
 async def compute_merge_metrics(_request: Request, **kwargs):
+    query_params = _request.request_params()
     app = Sanic.get_app(CONFIG.config["NAME"])
-    app.add_task(PRDataManager().update_pr_data())
+    app.add_task(PRDataManager().update_pr_data(query_params))
     return send_response("Success")
