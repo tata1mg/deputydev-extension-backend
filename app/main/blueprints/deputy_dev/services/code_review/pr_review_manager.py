@@ -115,10 +115,10 @@ class PRReviewManager:
                     },
                     filters={"id": pr_dto.id},
                 )
-            logger.info(
-                f"PR review failed for pr - {repo_service.pr_id}, repo_service - {data.get('repo_name')} exception {ex}"
+            logger.error(
+                f"PR review failed for pr - {repo_service.pr_id}, repo_name - {data.get('repo_name')} "
+                f"exception {ex}"
             )
-            logger.info(f"SCM creation time {pr_dto.scm_creation_time} -- {datetime.now(timezone.utc)}")
         finally:
             repo_service.delete_repo()
             logger.info(f"Completed PR review for pr id - {repo_service.pr_id}, repo_service - {data.get('repo_name')}")
