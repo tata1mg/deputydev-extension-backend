@@ -1,4 +1,4 @@
-from sanic import Blueprint
+from sanic import Blueprint, Sanic
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
 
@@ -72,7 +72,7 @@ async def compute_merge_metrics(_request: Request, **kwargs):
 
 @smart_code.route("/update_data", methods=["POST"])
 async def compute_merge_metrics(_request: Request, **kwargs):
-    payload = _request.custom_json()
-    query_params = _request.request_params()
+    app = Sanic.get_app(CONFIG.config["NAME"])
+    app.add_task(PRDataManager().update_pr_data())
     await PRDataManager().update_pr_data()
     return send_response("Success")
