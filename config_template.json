@@ -139,5 +139,6 @@
     "TestSet",
     "ControlSet1",
     "ControlSet2"
-  ]
+  ],
+  "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00"
 }
