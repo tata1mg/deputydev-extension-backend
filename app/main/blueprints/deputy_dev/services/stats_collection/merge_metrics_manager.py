@@ -31,6 +31,7 @@ class MergeMetricsManager:
         self.repo_dto = None
         self.pr_dto = None
         self.sqs_message_retention_time = CONFIG.config.get("SQS", {}).get("MESSAGE_RETENTION_TIME_SEC", 0)
+        self.experiment_start_time = datetime.fromisoformat(CONFIG.config.get("EXPERIMENT_START_TIME"))
 
     @classmethod
     async def handle_event(cls, data: Dict[str, Any]) -> None:
@@ -45,7 +46,7 @@ class MergeMetricsManager:
         await self.initialize_workspace_and_repo_dto()
         await self.initialize_pr_dto()
 
-        if not self.pr_dto:
+        if not self.pr_dto and self.merge_payload["pr_created_at"] > self.experiment_start_time:
             raise RetryException(f"PR: {self.merge_payload['pr_id']} not picked to be reviewed by Deputydev")
 
         pr_time_since_creation = (
