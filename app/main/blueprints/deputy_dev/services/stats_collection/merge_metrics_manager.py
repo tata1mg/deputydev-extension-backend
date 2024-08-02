@@ -9,6 +9,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     BitbucketBots,
     PrStatusTypes,
 )
+from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_processer import CommentPreprocessor
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
@@ -130,13 +131,22 @@ class MergeMetricsManager:
         chat_authors = BitbucketBots.list()
         bot_comment_count = 0
         human_comment_count = 0
-
+        tags_list = CommentPreprocessor.combine_comments_enums()
         for comment in comments:
             if comment.get("parent") is None:
                 if comment.get("user", {}).get("display_name") in chat_authors:
-                    bot_comment_count += 1
+                    # There are many bots that are currently running in bitbucket, but we are only considering
+                    # the comment from DeputyDev for llm count, rest of the bot comment counts are ignored
+                    if comment.get("user", {}).get("display_name") == BitbucketBots.DEPUTY_DEV.value:
+                        bot_comment_count += 1
                 else:
-                    human_comment_count += 1
+                    # Any tags such as #scrit, #like or any other whitelisted tags we receive starts with
+                    # \#dd, \#scrit, that is why we are filtering out this tags starting with "\"
+                    if not any(
+                        comment.get("content").get("raw").lower().startswith(f"\{tag}")
+                        for tag in tags_list
+                    ):
+                        human_comment_count += 1
 
         return bot_comment_count, human_comment_count
 

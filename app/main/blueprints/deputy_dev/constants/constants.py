@@ -129,3 +129,5 @@ class PRStatus(Enum):
 
 class BitbucketBots(ExtendedEnum):
     DEPUTY_DEV = "DeputyDev"
+    HECTOR_BOT = "Hector Coverage Bot"
+    FRONTEND_RELEASE_POLICE = "Frontend Release Police"
