@@ -176,3 +176,9 @@ def get_last_part(value: str, delimeter: str = "/") -> str:
     """
     parts = value.split(delimeter)
     return parts[-1]
+
+
+def convert_string(input_str, delimeter_to_replace: str = " ", delimeter_replaced_by: str = "-"):
+    lower_str = input_str.lower()
+    result_str = lower_str.replace(delimeter_to_replace, delimeter_replaced_by)
+    return result_str
