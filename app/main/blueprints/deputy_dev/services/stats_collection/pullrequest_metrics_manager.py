@@ -43,6 +43,7 @@ class PullRequestMetricsManager:
         await manager.compute_pr_close_metrics()
 
     async def compute_pr_close_metrics(self):
+        logger.info(f"PR close paylod: {self.pr_close_payload}")
         await self.initialize_repo_service()
         await self.initialize_workspace_and_repo_dto()
         await self.initialize_pr_dto()
