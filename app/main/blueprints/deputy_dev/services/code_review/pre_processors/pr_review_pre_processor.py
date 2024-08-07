@@ -96,7 +96,10 @@ class PRReviewPreProcessor:
 
     async def update_pr_status(self, pr_id):
         await PRService.db_update(
-            payload={"review_status": self.review_status, "meta_info": self.meta_info if self.meta_info else None},
+            payload={
+                "review_status": self.review_status,
+                "meta_info": self.meta_info if self.meta_info else None,
+            },
             filters={"id": pr_id},
         )
 

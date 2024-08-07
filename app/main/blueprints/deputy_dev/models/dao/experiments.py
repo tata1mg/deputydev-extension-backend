@@ -15,13 +15,14 @@ class Experiments(Base):
         "scm",
         "pr_id",
         "review_status",
-        "merge_time_in_sec",
+        "close_time_in_sec",
         "human_comment_count",
         "llm_comment_count",
         "scm_creation_time",
-        "scm_merge_time",
+        "scm_close_time",
         "created_at",
         "updated_at",
+        "pr_state"
     }
     id = fields.BigIntField(pk=True)
     scm_pr_id = CITextField(max_length=100)
@@ -32,11 +33,12 @@ class Experiments(Base):
     scm = CITextField(max_length=100)
     pr_id = fields.BigIntField()
     cohort = CITextField(max_length=100)
-    merge_time_in_sec = fields.BigIntField(null=True)
+    close_time_in_sec = fields.BigIntField(null=True)
     human_comment_count = fields.BigIntField(null=True)
     llm_comment_count = fields.BigIntField(null=True)
     scm_creation_time = NaiveDatetimeField(null=True)
-    scm_merge_time = NaiveDatetimeField(null=True)
+    scm_close_time = NaiveDatetimeField(null=True)
+    pr_state = fields.CharField(max_length=100, null=False)
 
     class Meta:
         table = "experiments"

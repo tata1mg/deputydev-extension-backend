@@ -27,7 +27,7 @@ class BitbucketPrModel(BasePrModel):
     def scm_updation_time(self):
         return self.pr_detail["updated_on"].replace("Z", "+00:00")
 
-    def scm_merge_time(self):
+    def scm_close_time(self):
         return self.pr_detail["updated_on"].replace("Z", "+00:00")
 
     def scm_state(self):

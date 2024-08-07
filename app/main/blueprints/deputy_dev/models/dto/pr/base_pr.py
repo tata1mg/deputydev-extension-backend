@@ -54,7 +54,7 @@ class BasePrModel:
     def scm_creation_time(self):
         raise NotImplementedError()
 
-    def scm_merge_time(self):
+    def scm_close_time(self):
         raise NotImplementedError()
 
     def scm_state(self):
