@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
-
+from app.main.blueprints.deputy_dev.constants.constants import PRStatus
 from pydantic import BaseModel
 
 
@@ -23,9 +23,10 @@ class PullRequestDTO(BaseModel):
     source_branch: str
     destination_branch: str
     scm_creation_time: Optional[datetime] = None
-    scm_merge_time: Optional[datetime] = None
+    scm_close_time: Optional[datetime] = None
     commit_id: str
     loc_changed: Optional[int] = 0
+    pr_state: str = PRStatus.OPEN.value
 
     class Config:
         orm_mode = True

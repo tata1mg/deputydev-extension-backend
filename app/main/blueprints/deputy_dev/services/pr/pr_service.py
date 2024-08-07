@@ -69,6 +69,7 @@ class PRService:
                     pr_dto = PullRequestDTO(**pr_model.get_pr_info())
                     pr_dto.meta_info = meta_info
                     pr_dto.loc_changed = loc_changed
+                    pr_dto.pr_state = pr_model.scm_state()
                     pr_dto = await PRService.db_insert(pr_dto)
         return pr_dto
 
