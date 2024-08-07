@@ -27,10 +27,11 @@ class PullRequests(Base):
         "source_branch",
         "destination_branch",
         "scm_creation_time",
-        "scm_merge_time",
+        "scm_close_time",
         "commit_id",
         "meta_info",
         "loc_changed",
+        "pr_state"
     }
 
     id = fields.BigIntField(pk=True)
@@ -72,9 +73,10 @@ class PullRequests(Base):
     source_branch = fields.CharField(max_length=1000)
     destination_branch = fields.CharField(max_length=1000)
     scm_creation_time = NaiveDatetimeField(null=True)
-    scm_merge_time = NaiveDatetimeField(null=True)
+    scm_close_time = NaiveDatetimeField(null=True)
     commit_id = CITextField(max_length=1000)
     loc_changed = fields.BigIntField(null=False)
+    pr_state = fields.CharField(max_length=100, null=False)
 
     class Meta:
         table = "pull_requests"
@@ -104,6 +106,7 @@ class PullRequests(Base):
         source_branch = ("source_branch",)
         destination_branch = ("destination_branch",)
         scm_creation_time = ("scm_creation_time",)
-        scm_merge_time = ("scm_merge_time",)
+        scm_close_time = ("scm_close_time",)
         commit_id = ("commit_id",)
         loc_changed = ("loc_changed",)
+        pr_state = ("pr_state",)

@@ -12,8 +12,8 @@ from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger imp
 from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
     PRReviewManager,
 )
-from app.main.blueprints.deputy_dev.services.pr.update_pr_data_manager import (
-    PRDataManager,
+from app.main.blueprints.deputy_dev.services.pr.backfill_data_manager import (
+    BackfillManager,
 )
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 
@@ -61,6 +61,17 @@ async def chat_assistance_api(_request: Request, **kwargs):
     return send_response(f"Processing Started with Request ID : {request_id}")
 
 
+@smart_code.route("/stats-collection", methods=["POST"])
+async def compute_pr_close_metrics(_request: Request, **kwargs):
+    payload = _request.custom_json()
+    query_params = _request.request_params()
+    data = {"payload": payload, "query_params": query_params}
+    await MetaSubscriber(config=config).publish(data)
+    return send_response("Success")
+
+
+# The below url is temporary to carter the merge flow, once the "/stats-collection" url is integrated,
+# the API below will be deprecated.
 @smart_code.route("/merge", methods=["POST"])
 async def compute_merge_metrics(_request: Request, **kwargs):
     payload = _request.custom_json()
@@ -70,9 +81,16 @@ async def compute_merge_metrics(_request: Request, **kwargs):
     return send_response("Success")
 
 
-@smart_code.route("/update_data", methods=["POST"])
-async def compute_merge_metrics(_request: Request, **kwargs):
+# The route defined below acts like a script, which when called upon is used to backfill data.
+# These are supposed to be one time activity, so please use this route accordingly
+@smart_code.route("/backfill_pr_data", methods=["POST"])
+async def update_pr_data(_request: Request, **kwargs):
     query_params = _request.request_params()
     app = Sanic.get_app(CONFIG.config["NAME"])
-    app.add_task(PRDataManager().update_pr_data(query_params))
+    if query_params.get("type") == "pr_state_experiments_update":
+        app.add_task(BackfillManager().backfill_expermients_data(query_params))
+    elif query_params.get("type") == "pr_state_pullrequest_update":
+        app.add_task(BackfillManager().backfill_pullrequests_data(query_params))
+    else:
+        app.add_task(BackfillManager().backfill_comments_count_in_experiments_table(query_params))
     return send_response("Success")
