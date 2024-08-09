@@ -197,3 +197,11 @@ def get_foundation_model_name():
     model_config = CONFIG.config.get("SCRIT_MODEL")
     model = model_config["MODEL"]
     return model
+
+
+def get_approval_time_from_participants_bitbucket(participants):
+    if not participants:
+        return
+    for participant in participants[::-1]:
+        if participant["role"] == "REVIEWER" and participant["approved"] is True and participant["state"] == "approved":
+            return participant["participated_on"]
