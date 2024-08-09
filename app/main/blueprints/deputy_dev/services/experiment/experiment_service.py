@@ -82,7 +82,7 @@ class ExperimentService:
             "review_status": ExperimentStatusTypes.IN_PROGRESS.value,
             "pr_id": pr_dto.id,
             "scm_creation_time": pr_dto.scm_creation_time,
-            "pr_state": pr_dto.pr_state
+            "pr_state": pr_dto.pr_state,
         }
         await ExperimentService.db_insert(ExperimentsDTO(**experiment_info))
 
@@ -121,9 +121,7 @@ class ExperimentService:
     @classmethod
     async def get_data_in_range(cls, start, end):
         try:
-            row = await DB.get_by_filters(
-                model=Experiments, filters={"id__gte": start, "id__lte": end}
-            )
+            row = await DB.get_by_filters(model=Experiments, filters={"id__gte": start, "id__lte": end})
             return row
         except Exception as ex:
             logger.error("Not able to fetch experiment data range - {}".format(ex))

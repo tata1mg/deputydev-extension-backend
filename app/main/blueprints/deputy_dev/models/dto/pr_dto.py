@@ -27,6 +27,7 @@ class PullRequestDTO(BaseModel):
     commit_id: str
     loc_changed: Optional[int] = 0
     pr_state: str = PRStatus.OPEN.value
+    scm_approval_time: Optional[datetime] = None
 
     class Config:
         orm_mode = True

@@ -31,7 +31,8 @@ class PullRequests(Base):
         "commit_id",
         "meta_info",
         "loc_changed",
-        "pr_state"
+        "pr_state",
+        "scm_approval_time",
     }
 
     id = fields.BigIntField(pk=True)
@@ -77,6 +78,7 @@ class PullRequests(Base):
     commit_id = CITextField(max_length=1000)
     loc_changed = fields.BigIntField(null=False)
     pr_state = fields.CharField(max_length=100, null=False)
+    scm_approval_time = NaiveDatetimeField(null=True)
 
     class Meta:
         table = "pull_requests"
@@ -110,3 +112,4 @@ class PullRequests(Base):
         commit_id = ("commit_id",)
         loc_changed = ("loc_changed",)
         pr_state = ("pr_state",)
+        scm_approval_time = ("scm_approval_time",)

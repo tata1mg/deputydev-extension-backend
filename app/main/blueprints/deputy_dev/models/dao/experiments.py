@@ -22,7 +22,7 @@ class Experiments(Base):
         "scm_close_time",
         "created_at",
         "updated_at",
-        "pr_state"
+        "pr_state",
     }
     id = fields.BigIntField(pk=True)
     scm_pr_id = CITextField(max_length=100)
