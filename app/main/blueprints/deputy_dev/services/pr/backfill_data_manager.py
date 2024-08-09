@@ -158,16 +158,15 @@ class BackfillManager:
         """
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         for row in pr_rows:
-            if row["scm_approval_time"] is None:
-                repo_dto = await RepoService.db_get({"id": row["repo_id"]})
-                self.bitbucket_client = BitbucketRepoClient("tata1mg", convert_string(repo_dto.name), row["scm_pr_id"])
-                pr_detail = await self.bitbucket_client.get_pr_details()
-                pr_approval_time = get_approval_time_from_participants_bitbucket(pr_detail.get("participants", []))
-                if pr_approval_time:
-                    await PRService.db_update(
-                        payload={"scm_approval_time": convert_to_datetime(pr_approval_time)},
-                        filters={"id": row["id"]},
-                    )
-                    logger.info(f"PR approval time updated for - {row['id']}")
-                else:
-                    logger.info(f"PR approval time not updated as PR is not approved - {row['id']}")
+            repo_dto = await RepoService.db_get({"id": row["repo_id"]})
+            self.bitbucket_client = BitbucketRepoClient("tata1mg", convert_string(repo_dto.name), row["scm_pr_id"])
+            pr_detail = await self.bitbucket_client.get_pr_details()
+            pr_approval_time = get_approval_time_from_participants_bitbucket(pr_detail.get("participants", []))
+            if pr_approval_time:
+                await PRService.db_update(
+                    payload={"scm_approval_time": convert_to_datetime(pr_approval_time)},
+                    filters={"id": row["id"]},
+                )
+                logger.info(f"PR approval time updated for - {row['id']}")
+            else:
+                logger.info(f"PR approval time not updated as PR is not approved - {row['id']}")
