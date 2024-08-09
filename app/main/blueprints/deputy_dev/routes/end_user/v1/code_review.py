@@ -91,6 +91,8 @@ async def update_pr_data(_request: Request, **kwargs):
         app.add_task(BackfillManager().backfill_expermients_data(query_params))
     elif query_params.get("type") == "pr_state_pullrequest_update":
         app.add_task(BackfillManager().backfill_pullrequests_data(query_params))
+    elif query_params.get("type") == "pr_approval_time_pullrequest_update":
+        app.add_task(BackfillManager().backfill_pr_approval_time(query_params))
     else:
         app.add_task(BackfillManager().backfill_comments_count_in_experiments_table(query_params))
     return send_response("Success")
