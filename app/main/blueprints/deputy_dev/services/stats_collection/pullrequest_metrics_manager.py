@@ -48,8 +48,11 @@ class PullRequestMetricsManager:
         await self.initialize_workspace_and_repo_dto()
         await self.initialize_pr_dto()
 
-        if not self.pr_dto and self.pr_close_payload["pr_created_at"] > self.experiment_start_time:
-            raise RetryException(f"PR: {self.pr_close_payload['pr_id']} not picked to be reviewed by Deputydev")
+        if not self.pr_dto:
+            if self.pr_close_payload["pr_created_at"] > self.experiment_start_time:
+                raise RetryException(f"PR: {self.pr_close_payload['pr_id']} not picked to be reviewed by Deputydev")
+            else:
+                return
 
         pr_time_since_creation = (
             datetime.now(timezone.utc) - self.pr_dto.scm_creation_time.astimezone(timezone.utc)
