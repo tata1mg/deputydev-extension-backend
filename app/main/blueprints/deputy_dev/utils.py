@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from torpedo import CONFIG
 
@@ -202,6 +203,10 @@ def get_foundation_model_name():
 def get_approval_time_from_participants_bitbucket(participants):
     if not participants:
         return
-    for participant in participants[::-1]:
+    participants = [participant for participant in participants if participant["participated_on"]]
+    if not participants:
+        return
+    sorted_participants = sorted(participants, key=lambda x: datetime.fromisoformat(x['participated_on']))
+    for participant in sorted_participants:
         if participant["role"] == "REVIEWER" and participant["approved"] is True and participant["state"] == "approved":
             return participant["participated_on"]
