@@ -1,5 +1,5 @@
 from enum import Enum
-
+from typing import List
 from torpedo.common_utils import CONFIG
 
 from app.common.constants.constants import ExtendedEnum
@@ -94,6 +94,29 @@ class MessageTypes(Enum):
     CHAT = "chat"
     FEEDBACK = "feedback"
     UNKNOWN = "unknown"
+
+
+class CombinedTagsList:
+    """
+    A class to combine tags from ChatTypes and FeedbackTypes enums.
+    """
+    @staticmethod
+    def combine() -> List[str]:
+        """
+        Combines the tags from ChatTypes and FeedbackTypes enums into a single list.
+
+        Returns:
+            List[str]: A list of combined tags with each tag prefixed by '#'.
+        """
+        combined_list = []
+        for chat_type in ChatTypes:
+            combined_list.append(f"#{chat_type.value}")
+        for feedback_type in FeedbackTypes:
+            combined_list.append(f"#{feedback_type.value}")
+        return combined_list
+
+
+COMBINED_TAGS_LIST = CombinedTagsList.combine()
 
 
 class PRReviewExperimentSet(Enum):
