@@ -208,5 +208,5 @@ def get_approval_time_from_participants_bitbucket(participants):
         return
     sorted_participants = sorted(participants, key=lambda x: datetime.fromisoformat(x['participated_on']))
     for participant in sorted_participants:
-        if participant["role"] == "REVIEWER" and participant["approved"] is True and participant["state"] == "approved":
+        if participant["approved"] is True and participant["state"] == "approved":
             return participant["participated_on"]
