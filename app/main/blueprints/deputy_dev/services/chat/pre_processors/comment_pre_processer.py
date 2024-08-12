@@ -77,12 +77,3 @@ class CommentPreprocessor(Enum):
             "repo_id": repo_dto.id if repo_dto else None,
         }
         return payload
-
-    @staticmethod
-    def combine_comments_enums():
-        combined_list = []
-        for chat_type in ChatTypes:
-            combined_list.append(f"#{chat_type.value}")
-        for feedback_type in FeedbackTypes:
-            combined_list.append(f"#{feedback_type.value}")
-        return combined_list

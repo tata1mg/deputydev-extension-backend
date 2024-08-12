@@ -9,6 +9,7 @@ __all__ = [
     "PRReviewExperimentSet",
     "ExperimentStatusTypes",
     "BitbucketBots",
+    "COMBINED_TAGS_LIST"
 ]
 from .constants import (
     BATCH_SIZE,
@@ -21,4 +22,5 @@ from .constants import (
     ExperimentStatusTypes,
     LLMModels,
     PRReviewExperimentSet,
+    COMBINED_TAGS_LIST
 )
