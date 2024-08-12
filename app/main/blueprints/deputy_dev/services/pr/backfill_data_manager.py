@@ -5,7 +5,7 @@ from app.common.service_clients.bitbucket.bitbucket_repo_client import (
 from app.main.blueprints.deputy_dev.constants.constants import (
     PrStatusTypes,
 )
-from app.common.utils.app_utils import convert_string, convert_to_datetime
+from app.common.utils.app_utils import name_to_slug, convert_to_datetime
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import ExperimentService
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
@@ -27,7 +27,7 @@ class BackfillManager:
             repo_dto = await RepoService.db_get({"id": repo_id})
             experiment_dto = await ExperimentService.db_get({"pr_id": pr["id"]})
             if repo_dto and experiment_dto:
-                self.bitbucket_client = BitbucketRepoClient("tata1mg", convert_string(repo_dto.name), scm_pr_id)
+                self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), scm_pr_id)
                 all_comments = await self.bitbucket_client.get_pr_comments()
                 llm_comment_count, human_comment_count = PullRequestMetricsManager.count_bot_and_human_comments(
                     all_comments
@@ -53,7 +53,7 @@ class BackfillManager:
             pr_dto = await PRService.db_get({"id": row.pr_id})
             if repo_dto and pr_dto:
                 # We will be fetching the PR details for every row in the table to backfill pr_state for each row
-                self.bitbucket_client = BitbucketRepoClient("tata1mg", convert_string(repo_dto.name), pr_dto.scm_pr_id)
+                self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), pr_dto.scm_pr_id)
                 pr_detail = await self.bitbucket_client.get_pr_details()
                 if row.scm_close_time is None and row.close_time_in_sec is None:
                     if pr_detail["state"] == "MERGED" or pr_detail["state"] == "DECLINED":
@@ -133,7 +133,7 @@ class BackfillManager:
         for row in pr_rows:
             if row["pr_state"] is None:
                 repo_dto = await RepoService.db_get({"id": row["repo_id"]})
-                self.bitbucket_client = BitbucketRepoClient("tata1mg", convert_string(repo_dto.name), row["scm_pr_id"])
+                self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), row["scm_pr_id"])
                 pr_detail = await self.bitbucket_client.get_pr_details()
                 if pr_detail["state"] == "MERGED" or pr_detail["state"] == "DECLINED":
                     pr_closed_at = convert_to_datetime(pr_detail["updated_on"])
@@ -159,7 +159,7 @@ class BackfillManager:
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         for row in pr_rows:
             repo_dto = await RepoService.db_get({"id": row["repo_id"]})
-            self.bitbucket_client = BitbucketRepoClient("tata1mg", convert_string(repo_dto.name), row["scm_pr_id"])
+            self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), row["scm_pr_id"])
             pr_detail = await self.bitbucket_client.get_pr_details()
             pr_approval_time = get_approval_time_from_participants_bitbucket(pr_detail.get("participants", []))
             if pr_approval_time:

@@ -1,6 +1,7 @@
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import remove_special_char
+from app.common.utils.app_utils import get_bitbucket_repo_name_slug
 
 
 class ChatWebhook:
@@ -36,7 +37,7 @@ class ChatWebhook:
             "repo": {
                 "workspace": request_payload["repository"]["workspace"]["slug"],
                 "pr_id": request_payload["pullrequest"]["id"],
-                "repo_name": request_payload["repository"]["name"],
+                "repo_name": get_bitbucket_repo_name_slug(request_payload["repository"]["full_name"]),
                 "commit_id": request_payload["pullrequest"]["destination"]["commit"]["hash"],
                 "workspace_id": request_payload["repository"]["workspace"]["uuid"],
             },

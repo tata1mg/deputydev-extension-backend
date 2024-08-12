@@ -1,3 +1,4 @@
+from app.common.utils.app_utils import get_bitbucket_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 
@@ -46,4 +47,4 @@ class BitbucketPrModel(BasePrModel):
         return self.pr_detail["destination"]["repository"]["uuid"]
 
     def scm_repo_name(self):
-        return self.pr_detail["destination"]["repository"]["name"]
+        return get_bitbucket_repo_name_slug(self.pr_detail["destination"]["repository"]["full_name"])

@@ -1,4 +1,4 @@
-from app.common.utils.app_utils import get_last_part
+from app.common.utils.app_utils import get_bitbucket_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 
 
@@ -20,7 +20,7 @@ class PRWebhook:
         Generates servable payload from bitbucket payload
         """
         pr_id = bitbucket_payload["pullrequest"]["id"]
-        repo_name = get_last_part(bitbucket_payload["repository"]["full_name"])
+        repo_name = get_bitbucket_repo_name_slug(bitbucket_payload["repository"]["full_name"])
         request_id = bitbucket_payload["request_id"]
         workspace = bitbucket_payload["repository"]["workspace"]["slug"]
         workspace_id = bitbucket_payload["repository"]["workspace"]["uuid"]

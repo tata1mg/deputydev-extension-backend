@@ -164,9 +164,9 @@ def convert_to_datetime(iso_string: str) -> datetime:
     return datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
 
 
-def get_last_part(value: str, delimeter: str = "/") -> str:
+def get_bitbucket_repo_name_slug(value: str) -> str:
     """
-    gets the last part of the string based on the delimeter passed to it
+    extracts repo slug from the full name passed to it
 
     Args:
         value (str): string from which the value needs to be extracted.
@@ -174,11 +174,20 @@ def get_last_part(value: str, delimeter: str = "/") -> str:
     Returns:
         datetime: The corresponding datetime object.
     """
-    parts = value.split(delimeter)
+    parts = value.split("/")
     return parts[-1]
 
 
-def convert_string(input_str, delimeter_to_replace: str = " ", delimeter_replaced_by: str = "-"):
+def name_to_slug(input_str) -> str:
+    """
+    Converts a name to a slug.
+
+    Args:
+        input_str (str): Name passed as argument.
+
+    Returns:
+        str: The corresponding slug.
+    """
     lower_str = input_str.lower()
-    result_str = lower_str.replace(delimeter_to_replace, delimeter_replaced_by)
+    result_str = lower_str.replace(" ", "-")
     return result_str

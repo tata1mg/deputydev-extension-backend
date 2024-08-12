@@ -1,4 +1,4 @@
-from app.common.utils.app_utils import convert_to_datetime
+from app.common.utils.app_utils import convert_to_datetime, get_bitbucket_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 
 
@@ -27,7 +27,7 @@ class PullRequestCloseWebhook:
         payload = {
             "pr_state": payload["pullrequest"]["state"],
             "pr_id": payload["pullrequest"]["id"],
-            "repo_name": payload["repository"]["name"],
+            "repo_name": get_bitbucket_repo_name_slug(payload["repository"]["full_name"]),
             "workspace": payload["repository"]["workspace"]["slug"],
             "workspace_id": payload["repository"]["workspace"]["uuid"],
             "pr_created_at": convert_to_datetime(payload["pullrequest"]["created_on"]),
