@@ -5,8 +5,13 @@ from torpedo import CONFIG
 
 from app.common.services.openai.client import LLMClient
 from app.common.utils.app_utils import build_openai_conversation_message
-from app.main.blueprints.deputy_dev.constants import SCRIT_TAG, TAGS, LLMModels
-from app.main.blueprints.deputy_dev.constants.constants import MessageTypes
+from app.main.blueprints.deputy_dev.constants import LLMModels
+from app.main.blueprints.deputy_dev.constants.constants import (
+    BitbucketBots,
+    ChatTypes,
+    MessageTypes,
+    MetaStatCollectionTypes,
+)
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     CHAT_COMMENT_PROMPT,
 )
@@ -21,16 +26,25 @@ from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWebhook
-from app.main.blueprints.deputy_dev.utils import format_code_blocks
+from app.main.blueprints.deputy_dev.utils import format_code_blocks, is_human_comment
+
+config = CONFIG.config
 
 
 class SmartCodeChatManager:
     @classmethod
-    async def chat(cls, payload: dict, vcs_type: str):
+    async def chat(cls, payload: dict, query_params: dict):
+        vcs_type = query_params.get("vcs_type", "bitbucket")
         comment_payload = ChatWebhook.parse_payload(payload, vcs_type)
         logger.info(f"Comment payload: {comment_payload}")
-        asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
+        if is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw):
+            await cls.handle_human_comment(payload, query_params)
+        elif comment_payload.author_info.name not in BitbucketBots.list():
+            asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
+        else:
+            logger.info(f"Comment rejected due to not falling in supported criteria {comment_payload}")
 
     @classmethod
     async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type):
@@ -52,13 +66,7 @@ class SmartCodeChatManager:
 
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
-        if any(comment.startswith(tag) for tag in TAGS):
-            # we are taking hastag_scrit as a flag to add a specific note to the comment before posting it
-            # through any VCS
-            add_note = False
-            if comment.startswith(SCRIT_TAG):
-                add_note = True
-
+        add_note = comment.startswith(ChatTypes.SCRIT.value)
         chat_type = await CommentPreprocessor.process_chat(chat_request, repo.pr_model())
         if chat_type == MessageTypes.UNKNOWN.value:
             logger.info(f"Chat processing rejected due to unknown tag with payload : {chat_request}")
@@ -107,3 +115,13 @@ class SmartCodeChatManager:
         )
         formatted_comment = format_code_blocks(response.content)
         return formatted_comment
+
+    @classmethod
+    async def handle_human_comment(cls, payload, query_params):
+        payload = {
+            "payload": payload,
+            "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
+            "query_params": query_params,
+        }
+
+        await MetaSubscriber(config=config).publish(payload)

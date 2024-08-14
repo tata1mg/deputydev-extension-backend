@@ -48,7 +48,7 @@ class PRReviewPostProcessor:
             filters={"id": pr_dto.id},
         )
         await ExperimentService.db_update(
-            payload={"review_status": ExperimentStatusTypes.COMPLETED.value},
+            payload={"review_status": ExperimentStatusTypes.COMPLETED.value, "llm_comment_count": 0},
             filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
         )
 
@@ -81,7 +81,7 @@ class PRReviewPostProcessor:
         buckets_data, comments = await cls.save_llm_comments(pr_dto, llm_comments)
         await cls.update_pr(pr_dto, comments, buckets_data, tokens_data, extra_info=extra_info)
         await ExperimentService.db_update(
-            payload={"review_status": ExperimentStatusTypes.COMPLETED.value},
+            payload={"review_status": ExperimentStatusTypes.COMPLETED.value, "llm_comment_count": len(llm_comments)},
             filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
         )
 

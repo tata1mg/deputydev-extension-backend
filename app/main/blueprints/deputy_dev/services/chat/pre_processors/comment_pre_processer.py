@@ -38,12 +38,12 @@ class CommentPreprocessor(Enum):
 
     @classmethod
     async def save_feedback_info(cls, feedback_type, chat_request: ChatRequest, pr_model: BasePrModel):
-        payload = await cls.extract_payload(feedback_type, chat_request, pr_model)
+        payload = await cls.extract_feedback_payload(feedback_type, chat_request, pr_model)
         result = await FeedbackService.db_insert(feedback_dto=FeedbackDTO(**payload))
         return result
 
     @classmethod
-    async def extract_payload(cls, feedback_type, chat_request: ChatRequest, pr_model: BasePrModel):
+    async def extract_feedback_payload(cls, feedback_type, chat_request: ChatRequest, pr_model: BasePrModel):
         workspace_dto, repo_dto, pr_dto = None, None, None
         workspace_dto = await WorkspaceService.find(
             scm=pr_model.scm_type(),

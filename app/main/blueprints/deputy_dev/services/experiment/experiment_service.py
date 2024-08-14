@@ -1,5 +1,6 @@
 from sanic.log import logger
 from torpedo import CONFIG
+from tortoise.expressions import F
 
 from app.main.blueprints.deputy_dev.caches.ab_experiment import ABExperimentCache
 from app.main.blueprints.deputy_dev.constants.constants import ExperimentStatusTypes
@@ -126,3 +127,21 @@ class ExperimentService:
         except Exception as ex:
             logger.error("Not able to fetch experiment data range - {}".format(ex))
             raise ex
+
+    @classmethod
+    async def increment_human_comment_count(cls, scm_pr_id, repo_id):
+        query = (
+            f"UPDATE experiments SET human_comment_count = COALESCE(human_comment_count, 0) + 1 "
+            f"WHERE scm_pr_id = '{scm_pr_id}' AND repo_id = {repo_id} RETURNING human_comment_count;"
+        )
+        update_count = await DB.raw_sql(query)
+        if update_count:
+            return True
+        return False
+
+    @classmethod
+    async def decrement_human_comment_count(cls, scm_pr_id, repo_id):
+        update_count = await Experiments.filter(scm_pr_id=scm_pr_id, repo_id=repo_id).update(
+            human_comment_count=F("human_comment_count") - 1
+        )
+        return update_count

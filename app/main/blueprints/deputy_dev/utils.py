@@ -1,9 +1,14 @@
 import re
 from datetime import datetime
+from typing import Dict, List, Tuple
 
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.constants.constants import IGNORE_FILES
+from app.main.blueprints.deputy_dev.constants.constants import (
+    COMBINED_TAGS_LIST,
+    IGNORE_FILES,
+    BitbucketBots,
+)
 
 
 def remove_special_char(char, input_string):
@@ -206,7 +211,44 @@ def get_approval_time_from_participants_bitbucket(participants):
     participants = [participant for participant in participants if participant["participated_on"]]
     if not participants:
         return
-    sorted_participants = sorted(participants, key=lambda x: datetime.fromisoformat(x['participated_on']))
+    sorted_participants = sorted(participants, key=lambda x: datetime.fromisoformat(x["participated_on"]))
     for participant in sorted_participants:
         if participant["approved"] is True and participant["state"] == "approved":
             return participant["participated_on"]
+
+
+def is_human_comment(actor, comment_raw):
+    human_comment = False
+    if actor not in BitbucketBots.list():
+        human_comment = not any(comment_raw.lower().startswith(f"{tag}") for tag in COMBINED_TAGS_LIST)
+    return human_comment
+
+
+def count_bot_and_human_comments_bitbucket(comments: List[Dict]) -> Tuple[int, int]:
+    """
+    Count the number of comments made by the bot and others.
+
+    Args:
+        comments (List[Dict]): List of comments from Bitbucket.
+
+    Returns:
+        Tuple[int, int]: Tuple containing two integers - count of bot comments and count of other comments.
+    """
+    chat_authors = BitbucketBots.list()
+    bot_comment_count = 0
+    human_comment_count = 0
+    for comment in comments:
+        if comment.get("parent") is None:
+            if comment.get("user", {}).get("display_name") in chat_authors:
+                # There are many bots that are currently running in bitbucket, but we are only considering
+                # the comment from DeputyDev for llm count, rest of the bot comment counts are ignored
+                if comment.get("user", {}).get("display_name") == BitbucketBots.DEPUTY_DEV.value:
+                    bot_comment_count += 1
+            else:
+                # Any tags such as #scrit, #like or any other whitelisted tags we receive starts with
+                # \#dd, \#scrit, that is why we are filtering out this tags starting with "\"
+                comment_raw = comment.get("content").get("raw")
+                if not any(comment_raw.lower().startswith(f"\{tag}") for tag in COMBINED_TAGS_LIST):
+                    human_comment_count += 1
+
+    return bot_comment_count, human_comment_count

@@ -1,18 +1,19 @@
 from sanic.log import logger
+
 from app.common.service_clients.bitbucket.bitbucket_repo_client import (
     BitbucketRepoClient,
 )
-from app.main.blueprints.deputy_dev.constants.constants import (
-    PrStatusTypes,
+from app.common.utils.app_utils import convert_to_datetime, name_to_slug
+from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
+from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
+    ExperimentService,
 )
-from app.common.utils.app_utils import name_to_slug, convert_to_datetime
-from app.main.blueprints.deputy_dev.services.experiment.experiment_service import ExperimentService
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
-from app.main.blueprints.deputy_dev.services.stats_collection.pullrequest_metrics_manager import (
-    PullRequestMetricsManager,
+from app.main.blueprints.deputy_dev.utils import (
+    count_bot_and_human_comments_bitbucket,
+    get_approval_time_from_participants_bitbucket,
 )
-from app.main.blueprints.deputy_dev.utils import get_approval_time_from_participants_bitbucket
 
 
 class BackfillManager:
@@ -29,9 +30,7 @@ class BackfillManager:
             if repo_dto and experiment_dto:
                 self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), scm_pr_id)
                 all_comments = await self.bitbucket_client.get_pr_comments()
-                llm_comment_count, human_comment_count = PullRequestMetricsManager.count_bot_and_human_comments(
-                    all_comments
-                )
+                llm_comment_count, human_comment_count = count_bot_and_human_comments_bitbucket(all_comments)
                 # Ideally we should be doing this update in batches, but since we have less thand 450 data in experiment
                 # table as of the time of adding this comment, we can do this one by one for now.
                 await ExperimentService.db_update(
@@ -58,9 +57,7 @@ class BackfillManager:
                 if row.scm_close_time is None and row.close_time_in_sec is None:
                     if pr_detail["state"] == "MERGED" or pr_detail["state"] == "DECLINED":
                         all_comments = await self.bitbucket_client.get_pr_comments()
-                        llm_comment_count, human_comment_count = PullRequestMetricsManager.count_bot_and_human_comments(
-                            all_comments
-                        )
+                        llm_comment_count, human_comment_count = count_bot_and_human_comments_bitbucket(all_comments)
 
                         if pr_dto.review_status not in [
                             PrStatusTypes.COMPLETED.value,
