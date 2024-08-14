@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List
+
 from torpedo.common_utils import CONFIG
 
 from app.common.constants.constants import ExtendedEnum
@@ -14,7 +15,6 @@ PR_SIZE_TOO_BIG_MESSAGE = (
     " Note :- Every 4 characters is equal to 1 token."
 )
 BATCH_SIZE = CONFIG.config["BATCH_SIZE"]
-TAGS = ["#scrit", "#deputydev", "#dd"]
 SCRIT_TAG = "#scrit"
 SCRIT_DEPRECATION_NOTIFICATION = (
     "Note :- #scrit is deprecated and will be removed with next releases. Recommended to use - #deputydev or #dd"
@@ -94,29 +94,7 @@ class MessageTypes(Enum):
     CHAT = "chat"
     FEEDBACK = "feedback"
     UNKNOWN = "unknown"
-
-
-class CombinedTagsList:
-    """
-    A class to combine tags from ChatTypes and FeedbackTypes enums.
-    """
-    @staticmethod
-    def combine() -> List[str]:
-        """
-        Combines the tags from ChatTypes and FeedbackTypes enums into a single list.
-
-        Returns:
-            List[str]: A list of combined tags with each tag prefixed by '#'.
-        """
-        combined_list = []
-        for chat_type in ChatTypes:
-            combined_list.append(f"#{chat_type.value}")
-        for feedback_type in FeedbackTypes:
-            combined_list.append(f"#{feedback_type.value}")
-        return combined_list
-
-
-COMBINED_TAGS_LIST = CombinedTagsList.combine()
+    HUMAN_COMMENT = "human_comment"
 
 
 class PRReviewExperimentSet(Enum):
@@ -154,3 +132,33 @@ class BitbucketBots(ExtendedEnum):
     DEPUTY_DEV = "DeputyDev"
     HECTOR_BOT = "Hector Coverage Bot"
     FRONTEND_RELEASE_POLICE = "Frontend Release Police"
+    TATA_1MG_ROOT = "Tata 1mg root"
+
+
+class MetaStatCollectionTypes(Enum):
+    PR_CLOSE = "pr_close"
+    HUMAN_COMMENT = "human comment"
+
+
+class CombinedTagsList:
+    """
+    A class to combine tags from ChatTypes and FeedbackTypes enums.
+    """
+
+    @staticmethod
+    def combine() -> List[str]:
+        """
+        Combines the tags from ChatTypes and FeedbackTypes enums into a single list.
+
+        Returns:
+            List[str]: A list of combined tags with each tag prefixed by '#'.
+        """
+        combined_list = []
+        for chat_type in ChatTypes:
+            combined_list.append(f"#{chat_type.value}")
+        for feedback_type in FeedbackTypes:
+            combined_list.append(f"#{feedback_type.value}")
+        return combined_list
+
+
+COMBINED_TAGS_LIST = CombinedTagsList.combine()

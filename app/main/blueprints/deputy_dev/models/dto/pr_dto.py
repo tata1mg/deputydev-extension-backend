@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
-from app.main.blueprints.deputy_dev.constants.constants import PRStatus
+
 from pydantic import BaseModel
+
+from app.main.blueprints.deputy_dev.constants.constants import PRStatus
 
 
 class PullRequestDTO(BaseModel):

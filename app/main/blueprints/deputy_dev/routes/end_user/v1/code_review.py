@@ -15,7 +15,9 @@ from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager impor
 from app.main.blueprints.deputy_dev.services.pr.backfill_data_manager import (
     BackfillManager,
 )
-from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
+from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
+    StatsCollectionTrigger,
+)
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
 
@@ -57,7 +59,7 @@ async def chat_assistance_api(_request: Request, **kwargs):
     headers = _request.headers
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     # TODO - Unfulfilled parameter - comment
-    await SmartCodeChatManager.chat(payload, vcs_type=query_params.get("vcs_type", VCSTypes.bitbucket.value))
+    await SmartCodeChatManager.chat(payload, query_params)
     return send_response(f"Processing Started with Request ID : {request_id}")
 
 
@@ -65,8 +67,7 @@ async def chat_assistance_api(_request: Request, **kwargs):
 async def compute_pr_close_metrics(_request: Request, **kwargs):
     payload = _request.custom_json()
     query_params = _request.request_params()
-    data = {"payload": payload, "query_params": query_params}
-    await MetaSubscriber(config=config).publish(data)
+    await StatsCollectionTrigger.select_stats_and_publish(payload=payload, query_params=query_params)
     return send_response("Success")
 
 
@@ -76,8 +77,7 @@ async def compute_pr_close_metrics(_request: Request, **kwargs):
 async def compute_merge_metrics(_request: Request, **kwargs):
     payload = _request.custom_json()
     query_params = _request.request_params()
-    data = {"payload": payload, "query_params": query_params}
-    await MetaSubscriber(config=config).publish(data)
+    await StatsCollectionTrigger.select_stats_and_publish(payload=payload, query_params=query_params)
     return send_response("Success")
 
 
