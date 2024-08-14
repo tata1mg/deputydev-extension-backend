@@ -24,12 +24,10 @@ class StatsCollectionBase(ABC):
         self.experiment_start_time = datetime.fromisoformat(CONFIG.config.get("EXPERIMENT_START_TIME"))
         self.stats_type = None
 
-    @abstractmethod
     def extract_payload(self):
         """Extract payload"""
         raise NotImplementedError()
 
-    @abstractmethod
     async def save_to_db(self, extracted_payload):
         """implement Saving meta info to db"""
         raise NotImplementedError()
