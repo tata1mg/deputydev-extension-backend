@@ -1,7 +1,7 @@
+from app.common.utils.app_utils import get_bitbucket_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import remove_special_char
-from app.common.utils.app_utils import get_bitbucket_repo_name_slug
 
 
 class ChatWebhook:
