@@ -42,13 +42,25 @@ class StatsCollectionBase(ABC):
             extracted_payload = self.extract_payload()
             await self.save_to_db(extracted_payload)
             logger.info(f"{self.stats_type} meta sync completed for payload {extracted_payload}")
+
+        except RetryException as ex:
+            logger.error(
+                f"{self.stats_type} meta sync failed with for repo {extracted_payload.get('repo_name')}"
+                f" and pr {extracted_payload.get('scm_pr_id')} exception {ex}"
+            )
+            raise ex
+
         except Exception as ex:
             await self.revert()
             logger.error(
                 f"{self.stats_type} meta sync failed with for repo {extracted_payload.get('repo_name')}"
                 f" and pr {extracted_payload.get('scm_pr_id')} exception {ex}"
             )
-            raise ex
+            raise RetryException(
+                message=f"Unknown: {self.stats_type} meta sync failed with for repo "
+                f"{extracted_payload.get('repo_name')}"
+                f" and pr {extracted_payload.get('scm_pr_id')} exception {ex}"
+            )
 
     async def get_pr_from_db(self, payload):
         workspace_dto = await WorkspaceService.find(scm_workspace_id=payload["scm_workspace_id"], scm=self.vcs_type)

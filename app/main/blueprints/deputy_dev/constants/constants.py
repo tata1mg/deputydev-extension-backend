@@ -138,6 +138,7 @@ class BitbucketBots(ExtendedEnum):
 class MetaStatCollectionTypes(Enum):
     PR_CLOSE = "pr_close"
     HUMAN_COMMENT = "human comment"
+    PR_APPROVAL_TIME = "pr_approval"
 
 
 class CombinedTagsList:
