@@ -29,3 +29,5 @@ class StatsCollectionTrigger:
             return MetaStatCollectionTypes.PR_CLOSE.value
         if payload.get("comment"):
             return MetaStatCollectionTypes.HUMAN_COMMENT.value
+        if payload.get("approval"):
+            return MetaStatCollectionTypes.PR_APPROVAL_TIME.value
