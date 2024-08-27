@@ -1,16 +1,14 @@
 import json
 from typing import List, Optional, Tuple
 
-import httpx
 import numpy as np
 import requests
-from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionMessage
 from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.caches import DeputyDevCache
-from app.common.services.openai.base import BaseClient
+from app.common.service_clients.openai.openai import OpenAIServiceClient
+from app.common.services.openai.base_client import BaseClient
 from app.common.utils.app_utils import hash_sha256
 from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
@@ -18,20 +16,8 @@ from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 openai_key = CONFIG.config.get("OPENAI_KEY")
 
 
-class OpenAIClient(BaseClient):
+class OpenAIManager(BaseClient):
     def __init__(self):
-        self.__client = AsyncOpenAI(
-            api_key=openai_key,
-            timeout=600,
-            http_client=httpx.AsyncClient(
-                timeout=60,
-                limits=httpx.Limits(
-                    max_connections=1000,
-                    max_keepalive_connections=100,
-                    keepalive_expiry=20,
-                ),
-            ),
-        )
         self.tiktoken_client = TikToken()
 
     async def __call_embedding(self, batch: List[str]) -> np.ndarray:
@@ -44,9 +30,7 @@ class OpenAIClient(BaseClient):
         Returns:
             np.ndarray: Embedded vectors.
         """
-        response = await self.__client.embeddings.create(
-            input=batch, model="text-embedding-3-small", encoding_format="float"
-        )
+        response = await OpenAIServiceClient().create_embedding(input=batch)
         cut_dim = np.array([data.embedding for data in response.data])
         normalized_dim = self.normalize_l2(cut_dim)
         # save results to redis
@@ -112,24 +96,3 @@ class OpenAIClient(BaseClient):
         except Exception:
             logger.error("Failed to store embeddings in cache, returning without storing")
         return embeddings, input_tokens
-
-    async def get_openai_response(
-        self, conversation_messages: list, model: str, response_type: str = "json_object"
-    ) -> ChatCompletionMessage:
-        """
-        Retrieve a response from the OpenAI Chat API.
-        Args:
-            conversation_messages (list): A list of conversation messages, including both system and user messages.
-            model (str): The name or identifier of the GPT model to use for the completion.
-        Returns:
-            ChatCompletionMessage: The completed message returned by the OpenAI Chat API.
-        Raises:
-            OpenAIException: If there is an error while communicating with the OpenAI API or processing the response.
-        """
-        completion = await self.__client.chat.completions.create(
-            model=model,
-            response_format={"type": response_type},
-            messages=conversation_messages,
-            temperature=0.5,
-        )
-        return completion.choices[0].message, completion.usage

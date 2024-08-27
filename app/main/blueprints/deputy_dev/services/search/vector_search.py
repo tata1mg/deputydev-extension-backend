@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from app.common.services.openai.client import LLMClient
+from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.executor import executor
 from app.main.blueprints.deputy_dev.constants import BATCH_SIZE
 from app.main.blueprints.deputy_dev.services.chunking.chunk_info import ChunkInfo
@@ -24,7 +24,7 @@ async def embed_text_array(texts: Tuple[str]) -> (List[np.ndarray], int):
     texts = [text if text else " " for text in texts]
     batches = [texts[i : i + BATCH_SIZE] for i in range(0, len(texts), BATCH_SIZE)]
     for batch in batches:
-        embedding, input_token = await LLMClient().get_embeddings(batch)
+        embedding, input_token = await OpenAILLMService().get_embeddings(batch)
         embeddings.append(embedding)
     return embeddings, input_tokens
 
@@ -61,7 +61,7 @@ async def get_query_texts_similarity(query: str, texts: List[str]) -> (List[floa
         return [], None
     embeddings, input_tokens = await embed_text_array(texts)
     embeddings = np.concatenate(embeddings)
-    query_embedding, input_tokens = await LLMClient().get_embeddings([query])
+    query_embedding, input_tokens = await OpenAILLMService().get_embeddings([query])
     similarity = cosine_similarity(query_embedding, embeddings)
     similarity = similarity.tolist()
     return similarity, input_tokens

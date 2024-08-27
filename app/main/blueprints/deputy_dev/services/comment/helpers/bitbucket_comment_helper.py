@@ -8,12 +8,13 @@ class BitbucketCommentHelper:
     @classmethod
     def format_pr_review_comment(cls, comment) -> dict:
         comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
+        file_path = comment["file_path"].split(",")[0]
         comment_payload = {
             "content": {"raw": format_comment(comment)},
             "inline": {
                 "path": (
-                    re.sub(r"^[ab]/\s*", "", comment["file_path"])
-                    if re.match(r"^[ab]/\s*", comment.get("file_path"))
+                    re.sub(r"^[ab]/\s*", "", file_path)
+                    if re.match(r"^[ab]/\s*", file_path)
                     else comment.get("file_path")
                 )
             },

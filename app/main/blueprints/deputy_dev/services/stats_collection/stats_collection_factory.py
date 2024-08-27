@@ -21,7 +21,9 @@ class StatsCollectionFactory:
 
     @classmethod
     async def handle_event(cls, data):
-        event_type = data.get("stats_type", MetaStatCollectionTypes.PR_CLOSE.value) # default value for backward compatibility
+        event_type = data.get(
+            "stats_type", MetaStatCollectionTypes.PR_CLOSE.value
+        )  # default value for backward compatibility
         logger.info(f"Received New SQS Message for meta sync {event_type}")
         _klass = cls.FACTORIES[event_type]
 

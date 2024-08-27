@@ -40,7 +40,7 @@ class OpenAiResponse:
             )
         context = self.get_context(contextual_docs, headers.city())
         conversation_messages = generate_conversation(payload, context)
-        llm_response = await self.client.get_response(conversation_messages)
+        llm_response = await self.client.get_llm_response(conversation_messages=conversation_messages, model="gpt-4")
         serialized_response = await self.generate_response(payload.chat_id, llm_response)
         await cache_user_chat_history(payload, serialized_response)
 
