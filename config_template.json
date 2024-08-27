@@ -140,5 +140,59 @@
     "ControlSet1",
     "ControlSet2"
   ],
-  "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00"
+  "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00",
+  "PR_REVIEW_SETTINGS": {
+    "MULTI_AGENT_ENABLED": true,
+    "REFLECTION_ENABLED": true
+  },
+  "AGENT_SETTINGS": {
+    "security": {
+      "confidence_score_limit": 0.9
+    },
+    "code_communication": {
+      "confidence_score_limit": 0.95
+    },
+    "performance_optimisation": {
+      "confidence_score_limit": 0.9
+    },
+    "code_maintainability": {
+      "confidence_score_limit": 0.9
+    },
+    "error": {
+      "confidence_score_limit": 0.9
+    },
+    "business_logic_validation": {
+      "confidence_score_limit": 0.9
+    },
+    "pr_description": {
+      "confidence_score_limit": 0.9
+    }
+  },
+  "AWS": {
+    "AWS_ACCESS_KEY_ID": null,
+    "AWS_SECRET_ACCESS_KEY": null,
+    "AWS_REGION": "us-east-1",
+    "BEDROCK_SERVICE_NAME": "bedrock-runtime",
+    "BEDROCK_READ_TIMEOUT": 1000
+  },
+  "LLM_MODELS": {
+    "CLAUDE_3_POINT_5_SONNET": {
+      "NAME": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "PROVIDER": "ANTHROPIC",
+      "ACCESS_KEY": "",
+      "BITBUCKET_TOKEN": "",
+      "MAX_TOKENS": 8192,
+      "VERSION": "bedrock-2023-05-31"
+    },
+    "GPT_4_O_MODEL": {
+      "NAME": "gpt-4o-mini",
+      "PROVIDER": "OPENAI",
+      "ACCESS_KEY": "",
+      "BITBUCKET_TOKEN": ""
+    }
+  },
+  "FEATURE_MODELS": {
+    "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
+    "PR_SUMMARY": "GPT_4_O_MODEL"
+  }
 }

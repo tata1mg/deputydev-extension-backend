@@ -3,7 +3,7 @@ import asyncio
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.services.openai.client import LLMClient
+from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.app_utils import build_openai_conversation_message
 from app.main.blueprints.deputy_dev.constants import LLMModels
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -106,7 +106,7 @@ class SmartCodeChatManager:
         Returns:
         - formatted_comment (str): Response from the llm server for the comment made on PR.
         """
-        client, model_config, context = LLMClient(), CONFIG.config.get(model), CHAT_COMMENT_PROMPT
+        client, model_config, context = OpenAILLMService(), CONFIG.config.get(model), CHAT_COMMENT_PROMPT
 
         conversation_message = build_openai_conversation_message(system_message=context, user_message=comment_data)
 

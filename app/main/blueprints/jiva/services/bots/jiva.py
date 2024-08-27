@@ -137,7 +137,7 @@ class JivaManager:
             final_chat_history = JivaManager.generate_chat_memory(payload)
         final_prompt = (
             f"{final_instructions} \n {user_location} \n {final_context} \n {final_chat_history} \n"
-            f"Given above context, please respond against this question - {payload.current_prompt}"
+            f"Given above context, please respond against this question - {payload.current_prompts}"
         )
         return final_prompt
 

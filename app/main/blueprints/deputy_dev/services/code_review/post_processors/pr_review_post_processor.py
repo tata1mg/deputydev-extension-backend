@@ -78,7 +78,8 @@ class PRReviewPostProcessor:
     async def post_process_pr_with_comments(
         cls, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
     ):
-        buckets_data, comments = await cls.save_llm_comments(pr_dto, llm_comments)
+        all_comments = cls.combine_all_agents_comments(llm_comments)
+        buckets_data, comments = await cls.save_llm_comments(pr_dto, all_comments)
         await cls.update_pr(pr_dto, comments, buckets_data, tokens_data, extra_info=extra_info)
         await ExperimentService.db_update(
             payload={"review_status": ExperimentStatusTypes.COMPLETED.value, "llm_comment_count": len(llm_comments)},
@@ -86,27 +87,35 @@ class PRReviewPostProcessor:
         )
 
     @classmethod
+    def combine_all_agents_comments(cls, llm_agents_comments):
+        all_comments = []
+
+        for agent, data in llm_agents_comments.items():
+            for comment in data.get("comments", []):
+                comment["agent"] = agent
+                all_comments.append(comment)
+
+        return all_comments
+
+    @classmethod
     def get_pr_score(cls, llm_comments: list, buckets_data: Dict[str, BucketDTO]):
         weight_counts_data = {}
         for comment in llm_comments:
-            bucket_name = comment["bucket_name"]
-            if buckets_data[bucket_name].status == BucketStatus.ACTIVE.value:
-                weight_counts_data[buckets_data[bucket_name].weight] = (
-                    weight_counts_data.get(buckets_data[bucket_name].weight, 0) + 1
+            bucket = comment["bucket"]
+            if buckets_data[bucket].status == BucketStatus.ACTIVE.value:
+                weight_counts_data[buckets_data[bucket].weight] = (
+                    weight_counts_data.get(buckets_data[bucket].weight, 0) + 1
                 )
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
     @classmethod
     async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[dict]):
-        fine_tuned_comments = llm_comments[LLMCommentTypes.FINE_TUNED_COMMENTS.value]
-        foundation_comments = llm_comments[LLMCommentTypes.FOUNDATION_COMMENTS.value]
         all_buckets = await BucketService.get_all_buckets_dict()
-        comments = fine_tuned_comments + foundation_comments
         new_buckets = []
         unique_buckets = set()
-        for comment in comments:
-            if comment["bucket_name"] not in all_buckets:
-                unique_buckets.add(comment["bucket_name"])
+        for comment in llm_comments:
+            if comment["bucket"] not in all_buckets:
+                unique_buckets.add(comment["bucket"])
         for bucket in unique_buckets:
             new_buckets.append(
                 BucketDTO(
@@ -127,31 +136,31 @@ class PRReviewPostProcessor:
             all_buckets = await BucketService.get_all_buckets_dict()
 
         comments_to_save = []
-        for model in [LLMCommentTypes.FOUNDATION_COMMENTS.value, LLMCommentTypes.FINE_TUNED_COMMENTS.value]:
-            if llm_comments[model]:
-                for comment in llm_comments[model]:
-                    comment_info = {
-                        "iteration": 1,
-                        "llm_confidence_score": comment["confidence_score"],
-                        "llm_source_model": CONFIG.config[comment["llm_source_model"]]["MODEL"],
-                        "organisation_id": pr_dto.organisation_id,
-                        "scm": pr_dto.scm,
-                        "workspace_id": pr_dto.workspace_id,
-                        "repo_id": pr_dto.repo_id,
-                        "pr_id": pr_dto.id,
-                        "scm_comment_id": str(comment["scm_comment_id"]),
-                        "scm_author_id": pr_dto.scm_author_id,
-                        "author_name": pr_dto.author_name,
-                        "bucket_id": all_buckets[comment["bucket_name"]].id,
-                        "meta_info": {
-                            "line_number": comment["line_number"],
-                            "file_path": comment["file_path"],
-                            "commit_id": pr_dto.commit_id,
-                        },
-                    }
-                    comments_to_save.append(PRComments(**comment_info))
-                await CommentService.bulk_insert(comments_to_save)
-        return all_buckets, comments
+
+        for comment in llm_comments:
+            comment_info = {
+                "iteration": 1,
+                "llm_confidence_score": comment["confidence_score"],
+                "llm_source_model": CONFIG.config["LLM_MODELS"][comment["llm_source_model"]]["NAME"],
+                "organisation_id": pr_dto.organisation_id,
+                "scm": pr_dto.scm,
+                "workspace_id": pr_dto.workspace_id,
+                "repo_id": pr_dto.repo_id,
+                "pr_id": pr_dto.id,
+                "scm_comment_id": str(comment["scm_comment_id"]),
+                "scm_author_id": pr_dto.scm_author_id,
+                "author_name": pr_dto.author_name,
+                "bucket_id": all_buckets[comment["bucket"]].id,
+                "meta_info": {
+                    "line_number": comment["line_number"],
+                    "file_path": comment["file_path"],
+                    "commit_id": pr_dto.commit_id,
+                    "agent": comment["agent"],
+                },
+            }
+            comments_to_save.append(PRComments(**comment_info))
+        await CommentService.bulk_insert(comments_to_save)
+        return all_buckets, llm_comments
 
     @classmethod
     async def update_pr(cls, pr_dto: PullRequestDTO, llm_comments, buckets_data, tokens_data, extra_info: dict = None):
@@ -181,28 +190,7 @@ class PRReviewPostProcessor:
 
     @classmethod
     def format_token(cls, tokens_data: dict):
-        return {
-            "tokens": {
-                "pr_diff_tokens": tokens_data.get(TokenTypes.PR_DIFF_TOKENS.value),
-                "pr_summary": {
-                    "input": tokens_data.get(TokenTypes.PR_SUMMARY_MODEL_INPUT.value),
-                    "output": tokens_data.get(TokenTypes.PR_SUMMARY_MODEL_OUTPUT.value),
-                },
-                "pr_review": {
-                    "input": tokens_data.get(TokenTypes.PR_REVIEW_MODEL_INPUT.value),
-                    "output": tokens_data.get(TokenTypes.PR_REVIEW_MODEL_OUTPUT.value),
-                    "system_prompt": tokens_data.get(TokenTypes.PR_REVIEW_SYSTEM_PROMPT.value),
-                    "user_prompt": {
-                        "total": tokens_data.get(TokenTypes.PR_REVIEW_USER_PROMPT.value),
-                        "break_up": {
-                            "pr_diff": tokens_data.get(TokenTypes.PR_DIFF_TOKENS.value),
-                            "relevant_chunk": tokens_data.get(TokenTypes.RELEVANT_CHUNK.value),
-                            "title": tokens_data.get(TokenTypes.PR_TITLE.value),
-                            "description": tokens_data.get(TokenTypes.PR_DESCRIPTION.value),
-                            "confluence": tokens_data.get(TokenTypes.PR_CONFLUENCE.value),
-                            "user_story": tokens_data.get(TokenTypes.PR_USER_STORY.value),
-                        },
-                    },
-                },
-            }
-        }
+        tokens = {}
+        for agent_name, agent_tokens in tokens_data.items():
+            tokens[agent_name] = agent_tokens
+        return {"tokens": tokens}

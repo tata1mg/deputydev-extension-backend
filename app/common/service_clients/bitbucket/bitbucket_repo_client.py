@@ -86,7 +86,7 @@ class BitbucketRepoClient:
         """
         comment_headers = {
             "Content-Type": "application/json",
-            "Authorization": CONFIG.config[model]["BITBUCKET_TOKEN"],
+            "Authorization": CONFIG.config["LLM_MODELS"][model]["BITBUCKET_TOKEN"],
         }
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments"
         response = requests.post(url, headers=comment_headers, json=comment)
