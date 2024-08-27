@@ -58,7 +58,9 @@ class DiagnoBotManager:
         final_prompt: str = self.generate_final_prompt(payload, docs)
 
         # Generation/Synthesis
-        llm_response: ChatCompletionMessage = OpenAIServiceClient().get_response(final_prompt=final_prompt)
+        llm_response: ChatCompletionMessage = await OpenAIServiceClient().get_llm_response(
+            conversation_messages=final_prompt, model="gpt-4"
+        )
 
         # Serialization
         return await self.generate_response(payload.chat_id, llm_response)
@@ -101,7 +103,7 @@ class DiagnoBotManager:
             final_chat_history = DiagnoBotManager.generate_chat_memory(payload)
         final_prompt = (
             f"{final_instructions} \n {final_context} \n {final_chat_history} \n Given above context, "
-            f"please respond against this question - {payload.current_prompt}"
+            f"please respond against this question - {payload.current_prompts}"
         )
         return final_prompt
 

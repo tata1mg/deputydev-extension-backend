@@ -68,10 +68,11 @@ class BitbucketComment(BaseComment):
 
     async def create_pr_review_comment(self, comment: dict, model):
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
-        if int(comment.get("line_number")) >= 0:
-            comment_payload["inline"]["to"] = int(comment.get("line_number"))
+        line_number = int(comment.get("line_number").split(",")[0])
+        if line_number >= 0:
+            comment_payload["inline"]["to"] = line_number
         else:
-            comment_payload["inline"]["from"] = -1 * int(comment.get("line_number"))
+            comment_payload["inline"]["from"] = -1 * line_number
         logger.info(f"Comment payload: {comment_payload}")
         result = await self.repo_client.create_comment_on_pr(comment_payload, model)
         comment["scm_comment_id"] = result["id"]

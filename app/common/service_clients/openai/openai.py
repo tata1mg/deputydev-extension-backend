@@ -1,7 +1,8 @@
+from typing import List
+
 import httpx
 from commonutils.utils import Singleton
 from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionMessage
 from torpedo import CONFIG
 
 from app.main.blueprints.jiva.services.openai.util import get_openai_funcs
@@ -11,7 +12,7 @@ config = CONFIG.config
 
 class OpenAIServiceClient(metaclass=Singleton):
     def __init__(self):
-        self.client = AsyncOpenAI(
+        self.__client = AsyncOpenAI(
             api_key=config.get("OPENAI_KEY"),
             timeout=60,
             http_client=httpx.AsyncClient(
@@ -24,13 +25,27 @@ class OpenAIServiceClient(metaclass=Singleton):
             ),
         )
 
-    async def get_response(self, conversation_messages) -> ChatCompletionMessage:
-        completion = await self.client.chat.completions.create(
-            model="gpt-4-1106-preview",
-            response_format={"type": "json_object"},
+    async def get_llm_response(
+        self,
+        conversation_messages: List,
+        model: str,
+        tool_choice: str = None,
+        tools: list = None,
+        response_type: str = "json_object",
+    ):
+        completion = await self.__client.chat.completions.create(
+            model=model,
+            response_format={"type": response_type},
             messages=conversation_messages,
-            tools=get_openai_funcs(),
-            tool_choice="auto",
+            tools=tools,
+            tool_choice=tool_choice,
             temperature=0.5,
         )
-        return completion.choices[0].message
+        # we need both message and output token now to returning full completion message
+        return completion
+
+    async def create_embedding(self, input):
+        embeddings = await self.__client.embeddings.create(
+            input=input, model="text-embedding-3-small", encoding_format="float"
+        )
+        return embeddings

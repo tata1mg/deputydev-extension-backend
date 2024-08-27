@@ -66,16 +66,16 @@ class TokenTypes(Enum):
     REVIEW_CONTEXT = "user_context"
     RELEVANT_CHUNK = "relevant_chunk"
     EMBEDDING = "embedding"
-    PR_SUMMARY_MODEL_INPUT = "pr_summary_input"
-    PR_SUMMARY_MODEL_OUTPUT = "pr_summary_output"
-    PR_REVIEW_MODEL_OUTPUT = "pr_review_model_output"
-    PR_REVIEW_MODEL_INPUT = "pr_review_model_input"
     PR_TITLE = "pr_title"
     PR_DESCRIPTION = "pr_description"
     PR_CONFLUENCE = "pr_confluence"
     PR_USER_STORY = "pr_user_story"
     PR_REVIEW_SYSTEM_PROMPT = "pr_review_system_prompt"
     PR_REVIEW_USER_PROMPT = "pr_review_user_prompt"
+    MODEL_INPUT_TOKENS = "model_input_tokens"
+    MODEL_OUTPUT_TOKENS = "model_output_tokens"
+    SYSTEM_PROMPT = "system_prompt"
+    USER_PROMPT = "user_prompt"
 
 
 class FeedbackTypes(ExtendedEnum):
@@ -163,3 +163,23 @@ class CombinedTagsList:
 
 
 COMBINED_TAGS_LIST = CombinedTagsList.combine()
+
+
+class AgentTypes(ExtendedEnum):
+    SECURITY = "security"
+    CODE_COMMUNICATION = "code_communication"
+    PERFORMANCE_OPTIMISATION = "performance_optimisation"
+    CODE_MAINTAINABILITY = "code_maintainability"
+    ERROR = "error"
+    BUSINESS_LOGIC_VALIDATION = "business_logic_validation"
+    PR_SUMMARY = "pr_summary"
+
+
+class MultiAgentReflectionIteration(Enum):
+    PASS_1 = "PASS_1"
+    PASS_2 = "PASS_2"
+
+
+class LLMProviders(Enum):
+    OPENAI = "OPENAI"
+    ANTHROPIC = "ANTHROPIC"

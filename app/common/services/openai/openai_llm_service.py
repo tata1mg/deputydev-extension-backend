@@ -1,9 +1,10 @@
 from typing import Any, List
 
-from app.common.services.openai.openai_service import OpenAIClient
+from app.common.service_clients.openai.openai import OpenAIServiceClient
+from app.common.services.openai.openai_service import OpenAIManager
 
 
-class LLMClient:
+class OpenAILLMService:
     """
     Client class for interacting with the Language Model (LLM) service.
     """
@@ -25,7 +26,7 @@ class LLMClient:
             raise ValueError("Unsupported client type. Only OpenAI is supported as of now.")
 
         try:
-            embeddings, input_tokens = await OpenAIClient().get_embeddings(input_data)
+            embeddings, input_tokens = await OpenAIManager().get_embeddings(input_data)
         except Exception as e:
             raise ValueError(f"Failed to get embeddings: {e}")
 
@@ -48,4 +49,7 @@ class LLMClient:
         if self.client_type != "openai":
             raise ValueError("Unsupported client type. Only OpenAI is supported as of now.")
 
-        return await OpenAIClient().get_openai_response(conversation_message, model, response_type)
+        response = await OpenAIServiceClient().get_llm_response(
+            conversation_messages=conversation_message, model=model, response_type=response_type
+        )
+        return response["choices"][0]["message"], response["usage"]

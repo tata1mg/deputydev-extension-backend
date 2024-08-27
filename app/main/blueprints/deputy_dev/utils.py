@@ -107,6 +107,26 @@ def format_code_blocks(comment: str) -> str:
     return formatted_comment
 
 
+def format_comment_bucket_name(input_string: str) -> str:
+    """
+    Convert a given string to uppercase and replace spaces with underscores,
+    preparing it for storage as a CITEXT field in a database.
+    Args:
+        input_string (str): The string to be converted.
+    Returns:
+        str: The converted string in uppercase with spaces replaced by underscores.
+
+    Example:
+        >>> convert_to_ci_text_field("runtime error")
+        'RUNTIME_ERROR'
+    """
+    # Convert the input string to uppercase
+    uppercase_string = input_string.upper()
+    # Replace spaces with underscores
+    ci_text_field = uppercase_string.replace(" ", "_")
+    return ci_text_field
+
+
 def parse_collection_name(name: str) -> str:
     # Replace any non-alphanumeric characters with hyphens
     name = re.sub(r"[^\w-]", "--", name)
@@ -139,7 +159,7 @@ def format_comment(data):
 
 
 def get_bucket_name(data):
-    bucket_name = data.get("bucket_name")
+    bucket_name = data.get("bucket")
     if bucket_name:
         return bucket_name
     return ""
