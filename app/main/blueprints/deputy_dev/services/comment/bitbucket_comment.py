@@ -68,7 +68,7 @@ class BitbucketComment(BaseComment):
 
     async def create_pr_review_comment(self, comment: dict, model):
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
-        line_number = int(comment.get("line_number").split(",")[0])
+        line_number = int(comment.get("line_number").split(",")[0]) or 1
         if line_number >= 0:
             comment_payload["inline"]["to"] = line_number
         else:
