@@ -9,10 +9,11 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.utils.app_utils import get_token_count
+from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND, VCS_REPO_URL_MAP
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
-from app.main.blueprints.deputy_dev.utils import parse_collection_name
+from app.main.blueprints.deputy_dev.utils import categorize_loc, parse_collection_name
 
 
 class BaseRepo(ABC):
@@ -119,6 +120,17 @@ class BaseRepo(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    async def update_pr_details(self) -> PullRequestResponse:
+        """
+        Update details of a pull request from Bitbucket, Github or Gitlab.
+        Args:
+        Returns:
+            PullRequestResponse: An object containing details of the pull request.
+        Raises:
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     async def get_pr_diff(self):
         """
         Get pr diff
@@ -171,3 +183,32 @@ class BaseRepo(ABC):
         if not pr_diff or pr_diff == PR_NOT_FOUND:
             return 0
         return get_token_count(pr_diff)
+
+    async def generate_pr_description(self, pr_summary: str) -> dict:
+        """
+        Generates a pull request (PR) description by combining an existing description
+        (if available) with a provided summary and a calculated size category based
+        on lines of code (LOC) changed.
+
+        Args:
+            pr_summary (str): A brief summary of the pull request to be included
+                            in the description.
+
+        Returns:
+            dict: A dictionary containing the updated PR description to be used in
+                the update request. The key is 'description' and the value is
+                the concatenated description string.
+        """
+        loc = await self.get_loc_changed_count()
+        category = categorize_loc(loc)
+        if self.pr_details.description:
+            description = f"{self.pr_details.description}\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
+        else:
+            description = f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
+        # Prepare the data for the update request
+        data = {"description": description}
+        return data
+
+    async def update_pr_description(self, pr_summary):
+        description = await self.generate_pr_description(pr_summary)
+        return await self.update_pr_details(description)

@@ -19,6 +19,8 @@ SCRIT_TAG = "#scrit"
 SCRIT_DEPRECATION_NOTIFICATION = (
     "Note :- #scrit is deprecated and will be removed with next releases. Recommended to use - #deputydev or #dd"
 )
+PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
+PR_SIZING_TEXT = "\n\n **Size {category}:** This PR changes include {loc} lines\n\n"
 
 
 class LLMModels(Enum):
@@ -139,6 +141,15 @@ class MetaStatCollectionTypes(Enum):
     PR_CLOSE = "pr_close"
     HUMAN_COMMENT = "human comment"
     PR_APPROVAL_TIME = "pr_approval"
+
+
+class PRDiffSizingLabel(Enum):
+    XS = "XS"
+    S = "S"
+    M = "M"
+    L = "L"
+    XL = "XL"
+    XXL = "XXL"
 
 
 class CombinedTagsList:

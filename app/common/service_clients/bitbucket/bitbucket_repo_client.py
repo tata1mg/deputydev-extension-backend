@@ -39,6 +39,19 @@ class BitbucketRepoClient:
             return
         return response.json()
 
+    async def update_pr_details(self, payload) -> dict:
+        """
+        Update details of a pull request from Bitbucket.
+
+        Returns:
+            dict: pre details response
+        Raises:
+            ValueError: If the pull request details are invalid or cannot be retrieved.
+        """
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}"
+        response = requests.put(diff_url, headers=self.headers, json=payload)
+        return response.json()
+
     async def get_pr_comments(self) -> list:
         """
         Get all comments for the pull request, handling pagination.

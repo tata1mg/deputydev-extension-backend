@@ -1,3 +1,4 @@
+# flake8: noqa
 import re
 from datetime import datetime
 from typing import Dict, List, Tuple
@@ -8,6 +9,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
     IGNORE_FILES,
     BitbucketBots,
+    PRDiffSizingLabel,
 )
 
 
@@ -272,3 +274,33 @@ def count_bot_and_human_comments_bitbucket(comments: List[Dict]) -> Tuple[int, i
                     human_comment_count += 1
 
     return bot_comment_count, human_comment_count
+
+
+def categorize_loc(loc: int) -> str:
+    """
+    Categorizes the number of lines of code (LOC) into predefined size categories.
+
+    Args:
+        loc (int): The total number of lines of code.
+
+    Returns:
+        str: The size category based on the number of lines of code.
+            - "XS" for 0-9 lines
+            - "S" for 10-29 lines
+            - "M" for 30-99 lines
+            - "L" for 100-499 lines
+            - "XL" for 500-999 lines
+            - "XXL" for 1000+ lines
+    """
+    if loc < 10:
+        return PRDiffSizingLabel.XS.value
+    elif loc < 30:
+        return PRDiffSizingLabel.S.value
+    elif loc < 100:
+        return PRDiffSizingLabel.M.value
+    elif loc < 500:
+        return PRDiffSizingLabel.L.value
+    elif loc < 1000:
+        return PRDiffSizingLabel.XL.value
+    else:
+        return PRDiffSizingLabel.XXL.value

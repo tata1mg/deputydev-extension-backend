@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from torpedo import CONFIG, Task
+from torpedo import CONFIG
 
 from app.common.utils.app_utils import get_task_response
 from app.main.blueprints.deputy_dev.constants.constants import LLMProviders

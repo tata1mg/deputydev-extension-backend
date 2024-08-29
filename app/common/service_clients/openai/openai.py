@@ -5,8 +5,6 @@ from commonutils.utils import Singleton
 from openai import AsyncOpenAI
 from torpedo import CONFIG
 
-from app.main.blueprints.jiva.services.openai.util import get_openai_funcs
-
 config = CONFIG.config
 
 

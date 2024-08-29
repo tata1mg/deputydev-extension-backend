@@ -6,7 +6,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.utils.log_time import log_time
-from app.main.blueprints.deputy_dev.constants import LLMModels, PRReviewExperimentSet
+from app.main.blueprints.deputy_dev.constants import PRReviewExperimentSet
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
@@ -115,7 +115,7 @@ class PRReviewManager:
         ).get_code_review_comments()
 
         if pr_summary:
-            await comment_service.create_pr_comment(pr_summary.get("response"), pr_summary.get("model"))
+            await repo_service.update_pr_description(pr_summary.get("response"))
 
         if cls.check_no_pr_comments(llm_response):
             await comment_service.create_pr_comment("LGTM!!", config.get("FEATURE_MODELS").get("PR_REVIEW"))

@@ -52,4 +52,4 @@ class OpenAILLMService:
         response = await OpenAIServiceClient().get_llm_response(
             conversation_messages=conversation_message, model=model, response_type=response_type
         )
-        return response["choices"][0]["message"], response["usage"]
+        return response.choices[0].message, response.usage

@@ -25,6 +25,40 @@ class BitbucketRepo(BaseRepo):
         )
         self.repo_client = BitbucketRepoClient(workspace=workspace, repo=repo_name, pr_id=int(pr_id))
 
+    def parse_pr_detail_response(self, pr_model: BitbucketPrModel) -> PullRequestResponse:
+        """
+        Parses the details of a pull request and returns a PullRequestResponse object.
+
+        Args:
+            pr_model (object): An object representing the pull request model, containing details about the PR.
+
+        Returns:
+            PullRequestResponse: An instance of PullRequestResponse containing the parsed pull request data.
+
+        Parsed Data:
+            - id (str): The ID of the pull request.
+            - state (str): The state of the pull request (e.g., open, closed).
+            - issue_id (str): The ID of the associated issue, if any.
+            - created_on (datetime): The creation time of the pull request.
+            - updated_on (datetime): The last update time of the pull request.
+            - branch_name (str): The name of the source branch of the pull request.
+            - title (str): The title of the pull request.
+            - description (str): The description of the pull request.
+            - commit_id (str): The ID of the commit associated with the pull request.
+        """
+        data = {
+            "id": pr_model.scm_pr_id(),
+            "state": pr_model.scm_state(),
+            "issue_id": self.__get_issue_id(self.pr_json_data.get("rendered", {}).get("title", {})),
+            "created_on": pr_model.scm_creation_time(),
+            "updated_on": pr_model.scm_updation_time(),
+            "branch_name": pr_model.source_branch(),
+            "title": pr_model.title(),
+            "description": pr_model.description(),
+            "commit_id": pr_model.commit_id(),
+        }
+        return PullRequestResponse(**data)
+
     async def get_pr_details(self) -> PullRequestResponse:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
@@ -35,18 +69,19 @@ class BitbucketRepo(BaseRepo):
         self.pr_json_data = await self.repo_client.get_pr_details()
         pr_model = BitbucketPrModel(self.pr_json_data)
         if self.pr_json_data:
-            data = {
-                "id": pr_model.scm_pr_id(),
-                "state": pr_model.scm_state(),
-                "issue_id": self.__get_issue_id(self.pr_json_data.get("rendered", {}).get("title", {})),
-                "created_on": pr_model.scm_creation_time(),
-                "updated_on": pr_model.scm_updation_time(),
-                "branch_name": pr_model.source_branch(),
-                "title": pr_model.title(),
-                "description": pr_model.description(),
-                "commit_id": pr_model.commit_id(),
-            }
-            return PullRequestResponse(**data)
+            return self.parse_pr_detail_response(pr_model)
+
+    async def update_pr_details(self, payload) -> PullRequestResponse:
+        """
+        Get details of a pull request from Bitbucket, Github or Gitlab.
+        Args:
+        Returns:
+            PullRequestResponse: An object containing details of the pull request.
+        """
+        self.pr_json_data = await self.repo_client.update_pr_details(payload)
+        pr_model = BitbucketPrModel(self.pr_json_data)
+        if self.pr_json_data:
+            return self.parse_pr_detail_response(pr_model)
 
     async def get_pr_comments(self):
         comments = await self.repo_client.get_pr_comments()

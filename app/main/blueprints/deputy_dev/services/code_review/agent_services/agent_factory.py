@@ -2,18 +2,21 @@ from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_business_validation_agent import (
     AnthropicBusinessValidationAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_code_communication_agent import \
-    AnthropicCodeCommunicationAgent
+from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_code_communication_agent import (
+    AnthropicCodeCommunicationAgent,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_code_maintainability_agent import (
     AnthropicCodeMaintainabilityAgent,
 )
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_error_agent import (
     AnthropicErrorAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_performance_optimisation_agent import \
-    AnthropicPerformanceOptimisationAgent
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_security_agent import \
-    AnthropicSecurityAgent
+from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_performance_optimisation_agent import (
+    AnthropicPerformanceOptimisationAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_security_agent import (
+    AnthropicSecurityAgent,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.openai_summary_agent import (
     OpenAIPRSummaryAgent,
 )

@@ -193,6 +193,7 @@
   },
   "FEATURE_MODELS": {
     "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
-    "PR_SUMMARY": "GPT_4_O_MODEL"
+    "PR_SUMMARY": "GPT_4_O_MODEL",
+    "PR_CHAT": "GPT_4_O_MODEL"
   }
 }

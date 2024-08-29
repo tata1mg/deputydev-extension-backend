@@ -1,4 +1,3 @@
-import asyncio
 import json
 import re
 import xml.etree.ElementTree as ET
@@ -9,7 +8,10 @@ from sanic.log import logger
 from torpedo import CONFIG, Task
 
 from app.main.blueprints.deputy_dev.constants.constants import LLMProviders
-from app.main.blueprints.deputy_dev.utils import format_code_blocks, format_comment_bucket_name
+from app.main.blueprints.deputy_dev.utils import (
+    format_code_blocks,
+    format_comment_bucket_name,
+)
 
 
 class LLMInterface(ABC):
