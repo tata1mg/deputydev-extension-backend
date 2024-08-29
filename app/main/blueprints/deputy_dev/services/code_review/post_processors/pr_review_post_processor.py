@@ -7,9 +7,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     BucketStatus,
     BucketTypes,
     ExperimentStatusTypes,
-    LLMCommentTypes,
     PrStatusTypes,
-    TokenTypes,
 )
 from app.main.blueprints.deputy_dev.models.dao import PRComments
 from app.main.blueprints.deputy_dev.models.dto.bucket_dto import BucketDTO

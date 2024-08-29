@@ -32,7 +32,7 @@ class AgentServiceBase(ABC):
             "CONTEXTUALLY_RELATED_CODE_SNIPPETS": await self.context_service.get_relevant_chunk(),
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
-            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff()
+            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
         }
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)

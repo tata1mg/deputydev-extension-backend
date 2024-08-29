@@ -3,9 +3,7 @@ from typing import Dict, List
 
 from torpedo import CONFIG
 
-from app.common.service_clients.bedrock.bedrock import (
-    BedrockServiceClient,
-)
+from app.common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.main.blueprints.deputy_dev.constants.constants import LLMProviders
 from app.main.blueprints.deputy_dev.services.llm.llm_interface import LLMInterface
 

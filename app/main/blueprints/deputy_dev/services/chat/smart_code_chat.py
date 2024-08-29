@@ -5,7 +5,6 @@ from torpedo import CONFIG
 
 from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.app_utils import build_openai_conversation_message
-from app.main.blueprints.deputy_dev.constants import LLMModels
 from app.main.blueprints.deputy_dev.constants.constants import (
     BitbucketBots,
     ChatTypes,
@@ -88,7 +87,7 @@ class SmartCodeChatManager:
 
     @classmethod
     async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service, add_note: bool = False):
-        llm_comment_response = await cls.get_comments_from_llm(context, LLMModels.FoundationModel.value)
+        llm_comment_response = await cls.get_comments_from_llm(context, config.get("FEATURE_MODELS").get("PR_CHAT"))
         logger.info(f"Process chat comment response: {llm_comment_response}")
         await comment_service.process_chat_comment(
             comment=llm_comment_response, chat_request=chat_request, add_note=add_note
@@ -106,12 +105,16 @@ class SmartCodeChatManager:
         Returns:
         - formatted_comment (str): Response from the llm server for the comment made on PR.
         """
-        client, model_config, context = OpenAILLMService(), CONFIG.config.get(model), CHAT_COMMENT_PROMPT
+        client, model_config, context = (
+            OpenAILLMService(),
+            CONFIG.config.get("LLM_MODELS").get(model),
+            CHAT_COMMENT_PROMPT,
+        )
 
         conversation_message = build_openai_conversation_message(system_message=context, user_message=comment_data)
 
         response, tokens = await client.get_client_response(
-            conversation_message=conversation_message, model=model_config.get("MODEL"), response_type="text"
+            conversation_message=conversation_message, model=model_config.get("NAME"), response_type="text"
         )
         formatted_comment = format_code_blocks(response.content)
         return formatted_comment

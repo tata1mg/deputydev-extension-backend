@@ -1,6 +1,8 @@
 # flake8: noqa
 from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import AgentServiceBase
+from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
+    AgentServiceBase,
+)
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )

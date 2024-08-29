@@ -1,5 +1,5 @@
-from aiobotocore.session import get_session
 from aiobotocore.config import AioConfig
+from aiobotocore.session import get_session
 from torpedo import CONFIG
 
 
@@ -19,7 +19,7 @@ class BedrockServiceClient:
             aws_access_key_id=CONFIG.config["AWS"].get("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=CONFIG.config["AWS"].get("AWS_SECRET_ACCESS_KEY"),
             region_name=CONFIG.config["AWS"]["AWS_REGION"],
-            config=config
+            config=config,
         ) as client:
             response = await client.invoke_model(modelId=model, body=formatted_conversation)
             return response
