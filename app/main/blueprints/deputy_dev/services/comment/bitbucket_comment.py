@@ -1,9 +1,9 @@
 from sanic.log import logger
+from torpedo import CONFIG
 
 from app.common.service_clients.bitbucket.bitbucket_repo_client import (
     BitbucketRepoClient,
 )
-from app.main.blueprints.deputy_dev.constants import LLMModels
 from app.main.blueprints.deputy_dev.constants.constants import COMMENTS_DEPTH
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
@@ -11,6 +11,8 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.comment.helpers.bitbucket_comment_helper import (
     BitbucketCommentHelper,
 )
+
+config = CONFIG.config
 
 
 class BitbucketComment(BaseComment):
@@ -31,7 +33,9 @@ class BitbucketComment(BaseComment):
         """
         comment_payload = self.comment_helper.format_pr_review_inline_comment(comment)
         logger.info(f"Comment payload: {comment_payload}")
-        response = await self.repo_client.create_comment_on_pr(comment_payload, LLMModels.FoundationModel.value)
+        response = await self.repo_client.create_comment_on_pr(
+            comment_payload, config.get("FEATURE_MODELS").get("PR_CHAT")
+        )
         return response
 
     async def fetch_comment_thread(self, comment_id, depth=0):
@@ -87,7 +91,7 @@ class BitbucketComment(BaseComment):
             comment_payload = self.comment_helper.format_chat_comment(comment, chat_request)
             await self.create_comment_on_line(comment_payload)
         else:
-            await self.create_pr_comment(comment, LLMModels.FoundationModel.value)
+            await self.create_pr_comment(comment, config.get("FEATURE_MODELS").get("PR_CHAT"))
 
     async def create_comment_on_thread(self, comment, chat_request: ChatRequest):
         """
@@ -101,5 +105,7 @@ class BitbucketComment(BaseComment):
         """
         comment_payload = self.comment_helper.format_chat_thread_comment(comment, chat_request)
         logger.info(f"Comment payload:{comment_payload}")
-        response = await self.repo_client.create_comment_on_pr(comment_payload, LLMModels.FoundationModel.value)
+        response = await self.repo_client.create_comment_on_pr(
+            comment_payload, config.get("FEATURE_MODELS").get("PR_CHAT")
+        )
         return response

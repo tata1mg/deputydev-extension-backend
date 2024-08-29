@@ -16,28 +16,18 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
-        Your name is DeputyDev, receiving a user's comment thread carefully examine the smart code review analysis. 
-        Your task is to summarise what the PR is doing.
-        include all the code changes inside ``` CODE ``` markdown".
+        Your name is SCRIT, receiving a user's comment thread carefully examine the smart code review analysis. 
+        If the comment involves inquiries about code improvements or other technical discussions, evaluate the 
+        provided pull request (PR) diff and offer appropriate resolutions. Otherwise, respond directly to 
+        the posed question without delving into the PR diff. 
+        include all the corrective_code inside ``` CODE ``` markdown"
         """
 
     def get_with_reflection_user_prompt_pass1(self):
         return """
-        Here is the information for the pull request you need to review:
-        Pull Request Title:
-        <pull_request_title>
-        {$PULL_REQUEST_TITLE}
-        </pull_request_title>
-
-        Pull Request Description:
-        <pull_request_description>
-        {$PULL_REQUEST_DESCRIPTION}
-        </pull_request_description>
-
+        What does the following PR do ?
         Pull Request Diff:
-        <pull_request_diff>
         {$PR_DIFF_WITHOUT_LINE_NUMBER}
-        </pull_request_diff>
         """
 
     def get_with_reflection_system_prompt_pass2(self):

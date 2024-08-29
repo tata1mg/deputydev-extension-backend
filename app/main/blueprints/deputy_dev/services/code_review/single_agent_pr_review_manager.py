@@ -116,7 +116,7 @@ class SingleAgentPRReviewManager:
         task_response = await get_task_response(tasks)
         # combine finetuned and gpt4 filtered comments
         foundation_model_pr_summarisation = task_response.get("foundation_model_pr_summarisation", {}).get("pr_summary")
-        foundationa_pr_comments = task_response.get("foundation_model_pr_summarisation", {}).get("pr_summary")
+        # foundationa_pr_comments = task_response.get("foundation_model_pr_summarisation", {}).get("pr_summary")
         combined_comments = {
             "foundation_comments": task_response.get("foundation_model", {}).get("comments", []),
             "summary": foundation_model_pr_summarisation,

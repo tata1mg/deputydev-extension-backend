@@ -1,8 +1,9 @@
+from torpedo import CONFIG
+
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
     ExperimentStatusTypes,
-    LLMModels,
     PRReviewExperimentSet,
     PRStatus,
     PrStatusTypes,
@@ -16,10 +17,9 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
-from torpedo import CONFIG
-
 
 config = CONFIG.config
+
 
 class PRReviewPreProcessor:
     def __init__(self, repo_service: BaseRepo, comment_service: BaseComment):
@@ -70,7 +70,9 @@ class PRReviewPreProcessor:
                 comment = PR_SIZE_TOO_BIG_MESSAGE.format(
                     pr_diff_token_count=self.pr_diff_token_count, max_token_limit=MAX_PR_DIFF_TOKEN_LIMIT
                 )
-                await self.comment_service.create_pr_comment(comment=comment, model=config.get("FEATURE_MODELS").get("PR_REVIEW"))
+                await self.comment_service.create_pr_comment(
+                    comment=comment, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+                )
                 self.is_valid = False
                 self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
 
