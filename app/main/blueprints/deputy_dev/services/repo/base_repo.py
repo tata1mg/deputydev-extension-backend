@@ -13,7 +13,11 @@ from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND, VCS_REPO_URL_MAP
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
-from app.main.blueprints.deputy_dev.utils import categorize_loc, parse_collection_name
+from app.main.blueprints.deputy_dev.utils import (
+    categorize_loc,
+    format_summary_loc_time_text,
+    parse_collection_name,
+)
 
 
 class BaseRepo(ABC):
@@ -200,11 +204,13 @@ class BaseRepo(ABC):
                 the concatenated description string.
         """
         loc = await self.get_loc_changed_count()
-        category = categorize_loc(loc)
+        category, time = categorize_loc(loc)
+        loc_text, time_text = format_summary_loc_time_text(loc, category, time)
+
         if self.pr_details.description:
-            description = f"{self.pr_details.description}\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
+            description = f"{self.pr_details.description}\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
         else:
-            description = f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
+            description = f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
         # Prepare the data for the update request
         data = {"description": description}
         return data
