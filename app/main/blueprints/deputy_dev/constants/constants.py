@@ -20,7 +20,9 @@ SCRIT_DEPRECATION_NOTIFICATION = (
     "Note :- #scrit is deprecated and will be removed with next releases. Recommended to use - #deputydev or #dd"
 )
 PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
-PR_SIZING_TEXT = "\n\n **Size {category}:** This PR changes include {loc} lines\n\n"
+PR_SIZING_TEXT = (
+    "\n\n **Size {category}:** This PR changes include {loc} lines and should take approximately {time}\n\n"
+)
 
 
 class LLMModels(Enum):
@@ -150,6 +152,12 @@ class PRDiffSizingLabel(Enum):
     L = "L"
     XL = "XL"
     XXL = "XXL"
+    XS_TIME = "5-15 minutes"
+    S_TIME = "15-30 minutes"
+    M_TIME = "30-60 minutes"
+    L_TIME = "1-3 hours"
+    XL_TIME = "3-6 hours"
+    XXL_TIME = "6+ hours"
 
 
 class CombinedTagsList:
