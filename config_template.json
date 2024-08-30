@@ -4,7 +4,7 @@
     "ENVIRONMENT": "",
     "SECRET_TOKEN": "",
     "SERVER_TIMEOUT": "30s",
-    "SERVER_URL": "http://onemg-apm-server-apm-http.elastic-system.svc.cluster.local:8200",
+    "SERVER_URL": "",
     "SPAN_FRAMES_MIN_DURATION": "5ms",
     "TRANSACTION_SAMPLE_RATE": 1
   },
@@ -43,7 +43,7 @@
     "URL": "https://api.bitbucket.org"
   },
   "OPENAPI_API": "gpt3",
-  "ASSISTANT_ID": "asst_Lv6jykfXt067w3ZDNdgbMTdU",
+  "ASSISTANT_ID": "",
   "REDIS_CACHE_HOSTS": {
     "genai": {
       "LABEL": "",
@@ -96,8 +96,8 @@
   "JIRA": {
     "HOST": "https://1mgtech.atlassian.net",
     "V3_PATH": "/rest/api/3",
-    "AUTH_TOKEN": "***REMOVED***",
-    "USERNAME": "sudhir.poodar@1mg.com",
+    "AUTH_TOKEN": "",
+    "USERNAME": "",
     "TIMEOUT": 0.1
   },
   "BATCH_SIZE": 24,
@@ -105,8 +105,8 @@
   "CONFLUENCE": {
     "HOST": "https://1mgtech.atlassian.net/wiki",
     "PATH": "/rest/api/content/{page_id}",
-    "AUTH_TOKEN": "***REMOVED***",
-    "USERNAME": "sudhir.poodar@1mg.com",
+    "AUTH_TOKEN": "",
+    "USERNAME": "",
     "TIMEOUT": 0.1
   },
   "GITHUB": {
@@ -168,16 +168,16 @@
       "confidence_score_limit": 0.9
     }
   },
-  "AWS": {
-    "AWS_ACCESS_KEY_ID": null,
-    "AWS_SECRET_ACCESS_KEY": null,
-    "AWS_REGION": "us-east-1",
+ "AWS": {
+    "AWS_ACCESS_KEY_ID": "",
+    "AWS_SECRET_ACCESS_KEY": "",
+    "AWS_REGION": "ap-south-1",
     "BEDROCK_SERVICE_NAME": "bedrock-runtime",
     "BEDROCK_READ_TIMEOUT": 1000
   },
   "LLM_MODELS": {
     "CLAUDE_3_POINT_5_SONNET": {
-      "NAME": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "NAME": "",
       "PROVIDER": "ANTHROPIC",
       "ACCESS_KEY": "",
       "BITBUCKET_TOKEN": "",
@@ -195,5 +195,6 @@
     "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
     "PR_SUMMARY": "GPT_4_O_MODEL",
     "PR_CHAT": "GPT_4_O_MODEL"
-  }
+  },
+    "OPENAI_TIMEOUT": 1000
 }

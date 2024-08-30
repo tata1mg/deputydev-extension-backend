@@ -11,6 +11,7 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.comment.helpers.bitbucket_comment_helper import (
     BitbucketCommentHelper,
 )
+from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
 
 config = CONFIG.config
 
@@ -71,13 +72,13 @@ class BitbucketComment(BaseComment):
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
 
     async def create_pr_review_comment(self, comment: dict, model):
+        logger.info(f"Comment payload: {comment}")
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
-        line_number = int(comment.get("line_number").split(",")[0]) or 1
+        line_number = extract_line_number_from_llm_response(comment.get("line_number"))
         if line_number >= 0:
             comment_payload["inline"]["to"] = line_number
         else:
             comment_payload["inline"]["from"] = -1 * line_number
-        logger.info(f"Comment payload: {comment_payload}")
         result = await self.repo_client.create_comment_on_pr(comment_payload, model)
         comment["scm_comment_id"] = result["id"]
         comment["llm_source_model"] = model

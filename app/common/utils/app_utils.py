@@ -139,13 +139,15 @@ def get_ab_experiment_set(experiment_id, experiment_name):
     return None  # Fallback if no set is assigned
 
 
-async def get_task_response(tasks: List[Task]) -> Dict[str, Any]:
+async def get_task_response(tasks: List[Task], suppress_exception=True) -> Dict[str, Any]:
     response = {}
     if tasks:
         task_results = await TaskExecutor(tasks=tasks).submit()
         for idx, result in enumerate(task_results):
             if isinstance(result.result, Exception):
                 logger.info("Exception while fetching task results, Details: {}".format(result.result))
+                if not suppress_exception:
+                    raise result.result
             else:
                 response[result.result_key] = result.result
     return response
