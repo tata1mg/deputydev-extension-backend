@@ -32,7 +32,7 @@ class MultiAgentsLLMManager:
         if anthropic_prompts:
             tasks.extend(Anthropic().create_bulk_tasks(anthropic_prompts))
 
-        llm_responses = await get_task_response(tasks)
+        llm_responses = await get_task_response(tasks, suppress_exception=False)
         return llm_responses
 
     @classmethod

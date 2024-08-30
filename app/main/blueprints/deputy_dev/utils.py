@@ -312,3 +312,13 @@ def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
     if category == PRDiffSizingLabel.XXL.value:
         return "1000+", f"{time} to review, potentially spread across multiple sessions"
     return str(loc), f"{time} to review"
+
+
+def extract_line_number_from_llm_response(line_number: str):
+    if "," in line_number:
+        line_number = line_number.split(",")[0]
+    if "-" in line_number:
+        line_number = line_number.split("-")[0]
+    if line_number == 0:
+        return 1
+    return int(line_number)

@@ -92,10 +92,11 @@ class PRReviewManager:
                     },
                     filters={"id": pr_dto.id},
                 )
-            logger.error(
+            logger.info(
                 f"PR review failed for pr - {repo_service.pr_id}, repo_name - {data.get('repo_name')} "
                 f"exception {ex}"
             )
+            raise ex
         finally:
             repo_service.delete_repo()
 
