@@ -12,9 +12,9 @@ class OpenAIServiceClient(metaclass=Singleton):
     def __init__(self):
         self.__client = AsyncOpenAI(
             api_key=config.get("OPENAI_KEY"),
-            timeout=60,
+            timeout=config.get("OPENAI_TIMEOUT"),
             http_client=httpx.AsyncClient(
-                timeout=60,
+                timeout=config.get("OPENAI_TIMEOUT"),
                 limits=httpx.Limits(
                     max_connections=1000,
                     max_keepalive_connections=100,
