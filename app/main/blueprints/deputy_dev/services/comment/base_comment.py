@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import List, Union
 
-from sanic.log import logger
 from torpedo import Task
 
 from app.common.utils.app_utils import get_task_response
 from app.main.blueprints.deputy_dev.constants import SCRIT_DEPRECATION_NOTIFICATION
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 
@@ -65,7 +65,7 @@ class BaseComment(ABC):
             try:
                 await self.create_pr_review_comment(comment, model)
             except Exception as e:
-                logger.error(f"Unable to create comment on PR {self.pr_id}: {e}")
+                AppLogger.log_error(f"Unable to create comment: {comment}: {e}")
 
     async def post_bots_comments(self, response):
         """
@@ -87,20 +87,4 @@ class BaseComment(ABC):
             for agent, agent_response in response.items()
         ]
 
-        # tasks = [
-        #     Task(
-        #         self.create_bulk_comments(
-        #             comments=response[LLMCommentTypes.FINE_TUNED_COMMENTS.value],
-        #             model=LLMModels.FinetunedModel.value,
-        #         ),
-        #         result_key=LLMCommentTypes.FINE_TUNED_COMMENTS.value,
-        #     ),
-        #     Task(
-        #         self.create_bulk_comments(
-        #             comments=response[LLMCommentTypes.FOUNDATION_COMMENTS.value],
-        #             model=LLMModels.FoundationModel.value,
-        #         ),
-        #         result_key=LLMCommentTypes.FOUNDATION_COMMENTS.value,
-        #     ),
-        # ]
         await get_task_response(tasks)

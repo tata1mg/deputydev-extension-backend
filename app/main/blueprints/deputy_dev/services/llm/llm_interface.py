@@ -4,11 +4,12 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from sanic.log import logger
 from torpedo import CONFIG, Task
 
 from app.common.exception import RetryException
+from app.common.exception.exception import ParseException
 from app.main.blueprints.deputy_dev.constants.constants import LLMProviders
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.utils import (
     format_code_blocks,
     format_comment_bucket_name,
@@ -93,16 +94,21 @@ class LLMInterface(ABC):
         """
 
         model_config = CONFIG.config.get("LLM_MODELS").get(model)
+        last_exception = None
         for i in range(max_retry):
             try:
                 llm_response = await self.call_service_client(
                     conversation_message, model_config.get("NAME"), structure_type
                 )
                 return await self.handle_response(llm_response, structure_type, parse, model)
+            except (ParseException, ValueError) as e:
+                AppLogger.log_warn(f"Retry {i + 1}/{max_retry} {e}")
+                last_exception = e
             except Exception as e:
-                logger.error(f"Error while fetching data from LLM: {e}")
-                if i + 1 == max_retry:
-                    raise RetryException("Retried due to llm client call failed")
+                AppLogger.log_warn(f"Retry {i + 1}/{max_retry}  Error while fetching data from LLM: {e}")
+                last_exception = e
+            if i + 1 == max_retry:
+                raise RetryException(f"Retried due to llm client call failed {last_exception}")
 
     def parse_json_response(self, response):
         if self.llm_type == LLMProviders.ANTHROPIC.value:
@@ -138,13 +144,10 @@ class LLMInterface(ABC):
             else:
                 raise ValueError("The XML string does not contain the expected <review> tags.")
 
-        except ET.ParseError as e:
-            # Log the specific XML parsing error
-            logger.error(f"XML parsing error while decoding PR review comments data:  {xml_string}, exception: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error occurred while processing XML response: {xml_string}, exception: {e}")
-            raise
+        except ET.ParseError as exception:
+            raise ParseException(
+                f"XML parsing error while decoding PR review comments data:  {xml_string}, exception: {exception}"
+            )
 
     async def handle_response(self, llm_response: Any, structure_type: str, parse: bool, model: str) -> Dict[str, Any]:
         """
