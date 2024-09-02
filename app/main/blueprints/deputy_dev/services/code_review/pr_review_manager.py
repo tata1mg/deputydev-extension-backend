@@ -9,6 +9,7 @@ from app.common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants import PRReviewExperimentSet
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
     MultiAgentPRReviewManager,
@@ -30,6 +31,9 @@ from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    set_context_values,
+)
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -47,8 +51,12 @@ class PRReviewManager:
             CodeReviewRequest(**data)
             logger.info("Received SQS Message: {}".format(data))
             await cls.process_pr_review(data=data)
+            AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
             logger.error(f"Received Invalid SQS Message - {data}: {e}")
+        except Exception as e:
+            AppLogger.log_error(f"Unable to review PR: {e}")
+            raise
 
     @staticmethod
     def set_identifier(value: str):
@@ -82,7 +90,7 @@ class PRReviewManager:
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
             await PRReviewPostProcessor.post_process_pr(pr_dto, llm_comments, tokens_data, meta_info_to_save)
-            logger.info(f"Completed PR review for pr id - {repo_service.pr_id}, repo_service - {data.get('repo_name')}")
+
         except Exception as ex:
             # if PR is inserted in db then only we will update status
             if pr_dto:
@@ -92,10 +100,6 @@ class PRReviewManager:
                     },
                     filters={"id": pr_dto.id},
                 )
-            logger.info(
-                f"PR review failed for pr - {repo_service.pr_id}, repo_name - {data.get('repo_name')} "
-                f"exception {ex}"
-            )
             raise ex
         finally:
             repo_service.delete_repo()
@@ -126,7 +130,8 @@ class PRReviewManager:
 
     @classmethod
     async def initialise_services(cls, data: dict):
-        cls.set_identifier(data.get("repo_name"))
+        cls.set_identifier(data.get("repo_name"))  # need to deprecate
+        set_context_values(scm_pr_id=data.get("pr_id"), repo_name=data.get("repo_name"))
         vcs_type = data.get("vcs_type", VCSTypes.bitbucket.value)
         repo_name, pr_id, workspace, scm_workspace_id = (
             data.get("repo_name"),

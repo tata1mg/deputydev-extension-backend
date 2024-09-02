@@ -1,4 +1,3 @@
-from sanic.log import logger
 from torpedo import CONFIG
 
 
@@ -10,24 +9,18 @@ class CommentBlendingEngine:
 
     def apply_agent_confidence_score_limit(self):
         for agent, data in self.llm_comments.items():
-            agent_comments = []
-            if data.get("response"):
-                for comment in data.get("response"):
-                    if (
-                        self.is_valid_comment(comment)
-                        and comment["confidence_score"]
-                        > self.llm_confidence_score_limit[agent]["confidence_score_limit"]
-                    ):
-                        agent_comments.append(comment)
-                del data["response"]
-            data["comments"] = agent_comments
-        return self.llm_comments
 
-    def is_valid_comment(self, comment):
-        if comment["line_number"] == "N/A":
-            logger.warn("invalid line number for comment {}".format(comment))
-            return False
-        return True
+            agent_comments = []
+            comments = data.get("response")
+            if not comments:
+                return
+            for comment in comments:
+                if comment["confidence_score"] > self.llm_confidence_score_limit[agent]["confidence_score_limit"]:
+                    agent_comments.append(comment)
+
+            del data["response"]
+            data["comments"] = agent_comments
+            return self.llm_comments
 
     def blend_comments(self):
         # this function can contain other operations in future

@@ -5,6 +5,9 @@ from sanic.log import logger
 
 from app.common.constants.constants import TimeFormat
 from app.common.utils.app_utils import get_time_difference
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    set_context_values,
+)
 
 
 def log_time(func):
@@ -47,6 +50,7 @@ def log_time(func):
         start_message = f"Start: {func.__name__} at {formatted_start_time}"
         if request_id:
             start_message = start_message + f", for request ID - {request_id}"
+            set_context_values(request_id=request_id)
         logger.info(start_message)
 
         try:

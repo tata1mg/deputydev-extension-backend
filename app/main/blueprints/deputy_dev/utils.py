@@ -11,6 +11,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     BitbucketBots,
     PRDiffSizingLabel,
 )
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 
 
 def remove_special_char(char, input_string):
@@ -315,10 +316,22 @@ def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
 
 
 def extract_line_number_from_llm_response(line_number: str):
-    if "," in line_number:
-        line_number = line_number.split(",")[0]
-    if "-" in line_number:
-        line_number = line_number.split("-")[0]
-    if line_number == 0:
-        return 1
-    return int(line_number)
+
+    if line_number.lower() == "n/a":
+        AppLogger.log_warn("Invalid line number for comment: {}".format(line_number))
+        return  # global comment
+
+    match = re.search(r"-?\d+", line_number)
+    #  Handles following cases:
+    #  "+21, +22", "21, 22", "21-22", "-21", "-21, -23", "22"
+    if match:
+        line_number_int = int(match.group())
+
+        # return 1 if the line number is 0
+        if line_number_int == 0:
+            return 1
+
+        return line_number_int
+
+    AppLogger.log_warn("Invalid line number for comment: {}".format(line_number))
+    return  # global comment
