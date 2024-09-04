@@ -83,7 +83,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         <review>
         <comments>
         <comment>
-        <description>Describe the error and its potential impact</description>
+        <description>Describe the error and its potential impact and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
         <corrective_code>
         Provide corrected code or suggest improvements.
         Add this section under <![CDATA[ ]]> for avoiding xml paring error.

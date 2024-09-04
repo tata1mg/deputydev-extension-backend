@@ -70,9 +70,8 @@ class OpenAIManager(BaseClient):
         try:
             new_embeddings, input_tokens = await self.__call_embedding(batch)
         except requests.exceptions.Timeout as e:
-            logger.exception(f"Timeout error occurred while embedding: {e}")
+            raise e
         except Exception as e:
-            logger.exception(e)
             if any(self.tiktoken_client.count(text) > 8192 for text in batch):
                 logger.warning(
                     f"Token count exceeded for batch: {max([self.tiktoken_client.count(text) for text in batch])} "
