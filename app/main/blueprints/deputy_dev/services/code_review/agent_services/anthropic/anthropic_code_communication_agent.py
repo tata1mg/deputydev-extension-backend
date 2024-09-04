@@ -66,7 +66,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         <review>
         <comments>
         <comment>
-        <description>Describe the code communication issue</description>
+        <description>Describe the code communication issue and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
         <corrective_code>Rewrite or create new (in case of missing) code, docstring or documentation for developer
          to directly use it.
          Add this section under <![CDATA[ ]]> for avoiding xml paring error.

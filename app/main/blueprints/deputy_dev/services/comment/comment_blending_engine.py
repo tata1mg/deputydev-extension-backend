@@ -12,13 +12,17 @@ class CommentBlendingEngine:
 
             agent_comments = []
             comments = data.get("response")
-            if not comments:
-                return
+
+            if not isinstance(comments, list) or not comments:
+                data.pop("response", None)
+                data["comments"] = []
+                continue
+
             for comment in comments:
                 if comment["confidence_score"] > self.llm_confidence_score_limit[agent]["confidence_score_limit"]:
                     agent_comments.append(comment)
 
-            del data["response"]
+            data.pop("response", None)
             data["comments"] = agent_comments
             return self.llm_comments
 
