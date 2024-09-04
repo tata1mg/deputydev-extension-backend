@@ -19,12 +19,12 @@ class CommentBlendingEngine:
                 continue
 
             for comment in comments:
-                if comment["confidence_score"] > self.llm_confidence_score_limit[agent]["confidence_score_limit"]:
+                if comment["confidence_score"] >= self.llm_confidence_score_limit[agent]["confidence_score_limit"]:
                     agent_comments.append(comment)
 
             data.pop("response", None)
             data["comments"] = agent_comments
-            return self.llm_comments
+        return self.llm_comments
 
     def blend_comments(self):
         # this function can contain other operations in future
