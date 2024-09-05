@@ -150,7 +150,7 @@ def get_corrective_code(data):
 def format_comment(data):
     # Check if corrective_code exists and is a dictionary
     if isinstance(data, dict):
-        comment = data.get("comment")
+        comment = data.get("comment", "")
         corrective_code = get_corrective_code(data)
         bucket_name = get_bucket_name(data)
         if bucket_name:
@@ -317,6 +317,11 @@ def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
 
 def extract_line_number_from_llm_response(line_number: str):
 
+    if not isinstance(line_number, str):
+        AppLogger.log_warn("Invalid line number for comment: {}".format(line_number))
+        return
+
+    line_number = line_number.strip()
     if line_number.lower() == "n/a":
         AppLogger.log_warn("Invalid line number for comment: {}".format(line_number))
         return  # global comment

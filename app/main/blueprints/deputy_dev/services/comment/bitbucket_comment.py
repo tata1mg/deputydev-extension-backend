@@ -74,6 +74,7 @@ class BitbucketComment(BaseComment):
     async def create_pr_review_comment(self, comment: dict, model):
         logger.info(f"Comment payload: {comment}")
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
+
         line_number = extract_line_number_from_llm_response(comment.get("line_number"))
         if line_number is not None:
             if line_number >= 0:
