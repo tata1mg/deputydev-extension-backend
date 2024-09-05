@@ -7,18 +7,19 @@ from app.main.blueprints.deputy_dev.utils import format_comment
 class BitbucketCommentHelper:
     @classmethod
     def format_pr_review_comment(cls, comment) -> dict:
-        comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
-        file_path = comment["file_path"].split(",")[0]
-        comment_payload = {
-            "content": {"raw": format_comment(comment)},
-            "inline": {
+        file_path = comment.get("file_path")
+        comment_payload = {"content": {"raw": format_comment(comment)}}
+
+        if isinstance(file_path, str) and file_path:
+            sanitized_file_path = re.sub(r"^[ab]/\s*", "", file_path).split(",")[0]
+
+            comment_payload["inline"] = {
                 "path": (
-                    re.sub(r"^[ab]/\s*", "", file_path)
-                    if re.match(r"^[ab]/\s*", file_path)
-                    else comment.get("file_path")
+                    re.sub(r"^[ab]/\s*", "", sanitized_file_path)
+                    if re.match(r"^[ab]/\s*", sanitized_file_path)
+                    else file_path
                 )
-            },
-        }
+            }
         return comment_payload
 
     @classmethod

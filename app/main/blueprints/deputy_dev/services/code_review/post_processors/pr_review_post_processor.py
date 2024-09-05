@@ -90,8 +90,13 @@ class PRReviewPostProcessor:
 
         for agent, data in llm_agents_comments.items():
             for comment in data.get("comments", []):
+                if not comment.get("scm_comment_id"):
+                    continue
                 comment["agent"] = agent
                 all_comments.append(comment)
+
+        if not all_comments:
+            raise ValueError("Failed to post comments on the VCS due to an error during the commenting process ")
 
         return all_comments
 
@@ -157,6 +162,7 @@ class PRReviewPostProcessor:
                 },
             }
             comments_to_save.append(PRComments(**comment_info))
+
         await CommentService.bulk_insert(comments_to_save)
         return all_buckets, llm_comments
 
