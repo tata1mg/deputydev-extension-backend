@@ -55,7 +55,7 @@ class GithubComment(BaseComment):
             response = await self.repo_client.get_comment_thread(
                 user_name=self.workspace, repo_name=self.repo_name, comment_id=comment_id
             )
-            if not response or response.status_code != 201:
+            if not response or response.status_code != 200:
                 logger.error(f"unable to comment on github PR {self.meta_data}")
             else:
                 comment_thread = response.json()["body"]
