@@ -11,9 +11,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MessageTypes,
     MetaStatCollectionTypes,
 )
-from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
-    CHAT_COMMENT_PROMPT,
-)
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
@@ -23,6 +20,9 @@ from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_pro
 )
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
+)
+from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
+    ChatPromptService,
 )
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
@@ -76,25 +76,27 @@ class SmartCodeChatManager:
 
             diff = await repo.get_pr_diff()
             user_story_description = await JiraManager(issue_id=repo.pr_details.issue_id).get_description_text()
-            get_comment_thread = await comment_service.fetch_comment_thread(chat_request.comment.id)
-
-            context = (
-                f"Comment Thread : {get_comment_thread} , questions: {comment}\n PR diff: {diff}\n"
-                f"User story description - {user_story_description}. Use this to get context of business logic for which change is made."
-            )
-            await cls.get_chat_comments(context, chat_request, comment_service, add_note)
+            comment_thread = await comment_service.fetch_comment_thread(chat_request.comment.id)
+            comment_context = {
+                "comment_thread": comment_thread,
+                "pr_diff": diff,
+                "user_story_description": user_story_description,
+            }
+            await cls.get_chat_comments(comment_context, chat_request, comment_service, add_note)
             logger.info(f"Chat processing completed: {comment} , with payload : {chat_request}")
 
     @classmethod
     async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service, add_note: bool = False):
-        llm_comment_response = await cls.get_comments_from_llm(context, config.get("FEATURE_MODELS").get("PR_CHAT"))
+        llm_comment_response = await cls.get_comments_from_llm(
+            context, config.get("FEATURE_MODELS").get("PR_CHAT"), chat_request
+        )
         logger.info(f"Process chat comment response: {llm_comment_response}")
         await comment_service.process_chat_comment(
             comment=llm_comment_response, chat_request=chat_request, add_note=add_note
         )
 
     @classmethod
-    async def get_comments_from_llm(cls, comment_data: str, model: str) -> str:
+    async def get_comments_from_llm(cls, context: dict, model: str, chat_request: ChatRequest) -> str:
         """
         Makes a call to OpenAI chat completion API with a specific model and conversation messages.
 
@@ -105,14 +107,21 @@ class SmartCodeChatManager:
         Returns:
         - formatted_comment (str): Response from the llm server for the comment made on PR.
         """
-        client, model_config, context = (
+        client, model_config = (
             OpenAILLMService(),
             CONFIG.config.get("LLM_MODELS").get(model),
-            CHAT_COMMENT_PROMPT,
         )
 
-        conversation_message = build_openai_conversation_message(system_message=context, user_message=comment_data)
+        system_prompt, user_message = ChatPromptService.build_chat_prompt(
+            pr_diff=context.get("pr_diff"),
+            user_story=context.get("user_story_description"),
+            comment_thread=context.get("comment_thread"),
+            chat_request=chat_request,
+        )
 
+        conversation_message = build_openai_conversation_message(
+            system_message=system_prompt, user_message=user_message
+        )
         response, tokens = await client.get_client_response(
             conversation_message=conversation_message, model=model_config.get("NAME"), response_type="text"
         )
