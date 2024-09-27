@@ -38,9 +38,53 @@
     "TIMEOUT": 10
   },
   "EXPERIMENT": {},
+  "ENCRYPTION_PASSWORD": "",
+  "WEBHOOKS_PAYLOAD": [
+    {
+      "NAME": "DeputyDev Review",
+      "DESCRIPTION": "DeputyDev Review",
+      "URL": "https://api.1mg.com/api/v1/scrit/init",
+      "EVENTS": {
+        "BITBUCKET": ["pullrequest:created"],
+        "GITHUB": ["pull_request"],
+        "GITLAB": ["pull_requests"]
+      },
+      "SECRET_TOKEN": ""
+    },
+    {
+      "NAME": "DeputyDev Chat",
+      "DESCRIPTION": "DeputyDev Chat",
+      "URL": "https://api.1mg.com/api/v1/scrit/chat",
+      "EVENTS": {
+        "BITBUCKET": ["pullrequest:comment_created"],
+        "GITHUB": ["pull_request_review_comment"],
+        "GITLAB": ["comments"]
+      },
+      "SECRET_TOKEN": ""
+    },
+    {
+      "NAME": "DeputyDev Stats Collection",
+      "DESCRIPTION": "DeputyDev Stats Collection",
+      "URL": "https://api.1mg.com/api/v1/scrit/stats-collection",
+      "EVENTS": {
+        "BITBUCKET": [
+          "pullrequest:approved",
+          "pullrequest:fulfilled",
+          "pullrequest:rejected"
+        ],
+        "GITHUB": ["pull_request"],
+        "GITLAB": ["pull_requests"]
+      },
+      "SECRET_TOKEN": ""
+    }
+  ],
+
   "BITBUCKET": {
     "KEY": "",
-    "URL": "https://api.bitbucket.org"
+    "URL": "https://api.bitbucket.org",
+    "OAUTH2_ENDPOINT": "https://bitbucket.org/site/oauth2/access_token",
+    "CLIENT_ID": "",
+    "CLIENT_SECRET": ""
   },
   "OPENAPI_API": "gpt3",
   "ASSISTANT_ID": "",
@@ -93,6 +137,10 @@
     "bitbucket-pipelines.yml",
     "package-lock.json"
   ],
+  "ATLASSIAN": {
+    "CLIENT_ID": "",
+    "CLIENT_SECRET": ""
+  },
   "JIRA": {
     "HOST": "https://1mgtech.atlassian.net",
     "V3_PATH": "/rest/api/3",
@@ -111,7 +159,14 @@
   },
   "GITHUB": {
     "BEARER_TOKEN": "github_pat_11AXHYWTA",
-    "HOST": "https://api.github.com"
+    "HOST": "https://api.github.com",
+    "CLIENT_ID": "",
+    "SIGNING_KEY": ""
+  },
+  "GITLAB": {
+    "OAUTH2_ENDPOINT": "https://gitlab.com/oauth/token",
+    "CLIENT_ID": "",
+    "CLIENT_SECRET": ""
   },
   "DB_CONNECTIONS": {
     "connections": {
@@ -168,7 +223,7 @@
       "confidence_score_limit": 0.9
     }
   },
- "AWS": {
+  "AWS": {
     "AWS_ACCESS_KEY_ID": "",
     "AWS_SECRET_ACCESS_KEY": "",
     "AWS_REGION": "ap-south-1",
@@ -196,5 +251,6 @@
     "PR_SUMMARY": "GPT_4_O_MODEL",
     "PR_CHAT": "GPT_4_O_MODEL"
   },
-    "OPENAI_TIMEOUT": 1000
+  "OPENAI_TIMEOUT": 1000,
+  "TEAMS_ENABLED_FOR_EXPERIMENT": [123456, 23456]
 }

@@ -24,10 +24,6 @@ class StatsCollectionBase(ABC):
         self.experiment_start_time = datetime.fromisoformat(CONFIG.config.get("EXPERIMENT_START_TIME"))
         self.stats_type = None
 
-    def extract_payload(self):
-        """Extract payload"""
-        raise NotImplementedError()
-
     async def save_to_db(self, extracted_payload):
         """implement Saving meta info to db"""
         raise NotImplementedError()
@@ -39,8 +35,7 @@ class StatsCollectionBase(ABC):
     async def process_event(self) -> None:
         extracted_payload = {}
         try:
-            extracted_payload = self.extract_payload()
-            await self.save_to_db(extracted_payload)
+            await self.save_to_db(self.payload)
             logger.info(f"{self.stats_type} meta sync completed for payload {extracted_payload}")
 
         except RetryException as ex:

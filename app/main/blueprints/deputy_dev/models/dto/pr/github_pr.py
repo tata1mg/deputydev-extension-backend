@@ -14,7 +14,7 @@ class GitHubPrModel(BasePrModel):
         return self.pr_detail["body"]
 
     def scm_pr_id(self):
-        return self.pr_detail["id"]
+        return self.pr_detail["number"]
 
     def scm_author_id(self):
         return str(self.pr_detail["user"]["id"])
@@ -32,9 +32,10 @@ class GitHubPrModel(BasePrModel):
         return self.pr_detail["updated_at"].replace("Z", "+00:00")
 
     def scm_state(self):
-        if self.scm_state() == "open":
+        scm_state = self.pr_detail["state"]
+        if scm_state == "open":
             return PRStatus.OPEN.value
-        elif self.scm_state() == "closed":
+        elif scm_state == "closed":
             return PRStatus.MERGED.value
         else:
             return PRStatus.DECLINED.value

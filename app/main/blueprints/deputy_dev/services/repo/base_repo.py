@@ -10,9 +10,10 @@ from torpedo import CONFIG
 
 from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
-from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND, VCS_REPO_URL_MAP
+from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.utils import (
     categorize_loc,
     format_summary_loc_time_text,
@@ -21,7 +22,17 @@ from app.main.blueprints.deputy_dev.utils import (
 
 
 class BaseRepo(ABC):
-    def __init__(self, vcs_type: str, workspace: str, repo_name: str, pr_id: str, workspace_id: str):
+    def __init__(
+        self,
+        vcs_type: str,
+        workspace: str,
+        repo_name: str,
+        pr_id: str,
+        workspace_id: str,
+        workspace_slug: str,
+        auth_handler: AuthHandler,
+        repo_id: str = None,
+    ):
         self.vcs_type = vcs_type
         self.workspace = workspace
         self.pr_id = pr_id
@@ -34,6 +45,9 @@ class BaseRepo(ABC):
         self.workspace_id = workspace_id
         self.pr_diff = None
         self.pr_stats = None
+        self.repo_id = repo_id
+        self.auth_handler = auth_handler
+        self.workspace_slug = workspace_slug
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -68,6 +82,7 @@ class BaseRepo(ABC):
         """
         This is a private method to clone the repository if it doesn't exist locally or pull updates if it does.
         """
+        repo_url = await self.get_repo_url()
         process = await asyncio.create_subprocess_exec(
             "git",
             "clone",
@@ -77,7 +92,7 @@ class BaseRepo(ABC):
             "1",  # This is the value of --depth flag
             "--single-branch",
             "--no-tags",  # This prevents Git from downloading any tags from the remote repository
-            VCS_REPO_URL_MAP[self.vcs_type].format(repo_name=f"{self.workspace}/{self.repo_name}"),
+            repo_url,
             self.repo_dir,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -90,6 +105,10 @@ class BaseRepo(ABC):
             logger.info("Cloning completed")
         else:
             error_message = stderr.decode().strip()
+            if return_code == 128 and "Invalid credentials" in error_message:
+                logger.error(f"Git clone failed due to invalid credentials: {error_message}")
+                raise PermissionError(f"Invalid credentials: {error_message}")
+
             if return_code != 128:
                 logger.error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
                 # we are raising runtime error for other status code, so that it can be retried from the SQS after sometime
@@ -124,7 +143,7 @@ class BaseRepo(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def update_pr_details(self) -> PullRequestResponse:
+    async def update_pr_details(self, description) -> PullRequestResponse:
         """
         Update details of a pull request from Bitbucket, Github or Gitlab.
         Args:
@@ -188,7 +207,7 @@ class BaseRepo(ABC):
             return 0
         return get_token_count(pr_diff)
 
-    async def generate_pr_description(self, pr_summary: str) -> dict:
+    async def generate_pr_description(self, pr_summary: str) -> str:
         """
         Generates a pull request (PR) description by combining an existing description
         (if available) with a provided summary and a calculated size category based
@@ -199,9 +218,8 @@ class BaseRepo(ABC):
                             in the description.
 
         Returns:
-            dict: A dictionary containing the updated PR description to be used in
-                the update request. The key is 'description' and the value is
-                the concatenated description string.
+            dict: A string containing the updated PR description to be used in
+                the update request.
         """
         loc = await self.get_loc_changed_count()
         category, time = categorize_loc(loc)
@@ -212,9 +230,11 @@ class BaseRepo(ABC):
         else:
             description = f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
         # Prepare the data for the update request
-        data = {"description": description}
-        return data
+        return description
 
     async def update_pr_description(self, pr_summary):
         description = await self.generate_pr_description(pr_summary)
         return await self.update_pr_details(description)
+
+    def get_repo_url(self):
+        raise NotImplementedError()

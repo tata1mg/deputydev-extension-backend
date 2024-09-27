@@ -5,7 +5,7 @@ from .base import Base
 
 class Tokens(Base):
     id = fields.BigIntField(pk=True)
-    token = fields.CharField(max_length=5000)
+    token = fields.CharField(max_length=10000)
     type = fields.CharField(
         max_length=500
     )  # refresh / access / workspace_access / installation_id / openai_key / llm_key

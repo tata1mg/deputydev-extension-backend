@@ -1,11 +1,23 @@
 from app.common.service_clients.confluence.page import Page
+from app.main.blueprints.deputy_dev.utils import get_auth_handler
 
+from ...workspace.context_vars import get_context_value
 from .confluence_helper import ConfluenceHelper
 
 
 class ConfluenceManager:
     def __init__(self, document_id: str):
         self.document_id = document_id
+        self.auth_handler = None
+        self.client_account_id = None
+
+    async def set_auth_handler(self):
+        if not self.auth_handler and not self.client_account_id:
+            confluence_auth_handler, integration_info = await get_auth_handler(
+                client="confluence", team_id=get_context_value("team_id")
+            )
+            self.auth_handler = confluence_auth_handler
+            self.client_account_id = integration_info["client_account_id"]
 
     async def get_description_text(self):
         """
@@ -14,13 +26,14 @@ class ConfluenceManager:
             str: returns description of confluence doc
         Note: For now we are retuning HTML information
         """
-        response = await self.get_document()
+        await self.set_auth_handler()
+        response = await self.__get_document()
         if response and response.get("body", {}).get("storage"):
             return ConfluenceHelper.parse_description(response["body"]["storage"]["value"])
         else:
             return ""
 
-    async def get_document(self) -> dict:
+    async def __get_document(self) -> dict:
         """
         Extracts the Confluence document ID from the given Confluence link.
 
@@ -28,4 +41,6 @@ class ConfluenceManager:
         Returns:
             dict: returns confluence doc data
         """
-        return await Page.get(self.document_id)
+        return await Page(auth_handler=self.auth_handler, client_account_id=self.client_account_id).get_document(
+            self.document_id
+        )

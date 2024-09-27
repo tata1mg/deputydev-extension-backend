@@ -12,6 +12,9 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MetaStatCollectionTypes,
 )
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
+from app.main.blueprints.deputy_dev.models.human_comment_request import (
+    HumanCommentRequest,
+)
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
@@ -27,7 +30,20 @@ from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWebhook
-from app.main.blueprints.deputy_dev.utils import format_code_blocks, is_human_comment
+from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
+    HumanCommentWebhook,
+)
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    set_context_values,
+)
+from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
+    WorkspaceService,
+)
+from app.main.blueprints.deputy_dev.utils import (
+    format_code_blocks,
+    get_vcs_auth_handler,
+    is_human_comment,
+)
 
 config = CONFIG.config
 
@@ -36,10 +52,13 @@ class SmartCodeChatManager:
     @classmethod
     async def chat(cls, payload: dict, query_params: dict):
         vcs_type = query_params.get("vcs_type", "bitbucket")
-        comment_payload = ChatWebhook.parse_payload(payload, vcs_type)
+        comment_payload = await ChatWebhook.parse_payload(payload, vcs_type)
+        if not comment_payload:
+            return
         logger.info(f"Comment payload: {comment_payload}")
         if is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw):
-            await cls.handle_human_comment(payload, query_params)
+            human_comment_payload = await HumanCommentWebhook.parse_payload(payload, vcs_type)
+            await cls.handle_human_comment(human_comment_payload, query_params)
         elif comment_payload.author_info.name not in BitbucketBots.list():
             asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
         else:
@@ -47,12 +66,16 @@ class SmartCodeChatManager:
 
     @classmethod
     async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type):
+        auth_handler = await get_vcs_auth_handler(chat_request.repo.workspace_id, vcs_type)
         repo = await RepoFactory.repo(
             vcs_type=vcs_type,
             repo_name=chat_request.repo.repo_name,
             pr_id=chat_request.repo.pr_id,
             workspace=chat_request.repo.workspace,
+            workspace_slug=chat_request.repo.workspace_slug,
             workspace_id=chat_request.repo.workspace_id,
+            repo_id=chat_request.repo.repo_id,
+            auth_handler=auth_handler,
         )
 
         comment_service = await CommentFactory.comment(
@@ -60,9 +83,15 @@ class SmartCodeChatManager:
             repo_name=chat_request.repo.repo_name,
             pr_id=chat_request.repo.pr_id,
             workspace=chat_request.repo.workspace,
+            workspace_slug=chat_request.repo.workspace_slug,
             pr_details=repo.pr_details,
+            repo_id=chat_request.repo.repo_id,
+            auth_handler=auth_handler,
         )
-
+        # Set Team id in context vars
+        workspace_dto = await WorkspaceService.find(scm_workspace_id=chat_request.repo.workspace_id, scm=vcs_type)
+        if workspace_dto:
+            set_context_values(team_id=workspace_dto.team_id)
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
         add_note = comment.startswith(ChatTypes.SCRIT.value)
@@ -76,7 +105,7 @@ class SmartCodeChatManager:
 
             diff = await repo.get_pr_diff()
             user_story_description = await JiraManager(issue_id=repo.pr_details.issue_id).get_description_text()
-            comment_thread = await comment_service.fetch_comment_thread(chat_request.comment.id)
+            comment_thread = await comment_service.fetch_comment_thread(chat_request)
             comment_context = {
                 "comment_thread": comment_thread,
                 "pr_diff": diff,
@@ -129,9 +158,9 @@ class SmartCodeChatManager:
         return formatted_comment
 
     @classmethod
-    async def handle_human_comment(cls, payload, query_params):
+    async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, query_params):
         payload = {
-            "payload": payload,
+            "payload": parsed_payload.dict(),
             "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
             "query_params": query_params,
         }
