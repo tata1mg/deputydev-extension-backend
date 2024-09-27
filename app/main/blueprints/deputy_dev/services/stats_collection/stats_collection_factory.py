@@ -25,8 +25,10 @@ class StatsCollectionFactory:
             "stats_type", MetaStatCollectionTypes.PR_CLOSE.value
         )  # default value for backward compatibility
         logger.info(f"Received New SQS Message for meta sync {event_type}")
-        _klass = cls.FACTORIES[event_type]
 
         payload = data.get("payload")
         query_params = data.get("query_params") or {}
-        await _klass(payload=payload, query_params=query_params).process_event()
+        _klass = cls.FACTORIES[event_type](payload=payload, query_params=query_params)
+
+        if _klass.validate_payload():
+            await _klass.process_event()

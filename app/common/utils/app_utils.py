@@ -163,10 +163,12 @@ def convert_to_datetime(iso_string: str) -> datetime:
     Returns:
         datetime: The corresponding datetime object.
     """
+    if "UTC" in iso_string:
+        iso_string = iso_string.replace(" UTC", "+00:00")  # Gitlab created at example: 2024-09-16 07:03:03 UTC
     return datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
 
 
-def get_bitbucket_repo_name_slug(value: str) -> str:
+def get_vcs_repo_name_slug(value: str) -> str:
     """
     extracts repo slug from the full name passed to it
 
@@ -178,6 +180,20 @@ def get_bitbucket_repo_name_slug(value: str) -> str:
     """
     parts = value.split("/")
     return parts[-1]
+
+
+def get_gitlab_workspace_slug(value: str) -> str:
+    """
+    extracts gitlab workspace slug from the full name passed to it
+
+    Args:
+        value (str): string from which the value needs to be extracted.
+
+    Returns:
+        datetime: The corresponding datetime object.
+    """
+    parts = value.split("/")
+    return parts[0]
 
 
 def name_to_slug(input_str) -> str:

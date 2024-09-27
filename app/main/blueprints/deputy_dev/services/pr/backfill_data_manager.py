@@ -1,8 +1,6 @@
 from sanic.log import logger
 
-from app.common.service_clients.bitbucket.bitbucket_repo_client import (
-    BitbucketRepoClient,
-)
+from app.common.service_clients.bitbucket import BitbucketRepoClient
 from app.common.utils.app_utils import convert_to_datetime, name_to_slug
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (

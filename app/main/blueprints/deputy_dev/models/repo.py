@@ -14,3 +14,4 @@ class PullRequestResponse(BaseModel):
     created_on: datetime
     updated_on: datetime
     commit_id: Optional[str] = None
+    diff_refs: Optional[dict] = None

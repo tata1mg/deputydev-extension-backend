@@ -9,3 +9,4 @@ class CodeReviewRequest(BaseModel):
     prompt_version: str
     vcs_type: str
     workspace_id: str
+    workspace_slug: str

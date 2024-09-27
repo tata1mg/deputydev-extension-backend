@@ -1,3 +1,3 @@
-__all__ = ["RetryException"]
+__all__ = ["RetryException", "RefreshTokenFailed", "InvalidIntegrationClient"]
 
-from .exception import RetryException
+from .exception import InvalidIntegrationClient, RefreshTokenFailed, RetryException

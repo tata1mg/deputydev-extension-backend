@@ -17,6 +17,9 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    set_context_values,
+)
 
 config = CONFIG.config
 
@@ -38,7 +41,17 @@ class PRReviewPreProcessor:
         await self.insert_pr_record()
         await self.run_validations()
         experiment_set = await self.get_experiment_set()
-        return experiment_set, self.pr_dto
+        return self.get_is_reviewable_request(experiment_set), self.pr_dto
+
+    def get_is_reviewable_request(self, experiment_set):
+        # if PR is eligible of experiment
+        if ExperimentService.is_eligible_for_experiment() and experiment_set == PRReviewExperimentSet.ReviewTest.value:
+            return True
+
+        # If PR is not eligible for experiment
+        if not ExperimentService.is_eligible_for_experiment() and self.is_valid:
+            return True
+        return False
 
     async def insert_pr_record(self):
         self.pr_diff_token_count = await self.repo_service.get_pr_diff_token_count()
@@ -47,6 +60,7 @@ class PRReviewPreProcessor:
         self.pr_dto = await PRService.find_or_create(
             self.pr_model, PrStatusTypes.IN_PROGRESS.value, loc_changed, self.meta_info
         )
+        set_context_values(team_id=self.pr_dto.team_id)
 
     async def run_validations(self):
         self.validate_pr_state_for_review()
@@ -87,7 +101,7 @@ class PRReviewPreProcessor:
             self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
 
     async def get_experiment_set(self):
-        if not self.is_valid:
+        if not ExperimentService.is_eligible_for_experiment() or not self.is_valid:
             return
         experiment_info = await ExperimentService.db_get({"repo_id": self.pr_dto.repo_id, "pr_id": self.pr_dto.id})
         experiment_set = (

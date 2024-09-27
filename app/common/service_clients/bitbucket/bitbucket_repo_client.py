@@ -1,24 +1,27 @@
+from __future__ import annotations
+
 from typing import Any, Dict
 
-import requests
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
-class BitbucketRepoClient:
+from ..base_scm_client import BaseSCMClient
+
+
+class BitbucketRepoClient(BaseSCMClient):
     """
     A class for interacting with Bitbucket API.
     """
 
-    def __init__(self, workspace: str, repo: str, pr_id: int) -> None:
-        self.workspace = workspace
+    def __init__(self, workspace_slug: str, repo: str, pr_id: int, auth_handler: AuthHandler) -> None:
+        self.workspace_slug = workspace_slug
         self.pr_id = pr_id
         self.repo = repo
         self.bitbucket_url = CONFIG.config["BITBUCKET"]["URL"]
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": CONFIG.config["BITBUCKET"]["KEY"],
-        }
+
+        super().__init__(auth_handler=auth_handler)
 
     async def get_pr_details(self) -> dict:
         """
@@ -29,11 +32,8 @@ class BitbucketRepoClient:
         Raises:
             ValueError: If the pull request details are invalid or cannot be retrieved.
         """
-        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}"
-        response = requests.get(
-            diff_url,
-            headers=self.headers,
-        )
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}"
+        response = await self.get(diff_url)
         if response.status_code != 200:
             logger.error(f"Unable to process PR - {self.pr_id}: {response._content}")
             return
@@ -48,8 +48,9 @@ class BitbucketRepoClient:
         Raises:
             ValueError: If the pull request details are invalid or cannot be retrieved.
         """
-        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}"
-        response = requests.put(diff_url, headers=self.headers, json=payload)
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}"
+        workspace_token_headers = await self.get_ws_token_headers()
+        response = await self.put(diff_url, json=payload, headers=workspace_token_headers, skip_headers=True)
         return response.json()
 
     async def get_pr_comments(self) -> list:
@@ -60,10 +61,10 @@ class BitbucketRepoClient:
             list: List of all comments for the pull request.
         """
         comments = []
-        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments"
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments"
 
         while url:
-            response = requests.get(url, headers=self.headers)
+            response = await self.get(url)
             data = response.json()
             comments.extend(data.get("values", []))
             url = data.get("next")
@@ -77,11 +78,10 @@ class BitbucketRepoClient:
         Returns:
             str: The diff of the pull request.
         """
-        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/diff"
-        response = requests.get(
-            diff_url,
-            headers=self.headers,
+        diff_url = (
+            f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/diff"
         )
+        response = await self.get(diff_url)
         if response.status_code != 200:
             logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
         return response, response.status_code
@@ -97,12 +97,9 @@ class BitbucketRepoClient:
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
-        comment_headers = {
-            "Content-Type": "application/json",
-            "Authorization": CONFIG.config["LLM_MODELS"][model]["BITBUCKET_TOKEN"],
-        }
-        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments"
-        response = requests.post(url, headers=comment_headers, json=comment)
+        workspace_token_headers = await self.get_ws_token_headers()
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments"
+        response = await self.post(url, json=comment, headers=workspace_token_headers, skip_headers=True)
         return response.json()
 
     async def get_comment_details(self, comment_id):
@@ -115,11 +112,8 @@ class BitbucketRepoClient:
         Raises:
             ValueError: If the diff cannot be retrieved.
         """
-        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/comments/{comment_id}"
-        response = requests.get(
-            url,
-            headers=self.headers,
-        )
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments/{comment_id}"
+        response = await self.get(url)
         if response.status_code != 200:
             logger.error(
                 f"Unable to retrieve Comment details for comment: {comment_id} - PR ID: {self.pr_id}: {response._content}"
@@ -133,16 +127,12 @@ class BitbucketRepoClient:
         Returns:
             str: The diff of the pull request.
         """
-        diff_url = (
-            f"{self.bitbucket_url}/2.0/repositories/{self.workspace}/{self.repo}/pullrequests/{self.pr_id}/diffstat"
-        )
-        response = requests.get(
-            diff_url,
-            headers=self.headers,
-        )
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/diffstat"
+        response = await self.get(diff_url)
         if response.status_code != 200:
             logger.error(
-                f"Unable to retrieve diff for PR - {self.pr_id} workspace " f"{self.workspace}: {response._content}"
+                f"Unable to retrieve diff for PR - {self.pr_id} workspace "
+                f"{self.workspace_slug}: {response._content}"
             )
             return None
         return response
@@ -151,10 +141,7 @@ class BitbucketRepoClient:
         url = "https://api.bitbucket.org/2.0/repositories/tata1mg/{repo_name}/pullrequests/{scm_pr_id}/diffstat".format(
             repo_name=repo_name, scm_pr_id=scm_pr_id
         )
-        response = requests.get(
-            url,
-            headers=self.headers,
-        )
+        response = await self.get(url)
         if response.status_code == 200:
             data = response.json()
             return sum(file["lines_added"] + file["lines_removed"] for file in data["values"])
@@ -173,10 +160,7 @@ class BitbucketRepoClient:
                 repo_name=repo_name, scm_pr_id=scm_pr_id
             )
         )
-        response = requests.get(
-            diff_url,
-            headers=self.headers,
-        )
+        response = await self.get(diff_url)
         if response.status_code != 200:
             logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
         return response, response.status_code

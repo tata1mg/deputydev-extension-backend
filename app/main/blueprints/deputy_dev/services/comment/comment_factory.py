@@ -4,15 +4,39 @@ from app.main.blueprints.deputy_dev.services.comment.bitbucket_comment import (
     BitbucketComment,
 )
 from app.main.blueprints.deputy_dev.services.comment.github_comment import GithubComment
+from app.main.blueprints.deputy_dev.services.comment.gitlab_comment import GitlabComment
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 
 class CommentFactory:
-    FACTORIES = {VCSTypes.bitbucket.value: BitbucketComment, VCSTypes.github.value: GithubComment}
+    FACTORIES = {
+        VCSTypes.bitbucket.value: BitbucketComment,
+        VCSTypes.github.value: GithubComment,
+        VCSTypes.gitlab.value: GitlabComment,
+    }
 
     @classmethod
-    async def comment(cls, vcs_type: str, workspace, repo_name, pr_id, pr_details) -> BaseComment:
+    async def comment(
+        cls,
+        vcs_type: str,
+        workspace,
+        workspace_slug,
+        repo_name,
+        pr_id,
+        pr_details,
+        auth_handler: AuthHandler,
+        repo_id=None,
+    ) -> BaseComment:
         if vcs_type not in cls.FACTORIES:
             raise ValueError("Incorrect vcs type passed")
         _klass = cls.FACTORIES[vcs_type]
-        _klass_obj = _klass(workspace=workspace, pr_id=pr_id, repo_name=repo_name, pr_details=pr_details)
+        _klass_obj = _klass(
+            workspace=workspace,
+            workspace_slug=workspace_slug,
+            pr_id=pr_id,
+            repo_name=repo_name,
+            pr_details=pr_details,
+            auth_handler=auth_handler,
+            repo_id=repo_id,
+        )
         return _klass_obj

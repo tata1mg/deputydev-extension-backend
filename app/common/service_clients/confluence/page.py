@@ -1,19 +1,23 @@
-import requests
 from sanic.log import logger
+
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 from .base import Base
 
 
 class Page(Base):
-    ISSUE_PATH = "/content"
+    ISSUE_PATH = "content"
 
-    @classmethod
-    async def get(cls, document_id):
+    def __init__(self, auth_handler: AuthHandler, client_account_id):
+        super().__init__(auth_handler)
+        self.client_account_id = client_account_id
+
+    async def get_document(self, document_id):
         if document_id:
-            url = f"{cls.BASE_URL}{cls.PATH}{cls.ISSUE_PATH}/{document_id}"
+            url = f"{self.BASE_URL}/{self.client_account_id}/{self.PATH}/{self.ISSUE_PATH}/{document_id}"
             query_params = {"expand": "body.storage,body.view"}
             try:
-                response = requests.get(url, auth=cls.auth(), params=query_params, timeout=cls.TIMEOUT)
+                response = await self.get(url, params=query_params)
                 return response.json()
             except Exception as e:
                 logger.error("Exception occured while fetching issue details from jira: {}".format(e))
