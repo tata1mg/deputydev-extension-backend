@@ -1,0 +1,45 @@
+from pydantic import ValidationError
+from sanic.log import logger
+
+from app.main.blueprints.deputy_dev.constants.constants import MetaStatCollectionTypes
+from app.main.blueprints.deputy_dev.models.human_comment_request import (
+    HumanCommentRequest,
+)
+from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
+    ExperimentService,
+)
+from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
+    StatsCollectionBase,
+)
+
+
+class HumanCommentCollectionManager(StatsCollectionBase):
+    def __init__(self, payload, query_params):
+        super().__init__(payload, query_params)
+        self.scm_pr_id = None
+        self.is_human_count_incremented = False
+        self.stats_type = MetaStatCollectionTypes.HUMAN_COMMENT.value
+        self.scm_pr_id = payload["scm_pr_id"]
+        self.is_eligible_for_experiment = ExperimentService.is_eligible_for_experiment()
+
+    def validate_payload(self):
+        """
+        Validates the PRCloseRequest payload and raises BadRequestException if validation fails.
+        """
+        try:
+            HumanCommentRequest(**self.payload)
+            return True
+        except ValidationError as ex:
+            logger.error(f"Invalid human comment request with error {ex}")
+            return False
+
+    async def save_to_db(self, payload):
+        if self.is_eligible_for_experiment:
+            await self.get_pr_from_db(payload)
+            self.is_human_count_incremented = await ExperimentService.increment_human_comment_count(
+                scm_pr_id=self.scm_pr_id, repo_id=self.repo_dto.id
+            )
+
+    async def revert(self):
+        if self.repo_dto and self.is_human_count_incremented:
+            await ExperimentService.decrement_human_comment_count(scm_pr_id=self.scm_pr_id, repo_id=self.repo_dto.id)

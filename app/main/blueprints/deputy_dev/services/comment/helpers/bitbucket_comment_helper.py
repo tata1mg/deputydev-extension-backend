@@ -1,7 +1,10 @@
 import re
 
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
-from app.main.blueprints.deputy_dev.utils import format_comment
+from app.main.blueprints.deputy_dev.utils import (
+    extract_line_number_from_llm_response,
+    format_comment,
+)
 
 
 class BitbucketCommentHelper:
@@ -20,6 +23,12 @@ class BitbucketCommentHelper:
                     else file_path
                 )
             }
+        line_number = extract_line_number_from_llm_response(comment.get("line_number"))
+        if line_number is not None:
+            if line_number >= 0:
+                comment_payload["inline"]["to"] = line_number
+            else:
+                comment_payload["inline"]["from"] = abs(line_number)
         return comment_payload
 
     @classmethod

@@ -1,4 +1,6 @@
 # flake8: noqa
+from __future__ import annotations
+
 import re
 from datetime import datetime
 from typing import Dict, List, Tuple
@@ -12,6 +14,16 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     PRDiffSizingLabel,
 )
 from app.main.blueprints.deputy_dev.loggers import AppLogger
+from app.main.blueprints.deputy_dev.models.dao import Integrations, Workspaces
+from app.main.blueprints.deputy_dev.services.credentials import (
+    AuthHandler,
+    GithubAuthHandler,
+    create_auth_handler,
+)
+from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    set_context_values,
+)
 
 
 def remove_special_char(char, input_string):
@@ -70,9 +82,9 @@ def format_code_block(code_block: str) -> str:
     return code_block
 
 
-def ignore_files(response):
+def ignore_files(pr_diff):
     resp_text = ""
-    for d in response.text.split("diff --git "):
+    for d in pr_diff.split("diff --git "):
         if not any(keyword in d for keyword in IGNORE_FILES):
             resp_text += d
     return resp_text
@@ -316,7 +328,6 @@ def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
 
 
 def extract_line_number_from_llm_response(line_number: str):
-
     if not isinstance(line_number, str):
         AppLogger.log_warn("Invalid line number for comment: {}".format(line_number))
         return
@@ -340,3 +351,43 @@ def extract_line_number_from_llm_response(line_number: str):
 
     AppLogger.log_warn("Invalid line number for comment: {}".format(line_number))
     return  # global comment
+
+
+async def get_workspace(scm, scm_workspace_id) -> Workspaces:
+    workspace = await Workspaces.get(scm=scm, scm_workspace_id=scm_workspace_id)
+    return workspace
+
+
+async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
+    workspace = await get_workspace(scm_workspace_id=scm_workspace_id, scm=vcs_type)
+    set_context_values(dd_workspace_id=workspace.id)
+    if vcs_type == "github":
+        # tokenable_type = "workspace"
+        workspace_id = workspace.id
+        tokenable_id = workspace_id
+
+    else:
+        # tokenable_type = "integration"
+        integration_id = workspace.integration_id
+        tokenable_id = integration_id
+
+    auth_handler = create_auth_handler(integration=vcs_type, tokenable_id=tokenable_id)
+    return auth_handler
+
+
+async def get_auth_handler(client: str, team_id: str | None = None, workspace_id: str | None = None):
+    integration_info = await DB.by_filters(
+        model_name=Integrations, where_clause={"team_id": team_id, "client": client}, limit=1, fetch_one=True
+    )
+    if not integration_info:
+        return
+    if client == "github":
+        # tokenable_type = "workspace"
+        tokenable_id = workspace_id
+
+    else:
+        # tokenable_type = "integration"
+        tokenable_id = integration_info["id"]
+
+    auth_handler = create_auth_handler(integration=client, tokenable_id=int(tokenable_id))
+    return auth_handler, integration_info
