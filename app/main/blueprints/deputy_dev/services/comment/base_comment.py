@@ -8,19 +8,32 @@ from app.main.blueprints.deputy_dev.constants import SCRIT_DEPRECATION_NOTIFICAT
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 
 class BaseComment(ABC):
-    def __init__(self, workspace: str, repo_name: str, pr_id: str, pr_details: PullRequestResponse = None):
+    def __init__(
+        self,
+        workspace: str,
+        workspace_slug: str,
+        repo_name: str,
+        pr_id: str,
+        auth_handler: AuthHandler,
+        pr_details: PullRequestResponse = None,
+        repo_id=None,
+    ):
         self.workspace = workspace
         self.pr_id = pr_id
         self.repo_name = repo_name
         self.pr_details: PullRequestResponse = pr_details
         self.branch_name = None
         self.meta_data = f"repo: {repo_name}, pr_id: {pr_id}, user_name: {workspace}"
+        self.repo_id = repo_id
+        self.auth_handler = auth_handler
+        self.workspace_slug = workspace_slug
 
     @abstractmethod
-    async def fetch_comment_thread(self, comment_id, depth=0):
+    async def fetch_comment_thread(self, chat_request, depth=0):
         """
         Fetches comment thread
         Args:

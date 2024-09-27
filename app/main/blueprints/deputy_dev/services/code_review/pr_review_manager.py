@@ -6,7 +6,6 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.utils.log_time import log_time
-from app.main.blueprints.deputy_dev.constants import PRReviewExperimentSet
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.loggers import AppLogger
@@ -34,6 +33,7 @@ from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactor
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
 )
+from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -82,8 +82,8 @@ class PRReviewManager:
         pr_dto = None
         try:
             tokens_data, execution_start_time = None, datetime.now()
-            experiment_set, pr_dto = await PRReviewPreProcessor(repo_service, comment_service).pre_process_pr()
-            if experiment_set != PRReviewExperimentSet.ReviewTest.value:
+            is_reviewable_request, pr_dto = await PRReviewPreProcessor(repo_service, comment_service).pre_process_pr()
+            if not is_reviewable_request:
                 return
             llm_comments, tokens_data, meta_info_to_save = await cls.review_pr(
                 repo_service, comment_service, data["prompt_version"]
@@ -114,7 +114,6 @@ class PRReviewManager:
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
-
         llm_response, pr_summary, tokens_data, meta_info_to_save = await _review_klass(
             repo_service, prompt_version
         ).get_code_review_comments()
@@ -132,17 +131,35 @@ class PRReviewManager:
     async def initialise_services(cls, data: dict):
         cls.set_identifier(data.get("repo_name"))  # need to deprecate
         set_context_values(scm_pr_id=data.get("pr_id"), repo_name=data.get("repo_name"))
+
         vcs_type = data.get("vcs_type", VCSTypes.bitbucket.value)
-        repo_name, pr_id, workspace, scm_workspace_id = (
+        repo_name, pr_id, workspace, scm_workspace_id, repo_id, workspace_slug = (
             data.get("repo_name"),
             data.get("pr_id"),
             data.get("workspace"),
             data.get("workspace_id"),
+            data.get("repo_id"),
+            data.get("workspace_slug"),
         )
+        auth_handler = await get_vcs_auth_handler(scm_workspace_id, vcs_type)
         repo_service = await RepoFactory.repo(
-            vcs_type=vcs_type, repo_name=repo_name, pr_id=pr_id, workspace=workspace, workspace_id=scm_workspace_id
+            vcs_type=vcs_type,
+            repo_name=repo_name,
+            pr_id=pr_id,
+            workspace=workspace,
+            workspace_id=scm_workspace_id,
+            workspace_slug=workspace_slug,
+            auth_handler=auth_handler,
+            repo_id=repo_id,
         )
         comment_service = await CommentFactory.comment(
-            vcs_type=vcs_type, repo_name=repo_name, pr_id=pr_id, workspace=workspace, pr_details=repo_service.pr_details
+            vcs_type=vcs_type,
+            repo_name=repo_name,
+            pr_id=pr_id,
+            workspace=workspace,
+            workspace_slug=workspace_slug,
+            pr_details=repo_service.pr_details,
+            auth_handler=auth_handler,
+            repo_id=repo_id,
         )
         return repo_service, comment_service

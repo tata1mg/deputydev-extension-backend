@@ -26,7 +26,9 @@ class CodeReviewTrigger:
         # handling for call from webhook
         try:
             if not payload.get("development"):
-                payload = PRWebhook.parse_payload(payload, vcs_type)
+                payload = await PRWebhook.parse_payload(payload, vcs_type)
+            if not payload:
+                return
             payload["prompt_version"] = prompt_version
             payload["vcs_type"] = vcs_type
             payload = CodeReviewRequest(**payload)

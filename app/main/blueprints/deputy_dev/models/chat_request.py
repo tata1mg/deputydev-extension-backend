@@ -1,14 +1,16 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
 
 class Comment(BaseModel):
     raw: str
-    parent: Optional[int]
+    parent: Optional[Union[int, str]]
     path: Optional[str]
-    line_number_from: Optional[int]
-    line_number_to: Optional[int]
+    line_number_from: Optional[int] = None  # Bitbucket old file
+    line_number_to: Optional[int] = None  # Bitbucket new file
+    line_number: Optional[int] = None  # Gitlab, Github line
+    side: Optional[str] = None  # RIGHT: New file, LEFT: Old file Gitlab, Github
     id: Optional[int]
     parent_comment_id: Optional[int]
 
@@ -19,6 +21,8 @@ class Repo(BaseModel):
     repo_name: str
     commit_id: str
     workspace_id: str
+    repo_id: Optional[str] = None
+    workspace_slug: str
 
 
 class Author(BaseModel):

@@ -71,9 +71,11 @@ class ContextService:
     async def get_confluence_doc(self):
         if self.confluence_doc_data:
             return self.confluence_doc_data
+        if not self.jira_manager:
+            return ""
         self.confluence_id = await self.jira_manager.get_confluence_link_attached()
         if self.confluence_id:
-            self.confluence_doc_data = await ConfluenceManager(self.confluence_id).get_description_text()
+            self.confluence_doc_data = await ConfluenceManager(document_id=self.confluence_id).get_description_text()
             self.confluence_doc_data_tokens = self.tiktoken.count(self.confluence_doc_data)
         return self.confluence_doc_data
 

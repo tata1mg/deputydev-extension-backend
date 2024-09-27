@@ -11,7 +11,11 @@ __all__ = [
     "SubscriptionPlans",
     "Integrations",
     "Subscriptions",
+    "Tokens",
+    "Users",
+    "UserTeams",
 ]
+
 from .buckets import Buckets
 from .experiments import Experiments
 from .feedbacks import Feedbacks
@@ -23,4 +27,7 @@ from .subscription_periods import SubscriptionPeriods
 from .subscription_plans import SubscriptionPlans
 from .subscriptions import Subscriptions
 from .teams import Teams
+from .tokens import Tokens
+from .user_teams import UserTeams
+from .users import Users
 from .workspaces import Workspaces

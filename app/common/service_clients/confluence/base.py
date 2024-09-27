@@ -1,16 +1,17 @@
-from requests.auth import HTTPBasicAuth
 from torpedo import CONFIG
+
+from app.common.service_clients.base_scm_client import BaseSCMClient
 
 config = CONFIG.config
 
 
-class Base:
+class Base(BaseSCMClient):
     BASE_URL = config["CONFLUENCE"]["HOST"]
     PATH = config["CONFLUENCE"]["PATH"]
     AUTH_TOKEN = config["CONFLUENCE"]["AUTH_TOKEN"]
     USERNAME = config["CONFLUENCE"]["USERNAME"]
     TIMEOUT = config["CONFLUENCE"]["TIMEOUT"]
 
-    @classmethod
-    def auth(cls):
-        return HTTPBasicAuth(cls.USERNAME, cls.AUTH_TOKEN)
+    # @classmethod
+    # def auth(cls):
+    #     return HTTPBasicAuth(cls.USERNAME, cls.AUTH_TOKEN)

@@ -130,6 +130,18 @@ class PRStatus(Enum):
     OPEN = "OPEN"
     MERGED = "MERGED"
     DECLINED = "DECLINED"
+    APPROVED = "approved"
+
+
+class GithubActions(Enum):
+    CREATED = "created"
+    SUBMITTED = "submitted"
+    CLOSED = "closed"
+    OPENED = "opened"
+
+
+class GitlabActions(Enum):
+    OPENED = "opened"
 
 
 class BitbucketBots(ExtendedEnum):

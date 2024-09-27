@@ -1,9 +1,7 @@
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.service_clients.bitbucket.bitbucket_repo_client import (
-    BitbucketRepoClient,
-)
+from app.common.service_clients.bitbucket import BitbucketRepoClient
 from app.main.blueprints.deputy_dev.constants.constants import COMMENTS_DEPTH
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
@@ -11,15 +9,24 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.comment.helpers.bitbucket_comment_helper import (
     BitbucketCommentHelper,
 )
-from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 config = CONFIG.config
 
 
 class BitbucketComment(BaseComment):
-    def __init__(self, workspace: str, repo_name: str, pr_id: str, pr_details: PullRequestResponse = None):
-        super().__init__(workspace, repo_name, pr_id, pr_details)
-        self.repo_client = BitbucketRepoClient(workspace, repo_name, int(pr_id))
+    def __init__(
+        self,
+        workspace: str,
+        workspace_slug: str,
+        repo_name: str,
+        pr_id: str,
+        auth_handler: AuthHandler,
+        pr_details: PullRequestResponse = None,
+        repo_id=None,
+    ):
+        super().__init__(workspace, workspace_slug, repo_name, pr_id, auth_handler, pr_details, repo_id)
+        self.repo_client = BitbucketRepoClient(workspace_slug, repo_name, int(pr_id), auth_handler=auth_handler)
         self.comment_helper = BitbucketCommentHelper
 
     async def create_comment_on_line(self, comment: dict):
@@ -39,7 +46,7 @@ class BitbucketComment(BaseComment):
         )
         return response
 
-    async def fetch_comment_thread(self, comment_id, depth=0):
+    async def fetch_comment_thread(self, chat_request, depth=0):
         """
         Create a comment on a parent comment in pull request.
 
@@ -49,6 +56,7 @@ class BitbucketComment(BaseComment):
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
+        comment_id = chat_request.comment.id
         try:
             if depth >= COMMENTS_DEPTH:
                 return ""  # Stop recursion when depth exceeds 7
@@ -75,12 +83,6 @@ class BitbucketComment(BaseComment):
         logger.info(f"Comment payload: {comment}")
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
 
-        line_number = extract_line_number_from_llm_response(comment.get("line_number"))
-        if line_number is not None:
-            if line_number >= 0:
-                comment_payload["inline"]["to"] = line_number
-            else:
-                comment_payload["inline"]["from"] = abs(line_number)
         result = await self.repo_client.create_comment_on_pr(comment_payload, model)
         comment["scm_comment_id"] = result["id"]
         comment["llm_source_model"] = model

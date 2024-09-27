@@ -8,6 +8,9 @@ from app.main.blueprints.deputy_dev.models.dao import Experiments
 from app.main.blueprints.deputy_dev.models.dto.experiments_dto import ExperimentsDTO
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 
 
 class ExperimentService:
@@ -143,3 +146,13 @@ class ExperimentService:
             human_comment_count=F("human_comment_count") - 1
         )
         return update_count
+
+    @classmethod
+    def is_eligible_for_experiment(cls):
+        """
+        Determines if the current team is eligible for the PR review experiment.
+        Returns:
+            bool: True if the team is eligible for the experiment, False otherwise.
+        """
+        team_id = get_context_value("team_id")
+        return team_id in CONFIG.config.get("TEAMS_ENABLED_FOR_EXPERIMENT", [])

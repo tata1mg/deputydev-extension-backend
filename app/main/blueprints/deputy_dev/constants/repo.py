@@ -8,9 +8,9 @@ class VCSTypes(str, Enum):
 
 
 class RepoUrl(Enum):
-    BITBUCKET_URL = "git@bitbucket.org:{repo_name}.git"
-    GITHUB_URL = "git@github.com:{repo_name}.git"
-    GITLAB_URL = "git@gitlab.com:{repo_name}.git"
+    BITBUCKET_URL = "https://x-token-auth:{token}@bitbucket.org/{workspace_slug}/{repo_name}.git"
+    GITHUB_URL = "https://x-token-auth:{token}@github.com/{workspace_slug}/{repo_name}.git"
+    GITLAB_URL = "https://x-token-auth:{token}@gitlab.com/{workspace_slug}/{repo_name}.git"
 
 
 VCS_REPO_URL_MAP = {

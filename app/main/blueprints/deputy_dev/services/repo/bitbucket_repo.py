@@ -1,29 +1,50 @@
 import re
 
-from app.common.service_clients.bitbucket.bitbucket_repo_client import (
-    BitbucketRepoClient,
-)
+from app.common.service_clients.bitbucket import BitbucketRepoClient
 from app.main.blueprints.deputy_dev.constants.jira import (
     ATLASSIAN_ISSUE_URL_PREFIX,
     ISSUE_ID_REGEX,
 )
-from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND, VCSTypes
+from app.main.blueprints.deputy_dev.constants.repo import (
+    PR_NOT_FOUND,
+    VCS_REPO_URL_MAP,
+    VCSTypes,
+)
 from app.main.blueprints.deputy_dev.models.dto.pr.bitbucket_pr import BitbucketPrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
+from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
 class BitbucketRepo(BaseRepo):
-    def __init__(self, workspace: str, repo_name: str, pr_id: str, workspace_id: str):
+    def __init__(
+        self,
+        workspace: str,
+        repo_name: str,
+        pr_id: str,
+        workspace_id: str,
+        auth_handler: AuthHandler,
+        workspace_slug: str,
+        repo_id: str = None,
+    ):
         super().__init__(
             vcs_type=VCSTypes.bitbucket.value,
             workspace=workspace,
             repo_name=repo_name,
             pr_id=pr_id,
             workspace_id=workspace_id,
+            workspace_slug=workspace_slug,
+            repo_id=repo_id,
+            auth_handler=auth_handler,
         )
-        self.repo_client = BitbucketRepoClient(workspace=workspace, repo=repo_name, pr_id=int(pr_id))
+        self.repo_client = BitbucketRepoClient(
+            workspace_slug=workspace_slug,
+            repo=repo_name,
+            pr_id=int(pr_id),
+            auth_handler=auth_handler,
+        )
+        self.token = ""
 
     def parse_pr_detail_response(self, pr_model: BitbucketPrModel) -> PullRequestResponse:
         """
@@ -71,13 +92,14 @@ class BitbucketRepo(BaseRepo):
         if self.pr_json_data:
             return self.parse_pr_detail_response(pr_model)
 
-    async def update_pr_details(self, payload) -> PullRequestResponse:
+    async def update_pr_details(self, description) -> PullRequestResponse:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
         Returns:
             PullRequestResponse: An object containing details of the pull request.
         """
+        payload = {"description": description}
         self.pr_json_data = await self.repo_client.update_pr_details(payload)
         pr_model = BitbucketPrModel(self.pr_json_data)
         if self.pr_json_data:
@@ -106,7 +128,7 @@ class BitbucketRepo(BaseRepo):
             return PR_NOT_FOUND
 
         if pr_diff:
-            self.pr_diff = ignore_files(pr_diff)
+            self.pr_diff = ignore_files(pr_diff.text)
         return self.pr_diff
 
     def __get_issue_id(self, title) -> str:
@@ -119,7 +141,10 @@ class BitbucketRepo(BaseRepo):
                 return issue_url.replace(ATLASSIAN_ISSUE_URL_PREFIX, "")
 
     def pr_model(self):
-        return BitbucketPrModel(pr_detail=self.pr_json(), meta_info={"scm_workspace_id": self.scm_workspace_id()})
+        return BitbucketPrModel(
+            pr_detail=self.pr_json(),
+            meta_info={"scm_workspace_id": self.scm_workspace_id()},
+        )
 
     async def get_pr_stats(self):
         if self.pr_stats:
@@ -148,3 +173,9 @@ class BitbucketRepo(BaseRepo):
             return stats["total_added"] + stats["total_removed"]
         else:
             raise Exception("Pr stats data not present")
+
+    async def get_repo_url(self):
+        self.token = await self.auth_handler.access_token()
+        return VCS_REPO_URL_MAP[self.vcs_type].format(
+            token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
+        )
