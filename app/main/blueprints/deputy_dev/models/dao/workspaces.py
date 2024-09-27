@@ -9,36 +9,35 @@ from .base import Base
 class Workspaces(Base):
     serializable_keys = {
         "id",
-        "scm_workspace_id",
+        "integration_id",
         "name",
-        "organisation_info",
         "scm",
         "created_at",
         "updated_at",
+        "scm_workspace_id",
+        "slug",
+        "team_id",
     }
 
     id = fields.BigIntField(pk=True)
-    scm_workspace_id = CITextField(max_length=100)
+    scm_workspace_id = CITextField(max_length=500)
     name = CITextField(max_length=1000)
-    organisation_info = fields.ForeignKeyField(
-        "dao.Organisations",
-        related_name="workspaces",
-        on_update=fields.CASCADE,
-        source_field="organisation_id",
-        index=True,
-        null=False,
-    )
     scm = fields.CharField(max_length=100)
+    integration_id = fields.BigIntField()
+    team_id = fields.BigIntField()
+    slug = CITextField(max_length=1000)
 
     class Meta:
         table = "workspaces"
-        unique_together = (("organisation_id", "scm", "scm_workspace_id"),)
+        unique_together = (("team_id", "scm", "scm_workspace_id"),)
 
     class Columns(Enum):
         id = ("id",)
         scm_workspace_id = ("scm_workspace_id",)
         name = ("name",)
-        organisation_id = ("organisation_id",)
+        team_id = ("team_id",)
         scm = ("scm",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
+        integration_id = ("integration_id",)
+        slug = ("slug",)

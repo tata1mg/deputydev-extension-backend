@@ -1,12 +1,12 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
 
-class OrganisationDTO(BaseModel):
+class TeamDTO(BaseModel):
     id: int
     name: str
     created_at: datetime
     updated_at: datetime
-    status: str
-    email: str
+    llm_model: Optional[str]

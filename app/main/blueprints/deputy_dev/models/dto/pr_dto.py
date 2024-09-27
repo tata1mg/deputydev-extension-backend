@@ -12,7 +12,7 @@ class PullRequestDTO(BaseModel):
     quality_score: Optional[int] = None
     title: Optional[str] = None
     description: Optional[str] = None
-    organisation_id: int
+    team_id: int
     scm: str
     workspace_id: int
     repo_id: int

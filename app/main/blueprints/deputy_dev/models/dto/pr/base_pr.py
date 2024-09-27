@@ -12,8 +12,8 @@ class BasePrModel:
     def workspace_id(self):
         return self.meta_info.get("workspace_id")
 
-    def organisation_id(self):
-        return self.meta_info.get("organisation_id")
+    def team_id(self):
+        return self.meta_info.get("team_id")
 
     def pr_id(self):
         return self.meta_info.get("pr_id")
@@ -83,7 +83,7 @@ class BasePrModel:
             "quality_score": self.quality_score(),
             "title": self.title(),
             "description": self.description(),
-            "organisation_id": self.organisation_id(),
+            "team_id": self.team_id(),
             "scm_pr_id": str(self.scm_pr_id()),
             "scm_author_id": self.scm_author_id(),
             "author_name": self.scm_author_name(),

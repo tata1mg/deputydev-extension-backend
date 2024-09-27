@@ -13,9 +13,8 @@ class PullRequests(Base):
         "quality_score",
         "title",
         "description",
-        "organisation_id",
+        "team_id",
         "scm",
-        "organisation_id",
         "scm",
         "workspace_id",
         "repo_id",
@@ -39,33 +38,9 @@ class PullRequests(Base):
     review_status = fields.CharField(max_length=100)
     quality_score = fields.IntField(null=True)
     title = fields.TextField(null=True)
-    # organisation_id = fields.ForeignKeyField(
-    #     "dao.Organisations",
-    #     related_name="pull_requests",
-    #     on_update=fields.CASCADE,
-    #     source_field="organisation_id",
-    #     index=True,
-    #     null=False,
-    # )
-    organisation_id = fields.BigIntField()
+    team_id = fields.BigIntField()
     scm = fields.CharField(max_length=100)
-    # workspace_id = fields.ForeignKeyField(
-    #     "dao.Workspaces",
-    #     related_name="pull_requests",
-    #     on_update=fields.CASCADE,
-    #     source_field="workspace_id",
-    #     index=True,
-    #     null=False,
-    # )
     workspace_id = fields.BigIntField()
-    # repo_id = fields.ForeignKeyField(
-    #     "dao.Repos",
-    #     related_name="pull_requests",
-    #     on_update=fields.CASCADE,
-    #     source_field="repo_id",
-    #     index=True,
-    #     null=False,
-    # )
     repo_id = fields.BigIntField()
     scm_pr_id = fields.CharField(max_length=100)
     scm_author_id = fields.CharField(max_length=100)
@@ -82,9 +57,9 @@ class PullRequests(Base):
 
     class Meta:
         table = "pull_requests"
-        unique_together = (("organisation_id", "scm", "workspace_id", "repo_id", "scm_pr_id"),)
+        unique_together = (("team_id", "scm", "workspace_id", "repo_id", "scm_pr_id"),)
         indexes = (
-            ("organisation_id", "created_at", "scm"),
+            ("team_id", "created_at", "scm"),
             ("repo_id", "created_at"),
             ("workspace_id", "created_at"),
         )
@@ -95,7 +70,7 @@ class PullRequests(Base):
         quality_score = ("quality_score",)
         title = ("title",)
         description = ("description",)
-        organisation_id = ("organisation_id",)
+        team_id = ("team_id",)
         scm = ("scm",)
         workspace_id = ("workspace_id",)
         repo_id = ("repo_id",)
