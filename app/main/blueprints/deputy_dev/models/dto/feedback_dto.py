@@ -13,7 +13,7 @@ class FeedbackDTO(BaseModel):
     author_info: dict
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    organisation_id: int
+    team_id: int
     workspace_id: int
     scm_pr_id: str
     scm: str

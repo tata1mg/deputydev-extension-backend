@@ -29,11 +29,11 @@ class RepoService:
             raise ex
 
     @classmethod
-    async def find_or_create(cls, workspace_id, organisation_id, pr_model: BasePrModel):
+    async def find_or_create(cls, workspace_id, team_id, pr_model: BasePrModel):
         repo_dto = await cls.find(workspace_id=workspace_id, scm_repo_id=pr_model.scm_repo_id())
         if not repo_dto:
             repo_data = {
-                "organisation_id": organisation_id,
+                "team_id": team_id,
                 "scm": pr_model.scm_type(),
                 "scm_repo_id": pr_model.scm_repo_id(),
                 "name": pr_model.scm_repo_name(),

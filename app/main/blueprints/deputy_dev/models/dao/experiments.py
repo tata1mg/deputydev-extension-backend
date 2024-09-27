@@ -8,7 +8,7 @@ class Experiments(Base):
     serializable_keys = {
         "id",
         "scm_pr_id",
-        "organisation_id",
+        "team_id",
         "workspace_id",
         "repo_id",
         "cohort",
@@ -27,7 +27,7 @@ class Experiments(Base):
     id = fields.BigIntField(pk=True)
     scm_pr_id = CITextField(max_length=100)
     review_status = CITextField(max_length=100)
-    organisation_id = fields.BigIntField()
+    team_id = fields.BigIntField()
     workspace_id = fields.BigIntField()
     repo_id = fields.BigIntField()
     scm = CITextField(max_length=100)

@@ -54,7 +54,7 @@ class PRService:
         )
         if workspace_dto:
             repo_dto = await RepoService.find_or_create(
-                workspace_id=workspace_dto.id, organisation_id=workspace_dto.organisation_info.id, pr_model=pr_model
+                workspace_id=workspace_dto.id, team_id=workspace_dto.team_id, pr_model=pr_model
             )
 
             if repo_dto:
@@ -62,7 +62,7 @@ class PRService:
                 if not pr_dto:
                     pr_model.meta_info = {
                         "review_status": pr_status,
-                        "organisation_id": repo_dto.organisation_id,
+                        "team_id": repo_dto.team_id,
                         "workspace_id": repo_dto.workspace_id,
                         "repo_id": repo_dto.id,
                     }

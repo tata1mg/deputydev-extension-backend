@@ -57,7 +57,6 @@ class CommentPreprocessor(Enum):
             "feedback_type": feedback_type,
             "feedback": chat_request.comment.raw,
             "pr_id": pr_dto.id if pr_dto else None,
-            "org_id": pr_dto.organisation_id if pr_dto else None,
             "meta_info": {
                 "commit_id": chat_request.repo.commit_id,
                 "scm_comment_id": str(chat_request.comment.id),
@@ -71,7 +70,7 @@ class CommentPreprocessor(Enum):
                 "scm_author_id": chat_request.author_info.scm_author_id,
             },
             "scm": pr_model.scm_type(),
-            "organisation_id": workspace_dto.organisation_info.id,
+            "team_id": workspace_dto.team_id,
             "workspace_id": workspace_dto.id,
             "scm_pr_id": str(pr_model.scm_pr_id()),
             "repo_id": repo_dto.id if repo_dto else None,

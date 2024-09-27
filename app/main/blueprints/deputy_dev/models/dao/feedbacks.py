@@ -14,7 +14,7 @@ class Feedbacks(Base):
         "pr_id",
         "meta_info",
         "author_info",
-        "organisation_id",
+        "team_id",
         "workspace_id",
         "scm_pr_id",
         "scm",
@@ -28,7 +28,7 @@ class Feedbacks(Base):
     pr_id = fields.BigIntField(null=True)
     meta_info = fields.JSONField()
     author_info = fields.JSONField()
-    organisation_id = fields.BigIntField()
+    team_id = fields.BigIntField()
     workspace_id = fields.BigIntField()
     scm_pr_id = fields.CharField(max_length=100)
     scm = fields.CharField(max_length=100)
@@ -46,7 +46,7 @@ class Feedbacks(Base):
         author_info = ("author_info",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
-        organisation_id = ("organisation_id",)
+        team_id = ("team_id",)
         workspace_id = ("workspace_id",)
         scm_pr_id = ("scm_pr_id",)
         scm = ("scm",)
