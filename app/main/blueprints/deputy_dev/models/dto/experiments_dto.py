@@ -9,7 +9,7 @@ from app.main.blueprints.deputy_dev.constants.constants import PRStatus
 class ExperimentsDTO(BaseModel):
     id: Optional[int] = None
     scm_pr_id: str
-    organisation_id: int
+    team_id: int
     workspace_id: int
     repo_id: int
     cohort: str

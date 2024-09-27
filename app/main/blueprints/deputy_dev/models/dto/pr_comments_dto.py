@@ -8,7 +8,7 @@ class PRCommentsDTO(BaseModel):
     iteration: int
     llm_confidence_score: float
     llm_source_model: str
-    organisation_id: int
+    team_id: int
     scm: str
     workspace_id: int
     repo_id: int

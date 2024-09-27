@@ -14,7 +14,7 @@ class PRComments(Base):
         "iteration",
         "llm_confidence_score",
         "llm_source_model",
-        "organisation_id",
+        "team_id",
         "scm",
         "workspace_id",
         "repo_id",
@@ -28,54 +28,14 @@ class PRComments(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    # bucket_id = fields.ForeignKeyField(
-    #     "dao.Buckets",
-    #     related_name="pr_components",
-    #     on_update=fields.CASCADE,
-    #     source_field="bucket_id",
-    #     index=True,
-    #     null=False,
-    # )
     bucket_id = fields.SmallIntField()
     iteration = fields.IntField()
     llm_confidence_score = fields.FloatField()
     llm_source_model = CITextField(max_length=500)
-    # organisation_id = fields.ForeignKeyField(
-    #     "dao.Organisations",
-    #     related_name="pr_components",
-    #     on_update=fields.CASCADE,
-    #     source_field="organisation_id",
-    #     index=True,
-    #     null=False,
-    # )
-    organisation_id = fields.BigIntField()
+    team_id = fields.BigIntField()
     scm = CITextField()
-    # workspace_id = fields.ForeignKeyField(
-    #     "dao.Workspaces",
-    #     related_name="pr_components",
-    #     on_update=fields.CASCADE,
-    #     source_field="workspace_id",
-    #     index=True,
-    #     null=False,
-    # )
     workspace_id = fields.BigIntField()
-    # repo_id = fields.ForeignKeyField(
-    #     "dao.Repos",
-    #     related_name="pr_components",
-    #     on_update=fields.CASCADE,
-    #     source_field="repo_id",
-    #     index=True,
-    #     null=False,
-    # )
     repo_id = fields.BigIntField()
-    # pr_id = fields.ForeignKeyField(
-    #     "dao.PullRequests",
-    #     related_name="pr_components",
-    #     on_update=fields.CASCADE,
-    #     source_field="pr_id",
-    #     index=True,
-    #     null=False,
-    # )
     pr_id = fields.BigIntField()
     scm_comment_id = fields.CharField(max_length=100)
     scm_author_id = fields.CharField(max_length=100)
@@ -84,7 +44,7 @@ class PRComments(Base):
 
     class Meta:
         table = "pr_comments"
-        unique_together = (("organisation_id", "scm", "workspace_id", "repo_id", "pr_id", "scm_comment_id"),)
+        unique_together = (("team_id", "scm", "workspace_id", "repo_id", "pr_id", "scm_comment_id"),)
         indexes = (
             (
                 "pr_id",
@@ -100,7 +60,7 @@ class PRComments(Base):
         iteration = ("iteration",)
         llm_confidence_score = ("llm_confidence_score",)
         llm_source_model = ("llm_source_model",)
-        organisation_id = ("organisation_id",)
+        team_id = ("team_id",)
         scm = ("scm",)
         workspace_id = ("workspace_id",)
         repo_id = ("repo_id",)

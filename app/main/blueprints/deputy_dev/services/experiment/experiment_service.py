@@ -13,7 +13,7 @@ from app.main.blueprints.deputy_dev.services.db.db import DB
 class ExperimentService:
     """Service class to handle operations related to Experiments."""
 
-    REVIEW_EXPERIMENT_CACHE_KEY = "{organisation_id}_{workspace_id}_{repo_id}"
+    REVIEW_EXPERIMENT_CACHE_KEY = "{team_id}_{workspace_id}_{repo_id}"
 
     @classmethod
     async def db_insert(cls, experiment_dto: ExperimentsDTO) -> ExperimentsDTO:
@@ -56,7 +56,7 @@ class ExperimentService:
             Exception: If fetching or setting cache fails.
         """
         review_cache_key = cls.REVIEW_EXPERIMENT_CACHE_KEY.format(
-            organisation_id=pr_dto.organisation_id, workspace_id=pr_dto.workspace_id, repo_id=pr_dto.repo_id
+            team_id=pr_dto.team_id, workspace_id=pr_dto.workspace_id, repo_id=pr_dto.repo_id
         )
         experiment_config = CONFIG.config["REVIEW_PR_EXPERIMENT"]
 
@@ -65,16 +65,14 @@ class ExperimentService:
 
         # For first time or when redis is down
         if count is None:
-            cohort_set_db_count = await cls.db_count(
-                {"repo_id": pr_dto.repo_id, "organisation_id": pr_dto.organisation_id}
-            )
+            cohort_set_db_count = await cls.db_count({"repo_id": pr_dto.repo_id, "team_id": pr_dto.team_id})
             await ABExperimentCache.set(review_cache_key, cohort_set_db_count)
 
         count = await ABExperimentCache.incr(review_cache_key)
         experiment_set = experiment_config[(count - 1) % len(CONFIG.config["REVIEW_PR_EXPERIMENT"])]
 
         experiment_info = {
-            "organisation_id": pr_dto.organisation_id,
+            "team_id": pr_dto.team_id,
             "workspace_id": pr_dto.workspace_id,
             "repo_id": pr_dto.repo_id,
             "scm_pr_id": pr_dto.scm_pr_id,
