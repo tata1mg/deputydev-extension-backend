@@ -145,7 +145,7 @@ class PRReviewPostProcessor:
                 "iteration": 1,
                 "llm_confidence_score": comment["confidence_score"],
                 "llm_source_model": CONFIG.config["LLM_MODELS"][comment["llm_source_model"]]["NAME"],
-                "organisation_id": pr_dto.organisation_id,
+                "team_id": pr_dto.team_id,
                 "scm": pr_dto.scm,
                 "workspace_id": pr_dto.workspace_id,
                 "repo_id": pr_dto.repo_id,
