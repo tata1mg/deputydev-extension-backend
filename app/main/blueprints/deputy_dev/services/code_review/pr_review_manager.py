@@ -48,6 +48,7 @@ class PRReviewManager:
         # someone was able to manually push invalid message to SQS, we will check the incoming SQS message
         # if it's fine then we start the PR review process, otherwise we log the invalid payload and purge the message
         try:
+            data["workspace_slug"] = "tata1mg"
             CodeReviewRequest(**data)
             logger.info("Received SQS Message: {}".format(data))
             await cls.process_pr_review(data=data)
