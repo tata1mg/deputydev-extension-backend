@@ -380,7 +380,7 @@ async def get_auth_handler(client: str, team_id: str | None = None, workspace_id
         model_name=Integrations, where_clause={"team_id": team_id, "client": client}, limit=1, fetch_one=True
     )
     if not integration_info:
-        return
+        return None, None
     if client == "github":
         # tokenable_type = "workspace"
         tokenable_id = workspace_id
