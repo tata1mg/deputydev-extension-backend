@@ -10,14 +10,17 @@ class ConfluenceManager:
         self.document_id = document_id
         self.auth_handler = None
         self.client_account_id = None
+        self.is_confluence_integration_enabled = False
 
     async def set_auth_handler(self):
         if not self.auth_handler and not self.client_account_id:
             confluence_auth_handler, integration_info = await get_auth_handler(
                 client="confluence", team_id=get_context_value("team_id")
             )
-            self.auth_handler = confluence_auth_handler
-            self.client_account_id = integration_info["client_account_id"]
+            if confluence_auth_handler and integration_info:
+                self.auth_handler = confluence_auth_handler
+                self.client_account_id = integration_info["client_account_id"]
+                self.is_confluence_integration_enabled = True
 
     async def get_description_text(self):
         """
@@ -27,6 +30,8 @@ class ConfluenceManager:
         Note: For now we are retuning HTML information
         """
         await self.set_auth_handler()
+        if not self.is_confluence_integration_enabled:
+            return ""
         response = await self.__get_document()
         if response and response.get("body", {}).get("storage"):
             return ConfluenceHelper.parse_description(response["body"]["storage"]["value"])
