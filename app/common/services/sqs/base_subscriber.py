@@ -57,6 +57,7 @@ class BaseSubscriber:
         show_configured_log = True
         while True:
             try:
+                logger.info("SQS subscribe event initiated for pr review")
                 response = await self.receive_message(
                     max_no_of_messages=max_no_of_messages,
                     wait_time_in_seconds=wait_time_in_seconds,
@@ -74,6 +75,7 @@ class BaseSubscriber:
             except botocore.exceptions.ReadTimeoutError:
                 # We are simply passing this exception, since using return would break it out
                 # of the loop
+                logger.info("SQS subscribe event failed with read timeout error")
                 continue
             except Exception as e:
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)
