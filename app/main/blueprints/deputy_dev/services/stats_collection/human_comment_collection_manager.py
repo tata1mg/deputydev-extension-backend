@@ -11,6 +11,9 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
     StatsCollectionBase,
 )
+from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
+    HumanCommentWebhook,
+)
 
 
 class HumanCommentCollectionManager(StatsCollectionBase):
@@ -19,7 +22,7 @@ class HumanCommentCollectionManager(StatsCollectionBase):
         self.scm_pr_id = None
         self.is_human_count_incremented = False
         self.stats_type = MetaStatCollectionTypes.HUMAN_COMMENT.value
-        self.scm_pr_id = payload["scm_pr_id"]
+        self.scm_pr_id = payload.get("scm_pr_id")
         self.is_eligible_for_experiment = ExperimentService.is_eligible_for_experiment()
 
     def validate_payload(self):
@@ -43,3 +46,8 @@ class HumanCommentCollectionManager(StatsCollectionBase):
     async def revert(self):
         if self.repo_dto and self.is_human_count_incremented:
             await ExperimentService.decrement_human_comment_count(scm_pr_id=self.scm_pr_id, repo_id=self.repo_dto.id)
+
+    async def generate_old_payload(self):
+        self.payload = await HumanCommentWebhook.parse_payload(self.payload, self.vcs_type)
+        self.payload = self.payload.dict()
+        self.scm_pr_id = self.payload.get("scm_pr_id")

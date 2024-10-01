@@ -391,3 +391,22 @@ async def get_auth_handler(client: str, team_id: str | None = None, workspace_id
 
     auth_handler = create_auth_handler(integration=client, tokenable_id=int(tokenable_id))
     return auth_handler, integration_info
+
+
+def get_bitbucket_repo_name_slug(value: str) -> str:
+    """
+    extracts repo slug from the full name passed to it
+
+    Args:
+        value (str): string from which the value needs to be extracted.
+
+    Returns:
+        datetime: The corresponding datetime object.
+    """
+    parts = value.split("/")
+    return parts[-1]
+
+
+def is_request_from_blocked_repo(repo_name):
+    config = CONFIG.config
+    return repo_name in config.get("BLOCKED_REPOS")
