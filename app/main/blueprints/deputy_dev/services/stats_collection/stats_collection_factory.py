@@ -32,3 +32,7 @@ class StatsCollectionFactory:
 
         if _klass.validate_payload():
             await _klass.process_event()
+        else:
+            # TODO Deprecated code added just for backward compatibility
+            await _klass.generate_old_payload()
+            await _klass.process_event()
