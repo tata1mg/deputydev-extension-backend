@@ -8,6 +8,9 @@ class MetaSubscriber(BaseSubscriber):
     def get_queue_name(self):
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("METASYNC", {}).get("QUEUE_NAME", "")
 
+    def get_queue_config(self):
+        return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("METASYNC", {})
+
     @property
     def event_handler(self):
         return StatsCollectionFactory

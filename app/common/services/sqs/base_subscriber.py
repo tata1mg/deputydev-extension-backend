@@ -52,8 +52,10 @@ class BaseSubscriber:
         return await self.sqs_manager.publish_to_sqs(messages=data, batch=True, **kwargs)
 
     async def subscribe(self, **kwargs):
-        max_no_of_messages = kwargs.get("max_no_of_messages", SQS.SUBSCRIBE.value["MAX_MESSAGES"])
-        wait_time_in_seconds = kwargs.get("wait_time_in_seconds", SQS.SUBSCRIBE.value["WAIT_TIME_IN_SECONDS"])
+        max_no_of_messages = kwargs.get("max_no_of_messages", self.get_queue_config().get("MAX_MESSAGES", 1))
+        wait_time_in_seconds = kwargs.get(
+            "wait_time_in_seconds", self.get_queue_config().get("WAIT_TIME_IN_SECONDS", 5)
+        )
         show_configured_log = True
         while True:
             try:
