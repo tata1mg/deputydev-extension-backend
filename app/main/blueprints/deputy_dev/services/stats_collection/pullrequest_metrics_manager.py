@@ -17,6 +17,9 @@ from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoServic
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
     StatsCollectionBase,
 )
+from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
+    PullRequestCloseWebhook,
+)
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
     WorkspaceService,
 )
@@ -168,3 +171,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
         cycle_time_seconds = pr_close_time_epoch - created_time_epoch
 
         return cycle_time_seconds
+
+    async def generate_old_payload(self):
+        self.payload = await PullRequestCloseWebhook.parse_payload(self.payload, self.vcs_type)
+        self.payload = self.payload.dict()

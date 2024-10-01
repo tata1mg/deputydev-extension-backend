@@ -7,6 +7,9 @@ from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
     StatsCollectionBase,
 )
+from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import (
+    PRApprovalWebhook,
+)
 
 
 class PRApprovalTimeManager(StatsCollectionBase):
@@ -30,3 +33,7 @@ class PRApprovalTimeManager(StatsCollectionBase):
             payload={"scm_approval_time": convert_to_datetime(payload["scm_approval_time"])},
             filters={"id": self.pr_dto.id},
         )
+
+    async def generate_old_payload(self):
+        self.payload = await PRApprovalWebhook.parse_payload(self.payload, self.vcs_type)
+        self.payload = self.payload.dict()

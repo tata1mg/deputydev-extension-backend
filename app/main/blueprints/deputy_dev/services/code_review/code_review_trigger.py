@@ -6,6 +6,7 @@ from torpedo.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.sqs.genai_subscriber import GenaiSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.pr_webhook import PRWebhook
+from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
 
 
 class CodeReviewTrigger:
@@ -36,7 +37,7 @@ class CodeReviewTrigger:
             logger.error(ex)
             raise BadRequestException(f"invalid pr review request with error {ex.errors()}")
 
-        if payload.repo_name not in config.get("BLOCKED_REPOS"):
+        if not is_request_from_blocked_repo(payload.repo_name):
             logger.info("Whitelisted request: {}".format(payload))
             await GenaiSubscriber(config=config).publish(payload=payload.dict())
             return f"Processing Started with PR ID : {payload.pr_id}"
