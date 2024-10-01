@@ -16,6 +16,7 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
     PullRequestCloseWebhook,
 )
+from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
 
 
 class StatsCollectionTrigger:
@@ -34,7 +35,8 @@ class StatsCollectionTrigger:
             parsed_payload = await PRApprovalWebhook.parse_payload(payload, vcs_type)
         if stats_type:
             data = {"payload": parsed_payload.dict(), "query_params": query_params, "stats_type": stats_type}
-            await MetaSubscriber(config=cls.config).publish(data)
+            if not is_request_from_blocked_repo(data["payload"].get("repo_name")):
+                await MetaSubscriber(config=cls.config).publish(data)
 
     @classmethod
     def get_stats_collection_type(cls, vcs_type, payload):

@@ -11,6 +11,7 @@ from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoServic
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
     WorkspaceService,
 )
+from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
 
 
 class StatsCollectionBase(ABC):
@@ -35,6 +36,8 @@ class StatsCollectionBase(ABC):
     async def process_event(self) -> None:
         extracted_payload = {}
         try:
+            if not self.check_serviceable_event():
+                return
             await self.save_to_db(self.payload)
             logger.info(f"{self.stats_type} meta sync completed for payload {extracted_payload}")
 
@@ -78,3 +81,10 @@ class StatsCollectionBase(ABC):
                     f"{self.stats_type} webhook failed for repo {payload['scm_repo_id']} due to"
                     f" pr review not started"
                 )
+
+    async def generate_old_payload(self):
+        """TODO deprecated method"""
+        pass
+
+    def check_serviceable_event(self):
+        return not is_request_from_blocked_repo(self.payload.get("repo_name"))

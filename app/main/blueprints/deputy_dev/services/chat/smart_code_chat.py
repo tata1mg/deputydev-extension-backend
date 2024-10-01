@@ -43,6 +43,7 @@ from app.main.blueprints.deputy_dev.utils import (
     format_code_blocks,
     get_vcs_auth_handler,
     is_human_comment,
+    is_request_from_blocked_repo,
 )
 
 config = CONFIG.config
@@ -56,6 +57,8 @@ class SmartCodeChatManager:
         if not comment_payload:
             return
         logger.info(f"Comment payload: {comment_payload}")
+        if is_request_from_blocked_repo(comment_payload.repo.repo_name):
+            return
         if is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw):
             human_comment_payload = await HumanCommentWebhook.parse_payload(payload, vcs_type)
             await cls.handle_human_comment(human_comment_payload, query_params)
