@@ -7,6 +7,9 @@ class GenaiSubscriber(BaseSubscriber):
     def get_queue_name(self):
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
 
+    def get_queue_config(self):
+        return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {})
+
     @property
     def event_handler(self):
         return PRReviewManager
