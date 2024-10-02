@@ -44,6 +44,8 @@ class PullRequestMetricsManager(StatsCollectionBase):
             return False
 
     async def process_event(self):
+        if not self.check_serviceable_event():
+            return
         logger.info(f"PR close paylod: {self.payload}")
         await self.initialize_repo_service()
         await self.initialize_workspace_and_repo_dto()
