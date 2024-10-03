@@ -2,6 +2,7 @@ from pydantic import ValidationError
 from sanic.log import logger
 
 from app.common.utils.app_utils import convert_to_datetime
+from app.main.blueprints.deputy_dev.constants.constants import MetaStatCollectionTypes
 from app.main.blueprints.deputy_dev.models.pr_approval_request import PRApprovalRequest
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
@@ -15,6 +16,7 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 class PRApprovalTimeManager(StatsCollectionBase):
     def __init__(self, payload, vcs_type):
         super().__init__(payload, vcs_type)
+        self.stats_type = MetaStatCollectionTypes.PR_CLOSE.value
 
     def validate_payload(self):
         """
