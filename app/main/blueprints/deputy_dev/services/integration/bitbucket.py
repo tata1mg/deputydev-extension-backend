@@ -51,7 +51,7 @@ class Bitbucket(Integration, SCM):
         logger.info("Filtered Workspaces: %s", filtered_workspaces)
 
         for workspace in filtered_workspaces:
-            await self.create_webhooks(workspace["slug"])
+            await self.create_webhooks(workspace["slug"], workspace["id"])
 
         async with in_transaction():
             for workspace in filtered_workspaces:
@@ -68,7 +68,7 @@ class Bitbucket(Integration, SCM):
 
             await self.mark_connected(integration_row)
 
-    async def create_webhooks(self, workspace_slug):
+    async def create_webhooks(self, workspace_slug, scm_workspace_id):
         set_hooks = await self.list_all_webhooks(workspace_slug)
 
         filtered_hooks = []
@@ -80,7 +80,11 @@ class Bitbucket(Integration, SCM):
             filtered_hooks.append(webhook)
 
         for webhook in filtered_hooks:
-            url = self._prepare_url(webhook["URL"], vcs_type="bitbucket")
+            url = self._prepare_url(
+                base_url=webhook["URL"],
+                vcs_type="bitbucket",
+                scm_workspace_id=scm_workspace_id,
+            )
 
             await self.client.create_webhooks(
                 workspace_slug,
@@ -95,7 +99,6 @@ class Bitbucket(Integration, SCM):
 
     def __hook_exists(self, new_webhook, set_hooks):
         for set_hook in set_hooks:
-
             if set_hook["active"]:
                 url = set_hook["url"]
                 new_url = self._prepare_url(new_webhook["URL"], vcs_type="bitbucket")

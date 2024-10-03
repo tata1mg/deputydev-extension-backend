@@ -5,7 +5,6 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.exception import RetryException
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
@@ -15,9 +14,9 @@ from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
 
 
 class StatsCollectionBase(ABC):
-    def __init__(self, payload, query_params):
+    def __init__(self, payload, vcs_type):
         self.payload = payload
-        self.vcs_type = query_params.get("vcs_type", VCSTypes.bitbucket.value)
+        self.vcs_type = vcs_type
         self.repo_service = None
         self.workspace_dto = None
         self.repo_dto = None

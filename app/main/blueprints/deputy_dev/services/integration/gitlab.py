@@ -84,7 +84,13 @@ class Gitlab(Integration, SCM):
 
         for webhook in filtered_hooks:
             events_dict = self.__prepare_events_dict(webhook["EVENTS"]["GITLAB"])
-            url = self._prepare_url(webhook["URL"], vcs_type="gitlab")
+
+            scm_workspace_id = group_id
+            url = self._prepare_url(
+                base_url=webhook["URL"],
+                vcs_type="gitlab",
+                scm_workspace_id=scm_workspace_id,
+            )
 
             await self.client.create_webhooks(
                 group_id=group_id,

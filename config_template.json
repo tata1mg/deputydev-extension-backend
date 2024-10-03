@@ -39,6 +39,7 @@
   },
   "EXPERIMENT": {},
   "ENCRYPTION_PASSWORD": "",
+  "WEBHOOK_JWT_SIGNING_KEY": "",
   "WEBHOOKS_PAYLOAD": [
     {
       "NAME": "DeputyDev Review",

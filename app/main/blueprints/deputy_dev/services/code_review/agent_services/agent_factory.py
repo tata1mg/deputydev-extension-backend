@@ -44,11 +44,20 @@ class AgentFactory:
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
         prompts = {}
         for agent in AgentTypes.list():
+
             _klass = self.FACTORIES.get(agent)
-            if _klass and agent not in exclude_agents:
-                prompts[agent] = await _klass(self.context_service, self.reflection_enabled).get_system_n_user_prompt(
-                    reflection_stage, previous_review_comments.get(agent, {}).get("response")
-                )
+            if not _klass or agent in exclude_agents:
+                continue
+
+            agent_instance = _klass(self.context_service, self.reflection_enabled)
+            agent_callable = await agent_instance.should_execute()
+            if not agent_callable:
+                continue
+
+            prompts[agent] = await agent_instance.get_system_n_user_prompt(
+                reflection_stage, previous_review_comments.get(agent, {}).get("response")
+            )
+
         meta_info = {
             "issue_id": self.context_service.issue_id,
             "confluence_doc_id": self.context_service.confluence_id,

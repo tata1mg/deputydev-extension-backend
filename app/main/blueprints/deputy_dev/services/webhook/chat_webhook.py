@@ -1,4 +1,3 @@
-from app.common.service_clients.gitlab.gitlab_repo_client import GitlabRepoClient
 from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.constants import GithubActions
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
@@ -12,7 +11,8 @@ class ChatWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload, vcs_type):
+    async def parse_payload(cls, payload):
+        vcs_type = payload.get("vcs_type")
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
@@ -44,7 +44,7 @@ class ChatWebhook:
                 "pr_id": request_payload["pullrequest"]["id"],
                 "repo_name": get_vcs_repo_name_slug(request_payload["repository"]["full_name"]),
                 "commit_id": request_payload["pullrequest"]["destination"]["commit"]["hash"],
-                "workspace_id": request_payload["repository"]["workspace"]["uuid"],
+                "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "workspace_slug": request_payload["repository"]["workspace"]["slug"],
             },
             "author_info": {
@@ -78,12 +78,12 @@ class ChatWebhook:
                 "side": request_payload["comment"]["side"],
             },
             "repo": {
-                "workspace": request_payload["enterprise"]["name"],
+                "workspace": request_payload["organization"]["login"],
                 "pr_id": request_payload["pull_request"]["number"],
                 "repo_name": get_vcs_repo_name_slug(request_payload["pull_request"]["head"]["repo"]["full_name"]),
                 "commit_id": request_payload["comment"]["commit_id"],
-                "workspace_id": str(request_payload["organization"]["id"]),
-                "workspace_slug": request_payload["enterprise"]["slug"],
+                "workspace_id": str(request_payload.get("scm_workspace_id")),
+                "workspace_slug": request_payload["organization"]["login"],
             },
             "author_info": {
                 "name": request_payload["comment"]["user"]["login"],
@@ -132,9 +132,7 @@ class ChatWebhook:
             return None
 
         pr_id = request_payload["merge_request"]["iid"]
-        workspace = request_payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(request_payload["project"]["path_with_namespace"])
-        workspace_id = await GitlabRepoClient(pr_id=pr_id, project_id=workspace).get_namespace_id(workspace_slug)
         final_payload = {
             "comment": {
                 "raw": request_payload["object_attributes"]["note"],
@@ -148,7 +146,7 @@ class ChatWebhook:
                 "pr_id": pr_id,
                 "repo_name": get_vcs_repo_name_slug(request_payload["project"]["path_with_namespace"]),
                 "commit_id": request_payload["object_attributes"]["position"].get("head_sha"),
-                "workspace_id": str(workspace_id),
+                "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "repo_id": str(request_payload["project"]["id"]),
                 "workspace_slug": workspace_slug,
             },
