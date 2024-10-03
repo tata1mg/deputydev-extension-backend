@@ -6,7 +6,10 @@ from torpedo import CONFIG
 
 from app.common.exception import RetryException
 from app.common.utils.app_utils import convert_to_datetime
-from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
+from app.main.blueprints.deputy_dev.constants.constants import (
+    MetaStatCollectionTypes,
+    PrStatusTypes,
+)
 from app.main.blueprints.deputy_dev.models.pr_close_request import PRCloseRequest
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
@@ -29,6 +32,7 @@ from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 class PullRequestMetricsManager(StatsCollectionBase):
     def __init__(self, payload, vcs_type):
         super().__init__(payload, vcs_type)
+        self.stats_type = MetaStatCollectionTypes.PR_CLOSE.value
 
         self.sqs_message_retention_time = CONFIG.config.get("SQS", {}).get("MESSAGE_RETENTION_TIME_SEC", 0)
 
@@ -54,7 +58,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
         self.payload["pr_closed_at"] = convert_to_datetime(self.payload["pr_closed_at"])
 
         if not self.pr_dto:
-            if self.payload["pr_created_at"] > self.experiment_start_time:
+            if self.payload.get("pr_created_at") and self.payload.get("pr_created_at") > self.experiment_start_time:
                 raise RetryException(f"PR: {self.payload['pr_id']} not picked to be reviewed by Deputydev")
             else:
                 return
