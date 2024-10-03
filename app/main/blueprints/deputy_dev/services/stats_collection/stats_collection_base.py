@@ -33,30 +33,29 @@ class StatsCollectionBase(ABC):
         pass
 
     async def process_event(self) -> None:
-        extracted_payload = {}
         try:
             if not self.check_serviceable_event():
                 return
             await self.save_to_db(self.payload)
-            logger.info(f"{self.stats_type} meta sync completed for payload {extracted_payload}")
+            logger.info(f"{self.stats_type} meta sync completed for payload {self.payload}")
 
         except RetryException as ex:
             logger.error(
-                f"{self.stats_type} meta sync failed with for repo {extracted_payload.get('repo_name')}"
-                f" and pr {extracted_payload.get('scm_pr_id')} exception {ex}"
+                f"{self.stats_type} meta sync failed with for repo {self.payload.get('repo_name')}"
+                f" and pr {self.payload.get('scm_pr_id')} exception {ex}"
             )
             raise ex
 
         except Exception as ex:
             await self.revert()
             logger.error(
-                f"{self.stats_type} meta sync failed with for repo {extracted_payload.get('repo_name')}"
-                f" and pr {extracted_payload.get('scm_pr_id')} exception {ex}"
+                f"{self.stats_type} meta sync failed with for repo {self.payload.get('repo_name')}"
+                f" and pr {self.payload.get('scm_pr_id')} exception {ex}"
             )
             raise RetryException(
                 message=f"Unknown: {self.stats_type} meta sync failed with for repo "
-                f"{extracted_payload.get('repo_name')}"
-                f" and pr {extracted_payload.get('scm_pr_id')} exception {ex}"
+                f"{self.payload.get('repo_name')}"
+                f" and pr {self.payload.get('scm_pr_id')} exception {ex}"
             )
 
     async def get_pr_from_db(self, payload):
@@ -75,11 +74,9 @@ class StatsCollectionBase(ABC):
 
         self.pr_dto = await PRService.find(repo_id=self.repo_dto.id, scm_pr_id=payload["scm_pr_id"])
         if not self.pr_dto:
-            if payload["pr_created_at"] > self.experiment_start_time:
-                raise RetryException(
-                    f"{self.stats_type} webhook failed for repo {payload['scm_repo_id']} due to"
-                    f" pr review not started"
-                )
+            raise RetryException(
+                f"{self.stats_type} webhook failed for repo {payload['scm_repo_id']} due to" f" pr review not started"
+            )
 
     async def generate_old_payload(self):
         """TODO deprecated method"""
