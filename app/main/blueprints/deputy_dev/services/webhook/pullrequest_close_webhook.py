@@ -1,4 +1,3 @@
-from app.common.service_clients.gitlab.gitlab_repo_client import GitlabRepoClient
 from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.constants import PRStatus
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
@@ -7,7 +6,7 @@ from app.main.blueprints.deputy_dev.models.pr_close_request import PRCloseReques
 
 class PullRequestCloseWebhook:
     @classmethod
-    async def parse_payload(cls, payload: dict, vcs_type: str) -> PRCloseRequest:
+    async def parse_payload(cls, payload: dict) -> PRCloseRequest:
         """
         Extracts pull request data from the payload based on the VCS type.
 
@@ -18,6 +17,7 @@ class PullRequestCloseWebhook:
         Returns:
             Tuple[int, str, str]: A tuple containing PR ID, creation time, and stats_collection time.
         """
+        vcs_type = payload.get("vcs_type")
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
@@ -35,7 +35,7 @@ class PullRequestCloseWebhook:
             "pr_id": str(payload["pullrequest"]["id"]),
             "repo_name": get_vcs_repo_name_slug(payload["repository"]["full_name"]),
             "workspace": payload["repository"]["workspace"]["slug"],
-            "workspace_id": payload["repository"]["workspace"]["uuid"],
+            "workspace_id": str(payload.get("scm_workspace_id")),
             "workspace_slug": payload["repository"]["workspace"]["slug"],
             "pr_created_at": payload["pullrequest"]["created_on"],
             "pr_closed_at": payload["pullrequest"]["updated_on"],
@@ -52,8 +52,8 @@ class PullRequestCloseWebhook:
             "pr_id": str(payload["pull_request"]["number"]),
             "repo_name": get_vcs_repo_name_slug(payload["pull_request"]["head"]["repo"]["full_name"]),
             "workspace": payload["organization"]["login"],
-            "workspace_slug": payload["enterprise"]["name"],
-            "workspace_id": str(payload["organization"]["id"]),
+            "workspace_slug": payload["organization"]["login"],
+            "workspace_id": str(payload.get("scm_workspace_id")),
             "pr_created_at": payload["pull_request"]["created_at"],
             "pr_closed_at": payload["pull_request"]["closed_at"],
             "repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
@@ -66,7 +66,6 @@ class PullRequestCloseWebhook:
         pr_id = payload["object_attributes"]["iid"]
         workspace = payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(payload["project"]["path_with_namespace"])
-        workspace_id = await GitlabRepoClient(pr_id=pr_id, project_id=workspace).get_namespace_id(workspace_slug)
         parsed_payload = {
             "pr_state": PRStatus.MERGED.value
             if payload["object_attributes"]["state"] == "merged"
@@ -76,7 +75,7 @@ class PullRequestCloseWebhook:
             "repo_id": str(payload["project"]["id"]),
             "workspace": workspace,
             "workspace_slug": workspace_slug,
-            "workspace_id": str(workspace_id),
+            "workspace_id": str(payload.get("scm_workspace_id")),
             "pr_created_at": payload["object_attributes"]["created_at"],
             "pr_closed_at": payload["object_attributes"]["updated_at"],
         }

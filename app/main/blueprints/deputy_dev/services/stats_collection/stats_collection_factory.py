@@ -27,8 +27,8 @@ class StatsCollectionFactory:
         logger.info(f"Received New SQS Message for meta sync {event_type}")
 
         payload = data.get("payload")
-        query_params = data.get("query_params") or {}
-        _klass = cls.FACTORIES[event_type](payload=payload, query_params=query_params)
+        vcs_type = data.get("vcs_type")
+        _klass = cls.FACTORIES[event_type](payload=payload, vcs_type=vcs_type)
 
         if _klass.validate_payload():
             await _klass.process_event()

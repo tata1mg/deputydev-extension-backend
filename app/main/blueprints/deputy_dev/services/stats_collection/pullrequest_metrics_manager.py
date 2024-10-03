@@ -27,8 +27,8 @@ from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 
 class PullRequestMetricsManager(StatsCollectionBase):
-    def __init__(self, payload, query_params):
-        super().__init__(payload, query_params)
+    def __init__(self, payload, vcs_type):
+        super().__init__(payload, vcs_type)
 
         self.sqs_message_retention_time = CONFIG.config.get("SQS", {}).get("MESSAGE_RETENTION_TIME_SEC", 0)
 

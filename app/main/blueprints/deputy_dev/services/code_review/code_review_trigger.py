@@ -6,32 +6,34 @@ from torpedo.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.sqs.genai_subscriber import GenaiSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.pr_webhook import PRWebhook
-from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
+from app.main.blueprints.deputy_dev.utils import (
+    is_request_from_blocked_repo,
+    update_payload_with_jwt_data,
+)
 
 
 class CodeReviewTrigger:
     """Triggers code review"""
 
     @classmethod
-    async def perform_review(cls, payload: dict, vcs_type: str, prompt_version: str = "v1"):
+    async def perform_review(cls, payload: dict, query_params: dict):
         """
         Triggers code review
         Args:
             payload (dict): payload from webhook or
-            vcs_type (str): vcs type
-            prompt_version (str): prompt version
+            query_params (dict): request quaer params: contains a jwt token
         Returns:
             PR review acknowledgments
         """
         config = CONFIG.config
+        payload = update_payload_with_jwt_data(query_params, payload)
+
         # handling for call from webhook
         try:
             if not payload.get("development"):
-                payload = await PRWebhook.parse_payload(payload, vcs_type)
+                payload = await PRWebhook.parse_payload(payload)
             if not payload:
                 return
-            payload["prompt_version"] = prompt_version
-            payload["vcs_type"] = vcs_type
             payload = CodeReviewRequest(**payload)
         except ValidationError as ex:
             logger.error(ex)

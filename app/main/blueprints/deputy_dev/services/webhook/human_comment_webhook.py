@@ -1,5 +1,4 @@
-from app.common.service_clients.gitlab.gitlab_repo_client import GitlabRepoClient
-from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
+from app.common.utils.app_utils import get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.human_comment_request import (
     HumanCommentRequest,
@@ -12,7 +11,8 @@ class HumanCommentWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload, vcs_type):
+    async def parse_payload(cls, payload):
+        vcs_type = payload.get("vcs_type")
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
@@ -27,7 +27,7 @@ class HumanCommentWebhook:
         Generates servable payload from bitbucket payload
         """
         parsed_payload = {
-            "scm_workspace_id": payload["repository"]["workspace"]["uuid"],
+            "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "repo_name": get_vcs_repo_name_slug(payload["repository"]["full_name"]),
             "scm_repo_id": payload["repository"]["uuid"],
             "actor": payload["actor"]["display_name"],
@@ -41,7 +41,7 @@ class HumanCommentWebhook:
         Generates servable payload from github payload
         """
         parsed_payload = {
-            "scm_workspace_id": str(payload["organization"]["id"]),
+            "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "repo_name": get_vcs_repo_name_slug(payload["pull_request"]["head"]["repo"]["full_name"]),
             "scm_repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
             "actor": payload["comment"]["user"]["login"],
@@ -54,12 +54,8 @@ class HumanCommentWebhook:
         """
         Generates servable payload from github payload
         """
-        pr_id = payload["merge_request"]["iid"]
-        workspace = payload["project"]["namespace"]
-        slug = get_gitlab_workspace_slug(payload["project"]["path_with_namespace"])
-        workspace_id = await GitlabRepoClient(pr_id=pr_id, project_id=workspace).get_namespace_id(slug)
         parsed_payload = {
-            "scm_workspace_id": str(workspace_id),
+            "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "repo_name": get_vcs_repo_name_slug(payload["project"]["path_with_namespace"]),
             "scm_repo_id": str(payload["project"]["id"]),
             "actor": payload["user"]["username"],

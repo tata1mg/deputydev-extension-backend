@@ -183,3 +183,8 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
             TokenTypes.PR_USER_STORY.value: self.context_service.pr_user_story_tokens,
             TokenTypes.PR_CONFLUENCE.value: self.context_service.confluence_doc_data_tokens,
         }
+
+    async def should_execute(self):
+        user_story = await self.context_service.get_user_story()
+        if user_story:
+            return True
