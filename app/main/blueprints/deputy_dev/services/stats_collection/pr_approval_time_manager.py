@@ -35,5 +35,5 @@ class PRApprovalTimeManager(StatsCollectionBase):
         )
 
     async def generate_old_payload(self):
-        self.payload = await PRApprovalWebhook.parse_payload(self.payload, self.vcs_type)
+        self.payload = await PRApprovalWebhook.parse_payload(self.payload)
         self.payload = self.payload.dict()
