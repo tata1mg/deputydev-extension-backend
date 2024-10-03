@@ -17,8 +17,8 @@ from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook impor
 
 
 class HumanCommentCollectionManager(StatsCollectionBase):
-    def __init__(self, payload, query_params):
-        super().__init__(payload, query_params)
+    def __init__(self, payload, vcs_type):
+        super().__init__(payload, vcs_type)
         self.scm_pr_id = None
         self.is_human_count_incremented = False
         self.stats_type = MetaStatCollectionTypes.HUMAN_COMMENT.value
