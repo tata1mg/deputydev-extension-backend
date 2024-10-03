@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import requests
@@ -12,6 +12,9 @@ from app.common.services.openai.base_client import BaseClient
 from app.common.utils.app_utils import hash_sha256
 from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 
 openai_key = CONFIG.config.get("OPENAI_KEY")
 
@@ -36,6 +39,16 @@ class OpenAIManager(BaseClient):
         # save results to redis
         return normalized_dim, response.usage.prompt_tokens
 
+    def get_cache_prefix(self):
+        repo_name = identifier.get(None)
+        team_id = get_context_value("team_id")
+        if team_id == 1:
+            # TODO added this check for backward compatibility and needs to be removed
+            prefix_key = repo_name
+        else:
+            prefix_key = f"{team_id}:{repo_name}"
+        return prefix_key
+
     # We can make the get_embeddings function more generic as redis layer should not be part of openai class
     async def get_embeddings(self, batch: Tuple[str]) -> np.ndarray:
         """
@@ -49,7 +62,7 @@ class OpenAIManager(BaseClient):
         """
         input_tokens = None
         # "identifier" will try to get the context value which was set, if not found, it will return None
-        key: Optional[str] = identifier.get(None)
+        key = self.get_cache_prefix()
         if len(batch) == 1:
             embeddings, input_tokens = await self.__call_embedding(batch)
             return np.array(embeddings), input_tokens
