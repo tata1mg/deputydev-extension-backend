@@ -48,6 +48,6 @@ class HumanCommentCollectionManager(StatsCollectionBase):
             await ExperimentService.decrement_human_comment_count(scm_pr_id=self.scm_pr_id, repo_id=self.repo_dto.id)
 
     async def generate_old_payload(self):
-        self.payload = await HumanCommentWebhook.parse_payload(self.payload, self.vcs_type)
+        self.payload = await HumanCommentWebhook.parse_payload(self.payload)
         self.payload = self.payload.dict()
         self.scm_pr_id = self.payload.get("scm_pr_id")
