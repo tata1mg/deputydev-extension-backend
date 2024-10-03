@@ -65,10 +65,9 @@ class Github(Integration, SCM):
 
     async def create_webhooks(self, org_name: str, scm_workspace_id) -> list[dict]:
         set_hooks = await self.list_all_webhooks(org_name)
-
         filtered_hooks = []
         for webhook in self.WEBHOOKS_PAYLOAD:
-            if self.__hook_exists(webhook, set_hooks=set_hooks):
+            if self.__hook_exists(webhook, set_hooks=set_hooks, scm_workspace_id=scm_workspace_id):
                 logger.info("Skipping already set hook")
                 continue
             filtered_hooks.append(webhook)
@@ -90,14 +89,14 @@ class Github(Integration, SCM):
 
         return filtered_hooks
 
-    def __hook_exists(self, new_webhook: dict, set_hooks: list[dict]) -> bool:
+    def __hook_exists(self, new_webhook: dict, set_hooks: list[dict], scm_workspace_id) -> bool:
         #  check with all set hooks
         for set_hook in set_hooks:
             # only consider active hooks
             if set_hook["active"]:
                 # matching url sufficient for github hooks
                 url = set_hook["config"]["url"]
-                new_url = self._prepare_url(new_webhook["URL"], vcs_type="github")
+                new_url = self._prepare_url(new_webhook["URL"], vcs_type="github", scm_workspace_id=scm_workspace_id)
                 if url == new_url:
                     return True
 
