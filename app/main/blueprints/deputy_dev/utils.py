@@ -457,7 +457,7 @@ def handle_old_request(query_params: dict, payload: dict) -> dict:
     Returns:
         dict: Updated payload with vcs_type, prompt_version and scm_workspace_id.
     """
-    vcs_type = query_params.get("vcs_type")
+    vcs_type = query_params.get("vcs_type", VCSTypes.bitbucket.value)
     prompt_version = query_params.get("prompt_version", "v1")
     payload["vcs_type"] = vcs_type
     payload["prompt_version"] = prompt_version

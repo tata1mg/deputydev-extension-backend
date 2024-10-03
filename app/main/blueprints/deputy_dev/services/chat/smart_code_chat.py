@@ -11,6 +11,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MessageTypes,
     MetaStatCollectionTypes,
 )
+from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.human_comment_request import (
     HumanCommentRequest,
@@ -57,7 +58,8 @@ class SmartCodeChatManager:
     @classmethod
     async def chat(cls, payload: dict, query_params: dict):
         payload = update_payload_with_jwt_data(query_params, payload)
-        vcs_type = payload.get("vcs_type")
+        # some webhooks don't have query params handling for that case
+        vcs_type = payload.get("vcs_type") or VCSTypes.bitbucket.value
 
         comment_payload = await ChatWebhook.parse_payload(payload)
         if not comment_payload:
