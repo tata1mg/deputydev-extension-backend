@@ -69,7 +69,7 @@ class SmartCodeChatManager:
             is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw)
             and ExperimentService.is_eligible_for_experiment()
         ):
-            human_comment_payload = await HumanCommentWebhook.parse_payload(payload, vcs_type)
+            human_comment_payload = await HumanCommentWebhook.parse_payload(payload)
             await cls.handle_human_comment(human_comment_payload, vcs_type)
         elif comment_payload.author_info.name not in BitbucketBots.list():
             asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
