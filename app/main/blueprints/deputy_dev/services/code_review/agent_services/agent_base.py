@@ -123,3 +123,6 @@ class AgentServiceBase(ABC):
         tokens_info[TokenTypes.SYSTEM_PROMPT.value] = self.tiktoken.count(prompt_data.get("system_message", ""))
         tokens_info[TokenTypes.USER_PROMPT.value] = self.tiktoken.count(prompt_data.get("user_message", ""))
         return tokens_info
+
+    async def should_execute(self):
+        return True

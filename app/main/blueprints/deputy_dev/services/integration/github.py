@@ -33,7 +33,7 @@ class Github(Integration, SCM):
 
         workspace_info = await self.get_workspace(installation_id=installation_id)
 
-        created_hooks = await self.create_webhooks(workspace_info["slug"])
+        created_hooks = await self.create_webhooks(workspace_info["slug"], workspace_info["scm_workspace_id"])
         if len(created_hooks) == 0:
             raise OnboardingError("No new hooks to create")
 
@@ -63,7 +63,7 @@ class Github(Integration, SCM):
             "scm_workspace_id": account["id"],
         }
 
-    async def create_webhooks(self, org_name: str) -> list[dict]:
+    async def create_webhooks(self, org_name: str, scm_workspace_id) -> list[dict]:
         set_hooks = await self.list_all_webhooks(org_name)
 
         filtered_hooks = []
@@ -74,7 +74,11 @@ class Github(Integration, SCM):
             filtered_hooks.append(webhook)
 
         for webhook in filtered_hooks:
-            url = self._prepare_url(webhook["URL"], vcs_type="github")
+            url = self._prepare_url(
+                base_url=webhook["URL"],
+                vcs_type="github",
+                scm_workspace_id=scm_workspace_id,
+            )
 
             await self.client.create_org_webhook(
                 org_name=org_name,

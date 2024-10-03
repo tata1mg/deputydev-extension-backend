@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 
 import jwt
@@ -9,7 +10,7 @@ from torpedo import CONFIG
 
 class GithubOAuthClient:
     CLIENT_ID = CONFIG.config["GITHUB"]["CLIENT_ID"]
-    SIGNING_KEY = CONFIG.config["GITHUB"]["SIGNING_KEY"]
+    SIGNING_KEY = json.loads(CONFIG.config["GITHUB"]["SIGNING_KEY"])
 
     ALOGTITHM = "RS256"
     JWT_EXPIRATION_DELTA = 600  # 10 minutes (max)
