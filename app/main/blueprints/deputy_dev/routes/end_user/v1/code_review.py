@@ -2,7 +2,6 @@ from sanic import Blueprint, Sanic
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
 
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,
 )
@@ -31,11 +30,7 @@ async def pool_assistance_api(_request: Request, **kwargs):
     query_params = _request.request_params()
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     payload["request_id"] = request_id
-    response = await CodeReviewTrigger.perform_review(
-        payload,
-        prompt_version=query_params.get("prompt_version", "v2"),
-        vcs_type=query_params.get("vcs_type", VCSTypes.bitbucket.value),
-    )
+    response = await CodeReviewTrigger.perform_review(payload, query_params=query_params)
     return send_response(response)
 
 

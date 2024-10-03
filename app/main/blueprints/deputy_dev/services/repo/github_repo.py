@@ -26,7 +26,7 @@ class GithubRepo(BaseRepo):
         repo_id: str = None,
     ):
         super().__init__(
-            vcs_type=VCSTypes.bitbucket.value,
+            vcs_type=VCSTypes.github.value,
             workspace=workspace,
             repo_name=repo_name,
             pr_id=pr_id,
@@ -98,7 +98,7 @@ class GithubRepo(BaseRepo):
         total_added, total_removed = 0, 0
         pr_diff_stats_response = await self.repo_client.get_pr_diff_stats()
         if pr_diff_stats_response:
-            files_changed_data = await pr_diff_stats_response.json()
+            files_changed_data = pr_diff_stats_response.json()
             if files_changed_data:
                 for file_stat in files_changed_data:
                     total_added += file_stat.get("additions", 0)
@@ -127,7 +127,8 @@ class GithubRepo(BaseRepo):
         else:
             raise Exception("Pr stats data not present")
 
-    def get_repo_url(self):
+    async def get_repo_url(self):
+        self.token = await self.auth_handler.access_token()
         return VCS_REPO_URL_MAP[self.vcs_type].format(
             token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
         )

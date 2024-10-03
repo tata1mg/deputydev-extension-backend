@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, List, Tuple
 
 from torpedo import CONFIG
+from torpedo.exceptions import BadRequestException
 
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
@@ -13,6 +14,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     BitbucketBots,
     PRDiffSizingLabel,
 )
+from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dao import Integrations, Workspaces
 from app.main.blueprints.deputy_dev.services.credentials import (
@@ -21,6 +23,7 @@ from app.main.blueprints.deputy_dev.services.credentials import (
     create_auth_handler,
 )
 from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
 )
@@ -377,7 +380,10 @@ async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
 
 async def get_auth_handler(client: str, team_id: str | None = None, workspace_id: str | None = None):
     integration_info = await DB.by_filters(
-        model_name=Integrations, where_clause={"team_id": team_id, "client": client}, limit=1, fetch_one=True
+        model_name=Integrations,
+        where_clause={"team_id": team_id, "client": client, "is_connected": True},
+        limit=1,
+        fetch_one=True,
     )
     if not integration_info:
         return None, None
@@ -410,3 +416,55 @@ def get_bitbucket_repo_name_slug(value: str) -> str:
 def is_request_from_blocked_repo(repo_name):
     config = CONFIG.config
     return repo_name in config.get("BLOCKED_REPOS")
+
+
+def update_payload_with_jwt_data(query_params: dict, payload: dict) -> dict:
+    """
+    Decodes the JWT token and updates the payload with relevant values.
+
+    Args:
+        query_params (dict): query parameters.
+        payload (dict): The payload to update with decoded token values.
+
+    Returns:
+        dict: Updated payload with the decoded values.
+    """
+    jwt_token = query_params.get("data")
+    if not jwt_token:
+        payload = handle_old_request(query_params, payload)
+        return payload
+    try:
+        decoded_token = JWTService.decode(jwt_token)
+    except Exception as e:
+        raise BadRequestException(f"Invalid JWT token: {e}")
+
+    # Update payload with values from decoded token
+    payload["prompt_version"] = decoded_token.get("prompt_version", "v1")
+    payload["vcs_type"] = decoded_token.get("vcs_type", VCSTypes.bitbucket.value)
+    payload["scm_workspace_id"] = decoded_token.get("scm_workspace_id")
+
+    return payload
+
+
+def handle_old_request(query_params: dict, payload: dict) -> dict:
+    """
+    Handles old request where query params only contain vcs_type and prompt version and not a jwt token.
+
+    Args:
+        query_params (dict): query parameters.
+        payload (dict): The payload to update with decoded token values.
+
+    Returns:
+        dict: Updated payload with vcs_type, prompt_version and scm_workspace_id.
+    """
+    vcs_type = query_params.get("vcs_type")
+    prompt_version = query_params.get("prompt_version", "v1")
+    payload["vcs_type"] = vcs_type
+    payload["prompt_version"] = prompt_version
+
+    # for now only handling for bitbucket and github. Gitlab is not integrated anywhere will always get jwt.
+    if vcs_type == VCSTypes.bitbucket.value:
+        payload["scm_workspace_id"] = payload["repository"]["workspace"]["uuid"]
+    elif vcs_type == VCSTypes.github.value:
+        payload["scm_workspace_id"] = payload["organization"]["id"]
+    return payload

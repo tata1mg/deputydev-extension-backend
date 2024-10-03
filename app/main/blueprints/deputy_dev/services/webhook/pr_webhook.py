@@ -1,4 +1,3 @@
-from app.common.service_clients.gitlab.gitlab_repo_client import GitlabRepoClient
 from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
@@ -13,7 +12,8 @@ class PRWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload, vcs_type):
+    async def parse_payload(cls, payload):
+        vcs_type = payload.get("vcs_type")
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
@@ -32,14 +32,18 @@ class PRWebhook:
         request_id = bitbucket_payload["request_id"]
         workspace = bitbucket_payload["repository"]["workspace"]["name"]
         workspace_slug = bitbucket_payload["repository"]["workspace"]["slug"]
-        workspace_id = bitbucket_payload["repository"]["workspace"]["uuid"]
+        prompt_version = bitbucket_payload.get("prompt_version")
+        scm_workspace_id = str(bitbucket_payload.get("scm_workspace_id"))
+        vcs_type = VCSTypes.bitbucket.value
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
             "request_id": request_id,
             "workspace": workspace,
-            "workspace_id": workspace_id,
+            "workspace_id": scm_workspace_id,
             "workspace_slug": workspace_slug,
+            "vcs_type": vcs_type,
+            "prompt_version": prompt_version,
         }
 
     @classmethod
@@ -52,16 +56,20 @@ class PRWebhook:
         pr_id = github_payload["pull_request"]["number"]
         repo_name = get_vcs_repo_name_slug(github_payload["pull_request"]["head"]["repo"]["full_name"])
         request_id = github_payload["request_id"]
-        workspace = github_payload["enterprise"]["name"]
-        workspace_slug = github_payload["enterprise"]["slug"]
-        workspace_id = str(github_payload["organization"]["id"])
+        workspace = github_payload["organization"]["login"]
+        workspace_slug = github_payload["organization"]["login"]
+        prompt_version = github_payload.get("prompt_version")
+        scm_workspace_id = str(github_payload.get("scm_workspace_id"))
+        vcs_type = VCSTypes.github.value
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
             "request_id": request_id,
             "workspace": workspace,
-            "workspace_id": workspace_id,
+            "workspace_id": scm_workspace_id,
             "workspace_slug": workspace_slug,
+            "vcs_type": vcs_type,
+            "prompt_version": prompt_version,
         }
 
     @classmethod
@@ -79,15 +87,19 @@ class PRWebhook:
         request_id = gitlab_payload["request_id"]
         workspace = gitlab_payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(gitlab_payload["project"]["path_with_namespace"])
-        workspace_id = (await GitlabRepoClient(pr_id=pr_id, project_id=workspace).get_namespace_id(workspace_slug),)
         repo_id = gitlab_payload["project"]["id"]
+        prompt_version = gitlab_payload.get("prompt_version")
+        scm_workspace_id = str(gitlab_payload.get("scm_workspace_id"))
+        vcs_type = VCSTypes.gitlab.value
 
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
             "request_id": str(request_id),
             "workspace": workspace,
-            "workspace_id": str(workspace_id),
+            "workspace_id": scm_workspace_id,
             "repo_id": str(repo_id),
             "workspace_slug": workspace_slug,
+            "vcs_type": vcs_type,
+            "prompt_version": prompt_version,
         }

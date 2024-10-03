@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 
 from torpedo import CONFIG
 
+from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
+
 from ...credentials import AuthHandler
 
 
@@ -22,8 +24,15 @@ class SCM(ABC):
         pass
 
     @staticmethod
-    def _prepare_url(base_url, vcs_type):
-        return f"{base_url}&vcs_type={vcs_type}&prompt_version=v2"
+    def _prepare_url(base_url, vcs_type, scm_workspace_id):
+        payload = {
+            "vcs_type": vcs_type,
+            "prompt_version": "v2",
+            "scm_workspace_id": scm_workspace_id,
+        }
+        token = JWTService.encode(payload=payload)
+
+        return f"{base_url}?data={token}"
 
     # @abstractmethod
     # def list_all_repos(self):

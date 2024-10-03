@@ -16,7 +16,10 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
     PullRequestCloseWebhook,
 )
-from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
+from app.main.blueprints.deputy_dev.utils import (
+    is_request_from_blocked_repo,
+    update_payload_with_jwt_data,
+)
 
 
 class StatsCollectionTrigger:
@@ -25,16 +28,19 @@ class StatsCollectionTrigger:
     @classmethod
     async def select_stats_and_publish(cls, payload, query_params):
         parsed_payload = {}
-        vcs_type = query_params.get("vcs_type", VCSTypes.bitbucket.value)
+
+        payload = update_payload_with_jwt_data(query_params, payload)
+        vcs_type = payload.get("vcs_type")
+
         stats_type = cls.get_stats_collection_type(vcs_type, payload)
         if stats_type == MetaStatCollectionTypes.HUMAN_COMMENT.value:  # This is not being used
-            parsed_payload = await HumanCommentWebhook.parse_payload(payload, vcs_type)
+            parsed_payload = await HumanCommentWebhook.parse_payload(payload)
         elif stats_type == MetaStatCollectionTypes.PR_CLOSE.value:
-            parsed_payload = await PullRequestCloseWebhook.parse_payload(payload, vcs_type)
+            parsed_payload = await PullRequestCloseWebhook.parse_payload(payload)
         elif stats_type == MetaStatCollectionTypes.PR_APPROVAL_TIME.value:
-            parsed_payload = await PRApprovalWebhook.parse_payload(payload, vcs_type)
+            parsed_payload = await PRApprovalWebhook.parse_payload(payload)
         if stats_type:
-            data = {"payload": parsed_payload.dict(), "query_params": query_params, "stats_type": stats_type}
+            data = {"payload": parsed_payload.dict(), "vcs_type": vcs_type, "stats_type": stats_type}
             if not is_request_from_blocked_repo(data["payload"].get("repo_name")):
                 await MetaSubscriber(config=cls.config).publish(data)
 

@@ -24,6 +24,9 @@ from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_pro
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
+from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
+    ExperimentService,
+)
 from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
     ChatPromptService,
 )
@@ -44,6 +47,7 @@ from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,
     is_human_comment,
     is_request_from_blocked_repo,
+    update_payload_with_jwt_data,
 )
 
 config = CONFIG.config
@@ -52,16 +56,21 @@ config = CONFIG.config
 class SmartCodeChatManager:
     @classmethod
     async def chat(cls, payload: dict, query_params: dict):
-        vcs_type = query_params.get("vcs_type", "bitbucket")
-        comment_payload = await ChatWebhook.parse_payload(payload, vcs_type)
+        payload = update_payload_with_jwt_data(query_params, payload)
+        vcs_type = payload.get("vcs_type")
+
+        comment_payload = await ChatWebhook.parse_payload(payload)
         if not comment_payload:
             return
         logger.info(f"Comment payload: {comment_payload}")
         if is_request_from_blocked_repo(comment_payload.repo.repo_name):
             return
-        if is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw):
+        if (
+            is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw)
+            and ExperimentService.is_eligible_for_experiment()
+        ):
             human_comment_payload = await HumanCommentWebhook.parse_payload(payload, vcs_type)
-            await cls.handle_human_comment(human_comment_payload, query_params)
+            await cls.handle_human_comment(human_comment_payload, vcs_type)
         elif comment_payload.author_info.name not in BitbucketBots.list():
             asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
         else:
@@ -161,11 +170,11 @@ class SmartCodeChatManager:
         return formatted_comment
 
     @classmethod
-    async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, query_params):
+    async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, vcs_type):
         payload = {
             "payload": parsed_payload.dict(),
             "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
-            "query_params": query_params,
+            "vcs_type": vcs_type,
         }
 
         await MetaSubscriber(config=config).publish(payload)
