@@ -11,6 +11,7 @@ __all__ = [
     "ExperimentStatusTypes",
     "BitbucketBots",
     "PRDiffSizingLabel",
+    "LLMModelNames",
 ]
 from .constants import (
     BATCH_SIZE,
@@ -22,6 +23,7 @@ from .constants import (
     SCRIT_TAG,
     BitbucketBots,
     ExperimentStatusTypes,
+    LLMModelNames,
     LLMModels,
     PRDiffSizingLabel,
     PRReviewExperimentSet,
