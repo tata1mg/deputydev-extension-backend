@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 from typing import Dict, List, Tuple
 
+from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
@@ -24,6 +25,7 @@ from app.main.blueprints.deputy_dev.services.credentials import (
 )
 from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
+from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
 )
@@ -468,3 +470,34 @@ def handle_old_request(query_params: dict, payload: dict) -> dict:
     elif vcs_type == VCSTypes.github.value:
         payload["scm_workspace_id"] = payload["organization"]["id"]
     return payload
+
+
+def create_optimized_batches(texts: List[str], max_tokens: int, model: str) -> List[List[str]]:
+    tiktoken_client = TikToken()
+    batches = []
+    current_batch = []
+    currrent_batch_token_count = 0
+
+    for text in texts:
+        if not text.strip():  # embeeding was breaking in case empty string were passed in batch
+            continue
+        text_token_count = tiktoken_client.count(text, model=model)
+
+        if text_token_count > max_tokens:  # Single text exceeds max tokens
+            truncated_text = tiktoken_client.truncate_string(text=text, max_tokens=max_tokens, model=model)
+            batches.append([truncated_text])
+            logger.warn(f"Text with token count {text_token_count} exceeds the max token limit of {max_tokens}.")
+            continue
+
+        if currrent_batch_token_count + text_token_count > max_tokens:
+            batches.append(current_batch)
+            current_batch = [text]
+            currrent_batch_token_count = text_token_count
+        else:
+            current_batch.append(text)
+            currrent_batch_token_count += text_token_count
+
+    if current_batch:
+        batches.append(current_batch)
+
+    return batches
