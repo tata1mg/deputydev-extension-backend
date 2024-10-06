@@ -5,8 +5,12 @@ import numpy as np
 
 from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.executor import executor
-from app.main.blueprints.deputy_dev.constants import BATCH_SIZE
+from app.main.blueprints.deputy_dev.constants import (
+    MAX_PR_DIFF_TOKEN_LIMIT,
+    LLMModelNames,
+)
 from app.main.blueprints.deputy_dev.services.chunking.chunk_info import ChunkInfo
+from app.main.blueprints.deputy_dev.utils import create_optimized_batches
 
 
 async def embed_text_array(texts: Tuple[str]) -> (List[np.ndarray], int):
@@ -22,8 +26,14 @@ async def embed_text_array(texts: Tuple[str]) -> (List[np.ndarray], int):
     embeddings = []
     input_tokens = 0
     texts = [text if text else " " for text in texts]
-    batches = [texts[i : i + BATCH_SIZE] for i in range(0, len(texts), BATCH_SIZE)]
+
+    batches = create_optimized_batches(
+        texts, max_tokens=MAX_PR_DIFF_TOKEN_LIMIT, model=LLMModelNames.GPT_TEXT_EMBEDDING_3_SMALL.value
+    )
+
     for batch in batches:
+        if not batch:
+            continue
         embedding, input_token = await OpenAILLMService().get_embeddings(batch)
         embeddings.append(embedding)
     return embeddings, input_tokens
