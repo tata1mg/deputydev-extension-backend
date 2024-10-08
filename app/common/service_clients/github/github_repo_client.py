@@ -60,6 +60,11 @@ class GithubRepoClient(BaseSCMClient):
         path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls/{self.pr_id}/comments"
         try:
             result = await self.post(url=path, json=payload, headers=headers)
+            if result.status_code != 201:
+                logger.error(
+                    f"Unable to create comment on pr - {self.pr_id} repository {self.repo}: {result.status_code}"
+                )
+                logger.error(f"Unable to create comment on pr {result.json()}")
             return result
         except Exception as ex:
             logger.error(
