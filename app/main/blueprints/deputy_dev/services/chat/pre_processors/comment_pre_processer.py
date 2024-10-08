@@ -32,7 +32,7 @@ class CommentPreprocessor(Enum):
             if f"#{_type}" in message.lower():
                 return MessageTypes.FEEDBACK.value, _type
         for _type in ChatTypes.list():
-            if f"#{_type}" in message.lower():
+            if message.lower().startswith(f"#{_type}"):
                 return MessageTypes.CHAT.value, _type
         return MessageTypes.UNKNOWN.value, None
 
