@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
@@ -128,8 +129,7 @@ class AuthHandler:
             access_token (str): The access token.
             expiry (datetime): The expiry time of the access token.
         """
-        ctx = _TOKEN_STORE.get()
-
+        ctx = deepcopy(_TOKEN_STORE.get())
         client_ctx = {"access_token": access_token, "expiry": expiry}
         ctx.update({self.__integration__: client_ctx})
 

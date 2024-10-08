@@ -149,6 +149,7 @@ class BitbucketBots(ExtendedEnum):
     HECTOR_BOT = "Hector Coverage Bot"
     FRONTEND_RELEASE_POLICE = "Frontend Release Police"
     TATA_1MG_ROOT = "Tata 1mg root"
+    DEPUTY_DEV_AGENTS = "deputydev-agent"
 
 
 class MetaStatCollectionTypes(Enum):
