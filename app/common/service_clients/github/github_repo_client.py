@@ -64,6 +64,7 @@ class GithubRepoClient(BaseSCMClient):
                 logger.error(
                     f"Unable to create comment on pr - {self.pr_id} repository {self.repo}: {result.status_code}"
                 )
+                logger.error(f"Unable to create comment on pr payload {payload} headers {headers}")
                 logger.error(f"Unable to create comment on pr {result.json()}")
             return result
         except Exception as ex:
