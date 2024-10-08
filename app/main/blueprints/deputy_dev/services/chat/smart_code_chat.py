@@ -57,6 +57,8 @@ config = CONFIG.config
 class SmartCodeChatManager:
     @classmethod
     async def chat(cls, payload: dict, query_params: dict):
+        logger.info(f"Comment payload: {payload}")
+        logger.info(f"comment query params {query_params}")
         payload = update_payload_with_jwt_data(query_params, payload)
         # some webhooks don't have query params handling for that case
         vcs_type = payload.get("vcs_type") or VCSTypes.bitbucket.value
