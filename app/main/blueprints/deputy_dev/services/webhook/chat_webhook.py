@@ -1,3 +1,5 @@
+from sanic.log import logger
+
 from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.constants import GithubActions
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
@@ -115,8 +117,12 @@ class ChatWebhook:
             else:
                 return {"comment": raw_content}
         except KeyError as e:
+            logger.error(f"bitbucket chat failed payload {payload}")
+            logger.error(f"bitbucket chat failed error {e}")
             raise f"Error: {e} not found in the JSON structure."
         except Exception as e:
+            logger.error(f"bitbucket chat failed payload {payload}")
+            logger.error(f"bitbucket chat failed error {e}")
             raise f"An unexpected error occurred: {e}"
 
     @classmethod
