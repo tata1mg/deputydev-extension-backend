@@ -77,12 +77,19 @@ class AnthropicSecurityAgent(AgentServiceBase):
         </comments>
         </review>
         
-        6. Remember to focus solely on security aspects of the code. Do not comment on code style,
-        performance, or other non-security related issues unless they directly impact security.
-        
-        7. If you find no security issues, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues. If no issue is identified, don't say anything.
-        
         8. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
+        
+        Keep in mind these important instructions when reviewing the code:
+        1. Carefully analyze each change in the diff.
+        2. Focus solely on security vulnerabilities as outlined above.
+        3. Do not provide appreciation comments or positive feedback.
+        4. Consider the context provided by contextually related code snippets.
+        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each finding.
+        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        10. Do not repeat similar comments for multiple instances of the same issue.
         """
 
     def get_with_reflection_system_prompt_pass2(self):
@@ -149,12 +156,18 @@ class AnthropicSecurityAgent(AgentServiceBase):
         </comments>
         </review>
         
-        6. Remember to focus solely on security aspects of the code. Do not comment on code style,
-        performance, or other non-security related issues unless they directly impact security.
+        6. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
         
-        7. If you find no security issues, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues. If no issue is identified, don't say anything.
-        
-        8. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
+        Keep in mind these important instructions when reviewing the code:
+        1. Carefully analyze each change in the diff.
+        2. Focus solely on major performance issues that could substantially impact system efficiency.
+        3. Do not include appreciation comments, minor suggestions, or repeated issues.
+        4. Consider the context provided by contextually related code snippets.
+        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each finding.
+        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
         """
 
     def get_agent_specific_tokens_data(self):

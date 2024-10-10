@@ -86,12 +86,15 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         logging.
         
         Keep in mind these important instructions when reviewing the code:
-        1. Carefully analyze each change in the diff.
-        2. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        3. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        1. Focus solely on major code communication issues as outlined above.
+        2. Carefully analyze each change in the diff.
+        3. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        4. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
         5. Ensure that your comments are clear, concise, and actionable.
         6. Provide specific line numbers and file paths for each finding.
         7. Assign appropriate confidence scores based on your certainty of the findings or suggestion
+        8. Do not provide appreciation comments or positive feedback.
+        9. Do not repeat similar comments for multiple instances of the same issue
         """
 
     def get_with_reflection_system_prompt_pass2(self):
@@ -193,6 +196,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         5. Ensure that your comments are clear, concise, and actionable.
         6. Provide specific line numbers and file paths for each finding.
         7. Assign appropriate confidence scores based on your certainty of the findings or suggestion
+        8. Do not include appreciation comments, minor suggestions, or repeated issues.
         """
 
     def get_agent_specific_tokens_data(self):
