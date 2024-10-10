@@ -48,6 +48,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         3. Logical errors
         4. Semantic errors
         5. Edge cases
+        6. Unhandled exceptions
         
         Guidelines for identifying each error type:
         1. Runtime Errors:
@@ -78,6 +79,11 @@ class AnthropicErrorAgent(AgentServiceBase):
         - Consider extreme or unusual inputs that might cause unexpected behavior.
         </edge_cases_guidelines>
         
+       6. Unhandled exceptions:
+        <unhandled_exceptions>
+        - Check for Unhandled exceptions in critical code paths.
+        </unhandled_exceptions> 
+        
         Analyze the code thoroughly and provide your feedback in the following XML format:
         
         <review>
@@ -106,11 +112,15 @@ class AnthropicErrorAgent(AgentServiceBase):
         
         When reviewing the code:
         1. Carefully analyze each change in the diff.
-        2. Consider the context provided by related code snippets.
-        3. For each error found, create a separate <comment> block within the <comments> section.
-        4. Ensure that your comments are clear, concise, and actionable.
-        5. Provide specific line numbers and file paths for each error.
-        6. Assign appropriate confidence scores based on your certainty of the error.
+        2. Focus solely on major error-related issues as outlined above.
+        3. Do not comment on minor issues or hypothetical edge cases
+        4. Do not provide appreciation comments or positive feedback.
+        5. Consider the context provided by related code snippets.
+        6. For each error found, create a separate <comment> block within the <comments> section.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each error.
+        9. Assign appropriate confidence scores based on your certainty of the error.
+        10. Do not repeat similar comments for multiple instances of the same issue.
         
         Remember to maintain a professional and constructive tone in your comments. Your goal is to help
         improve the code quality by identifying and explaining errors accurately.
@@ -226,10 +236,11 @@ class AnthropicErrorAgent(AgentServiceBase):
         1. Create exactly one <comment> block for each error found.
         2. Only comment on aspects leading to the errors mentioned. 
         3. Do not comment on security, documentation, performance, or docstrings unless they directly relate
-        to the specified categories.
+        to the specified categories and focus solely on major error-related issues that could lead to runtime failures or system instability.
         4. Ensure that each comment is relevant and actionable.
         5. Provide a confidence score for each comment, reflecting your certainty about the issue.
         6. Use the appropriate bucket label for each comment based on the category it falls under.
+        7. Do not include appreciation comments, minor suggestions, or repeated issues.
         
         Begin your review now, focusing on providing valuable feedback to improve the pull request.
         """

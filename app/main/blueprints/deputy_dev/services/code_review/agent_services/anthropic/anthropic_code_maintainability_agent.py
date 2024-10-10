@@ -52,6 +52,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         
         1. Architecture:
         <architecture_guidelines>
+        - Major violations of SOLID principles.
         - Design Patterns: Evaluate the use of design patterns and overall software architecture.
         - Modularity: Ensure code is modular for component reusability.
         - Extensibility: Assess the extensibility of the codebase and its components.
@@ -125,11 +126,13 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         Important instructions:
         1. Create exactly one <comment> block for each code maintainability issue found.
         2. Only comment on aspects related to the six categories mentioned above.
-        3. Do not comment on security, documentation, performance, or docstrings unless they directly relate
+        3. Do not provide appreciation comments or positive feedback.
+        4. Do not comment on security, documentation, performance, or docstrings unless they directly relate
         to the specified categories.
-        4. Ensure that each comment is relevant and actionable.
-        5. Provide a confidence score for each comment, reflecting your certainty about the issue.
-        6. Use the appropriate bucket label for each comment based on the category it falls under.
+        5. Ensure that each comment is relevant and actionable.
+        6. Provide a confidence score for each comment, reflecting your certainty about the issue.
+        7. Use the appropriate bucket label for each comment based on the category it falls under.
+        8. Do not repeat similar comments for multiple instances of the same issue
         
         Begin your review now, focusing on providing valuable feedback to improve the code quality and
         maintainability of the pull request.
@@ -260,6 +263,14 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         score between 0.0 and 1.0 for each comment, reflecting your certainty in the observation. Categorize
         each comment into one of the six buckets: ARCHITECTURE, REUSABILITY, MAINTAINABILITY, CODE
         ROBUSTNESS, CODE QUALITY, or READABILITY.
+        
+        Remember:
+        - Focus solely on major maintainability issues that substantially impact long-term code quality.
+        - Do not include appreciation comments, minor suggestions, or repeated issues.
+        - If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        - Ensure that your comments are clear, concise, and actionable.
+        - Provide specific line numbers and file paths for each finding.
+        
         """
 
     def get_agent_specific_tokens_data(self):
