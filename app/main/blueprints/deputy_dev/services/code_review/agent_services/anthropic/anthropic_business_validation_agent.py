@@ -54,9 +54,15 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         product research document.
         - Identify any discrepancies or misalignment's between the implemented changes and the stated
         requirements.
-        - Focus solely on business logic correctness. Do not comment on other aspects such as security, code communication, performance, code maintainability, errors etc.
+        - Focus solely on business logic correctness. Do not comment on other aspects such as security, code communication, performance, code maintainability, errors etc or provide
+        appreciation for correct implementations..
         
         4. Prepare your review comments:
+        - Only create a comment for unique, significant issues that directly impact business requirements.
+        - Do not repeat similar comments for multiple instances of the same issue.
+        - Do not provide general observations or suggestions unless they are critical to meeting the
+        business requirements.
+        
         For each issue you identify, create a comment using the following format:
         
         <review>
@@ -83,7 +89,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         Remember:
         - Map exactly 1 comment to each comment tag in the output response.
         - Focus only on business logic correctness. Do not comment on any other aspects of code review.
-        - Provide clear and actionable feedback in your comments.
+        - Provide clear and actionable feedback in your comments only for critical issues.
         - Use the confidence score to indicate how certain you are about each issue you raise.
         - Need not to do the appreciation comments for the things that are done correctly.
         
@@ -167,6 +173,8 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         5. Assign an appropriate confidence score to each comment based on your certainty of the issue.
         6. Use the exact line numbers from the diff when referencing specific lines of code.
         7. Always set the bucket value to "USER_STORY" as this is a business logic validation review.
+        8. Keep only comments that identify critical misalignments with business requirements.
+        9. Remove any appreciation comments or general observations.
         
         Remember, your primary goal is to ensure that the changes in the pull request accurately implement
         the requirements specified in the user story and product research document. Do not get sidetracked

@@ -57,6 +57,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         from downstream service APIs or databases.
         - Timeout: Ensure proper timeouts are added for API calls or any other network calls.
         - General optimizations - General code optimizations best practices.
+        - Critical resource leaks or memory management issues
         </performance_issues_guidelines>
         
         <algorithmic_efficiency_guidelines>
@@ -97,12 +98,16 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         
         Keep in mind these important instructions when reviewing the code:
         1. Carefully analyze each change in the diff.
-        2. Consider the context provided by contextually related code snippets.
-        3. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        4. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        5. Ensure that your comments are clear, concise, and actionable.
-        6. Provide specific line numbers and file paths for each finding.
-        7. Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        2. Focus solely on major performance issues that could substantially impact system efficiency.
+        3. Do not provide appreciation comments or positive feedback.
+        4. Consider the context provided by contextually related code snippets.
+        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each finding.
+        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        10. Do not repeat similar comments for multiple instances of the same issue.
+        
         """
 
     def get_with_reflection_system_prompt_pass2(self):
@@ -190,12 +195,14 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         
         Keep in mind these important instructions when reviewing the code:
         1. Carefully analyze each change in the diff.
-        2. Consider the context provided by contextually related code snippets.
-        3. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        4. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        5. Ensure that your comments are clear, concise, and actionable.
-        6. Provide specific line numbers and file paths for each finding.
-        7. Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        2. Focus solely on major performance issues that could substantially impact system efficiency.
+        3. Do not include appreciation comments, minor suggestions, or repeated issues.
+        4. Consider the context provided by contextually related code snippets.
+        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each finding.
+        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
         """
 
     def get_agent_specific_tokens_data(self):
