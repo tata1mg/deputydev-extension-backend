@@ -1,0 +1,18 @@
+\begin{table*}[ht]
+\centering
+\caption{List of agents along with which piece of information constitutes to make optimized context.}
+\label{tab:agent-prompt-matrix}
+\small
+\begin{tabularx}{\textwidth}{@{}l*{7}{>{\centering\arraybackslash}X}@{}}
+\toprule
+Agent & PR Diff & PR Title & PR Description & Context Code & User Story & Confluence Pages & Initial LLM Review \\
+\hline
+Security & $\checkmark$ & $\checkmark$ & $\checkmark$ & & & & $\checkmark$ (Refl.) \\
+Code Communication & $\checkmark$ & $\checkmark$ & $\checkmark$ & & & & $\checkmark$ (Refl.) \\
+Performance Optimization & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & & & $\checkmark$ (Refl.) \\
+Code Maintainability & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & & & $\checkmark$ (Refl.) \\
+Error & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & & & $\checkmark$ (Refl.) \\
+Business Logic Validation & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ (Refl.) \\
+\bottomrule
+\end{tabularx}
+\end{table*}
