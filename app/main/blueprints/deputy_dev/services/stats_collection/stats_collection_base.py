@@ -59,7 +59,7 @@ class StatsCollectionBase(ABC):
 
     async def get_pr_from_db(self, payload):
         self.payload["pr_created_at"] = (
-            convert_to_datetime(self.payload["pr_created_at"]) if self.payload["pr_created_at"] else None
+            convert_to_datetime(self.payload["pr_created_at"]) if self.payload.get("pr_created_at") else None
         )
         self.workspace_dto = await WorkspaceService.find(
             scm_workspace_id=payload["scm_workspace_id"], scm=self.vcs_type
