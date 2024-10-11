@@ -54,11 +54,12 @@ class PullRequestMetricsManager(StatsCollectionBase):
         await self.initialize_repo_service()
         await self.initialize_workspace_and_repo_dto()
         await self.initialize_pr_dto()
+
         self.payload["pr_created_at"] = convert_to_datetime(self.payload["pr_created_at"])
         self.payload["pr_closed_at"] = convert_to_datetime(self.payload["pr_closed_at"])
 
         if not self.pr_dto:
-            if self.payload.get("pr_created_at") and self.payload.get("pr_created_at") > self.experiment_start_time:
+            if self.pr_created_after_onboarding_time():
                 raise RetryException(f"PR: {self.payload['pr_id']} not picked to be reviewed by Deputydev")
             else:
                 return
