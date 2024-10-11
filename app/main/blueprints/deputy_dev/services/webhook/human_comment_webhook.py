@@ -32,6 +32,7 @@ class HumanCommentWebhook:
             "scm_repo_id": payload["repository"]["uuid"],
             "actor": payload["actor"]["display_name"],
             "scm_pr_id": str(payload["pullrequest"]["id"]),
+            "pr_created_at": payload["pullrequest"]["created_on"],
         }
         return HumanCommentRequest(**parsed_payload)
 
@@ -46,6 +47,7 @@ class HumanCommentWebhook:
             "scm_repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
             "actor": payload["comment"]["user"]["login"],
             "scm_pr_id": str(payload["pull_request"]["number"]),
+            "pr_created_at": payload["pull_request"]["created_at"],
         }
         return HumanCommentRequest(**parsed_payload)
 
@@ -60,5 +62,6 @@ class HumanCommentWebhook:
             "scm_repo_id": str(payload["project"]["id"]),
             "actor": payload["user"]["username"],
             "scm_pr_id": str(payload["merge_request"]["iid"]),
+            "pr_created_at": payload["object_attributes"]["created_at"],
         }
         return HumanCommentRequest(**parsed_payload)
