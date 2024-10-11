@@ -1,0 +1,19 @@
+\section{Introduction}
+The software development lifecycle encompasses a multitude of stages, ranging from initial requirement gathering to final production deployment. This process involves numerous critical steps, including code writing, review, and testing. Among these, DeputyDev concentrates on enhancing the efficiency of the code review phase.
+
+Code review, while crucial, presents a significant challenge in terms of time consumption, particularly for senior developers \cite{Vijayvergiya_2024}. While there is no one-size-fits-all answer regarding the amount of time spent on code reviews, it is clear that developers typically dedicate a significant portion of their workday, approximately 41 minutes \cite{softwareCodeTime} to this critical activity. The key is balancing thoroughness with efficiency to maintain productivity without compromising code quality. Consequently, code reviews frequently become a bottleneck, impeding rapid releases and continuous integration practices.
+
+A comprehensive code review typically addresses multiple functional and non-functional aspects:
+
+\begin{enumerate}
+    \item \textbf{Functional code review}: In functional code review, the developers review the quality of source code by checking whether the syntax of the code is good or not and whether the code follows basic code formatting practices. Functional code reviews are related to the functionality of the software or an application, so if the developer overlooks these code issues, then it might affect the applications.
+
+    \item \textbf{Non-Functional Code Review}: While reviewing the code, the developers analyze the non-functional requirements, such as determining whether the code is secure, scalable, reusable, and easy to maintain. Therefore, the developer strives to ensure that the code is secure, easy to maintain, offers robust performance, and adheres to the best practices laid down in Software Engineering.
+
+\end{enumerate}
+
+Recent advancements in machine learning, particularly in Large Language Models (LLMs), have shown promise in automating code reviews (e.g., studies by Tufano et al.,  \cite{tufano2024codereviewautomationstrengths},  \cite{tufano2022usingpretrainedmodelsboost}; Hong et al., \cite{10.1145/3540250.3549119}). However, the software engineering challenges associated with deploying such systems at scale remain largely unexplored. Furthermore, there is a notable lack of extrinsic evaluations examining the overall effectiveness and user acceptance of these automated systems.
+
+This paper delves into the implementation specifics of DeputyDev's automated contextual code review capabilities \ref{app:capabilities} within the TATA 1mg technology ecosystem. We explore its impact on reducing code review time and provide an in-depth analysis of areas where DeputyDev's performance is suboptimal, along with the underlying reasons for these limitations.
+
+By addressing these aspects, our research aims to bridge the gap between theoretical potential and practical application of LLM-based code review automation, offering valuable insights into its real-world efficacy and challenges.

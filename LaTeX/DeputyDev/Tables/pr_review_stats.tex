@@ -1,0 +1,18 @@
+\begin{table*}[ht]
+\centering
+\begin{tabularx}{\textwidth}{@{}l*{7}{>{\centering\arraybackslash}X}@{}}
+\toprule
+\hline
+\textbf{Set} & \textbf{No. of PRs} & \textbf{Avg Loc Per PR} & \textbf{Avg Review Time (hrs)} & \textbf{Avg Review Time Per LOC (hrs)} & \textbf{Median Review Time (hrs)} \\
+\hline
+ControlSet1 (CS1) & 244 & 69 & 239.57 & 12.97 & 0.76 \\
+ControlSet2 (CS2) & 238 & 82 & 278.14 & 12.29 & 0.78 \\
+TestSet (TS) & 239 & 78 & 197.97 & 7.50 & 0.41 \\
+\hline
+\textbf{TS $\Delta$ CS1 (\%)} & - & - & -17.36 & -42.19 & -46.36\\
+\textbf{TS $\Delta$ CS2 (\%)} & - & - & -28.82 & -38.98 & -47.52\\
+\hline
+\end{tabularx}
+\caption{We observe significant decrease in avg review time, avg review time per LOC and median review time in Test set upto 28.82\%, 42.19\% and 47.52\% respectively}
+\label{tab:pr_review_stats}
+\end{table*}

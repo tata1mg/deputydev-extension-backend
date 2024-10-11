@@ -1,0 +1,15 @@
+\section{Problem}
+Code review processes face significant challenges in large-scale, distributed software systems. Organizations with extensive microservice architectures often find that even minor feature requests can trigger changes across multiple services. This complexity makes it impractical to outsource code reviews to external parties, as they would lack the necessary contextual understanding to effectively evaluate the changes.
+
+Consider DeputyDev as this external party. However, DeputyDev orchestrates the creation of optimized context which includes all information required to review the PR.
+
+The importance of context in code review cannot be overstated. It is crucial for comprehending both the immediate changes and their potential ripple effects throughout the entire codebase. Context, in this case, comprises several key pieces of information. We have identified the following items that contribute to making an optimized context for PR review.
+
+\begin{enumerate}
+    \item \textbf{PR title}: Title of the pull request articulated by author.
+    \item \textbf{PR description}: Description of the pull request articulated by author
+    \item \textbf{PR diff}: Output of git diff command between source and destination branches of pull request.
+    \item \textbf{Story description}: DeputyDev currently integrates with Jira to pull contents of associated jira stories in order to figure out what needs to be done as per requirements.
+    \item \textbf{Approach description}: DeputyDev currently integrates with Confluence to pull contents of associated confluences pages to figure out more details or approach through which change has to be done.
+    \item \textbf{Contextually relevant code chunks}: In order to be context-aware, DeputyDev includes contextually relevant code chunks in optimized context.
+\end{enumerate}
