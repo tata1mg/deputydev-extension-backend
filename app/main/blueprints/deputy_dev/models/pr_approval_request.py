@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -8,4 +10,4 @@ class PRApprovalRequest(BaseModel):
     actor: str
     scm_pr_id: str
     scm_approval_time: str
-    pr_created_at: str
+    pr_created_at: Optional[str] = None

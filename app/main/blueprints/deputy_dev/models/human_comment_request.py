@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -7,4 +9,4 @@ class HumanCommentRequest(BaseModel):
     scm_repo_id: str
     actor: str
     scm_pr_id: str
-    pr_created_at: str
+    pr_created_at: Optional[str] = None
