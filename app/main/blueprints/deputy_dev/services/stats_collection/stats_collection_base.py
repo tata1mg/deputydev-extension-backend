@@ -1,10 +1,10 @@
 from abc import ABC
-from datetime import datetime
 
 from sanic.log import logger
-from torpedo import CONFIG
 
 from app.common.exception import RetryException
+from app.common.utils.app_utils import convert_to_datetime
+from app.main.blueprints.deputy_dev.models.dao import Teams
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
@@ -21,7 +21,6 @@ class StatsCollectionBase(ABC):
         self.workspace_dto = None
         self.repo_dto = None
         self.pr_dto = None
-        self.experiment_start_time = datetime.fromisoformat(CONFIG.config.get("EXPERIMENT_START_TIME"))
         self.stats_type = None
 
     async def save_to_db(self, extracted_payload):
@@ -59,14 +58,19 @@ class StatsCollectionBase(ABC):
             )
 
     async def get_pr_from_db(self, payload):
-        workspace_dto = await WorkspaceService.find(scm_workspace_id=payload["scm_workspace_id"], scm=self.vcs_type)
-        if not workspace_dto:
+        self.payload["pr_created_at"] = (
+            convert_to_datetime(self.payload["pr_created_at"]) if self.payload["pr_created_at"] else None
+        )
+        self.workspace_dto = await WorkspaceService.find(
+            scm_workspace_id=payload["scm_workspace_id"], scm=self.vcs_type
+        )
+        if not self.workspace_dto:
             raise RetryException(
                 f"{self.stats_type} webhook failed for workspace {payload['scm_workspace_id']} due to"
                 f"workspace not registered"
             )
 
-        self.repo_dto = await RepoService.find(scm_repo_id=payload["scm_repo_id"], workspace_id=workspace_dto.id)
+        self.repo_dto = await RepoService.find(scm_repo_id=payload["scm_repo_id"], workspace_id=self.workspace_dto.id)
         if not self.repo_dto:
             raise RetryException(
                 f"{self.stats_type} webhook failed for repo {payload['repo_name']} due to" f"repo not registered"
@@ -74,9 +78,10 @@ class StatsCollectionBase(ABC):
 
         self.pr_dto = await PRService.find(repo_id=self.repo_dto.id, scm_pr_id=payload["scm_pr_id"])
         if not self.pr_dto:
-            raise RetryException(
-                f"{self.stats_type} webhook failed for repo {payload['scm_repo_id']} due to" f" pr review not started"
-            )
+            if self.pr_created_after_onboarding_time():
+                raise RetryException(f"PR: {self.payload['pr_id']} not picked to be reviewed by Deputydev")
+            else:
+                return
 
     async def generate_old_payload(self):
         """TODO deprecated method"""
@@ -84,3 +89,15 @@ class StatsCollectionBase(ABC):
 
     def check_serviceable_event(self):
         return not is_request_from_blocked_repo(self.payload.get("repo_name"))
+
+    async def pr_created_after_onboarding_time(self):
+        """
+        Check if PR is created after onboarding time of team.
+         Returns:
+             bool: True if pr created after onboarding time else False.
+        """
+        team_id = self.workspace_dto.team_id
+        team_dto = await Teams.get(id=team_id)
+        if not self.payload.get("pr_created_at") or self.payload.get("pr_created_at") > team_dto.created_at:
+            return True
+        return False
