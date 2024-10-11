@@ -1,0 +1,12 @@
+\section{Experiment setting}
+To measure DeputyDev's impact on time taken to review a PR we designed a double controlled A/B experiment. Following are some aspects of experiment settings-
+
+\begin{enumerate}
+    \item TATA 1mg uses Atlassian's Bitbucket as its version control system.
+    \item 3 sets were defined namely Control 1, Control 2 and Test sets with 33\% allocation to each one of them.
+    \item This essentially means that 33\% PRs of a repository will be reviewed by DeputyDev.
+    \item The final analysis excluded pull requests (PRs) that were considered outliers based on their size, as measured by the number of lines of code (LOC) changed. Specifically, PRs in the top 25 percentile and bottom 10 percentile of size were removed from the dataset before conducting the final analysis.
+    \item We excluded repositories that lacked balanced representation across all three sets. A repository was considered balanced only if each set contained at least 10 or an equal number of pull requests. This filtering process helped us achieve statistical normalization of behavior among the sets.
+    \item Data collated is of comprehensive workflow and while using OpenAI's GPT-4o as LLM.
+    \item Duration of the experiment is 30 days from 27th July 2024 to 27th August 2024.
+\end{enumerate}
