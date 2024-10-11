@@ -31,6 +31,7 @@ class PRApprovalWebhook:
             "actor": payload["actor"]["display_name"],
             "scm_pr_id": str(payload["pullrequest"]["id"]),
             "scm_approval_time": payload["approval"]["date"],
+            "pr_created_at": payload["pullrequest"]["created_on"],
         }
         return PRApprovalRequest(**parsed_payload)
 
@@ -46,6 +47,7 @@ class PRApprovalWebhook:
             "actor": payload["review"]["user"]["login"],
             "scm_pr_id": str(payload["pull_request"]["number"]),
             "scm_approval_time": payload["review"]["submitted_at"],
+            "pr_created_at": payload["pull_request"]["created_at"],
         }
         return PRApprovalRequest(**parsed_payload)
 
@@ -61,5 +63,6 @@ class PRApprovalWebhook:
             "actor": payload["user"]["username"],
             "scm_pr_id": str(payload["object_attributes"]["iid"]),
             "scm_approval_time": payload["object_attributes"]["updated_at"],
+            "pr_created_at": payload["object_attributes"]["created_at"],
         }
         return PRApprovalRequest(**parsed_payload)

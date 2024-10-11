@@ -16,7 +16,7 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 class PRApprovalTimeManager(StatsCollectionBase):
     def __init__(self, payload, vcs_type):
         super().__init__(payload, vcs_type)
-        self.stats_type = MetaStatCollectionTypes.PR_CLOSE.value
+        self.stats_type = MetaStatCollectionTypes.PR_APPROVAL_TIME.value
 
     def validate_payload(self):
         """
