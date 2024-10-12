@@ -17,7 +17,7 @@ Where, $R_f$ is final set of contextually relevant code chunks\ref{fig:DeputyDev
 Now that we have all the pieces of information we need to create optimized context, the next step would be to call LLMs with this context to get a response.
 
 \subsection{Agentic workflow}
-DeputyDev uses agentic workflow to further optimize the quality and better segregate responsibilities of different aspects of the code review process. Inspired by Andrew Ng's letters \cite{deeplearningFourAgent}, DeputyDev's agentic workflow is an amalgamation of 2 agentic design patterns i.e. and Multi-agent and Reflection.
+DeputyDev uses agentic workflow to further optimize the quality and better segregate responsibilities of different aspects of the code review process. Inspired by Andrew Ng's letters \cite{deeplearningFourAgent}, DeputyDev's agentic workflow is an amalgamation of 2 agentic design patterns i.e. Multi-agent and Reflection.
 
 An agentic workflow is different from a comprehensive workflow where optimized context is passed on to LLM to obtain review on all aspects of code in a single pass. In an agentic workflow, we define agents to cater to each specific aspect. There are pros and cons to agentic design which are as follows-
 
@@ -42,8 +42,7 @@ An agentic workflow is different from a comprehensive workflow where optimized c
     \item \textbf{Higher Resource Usage}: Running multiple agents may require more computational resources compared to a single, comprehensive review.
 \end{enumerate}
 
-After carefully considering the advantages and disadvantages of an agentic workflow, we decided to upgrade to an a
-genic design approach from a comprehensive approach as it is superior for achieving optimal quality. Consequently, we decided to implement an agentic workflow strategy.
+After carefully considering the advantages and disadvantages of an agentic workflow, we decided to upgrade to a generic design approach from a comprehensive approach as it is superior for achieving optimal quality. Consequently, we decided to implement an agentic workflow strategy.
 
 Let's discuss agentic design patterns we used-
 
@@ -128,7 +127,7 @@ To structure our agents, we refer communicative agents \cite{qian2024chatdevcomm
     
     \item $A_i = C\langle R_{sp}, R_r\rangle$
     \begin{itemize}
-        \item Where C is a consensus reached between $R_{us}$ (Unstructured response from LLM) and $R_s$ (Structured response from LLM)
+        \item Where C is a consensus reached between $R_{sp}$ (Single pass response from LLM) and $R_r$ (Reflection response from LLM)
     \end{itemize}
     
     \item $C\langle R_{sp}, R_r\rangle = \langle DD \rightarrow LLM, LLM ; DD\rangle_{sp} | \langle DD \rightarrow LLM, LLM ; DD\rangle_r$

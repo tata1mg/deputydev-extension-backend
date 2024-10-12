@@ -62,26 +62,26 @@ Calculating the average review times, we observe a decrease from 30 minutes to 2
 This discrepancy between the reduction in average review time (16.7\%) and the reduction in average review time per LOC (36.7\%) can be attributed to several factors:
 
 \begin{itemize}
-    \item Reduction of fixed costs: Improvements may be primarily addressing the overhead associated with each PR review, which has a proportionally larger impact on smaller PRs.
-    \item Cognitive load management: Smaller PRs may benefit more significantly from enhancements in review tools or processes that facilitate rapid context comprehension and change assessment.
-    \item Proportional impact: Time savings on smaller PRs translate to larger percentage improvements in time per LOC compared to equivalent time savings on larger PRs.
+    \item \textbf{Reduction of fixed costs:} Improvements may be primarily addressing the overheads such as setup time, initial context switch and CI run times etc. associated with each PR review, which has a proportionally larger impact on smaller PRs.
+    \item \textbf{Cognitive load management:} Smaller PRs may benefit more significantly from enhancements in review tools or processes that facilitate rapid context comprehension and change assessment.
+    \item \textbf{Proportional impact:} Time savings on smaller PRs translate to larger percentage improvements in time per LOC compared to equivalent time savings on larger PRs.
 \end{itemize}
 
 These findings suggest that DeputyDev is particularly effective in optimizing the efficiency of smaller PR reviews, while still offering benefits across all PR sizes. Refer table \ref{table:pr_stats_by_size} for experiment numbers.
 
-\subsection{Repository wise performance of DeputyDev}
-Our analysis extended to examining DeputyDev's performance across individual repositories. From a total of 28 repositories that met our analysis criteria, we observed a varied performance pattern. In 13 repositories, DeputyDev's test set demonstrated superior performance compared to both control sets. A mixed performance was noted in 11 repositories, while in 4 repositories, DeputyDev's test set underperformed relative to both control sets. This repository-wise assessment provides a nuanced understanding of DeputyDev's effectiveness across different project contexts. Table \ref{tab:deputydev-performance}.
+% \subsection{Repository wise performance of DeputyDev}
+% Our analysis extended to examining DeputyDev's performance across individual repositories. From a total of 28 repositories that met our analysis criteria, we observed a varied performance pattern. In 13 repositories, DeputyDev's test set demonstrated superior performance compared to both control sets. A mixed performance was noted in 11 repositories, while in 4 repositories, DeputyDev's test set underperformed relative to both control sets. This repository-wise assessment provides a nuanced understanding of DeputyDev's effectiveness across different project contexts. Table \ref{tab:deputydev-performance}.
 
-\input{Tables/deputydev-performance}
+% \input{Tables/deputydev-performance}
 
-\input{Tables/poor-performance-repo-list}
+% \input{Tables/poor-performance-repo-list}
 
-Further investigation revealed four repositories where DeputyDev exhibited suboptimal performance. However, three of these repositories were deemed statistically insignificant due to having only one pull request in each set, as shown in Table \ref{tab:poor-performance-repo-list}. The sole repository with statistically meaningful data was \texttt{search\_service}, where DeputyDev under-performed. Subsequent analysis of this under-performance identified several contributing factors:
+% Further investigation revealed four repositories where DeputyDev exhibited suboptimal performance. However, three of these repositories were deemed statistically insignificant due to having only one pull request in each set, as shown in Table \ref{tab:poor-performance-repo-list}. The sole repository with statistically meaningful data was \texttt{search\_service}, where DeputyDev under-performed. Subsequent analysis of this under-performance identified several contributing factors:
 
-\begin{enumerate}
-    \item Pull requests authored by non-core search team developers receiving numerous review comments indicating a significant learning curve for contributing to \texttt{search\_service}.
-    \item Unresolved pull requests that were no longer necessary but remained open
-    \item Coincidental falling of hotfixes and revert pull requests in control sets, which typically experience rapid closure due to their urgent nature
-\end{enumerate}
+% \begin{enumerate}
+%     \item Pull requests authored by non-core search team developers receiving numerous review comments indicating a significant learning curve for contributing to \texttt{search\_service}.
+%     \item Unresolved pull requests that were no longer necessary but remained open
+%     \item Coincidental falling of hotfixes and revert pull requests in control sets, which typically experience rapid closure due to their urgent nature
+% \end{enumerate}
 
-These patterns explain the apparent under-performance in the \texttt{search\_service} repository.
+% These patterns explain the apparent under-performance in the \texttt{search\_service} repository.
