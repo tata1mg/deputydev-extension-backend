@@ -55,14 +55,14 @@ Our analysis reveals that while larger PRs have a more substantial impact on the
 
 To illustrate this mathematically, consider a simplified example:
 
-Prior to improvements, a small PR of 10 LOC might require 10 minutes (1 min/LOC), while a larger PR of 100 LOC could take 50 minutes (0.5 min/LOC). Post-improvement, the same small PR might only require 5 minutes (0.5 min/LOC), representing a 50\% reduction in time per LOC. Conversely, the larger PR might now take 45 minutes (0.45 min/LOC), showing a 10\% reduction in time per LOC.
+As an example - Prior to improvements, a small PR of 10 LOC might require 10 minutes (1 min/LOC), while a larger PR of 100 LOC could take 50 minutes (0.5 min/LOC). Post-improvement, the same small PR might only require 5 minutes (0.5 min/LOC), representing a 50\% reduction in time per LOC. Conversely, the larger PR might now take 45 minutes (0.45 min/LOC), showing a 10\% reduction in time per LOC.
 
 Calculating the average review times, we observe a decrease from 30 minutes to 25 minutes, representing a 16.7\% reduction. However, when examining the average review time per LOC, we note a more substantial decrease from 0.75 min/LOC to 0.475 min/LOC, equating to a 36.7\% reduction.
 
 This discrepancy between the reduction in average review time (16.7\%) and the reduction in average review time per LOC (36.7\%) can be attributed to several factors:
 
 \begin{itemize}
-    \item \textbf{Reduction of fixed costs:} Improvements may be primarily addressing the overheads such as setup time, initial context switch and CI run times etc. associated with each PR review, which has a proportionally larger impact on smaller PRs.
+    \item \textbf{Reduction of fixed costs:} Each pull request (PR) review incurs fixed overhead costs, irrespective of its size, with context-switching being the most significant among these. These fixed costs disproportionately affect smaller PRs, resulting in a higher time-to-lines-of-code (LOC) ratio. The observed reduction in this ratio suggests that DeputyDev has effectively mitigated context-switching to some degree and other associated fixed costs, thereby improving overall review efficiency.
     \item \textbf{Cognitive load management:} Smaller PRs may benefit more significantly from enhancements in review tools or processes that facilitate rapid context comprehension and change assessment.
     \item \textbf{Proportional impact:} Time savings on smaller PRs translate to larger percentage improvements in time per LOC compared to equivalent time savings on larger PRs.
 \end{itemize}
