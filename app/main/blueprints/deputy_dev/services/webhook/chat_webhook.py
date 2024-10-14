@@ -37,9 +37,9 @@ class ChatWebhook:
                 "line_number_from": payload.get("line_number_from"),
                 "line_number_to": payload.get("line_number_to"),
                 "id": request_payload["comment"]["id"],
-                "parent_comment_id": request_payload["comment"]["parent"].get("id")
-                if request_payload["comment"].get("parent")
-                else None,
+                "parent_comment_id": (
+                    request_payload["comment"]["parent"].get("id") if request_payload["comment"].get("parent") else None
+                ),
             },
             "repo": {
                 "workspace": request_payload["repository"]["workspace"]["name"],
@@ -69,12 +69,16 @@ class ChatWebhook:
             "comment": {
                 "raw": request_payload["comment"]["body"],
                 "parent": request_payload["comment"].get("in_reply_to_id"),
-                "path": request_payload["comment"]["path"]
-                if request_payload["comment"].get("subject_type") == "line"
-                else None,
-                "line_number": request_payload["comment"]["line"]
-                if request_payload["comment"].get("subject_type") == "line"
-                else None,
+                "path": (
+                    request_payload["comment"]["path"]
+                    if request_payload["comment"].get("subject_type") == "line"
+                    else None
+                ),
+                "line_number": (
+                    request_payload["comment"]["line"]
+                    if request_payload["comment"].get("subject_type") == "line"
+                    else None
+                ),
                 "id": request_payload["comment"]["id"],
                 "parent_comment_id": None,
                 "side": request_payload["comment"]["side"],

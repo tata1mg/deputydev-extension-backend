@@ -57,9 +57,11 @@ class BitbucketCommentHelper:
         comment_payload = {
             "content": {"raw": format_comment(comment)},
             "inline": {
-                "path": re.sub(r"^[ab]/\s*", "", comment["file_path"])
-                if re.match(r"^[ab]/\s*", comment.get("file_path"))
-                else comment.get("file_path"),
+                "path": (
+                    re.sub(r"^[ab]/\s*", "", comment["file_path"])
+                    if re.match(r"^[ab]/\s*", comment.get("file_path"))
+                    else comment.get("file_path")
+                ),
             },
         }
         if comment["line_number_from"]:
