@@ -13,9 +13,11 @@ class ChatPromptService:
         pr_diff = append_line_numbers(pr_diff)
         question_info = {
             "raw": chat_request.comment.raw,
-            "line_number": f"+{chat_request.comment.line_number_to}"
-            if chat_request.comment.line_number_to
-            else f"-{chat_request.comment.line_number_from}",
+            "line_number": (
+                f"+{chat_request.comment.line_number_to}"
+                if chat_request.comment.line_number_to
+                else f"-{chat_request.comment.line_number_from}"
+            ),
             "file_path": chat_request.comment.path,
         }
         user_prompt = cls.__build_user_prompt(pr_diff, question_info, user_story, comment_thread)

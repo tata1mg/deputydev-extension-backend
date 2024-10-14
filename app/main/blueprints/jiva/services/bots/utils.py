@@ -93,11 +93,15 @@ async def cache_user_chat_history(
         prompt = (
             response.answer
             if response.type == JivaChatTypes.ChatTypeMsg.value
-            else stringify_sku_card_data(response)
-            if response.type == JivaChatTypes.ChatTypeSkuCard.value
-            else stringify_call_agent_data(response)
-            if response.type == JivaChatTypes.ChatTypeCallAgent.value
-            else ""
+            else (
+                stringify_sku_card_data(response)
+                if response.type == JivaChatTypes.ChatTypeSkuCard.value
+                else (
+                    stringify_call_agent_data(response)
+                    if response.type == JivaChatTypes.ChatTypeCallAgent.value
+                    else ""
+                )
+            )
         )
         chat_history.append({"type": response.type, "role": "assistant", "prompt": prompt})
     for chat in chat_history:

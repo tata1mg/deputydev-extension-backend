@@ -67,9 +67,9 @@ class PullRequestCloseWebhook:
         workspace = payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(payload["project"]["path_with_namespace"])
         parsed_payload = {
-            "pr_state": PRStatus.MERGED.value
-            if payload["object_attributes"]["state"] == "merged"
-            else PRStatus.DECLINED.value,
+            "pr_state": (
+                PRStatus.MERGED.value if payload["object_attributes"]["state"] == "merged" else PRStatus.DECLINED.value
+            ),
             "pr_id": str(pr_id),
             "repo_name": get_vcs_repo_name_slug(payload["project"]["path_with_namespace"]),
             "repo_id": str(payload["project"]["id"]),
