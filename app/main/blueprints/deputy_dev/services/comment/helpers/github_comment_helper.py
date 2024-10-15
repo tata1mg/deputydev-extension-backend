@@ -41,6 +41,7 @@ class GithubCommentHelper:
             "path": chat_request.comment.path,
             "line": chat_request.comment.line_number,
             "side": chat_request.comment.side,
+            "commit_id": chat_request.repo.commit_id,
         }
         if have_parent:
             comment_payload["in_reply_to"] = chat_request.comment.parent
