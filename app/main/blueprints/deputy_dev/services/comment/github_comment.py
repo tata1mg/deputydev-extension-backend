@@ -95,17 +95,9 @@ class GithubComment(BaseComment):
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
         comment = await super().process_chat_comment(comment, chat_request, add_note)
-        have_parent = False
-        commits = await self.repo_client.get_pr_commits()
-        latest_commit = commits[-1]
-
-        if chat_request.comment.parent:
-            have_parent = True
+        have_parent = True if chat_request.comment.parent else False
         comment_payload = self.comment_helper.format_chat_comment(comment, chat_request, have_parent=have_parent)
-        comment_payload["commit_id"] = latest_commit["sha"]
         await self.create_comment_on_thread(comment_payload)
-        # else:
-        #     await self.create_pr_comment(comment, model=config.get("FEATURE_MODELS").get("PR_CHAT"))
 
     async def create_comment_on_thread(self, comment_payload):
         """
