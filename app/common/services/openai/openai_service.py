@@ -1,5 +1,5 @@
 import json
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import requests
@@ -7,9 +7,15 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.caches import DeputyDevCache
+from app.common.constants.error_messages import ErrorMessages
 from app.common.service_clients.openai.openai import OpenAIServiceClient
 from app.common.services.openai.base_client import BaseClient
 from app.common.utils.app_utils import hash_sha256
+from app.main.blueprints.deputy_dev.constants import (
+    EMBEDDING_MODEL,
+    EMBEDDING_TOKEN_LIMIT,
+)
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
@@ -33,7 +39,9 @@ class OpenAIManager(BaseClient):
         Returns:
             np.ndarray: Embedded vectors.
         """
-        response = await OpenAIServiceClient().create_embedding(input=batch)
+        response = await OpenAIServiceClient().create_embedding(
+            input=batch, model=EMBEDDING_MODEL, encoding_format="float"
+        )
         cut_dim = np.array([data.embedding for data in response.data])
         normalized_dim = self.normalize_l2(cut_dim)
         # save results to redis
@@ -49,23 +57,61 @@ class OpenAIManager(BaseClient):
             prefix_key = f"{team_id}:{repo_name}"
         return prefix_key
 
+    async def create_embeddings(self, batch: Tuple[str]) -> Optional[List[float]]:
+        """
+        Create embeddings for a batch of text strings.
+
+        Args:
+            batch (Tuple[str]): A tuple of text strings to embed.
+
+        Returns:
+            Optional[List[float]]: A list of embeddings if successful, None if there was a timeout.
+        """
+        new_embeddings = None
+        try:
+            new_embeddings, input_tokens = await self.__call_embedding(batch)
+        except requests.exceptions.Timeout as e:
+            AppLogger.log_error(f"Timeout error occurred while embedding: {e}")
+        except Exception as e:
+            AppLogger.log_error(e)
+            if any(self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT for text in batch):
+                new_batch = []
+                for text in batch:
+                    if self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT:
+                        AppLogger.log_warn(
+                            ErrorMessages.TOKEN_COUNT_EXCEED_WARNING.value.format(
+                                count=self.tiktoken_client.count(text),
+                                token_limit=EMBEDDING_TOKEN_LIMIT,
+                            )
+                        )
+                    new_batch.append(self.tiktoken_client.truncate_string(text))
+                new_embeddings, input_tokens = await self.__call_embedding(new_batch)
+            else:
+                raise e
+        return new_embeddings, input_tokens
+
     # We can make the get_embeddings function more generic as redis layer should not be part of openai class
-    async def get_embeddings(self, batch: Tuple[str]) -> np.ndarray:
+    async def get_embeddings(self, batch: Tuple[str], store_embeddings: bool = True) -> np.ndarray:
         """
         Gets embeddings for a batch of texts.
 
         Args:
             batch (tuple[str]): Batch of texts.
+            store_embeddings (bool): If true we will store embeddings in Redis
 
         Returns:
             np.ndarray: Embedded vectors.
         """
-        input_tokens = None
+        input_tokens = 0
         # "identifier" will try to get the context value which was set, if not found, it will return None
-        key = self.get_cache_prefix()
-        if len(batch) == 1:
-            embeddings, input_tokens = await self.__call_embedding(batch)
-            return np.array(embeddings), input_tokens
+        key: Optional[str] = self.get_cache_prefix()
+        if not store_embeddings:
+            batch = self.tiktoken_client.split_text_by_tokens(batch[0])
+            embeddings, input_tokens = await self.create_embeddings(batch=batch)
+
+            result = self.process_embeddings(np.array(embeddings))
+
+            return np.array(result), input_tokens
         embeddings: List[np.ndarray] = [None] * len(batch)
         cache_keys = [f"{key}:{hash_sha256(text)}" if key else hash_sha256(text) for text in batch]
         try:
@@ -76,24 +122,12 @@ class OpenAIManager(BaseClient):
             logger.exception(e)
 
         batch = [text for i, text in enumerate(batch) if embeddings[i] is None]
-        if len(batch) == 0:
+
+        if len(batch) == 0:  # when we get all embeddings from cache
             embeddings = np.array(embeddings)
             return embeddings, input_tokens
 
-        try:
-            new_embeddings, input_tokens = await self.__call_embedding(batch)
-        except requests.exceptions.Timeout as e:
-            raise e
-        except Exception as e:
-            if any(self.tiktoken_client.count(text) > 8192 for text in batch):
-                logger.warning(
-                    f"Token count exceeded for batch: {max([self.tiktoken_client.count(text) for text in batch])} "
-                    f"truncating down to 8192 tokens."
-                )
-                batch = [self.tiktoken_client.truncate_string(text) for text in batch]
-                new_embeddings, input_tokens = await self.__call_embedding(batch)
-            else:
-                raise e
+        new_embeddings, input_tokens = await self.create_embeddings(batch=batch)
 
         indices = [i for i, emb in enumerate(embeddings) if emb is None]
         assert len(indices) == len(new_embeddings)

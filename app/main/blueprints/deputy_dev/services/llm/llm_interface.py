@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 import xml.etree.ElementTree as ET
@@ -107,6 +108,7 @@ class LLMInterface(ABC):
             except Exception as e:
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry}  Error while fetching data from LLM: {e}")
                 last_exception = e
+                await asyncio.sleep(60)
             if i + 1 == max_retry:
                 raise RetryException(f"Retried due to llm client call failed {last_exception}")
 

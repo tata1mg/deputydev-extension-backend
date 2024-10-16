@@ -42,8 +42,6 @@ class OpenAIServiceClient(metaclass=Singleton):
         # we need both message and output token now to returning full completion message
         return completion
 
-    async def create_embedding(self, input):
-        embeddings = await self.__client.embeddings.create(
-            input=input, model="text-embedding-3-small", encoding_format="float"
-        )
+    async def create_embedding(self, input, model: str, encoding_format: str):
+        embeddings = await self.__client.embeddings.create(input=input, model=model, encoding_format=encoding_format)
         return embeddings
