@@ -135,9 +135,18 @@ class OpenAIManager(BaseClient):
             embeddings[index] = new_embeddings[i]
 
         try:
-            await DeputyDevCache.mset_with_expire(
-                {cache_key: json.dumps(embedding.tolist()) for cache_key, embedding in zip(cache_keys, embeddings)}
-            )
+            for i in range(0, len(cache_keys), 100):
+                batch_keys = cache_keys[i : i + 100]
+                batch_embeddings = embeddings[i : i + 100]
+
+                # Store the current batch in Redis
+                await DeputyDevCache.mset_with_expire(
+                    {
+                        cache_key: json.dumps(embedding.tolist())
+                        for cache_key, embedding in zip(batch_keys, batch_embeddings)
+                    }
+                )
+
             embeddings = np.array(embeddings)
         except Exception:
             logger.error("Failed to store embeddings in cache, returning without storing")

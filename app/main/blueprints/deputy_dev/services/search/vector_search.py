@@ -2,16 +2,15 @@ import asyncio
 from typing import Dict, List, Tuple
 
 import numpy as np
+from torpedo import CONFIG
 
 from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.executor import executor
-from app.main.blueprints.deputy_dev.constants import (
-    MAX_PR_DIFF_TOKEN_LIMIT,
-    LLMModelNames,
-)
 from app.main.blueprints.deputy_dev.services.chunking.chunk import chunk_pr_diff
 from app.main.blueprints.deputy_dev.services.chunking.chunk_info import ChunkInfo
 from app.main.blueprints.deputy_dev.utils import create_optimized_batches
+
+config = CONFIG.config
 
 
 async def embed_text_array(texts: Tuple[str], store_embeddings: bool = True) -> (List[np.ndarray], int):
@@ -30,7 +29,7 @@ async def embed_text_array(texts: Tuple[str], store_embeddings: bool = True) -> 
     texts = [text if text else " " for text in texts]
 
     batches = create_optimized_batches(
-        texts, max_tokens=MAX_PR_DIFF_TOKEN_LIMIT, model=LLMModelNames.GPT_TEXT_EMBEDDING_3_SMALL.value
+        texts, max_tokens=config["EMBEDDING"]["TOKEN_LIMIT"], model=config["EMBEDDING"]["MODEL"]
     )
 
     for batch in batches:
