@@ -27,13 +27,16 @@ from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 
 class PRReviewPostProcessor:
     @classmethod
-    async def post_process_pr_large_pr(cls, pr_dto: PullRequestDTO):
+    async def post_process_pr_large_pr(cls, pr_dto: PullRequestDTO, tokens_data):
         await PRService.db_update(
-            payload={
-                "review_status": PrStatusTypes.REJECTED_LARGE_SIZE.value,
-            },
+            payload={"review_status": PrStatusTypes.REJECTED_LARGE_SIZE.value, "meta_info": {"tokens": tokens_data}},
             filters={"id": pr_dto.id},
         )
+        if ExperimentService.is_eligible_for_experiment():
+            await ExperimentService.db_update(
+                payload={"review_status": ExperimentStatusTypes.REJECTED_LARGE_SIZE.value},
+                filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
+            )
 
     @classmethod
     async def post_process_pr_no_comments(cls, pr_dto: PullRequestDTO, tokens_data, extra_info: dict = None):
@@ -67,9 +70,11 @@ class PRReviewPostProcessor:
 
     @classmethod
     async def post_process_pr(
-        cls, pr_dto: PullRequestDTO, llm_comments: dict, tokens_data: dict, extra_info: dict = None
+        cls, pr_dto: PullRequestDTO, llm_comments: dict, tokens_data: dict, is_large_pr: bool, extra_info: dict = None
     ):
-        if llm_comments:
+        if is_large_pr:
+            await cls.post_process_pr_large_pr(pr_dto, tokens_data)
+        elif llm_comments:
             await cls.post_process_pr_with_comments(pr_dto, llm_comments, tokens_data, extra_info)
         else:
             await cls.post_process_pr_no_comments(pr_dto, tokens_data, extra_info)
