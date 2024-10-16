@@ -7,6 +7,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MultiAgentReflectionIteration,
     TokenTypes,
 )
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
@@ -22,6 +23,7 @@ class AgentServiceBase(ABC):
             CONFIG.config["AGENT_SETTINGS"].get(self.agent_name, {}).get("confidence_score_limit")
         )
         self.tiktoken = TikToken()
+        self.model = CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"]
 
     async def format_user_prompt(self, prompt: str, comments: str = None):
         prompt_variables = {
@@ -53,7 +55,7 @@ class AgentServiceBase(ABC):
         return {
             "key": self.agent_name,
             "comment_confidence_score": self.comment_confidence_score,
-            "model": CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"],
+            "model": self.model,
             "tokens": tokens_info,
             "reflection_iteration": reflection_iteration,
         }
@@ -65,29 +67,38 @@ class AgentServiceBase(ABC):
             return await self.get_with_reflection_prompt_pass_2(previous_review_comments)
 
     async def get_with_reflection_prompt_pass_1(self):
+        system_message = self.get_with_reflection_system_prompt_pass1()
+        user_message = await self.format_user_prompt(self.get_with_reflection_user_prompt_pass1())
         return {
-            "system_message": self.get_with_reflection_system_prompt_pass1(),
-            "user_message": await self.format_user_prompt(self.get_with_reflection_user_prompt_pass1()),
+            "system_message": system_message,
+            "user_message": user_message,
             "structure_type": "text",
             "parse": False,
+            "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
 
     async def get_with_reflection_prompt_pass_2(self, previous_review_comments):
+        system_message = self.get_with_reflection_system_prompt_pass2()
+        user_message = await self.format_user_prompt(
+            self.get_with_reflection_user_prompt_pass2(), previous_review_comments
+        )
         return {
-            "system_message": self.get_with_reflection_system_prompt_pass2(),
-            "user_message": await self.format_user_prompt(
-                self.get_with_reflection_user_prompt_pass2(), previous_review_comments
-            ),
+            "system_message": system_message,
+            "user_message": user_message,
             "structure_type": "xml",
             "parse": True,
+            "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
 
     async def get_without_reflection_prompt(self):
+        system_message = self.get_without_reflection_system_prompt()
+        user_message = await self.format_user_prompt(self.get_without_reflection_user_prompt())
         return {
-            "system_message": self.get_without_reflection_system_prompt(),
-            "user_message": await self.format_user_prompt(self.get_without_reflection_user_prompt()),
+            "system_message": system_message,
+            "user_message": user_message,
             "structure_type": "text",
             "parse": False,
+            "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
 
     def get_without_reflection_system_prompt(self):
@@ -125,4 +136,14 @@ class AgentServiceBase(ABC):
         return tokens_info
 
     async def should_execute(self):
+        return True
+
+    def has_exceeded_token_limit(self, system_message, user_message):
+        token_count = self.tiktoken.count(system_message + user_message)
+        model_input_token_limit = CONFIG.config["LLM_MODELS"][self.model]["INPUT_TOKENS_LIMIT"]
+        if token_count <= model_input_token_limit:
+            return False
+        AppLogger.log_info(
+            f"Prompt: {self.agent_name} token count {token_count} exceeds the allowed limit of {model_input_token_limit}."
+        )
         return True

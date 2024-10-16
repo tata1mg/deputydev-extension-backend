@@ -479,8 +479,6 @@ def create_optimized_batches(texts: List[str], max_tokens: int, model: str) -> L
     currrent_batch_token_count = 0
 
     for text in texts:
-        if not text.strip():  # embeeding was breaking in case empty string were passed in batch
-            continue
         text_token_count = tiktoken_client.count(text, model=model)
 
         if text_token_count > max_tokens:  # Single text exceeds max tokens

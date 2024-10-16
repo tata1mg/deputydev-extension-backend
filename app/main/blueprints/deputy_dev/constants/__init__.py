@@ -3,6 +3,8 @@ __all__ = [
     "LLMModels",
     "BATCH_SIZE",
     "MAX_PR_DIFF_TOKEN_LIMIT",
+    "EMBEDDING_MODEL",
+    "EMBEDDING_TOKEN_LIMIT",
     "SCRIT_DEPRECATION_NOTIFICATION",
     "SCRIT_TAG",
     "PR_SUMMARY_TEXT",
@@ -19,6 +21,8 @@ __all__ = [
 from .ab_analysis_constants import AbAnalysisDates, AbAnalysisPhases, AbAnalysisQueries
 from .constants import (
     BATCH_SIZE,
+    EMBEDDING_MODEL,
+    EMBEDDING_TOKEN_LIMIT,
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
     PR_SIZING_TEXT,
