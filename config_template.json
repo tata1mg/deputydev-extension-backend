@@ -131,7 +131,11 @@
     "CHARACTER_SIZE": 2000,
     "NUMBER_OF_CHUNKS": 10
   },
-  "MAX_PR_DIFF_TOKEN_LIMIT": 8192,
+  "MAX_PR_DIFF_TOKEN_LIMIT": 150000,
+  "EMBEDDING": {
+    "MODEL": "text-embedding-3-small",
+    "TOKEN_LIMIT": 8192
+  },
   "IGNORE_FILES": [
     "Pipfile",
     "Pipfile.lock",
@@ -238,13 +242,15 @@
       "ACCESS_KEY": "",
       "BITBUCKET_TOKEN": "",
       "MAX_TOKENS": 8192,
-      "VERSION": "bedrock-2023-05-31"
+      "VERSION": "bedrock-2023-05-31",
+      "INPUT_TOKENS_LIMIT": 130000
     },
     "GPT_4_O_MODEL": {
       "NAME": "gpt-4o-mini",
       "PROVIDER": "OPENAI",
       "ACCESS_KEY": "",
-      "BITBUCKET_TOKEN": ""
+      "BITBUCKET_TOKEN": "",
+      "INPUT_TOKENS_LIMIT": 130000
     }
   },
   "FEATURE_MODELS": {

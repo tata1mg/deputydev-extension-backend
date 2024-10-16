@@ -6,7 +6,10 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.utils.log_time import log_time
-from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
+from app.main.blueprints.deputy_dev.constants.constants import (
+    PR_SIZE_TOO_BIG_MESSAGE,
+    PrStatusTypes,
+)
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
@@ -85,11 +88,13 @@ class PRReviewManager:
             is_reviewable_request, pr_dto = await PRReviewPreProcessor(repo_service, comment_service).pre_process_pr()
             if not is_reviewable_request:
                 return
-            llm_comments, tokens_data, meta_info_to_save = await cls.review_pr(
+            llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
                 repo_service, comment_service, data["prompt_version"]
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
-            await PRReviewPostProcessor.post_process_pr(pr_dto, llm_comments, tokens_data, meta_info_to_save)
+            await PRReviewPostProcessor.post_process_pr(
+                pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
+            )
 
         except Exception as ex:
             # if PR is inserted in db then only we will update status
@@ -114,18 +119,22 @@ class PRReviewManager:
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
-        llm_response, pr_summary, tokens_data, meta_info_to_save = await _review_klass(
+        llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
             repo_service, prompt_version
         ).get_code_review_comments()
 
         if pr_summary:
             await repo_service.update_pr_description(pr_summary.get("response"))
 
-        if cls.check_no_pr_comments(llm_response):
+        if _is_large_pr:
+            await comment_service.create_pr_comment(
+                comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+            )
+        elif cls.check_no_pr_comments(llm_response):
             await comment_service.create_pr_comment("LGTM!!", config.get("FEATURE_MODELS").get("PR_REVIEW"))
         else:
             await comment_service.post_bots_comments(llm_response)
-        return llm_response, tokens_data, meta_info_to_save
+        return llm_response, tokens_data, meta_info_to_save, _is_large_pr
 
     @classmethod
     async def initialise_services(cls, data: dict):

@@ -13,6 +13,7 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 class OpenAIPRSummaryAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.PR_SUMMARY.value)
+        self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -40,17 +41,20 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         additional_info = super().get_additional_info_prompt(tokens_info, reflection_iteration)
         additional_info.update(
             {
-                "model": CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"],
+                "model": self.model,
             }
         )
         return additional_info
 
     async def get_without_reflection_prompt(self):
+        system_message = self.get_without_reflection_system_prompt()
+        user_message = await self.format_user_prompt(self.get_without_reflection_user_prompt())
         return {
-            "system_message": self.get_without_reflection_system_prompt(),
-            "user_message": await self.format_user_prompt(self.get_without_reflection_user_prompt()),
+            "system_message": system_message,
+            "user_message": user_message,
             "structure_type": "text",
             "parse": False,
+            "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
 
     def get_agent_specific_tokens_data(self):

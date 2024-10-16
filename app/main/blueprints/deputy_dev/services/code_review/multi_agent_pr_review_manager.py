@@ -35,10 +35,11 @@ class MultiAgentPRReviewManager:
         self.agents_tokens = {}
         self.filtered_comments = None
         self.pr_summary = None
-        self.exclude_agent = []
+        self.exclude_agent = set()
         self.agent_factory = AgentFactory(
             repo_service=self.repo_service, reflection_enabled=self._is_reflection_enabled()
         )
+        self._is_large_pr = False
 
     # section setting start
 
@@ -59,7 +60,7 @@ class MultiAgentPRReviewManager:
         )
 
     async def _build_post_reflection_prompt(self):
-        self.exclude_agent.append(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
+        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
         self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
         await self._build_prompts()
 
@@ -67,7 +68,10 @@ class MultiAgentPRReviewManager:
 
     # llm handler start
     async def _make_llm_calls(self):
-        contexts = [self.current_prompts[key] for key in self.current_prompts]
+        contexts = []
+        for agent in self.current_prompts:
+            if agent not in self.exclude_agent:
+                contexts.append(self.current_prompts[agent])
         self.llm_comments = await MultiAgentsLLMManager.get_llm_response(contexts)
         return self.llm_comments
 
@@ -84,6 +88,12 @@ class MultiAgentPRReviewManager:
 
     async def __execute_pass(self):
         await self._build_prompts()
+        self.all_prompts_exceed_token_limit()
+        if self._is_large_pr:
+            self.llm_comments = {}
+            pr_diff_tokens_count = await self.repo_service.get_pr_diff_token_count()
+            self.agents_tokens = {"pr_diff_tokens": pr_diff_tokens_count}
+            return
         await self._make_llm_calls()
         self.populate_meta_info()
 
@@ -92,7 +102,7 @@ class MultiAgentPRReviewManager:
         self.populate_pr_summary()
 
     async def execute_pass_2(self):
-        self.exclude_agent.append(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
+        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
         self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
         await self.__execute_pass()
 
@@ -114,4 +124,15 @@ class MultiAgentPRReviewManager:
             )
 
     def return_final_response(self):
-        return self.filtered_comments, self.pr_summary, self.agents_tokens, self.meta_info_to_save
+        return self.filtered_comments, self.pr_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
+
+    def all_prompts_exceed_token_limit(self):
+        all_exceeded = True
+
+        for prompt, prompt_data in self.current_prompts.items():
+            if prompt_data["exceeds_tokens"]:
+                self.exclude_agent.add(prompt)
+            else:
+                all_exceeded = False
+
+        self._is_large_pr = all_exceeded

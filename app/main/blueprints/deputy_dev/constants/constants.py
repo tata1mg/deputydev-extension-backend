@@ -124,6 +124,7 @@ class LLMModelNames(ExtendedEnum):
 class ExperimentStatusTypes(Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
+    REJECTED_LARGE_SIZE = "REJECTED_LARGE_SIZE"
 
 
 class PRStatus(Enum):
@@ -215,3 +216,7 @@ class MultiAgentReflectionIteration(Enum):
 class LLMProviders(Enum):
     OPENAI = "OPENAI"
     ANTHROPIC = "ANTHROPIC"
+
+
+EMBEDDING_MODEL = CONFIG.config.get("EMBEDDING").get("MODEL")
+EMBEDDING_TOKEN_LIMIT = CONFIG.config.get("EMBEDDING").get("TOKEN_LIMIT")

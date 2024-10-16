@@ -9,16 +9,18 @@ from app.main.blueprints.deputy_dev.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     LLMModelNames,
 )
+from app.main.blueprints.deputy_dev.services.chunking.chunk import chunk_pr_diff
 from app.main.blueprints.deputy_dev.services.chunking.chunk_info import ChunkInfo
 from app.main.blueprints.deputy_dev.utils import create_optimized_batches
 
 
-async def embed_text_array(texts: Tuple[str]) -> (List[np.ndarray], int):
+async def embed_text_array(texts: Tuple[str], store_embeddings: bool = True) -> (List[np.ndarray], int):
     """
     Embeds a list of texts using OpenAI's embedding model.
 
     Args:
         texts (tuple[str]): A tuple of texts to embed.
+        store_embeddings (bool): If true we will store embeddings in Redis
 
     Returns:
         list[np.ndarray]: List of embeddings for each text.
@@ -34,8 +36,10 @@ async def embed_text_array(texts: Tuple[str]) -> (List[np.ndarray], int):
     for batch in batches:
         if not batch:
             continue
-        embedding, input_token = await OpenAILLMService().get_embeddings(batch)
+        embedding, batch_input_tokens = await OpenAILLMService().get_embeddings(batch, store_embeddings)
         embeddings.append(embedding)
+
+        input_tokens += batch_input_tokens
     return embeddings, input_tokens
 
 
@@ -69,12 +73,21 @@ async def get_query_texts_similarity(query: str, texts: List[str]) -> (List[floa
     """
     if not texts:
         return [], None
-    embeddings, input_tokens = await embed_text_array(texts)
-    embeddings = np.concatenate(embeddings)
-    query_embedding, input_tokens = await OpenAILLMService().get_embeddings([query])
-    similarity = cosine_similarity(query_embedding, embeddings)
-    similarity = similarity.tolist()
-    return similarity, input_tokens
+    query_chunks = chunk_pr_diff(query)
+    text_embeddings, text_tokens = await embed_text_array(texts)
+    text_embeddings = np.concatenate(text_embeddings)
+
+    query_embeddings, query_tokens = await embed_text_array(query_chunks, store_embeddings=False)
+
+    similarities = []
+    for query_embedding in query_embeddings:
+        similarity = cosine_similarity(query_embedding, text_embeddings)
+        similarities.append(similarity)
+
+    avg_similarity = np.mean(similarities, axis=0).tolist()
+    total_tokens = text_tokens + query_tokens
+
+    return avg_similarity, total_tokens
 
 
 def create_chunk_str_to_contents(chunks: List[ChunkInfo]) -> Dict[str, str]:
