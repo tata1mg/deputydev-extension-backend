@@ -6,6 +6,9 @@ from app.common.exception import RetryException
 from app.common.utils.app_utils import convert_to_datetime
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    set_context_values,
+)
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
     WorkspaceService,
 )
@@ -68,7 +71,7 @@ class StatsCollectionBase(ABC):
                 f"{self.stats_type} webhook failed for workspace {payload['scm_workspace_id']} due to"
                 f"workspace not registered"
             )
-
+        set_context_values(team_id=self.workspace_dto.team_id)
         self.repo_dto = await RepoService.find(scm_repo_id=payload["scm_repo_id"], workspace_id=self.workspace_dto.id)
         if not self.repo_dto:
             raise RetryException(
@@ -79,8 +82,6 @@ class StatsCollectionBase(ABC):
         if not self.pr_dto:
             if self.pr_created_after_onboarding_time():
                 raise RetryException(f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev")
-            else:
-                return
 
     async def generate_old_payload(self):
         """TODO deprecated method"""
