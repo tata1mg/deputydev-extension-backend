@@ -4,7 +4,6 @@ from sanic.log import logger
 
 from app.common.exception import RetryException
 from app.common.utils.app_utils import convert_to_datetime
-from app.main.blueprints.deputy_dev.models.dao import Teams
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
@@ -79,7 +78,7 @@ class StatsCollectionBase(ABC):
         self.pr_dto = await PRService.find(repo_id=self.repo_dto.id, scm_pr_id=payload["scm_pr_id"])
         if not self.pr_dto:
             if self.pr_created_after_onboarding_time():
-                raise RetryException(f"PR: {self.payload['pr_id']} not picked to be reviewed by Deputydev")
+                raise RetryException(f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev")
             else:
                 return
 
@@ -96,8 +95,6 @@ class StatsCollectionBase(ABC):
          Returns:
              bool: True if pr created after onboarding time else False.
         """
-        team_id = self.workspace_dto.team_id
-        team_dto = await Teams.get(id=team_id)
-        if not self.payload.get("pr_created_at") or self.payload.get("pr_created_at") > team_dto.created_at:
+        if not self.payload.get("pr_created_at") or self.payload.get("pr_created_at") > self.workspace_dto.created_at:
             return True
         return False
