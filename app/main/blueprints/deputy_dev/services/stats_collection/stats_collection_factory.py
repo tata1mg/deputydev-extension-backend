@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from sanic.log import logger
 
 from app.main.blueprints.deputy_dev.constants.constants import MetaStatCollectionTypes
@@ -30,7 +32,7 @@ class StatsCollectionFactory:
         payload = data.get("payload")
         # TODO Added for backward compatibility, remove later.
         vcs_type = data.get("vcs_type") or VCSTypes.bitbucket.value
-        _klass = cls.FACTORIES[event_type](payload=payload, vcs_type=vcs_type)
+        _klass = cls.FACTORIES[event_type](payload=deepcopy(payload), vcs_type=vcs_type)
 
         if _klass.validate_payload():
             await _klass.process_event()
