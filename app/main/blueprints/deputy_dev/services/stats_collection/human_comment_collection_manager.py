@@ -23,7 +23,7 @@ class HumanCommentCollectionManager(StatsCollectionBase):
         self.is_human_count_incremented = False
         self.stats_type = MetaStatCollectionTypes.HUMAN_COMMENT.value
         self.scm_pr_id = payload.get("scm_pr_id")
-        self.is_eligible_for_experiment = ExperimentService.is_eligible_for_experiment()
+        self.is_eligible_for_experiment = True or ExperimentService.is_eligible_for_experiment()
 
     def validate_payload(self):
         """
@@ -37,6 +37,7 @@ class HumanCommentCollectionManager(StatsCollectionBase):
             return False
 
     async def save_to_db(self, payload):
+        breakpoint()
         if self.is_eligible_for_experiment:
             await self.get_pr_from_db(payload)
             self.is_human_count_incremented = await ExperimentService.increment_human_comment_count(

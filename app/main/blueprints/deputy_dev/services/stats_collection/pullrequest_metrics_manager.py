@@ -33,7 +33,6 @@ class PullRequestMetricsManager(StatsCollectionBase):
     def __init__(self, payload, vcs_type):
         super().__init__(payload, vcs_type)
         self.stats_type = MetaStatCollectionTypes.PR_CLOSE.value
-
         self.sqs_message_retention_time = CONFIG.config.get("SQS", {}).get("MESSAGE_RETENTION_TIME_SEC", 0)
 
     def validate_payload(self):
@@ -41,11 +40,22 @@ class PullRequestMetricsManager(StatsCollectionBase):
         Validates the PRCloseRequest payload and raises BadRequestException if validation fails.
         """
         try:
+            # backward compatibility handling
+            self.handle_old_keys()
             PRCloseRequest(**self.payload)
             return True
         except ValidationError as ex:
             logger.error(f"Invalid pr close request with error {ex}")
             return False
+
+    def handle_old_keys(self):
+        # TODO added for backward compatibility need to remove in future
+        if self.payload.get("workspace_id"):
+            self.payload["scm_workspace_id"] = self.payload["workspace_id"]
+            del self.payload["workspace_id"]
+        if self.payload.get("pr_id"):
+            self.payload["scm_pr_id"] = self.payload["pr_id"]
+            del self.payload["pr_id"]
 
     async def process_event(self):
         if not self.check_serviceable_event():
@@ -87,7 +97,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
                     "pr_state": self.payload["pr_state"],
                     "scm_close_time": self.payload["pr_closed_at"],
                 },
-                filters={"repo_id": self.repo_dto.id, "scm_pr_id": self.payload["pr_id"]},
+                filters={"repo_id": self.repo_dto.id, "scm_pr_id": self.payload["scm_pr_id"]},
             )
             return
 
@@ -103,7 +113,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
             {
                 "repo_id": self.repo_dto.id,
                 "workspace_id": self.workspace_dto.id,
-                "scm_pr_id": self.payload["pr_id"],
+                "scm_pr_id": self.payload["scm_pr_id"],
             }
         )
 
@@ -129,9 +139,9 @@ class PullRequestMetricsManager(StatsCollectionBase):
         Retrieves the repository instance based on the given VCS type and payload.
         """
         repo_name = self.payload.get("repo_name")
-        pr_id = self.payload.get("pr_id")
+        pr_id = self.payload.get("scm_pr_id")
         workspace = self.payload.get("workspace")
-        scm_workspace_id = self.payload.get("workspace_id")
+        scm_workspace_id = self.payload["scm_workspace_id"]
         repo_id = self.payload.get("repo_id")
         workspace_slug = self.payload.get("workspace_slug")
         auth_handler = await get_vcs_auth_handler(scm_workspace_id, self.vcs_type)
@@ -153,7 +163,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
                 "scm_close_time": self.payload["pr_closed_at"],
                 "pr_state": self.payload["pr_state"],
             },
-            filters={"repo_id": self.repo_dto.id, "scm_pr_id": self.payload["pr_id"]},
+            filters={"repo_id": self.repo_dto.id, "scm_pr_id": self.payload["scm_pr_id"]},
         )
         if ExperimentService.is_eligible_for_experiment():
             await ExperimentService.db_update(

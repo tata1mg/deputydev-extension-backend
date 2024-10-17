@@ -5,8 +5,10 @@ from typing import Any, Dict
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
+from ...constants.constants import VCSFailureMessages
 from ..base_scm_client import BaseSCMClient
 
 
@@ -35,7 +37,7 @@ class BitbucketRepoClient(BaseSCMClient):
         diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}"
         response = await self.get(diff_url)
         if response.status_code != 200:
-            logger.error(f"Unable to process PR - {self.pr_id}: {response._content}")
+            AppLogger.log_error(f"Unable to get PR details: error message {response._content}")
             return
         return response.json()
 
@@ -51,7 +53,15 @@ class BitbucketRepoClient(BaseSCMClient):
         diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}"
         workspace_token_headers = await self.get_ws_token_headers()
         response = await self.put(diff_url, json=payload, headers=workspace_token_headers, skip_headers=True)
-        return response.json()
+        if response.status_code == 200:
+            return response.json()
+        elif (
+            response.status_code == 400
+            and response.json().get("error", {}).get("message") == VCSFailureMessages.BITBUCKET_PR_UPDATE_FAIL.value
+        ):
+            AppLogger.log_warn(f"PR couldn't updated due to not open {response.json()}")
+        else:
+            AppLogger.log_error(f"PR couldn't updated {response.json()}")
 
     async def get_pr_comments(self) -> list:
         """

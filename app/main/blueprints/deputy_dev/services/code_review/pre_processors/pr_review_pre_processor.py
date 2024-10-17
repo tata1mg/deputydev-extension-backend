@@ -89,13 +89,13 @@ class PRReviewPreProcessor:
 
     def validate_pr_state_for_review(self):
         pr_state = self.pr_model.scm_state()
-
-        if pr_state == PRStatus.MERGED.value:
-            self.is_valid = False
-            self.review_status = PrStatusTypes.REJECTED_ALREADY_MERGED.value
-        elif pr_state == PRStatus.DECLINED.value:
-            self.is_valid = False
-            self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
+        if ExperimentService.is_eligible_for_experiment():
+            if pr_state == PRStatus.MERGED.value:
+                self.is_valid = False
+                self.review_status = PrStatusTypes.REJECTED_ALREADY_MERGED.value
+            elif pr_state == PRStatus.DECLINED.value:
+                self.is_valid = False
+                self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
 
     async def get_experiment_set(self):
         if not ExperimentService.is_eligible_for_experiment() or not self.is_valid:

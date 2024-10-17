@@ -3,7 +3,9 @@ from typing import Optional
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.common.constants.constants import VCSFailureMessages
 from app.common.service_clients.base_scm_client import BaseSCMClient
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 config = CONFIG.config
@@ -60,12 +62,27 @@ class GithubRepoClient(BaseSCMClient):
         path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls/{self.pr_id}/comments"
         try:
             result = await self.post(url=path, json=payload, headers=headers)
-            if result.status_code != 201:
-                logger.error(
-                    f"Unable to create comment on pr - {self.pr_id} repository {self.repo}: {result.status_code}"
-                )
-                logger.error(f"Unable to create comment on pr payload {payload} headers {headers}")
-                logger.error(f"Unable to create comment on pr {result.json()}")
+            if result.status_code == 201:
+                return result
+            elif result.status_code == 422:
+                if (
+                    result.json().get("message") == VCSFailureMessages.GITHUB_VALIDATION_FAIL.value
+                    and result.json().get("errors", [{}])[0].get("field")
+                    == VCSFailureMessages.GITHUB_INCORRECT_LINE_NUMBER.value
+                ):
+                    AppLogger.log_warn(
+                        f"Unable to create comment on pr due to invalid line - {result.status_code} {result.json()}"
+                    )
+                if (
+                    result.json().get("message") == VCSFailureMessages.GITHUB_VALIDATION_FAIL.value
+                    and result.json().get("errors", [{}])[0].get("field")
+                    == VCSFailureMessages.GITHUB_INCORRECT_FILE_PATH.value
+                ):
+                    AppLogger.log_warn(
+                        f"Unable to create comment on pr due to invalid path - {result.status_code} {result.json()}"
+                    )
+            else:
+                AppLogger.log_error(f"Unable to create comment on pr - {result.status_code} {result.json()}")
             return result
         except Exception as ex:
             logger.error(
@@ -134,9 +151,7 @@ class GithubRepoClient(BaseSCMClient):
 
         response = await self.get(path, headers=headers)
         if response.status_code != 200:
-            logger.error(
-                f"Unable to retrieve diff for PR - {self.pr_id} repository {self.repo}: {response.status_code}"
-            )
+            AppLogger.log_error(f"Unable to retrieve diff for PR - {response.status_code}")
             return None
         return response
 
@@ -155,12 +170,10 @@ class GithubRepoClient(BaseSCMClient):
         headers["Accept"] = "application/vnd.github+json"
 
         response = await self.patch(path, headers=headers, json=payload)
-        if response.status_code != 200:
-            logger.error(
-                f"Unable to retrieve diff for PR - {self.pr_id} repository {self.repo}: {response.status_code}"
-            )
-            return
-        return response
+        if response.status_code == 200:
+            return response.json()
+        else:
+            AppLogger.log_error("PR couldn't updated {}".format(response.json()))
 
     async def get_pr_commits(self) -> dict:
         """
