@@ -31,6 +31,8 @@ class PRApprovalTimeManager(StatsCollectionBase):
 
     async def save_to_db(self, payload):
         await self.get_pr_from_db(payload)
+        if not self.pr_dto:  # PR is raised before onboarding time
+            return
         await PRService.db_update(
             payload={"scm_approval_time": convert_to_datetime(payload["scm_approval_time"])},
             filters={"id": self.pr_dto.id},
