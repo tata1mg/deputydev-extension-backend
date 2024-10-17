@@ -31,6 +31,7 @@ class ContextService:
         self.pr_user_story_tokens = None
         self.confluence_doc_data_tokens = None
         self.tiktoken = TikToken()
+        self.pr_status = None
 
     async def get_relevant_chunk(self):
         if not self.relevant_chunk:
@@ -86,3 +87,8 @@ class ContextService:
         if not self.issue_id:
             self.issue_id = self.repo_service.pr_details.issue_id
         return self.issue_id
+
+    def get_pr_status(self):
+        if not self.pr_status:
+            self.pr_status = self.repo_service.pr_model().scm_state()
+        return self.pr_status

@@ -56,7 +56,7 @@ class PRReviewManager:
             await cls.process_pr_review(data=data)
             AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
-            logger.error(f"Received Invalid SQS Message - {data}: {e}")
+            AppLogger.log_error(f"Received Invalid SQS Message - {data}: {e}")
         except Exception as e:
             AppLogger.log_error(f"Unable to review PR: {e}")
             raise

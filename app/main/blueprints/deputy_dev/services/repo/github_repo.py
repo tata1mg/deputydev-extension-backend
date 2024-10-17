@@ -1,4 +1,3 @@
-from sanic.log import logger
 from torpedo.exceptions import BadRequestException
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
@@ -7,6 +6,7 @@ from app.main.blueprints.deputy_dev.constants.repo import (
     VCS_REPO_URL_MAP,
     VCSTypes,
 )
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dto.pr.github_pr import GitHubPrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
@@ -66,7 +66,7 @@ class GithubRepo(BaseRepo):
         if not self.pr_json_data:
             response = await self.repo_client.get_pr_details()
             if not response or response.status_code != 200:
-                logger.error(f"unable to get pr details {self.meta_data} status code {response.status_code} ")
+                AppLogger.log_error(f"unable to get pr details {self.meta_data} status code {response.status_code} ")
                 raise BadRequestException(f"unable to get pr details for {self.meta_data}")
             self.pr_json_data = response.json()
 
@@ -110,7 +110,7 @@ class GithubRepo(BaseRepo):
         }
         return self.pr_stats
 
-    async def update_pr_details(self, description) -> PullRequestResponse:
+    async def update_pr_details(self, description):
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
@@ -118,7 +118,7 @@ class GithubRepo(BaseRepo):
             PullRequestResponse: An object containing details of the pull request.
         """
         payload = {"body": description}
-        self.pr_json_data = await self.repo_client.update_pr_details(payload)
+        return await self.repo_client.update_pr_details(payload)
 
     async def get_loc_changed_count(self):
         stats = await self.get_pr_stats()

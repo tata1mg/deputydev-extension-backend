@@ -89,18 +89,14 @@ class GitlabRepo(BaseRepo):
         if self.pr_json_data:
             return self.parse_pr_detail_response(pr_model)
 
-    async def update_pr_details(self, description) -> PullRequestResponse:
+    async def update_pr_details(self, description):
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
         Returns:
-            PullRequestResponse: An object containing details of the pull request.
         """
         payload = {"description": description}
-        self.pr_json_data = await self.repo_client.update_pr_details(payload)
-        pr_model = GitlabPrModel(self.pr_json_data)
-        if self.pr_json_data:
-            return self.parse_pr_detail_response(pr_model)
+        return await self.repo_client.update_pr_details(payload)
 
     async def get_pr_comments(self):
         comments = await self.repo_client.get_pr_comments()

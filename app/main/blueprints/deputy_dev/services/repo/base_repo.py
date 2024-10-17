@@ -11,6 +11,7 @@ from torpedo import CONFIG
 from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
@@ -143,12 +144,10 @@ class BaseRepo(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def update_pr_details(self, description) -> PullRequestResponse:
+    async def update_pr_details(self, description):
         """
         Update details of a pull request from Bitbucket, Github or Gitlab.
         Args:
-        Returns:
-            PullRequestResponse: An object containing details of the pull request.
         Raises:
         """
         raise NotImplementedError()
@@ -233,8 +232,11 @@ class BaseRepo(ABC):
         return description
 
     async def update_pr_description(self, pr_summary):
-        description = await self.generate_pr_description(pr_summary)
-        return await self.update_pr_details(description)
+        try:
+            description = await self.generate_pr_description(pr_summary)
+            return await self.update_pr_details(description)
+        except Exception as ex:
+            AppLogger.log_error(f"PR description was not updated {ex}")
 
     def get_repo_url(self):
         raise NotImplementedError()

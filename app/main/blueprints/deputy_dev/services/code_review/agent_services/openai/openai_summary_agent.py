@@ -1,7 +1,11 @@
 # flake8: noqa
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
+from app.main.blueprints.deputy_dev.constants.constants import (
+    AgentTypes,
+    PRStatus,
+    TokenTypes,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
 )
@@ -63,3 +67,9 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
             TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
         }
+
+    async def should_execute(self):
+        pr_status = self.context_service.get_pr_status()
+        if pr_status in [PRStatus.MERGED.value, PRStatus.DECLINED.value]:
+            return False
+        return True
