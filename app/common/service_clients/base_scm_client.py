@@ -3,9 +3,9 @@ from __future__ import annotations
 import typing as t
 
 import requests  # TODO: why not aiohttp
-from sanic.log import logger
 
 from app.common.exception import RefreshTokenFailed
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
@@ -61,8 +61,8 @@ class BaseSCMClient:
                 raise RefreshTokenFailed("Forbidden error even after refreshed token")
 
         if response.status_code not in [200, 201, 204]:
-            logger.info(
-                f"service request failed headers {headers} status code {response.status_code} error {response.json()}"
+            AppLogger.log_warn(
+                f"service request failed with status code {response.status_code} and error {response.json()}"
             )
 
         return response

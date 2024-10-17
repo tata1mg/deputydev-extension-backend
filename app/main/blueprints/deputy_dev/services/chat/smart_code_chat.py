@@ -33,6 +33,9 @@ from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
 )
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
+from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
+    StatsCollectionTrigger,
+)
 from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWebhook
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
@@ -175,10 +178,10 @@ class SmartCodeChatManager:
 
     @classmethod
     async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, vcs_type):
-        payload = {
-            "payload": parsed_payload.dict(),
-            "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
-            "vcs_type": vcs_type,
-        }
-
-        await MetaSubscriber(config=config).publish(payload)
+        if await StatsCollectionTrigger.is_pr_created_post_onboarding(parsed_payload, vcs_type):
+            payload = {
+                "payload": parsed_payload.dict(),
+                "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
+                "vcs_type": vcs_type,
+            }
+            await MetaSubscriber(config=config).publish(payload)

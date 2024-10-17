@@ -32,10 +32,10 @@ class PullRequestCloseWebhook:
     def __parse_bitbucket_payload(cls, payload: dict) -> PRCloseRequest:
         parsed_payload = {
             "pr_state": payload["pullrequest"]["state"],
-            "pr_id": str(payload["pullrequest"]["id"]),
+            "scm_pr_id": str(payload["pullrequest"]["id"]),
             "repo_name": get_vcs_repo_name_slug(payload["repository"]["full_name"]),
             "workspace": payload["repository"]["workspace"]["slug"],
-            "workspace_id": str(payload.get("scm_workspace_id")),
+            "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "workspace_slug": payload["repository"]["workspace"]["slug"],
             "pr_created_at": payload["pullrequest"]["created_on"],
             "pr_closed_at": payload["pullrequest"]["updated_on"],
@@ -49,11 +49,11 @@ class PullRequestCloseWebhook:
         # define below
         parsed_payload = {
             "pr_state": PRStatus.MERGED.value if payload["pull_request"]["merged"] else PRStatus.DECLINED.value,
-            "pr_id": str(payload["pull_request"]["number"]),
+            "scm_pr_id": str(payload["pull_request"]["number"]),
             "repo_name": get_vcs_repo_name_slug(payload["pull_request"]["head"]["repo"]["full_name"]),
             "workspace": payload["organization"]["login"],
             "workspace_slug": payload["organization"]["login"],
-            "workspace_id": str(payload.get("scm_workspace_id")),
+            "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "pr_created_at": payload["pull_request"]["created_at"],
             "pr_closed_at": payload["pull_request"]["closed_at"],
             "repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
@@ -70,12 +70,12 @@ class PullRequestCloseWebhook:
             "pr_state": (
                 PRStatus.MERGED.value if payload["object_attributes"]["state"] == "merged" else PRStatus.DECLINED.value
             ),
-            "pr_id": str(pr_id),
+            "scm_pr_id": str(pr_id),
             "repo_name": get_vcs_repo_name_slug(payload["project"]["path_with_namespace"]),
             "repo_id": str(payload["project"]["id"]),
             "workspace": workspace,
             "workspace_slug": workspace_slug,
-            "workspace_id": str(payload.get("scm_workspace_id")),
+            "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "pr_created_at": payload["object_attributes"]["created_at"],
             "pr_closed_at": payload["object_attributes"]["updated_at"],
         }
