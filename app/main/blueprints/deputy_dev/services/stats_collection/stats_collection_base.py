@@ -89,7 +89,7 @@ class StatsCollectionBase(ABC):
     def check_serviceable_event(self):
         return not is_request_from_blocked_repo(self.payload.get("repo_name"))
 
-    async def pr_created_after_onboarding_time(self):
+    def pr_created_after_onboarding_time(self):
         """
         Check if PR is created after onboarding time of team.
          Returns:

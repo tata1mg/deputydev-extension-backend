@@ -70,7 +70,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
 
         if not self.pr_dto:
             if self.pr_created_after_onboarding_time():
-                raise RetryException(f"PR: {self.payload['pr_id']} not picked to be reviewed by Deputydev")
+                raise RetryException(f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev")
             else:
                 return
 
@@ -83,11 +83,11 @@ class PullRequestMetricsManager(StatsCollectionBase):
             and pr_time_since_creation < self.sqs_message_retention_time
         ):
             raise RetryException(
-                f"PR: {self.payload['pr_id']} is in sqs and still have a chance to be reviewed by Deputydev"
+                f"PR: {self.payload['scm_pr_id']} is in sqs and still have a chance to be reviewed by Deputydev"
             )
 
         if self.pr_dto.review_status == PrStatusTypes.IN_PROGRESS.value:
-            raise RetryException(f"PR: {self.payload['pr_id']} is still in progress to be reviewed by Deputydev")
+            raise RetryException(f"PR: {self.payload['scm_pr_id']} is still in progress to be reviewed by Deputydev")
 
         if self.pr_dto.review_status not in [PrStatusTypes.COMPLETED.value, PrStatusTypes.REJECTED_EXPERIMENT.value]:
             # For not completed or not rejected experiment we will just be updating the pr state of both experiments and pull request
@@ -131,7 +131,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
         self.repo_dto = await RepoService.find(scm_repo_id=pr_model.scm_repo_id(), workspace_id=self.workspace_dto.id)
         if not self.repo_dto:
             raise RetryException(
-                f"PR: {self.payload['pr_id']} not picked to be reviewed by Deputydev. Reason: Repository does not exist in our DB."
+                f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev. Reason: Repository does not exist in our DB."
             )
 
     async def initialize_repo_service(self):
