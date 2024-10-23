@@ -34,6 +34,10 @@ class AbAnalysisFetchingData:
                     query = AbAnalysisQueries.approval_query.value.format(
                         date_condition=AbAnalysisDates.date_condition_phase2.value
                     )
+                elif query_phase == AbAnalysisPhases.ab_analysis_phase_overall.value:
+                    query = AbAnalysisQueries.approval_query.value.format(
+                        date_condition=AbAnalysisDates.date_condition_phase_overall.value
+                    )
                 else:
                     raise BadRequestException("invalid Query Phase Input !!!")
             elif ab_analysis_time == "merge":
@@ -44,6 +48,10 @@ class AbAnalysisFetchingData:
                 elif query_phase == AbAnalysisPhases.ab_analysis_phase2.value:
                     query = AbAnalysisQueries.merge_query.value.format(
                         date_condition=AbAnalysisDates.date_condition_phase2.value
+                    )
+                elif query_phase == AbAnalysisPhases.ab_analysis_phase_overall.value:
+                    query = AbAnalysisQueries.merge_query.value.format(
+                        date_condition=AbAnalysisDates.date_condition_phase_overall.value
                     )
                 else:
                     raise BadRequestException("invalid Query Phase Input !!!")

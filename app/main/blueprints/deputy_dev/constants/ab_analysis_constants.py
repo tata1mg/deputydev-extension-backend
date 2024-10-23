@@ -25,7 +25,7 @@ class AbAnalysisQueries(Enum):
             repos r ON e.repo_id = r.id
         WHERE
             p.review_status IN ('COMPLETED', 'REJECTED_EXPERIMENT')
-            AND e.created_at {date_condition}
+            {date_condition}
     """
 
     merge_query = """
@@ -54,15 +54,17 @@ class AbAnalysisQueries(Enum):
             repos r ON e.repo_id = r.id
         WHERE
             p.review_status IN ('COMPLETED', 'REJECTED_EXPERIMENT')
-            AND e.created_at {date_condition}
+            {date_condition}
     """
 
 
 class AbAnalysisDates(Enum):
-    date_condition_phase1 = "<= '2024-08-27T18:29'"
-    date_condition_phase2 = ">= '2024-09-02T05:30'"
+    date_condition_phase1 = "AND e.created_at <= '2024-08-27T18:29'"
+    date_condition_phase2 = "AND e.created_at >= '2024-09-02T05:30'"
+    date_condition_phase_overall = ""
 
 
 class AbAnalysisPhases(Enum):
     ab_analysis_phase1 = "phase1"
     ab_analysis_phase2 = "phase2"
+    ab_analysis_phase_overall = "overall"
