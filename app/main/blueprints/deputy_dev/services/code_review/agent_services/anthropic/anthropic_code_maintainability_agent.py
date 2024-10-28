@@ -28,7 +28,8 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
     def get_with_reflection_user_prompt_pass1(self):
         return """
         Here is the information for the pull request you need to review:
-        Pull Request Title:
+        
+        Pull Request Title: 
         <pull_request_title>
         {$PULL_REQUEST_TITLE}
         </pull_request_title>
@@ -43,7 +44,8 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         {$PULL_REQUEST_DIFF}
         </pull_request_diff>
         
-        Contextually Related Code Snippets:
+        Contextually Related Code Snippets corresponding to PR diff:
+        Additional code snippets that contain related files, dependent code but are not PR diff.
         <contextually_related_code_snippets>
         {$CONTEXTUALLY_RELATED_CODE_SNIPPETS}
         </contextually_related_code_snippets>
@@ -132,7 +134,18 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         5. Ensure that each comment is relevant and actionable.
         6. Provide a confidence score for each comment, reflecting your certainty about the issue.
         7. Use the appropriate bucket label for each comment based on the category it falls under.
-        8. Do not repeat similar comments for multiple instances of the same issue
+        8. Do not repeat similar comments for multiple instances of the same issue.
+        9. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only added lines and Removed lines changes should receive direct review comments.
+        10. Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        11. Do not comment on unchanged code unless directly impacted by the changes.
+        12. Do not duplicate comments for similar issues across different locations.
+        13. If you are suggesting any comment that is already catered please don't include those comment in response.
         
         Begin your review now, focusing on providing valuable feedback to improve the code quality and
         maintainability of the pull request.
@@ -153,32 +166,35 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
 
     def get_with_reflection_user_prompt_pass2(self):
         return """
-        First, examine the pull request information:
-
+        First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
+        <data>
+        Pull Request Title: 
         <pull_request_title>
         {$PULL_REQUEST_TITLE}
         </pull_request_title>
         
+        Pull Request Description:
         <pull_request_description>
         {$PULL_REQUEST_DESCRIPTION}
         </pull_request_description>
         
+        Pull Request Diff:
         <pull_request_diff>
         {$PULL_REQUEST_DIFF}
         </pull_request_diff>
         
-        Here are the contextually relevant code snippets:
-        
+        Contextually Related Code Snippets corresponding to PR diff:
         <contextually_related_code_snippets>
         {$CONTEXTUALLY_RELATED_CODE_SNIPPETS}
         </contextually_related_code_snippets>
-        
-        Now, review the comments made by the junior developer:
         
         <junior_developer_comments>
         {$REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER}
         </junior_developer_comments>
         
+        </data>
+        
+        <guidelines>
         Analyze each comment made by the junior developer. Consider the following aspects:
         1. Is the comment accurate and relevant to the code changes?
         2. Does the comment address important issues related to code quality and maintainability?
@@ -235,8 +251,44 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         - Ensure type hints are present for input and return types.
         </readability_guidelines>
         
-        Based on your analysis, create, modify, or remove comments as necessary. Output your review in the
-        following XML format:
+        1. Ensure that each comment tag addresses a single issue. Provide a confidence
+        score between 0.0 and 1.0 for each comment, reflecting your certainty in the observation. Categorize
+        each comment into one of the six buckets: ARCHITECTURE, REUSABILITY, MAINTAINABILITY, CODE
+        ROBUSTNESS, CODE QUALITY, or READABILITY.
+        
+        Remember:
+        - Focus solely on major maintainability issues that substantially impact long-term code quality.
+        - Do not include appreciation comments, minor suggestions, or repeated issues.
+        - If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        - Ensure that your comments are clear, concise, and actionable.
+        - Provide specific line numbers and file paths for each finding.
+        - Comment should be only part of code present in <pull_request_diff> not <contextually_related_code_snippets> 
+        as <contextually_related_code_snippets> this is provided only for understanding impact of change. 
+        - Do not comment on unchanged code unless directly impacted by the changes.
+        - Do not duplicate comments for similar issues across different locations.
+        - <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only added lines and Removed lines changes should receive direct review comments. 
+        - Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        - Do not comment on unchanged code unless directly impacted by the changes.
+        - Do not duplicate comments for similar issues across different locations.
+        - If you are suggesting any comment that is already catered please don't include those comment in response.
+        </guidelines>
+        
+        Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
+        in new_guidelines
+        <new_guidelines>
+        1. If any comment is already catered. 
+        2. If comment is not part of added and Removed lines. 
+        3. If any comment reflects appreciation.
+        4. If comment is not part of PR diff.
+        </new_guidelines>
+        
+        Next, format comments from previous step in the following XML format:
         
         <review>
         <comments>
@@ -258,19 +310,6 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         <!-- Repeat the <comment> block for each code maintainability issue found -->
         </comments>
         </review>
-        
-        1. Ensure that each comment tag addresses a single issue. Provide a confidence
-        score between 0.0 and 1.0 for each comment, reflecting your certainty in the observation. Categorize
-        each comment into one of the six buckets: ARCHITECTURE, REUSABILITY, MAINTAINABILITY, CODE
-        ROBUSTNESS, CODE QUALITY, or READABILITY.
-        
-        Remember:
-        - Focus solely on major maintainability issues that substantially impact long-term code quality.
-        - Do not include appreciation comments, minor suggestions, or repeated issues.
-        - If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        - Ensure that your comments are clear, concise, and actionable.
-        - Provide specific line numbers and file paths for each finding.
-        
         """
 
     def get_agent_specific_tokens_data(self):
