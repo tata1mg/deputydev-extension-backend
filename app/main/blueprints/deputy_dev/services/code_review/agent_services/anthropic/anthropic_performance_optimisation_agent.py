@@ -97,17 +97,26 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         optimizations.
         
         Keep in mind these important instructions when reviewing the code:
-        1. Carefully analyze each change in the diff.
-        2. Focus solely on major performance issues that could substantially impact system efficiency.
-        3. Do not provide appreciation comments or positive feedback.
-        4. Consider the context provided by contextually related code snippets.
-        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        7. Ensure that your comments are clear, concise, and actionable.
-        8. Provide specific line numbers and file paths for each finding.
-        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
-        10. Do not repeat similar comments for multiple instances of the same issue.
-        
+        -  Carefully analyze each change in the diff.
+        -  Focus solely on major performance issues that could substantially impact system efficiency.
+        -  Do not provide appreciation comments or positive feedback.
+        -  Consider the context provided by contextually related code snippets.
+        -  For each finding or improvement, create a separate <comment> block within the <comments> section.
+        -  If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        -  Ensure that your comments are clear, concise, and actionable.
+        -  Provide specific line numbers and file paths for each finding.
+        -  Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        - <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only added lines and Removed lines changes should receive direct review comments.
+        -  Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        -   Do not comment on unchanged code unless directly impacted by the changes.
+        -   Do not duplicate comments for similar issues across different locations.
+        -   If you are suggesting any comment that is already catered please don't include those comment in response.
         """
 
     def get_with_reflection_system_prompt_pass2(self):
@@ -119,8 +128,9 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
 
     def get_with_reflection_user_prompt_pass2(self):
         return """
-        1. First, examine the pull request information:
-
+        First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
+        
+        <data>
         Pull Request Title:
         
         <pull_request_title>
@@ -128,7 +138,6 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         </pull_request_title>
         
         Pull Request Description:
-        
         <pull_request_description>
         {$PULL_REQUEST_DESCRIPTION}
         </pull_request_description>
@@ -137,20 +146,18 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         {$PULL_REQUEST_DIFF}
         </pull_request_diff>
         
-        2. Also have a look at contextually related code snippets:
-        
+        Here are the contextually relevant code snippets:
         <contextually_related_code_snippets>
         {$CONTEXTUALLY_RELATED_CODE_SNIPPETS}
         </contextually_related_code_snippets>
         
-        
-        3. Now, review the comments made by the junior developer:
-        
         <junior_developer_comments>
         {$JUNIOR_DEVELOPER_COMMENTS}
         </junior_developer_comments>
+        </data>
         
-        4. Your task is to review these comments for accuracy, relevancy, and correctness. Consider the
+        <guidelines>
+        Your task is to review these comments for accuracy, relevancy, and correctness. Consider the
         following guidelines while reviewing:
         
         <performance>
@@ -172,8 +179,41 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         indexing, query refactoring).
         - Connection Management: Review database connection handling and pooling strategies.
         <database_query_optimization>
+
         
-        5. You are free to add more comments, update existing comments, or delete unnecessary comments.  For each category, provide your analysis in the following format:
+        Keep in mind these important instructions when reviewing the code:
+        1. Carefully analyze each change in the diff.
+        2. Focus solely on major performance issues that could substantially impact system efficiency.
+        3. Do not include appreciation comments, minor suggestions, or repeated issues.
+        4. Consider the context provided by contextually related code snippets.
+        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each finding.
+        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        10. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only added lines and Removed lines changes should receive direct review comments.
+        11.  Comment should be part of code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        12.  comment should not be on unchanged code unless directly impacted by the changes.
+        13.  comment should not be duplicated for similar issues across different locations.
+        14.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        </guidelines>
+        
+        Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
+        in new_guidelines.
+        <new_guidelines>
+        1. If any comment is already catered. 
+        2. If comment is not part of added and Removed lines. 
+        3. If any comment reflects appreciation.
+        4. If comment is not part of PR diff.
+        </new_guidelines>
+        
+        Next, format comments from previous step in the following XML format:
         
         <review>
         <comments>
@@ -193,16 +233,6 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         </comments>
         </review>
         
-        Keep in mind these important instructions when reviewing the code:
-        1. Carefully analyze each change in the diff.
-        2. Focus solely on major performance issues that could substantially impact system efficiency.
-        3. Do not include appreciation comments, minor suggestions, or repeated issues.
-        4. Consider the context provided by contextually related code snippets.
-        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        7. Ensure that your comments are clear, concise, and actionable.
-        8. Provide specific line numbers and file paths for each finding.
-        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
         """
 
     def get_agent_specific_tokens_data(self):

@@ -220,21 +220,21 @@ def append_line_numbers(pr_diff: str) -> str:
         # Handle added lines
         if line.startswith("+") and not line.startswith("+++"):
             if current_file:
-                result.append(f"<+{new_line_number}>{line}")
+                result.append(f"<+{new_line_number}> {line}")
             new_line_number += 1
             continue
 
         # Handle removed lines
         if line.startswith("-") and not line.startswith("---"):
             if current_file:
-                result.append(f"<-{original_line_number}>{line}")
+                result.append(f"<-{original_line_number}> {line}")
             original_line_number += 1
             continue
 
         # Handle unchanged lines
         if not line.startswith("-") and not line.startswith("+") and not line.startswith("@@"):
             if current_file:
-                result.append(f"<+{new_line_number}>{line}")
+                result.append(f"<+{new_line_number}> {line}")
             new_line_number += 1
             original_line_number += 1
 

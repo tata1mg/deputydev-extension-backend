@@ -111,16 +111,27 @@ class AnthropicErrorAgent(AgentServiceBase):
         to an error.
         
         When reviewing the code:
-        1. Carefully analyze each change in the diff.
-        2. Focus solely on major error-related issues as outlined above.
-        3. Do not comment on minor issues or hypothetical edge cases
-        4. Do not provide appreciation comments or positive feedback.
-        5. Consider the context provided by related code snippets.
-        6. For each error found, create a separate <comment> block within the <comments> section.
-        7. Ensure that your comments are clear, concise, and actionable.
-        8. Provide specific line numbers and file paths for each error.
-        9. Assign appropriate confidence scores based on your certainty of the error.
-        10. Do not repeat similar comments for multiple instances of the same issue.
+        -  Carefully analyze each change in the diff.
+        -  Focus solely on major error-related issues as outlined above.
+        -  Do not comment on minor issues or hypothetical edge cases
+        -  Do not provide appreciation comments or positive feedback.
+        -  Consider the context provided by related code snippets.
+        -  For each error found, create a separate <comment> block within the <comments> section.
+        -  Ensure that your comments are clear, concise, and actionable.
+        -  Provide specific line numbers and file paths for each error.
+        -  Assign appropriate confidence scores based on your certainty of the error.
+        - Do not repeat similar comments for multiple instances of the same issue.
+        - <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only  Added lines and Removed lines  changes should receive direct review comments.
+        -  Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        -   Do not comment on unchanged code unless directly impacted by the changes.
+        -   Do not duplicate comments for similar issues across different locations.
+        -   If you are suggesting any comment that is already catered please don't include those comment in response.
         
         Remember to maintain a professional and constructive tone in your comments. Your goal is to help
         improve the code quality by identifying and explaining errors accurately.
@@ -136,8 +147,8 @@ class AnthropicErrorAgent(AgentServiceBase):
 
     def get_with_reflection_user_prompt_pass2(self):
         return """
-        Here's the information about the pull request:
-        
+        First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
+        <data>
         <pull_request_title>
         {$PULL_REQUEST_TITLE}
         </pull_request_title>
@@ -151,17 +162,17 @@ class AnthropicErrorAgent(AgentServiceBase):
         </pull_request_diff>
         
         Here are the contextually relevant code snippets:
-        
         <contextual_code_snippets>
         {$CONTEXTUALLY_RELATED_CODE_SNIPPETS}
         </contextual_code_snippets>
         
         Here are the review comments made by the junior developer:
-        
         <junior_developer_comments>
         {$REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER}
         </junior_developer_comments>
+        </data>
         
+        <guidelines>
         When reviewing the comments, consider the following guidelines for each type of error:
         
         1. Runtime Errors:
@@ -210,7 +221,38 @@ class AnthropicErrorAgent(AgentServiceBase):
         3. Specify the correct file path and line number for the comment.
         4. Assign an appropriate confidence score between 0.0 and 1.0.
         
-        Analyze the code thoroughly and provide your feedback in the following XML format:
+        Important instructions:
+        1. Create exactly one <comment> block for each error found.
+        2. Only comment on aspects leading to the errors mentioned. 
+        3. Do not comment on security, documentation, performance, or docstrings unless they directly relate
+        to the specified categories and focus solely on major error-related issues that could lead to runtime failures or system instability.
+        4. Ensure that each comment is relevant and actionable.
+        5. Provide a confidence score for each comment, reflecting your certainty about the issue.
+        6. Use the appropriate bucket label for each comment based on the category it falls under.
+        7. Do not include appreciation comments, minor suggestions, or repeated issues.
+        8. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only  Added lines and Removed lines  changes should receive direct review comments.
+        9.  Comment should be part of code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        10.  comment should not be on unchanged code unless directly impacted by the changes.
+        11.  comment should not be duplicated for similar issues across different locations.
+        12.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        </guidelines>
+        
+        Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
+        in new_guidelines.
+        <new_guidelines>
+        1. If any comment is already catered. 
+        2. If comment is not part of added and Removed lines. 
+        3. If any comment reflects appreciation.
+        4. If comment is not part of PR diff.
+        </new_guidelines>
+        
+        Next, format comments from previous step in the following XML format:
         
         <review>
         <comments>
@@ -231,18 +273,6 @@ class AnthropicErrorAgent(AgentServiceBase):
         <!-- Repeat the <comment> block for each error found -->
         </comments>
         </review>
-        
-        Important instructions:
-        1. Create exactly one <comment> block for each error found.
-        2. Only comment on aspects leading to the errors mentioned. 
-        3. Do not comment on security, documentation, performance, or docstrings unless they directly relate
-        to the specified categories and focus solely on major error-related issues that could lead to runtime failures or system instability.
-        4. Ensure that each comment is relevant and actionable.
-        5. Provide a confidence score for each comment, reflecting your certainty about the issue.
-        6. Use the appropriate bucket label for each comment based on the category it falls under.
-        7. Do not include appreciation comments, minor suggestions, or repeated issues.
-        
-        Begin your review now, focusing on providing valuable feedback to improve the pull request.
         """
 
     def get_agent_specific_tokens_data(self):
