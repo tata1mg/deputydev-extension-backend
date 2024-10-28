@@ -80,16 +80,27 @@ class AnthropicSecurityAgent(AgentServiceBase):
         8. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
         
         Keep in mind these important instructions when reviewing the code:
-        1. Carefully analyze each change in the diff.
-        2. Focus solely on security vulnerabilities as outlined above.
-        3. Do not provide appreciation comments or positive feedback.
-        4. Consider the context provided by contextually related code snippets.
-        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        7. Ensure that your comments are clear, concise, and actionable.
-        8. Provide specific line numbers and file paths for each finding.
-        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
-        10. Do not repeat similar comments for multiple instances of the same issue.
+        -  Carefully analyze each change in the diff.
+        -  Focus solely on security vulnerabilities as outlined above.
+        -  Do not provide appreciation comments or positive feedback.
+        -  Consider the context provided by contextually related code snippets.
+        - For each finding or improvement, create a separate <comment> block within the <comments> section.
+        -  If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        -  Ensure that your comments are clear, concise, and actionable.
+        -  Provide specific line numbers and file paths for each finding.
+        -  Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        -  Do not repeat similar comments for multiple instances of the same issue.
+        - <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only added lines and Removed lines changes should receive direct review comments.
+        -  Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        -   Do not comment on unchanged code unless directly impacted by the changes.
+        -   Do not duplicate comments for similar issues across different locations.
+        -   If you are suggesting any comment that is already catered please don't include those comment in response.
         """
 
     def get_with_reflection_system_prompt_pass2(self):
@@ -100,10 +111,8 @@ class AnthropicSecurityAgent(AgentServiceBase):
 
     def get_with_reflection_user_prompt_pass2(self):
         return """
-        Follow these instructions carefully to conduct your review:
-
-        1. Review the following information about the pull request:
-        
+        First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
+        <data>
         <pull_request_title>
         {$PULL_REQUEST_TITLE}
         </pull_request_title>
@@ -112,13 +121,17 @@ class AnthropicSecurityAgent(AgentServiceBase):
         {$PULL_REQUEST_DESCRIPTION}
         </pull_request_description>
         
-        2. Carefully examine the code diff provided:
-        
         <pull_request_diff>
         {$PULL_REQUEST_DIFF}
         </pull_request_diff>
         
-        3. Conduct a comprehensive security review of the code changes, focusing on the following aspects:
+        <junior_developer_comments>
+        {$REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER}
+        </junior_developer_comments>
+        </data>
+        
+        <guidelines>
+        Conduct a comprehensive security review of the code changes, focusing on the following aspects:
         a. Input validation and sanitization
         b. Authentication and authorization
         c. Data encryption and protection
@@ -136,8 +149,42 @@ class AnthropicSecurityAgent(AgentServiceBase):
         d. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
         e. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
         
-        5. After completing your review, provide your findings in the following format:
+        Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
         
+        Keep in mind these important instructions when reviewing the code:
+        1. Carefully analyze each change in the diff.
+        2. Focus solely on major performance issues that could substantially impact system efficiency.
+        3. Do not include appreciation comments, minor suggestions, or repeated issues.
+        4. Consider the context provided by contextually related code snippets.
+        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
+        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
+        7. Ensure that your comments are clear, concise, and actionable.
+        8. Provide specific line numbers and file paths for each finding.
+        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
+        10. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            This is the primary focus for review comments. The diff shows:
+            - Added lines (prefixed with +)
+            - Removed lines (prefixed with -)
+            - Context lines (no prefix)
+            Only added lines and Removed lines changes should receive direct review comments.
+        11.  Comment should be part of code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+        only for understanding impact of change. 
+        12.  comment should not be on unchanged code unless directly impacted by the changes.
+        13.  comment should not be duplicated for similar issues across different locations.
+        14.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        
+        </guidelines>
+        
+        Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
+        in new_guidelines.
+        <new_guidelines>
+        1. If any comment is already catered. 
+        2. If comment is not part of added and Removed lines. 
+        3. If any comment reflects appreciation.
+        4. If comment is not part of PR diff.
+        </new_guidelines>
+        
+        Next, format comments from previous step in the following XML format:
         <review>
         <comments>
         <comment>
@@ -155,19 +202,6 @@ class AnthropicSecurityAgent(AgentServiceBase):
         <!-- Repeat the <comment> block for each security issue found -->
         </comments>
         </review>
-        
-        6. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
-        
-        Keep in mind these important instructions when reviewing the code:
-        1. Carefully analyze each change in the diff.
-        2. Focus solely on major performance issues that could substantially impact system efficiency.
-        3. Do not include appreciation comments, minor suggestions, or repeated issues.
-        4. Consider the context provided by contextually related code snippets.
-        5. For each finding or improvement, create a separate <comment> block within the <comments> section.
-        6. If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
-        7. Ensure that your comments are clear, concise, and actionable.
-        8. Provide specific line numbers and file paths for each finding.
-        9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
         """
 
     def get_agent_specific_tokens_data(self):
