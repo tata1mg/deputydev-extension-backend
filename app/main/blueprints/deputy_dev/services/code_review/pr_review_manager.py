@@ -111,9 +111,7 @@ class PRReviewManager:
 
     @classmethod
     def check_no_pr_comments(cls, llm_response):
-        if not llm_response:
-            return True
-        return not any(agent_response.get("comments") for agent_response in llm_response.values())
+        return not llm_response
 
     @classmethod
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):

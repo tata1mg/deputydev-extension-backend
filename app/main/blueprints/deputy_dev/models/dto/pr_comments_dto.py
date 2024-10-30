@@ -16,7 +16,6 @@ class PRCommentsDTO(BaseModel):
     scm_comment_id: str
     scm_author_id: str
     author_name: str
-    bucket_id: int
     meta_info: Optional[dict] = None
 
     class Config:

@@ -10,7 +10,6 @@ class PRComments(Base):
     serializable_keys = {
         "id",
         "quality_score",
-        "bucket_id",
         "iteration",
         "llm_confidence_score",
         "llm_source_model",
@@ -28,7 +27,6 @@ class PRComments(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    bucket_id = fields.SmallIntField()
     iteration = fields.IntField()
     llm_confidence_score = fields.FloatField()
     llm_source_model = CITextField(max_length=500)
@@ -56,7 +54,6 @@ class PRComments(Base):
 
     class Columns(Enum):
         id = ("id",)
-        bucket_id = ("bucket_id",)
         iteration = ("iteration",)
         llm_confidence_score = ("llm_confidence_score",)
         llm_source_model = ("llm_source_model",)

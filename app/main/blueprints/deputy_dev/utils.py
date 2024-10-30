@@ -181,9 +181,9 @@ def format_comment(data):
 
 
 def get_bucket_name(data):
-    bucket_name = data.get("bucket")
-    if bucket_name:
-        return bucket_name
+    buckets = data.get("buckets")
+    if buckets and len(buckets) == 1:
+        return buckets[0]
     return ""
 
 
