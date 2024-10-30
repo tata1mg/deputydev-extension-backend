@@ -10,15 +10,22 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.models.dao import PRComments
+from app.main.blueprints.deputy_dev.models.dao.comment_bucket_mapping import (
+    CommentBucketMapping,
+)
 from app.main.blueprints.deputy_dev.models.dto.bucket_dto import BucketDTO
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.bucket.bucket_service import BucketService
 from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
     PRScoreHelper,
 )
+from app.main.blueprints.deputy_dev.services.comment.comment_bucket_mapping_Service import (
+    CommentBucketMappingService,
+)
 from app.main.blueprints.deputy_dev.services.comment.pr_comments_service import (
     CommentService,
 )
+from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
@@ -83,8 +90,7 @@ class PRReviewPostProcessor:
     async def post_process_pr_with_comments(
         cls, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
     ):
-        all_comments = cls.combine_all_agents_comments(llm_comments)
-        buckets_data, comments = await cls.save_llm_comments(pr_dto, all_comments)
+        buckets_data, comments = await cls.save_llm_comments(pr_dto, llm_comments)
         await cls.update_pr(pr_dto, comments, buckets_data, tokens_data, extra_info=extra_info)
         if ExperimentService.is_eligible_for_experiment():
             await ExperimentService.db_update(
@@ -115,11 +121,11 @@ class PRReviewPostProcessor:
     def get_pr_score(cls, llm_comments: list, buckets_data: Dict[str, BucketDTO]):
         weight_counts_data = {}
         for comment in llm_comments:
-            bucket = comment["bucket"]
-            if buckets_data[bucket].status == BucketStatus.ACTIVE.value:
-                weight_counts_data[buckets_data[bucket].weight] = (
-                    weight_counts_data.get(buckets_data[bucket].weight, 0) + 1
-                )
+            for bucket in comment["buckets"]:
+                if buckets_data[bucket].status == BucketStatus.ACTIVE.value:
+                    weight_counts_data[buckets_data[bucket].weight] = (
+                        weight_counts_data.get(buckets_data[bucket].weight, 0) + 1
+                    )
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
     @classmethod
@@ -128,8 +134,10 @@ class PRReviewPostProcessor:
         new_buckets = []
         unique_buckets = set()
         for comment in llm_comments:
-            if comment["bucket"] not in all_buckets:
-                unique_buckets.add(comment["bucket"])
+            for bucket in comment["buckets"]:
+                if bucket not in all_buckets:
+                    unique_buckets.add(comment["bucket"])
+
         for bucket in unique_buckets:
             new_buckets.append(
                 BucketDTO(
@@ -150,6 +158,7 @@ class PRReviewPostProcessor:
             all_buckets = await BucketService.get_all_buckets_dict()
 
         comments_to_save = []
+        bucket_mappings_to_save = []
 
         for comment in llm_comments:
             comment_info = {
@@ -164,7 +173,6 @@ class PRReviewPostProcessor:
                 "scm_comment_id": str(comment["scm_comment_id"]),
                 "scm_author_id": pr_dto.scm_author_id,
                 "author_name": pr_dto.author_name,
-                "bucket_id": all_buckets[comment["bucket"]].id,
                 "meta_info": {
                     "line_number": comment["line_number"],
                     "file_path": comment["file_path"],
@@ -175,6 +183,22 @@ class PRReviewPostProcessor:
             comments_to_save.append(PRComments(**comment_info))
 
         await CommentService.bulk_insert(comments_to_save)
+
+        filters_to_fetch_inserted_comments = {
+            "pr_id": pr_dto.id,
+            "scm_comment_id__in": [str(c["scm_comment_id"]) for c in llm_comments],
+        }
+        inserted_comments = await DB.get_by_filters(
+            PRComments,
+            filters=filters_to_fetch_inserted_comments,
+        )
+
+        for comment, pr_comment in zip(llm_comments, inserted_comments):
+            for bucket in comment["buckets"]:
+                bucket_id = all_buckets[bucket].id
+                bucket_mappings_to_save.append(CommentBucketMapping(pr_comment_id=pr_comment.id, bucket_id=bucket_id))
+        await CommentBucketMappingService.bulk_insert(bucket_mappings_to_save)
+
         return all_buckets, llm_comments
 
     @classmethod

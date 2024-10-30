@@ -23,7 +23,6 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.o
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 
 
 class AgentFactory:
@@ -37,8 +36,8 @@ class AgentFactory:
         AgentTypes.PR_SUMMARY.value: OpenAIPRSummaryAgent,
     }
 
-    def __init__(self, repo_service: BaseRepo, reflection_enabled: bool):
-        self.context_service = ContextService(repo_service)
+    def __init__(self, reflection_enabled: bool, context_service: ContextService):
+        self.context_service = context_service
         self.reflection_enabled = reflection_enabled
 
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):

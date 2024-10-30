@@ -62,7 +62,7 @@ class BaseComment(ABC):
             comment = f"{SCRIT_DEPRECATION_NOTIFICATION}\n\n{comment}"
         return comment
 
-    async def create_bulk_comments(self, comments: List[Union[str, dict]], model: str) -> None:
+    async def create_bulk_comments(self, comments: List[Union[str, dict]]) -> None:
         """
         Iterate over each comment in pull request and post that comment on PR.
 
@@ -76,28 +76,28 @@ class BaseComment(ABC):
         """
         for comment in comments:
             try:
-                await self.create_pr_review_comment(comment, model)
+                await self.create_pr_review_comment(comment, comment.get("model"))
             except Exception as e:
                 AppLogger.log_error(f"Unable to create comment: {comment}: {e}")
 
-    async def post_bots_comments(self, response):
+    async def post_bots_comments(self, comments):
         """
         Create two parallel tasks to comment on PR using multiple bots
 
         Args:
-            response(dict): dict of PR comments fetched from finetuned and foundation nodels
+            comments(List): List of PR comments fetched from finetuned and foundation nodels
         Returns:
             None
         """
-        tasks = [
-            Task(
-                self.create_bulk_comments(
-                    comments=agent_response["comments"],
-                    model=agent_response["model"],
-                ),
-                result_key=agent,
-            )
-            for agent, agent_response in response.items()
-        ]
+        batch_size = 10
+        batches = [comments[i : i + batch_size] for i in range(0, len(comments), batch_size)]
+        for batch in batches:
+            # Create tasks for the current batch
+            tasks = [
+                Task(
+                    self.create_bulk_comments(comments=batch),
+                    result_key="response",
+                )
+            ]
 
-        await get_task_response(tasks)
+            await get_task_response(tasks)
