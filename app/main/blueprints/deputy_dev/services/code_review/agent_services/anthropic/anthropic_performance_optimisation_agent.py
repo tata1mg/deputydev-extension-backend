@@ -218,7 +218,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         <review>
         <comments>
         <comment>
-        <description>Describe the performance issue</description>
+        <description>Describe the performance issue and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
         <corrective_code>
         Rewrite code snippet to remedy the issue.
         Add this section under <![CDATA[ ]]> for avoiding xml paring error.

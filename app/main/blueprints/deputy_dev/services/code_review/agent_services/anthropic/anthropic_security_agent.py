@@ -188,7 +188,7 @@ class AnthropicSecurityAgent(AgentServiceBase):
         <review>
         <comments>
         <comment>
-        <description>Describe the issue, it's potential impact and its severity (Critical, High, Medium, Low)</description>
+        <description>Describe the issue, it's potential impact and its severity (Critical, High, Medium, Low) and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
         <corrective_code>
         Rewrite the code snippet. How the code should be written ideally.
         Add this section under <![CDATA[ ]]> for avoiding xml paring error.
