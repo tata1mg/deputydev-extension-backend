@@ -7,6 +7,9 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
     AgentFactory,
 )
+from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
+    ContextService,
+)
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
 )
@@ -36,8 +39,9 @@ class MultiAgentPRReviewManager:
         self.filtered_comments = None
         self.pr_summary = None
         self.exclude_agent = set()
+        self.context_service = ContextService(repo_service)
         self.agent_factory = AgentFactory(
-            repo_service=self.repo_service, reflection_enabled=self._is_reflection_enabled()
+            reflection_enabled=self._is_reflection_enabled(), context_service=self.context_service
         )
         self._is_large_pr = False
 
@@ -78,8 +82,8 @@ class MultiAgentPRReviewManager:
     # llm handler end
 
     # blending engine section start
-    def filter_comments(self):
-        self.filtered_comments = CommentBlendingEngine(self.llm_comments).blend_comments()
+    async def filter_comments(self):
+        self.filtered_comments = await CommentBlendingEngine(self.llm_comments, self.context_service).blend_comments()
 
     # blending engine section end
 
@@ -109,7 +113,7 @@ class MultiAgentPRReviewManager:
     async def get_code_review_comments(self):
         await self.execute_pass_1()
         await self.execute_pass_2() if self._is_reflection_enabled() else None
-        self.filter_comments()
+        await self.filter_comments()
         return self.return_final_response()
 
     def populate_meta_info(self):
