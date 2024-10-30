@@ -206,6 +206,8 @@ class AgentTypes(ExtendedEnum):
     ERROR = "error"
     BUSINESS_LOGIC_VALIDATION = "business_logic_validation"
     PR_SUMMARY = "pr_summary"
+    COMMENT_VALIDATION = "comment_validation"
+    COMMENT_SUMMARIZATION = "comment_summarization"
 
 
 class MultiAgentReflectionIteration(Enum):

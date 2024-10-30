@@ -14,9 +14,11 @@ __all__ = [
     "Tokens",
     "Users",
     "UserTeams",
+    "CommentBucketMapping",
 ]
 
 from .buckets import Buckets
+from .comment_bucket_mapping import CommentBucketMapping
 from .experiments import Experiments
 from .feedbacks import Feedbacks
 from .integrations import Integrations
