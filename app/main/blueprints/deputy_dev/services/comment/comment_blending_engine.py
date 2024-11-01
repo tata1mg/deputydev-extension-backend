@@ -142,14 +142,14 @@ class CommentBlendingEngine:
             # Add the single comment's data to the lists
             aggregated_comments[file_path][line_number]["comments"].append(comment["comment"])
             aggregated_comments[file_path][line_number]["buckets"].append(comment["buckets"][0])
+            corrective_code = comment.get("corrective_code")
+            aggregated_comments[file_path][line_number]["corrective_code"].append(
+                corrective_code.strip() if corrective_code else ""
+            )
             aggregated_comments[file_path][line_number]["corrective_code"].append(
                 comment.get("corrective_code", "").strip()
             )
             aggregated_comments[file_path][line_number]["confidence_scores"].append(comment["confidence_score"])
-
-            # Add corrective code if present and non-empty
-            corrective_code = comment["corrective_code"].strip() if comment["corrective_code"] else ""
-            aggregated_comments[file_path][line_number]["corrective_code"].append(corrective_code or "")
 
         return aggregated_comments
 
