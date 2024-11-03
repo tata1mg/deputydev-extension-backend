@@ -136,7 +136,7 @@ class PRReviewPostProcessor:
         for comment in llm_comments:
             for bucket in comment["buckets"]:
                 if bucket not in all_buckets:
-                    unique_buckets.add(comment["bucket"])
+                    unique_buckets.add(bucket)
 
         for bucket in unique_buckets:
             new_buckets.append(
