@@ -146,9 +146,6 @@ class CommentBlendingEngine:
             aggregated_comments[file_path][line_number]["corrective_code"].append(
                 corrective_code.strip() if corrective_code else ""
             )
-            aggregated_comments[file_path][line_number]["corrective_code"].append(
-                comment.get("corrective_code", "").strip()
-            )
             aggregated_comments[file_path][line_number]["confidence_scores"].append(comment["confidence_score"])
 
         return aggregated_comments

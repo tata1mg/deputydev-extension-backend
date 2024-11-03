@@ -85,13 +85,15 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "line_number": +42,
                 "comment": "Consider refactoring this function to improve readability.",
                 "corrective_code": "def my_function(...): pass"
-                "is_valid": "true"
+                "is_valid": true,
+                "bucket": "CODE_MAINTAINABILITY"
             }},
             {{
                 "file_path": "src/utils.py",
                 "line_number": 27,
                 "comment": "Replace '==' with 'is' for comparison.",
-                "is_valid": "false"
+                "is_valid": false,
+                "bucket": "CODE_MAINTAINABILITY"
             }}
         ]
         ```
