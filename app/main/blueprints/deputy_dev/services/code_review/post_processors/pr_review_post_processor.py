@@ -177,7 +177,7 @@ class PRReviewPostProcessor:
                     "line_number": comment["line_number"],
                     "file_path": comment["file_path"],
                     "commit_id": pr_dto.commit_id,
-                    "agent": comment["agent"],
+                    "is_valid": comment["is_valid"],
                 },
             }
             comments_to_save.append(PRComments(**comment_info))

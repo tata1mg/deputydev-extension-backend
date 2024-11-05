@@ -24,7 +24,8 @@ class CommentBlendingEngine:
         self.llm_comments = llm_comments
         self.llm_confidence_score_limit = CONFIG.config["AGENT_SETTINGS"]
         self.filtered_comments = []
-        self.context_Service = context_service
+        self.invalid_comments = []
+        self.context_service = context_service
 
         self.llm_service = OpenaiLLM()
         self.MAX_RETRIES = 2
@@ -34,7 +35,7 @@ class CommentBlendingEngine:
         self.apply_agent_confidence_score_limit()
         await self.validate_comments()
         await self.process_all_comments()
-
+        self.filtered_comments.extend(self.invalid_comments)
         return self.filtered_comments
 
     def apply_agent_confidence_score_limit(self):
@@ -61,7 +62,7 @@ class CommentBlendingEngine:
                             "confidence_score": comment["confidence_score"],
                             "corrective_code": comment.get("corrective_code", ""),
                             "model": data.get("model"),
-                            "agent": agent,
+                            "is_valid": None,  # Default to None
                         }
                     )
 
@@ -79,7 +80,7 @@ class CommentBlendingEngine:
         # Attempt validation with retries
         for attempt in range(self.MAX_RETRIES):
             try:
-                prompt = await OpenAICommentValidationAgent(self.context_Service).get_system_n_user_prompt(
+                prompt = await OpenAICommentValidationAgent(self.context_service).get_system_n_user_prompt(
                     validation_data
                 )
                 if prompt.get("exceeds_tokens"):  # Case when we exceed tokens of gpt
@@ -95,19 +96,36 @@ class CommentBlendingEngine:
                 )
                 return
 
+            except json.JSONDecodeError as e:
+                AppLogger.log_warn(
+                    f"Retry {attempt + 1}/{self.MAX_RETRIES}  Json decode error in comments Re-Validation call: {str(e)}"
+                )
+
+            except asyncio.TimeoutError as timeout_err:
+                AppLogger.log_warn(
+                    f"Retry {attempt + 1}/{self.MAX_RETRIES}: Timeout error in comments Re-Validation call {str(timeout_err)}"
+                )
+
             except Exception as e:
-                AppLogger.log_warn(f"Retry {attempt + 1}/{self.MAX_RETRIES}  comments Re-Validation call: {e}")
-                if attempt == self.MAX_RETRIES - 1:
-                    AppLogger.log_warn(f"Comments Re-Validation failed after {self.MAX_RETRIES} attempts: {str(e)}")
-                    break
-                await asyncio.sleep(1)
+                AppLogger.log_warn(f"Retry {attempt + 1}/{self.MAX_RETRIES}  comments Re-Validation call: {str(e)}")
+
+            if attempt == self.MAX_RETRIES - 1:
+                AppLogger.log_warn(f"Comments Re-Validation failed after {self.MAX_RETRIES} attempts")
+                break
+            await asyncio.sleep(1)
 
     def extract_validated_comments(self, response_content: dict) -> List[dict]:
         """Extracts and returns validated comments from LLM validated comment response."""
         validated_comments = []
         for comment, validation in zip(self.filtered_comments, response_content.get("comments", [])):
-            if validation.get("is_valid", True):
-                validated_comments.append({**comment, "is_valid": True})
+            is_valid = validation.get("is_valid", None)
+            comment["is_valid"] = is_valid
+
+            if is_valid is False:
+                self.invalid_comments.append(comment)
+            else:
+                # Collect valid or unvalidated comments in the Filterd comment list
+                validated_comments.append(comment)
         return validated_comments
 
     def aggregate_comments_by_line(self):
@@ -136,7 +154,7 @@ class CommentBlendingEngine:
                     "corrective_code": [],
                     "confidence_scores": [],  # Will be used to calculate average confidence score of combined comments
                     "model": comment.get("model"),
-                    "agent": comment.get("agent"),
+                    "is_valid": comment["is_valid"],
                 }
 
             # Add the single comment's data to the lists
@@ -170,7 +188,7 @@ class CommentBlendingEngine:
                             "corrective_code": data["corrective_code"][0] if data["corrective_code"] else "",
                             "confidence_score": data["confidence_scores"][0],
                             "model": data["model"],
-                            "agent": data["agent"],
+                            "is_valid": data["is_valid"],
                         }
                     )
                 else:
@@ -200,7 +218,7 @@ class CommentBlendingEngine:
                 "corrective_code": comment["corrective_code"],
                 "confidence_score": comment["confidence_score"],
                 "model": comment["model"],
-                "agent": comment["agent"],
+                "is_valid": comment["is_valid"],
             }
             for comment in single_comments
         ]
@@ -213,7 +231,7 @@ class CommentBlendingEngine:
             # Attempt validation with retries
         for attempt in range(self.MAX_RETRIES):
             try:
-                prompt = await OpenAICommentSummarizationAgent(self.context_Service).get_system_n_user_prompt(
+                prompt = await OpenAICommentSummarizationAgent(self.context_service).get_system_n_user_prompt(
                     multi_comments
                 )
                 if prompt.get("exceeds_tokens"):  # Case when we exceed tokens of gpt
@@ -230,10 +248,20 @@ class CommentBlendingEngine:
                 self.filtered_comments = processed_comments
                 return
 
+            except json.JSONDecodeError as e:
+                AppLogger.log_warn(
+                    f"Retry {attempt + 1}/{self.MAX_RETRIES}  Json decode error during comment summarization: {str(e)}"
+                )
+
+            except asyncio.TimeoutError as timeout_err:
+                AppLogger.log_warn(
+                    f"Timeout on attempt {attempt + 1}/{self.MAX_RETRIES} during comment summarization: {str(timeout_err)}"
+                )
+
             except Exception as e:
                 AppLogger.log_warn(f"Retry {attempt + 1}/{self.MAX_RETRIES}  comments summarization call: {e}")
-                if attempt == self.MAX_RETRIES - 1:
+            if attempt == self.MAX_RETRIES - 1:
 
-                    AppLogger.log_warn(f"Summarization failed after {self.MAX_RETRIES} attempts: {str(e)}")
-                    break
-                await asyncio.sleep(1)
+                AppLogger.log_warn(f"Summarization failed after {self.MAX_RETRIES} attempts")
+                break
+            await asyncio.sleep(1)
