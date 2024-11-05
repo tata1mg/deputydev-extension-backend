@@ -36,9 +36,23 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         - Multiple comments might reference the same line of code, but they come from different agents focusing on various aspects of the code.
     
         Objective:
-         **Blending**:
-           - For each line in the code where multiple comments exist, merge them into a single, concise summary.
-           - The final summary of all the comments should contains bullet points bucket wise that Bucket as initial start of bullet point followed by combined summary for that bucket.
+                   
+        1. **Comment Merging**:
+           - When multiple comments on a single line have similar semantic meanings, intelligently merge them to avoid redundancy. Follow these rules:
+             - **Same Function or Variable Context**: If comments reference the same function or line context (e.g., missing docstrings, type hints, or complex logic), consolidate them into one summarized bullet.
+             - **Unique Comments in Separate Bullets**: If every comment is semantically unique on a line and cannot be clubbed with another bucket comment, create a separate bullet point for each unique comment.
+             - **Single Bullet for Uniform Meaning**: If all comments have the same semantic meaning, combine them into one summary bullet, choosing the most relevant bucket name.
+             - **Separate Bullets for Mixed Meanings**: If there are subsets of comments with shared meanings, group each subset under a bullet with the most relevant bucket name, using concise language to avoid duplication.
+           - Preserve the integrity of all individual bucket values in the input data, but make the output summary concise and grouped based on semantic similarity and don't loose actual context of comment.
+        
+        2. **Bucket-wise Summary**:
+           - Begin each bullet point with the relevant bucket name, followed by a combined summary. If multiple buckets are present, select the most contextually suitable bucket for the combined comment.
+           - Maintain bullet format per bucket in the output to ensure clear organization.
+           - Ensure that the `buckets` field in the output contains only the buckets used in the summarized comments. Select only the most relevant bucket for bullets where multiple comments were merged, and ensure accuracy in spelling and formatting to match the input.
+        
+        3. **Corrective Code Union**:
+           - Consolidate all corrective code snippets provided, combining relevant parts to form a unified corrective code block that addresses all feedback. Ensure the corrective code retains functionality and addresses issues highlighted by all buckets.
+
     
         ### Guidelines:
         - Combine related feedback intelligently while preserving important details.
@@ -46,14 +60,13 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         - Prioritize feedback based on severity and impact
         - Ensure that comments maintain their original intent even when merged.
         - Consider the PR diff and comments closely while providing summary.
-        - If single line have multiple comments and those comments contains some part of corrective code. Then in the final summarized comment intenlligenlty create the union of corrective code block for all comments with all the suggested fixes.
         
         ### Input Comments that needs to be summarized: 
         {comments}
     
         Below is a sample input structure for the comments you will receive:
         
-        ### Sample Input:
+        ### Sample Input containing two comments example:
         [
             {{
             "file_path": "app/services/cache.py",
@@ -69,7 +82,27 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
             ],
             "model": "Claude_3.5_Sonet",
             "agent": "SECURITY",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "is_valid": true
+            }},
+            {{
+            "file_path": "example/class.py",
+            "line_number": "42",
+            "comments": [
+                "MAINTAINABILITY: Duplicated method violates DRY principle",
+                "CODE_ROBUSTNESS: Code structure leads to maintenance challenges",
+                "RUNTIME_ERROR: Unique error handling approach needed"
+            ],
+            "buckets": ["MAINTAINABILITY", "CODE_ROBUSTNESS", "RUNTIME_ERROR"],
+            "corrective_code": [
+                "# Refactor to remove duplication",
+                "# Improve error handling strategy",
+                "# Implement unique error handling"
+            ],
+            "model": "Claude_3.5_Sonet",
+            "agent": "MAINTAINABILITY",
+            "confidence_score": 0.95,
+            "is_valid": true
             }}
         ]
         
@@ -82,13 +115,14 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
             'comment': '<A single summarized comment for all the comments. Make bucket wise bullets in summary>',
             'corrective_code': '<Intelligently union of combined Corrective code for all the comments provided as a string.>',
             'confidence_score': '<confidence_score field value in input comment>;,
-            'buckets': <List of buckets as provided in input>,
+            'buckets': <List of buckets only for the buckets used as bullet names in the summary; ensure spelling and format match the input exactly>,
             'model': <model field value in input comment>,
             'agent': <agent field value in input comment>,
+            'is_valid': <is_valid field value in input comment. It can be true, false or null. Return as it is as mentioned in input comment>
             }}]
             ```
             
-        ### Expected output example 
+        ### Expected output example of provided input comments
         ```JSON
         comments: [
             {{
@@ -100,8 +134,20 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
                 "is_valid": true,
                 "confidence_score": 0.95,
                 "model": "Claude_3.5_Sonet",
-                "agent": "SECURITY",
-                "confidence_score": 0.95
+                "confidence_score": 0.95,
+                "is_valid": true
+            }},
+            {{
+                "file_path": "example/class.py",
+                "line_number": "42",
+                "comment": "- **MAINTAINABILITY**: Duplicated method violates DRY principle and introduces maintenance challenges\\n- **RUNTIME_ERROR**: Unique error handling approach needed",
+                "buckets": ["MAINTAINABILITY", "RUNTIME_ERROR"],
+                "corrective_code": "Intelligently combine: # Refactor to remove duplication and standardize method implementation and Implement comprehensive error handling strategy",
+                "is_valid": true,
+                "confidence_score": 0.95,
+                "model": "Claude_3.5_Sonet",
+                "confidence_score": 0.95,
+                "is_valid": true
             }}
         ]
         ```
@@ -117,12 +163,12 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
            - Explicitly request a validation pass before blending to avoid premature filtering.
         
         2. Multi-comment Merging:
-            - For lines with multiple comments, ensure that all important details are retained, particularly those marked under business validation.
+            - For lines with multiple comments, ensure that all important details are retained, particularly those marked under business validation or user story.
             - For business validation comment if it is part of multiple comments don't loose any point while summarizing it in bullet point.
             - If there are n number of comments in "comments" list. then there are n number of buckets and n number of corrective code in buckets and corrective_code list in the same serial order. 
         
         3. Corrective Code Handling:
-            - When merging multiple corrective code suggestions, intelligently combine them so that the final corrective_code field contains a comprehensive fix for the line in question.
+            - When merging multiple corrective code suggestions, intelligently combine and take union of them so that the final corrective_code field contains a comprehensive fix for the line in question.
         
         4. No missing comments.
             - No comments should be missed during processing. If input list contains 5 comments then we should get corresponding 5 comments in output response, each containing a summary as mentioned above.  
