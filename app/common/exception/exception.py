@@ -69,3 +69,13 @@ class SignUpError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(f"Sign-Up Error: {self.message}")
+
+
+class RateLimitError(Exception):
+    """
+    Exception raised for errors during vcs rate limit is reached
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(f"Rate limit error: {self.message}")
