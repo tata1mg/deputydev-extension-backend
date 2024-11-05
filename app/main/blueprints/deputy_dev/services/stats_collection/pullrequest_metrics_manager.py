@@ -15,18 +15,12 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
-from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
     StatsCollectionBase,
 )
 from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
     PullRequestCloseWebhook,
 )
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
-)
-from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 
 class PullRequestMetricsManager(StatsCollectionBase):
@@ -49,31 +43,17 @@ class PullRequestMetricsManager(StatsCollectionBase):
             return False
 
     def handle_old_keys(self):
-        # TODO added for backward compatibility need to remove in future
-        if self.payload.get("workspace_id"):
-            self.payload["scm_workspace_id"] = self.payload["workspace_id"]
-            del self.payload["workspace_id"]
-        if self.payload.get("pr_id"):
-            self.payload["scm_pr_id"] = self.payload["pr_id"]
-            del self.payload["pr_id"]
+        if "repo_id" in self.payload:
+            self.payload["scm_repo_id"] = self.payload.pop("repo_id")
 
     async def process_event(self):
+        logger.info(f"PR close payload: {self.payload}")
         if not self.check_serviceable_event():
             return
-        logger.info(f"PR close paylod: {self.payload}")
-        await self.initialize_repo_service()
-        await self.initialize_workspace_and_repo_dto()
-        await self.initialize_pr_dto()
-
-        self.payload["pr_created_at"] = convert_to_datetime(self.payload["pr_created_at"])
+        await self.get_pr_from_db(self.payload)
+        if not self.pr_dto:  # PR is raised before onboarding time
+            return
         self.payload["pr_closed_at"] = convert_to_datetime(self.payload["pr_closed_at"])
-
-        if not self.pr_dto:
-            if self.pr_created_after_onboarding_time():
-                raise RetryException(f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev")
-            else:
-                return
-
         pr_time_since_creation = (
             datetime.now(timezone.utc) - self.pr_dto.scm_creation_time.astimezone(timezone.utc)
         ).total_seconds()
@@ -104,57 +84,6 @@ class PullRequestMetricsManager(StatsCollectionBase):
         close_cycle_time = await self.calculate_pr_close_cycle_time()
 
         await self.post_pr_close_processing(close_cycle_time)
-
-    async def initialize_pr_dto(self):
-        """
-        Initializes the PR DTO.
-        """
-        self.pr_dto = await PRService.db_get(
-            {
-                "repo_id": self.repo_dto.id,
-                "workspace_id": self.workspace_dto.id,
-                "scm_pr_id": self.payload["scm_pr_id"],
-            }
-        )
-
-    async def initialize_workspace_and_repo_dto(self):
-        """
-        Initializes the workspace and repository DTOs.
-        """
-        pr_model = self.repo_service.pr_model()
-        self.workspace_dto = await WorkspaceService.find(
-            scm=pr_model.scm_type(),
-            scm_workspace_id=pr_model.scm_workspace_id(),
-        )
-        if not self.workspace_dto:
-            raise RetryException(f"Workspace not found in DB: SCM Workspace ID : {pr_model.scm_workspace_id()}")
-        self.repo_dto = await RepoService.find(scm_repo_id=pr_model.scm_repo_id(), workspace_id=self.workspace_dto.id)
-        if not self.repo_dto:
-            raise RetryException(
-                f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev. Reason: Repository does not exist in our DB."
-            )
-
-    async def initialize_repo_service(self):
-        """
-        Retrieves the repository instance based on the given VCS type and payload.
-        """
-        repo_name = self.payload.get("repo_name")
-        pr_id = self.payload.get("scm_pr_id")
-        workspace = self.payload.get("workspace")
-        scm_workspace_id = self.payload["scm_workspace_id"]
-        repo_id = self.payload.get("repo_id")
-        workspace_slug = self.payload.get("workspace_slug")
-        auth_handler = await get_vcs_auth_handler(scm_workspace_id, self.vcs_type)
-        self.repo_service = await RepoFactory.repo(
-            vcs_type=self.vcs_type,
-            repo_name=repo_name,
-            pr_id=pr_id,
-            workspace=workspace,
-            workspace_id=scm_workspace_id,
-            workspace_slug=workspace_slug,
-            repo_id=repo_id,
-            auth_handler=auth_handler,
-        )
 
     async def post_pr_close_processing(self, close_cycle_time):
 

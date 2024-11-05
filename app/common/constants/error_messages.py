@@ -12,5 +12,7 @@ class ErrorMessages(Enum):
     QUEUE_EVENT_HANDLE_ERROR = "SQS {queue_name} | Unable to handle event"
     QUEUE_SUBSCRIBE_ERROR = "SQS {queue_name} | Unable to subscribe queue"
     TOKEN_COUNT_EXCEED_WARNING = "Token count exceeded for batch: {count}. Truncating down to {token_limit} tokens."
+    QUEUE_MESSAGE_RETRY_EVENT = "SQS {queue_name} | Retried with error "
+    VCS_RATE_LIMIT_EVENT = "SQS {queue_name} | VCS rate limit breached with error "
     # RETRIEVAL_FAIL_MSG = "Oops! We couldn't process your Lab report. Please make sure it's a valid format and try again",
     # RETRIEVAL_FAIL_MSG =  "Oops! We couldn't process your image. Please make sure it's a valid format and try again"
