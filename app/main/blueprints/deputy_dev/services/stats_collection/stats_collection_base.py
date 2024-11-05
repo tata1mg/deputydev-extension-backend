@@ -41,10 +41,6 @@ class StatsCollectionBase(ABC):
             logger.info(f"{self.stats_type} meta sync completed for payload {self.payload}")
 
         except RetryException as ex:
-            logger.error(
-                f"{self.stats_type} meta sync failed with for repo {self.payload.get('repo_name')}"
-                f" and pr {self.payload.get('scm_pr_id')} exception {ex}"
-            )
             raise ex
 
         except Exception as ex:
