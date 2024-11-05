@@ -7,6 +7,8 @@ from sanic.log import logger
 
 from app.common.constants.error_messages import ErrorMessages
 from app.common.constants.success_messages import SuccessMessages
+from app.common.exception import RetryException
+from app.common.exception.exception import RateLimitError
 from app.common.services.sqs.sqs_model import Response
 from app.common.utils.app_utils import log_combined_exception
 from app.main.blueprints.deputy_dev.constants.sqs import SQS
@@ -97,6 +99,10 @@ class BaseSubscriber:
             await self.event_handler.handle_event(body)
             is_event_success = True
             self.log_info(SuccessMessages.QUEUE_SUCCESSFULLY_HANDELED_EVENT.value, body)
+        except RateLimitError as e:
+            self.log_info(ErrorMessages.VCS_RATE_LIMIT_EVENT.value + e.message, body)
+        except RetryException as e:
+            self.log_info(ErrorMessages.QUEUE_MESSAGE_RETRY_EVENT.value + e.message, body)
         except Exception as e:
             self.log_error(ErrorMessages.QUEUE_EVENT_HANDLE_ERROR.value, e, body)
 
@@ -128,3 +134,9 @@ class BaseSubscriber:
         if payload:
             message += " Payload = " + json.dumps(payload)[: SQS.LOG_LENGTH.value]
         logger.info(message)
+
+    def log_warn(self, message, payload=None):
+        message = message.format(queue_name=self.get_queue_name())
+        if payload:
+            message += " Payload =  " + json.dumps(payload)[: SQS.LOG_LENGTH.value]
+        logger.warn(message)

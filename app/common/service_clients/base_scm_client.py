@@ -5,6 +5,7 @@ import typing as t
 import requests  # TODO: why not aiohttp
 
 from app.common.exception import RefreshTokenFailed
+from app.common.exception.exception import RateLimitError
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
@@ -59,6 +60,8 @@ class BaseSCMClient:
 
             if response.status_code == 401:
                 raise RefreshTokenFailed("Forbidden error even after refreshed token")
+        elif response.status_code == 429:
+            raise RateLimitError("VCS rate limit breached")
 
         if response.status_code not in [200, 201, 204]:
             AppLogger.log_warn(

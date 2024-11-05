@@ -5,7 +5,7 @@ class PRCloseRequest(BaseModel):
     pr_state: str
     scm_pr_id: str
     repo_name: str
-    repo_id: str
+    scm_repo_id: str
     workspace: str
     workspace_slug: str
     scm_workspace_id: str

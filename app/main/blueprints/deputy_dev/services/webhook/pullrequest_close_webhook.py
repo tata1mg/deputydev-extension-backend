@@ -39,7 +39,7 @@ class PullRequestCloseWebhook:
             "workspace_slug": payload["repository"]["workspace"]["slug"],
             "pr_created_at": payload["pullrequest"]["created_on"],
             "pr_closed_at": payload["pullrequest"]["updated_on"],
-            "repo_id": payload["repository"]["uuid"],
+            "scm_repo_id": payload["repository"]["uuid"],
         }
         return PRCloseRequest(**parsed_payload)
 
@@ -56,7 +56,7 @@ class PullRequestCloseWebhook:
             "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "pr_created_at": payload["pull_request"]["created_at"],
             "pr_closed_at": payload["pull_request"]["closed_at"],
-            "repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
+            "scm_repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
         }
         return PRCloseRequest(**parsed_payload)
 
@@ -72,7 +72,7 @@ class PullRequestCloseWebhook:
             ),
             "scm_pr_id": str(pr_id),
             "repo_name": get_vcs_repo_name_slug(payload["project"]["path_with_namespace"]),
-            "repo_id": str(payload["project"]["id"]),
+            "scm_repo_id": str(payload["project"]["id"]),
             "workspace": workspace,
             "workspace_slug": workspace_slug,
             "scm_workspace_id": str(payload.get("scm_workspace_id")),
