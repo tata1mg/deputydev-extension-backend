@@ -30,7 +30,6 @@ class BaseSCMClient:
     ):
         # -- prep headers --
         headers = headers or {}
-
         if not skip_headers:
             auth_headers = await self._auth_headers()
             headers.update(auth_headers)
