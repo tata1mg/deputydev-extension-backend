@@ -13,6 +13,7 @@ class Comment(BaseModel):
     side: Optional[str] = None  # RIGHT: New file, LEFT: Old file Gitlab, Github
     id: Optional[int]
     parent_comment_id: Optional[int]
+    context_lines: Optional[str]
 
 
 class Repo(BaseModel):
@@ -22,7 +23,7 @@ class Repo(BaseModel):
     commit_id: str
     workspace_id: str
     repo_id: Optional[str] = None
-    workspace_slug: str
+    workspace_slug: str = None
 
 
 class Author(BaseModel):
