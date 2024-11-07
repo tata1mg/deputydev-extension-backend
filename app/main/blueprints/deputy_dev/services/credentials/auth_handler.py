@@ -56,7 +56,6 @@ class AuthHandler:
                 if not self._has_expired(expiry=expiry):
                     # happy flow!
                     return tkn
-
         # -- read from datastore --
         tkn, expiry, refresh_tkn = await self.load()
 
