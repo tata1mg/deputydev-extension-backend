@@ -31,8 +31,8 @@ class BitbucketOAuthClient:
             "code": code,
             # "redirect_uri": "https://www.1mg.com/",
         }
-
         response = requests.post(url=url, auth=auth, data=data)
+
         content = response.json()
         response.raise_for_status()
         return content

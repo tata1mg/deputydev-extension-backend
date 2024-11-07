@@ -40,6 +40,7 @@ class ChatWebhook:
                 "parent_comment_id": (
                     request_payload["comment"]["parent"].get("id") if request_payload["comment"].get("parent") else None
                 ),
+                "context_lines": request_payload["comment"].get("inline", {}).get("context_lines"),
             },
             "repo": {
                 "workspace": request_payload["repository"]["workspace"]["name"],
@@ -82,6 +83,7 @@ class ChatWebhook:
                 "id": request_payload["comment"]["id"],
                 "parent_comment_id": None,
                 "side": request_payload["comment"]["side"],
+                "context_lines": request_payload["comment"].get("diff_hunk") or "",
             },
             "repo": {
                 "workspace": request_payload["organization"]["login"],
