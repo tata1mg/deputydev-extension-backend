@@ -90,7 +90,8 @@ class BaseComment(ABC):
             None
         """
         batch_size = 10
-        batches = [comments[i : i + batch_size] for i in range(0, len(comments), batch_size)]
+        valid_comments = [comment for comment in comments if comment["is_valid"] is not False]
+        batches = [valid_comments[i : i + batch_size] for i in range(0, len(valid_comments), batch_size)]
         for batch in batches:
             # Create tasks for the current batch
             tasks = [
