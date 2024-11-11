@@ -85,7 +85,6 @@ class BitbucketComment(BaseComment):
 
         result = await self.repo_client.create_comment_on_pr(comment_payload, model)
         comment["scm_comment_id"] = result["id"]
-        comment["llm_source_model"] = model
         return result
 
     async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):

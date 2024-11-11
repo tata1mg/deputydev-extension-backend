@@ -35,7 +35,7 @@ class PRComments(Base):
     workspace_id = fields.BigIntField()
     repo_id = fields.BigIntField()
     pr_id = fields.BigIntField()
-    scm_comment_id = fields.CharField(max_length=100)
+    scm_comment_id = fields.CharField(max_length=100, null=True)
     scm_author_id = fields.CharField(max_length=100)
     author_name = fields.CharField(max_length=1000)
     meta_info = fields.JSONField(null=True)
