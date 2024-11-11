@@ -13,7 +13,7 @@ class PRCommentsDTO(BaseModel):
     workspace_id: int
     repo_id: int
     pr_id: int
-    scm_comment_id: str
+    scm_comment_id: Optional[str] = None
     scm_author_id: str
     author_name: str
     meta_info: Optional[dict] = None

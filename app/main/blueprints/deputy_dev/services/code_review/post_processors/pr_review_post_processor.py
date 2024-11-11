@@ -164,13 +164,13 @@ class PRReviewPostProcessor:
             comment_info = {
                 "iteration": 1,
                 "llm_confidence_score": comment["confidence_score"],
-                "llm_source_model": CONFIG.config["LLM_MODELS"][comment["llm_source_model"]]["NAME"],
+                "llm_source_model": CONFIG.config["LLM_MODELS"][comment["model"]]["NAME"],
                 "team_id": pr_dto.team_id,
                 "scm": pr_dto.scm,
                 "workspace_id": pr_dto.workspace_id,
                 "repo_id": pr_dto.repo_id,
                 "pr_id": pr_dto.id,
-                "scm_comment_id": str(comment["scm_comment_id"]),
+                "scm_comment_id": str(comment["scm_comment_id"]) if comment.get("scm_comment_id") is not None else None,
                 "scm_author_id": pr_dto.scm_author_id,
                 "author_name": pr_dto.author_name,
                 "meta_info": {
@@ -184,16 +184,18 @@ class PRReviewPostProcessor:
 
         await CommentService.bulk_insert(comments_to_save)
 
+        valid_llm_comments = [comment for comment in llm_comments if comment.get("scm_comment_id")]
+
         filters_to_fetch_inserted_comments = {
             "pr_id": pr_dto.id,
-            "scm_comment_id__in": [str(c["scm_comment_id"]) for c in llm_comments],
+            "scm_comment_id__in": [str(c["scm_comment_id"]) for c in valid_llm_comments],
         }
         inserted_comments = await DB.get_by_filters(
             PRComments,
             filters=filters_to_fetch_inserted_comments,
         )
 
-        for comment, pr_comment in zip(llm_comments, inserted_comments):
+        for comment, pr_comment in zip(valid_llm_comments, inserted_comments):
             for bucket in comment["buckets"]:
                 bucket_id = all_buckets[bucket].id
                 bucket_mappings_to_save.append(CommentBucketMapping(pr_comment_id=pr_comment.id, bucket_id=bucket_id))
