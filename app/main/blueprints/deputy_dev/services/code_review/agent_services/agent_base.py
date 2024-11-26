@@ -1,3 +1,4 @@
+import time
 from abc import ABC, abstractmethod
 from string import Template
 
@@ -62,9 +63,17 @@ class AgentServiceBase(ABC):
 
     async def get_with_reflection_prompt(self, reflection_iteration: str, previous_review_comments: str = None):
         if reflection_iteration == MultiAgentReflectionIteration.PASS_1.value:
-            return await self.get_with_reflection_prompt_pass_1()
+            t1 = time.time() * 1000
+            prompt = await self.get_with_reflection_prompt_pass_1()
+            t2 = time.time() * 1000
+            AppLogger.log_info(f"Time taken in building prompt for pass 1 - {t2 - t1} ms")
+            return prompt
         elif reflection_iteration == MultiAgentReflectionIteration.PASS_2.value:
-            return await self.get_with_reflection_prompt_pass_2(previous_review_comments)
+            t1 = time.time() * 1000
+            prompt = await self.get_with_reflection_prompt_pass_2(previous_review_comments)
+            t2 = time.time() * 1000
+            AppLogger.log_info(f"Time taken in building prompt for pass 2 - {t2 - t1} ms")
+            return prompt
 
     async def get_with_reflection_prompt_pass_1(self):
         system_message = self.get_with_reflection_system_prompt_pass1()
