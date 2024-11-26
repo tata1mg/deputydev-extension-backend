@@ -1,9 +1,12 @@
+import time
+
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     MultiAgentReflectionIteration,
 )
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
     AgentFactory,
 )
@@ -98,7 +101,10 @@ class MultiAgentPRReviewManager:
             pr_diff_tokens_count = await self.repo_service.get_pr_diff_token_count()
             self.agents_tokens = {"pr_diff_tokens": pr_diff_tokens_count}
             return
+        t1 = time.time() * 1000
         await self._make_llm_calls()
+        t2 = time.time() * 1000
+        AppLogger.log_info(f"Time taken in LLM call - {t2 - t1} ms")
         self.populate_meta_info()
 
     async def execute_pass_1(self):
