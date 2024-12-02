@@ -25,6 +25,9 @@ from app.main.blueprints.deputy_dev.services.code_review.pre_processors.pr_revie
 from app.main.blueprints.deputy_dev.services.code_review.single_agent_pr_review_manager import (
     SingleAgentPRReviewManager,
 )
+from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
+    AffirmationService,
+)
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
@@ -34,6 +37,7 @@ from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
     set_context_values,
 )
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
@@ -82,17 +86,21 @@ class PRReviewManager:
             None
         """
         repo_service, comment_service = await cls.initialise_services(data)
+        affirmation_service = AffirmationService(data, comment_service)
         pr_dto = None
+
         try:
             tokens_data, execution_start_time = None, datetime.now()
-            is_reviewable_request, pr_dto = await PRReviewPreProcessor(repo_service, comment_service).pre_process_pr()
+            is_reviewable_request, pr_dto = await PRReviewPreProcessor(
+                repo_service, comment_service, affirmation_service
+            ).pre_process_pr()
             if not is_reviewable_request:
                 return
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
                 repo_service, comment_service, data["prompt_version"]
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
-            await PRReviewPostProcessor.post_process_pr(
+            await PRReviewPostProcessor(repo_service, comment_service, affirmation_service).post_process_pr(
                 pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
             )
 
@@ -121,7 +129,8 @@ class PRReviewManager:
             repo_service, prompt_version
         ).get_code_review_comments()
 
-        if pr_summary:
+        # We will only post summary for forst PR review request
+        if pr_summary and not get_context_value("has_reviewed_entry"):
             await repo_service.update_pr_description(pr_summary.get("response"))
 
         if _is_large_pr:
@@ -159,7 +168,7 @@ class PRReviewManager:
             auth_handler=auth_handler,
             repo_id=repo_id,
         )
-        comment_service = await CommentFactory.comment(
+        comment_service = await CommentFactory.initialize(
             vcs_type=vcs_type,
             repo_name=repo_name,
             pr_id=pr_id,

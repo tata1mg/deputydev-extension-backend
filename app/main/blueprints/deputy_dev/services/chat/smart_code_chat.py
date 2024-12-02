@@ -22,6 +22,9 @@ from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import 
 from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_processer import (
     CommentPreprocessor,
 )
+from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger import (
+    CodeReviewTrigger,
+)
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
@@ -66,6 +69,12 @@ class SmartCodeChatManager:
         # some webhooks don't have query params handling for that case
         vcs_type = payload.get("vcs_type") or VCSTypes.bitbucket.value
 
+        raw_comment = ChatWebhook.get_raw_comment(payload)
+
+        if raw_comment and raw_comment.strip().lower() == "#review":
+            await CodeReviewTrigger.perform_review(payload, query_params)
+            return
+
         comment_payload = await ChatWebhook.parse_payload(payload)
         if not comment_payload:
             return
@@ -97,7 +106,7 @@ class SmartCodeChatManager:
             auth_handler=auth_handler,
         )
 
-        comment_service = await CommentFactory.comment(
+        comment_service = await CommentFactory.initialize(
             vcs_type=vcs_type,
             repo_name=chat_request.repo.repo_name,
             pr_id=chat_request.repo.pr_id,
@@ -122,7 +131,7 @@ class SmartCodeChatManager:
 
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
-            diff = await repo.get_pr_diff()
+            diff = await repo.get_effective_pr_diff()
             user_story_description = await JiraManager(issue_id=repo.pr_details.issue_id).get_description_text()
             comment_thread = await comment_service.fetch_comment_thread(chat_request)
             comment_context = {

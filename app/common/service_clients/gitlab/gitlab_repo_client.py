@@ -1,7 +1,9 @@
 import requests
 from sanic.log import logger
+from torpedo.exceptions import HTTPRequestException
 
 from app.common.service_clients.base_scm_client import BaseSCMClient
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 
@@ -35,6 +37,22 @@ class GitlabRepoClient(BaseSCMClient):
         - dict: Response data from the API or error message.
         """
         path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/notes"
+        workspace_token_headers = await self.get_ws_token_headers()
+        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
+        return response
+
+    async def create_comment_on_parent(self, comment_payload: dict, parent_id):
+        """
+        Creates a child comment on parent in  merge request.
+
+        Parameters:
+        - parent_id (str): The parent ID of a discussion in GitLab
+        - comment_payload (dict): The payload of the comment (e.g., body).
+
+        Returns:
+        - dict: Response data from the API or error message.
+        """
+        path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions/{parent_id}/notes"
         workspace_token_headers = await self.get_ws_token_headers()
         response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
         return response
@@ -95,8 +113,28 @@ class GitlabRepoClient(BaseSCMClient):
         """
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/changes"
         response = await self.get(diff_url)
-        if response.status_code != 200:
-            logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
+        if response.status_code not in [200, 404]:
+            error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
+            raise HTTPRequestException(status_code=response.status_code, error=error_msg)
+        return response.json(), response.status_code
+
+    async def get_commit_diff(self, base_commit, destination_commit):
+        """
+        Get the diff between two commits in GitLab.
+
+        Args:
+            base_commit (str): The first commit hash.
+            commit_b (str): The second commit hash.
+
+        Returns:
+            str: The diff between two commits.
+        """
+        diff_url = f"{self.gitlab_url}/projects/{self.project_id}/repository/compare?from={base_commit}&to={destination_commit}"
+        response = await self.get(diff_url)
+
+        if response.status_code not in [200, 404]:
+            error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
+            raise HTTPRequestException(status_code=response.status_code, error=error_msg)
         return response.json(), response.status_code
 
     async def get_discussion_comments(self, discussion_id):
@@ -113,3 +151,19 @@ class GitlabRepoClient(BaseSCMClient):
         if response.status_code != 200:
             logger.error(f"Unable to retrieve discussoin thread comments- {self.pr_id}: {response._content}")
         return response.json()
+
+    async def get_pr_commits(self) -> list:
+        """Get all commits in a GitLab merge request with pagination"""
+        path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/commits"
+
+        response = await self.get(
+            path, params={"per_page": 100, "order_by": "created_at", "sort": "desc"}  # Get max 100 commits
+        )
+
+        if response and response.status_code == 200:
+            return response.json()
+
+        AppLogger.log_error(
+            f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"
+        )
+        return []

@@ -48,3 +48,6 @@ class BitbucketPrModel(BasePrModel):
 
     def scm_repo_name(self):
         return get_vcs_repo_name_slug(self.pr_detail["destination"]["repository"]["full_name"])
+
+    def destination_branch_commit(self):
+        return self.pr_detail["destination"]["commit"]["hash"]

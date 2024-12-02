@@ -79,12 +79,17 @@ class BitbucketComment(BaseComment):
         comment_payload = {"content": {"raw": comment}}
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
 
+    async def create_comment_on_parent(self, comment: str, parent_id, model):
+        """creates comment on whole pr"""
+        comment_payload = {"content": {"raw": comment}, "parent": {"id": parent_id}}
+        return await self.repo_client.create_comment_on_pr(comment_payload, model)
+
     async def create_pr_review_comment(self, comment: dict, model):
         logger.info(f"Comment payload: {comment}")
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
 
         result = await self.repo_client.create_comment_on_pr(comment_payload, model)
-        comment["scm_comment_id"] = result["id"]
+        comment["scm_comment_id"] = result.json()["id"]
         return result
 
     async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):

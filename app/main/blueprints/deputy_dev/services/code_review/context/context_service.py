@@ -54,7 +54,7 @@ class ContextService:
 
     async def get_pr_diff(self, append_line_no_info=False):
         if not self.pr_diff:
-            self.pr_diff = await self.repo_service.get_pr_diff()
+            self.pr_diff = await self.repo_service.get_effective_pr_diff()
             self.pr_diff_tokens = self.tiktoken.count(self.pr_diff)
         if append_line_no_info:
             return append_line_numbers(self.pr_diff)

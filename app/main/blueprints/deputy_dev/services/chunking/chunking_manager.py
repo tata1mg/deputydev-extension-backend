@@ -6,6 +6,9 @@ from app.main.blueprints.deputy_dev.services.chunking.chunk_parsing_utils import
     render_snippet_array,
 )
 from app.main.blueprints.deputy_dev.services.search import perform_search
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 
 
 class ChunkingManger:
@@ -16,10 +19,10 @@ class ChunkingManger:
         # clone the repo
         all_chunks, all_docs = await get_chunks(repo.repo_dir)
         logger.info("Completed chunk creation")
-
+        query = repo.pr_commit_diff if get_context_value("pr_reviewable_on_commit") else repo.pr_diff
         # Perform a search based on the diff content to find relevant chunks
         content_to_lexical_score_list, input_tokens = await perform_search(
-            all_docs=all_docs, all_chunks=all_chunks, query=repo.pr_diff
+            all_docs=all_docs, all_chunks=all_chunks, query=query
         )
         logger.info("Completed lexical and vector search")
 

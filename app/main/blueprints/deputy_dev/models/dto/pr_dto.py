@@ -27,6 +27,8 @@ class PullRequestDTO(BaseModel):
     scm_creation_time: Optional[datetime] = None
     scm_close_time: Optional[datetime] = None
     commit_id: str
+    destination_commit_id: str
+    iteration: Optional[int] = None
     loc_changed: Optional[int] = 0
     pr_state: str = PRStatus.OPEN.value
     scm_approval_time: Optional[datetime] = None

@@ -16,15 +16,15 @@ class CommentFactory:
     }
 
     @classmethod
-    async def comment(
+    async def initialize(
         cls,
         vcs_type: str,
         workspace,
         workspace_slug,
         repo_name,
         pr_id,
-        pr_details,
         auth_handler: AuthHandler,
+        pr_details=None,
         repo_id=None,
     ) -> BaseComment:
         if vcs_type not in cls.FACTORIES:
