@@ -11,6 +11,9 @@ from app.main.blueprints.deputy_dev.models.dto.pr.github_pr import GitHubPrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
@@ -49,10 +52,35 @@ class GithubRepo(BaseRepo):
             return self.pr_diff
 
         response = await self.repo_client.get_pr_diff()
-        if response.status_code != 200:
+        if response and response.status_code != 200:
             return PR_NOT_FOUND
         self.pr_diff = ignore_files(response.text)
         return self.pr_diff
+
+    async def get_commit_diff(self):
+        """
+        Get the diff between two commits in GitHub.
+
+        Args:
+            base_commit (str): The first commit hash.
+            destination_commit (str): The second commit hash.
+
+        Returns:
+            str: The diff between two commits.
+
+        Raises:
+            ValueError: If the repo diff cannot be retrieved.
+        """
+        if self.pr_commit_diff:
+            return self.pr_commit_diff
+
+        response = await self.repo_client.get_commit_diff(
+            self.pr_details.commit_id, get_context_value("last_reviewed_commit")
+        )
+        if response and response.status_code != 200:
+            return PR_NOT_FOUND
+        self.pr_commit_diff = ignore_files(response.text)
+        return self.pr_commit_diff
 
     async def get_pr_details(self) -> PullRequestResponse:
         """
@@ -80,6 +108,7 @@ class GithubRepo(BaseRepo):
             "updated_on": pr_model.scm_updation_time(),
             "branch_name": pr_model.source_branch(),
             "commit_id": pr_model.commit_id(),
+            "destination_branch_commit": pr_model.destination_branch_commit(),
         }
         self.branch_name = data["branch_name"]
         return PullRequestResponse(**data)
@@ -90,19 +119,47 @@ class GithubRepo(BaseRepo):
             meta_info={"scm_workspace_id": self.scm_workspace_id()},
         )
 
+    async def get_file_stats_from_pulls(self):
+        """
+        Get PR file statistics using the pulls API endpoint.
+        """
+        pr_diff_stats_response = await self.repo_client.get_pr_diff_stats()
+
+        if pr_diff_stats_response:
+            return pr_diff_stats_response.json()
+
+    async def get_file_stats_from_commits(self, current_commit, last_reviewed_commit):
+        """
+        Get PR file statistics by comparing two commits.
+
+        Args:
+            current_commit (str): Current commit SHA
+            last_reviewed_commit (str): Last reviewed commit SHA
+        """
+        diff_stats_response = await self.repo_client.get_commit_diff_stats(current_commit, last_reviewed_commit)
+
+        if diff_stats_response:
+            return diff_stats_response.json().get("files", [])
+
     async def get_pr_stats(self):
         if self.pr_stats:
             return self.pr_stats
 
         # Compute stats
         total_added, total_removed = 0, 0
-        pr_diff_stats_response = await self.repo_client.get_pr_diff_stats()
-        if pr_diff_stats_response:
-            files_changed_data = pr_diff_stats_response.json()
-            if files_changed_data:
-                for file_stat in files_changed_data:
-                    total_added += file_stat.get("additions", 0)
-                    total_removed += file_stat.get("deletions", 0)
+
+        pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
+
+        files_changed_data = (
+            await self.get_file_stats_from_commits(self.pr_details.commit_id, get_context_value("last_reviewed_commit"))
+            if pr_reviewable_on_commit
+            else await self.get_file_stats_from_pulls()
+        )
+
+        if files_changed_data:
+            for file_stat in files_changed_data:
+                total_added += file_stat.get("additions", 0)
+                total_removed += file_stat.get("deletions", 0)
 
         self.pr_stats = {
             "total_added": total_added,
@@ -132,3 +189,23 @@ class GithubRepo(BaseRepo):
         return VCS_REPO_URL_MAP[self.vcs_type].format(
             token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
         )
+
+    async def get_pr_commits(self) -> list:
+        """Get all commits in the PR"""
+
+        commits = await self.repo_client.get_pr_commits()
+
+        # Format commits to standard structure
+        formatted_commits = []
+        for commit in commits:
+            formatted_commits.append(
+                {
+                    "hash": commit.get("sha"),
+                    "parents": commit.get("parents", []),
+                    "message": commit.get("commit", {}).get("message"),
+                    "date": commit.get("commit", {}).get("author", {}).get("date"),
+                    "author": commit.get("commit", {}).get("author", {}).get("name"),
+                }
+            )
+
+        return formatted_commits

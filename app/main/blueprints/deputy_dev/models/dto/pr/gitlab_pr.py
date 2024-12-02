@@ -57,3 +57,6 @@ class GitlabPrModel(BasePrModel):
 
     def diff_refs(self):
         return self.pr_detail["diff_refs"]
+
+    def destination_branch_commit(self):
+        return self.pr_detail["diff_refs"]["base_sha"]

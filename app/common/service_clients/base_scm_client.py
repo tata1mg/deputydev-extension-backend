@@ -132,6 +132,16 @@ class BaseSCMClient:
     ):
         return await self.request("PATCH", url, headers=headers, data=data, json=json, skip_headers=skip_headers)
 
+    async def delete(
+        self,
+        url: str,
+        data: t.Any = None,
+        json: t.Any = None,
+        headers: dict | None = None,
+        skip_headers: bool = False,
+    ):
+        return await self.request("DELETE", url, headers=headers, data=data, json=json, skip_headers=skip_headers)
+
     async def get_ws_token_headers(self):
         if not self.workspace_token_headers:
             dd_workspace_id = get_context_value("dd_workspace_id")
