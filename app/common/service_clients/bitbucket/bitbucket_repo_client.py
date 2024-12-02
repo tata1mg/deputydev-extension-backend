@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from sanic.log import logger
 from torpedo import CONFIG
+from torpedo.exceptions import HTTPRequestException
 
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
@@ -92,11 +91,30 @@ class BitbucketRepoClient(BaseSCMClient):
             f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/diff"
         )
         response = await self.get(diff_url)
-        if response.status_code != 200:
-            logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
+        if response.status_code not in [200, 404]:
+            error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
+            raise HTTPRequestException(status_code=response.status_code, error=error_msg)
         return response, response.status_code
 
-    async def create_comment_on_pr(self, comment: dict, model: str) -> Dict[str, Any]:
+    async def get_commit_diff(self, base_commit, destination_commit):
+        """
+        Get the diff between two commits in Bitbucket.
+
+        Args:
+            base_commit (str): The base commit hash.
+            destination_commit (str): The destination commit hash.
+
+        Returns:
+            str: The diff between the two commits.
+        """
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/diff/{base_commit}..{destination_commit}"
+        response = await self.get(diff_url)
+        if response.status_code not in [200, 404]:
+            error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
+            raise HTTPRequestException(status_code=response.status_code, error=error_msg)
+        return response, response.status_code
+
+    async def create_comment_on_pr(self, comment: dict, model: str):
         """
         Create a comment on the pull request.
 
@@ -110,7 +128,7 @@ class BitbucketRepoClient(BaseSCMClient):
         workspace_token_headers = await self.get_ws_token_headers()
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments"
         response = await self.post(url, json=comment, headers=workspace_token_headers, skip_headers=True)
-        return response.json()
+        return response
 
     async def get_comment_details(self, comment_id):
         """
@@ -137,13 +155,24 @@ class BitbucketRepoClient(BaseSCMClient):
         Returns:
             str: The diff of the pull request.
         """
-        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/diffstat"
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/diffstat/"
         response = await self.get(diff_url)
         if response.status_code != 200:
-            logger.error(
-                f"Unable to retrieve diff for PR - {self.pr_id} workspace "
-                f"{self.workspace_slug}: {response._content}"
-            )
+            AppLogger.log_error(f"Unable to retrieve diffstats for PR Response: {response._content}")
+            return None
+        return response
+
+    async def get_commit_diff_stats(self, base_commit, destination_commit):
+        """
+        Get the diff stat between two commits
+
+        Returns:
+            str: The diff of the pull request.
+        """
+        diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/diffstat/{base_commit}..{destination_commit}"
+        response = await self.get(diff_url)
+        if response.status_code != 200:
+            AppLogger.log_error(f"Unable to retrieve commit diffstats for PR Response: {response._content}")
             return None
         return response
 
@@ -172,5 +201,21 @@ class BitbucketRepoClient(BaseSCMClient):
         )
         response = await self.get(diff_url)
         if response.status_code != 200:
-            logger.error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
+            AppLogger.log_error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
         return response, response.status_code
+
+    async def get_pr_commits(self) -> list:
+        """Get all commits in a Bitbucket PR with pagination"""
+        url = (
+            f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/commits"
+        )
+
+        response = await self.get(url, params={"pagelen": 100})
+
+        if response and response.status_code == 200:
+            return response.json().get("values", [])
+
+        AppLogger.log_error(
+            f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"
+        )
+        return []

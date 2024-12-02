@@ -11,6 +11,9 @@ from app.main.blueprints.deputy_dev.models.dto.pr.gitlab_pr import GitlabPrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
@@ -68,6 +71,7 @@ class GitlabRepo(BaseRepo):
             "branch_name": pr_model.source_branch(),
             "commit_id": pr_model.commit_id(),
             "diff_refs": pr_model.diff_refs(),
+            "destination_branch_commit": pr_model.destination_branch_commit(),
         }
         return PullRequestResponse(**data)
 
@@ -125,6 +129,34 @@ class GitlabRepo(BaseRepo):
             self.pr_diff = ignore_files(combined_pr_diff)
         return self.pr_diff
 
+    async def get_commit_diff(self):
+        """
+        Get the diff between two commits in GitLab.
+
+        Args:
+            base_commit (str): The first commit hash.
+            destination_commit (str): The second commit hash.
+
+        Returns:
+            str: The diff between two commits.
+
+        Raises:
+            ValueError: If the repo diff cannot be retrieved.
+        """
+        if self.pr_commit_diff:
+            return self.pr_commit_diff
+
+        response, status_code = await self.repo_client.get_commit_diff(
+            self.pr_details.commit_id, get_context_value("last_reviewed_commit")
+        )
+        if status_code == 404:
+            return PR_NOT_FOUND
+
+        if response:
+            combined_repo_diff = self.create_combined_diff_text(response["changes"])
+            self.pr_commit_diff = ignore_files(combined_repo_diff)
+        return self.pr_commit_diff
+
     @staticmethod
     def create_combined_diff_text(changes):
         combined_diff = ""
@@ -151,7 +183,10 @@ class GitlabRepo(BaseRepo):
             return self.pr_stats
 
         total_added, total_removed = (0, 0)
-        pr_diff = await self.get_pr_diff()
+
+        pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
+
+        pr_diff = await self.get_commit_diff() if pr_reviewable_on_commit else await self.get_effective_pr_diff()
         diff_lines = pr_diff.split("\n")
 
         if diff_lines:
@@ -179,3 +214,23 @@ class GitlabRepo(BaseRepo):
         return VCS_REPO_URL_MAP[self.vcs_type].format(
             token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
         )
+
+    async def get_pr_commits(self) -> list:
+        """Get all commits in the PR"""
+
+        commits = await self.repo_client.get_pr_commits()
+
+        # Format commits to standard structure
+        formatted_commits = []
+        for commit in commits:
+            formatted_commits.append(
+                {
+                    "hash": commit.get("id"),
+                    "parents": [{"id": parent_id} for parent_id in commit.get("parent_ids", [])],
+                    "message": commit.get("message"),
+                    "date": commit.get("created_at"),
+                    "author": commit.get("author_name"),
+                }
+            )
+
+        return formatted_commits

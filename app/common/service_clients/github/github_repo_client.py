@@ -2,6 +2,7 @@ from typing import Optional
 
 from sanic.log import logger
 from torpedo import CONFIG
+from torpedo.exceptions import HTTPRequestException
 
 from app.common.constants.constants import VCSFailureMessages
 from app.common.service_clients.base_scm_client import BaseSCMClient
@@ -97,16 +98,33 @@ class GithubRepoClient(BaseSCMClient):
         headers = {}
         path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls/{self.pr_id}"
         headers["Accept"] = "application/vnd.github.v3.diff"
-        try:
-            result = await self.get(path, headers=headers)
-            return result
-        except Exception as ex:
-            logger.error(
-                f"unable to get github pr diff for repo_name: {self.repo}, "
-                f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} err {ex}"
-            )
 
-    async def get_pr_details(self, headers=None):
+        result = await self.get(path, headers=headers)
+        if result.status_code not in [200, 404]:
+            error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {result._content}"
+            raise HTTPRequestException(status_code=result.status_code, error=error_msg)
+        return result
+
+    async def get_commit_diff(self, commit_a, commit_b):
+        """
+        Get the diff between two commits in GitHub.
+
+        Args:
+            commit_a (str): The first commit hash.
+            commit_b (str): The second commit hash.
+
+        """
+        headers = {}
+        path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/compare/{commit_b}...{commit_a}"
+        headers["Accept"] = "application/vnd.github.v3.diff"
+
+        result = await self.get(path, headers=headers)
+        if result.status_code not in [200, 404]:
+            error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {result._content}"
+            raise HTTPRequestException(status_code=result.status_code, error=error_msg)
+        return result
+
+    async def get_pr_details(self):
         """
         returns pr details
         """
@@ -155,6 +173,23 @@ class GithubRepoClient(BaseSCMClient):
             return None
         return response
 
+    async def get_commit_diff_stats(self, base_commit, destination_commit, headers=None):
+        """
+        Get the diff stat between two commits
+
+        Returns:
+            str: The diff of the pull request.
+        """
+        headers = headers or {}
+        path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/compare/{destination_commit}...{base_commit}"
+        headers["Accept"] = "application/vnd.github+json"
+
+        response = await self.get(path, headers=headers)
+        if response.status_code != 200:
+            AppLogger.log_error(f"Unable to retrieve diff for PR - {response.status_code}")
+            return None
+        return response
+
     async def update_pr_details(self, payload) -> Optional[dict]:
         """
         Update the details of a pull request on GitHub.
@@ -175,15 +210,9 @@ class GithubRepoClient(BaseSCMClient):
         else:
             AppLogger.log_error("PR couldn't updated {}".format(response.json()))
 
-    async def get_pr_commits(self) -> dict:
+    async def get_pr_commits(self) -> list:
         """
         Get the latest commit SHA of a pull request on GitHub.
-
-        Args:
-            user_name (str): The owner of the repository.
-            repo_name (str): The name of the repository.
-            pr_id (int): The ID number of the pull request.
-            headers (dict, optional): Additional headers to pass in the request.
 
         Returns:
             dict: Response containing the latest commit SHA.
@@ -191,10 +220,31 @@ class GithubRepoClient(BaseSCMClient):
         headers = {}
         path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls/{self.pr_id}/commits"
         headers["Accept"] = "application/vnd.github+json"
+        commits = []
 
-        response = await self.get(path, headers=headers)
+        params = {"per_page": 100, "page": 1}  # Maximum page size for GitHub
 
-        return response.json()
+        while True:
+            response = await self.get(path, params=params, headers=headers)
+            if not response or response.status_code != 200:
+                AppLogger.log_error(
+                    f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"
+                )
+                break
+
+            data = response.json()
+            if not data:
+                break
+
+            commits.extend(data)
+
+            # Check if we've received less than the maximum items per page
+            if len(data) < params["per_page"]:
+                break
+
+            params["page"] += 1
+
+        return list(reversed(commits))
 
     async def get_pr_comments(self) -> list:
         """

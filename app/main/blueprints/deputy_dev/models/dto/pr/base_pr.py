@@ -78,6 +78,9 @@ class BasePrModel:
     def commit_id(self):
         raise NotImplementedError()
 
+    def destination_branch_commit(self):
+        raise NotImplementedError()
+
     def get_pr_info(self) -> dict:
         pr_details = {
             "quality_score": self.quality_score(),
@@ -96,5 +99,6 @@ class BasePrModel:
             "destination_branch": self.destination_branch(),
             "commit_id": self.commit_id(),
             "loc_changed": self.loc_changed(),
+            "destination_commit_id": self.destination_branch_commit(),
         }
         return pr_details

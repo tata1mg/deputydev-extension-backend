@@ -32,7 +32,7 @@ class PRWebhook:
         request_id = bitbucket_payload["request_id"]
         workspace = bitbucket_payload["repository"]["workspace"]["name"]
         workspace_slug = bitbucket_payload["repository"]["workspace"]["slug"]
-        prompt_version = bitbucket_payload.get("prompt_version")
+        prompt_version = bitbucket_payload.get("prompt_version", "v2")
         scm_workspace_id = str(bitbucket_payload.get("scm_workspace_id"))
         vcs_type = VCSTypes.bitbucket.value
         return {
@@ -51,14 +51,15 @@ class PRWebhook:
         """
         Generates servable payload from github payload
         """
-        if github_payload.get("action") != GithubActions.OPENED.value:
+        #  only gets request for PR open and comment created on a PR with #review tag
+        if github_payload.get("action") not in [GithubActions.OPENED.value, GithubActions.CREATED.value]:
             return
         pr_id = github_payload["pull_request"]["number"]
         repo_name = get_vcs_repo_name_slug(github_payload["pull_request"]["head"]["repo"]["full_name"])
         request_id = github_payload["request_id"]
         workspace = github_payload["organization"]["login"]
         workspace_slug = github_payload["organization"]["login"]
-        prompt_version = github_payload.get("prompt_version")
+        prompt_version = github_payload.get("prompt_version", "v2")
         scm_workspace_id = str(github_payload.get("scm_workspace_id"))
         vcs_type = VCSTypes.github.value
         return {
@@ -88,7 +89,7 @@ class PRWebhook:
         workspace = gitlab_payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(gitlab_payload["project"]["path_with_namespace"])
         repo_id = gitlab_payload["project"]["id"]
-        prompt_version = gitlab_payload.get("prompt_version")
+        prompt_version = gitlab_payload.get("prompt_version", "v2")
         scm_workspace_id = str(gitlab_payload.get("scm_workspace_id"))
         vcs_type = VCSTypes.gitlab.value
 

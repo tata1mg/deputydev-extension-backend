@@ -15,6 +15,9 @@ from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 from app.main.blueprints.deputy_dev.utils import (
     categorize_loc,
     format_summary_loc_time_text,
@@ -49,6 +52,7 @@ class BaseRepo(ABC):
         self.repo_id = repo_id
         self.auth_handler = auth_handler
         self.workspace_slug = workspace_slug
+        self.pr_commit_diff = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -152,8 +156,30 @@ class BaseRepo(ABC):
         """
         raise NotImplementedError()
 
+    async def get_effective_pr_diff(self):
+        """
+        Determines whether to fetch the full PR diff or a specific commit diff.
+        Returns:
+            str: The appropriate diff based on context.
+        """
+        pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
+        if pr_reviewable_on_commit:
+            return await self.get_commit_diff()
+        return await self.get_pr_diff()
+
     @abstractmethod
     async def get_pr_diff(self):
+        """
+        Get pr diff
+        Args:
+        Returns: str: PR diff
+            An object containing details of the pull request.
+        Raises:
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_commit_diff(self):
         """
         Get pr diff
         Args:
@@ -201,7 +227,7 @@ class BaseRepo(ABC):
         raise NotImplementedError()
 
     async def get_pr_diff_token_count(self) -> int:
-        pr_diff = await self.get_pr_diff()
+        pr_diff = await self.get_effective_pr_diff()
         if not pr_diff or pr_diff == PR_NOT_FOUND:
             return 0
         return get_token_count(pr_diff)
@@ -239,4 +265,23 @@ class BaseRepo(ABC):
             AppLogger.log_error(f"PR description was not updated {ex}")
 
     def get_repo_url(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_pr_commits(self) -> list:
+        """
+        Get all commits in the PR with pagination support.
+
+        Returns:
+            list: List of commits in standardized format:
+            [
+                {
+                    'hash': str,          # Commit hash
+                    'parents': list,      # List of parent commits
+                    'message': str,       # Commit message
+                    'date': str,          # Commit date
+                    'author': str         # Author information
+                }
+            ]
+        """
         raise NotImplementedError()

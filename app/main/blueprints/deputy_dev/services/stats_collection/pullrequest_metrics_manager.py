@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
@@ -54,17 +52,6 @@ class PullRequestMetricsManager(StatsCollectionBase):
         if not self.pr_dto:  # PR is raised before onboarding time
             return
         self.payload["pr_closed_at"] = convert_to_datetime(self.payload["pr_closed_at"])
-        pr_time_since_creation = (
-            datetime.now(timezone.utc) - self.pr_dto.scm_creation_time.astimezone(timezone.utc)
-        ).total_seconds()
-
-        if (
-            self.pr_dto.review_status == PrStatusTypes.FAILED.value
-            and pr_time_since_creation < self.sqs_message_retention_time
-        ):
-            raise RetryException(
-                f"PR: {self.payload['scm_pr_id']} is in sqs and still have a chance to be reviewed by Deputydev"
-            )
 
         if self.pr_dto.review_status == PrStatusTypes.IN_PROGRESS.value:
             raise RetryException(f"PR: {self.payload['scm_pr_id']} is still in progress to be reviewed by Deputydev")
@@ -72,12 +59,13 @@ class PullRequestMetricsManager(StatsCollectionBase):
         if self.pr_dto.review_status not in [PrStatusTypes.COMPLETED.value, PrStatusTypes.REJECTED_EXPERIMENT.value]:
             # For not completed or not rejected experiment we will just be updating the pr state of both experiments and pull request
             # table without updating comment count.
+
             await PRService.db_update(
                 payload={
                     "pr_state": self.payload["pr_state"],
                     "scm_close_time": self.payload["pr_closed_at"],
                 },
-                filters={"repo_id": self.repo_dto.id, "scm_pr_id": self.payload["scm_pr_id"]},
+                filters={"scm_pr_id": self.pr_dto.scm_pr_id, "repo_id": self.pr_dto.repo_id},
             )
             return
 
@@ -92,7 +80,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
                 "scm_close_time": self.payload["pr_closed_at"],
                 "pr_state": self.payload["pr_state"],
             },
-            filters={"repo_id": self.repo_dto.id, "scm_pr_id": self.payload["scm_pr_id"]},
+            filters={"scm_pr_id": self.pr_dto.scm_pr_id, "repo_id": self.pr_dto.repo_id},
         )
         if ExperimentService.is_eligible_for_experiment():
             await ExperimentService.db_update(

@@ -14,6 +14,9 @@ from app.main.blueprints.deputy_dev.models.dto.pr.bitbucket_pr import BitbucketP
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
@@ -77,6 +80,7 @@ class BitbucketRepo(BaseRepo):
             "title": pr_model.title(),
             "description": pr_model.description(),
             "commit_id": pr_model.commit_id(),
+            "destination_branch_commit": pr_model.destination_branch_commit(),
         }
         return PullRequestResponse(**data)
 
@@ -128,6 +132,33 @@ class BitbucketRepo(BaseRepo):
             self.pr_diff = ignore_files(pr_diff.text)
         return self.pr_diff
 
+    async def get_commit_diff(self):
+        """
+        Get the diff between two commits in Bitbucket.
+
+        Args:
+            base_commit (str): The first commit hash.
+            destination_commit (str): The second commit hash.
+
+        Returns:
+            str: The diff between two commits.
+
+        Raises:
+            ValueError: If the repo diff cannot be retrieved.
+        """
+        if self.pr_commit_diff:
+            return self.pr_commit_diff
+
+        commit_diff, status_code = await self.repo_client.get_commit_diff(
+            self.pr_details.commit_id, get_context_value("last_reviewed_commit")
+        )
+        if status_code == 404:
+            return PR_NOT_FOUND
+
+        if commit_diff:
+            self.pr_commit_diff = ignore_files(commit_diff.text)
+        return self.pr_commit_diff
+
     def __get_issue_id(self, title) -> str:
         title_html = title.get("html", "")
         if title_html:
@@ -148,7 +179,16 @@ class BitbucketRepo(BaseRepo):
             return self.pr_stats
         # compute stats
         total_added, total_removed = (0, 0)
-        pr_diff_stats_response = await self.repo_client.get_pr_diff_stats()
+        pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
+
+        pr_diff_stats_response = (
+            await self.repo_client.get_commit_diff_stats(
+                self.pr_details.commit_id, get_context_value("last_reviewed_commit")
+            )
+            if pr_reviewable_on_commit
+            else await self.repo_client.get_pr_diff_stats()
+        )
+
         if pr_diff_stats_response:
             files_changed_data = pr_diff_stats_response.json()
             if files_changed_data and files_changed_data.get("values"):
@@ -176,3 +216,23 @@ class BitbucketRepo(BaseRepo):
         return VCS_REPO_URL_MAP[self.vcs_type].format(
             token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
         )
+
+    async def get_pr_commits(self) -> list:
+        """Get all commits in the PR"""
+
+        commits = await self.repo_client.get_pr_commits()
+
+        # Format commits to standard structure
+        formatted_commits = []
+        for commit in commits:
+            formatted_commits.append(
+                {
+                    "hash": commit.get("hash"),
+                    "parents": commit.get("parents", []),
+                    "message": commit.get("message"),
+                    "date": commit.get("date"),
+                    "author": commit.get("author", {}).get("raw"),
+                }
+            )
+
+        return formatted_commits

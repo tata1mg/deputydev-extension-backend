@@ -1,3 +1,5 @@
+from typing import Optional
+
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -11,21 +13,28 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
+from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
+    AffirmationService,
+)
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
+)
+from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
+    WorkspaceService,
 )
 
 config = CONFIG.config
 
 
 class PRReviewPreProcessor:
-    def __init__(self, repo_service: BaseRepo, comment_service: BaseComment):
+    def __init__(self, repo_service: BaseRepo, comment_service: BaseComment, affirmation_service: AffirmationService):
         self.repo_service = repo_service
         self.comment_service = comment_service
         self.pr_model = repo_service.pr_model()
@@ -36,6 +45,9 @@ class PRReviewPreProcessor:
         self.meta_info = {}
         self.pr_dto = None
         self.pr_diff_token_count = None
+        self.affirmation_service = affirmation_service
+        self.completed_pr_count = 0
+        self.loc_changed = 0
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         await self.insert_pr_record()
@@ -54,25 +66,166 @@ class PRReviewPreProcessor:
         return False
 
     async def insert_pr_record(self):
+        self.pr_dto = await self.process_pr_record()
+        if self.pr_dto:
+            set_context_values(team_id=self.pr_dto.team_id)
+
+    async def process_pr_record(self) -> Optional[PullRequestDTO]:
+        """Process PR record creation/update logic"""
+
+        workspace_dto = await WorkspaceService.find(
+            scm_workspace_id=self.pr_model.scm_workspace_id(), scm=self.pr_model.scm_type()
+        )
+        if not workspace_dto:
+            return None
+
+        repo_dto = await RepoService.find_or_create(
+            workspace_id=workspace_dto.id, team_id=workspace_dto.team_id, pr_model=self.pr_model
+        )
+        if not repo_dto:
+            return None
+
+        # Check for existing reviewed PR
+        reviewed_pr_dto = await self._get_reviewed_pr(repo_dto.id)
+
+        # Handle already reviewed PRx
+        if reviewed_pr_dto and reviewed_pr_dto.commit_id == self.pr_model.commit_id():
+            # Will be used to post affirmation message
+            self.is_valid = False
+            self.review_status = PrStatusTypes.ALREADY_REVIEWED.value
+            return None
+
+        # Set commit review context
+        pr_reviewable_on_commit = False
+        last_reviewed_commit = None
+        has_reviewed_entry = False  # Signifies if PR has any reviewed completed existing entry in DB
+
+        if reviewed_pr_dto:  # Got an entry with same destination branch
+            review_full_pr = await self.should_do_full_review(reviewed_pr_dto.commit_id, self.pr_model.commit_id())
+            has_reviewed_entry = True
+            if not review_full_pr:
+                pr_reviewable_on_commit = True
+                last_reviewed_commit = reviewed_pr_dto.commit_id
+
+        set_context_values(
+            pr_reviewable_on_commit=pr_reviewable_on_commit,
+            last_reviewed_commit=last_reviewed_commit,
+            has_reviewed_entry=has_reviewed_entry,
+        )
         self.pr_diff_token_count = await self.repo_service.get_pr_diff_token_count()
         self.meta_info["tokens"] = {TokenTypes.PR_DIFF_TOKENS.value: self.pr_diff_token_count}
-        loc_changed = await self.repo_service.get_loc_changed_count()
-        self.pr_dto = await PRService.find_or_create(
-            self.pr_model, PrStatusTypes.IN_PROGRESS.value, loc_changed, self.meta_info
+        self.loc_changed = await self.repo_service.get_loc_changed_count()
+
+        # Check for failed PR
+        failed_pr_filters = {
+            "scm_pr_id": self.pr_model.scm_pr_id(),
+            "repo_id": repo_dto.id,
+            "review_status": PrStatusTypes.FAILED.value,
+        }
+        failed_pr_dto = await PRService.find(filters=failed_pr_filters)
+
+        if failed_pr_dto:
+            # Update failed PR
+            update_data = {
+                "commit_id": self.pr_model.commit_id(),
+                "destination_commit_id": self.pr_model.destination_branch_commit(),
+                "review_status": PrStatusTypes.IN_PROGRESS.value,
+                "destination_branch": self.pr_model.destination_branch(),
+                "loc_changed": self.loc_changed,
+                "meta_info": self.meta_info,
+            }
+            return await PRService.db_update(filters={"id": failed_pr_dto.id}, payload=update_data)
+
+        else:
+            self.pr_model.meta_info = {
+                "review_status": PrStatusTypes.IN_PROGRESS.value,
+                "team_id": repo_dto.team_id,
+                "workspace_id": repo_dto.workspace_id,
+                "repo_id": repo_dto.id,
+            }
+            # Create new entry for PR
+            pr_dto_data = {
+                **self.pr_model.get_pr_info(),
+                "pr_state": self.pr_model.scm_state(),
+                "loc_changed": self.loc_changed,
+            }
+            pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
+            if not pr_dto:  # Handle integrity error case
+                self.is_valid = False
+                self.review_status = PrStatusTypes.ALREADY_REVIEWED.value
+                return None
+
+            return pr_dto
+
+    async def _get_reviewed_pr(self, repo_id: str) -> Optional[PullRequestDTO]:
+        """Get previously reviewed PR if exists"""
+        reviewed_pr_filters = {
+            "scm_pr_id": self.pr_model.scm_pr_id(),
+            "repo_id": repo_id,
+            "destination_branch": self.pr_model.destination_branch(),
+            "review_status__in": [
+                PrStatusTypes.COMPLETED.value,
+                PrStatusTypes.REJECTED_LARGE_SIZE.value,
+                PrStatusTypes.REJECTED_NO_DIFF.value,
+                PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value,
+                PrStatusTypes.REJECTED_INVALID_REQUEST.value,
+            ],
+        }
+        return await PRService.find(filters=reviewed_pr_filters, order_by=["-iteration"])
+
+    async def should_do_full_review(self, last_reviewed_commit: str, current_commit: str) -> bool:
+        """
+        Check if PR needs full review by detecting rebase or merge commits
+
+        Args:
+            last_reviewed_commit: Last reviewed commit hash
+            current_commit: Current commit hash
+
+        Returns:
+            bool: True if PR should be fully reviewed (rebase detected or merge commits present)
+        """
+        commits = await self.repo_service.get_pr_commits()
+        if not commits:
+            return True
+
+        current_commit_index = None
+        last_review_commit_index = None
+
+        # Find current commit and last commit index in PR commits
+        for i, commit in enumerate(commits):
+            if commit["hash"].startswith(current_commit):
+                current_commit_index = i
+            if commit["hash"].startswith(last_reviewed_commit):
+                last_review_commit_index = i
+
+        if last_review_commit_index is None:  # Rebased case, last reviewed commit not found in current pr commits
+            return True
+
+        # Checks if any commit in range is a merge commit with two or more than two parents
+        return any(
+            len(commit.get("parents", [])) > 1 for commit in commits[current_commit_index:last_review_commit_index]
         )
-        set_context_values(team_id=self.pr_dto.team_id)
 
     async def run_validations(self):
         self.validate_pr_state_for_review()
+
         if self.is_valid:
             await self.validate_pr_diff()
             if self.is_valid:
                 await self.validate_repo_clone()
+
         if not self.is_valid:
-            await self.update_pr_status(self.pr_dto.id)
+            if self.pr_dto:
+                await self.update_pr_status(self.pr_dto)
+            await self.process_invalid_prs()
+
+    async def process_invalid_prs(self):
+        await self.affirmation_service.create_affirmation_reply(
+            review_status=self.review_status, commit_id=self.pr_model.commit_id()
+        )
 
     async def validate_pr_diff(self):
-        pr_diff = await self.repo_service.get_pr_diff()
+        pr_diff = await self.repo_service.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_INVALID_REQUEST.value
@@ -106,17 +259,22 @@ class PRReviewPreProcessor:
         )
         if experiment_set != PRReviewExperimentSet.ReviewTest.value:
             self.review_status = PrStatusTypes.REJECTED_EXPERIMENT.value
-            await self.update_pr_status(self.pr_dto.id)
+            await self.update_pr_status(self.pr_dto)
             await self.update_pr_experiment_status(self.pr_dto.id, ExperimentStatusTypes.COMPLETED.value)
         return experiment_set
 
-    async def update_pr_status(self, pr_id):
+    async def update_pr_status(self, pr_dto):
+
+        self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
+
         await PRService.db_update(
             payload={
                 "review_status": self.review_status,
                 "meta_info": self.meta_info if self.meta_info else None,
+                "iteration": self.completed_pr_count + 1,
+                "loc_changed": self.loc_changed,
             },
-            filters={"id": pr_id},
+            filters={"id": pr_dto.id},
         )
 
     async def update_pr_experiment_status(self, pr_id, status):

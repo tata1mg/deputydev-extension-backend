@@ -39,6 +39,14 @@ class GitlabComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
+    async def create_comment_on_parent(self, comment: str, parent_id, model):
+        """creates comment on whole pr"""
+        comment_payload = {"body": format_comment(comment)}
+        response = await self.repo_client.create_comment_on_parent(comment_payload, parent_id)
+        if not response or response.status_code != 201:
+            logger.error(f"unable to make whole PR comment {self.meta_data}")
+        return response
+
     async def create_pr_review_comment(self, comment, model):
         """Creates comments on PR lines"""
         logger.info(f"Comment payload: {comment}")
