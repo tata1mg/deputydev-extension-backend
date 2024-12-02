@@ -48,6 +48,18 @@ class PrStatusTypes(Enum):
     REJECTED_CLONING_FAILED_WITH_128 = "REJECTED_CLONING_FAILED_WITH_128"
     REJECTED_INVALID_REQUEST = "REJECTED_INVALID_REQUEST"
     FAILED = "FAILED"
+    ALREADY_REVIEWED = "ALREADY_REVIEWED"  # This is not representing db state, used to post affirmation reply msg
+
+
+PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
+    PrStatusTypes.IN_PROGRESS.value: "DeputyDev has started reviewing your pull request.",
+    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}",
+    PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value: "DeputyDev encountered an error cloning the repository for commit {commit_id}. Please verify your repository settings or PR and try again.",
+    PrStatusTypes.REJECTED_LARGE_SIZE.value: "This PR for commit {commit_id} is too large. Ideal PRs should not exceed 150-200 lines. Large PRs are harder to review and more likely to be rejected or reverted. Please consider breaking down your changes into smaller, more manageable pull requests.",
+    PrStatusTypes.REJECTED_NO_DIFF.value: "There is no code difference for commit {commit_id} to review in this pull request. Please ensure there are changes in the PR before requesting a review.",
+    PrStatusTypes.REJECTED_INVALID_REQUEST.value: "There seems to be an issue with this pull request for commit {commit_id}. Please make sure the PR is set up correctly and try again.",
+    PrStatusTypes.ALREADY_REVIEWED.value: "DeputyDev has already reviewed this PR on commit {commit_id}",
+}
 
 
 class LLMCommentTypes(Enum):

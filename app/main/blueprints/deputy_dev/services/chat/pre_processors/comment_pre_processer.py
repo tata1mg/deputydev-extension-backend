@@ -52,7 +52,7 @@ class CommentPreprocessor(Enum):
         if workspace_dto:
             repo_dto = await RepoService.find(scm_repo_id=pr_model.scm_repo_id(), workspace_id=workspace_dto.id)
             if repo_dto:
-                pr_dto = await PRService.find(repo_id=repo_dto.id, scm_pr_id=pr_model.scm_pr_id())
+                pr_dto = await PRService.find(filters={"scm_pr_id": pr_model.scm_pr_id(), "repo_id": repo_dto.id})
         payload = {
             "feedback_type": feedback_type,
             "feedback": chat_request.comment.raw,

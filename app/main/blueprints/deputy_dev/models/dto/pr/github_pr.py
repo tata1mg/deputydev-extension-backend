@@ -54,3 +54,6 @@ class GitHubPrModel(BasePrModel):
 
     def scm_repo_id(self):
         return str(self.pr_detail["head"]["repo"]["id"])
+
+    def destination_branch_commit(self):
+        return self.pr_detail["base"]["sha"]

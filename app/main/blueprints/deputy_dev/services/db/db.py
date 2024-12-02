@@ -36,6 +36,13 @@ class DB(ORMWrapper):
         return results
 
     @classmethod
+    async def count_by_filters(cls, model_name, filters, order_by=None, limit=None, offset=None):
+        result = await cls.get_by_filters_count(
+            model=model_name, filters=filters, order_by=order_by, limit=limit, offset=offset
+        )
+        return result
+
+    @classmethod
     async def by_filters_in_batches(cls, model_name, where_clause, limit=None):
         batch_offset, results = 0, []
         limit = limit

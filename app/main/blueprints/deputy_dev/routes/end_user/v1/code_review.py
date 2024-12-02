@@ -53,6 +53,7 @@ async def chat_assistance_api(_request: Request, **kwargs):
     query_params = _request.request_params()
     headers = _request.headers
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
+    payload["request_id"] = request_id
     # TODO - Unfulfilled parameter - comment
     await SmartCodeChatManager.chat(payload, query_params)
     return send_response(f"Processing Started with Request ID : {request_id}")

@@ -19,6 +19,10 @@ from app.main.blueprints.deputy_dev.services.bucket.bucket_service import Bucket
 from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
     PRScoreHelper,
 )
+from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
+    AffirmationService,
+)
+from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.comment_bucket_mapping_Service import (
     CommentBucketMappingService,
 )
@@ -30,13 +34,30 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
+from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+
+config = CONFIG.config
 
 
 class PRReviewPostProcessor:
-    @classmethod
-    async def post_process_pr_large_pr(cls, pr_dto: PullRequestDTO, tokens_data):
+    def __init__(self, repo_service: BaseRepo, comment_service: BaseComment, affirmation_service: AffirmationService):
+        self.repo_service = repo_service
+        self.comment_service = comment_service
+        self.pr_model = repo_service.pr_model()
+        self.affirmation_service = affirmation_service
+        self.completed_pr_count = 0
+        self.review_status = None
+        self.loc_changed = 0
+
+    async def post_process_pr_large_pr(self, pr_dto: PullRequestDTO, tokens_data):
+        self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
         await PRService.db_update(
-            payload={"review_status": PrStatusTypes.REJECTED_LARGE_SIZE.value, "meta_info": {"tokens": tokens_data}},
+            payload={
+                "review_status": self.review_status,
+                "meta_info": {"tokens": tokens_data},
+                "iteration": self.completed_pr_count + 1,
+                "loc_changed": self.loc_changed,
+            },
             filters={"id": pr_dto.id},
         )
         if ExperimentService.is_eligible_for_experiment():
@@ -45,13 +66,15 @@ class PRReviewPostProcessor:
                 filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
             )
 
-    @classmethod
-    async def post_process_pr_no_comments(cls, pr_dto: PullRequestDTO, tokens_data, extra_info: dict = None):
+    async def post_process_pr_no_comments(self, pr_dto: PullRequestDTO, tokens_data, extra_info: dict = None):
+        self.review_status = PrStatusTypes.COMPLETED.value
         await PRService.db_update(
             payload={
-                "review_status": PrStatusTypes.COMPLETED.value,
-                "meta_info": cls.pr_meta_info(pr_dto, tokens_data, extra_info=extra_info),
-                "quality_score": cls.get_pr_score([], {}),
+                "review_status": self.review_status,
+                "meta_info": self.pr_meta_info(pr_dto, tokens_data, extra_info=extra_info),
+                "quality_score": self.get_pr_score([], {}),
+                "iteration": self.completed_pr_count + 1,
+                "loc_changed": self.loc_changed,
             },
             filters={"id": pr_dto.id},
         )
@@ -61,8 +84,8 @@ class PRReviewPostProcessor:
                 filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
             )
 
-    @classmethod
-    async def post_process_pr_experiment_purpose(cls, pr_dto: PullRequestDTO):
+    @staticmethod
+    async def post_process_pr_experiment_purpose(pr_dto: PullRequestDTO):
         await PRService.db_update(
             payload={
                 "review_status": PrStatusTypes.REJECTED_EXPERIMENT.value,
@@ -75,23 +98,31 @@ class PRReviewPostProcessor:
                 filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
             )
 
-    @classmethod
     async def post_process_pr(
-        cls, pr_dto: PullRequestDTO, llm_comments: dict, tokens_data: dict, is_large_pr: bool, extra_info: dict = None
+        self, pr_dto: PullRequestDTO, llm_comments: dict, tokens_data: dict, is_large_pr: bool, extra_info: dict = None
     ):
-        if is_large_pr:
-            await cls.post_process_pr_large_pr(pr_dto, tokens_data)
-        elif llm_comments:
-            await cls.post_process_pr_with_comments(pr_dto, llm_comments, tokens_data, extra_info)
-        else:
-            await cls.post_process_pr_no_comments(pr_dto, tokens_data, extra_info)
+        self.loc_changed = await self.repo_service.get_loc_changed_count()
+        self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
-    @classmethod
+        if is_large_pr:
+            await self.post_process_pr_large_pr(pr_dto, tokens_data)
+        elif llm_comments:
+            await self.post_process_pr_with_comments(pr_dto, llm_comments, tokens_data, extra_info)
+        else:
+            await self.post_process_pr_no_comments(pr_dto, tokens_data, extra_info)
+
+        await self.process_affirmation_message()
+
+    async def process_affirmation_message(self):
+        await self.affirmation_service.create_affirmation_reply(
+            review_status=PrStatusTypes.COMPLETED.value, commit_id=self.pr_model.commit_id()
+        )
+
     async def post_process_pr_with_comments(
-        cls, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
+        self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
     ):
-        buckets_data, comments = await cls.save_llm_comments(pr_dto, llm_comments)
-        await cls.update_pr(pr_dto, comments, buckets_data, tokens_data, extra_info=extra_info)
+        buckets_data, comments = await self.save_llm_comments(pr_dto, llm_comments)
+        await self.update_pr(pr_dto, comments, buckets_data, tokens_data, extra_info=extra_info)
         if ExperimentService.is_eligible_for_experiment():
             await ExperimentService.db_update(
                 payload={
@@ -101,8 +132,8 @@ class PRReviewPostProcessor:
                 filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
             )
 
-    @classmethod
-    def combine_all_agents_comments(cls, llm_agents_comments):
+    @staticmethod
+    def combine_all_agents_comments(llm_agents_comments):
         all_comments = []
 
         for agent, data in llm_agents_comments.items():
@@ -117,8 +148,8 @@ class PRReviewPostProcessor:
 
         return all_comments
 
-    @classmethod
-    def get_pr_score(cls, llm_comments: list, buckets_data: Dict[str, BucketDTO]):
+    @staticmethod
+    def get_pr_score(llm_comments: list, buckets_data: Dict[str, BucketDTO]):
         weight_counts_data = {}
         for comment in llm_comments:
             for bucket in comment["buckets"]:
@@ -128,8 +159,8 @@ class PRReviewPostProcessor:
                     )
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
-    @classmethod
-    async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[dict]):
+    @staticmethod
+    async def save_llm_comments(pr_dto: PullRequestDTO, llm_comments: List[dict]):
         all_buckets = await BucketService.get_all_buckets_dict()
         new_buckets = []
         unique_buckets = set()
@@ -203,34 +234,35 @@ class PRReviewPostProcessor:
 
         return all_buckets, llm_comments
 
-    @classmethod
-    async def update_pr(cls, pr_dto: PullRequestDTO, llm_comments, buckets_data, tokens_data, extra_info: dict = None):
-        pr_score = cls.get_pr_score(llm_comments, buckets_data)
+    async def update_pr(self, pr_dto: PullRequestDTO, llm_comments, buckets_data, tokens_data, extra_info: dict = None):
+        pr_score = self.get_pr_score(llm_comments, buckets_data)
+        self.review_status = PrStatusTypes.COMPLETED.value
         await PRService.db_update(
             payload={
-                "review_status": PrStatusTypes.COMPLETED.value,
-                "meta_info": cls.pr_meta_info(pr_dto, tokens_data, llm_comments=llm_comments, extra_info=extra_info),
+                "review_status": self.review_status,
+                "meta_info": self.pr_meta_info(pr_dto, tokens_data, llm_comments=llm_comments, extra_info=extra_info),
                 "quality_score": pr_score,
+                "iteration": self.completed_pr_count + 1,
+                "loc_changed": self.loc_changed,
             },
             filters={"id": pr_dto.id},
         )
 
-    @classmethod
-    def pr_meta_info(cls, pr_dto: PullRequestDTO, tokens_data, llm_comments: dict = None, extra_info: dict = None):
+    def pr_meta_info(self, pr_dto: PullRequestDTO, tokens_data, llm_comments: dict = None, extra_info: dict = None):
         llm_comments, extra_info = llm_comments or [], extra_info or {}
         return {
             "pr_review_tat_in_secs": int(
                 (datetime.now(timezone.utc) - pr_dto.scm_creation_time.astimezone(timezone.utc)).total_seconds()
             ),
             "execution_time_in_secs": int((datetime.now() - extra_info["execution_start_time"]).total_seconds()),
-            "tokens": cls.format_token(tokens_data)["tokens"],
+            "tokens": self.format_token(tokens_data)["tokens"],
             "total_comments": len(llm_comments),
             "issue_id": extra_info.get("issue_id"),
             "confluence_id": extra_info.get("confluence_doc_id"),
         }
 
-    @classmethod
-    def format_token(cls, tokens_data: dict):
+    @staticmethod
+    def format_token(tokens_data: dict):
         tokens = {}
         for agent_name, agent_tokens in tokens_data.items():
             tokens[agent_name] = agent_tokens

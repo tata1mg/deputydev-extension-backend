@@ -13,6 +13,25 @@ class ChatWebhook:
     """
 
     @classmethod
+    def get_raw_comment(cls, payload):
+        vcs_type = payload.get("vcs_type")
+        if vcs_type == VCSTypes.bitbucket.value:
+            comment = payload.get("comment")
+            return remove_special_char("\\", comment["content"]["raw"])
+        elif vcs_type == VCSTypes.github.value:
+            if payload.get("action") != GithubActions.CREATED.value:
+                return None
+
+            comment_data = payload.get("comment", {})
+            if not comment_data:
+                return None
+            return comment_data.get("body", "")
+
+        elif vcs_type == VCSTypes.gitlab.value:
+            return payload.get("object_attributes", {}).get("note")
+        return None
+
+    @classmethod
     async def parse_payload(cls, payload):
         vcs_type = payload.get("vcs_type")
         if vcs_type == VCSTypes.bitbucket.value:

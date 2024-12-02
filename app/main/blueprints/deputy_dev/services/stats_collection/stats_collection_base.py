@@ -74,9 +74,13 @@ class StatsCollectionBase(ABC):
                 f"{self.stats_type} webhook failed for repo {payload['repo_name']} due to" f"repo not registered"
             )
 
-        self.pr_dto = await PRService.find(repo_id=self.repo_dto.id, scm_pr_id=payload["scm_pr_id"])
+        self.pr_dto = await PRService.find(
+            filters={"scm_pr_id": payload["scm_pr_id"], "repo_id": self.repo_dto.id, "iteration": 1}
+        )
         if not self.pr_dto:
-            if self.pr_created_after_onboarding_time():
+            if (
+                self.pr_created_after_onboarding_time()
+            ):  # Failed case will also be handled as it will not have iteration value
                 raise RetryException(f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev")
 
     async def generate_old_payload(self):

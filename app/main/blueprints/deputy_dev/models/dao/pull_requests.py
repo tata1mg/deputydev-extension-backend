@@ -28,6 +28,8 @@ class PullRequests(Base):
         "scm_creation_time",
         "scm_close_time",
         "commit_id",
+        "destination_commit_id",
+        "iteration",
         "meta_info",
         "loc_changed",
         "pr_state",
@@ -51,13 +53,17 @@ class PullRequests(Base):
     scm_creation_time = NaiveDatetimeField(null=True)
     scm_close_time = NaiveDatetimeField(null=True)
     commit_id = CITextField(max_length=1000)
+    destination_commit_id = CITextField(max_length=1000)
+    iteration = fields.BigIntField(null=True)
     loc_changed = fields.BigIntField(null=False)
     pr_state = fields.CharField(max_length=100, null=False)
     scm_approval_time = NaiveDatetimeField(null=True)
 
     class Meta:
         table = "pull_requests"
-        unique_together = (("team_id", "scm", "workspace_id", "repo_id", "scm_pr_id"),)
+        unique_together = (
+            ("team_id", "scm", "workspace_id", "repo_id", "scm_pr_id", "destination_commit_id", "commit_id"),
+        )
         indexes = (
             ("team_id", "created_at", "scm"),
             ("repo_id", "created_at"),
@@ -85,6 +91,8 @@ class PullRequests(Base):
         scm_creation_time = ("scm_creation_time",)
         scm_close_time = ("scm_close_time",)
         commit_id = ("commit_id",)
+        destination_commit_id = ("destination_commit_id",)
+        iteration = "iteration"
         loc_changed = ("loc_changed",)
         pr_state = ("pr_state",)
         scm_approval_time = ("scm_approval_time",)

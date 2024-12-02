@@ -15,3 +15,4 @@ class PullRequestResponse(BaseModel):
     updated_on: datetime
     commit_id: Optional[str] = None
     diff_refs: Optional[dict] = None
+    destination_branch_commit: str
