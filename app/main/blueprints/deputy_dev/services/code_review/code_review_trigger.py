@@ -83,6 +83,8 @@ class CodeReviewTrigger:
             PR review acknowledgments
         """
         code_review_request = await cls.__preprocess_review_payload(payload, query_params)
+        if not code_review_request:
+            return
 
         return await cls.__process_review_request(code_review_request)
 
