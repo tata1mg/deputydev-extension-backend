@@ -61,9 +61,10 @@ async def chat_assistance_api(_request: Request, **kwargs):
 
 @smart_code.route("/stats-collection", methods=["POST"])
 async def compute_pr_close_metrics(_request: Request, **kwargs):
+    logger.info("Request received for stats-collection")
     payload = _request.custom_json()
     query_params = _request.request_params()
-    await StatsCollectionTrigger.select_stats_and_publish(payload=payload, query_params=query_params)
+    await StatsCollectionTrigger().select_stats_and_publish(payload=payload, query_params=query_params)
     return send_response("Success")
 
 
@@ -73,7 +74,7 @@ async def compute_pr_close_metrics(_request: Request, **kwargs):
 async def compute_merge_metrics(_request: Request, **kwargs):
     payload = _request.custom_json()
     query_params = _request.request_params()
-    await StatsCollectionTrigger.select_stats_and_publish(payload=payload, query_params=query_params)
+    await StatsCollectionTrigger().select_stats_and_publish(payload=payload, query_params=query_params)
     return send_response("Success")
 
 

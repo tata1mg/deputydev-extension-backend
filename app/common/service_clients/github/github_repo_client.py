@@ -277,3 +277,10 @@ class GithubRepoClient(BaseSCMClient):
             commits.extend(data)
             page += 1
         return commits
+
+    async def get_file(self, branch_name, file_path):
+        url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/contents/{file_path}?ref={branch_name}"
+        response = await self.get(url)
+        if response.status_code != 200:
+            return None
+        return response.content

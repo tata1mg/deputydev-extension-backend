@@ -23,7 +23,7 @@ class PullRequestCloseWebhook:
         elif vcs_type == VCSTypes.github.value:
             return cls.__parse_github_payload(payload)
         elif vcs_type == VCSTypes.gitlab.value:
-            parsed_payload = await cls.__parse_gitlab_payload(payload)
+            parsed_payload = cls.__parse_gitlab_payload(payload)
             return parsed_payload
         else:
             raise ValueError("Unsupported VCS type")
@@ -40,6 +40,7 @@ class PullRequestCloseWebhook:
             "pr_created_at": payload["pullrequest"]["created_on"],
             "pr_closed_at": payload["pullrequest"]["updated_on"],
             "scm_repo_id": payload["repository"]["uuid"],
+            "destination_branch": payload["pullrequest"]["destination"]["branch"]["name"],
         }
         return PRCloseRequest(**parsed_payload)
 
@@ -57,11 +58,12 @@ class PullRequestCloseWebhook:
             "pr_created_at": payload["pull_request"]["created_at"],
             "pr_closed_at": payload["pull_request"]["closed_at"],
             "scm_repo_id": str(payload["pull_request"]["head"]["repo"]["id"]),
+            "destination_branch": payload["pull_request"]["base"]["ref"],
         }
         return PRCloseRequest(**parsed_payload)
 
     @classmethod
-    async def __parse_gitlab_payload(cls, payload: dict) -> PRCloseRequest:
+    def __parse_gitlab_payload(cls, payload: dict) -> PRCloseRequest:
         # TODO - Need to revisit the payload for github, before we start using the payload,
         pr_id = payload["object_attributes"]["iid"]
         workspace = payload["project"]["namespace"]
@@ -78,5 +80,6 @@ class PullRequestCloseWebhook:
             "scm_workspace_id": str(payload.get("scm_workspace_id")),
             "pr_created_at": payload["object_attributes"]["created_at"],
             "pr_closed_at": payload["object_attributes"]["updated_at"],
+            "destination_branch": payload["object_attributes"]["target_branch"],
         }
         return PRCloseRequest(**parsed_payload)

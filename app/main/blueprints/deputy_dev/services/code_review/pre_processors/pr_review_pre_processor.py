@@ -23,6 +23,7 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
 )
@@ -50,10 +51,37 @@ class PRReviewPreProcessor:
         self.loc_changed = 0
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
-        await self.insert_pr_record()
+        repo_dto = await self.fetch_repo()
+        setting = await self.fetch_setting()
+
+        if not self.is_reviewable_based_on_settings(setting):
+            self.is_valid = False
+            self.review_status = PrStatusTypes.FEATURES_DISABLED.value
+            await self.run_validations()
+            return False, self.pr_dto
+
+        await self.insert_pr_record(repo_dto)
         await self.run_validations()
+
         experiment_set = await self.get_experiment_set()
         return self.get_is_reviewable_request(experiment_set), self.pr_dto
+
+    @staticmethod
+    def is_reviewable_based_on_settings(setting: dict) -> bool:
+        """Check if the PR is reviewable based on settings."""
+        return setting["code_review_agent"]["enable"] or setting["pr_summary"]["enable"]
+
+    async def fetch_setting(self):
+        workspace_dto = await self.fetch_workspace()
+        setting = await SettingService(self.repo_service, workspace_dto.team_id).build()
+        return setting
+
+    async def fetch_workspace(self):
+        workspace_dto = await WorkspaceService.find(
+            scm_workspace_id=self.pr_model.scm_workspace_id(), scm=self.pr_model.scm_type()
+        )
+        set_context_values(workspace_id=workspace_dto.id, team_id=workspace_dto.team_id)
+        return workspace_dto
 
     def get_is_reviewable_request(self, experiment_set):
         # if PR is eligible of experiment
@@ -65,26 +93,19 @@ class PRReviewPreProcessor:
             return True
         return False
 
-    async def insert_pr_record(self):
-        self.pr_dto = await self.process_pr_record()
+    async def insert_pr_record(self, repo_dto):
+        self.pr_dto = await self.process_pr_record(repo_dto)
         if self.pr_dto:
             set_context_values(team_id=self.pr_dto.team_id)
 
-    async def process_pr_record(self) -> Optional[PullRequestDTO]:
+    async def fetch_repo(self):
+        repo_dto = await RepoService.find_or_create_with_workspace_id(self.pr_model.scm_workspace_id(), self.pr_model)
+        return repo_dto
+
+    async def process_pr_record(self, repo_dto) -> Optional[PullRequestDTO]:
         """Process PR record creation/update logic"""
-
-        workspace_dto = await WorkspaceService.find(
-            scm_workspace_id=self.pr_model.scm_workspace_id(), scm=self.pr_model.scm_type()
-        )
-        if not workspace_dto:
-            return None
-
-        repo_dto = await RepoService.find_or_create(
-            workspace_id=workspace_dto.id, team_id=workspace_dto.team_id, pr_model=self.pr_model
-        )
         if not repo_dto:
             return None
-
         # Check for existing reviewed PR
         reviewed_pr_dto = await self._get_reviewed_pr(repo_dto.id)
 
@@ -210,9 +231,9 @@ class PRReviewPreProcessor:
         self.validate_pr_state_for_review()
 
         if self.is_valid:
+            await self.validate_repo_clone()
+        if self.is_valid:
             await self.validate_pr_diff()
-            if self.is_valid:
-                await self.validate_repo_clone()
 
         if not self.is_valid:
             if self.pr_dto:
@@ -221,7 +242,7 @@ class PRReviewPreProcessor:
 
     async def process_invalid_prs(self):
         await self.affirmation_service.create_affirmation_reply(
-            review_status=self.review_status, commit_id=self.pr_model.commit_id()
+            message_type=self.review_status, commit_id=self.pr_model.commit_id()
         )
 
     async def validate_pr_diff(self):

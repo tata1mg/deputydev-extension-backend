@@ -4,6 +4,9 @@ from app.main.blueprints.deputy_dev.models.dao import Repos
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.dto.repo_dto import RepoDTO
 from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
+    WorkspaceService,
+)
 
 
 class RepoService:
@@ -40,6 +43,12 @@ class RepoService:
                 "workspace_id": workspace_id,
             }
             repo_dto = await RepoService.db_insert(RepoDTO(**repo_data))
+        return repo_dto
+
+    @classmethod
+    async def find_or_create_with_workspace_id(cls, scm_workspace_id, pr_model: BasePrModel):
+        workspace_dto = await WorkspaceService.find(scm_workspace_id=scm_workspace_id, scm=pr_model.scm_type())
+        repo_dto = await cls.find_or_create(workspace_dto.id, workspace_dto.team_id, pr_model)
         return repo_dto
 
     @classmethod

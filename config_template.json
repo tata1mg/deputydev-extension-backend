@@ -97,6 +97,7 @@
     }
   },
   "REPO_BASE_DIR": "",
+  "REPO_SETTINGS_FILE": "deputy_dev_settings.toml",
   "SQS": {
     "SUBSCRIBE": {
       "GENAI": {

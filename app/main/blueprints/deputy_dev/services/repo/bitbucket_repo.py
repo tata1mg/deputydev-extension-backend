@@ -17,7 +17,6 @@ from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
-from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
 class BitbucketRepo(BaseRepo):
@@ -81,6 +80,7 @@ class BitbucketRepo(BaseRepo):
             "description": pr_model.description(),
             "commit_id": pr_model.commit_id(),
             "destination_branch_commit": pr_model.destination_branch_commit(),
+            "scm_repo_id": pr_model.scm_repo_id(),
         }
         return PullRequestResponse(**data)
 
@@ -127,9 +127,7 @@ class BitbucketRepo(BaseRepo):
         pr_diff, status_code = await self.repo_client.get_pr_diff()
         if status_code == 404:
             return PR_NOT_FOUND
-
-        if pr_diff:
-            self.pr_diff = ignore_files(pr_diff.text)
+        self.pr_diff = self.exclude_pr_diff(pr_diff.text)
         return self.pr_diff
 
     async def get_commit_diff(self):
@@ -156,7 +154,7 @@ class BitbucketRepo(BaseRepo):
             return PR_NOT_FOUND
 
         if commit_diff:
-            self.pr_commit_diff = ignore_files(commit_diff.text)
+            self.pr_commit_diff = self.exclude_pr_diff(commit_diff.text)
         return self.pr_commit_diff
 
     def __get_issue_id(self, title) -> str:
