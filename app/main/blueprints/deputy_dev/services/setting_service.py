@@ -189,10 +189,14 @@ class SettingService:
         await RepoSettingCache.set(cache_key, repo_level_settings)
         if repo_level_settings in [-1, -2]:  # Save in DB
             repo_level_settings = None
-        repo = await self.repo_service.fetch_repo()
-        await self.create_or_update_setting(
-            configurable_id=repo.id, configurable_type=SettingLevel.REPO.value, error=error, setting=repo_level_settings
-        )
+        if error or repo_level_settings:
+            repo = await self.repo_service.fetch_repo()
+            await self.create_or_update_setting(
+                configurable_id=repo.id,
+                configurable_type=SettingLevel.REPO.value,
+                error=error,
+                setting=repo_level_settings,
+            )
 
     def repo_setting_cache_key(self):
         scm_workspace_id = self.repo_service.workspace_id
@@ -226,17 +230,20 @@ class SettingService:
 
     @classmethod
     async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting):
-        payload = {
-            "configurable_id": configurable_id,
-            "configurable_type": configurable_type,
-            "configuration": setting,
-            "error": error,
-        }
-        setting = await Configurations.get_or_none(configurable_id=configurable_id, configurable_type=configurable_type)
-        if not setting:
-            setting = Configurations(**payload)
-            await setting.save()
-        else:
-            payload["id"] = setting.id
-            setting = Configurations(**payload)
-            await setting.save(update_fields=["configuration", "error"], force_update=True)
+        if error or setting:
+            payload = {
+                "configurable_id": configurable_id,
+                "configurable_type": configurable_type,
+                "configuration": setting,
+                "error": error,
+            }
+            saved_setting = await Configurations.get_or_none(
+                configurable_id=configurable_id, configurable_type=configurable_type
+            )
+            if not saved_setting:
+                setting = Configurations(**payload)
+                await setting.save()
+            else:
+                payload["id"] = setting.id
+                setting = Configurations(**payload)
+                await setting.save(update_fields=["configuration", "error"], force_update=True)
