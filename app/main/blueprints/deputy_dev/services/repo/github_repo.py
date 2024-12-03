@@ -1,3 +1,8 @@
+import base64
+
+import toml
+from sanic.log import logger
+from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
@@ -14,7 +19,6 @@ from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
-from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
 class GithubRepo(BaseRepo):
@@ -54,7 +58,7 @@ class GithubRepo(BaseRepo):
         response = await self.repo_client.get_pr_diff()
         if response and response.status_code != 200:
             return PR_NOT_FOUND
-        self.pr_diff = ignore_files(response.text)
+        self.pr_diff = self.exclude_pr_diff(response.text)
         return self.pr_diff
 
     async def get_commit_diff(self):
@@ -79,7 +83,7 @@ class GithubRepo(BaseRepo):
         )
         if response and response.status_code != 200:
             return PR_NOT_FOUND
-        self.pr_commit_diff = ignore_files(response.text)
+        self.pr_commit_diff = self.exclude_pr_diff(response.text)
         return self.pr_commit_diff
 
     async def get_pr_details(self) -> PullRequestResponse:
@@ -109,6 +113,7 @@ class GithubRepo(BaseRepo):
             "branch_name": pr_model.source_branch(),
             "commit_id": pr_model.commit_id(),
             "destination_branch_commit": pr_model.destination_branch_commit(),
+            "scm_repo_id": pr_model.scm_repo_id(),
         }
         self.branch_name = data["branch_name"]
         return PullRequestResponse(**data)
@@ -209,3 +214,16 @@ class GithubRepo(BaseRepo):
             )
 
         return formatted_commits
+
+    async def get_settings(self, branch_name):
+        settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
+        if settings:
+            try:
+                decoded_settings = base64.b64decode(settings).decode("utf-8")
+                settings = toml.loads(decoded_settings)
+                return settings, ""
+            except toml.TomlDecodeError as e:
+                logger.error(f"Invalid TOML: {e}")
+                return {}, str(e)
+        else:
+            return {}, ""

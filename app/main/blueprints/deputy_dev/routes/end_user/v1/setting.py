@@ -1,0 +1,16 @@
+from sanic import Blueprint
+from torpedo import CONFIG, Request, send_response
+
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+
+setting = Blueprint("setting", "/setting")
+
+config = CONFIG.config
+
+
+@setting.route("/org_setting", methods=["POST"])
+async def create_org_setting(_request: Request, **kwargs):
+    payload = _request.custom_json()
+    query_params = _request.request_params()
+    await SettingService.create_or_update_org_settings(payload, query_params=query_params)
+    return send_response("Success")

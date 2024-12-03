@@ -27,7 +27,7 @@ class Repos(Base):
 
     class Meta:
         table = "repos"
-        unique_together = (("team_id", "scm", "workspace_id", "scm_repo_id"),)
+        unique_together = (("workspace_id", "scm_repo_id"),)  # workspace have team_id and scm
         indexes = (("workspace_id",),)
 
     class Columns(Enum):

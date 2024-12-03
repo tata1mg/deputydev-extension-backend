@@ -2,8 +2,6 @@ import asyncio
 import json
 from typing import List
 
-from torpedo import CONFIG
-
 from app.main.blueprints.deputy_dev.constants.constants import LLMModelNames
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.openai_comment_summarization_agent import (
@@ -16,19 +14,29 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
     ContextService,
 )
 from app.main.blueprints.deputy_dev.services.llm.openai_llm import OpenaiLLM
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
 
 
 class CommentBlendingEngine:
     def __init__(self, llm_comments: dict, context_service: ContextService):
         self.llm_comments = llm_comments
-        self.llm_confidence_score_limit = CONFIG.config["AGENT_SETTINGS"]
+        self.llm_confidence_score_limit = self.get_confidence_score_limit()
         self.filtered_comments = []
         self.invalid_comments = []
         self.context_service = context_service
 
         self.llm_service = OpenaiLLM()
         self.MAX_RETRIES = 2
+
+    @staticmethod
+    def get_confidence_score_limit():
+        llm_confidence_score_limit = {}
+        for agent, setting in get_context_value("setting")["code_review_agent"]["agents"].items():
+            llm_confidence_score_limit[agent] = {"confidence_score_limit": setting["confidence_score"]}
+        return llm_confidence_score_limit
 
     async def blend_comments(self):
         # this function can contain other operations in future
