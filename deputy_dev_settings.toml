@@ -51,7 +51,7 @@ is_override = true
 confidence_score = 0.9
 
 [chat]
-enable = false
+enable = true
 model = "gpt-4o"
 is_override = true
 custom_prompt = ""
