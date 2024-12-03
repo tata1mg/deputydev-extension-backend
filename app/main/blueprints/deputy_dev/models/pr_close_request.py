@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -11,4 +13,4 @@ class PRCloseRequest(BaseModel):
     scm_workspace_id: str
     pr_created_at: str
     pr_closed_at: str
-    destination_branch: str
+    destination_branch: Optional[str] = None
