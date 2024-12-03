@@ -1,28 +1,17 @@
 title = "DeputyDev configuration"
 
 [app]
-name = ""
+name = "deputy_dev"
 description = ""
-language = ""
-framework = ""
+language = "python:3.9"
+framework = "sanic"
 owner = ""
 
 [code_review_agent]
 enable = true                       # Set to true to enable the code review agent, false to disable
 is_override = true                 # Set to true if this configuration can be overridden by repo level configuration
 model = "claude_3.5_sonnet"         # Specifying which model to use for code reviews
-exclusions = [
-    "Pipfile.lock",
-    "bitbucket-pipelines.yml",
-    "package-lock.json",
-    "poetry.lock",
-    "pyproject.toml",
-    "README.md",
-    "chromedriver",
-    "local_execute.sh",
-    "local_build.sh"
-]
-
+exclusions = []
 inclusions = []
 
 [code_review_agent.agents.security]
@@ -62,7 +51,7 @@ is_override = true
 confidence_score = 0.9
 
 [chat]
-enable = true
+enable = false
 model = "gpt-4o"
 is_override = true
 custom_prompt = ""
