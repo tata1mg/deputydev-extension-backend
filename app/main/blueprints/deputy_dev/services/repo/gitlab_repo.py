@@ -14,7 +14,6 @@ from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
-from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
 class GitlabRepo(BaseRepo):
@@ -72,6 +71,7 @@ class GitlabRepo(BaseRepo):
             "commit_id": pr_model.commit_id(),
             "diff_refs": pr_model.diff_refs(),
             "destination_branch_commit": pr_model.destination_branch_commit(),
+            "scm_repo_id": pr_model.scm_repo_id(),
         }
         return PullRequestResponse(**data)
 
@@ -126,7 +126,7 @@ class GitlabRepo(BaseRepo):
 
         if response:
             combined_pr_diff = self.create_combined_diff_text(response["changes"])
-            self.pr_diff = ignore_files(combined_pr_diff)
+            self.pr_diff = self.exclude_pr_diff(combined_pr_diff)
         return self.pr_diff
 
     async def get_commit_diff(self):
@@ -154,7 +154,7 @@ class GitlabRepo(BaseRepo):
 
         if response:
             combined_repo_diff = self.create_combined_diff_text(response["changes"])
-            self.pr_commit_diff = ignore_files(combined_repo_diff)
+            self.pr_commit_diff = self.exclude_pr_diff(combined_repo_diff)
         return self.pr_commit_diff
 
     @staticmethod

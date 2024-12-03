@@ -6,7 +6,6 @@ from torpedo.common_utils import CONFIG
 from app.common.constants.constants import ExtendedEnum
 
 MAX_PR_DIFF_TOKEN_LIMIT = CONFIG.config["MAX_PR_DIFF_TOKEN_LIMIT"]
-IGNORE_FILES = CONFIG.config["IGNORE_FILES"]
 COMMENTS_DEPTH = 7
 PR_SIZE_TOO_BIG_MESSAGE = (
     "This PR is too large. Ideal PRs are not more than 150-200 lines."
@@ -49,6 +48,11 @@ class PrStatusTypes(Enum):
     REJECTED_INVALID_REQUEST = "REJECTED_INVALID_REQUEST"
     FAILED = "FAILED"
     ALREADY_REVIEWED = "ALREADY_REVIEWED"  # This is not representing db state, used to post affirmation reply msg
+    FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
+
+
+class AffirmationMessagesTypes(Enum):
+    DEFAULT_SETTING_REVIEW = "DEFAULT_SETTING_REVIEW"
 
 
 PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
@@ -59,6 +63,10 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.REJECTED_NO_DIFF.value: "There is no code difference for commit {commit_id} to review in this pull request. Please ensure there are changes in the PR before requesting a review.",
     PrStatusTypes.REJECTED_INVALID_REQUEST.value: "There seems to be an issue with this pull request for commit {commit_id}. Please make sure the PR is set up correctly and try again.",
     PrStatusTypes.ALREADY_REVIEWED.value: "DeputyDev has already reviewed this PR on commit {commit_id}",
+    AffirmationMessagesTypes.DEFAULT_SETTING_REVIEW.value: """Your PR is reviewed with default settings. The custom settings provided seems to have error.
+        Please fix it to attain optimum review accuracy and relevancy:
+        ERROR: {error}""",
+    PrStatusTypes.FEATURES_DISABLED.value: "Code review and PR summary features are currently disabled in your repository/organization settings. To enable these features, please update your settings.",
 }
 
 
@@ -111,6 +119,11 @@ class MessageTypes(Enum):
     FEEDBACK = "feedback"
     UNKNOWN = "unknown"
     HUMAN_COMMENT = "human_comment"
+
+
+class SettingLevel(Enum):
+    REPO = "repo"
+    TEAM = "team"
 
 
 class PRReviewExperimentSet(Enum):

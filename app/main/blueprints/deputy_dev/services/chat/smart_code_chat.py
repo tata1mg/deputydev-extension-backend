@@ -35,6 +35,7 @@ from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
     ChatPromptService,
 )
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
     StatsCollectionTrigger,
@@ -104,6 +105,7 @@ class SmartCodeChatManager:
             workspace_id=chat_request.repo.workspace_id,
             repo_id=chat_request.repo.repo_id,
             auth_handler=auth_handler,
+            fetch_pr_details=True,
         )
 
         comment_service = await CommentFactory.initialize(
@@ -118,8 +120,15 @@ class SmartCodeChatManager:
         )
         # Set Team id in context vars
         workspace_dto = await WorkspaceService.find(scm_workspace_id=chat_request.repo.workspace_id, scm=vcs_type)
+        team_id = None
         if workspace_dto:
             set_context_values(team_id=workspace_dto.team_id)
+            team_id = workspace_dto.team_id
+        setting = await SettingService(repo, team_id).build()
+        if not setting["chat"]["enable"]:
+            # TODO: fix this after merging incremental review changes.
+            await comment_service.create_comment_on_parent("Chat feature is disable for this repo.")
+            return
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
         add_note = comment.startswith(ChatTypes.SCRIT.value)
@@ -187,7 +196,7 @@ class SmartCodeChatManager:
 
     @classmethod
     async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, vcs_type):
-        if await StatsCollectionTrigger.is_pr_created_post_onboarding(parsed_payload, vcs_type):
+        if await StatsCollectionTrigger().is_pr_created_post_onboarding(parsed_payload, vcs_type):
             payload = {
                 "payload": parsed_payload.dict(),
                 "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,

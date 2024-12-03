@@ -167,3 +167,10 @@ class GitlabRepoClient(BaseSCMClient):
             f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"
         )
         return []
+
+    async def get_file(self, branch_name, file_path):
+        url = f"{self.gitlab_url}/projects/{self.project_id}/repository/files/{file_path}?ref={branch_name}"
+        response = await self.get(url)
+        if response.status_code != 200:
+            return None
+        return response

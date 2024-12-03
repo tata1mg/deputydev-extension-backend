@@ -14,8 +14,18 @@ class RepoFactory:
 
     @classmethod
     async def repo(
-        cls, vcs_type: str, workspace, repo_name, pr_id, workspace_id, auth_handler, workspace_slug, repo_id=None
+        cls,
+        vcs_type: str,
+        workspace,
+        repo_name,
+        pr_id,
+        workspace_id,
+        auth_handler,
+        workspace_slug,
+        repo_id=None,
+        fetch_pr_details=False,
     ) -> BaseRepo:
+        # IF PR DETAILS REQUIRED PASS fetch_pr_details true
         if vcs_type not in cls.FACTORIES:
             raise ValueError("Incorrect vcs type passed")
         _klass = cls.FACTORIES[vcs_type]
@@ -28,5 +38,6 @@ class RepoFactory:
             auth_handler=auth_handler,
             repo_id=repo_id,
         )
-        await _klass_obj.initialize()
+        if fetch_pr_details:
+            await _klass_obj.initialize()
         return _klass_obj

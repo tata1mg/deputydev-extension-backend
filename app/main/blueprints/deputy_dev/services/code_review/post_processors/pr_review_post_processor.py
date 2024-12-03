@@ -4,6 +4,7 @@ from typing import Dict, List
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
+    AffirmationMessagesTypes,
     BucketStatus,
     BucketTypes,
     ExperimentStatusTypes,
@@ -35,6 +36,9 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 
 config = CONFIG.config
 
@@ -114,9 +118,17 @@ class PRReviewPostProcessor:
         await self.process_affirmation_message()
 
     async def process_affirmation_message(self):
-        await self.affirmation_service.create_affirmation_reply(
-            review_status=PrStatusTypes.COMPLETED.value, commit_id=self.pr_model.commit_id()
-        )
+        error = get_context_value("setting_error")
+        if error:
+            await self.affirmation_service.create_affirmation_reply(
+                message_type=AffirmationMessagesTypes.DEFAULT_SETTING_REVIEW.value,
+                commit_id=self.pr_model.commit_id(),
+                additional_context={"error": error},
+            )
+        else:
+            await self.affirmation_service.create_affirmation_reply(
+                message_type=self.review_status, commit_id=self.pr_model.commit_id()
+            )
 
     async def post_process_pr_with_comments(
         self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
