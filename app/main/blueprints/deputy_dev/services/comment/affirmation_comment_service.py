@@ -23,25 +23,34 @@ class AffirmationService:
         affirmation_details = await AffirmationCache.get(self.cache_key)
         return affirmation_details.get("comment_id") if affirmation_details else None
 
-    async def create_affirmation_reply(self, review_status: str, commit_id: str = None) -> None:
+    async def create_affirmation_reply(
+        self, message_type: str, commit_id: str = None, additional_context: dict = None
+    ) -> None:
         """
         Create a reply to the affirmation comment
 
         Args:
-            review_status: Status message type from PrStatusTypes
+            message_type: Status message type from PrStatusTypes
             commit_id: Optional commit ID for formatting message
+            additional_context: Additional context for message formatting
         """
         comment_id = await self.get_comment_id()
 
-        message = PR_REVIEW_POST_AFFIRMATION_MESSAGES[review_status].format(commit_id=commit_id)
+        message = PR_REVIEW_POST_AFFIRMATION_MESSAGES[message_type]
+
+        format_args = {"commit_id": commit_id} if commit_id else {}
+        if additional_context:
+            format_args.update(additional_context)
+
+        formatted_message = message.format(**format_args)
 
         if comment_id:
             response = await self.comment_service.create_comment_on_parent(
-                comment=message, parent_id=comment_id, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+                comment=formatted_message, parent_id=comment_id, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
             )
         else:
             response = await self.comment_service.create_pr_comment(
-                comment=message, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+                comment=formatted_message, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
             )
 
         if response and response.status_code in [200, 201]:

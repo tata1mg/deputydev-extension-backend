@@ -4,16 +4,13 @@ from sanic.log import logger
 from tortoise.exceptions import IntegrityError
 
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
-from app.main.blueprints.deputy_dev.models.dao import PullRequests
+from app.main.blueprints.deputy_dev.models.dao import PullRequests, Repos, Workspaces
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    set_context_values,
-)
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
+    get_context_value,
 )
 
 
@@ -65,34 +62,9 @@ class PRService:
     @classmethod
     async def find_or_create(cls, pr_model: BasePrModel, pr_status, pr_commits) -> Optional[PullRequestDTO]:
         pr_dto = None
-        pr_reviewable_on_commit = False
-        last_reviewed_commit = None
-
-        workspace_dto = await WorkspaceService.find(
-            scm_workspace_id=pr_model.scm_workspace_id(), scm=pr_model.scm_type()
-        )
-        if not workspace_dto:
-            return
-
-        repo_dto = await RepoService.find_or_create(
-            workspace_id=workspace_dto.id, team_id=workspace_dto.team_id, pr_model=pr_model
-        )
-        if not repo_dto:
-            return
-
-        # Check if any reviewed PR exists on that destination branch
-        reviewed_pr_dto = await cls.find_reviewed_pr(pr_model, repo_dto)
-
-        # Already reviewed on that commit ID
-        if reviewed_pr_dto and reviewed_pr_dto.commit_id == pr_model.commit_id():
-            return
-
-        # Destination branch is same so we need to
-        if reviewed_pr_dto and reviewed_pr_dto.destination_branch == pr_model.destination_branch():
-            pr_reviewable_on_commit = True
-            last_reviewed_commit = reviewed_pr_dto.commit_id
-
-        set_context_values(pr_reviewable_on_commit=pr_reviewable_on_commit, last_reviewed_commit=last_reviewed_commit)
+        team_id, workspace_id = get_context_value("team_id"), get_context_value("workspace_id")
+        if workspace_id:
+            repo_dto = await RepoService.find_or_create(workspace_id=workspace_id, team_id=team_id, pr_model=pr_model)
 
         #  Pick Failed PR incase not reviewed for current commit_ids
         failed_pr_dto = await cls.find_failed_pr(pr_model, repo_dto)
@@ -202,3 +174,11 @@ class PRService:
         """
         filters = cls.get_completed_pr_filters(pr_dto)
         return await cls.db_get_count(filters)
+
+    @classmethod
+    async def fetch_pr(cls, scm_workspace_id, repo_name, scm, scm_pr_id):
+        workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
+        repo = await Repos.get_or_none(workspace_id=workspace.id, name=repo_name)
+        if repo:
+            pr = await PullRequests.get_or_none(repo_id=repo.id, scm_pr_id=scm_pr_id)
+            return pr

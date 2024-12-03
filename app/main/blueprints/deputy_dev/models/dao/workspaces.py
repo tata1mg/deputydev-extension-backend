@@ -29,7 +29,7 @@ class Workspaces(Base):
 
     class Meta:
         table = "workspaces"
-        unique_together = (("team_id", "scm", "scm_workspace_id"),)
+        unique_together = (("scm", "scm_workspace_id"),)  # for a scm scm_workspace_id will always be unique
 
     class Columns(Enum):
         id = ("id",)

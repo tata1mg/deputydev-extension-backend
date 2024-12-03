@@ -21,12 +21,14 @@ from app.main.blueprints.deputy_dev.services.llm.multi_agents_manager import (
 )
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 
 
 class MultiAgentPRReviewManager:
     def __init__(self, repo_service: BaseRepo, prompt_version=None):
         self.repo_service = repo_service
-        self.settings = CONFIG.config["PR_REVIEW_SETTINGS"]
         self.multi_agent_enabled = None
         self.reflection_enabled = None
         self.pr_diff = None
@@ -52,7 +54,7 @@ class MultiAgentPRReviewManager:
 
     def _is_reflection_enabled(self):
         if self.reflection_enabled is None:
-            self.reflection_enabled = self.settings["REFLECTION_ENABLED"]
+            self.reflection_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["REFLECTION_ENABLED"]
         return self.reflection_enabled
 
     # section setting end
@@ -107,6 +109,14 @@ class MultiAgentPRReviewManager:
         AppLogger.log_info(f"Time taken in LLM call - {t2 - t1} ms")
         self.populate_meta_info()
 
+    def exclude_disabled_agents(self):
+        setting = get_context_value("setting")
+        for agent, agent_setting in setting["code_review_agent"]["agents"].items():
+            if not agent_setting["enable"] or not setting["code_review_agent"]["enable"]:
+                self.exclude_agent.add(agent)
+        if not setting[AgentTypes.PR_SUMMARY.value]["enable"]:
+            self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
+
     async def execute_pass_1(self):
         await self.__execute_pass()
         self.populate_pr_summary()
@@ -117,9 +127,11 @@ class MultiAgentPRReviewManager:
         await self.__execute_pass()
 
     async def get_code_review_comments(self):
+        self.exclude_disabled_agents()
         await self.execute_pass_1()
-        await self.execute_pass_2() if self._is_reflection_enabled() else None
-        await self.filter_comments()
+        if get_context_value("setting")["code_review_agent"]["enable"]:
+            await self.execute_pass_2() if self._is_reflection_enabled() else None
+            await self.filter_comments()
         return self.return_final_response()
 
     def populate_meta_info(self):

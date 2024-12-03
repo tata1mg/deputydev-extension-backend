@@ -15,4 +15,5 @@ class PullRequestResponse(BaseModel):
     updated_on: datetime
     commit_id: Optional[str] = None
     diff_refs: Optional[dict] = None
+    scm_repo_id: str
     destination_branch_commit: str

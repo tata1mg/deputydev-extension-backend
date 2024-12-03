@@ -219,3 +219,10 @@ class BitbucketRepoClient(BaseSCMClient):
             f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"
         )
         return []
+
+    async def get_file(self, branch_name, file_path):
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/src/{branch_name}/{file_path}"
+        response = await self.get(url)
+        if response.status_code != 200:
+            return None
+        return response

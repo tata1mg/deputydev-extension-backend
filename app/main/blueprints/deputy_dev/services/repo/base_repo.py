@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 
 import git
+import toml
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -12,6 +13,7 @@ from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.loggers import AppLogger
+from app.main.blueprints.deputy_dev.models.dao import Repos, Workspaces
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
@@ -20,7 +22,9 @@ from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
 )
 from app.main.blueprints.deputy_dev.utils import (
     categorize_loc,
+    files_to_exclude,
     format_summary_loc_time_text,
+    ignore_files,
     parse_collection_name,
 )
 
@@ -58,6 +62,7 @@ class BaseRepo(ABC):
         self.pr_details = await self.get_pr_details()
         if self.pr_details:
             self.branch_name = self.pr_details.branch_name
+            self.repo_id = self.pr_details.scm_repo_id
 
     def delete_repo(self) -> bool:
         """
@@ -82,6 +87,29 @@ class BaseRepo(ABC):
             self.repo_full_name(),
             parse_collection_name(self.branch_name),
         )
+
+    async def get_default_branch(self):
+        """
+        Response of 'git remote show https://github.com/tata1mg/hector' command:
+          remote https://github.com/tata1mg/hector
+          Fetch URL: https://github.com/tata1mg/hector
+          Push  URL: https://github.com/tata1mg/hector
+          HEAD branch: main
+        """
+        repo_url = await self.get_repo_url()
+        process = await asyncio.create_subprocess_exec(
+            "git", "remote", "show", repo_url, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            for line in stdout.decode().splitlines():
+                if line.strip().startswith("HEAD branch:"):
+                    return line.split(":")[1].strip()
+
+        logger.error(f"Issue in fetching default branch for {repo_url}")
+        return None
 
     async def __clone(self) -> git.Repo:
         """
@@ -285,3 +313,31 @@ class BaseRepo(ABC):
             ]
         """
         raise NotImplementedError()
+
+    async def get_settings(self, branch_name):
+        settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
+        if settings:
+            try:
+                settings = toml.loads(settings.text)
+                return settings, ""
+            except toml.TomlDecodeError as e:
+                logger.error(f"Invalid TOML: {e}")
+                return {}, str(e)
+        else:
+            return {}, ""
+
+    async def fetch_repo(self):
+        scm_workspace_id = self.workspace_id
+        repo_name = self.repo_name
+        scm = self.vcs_type
+        workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
+        repo = await Repos.get_or_none(workspace_id=workspace.id, name=repo_name)
+        return repo
+
+    def exclude_pr_diff(self, pr_diff):
+        settings = get_context_value("setting") or {}
+        code_review_agent = settings.get("code_review_agent", {})
+        inclusions = code_review_agent.get("inclusions", [])
+        exclusions = code_review_agent.get("exclusions", [])
+        excluded_files = files_to_exclude(exclusions, inclusions, self.repo_dir)
+        return ignore_files(pr_diff, excluded_files)

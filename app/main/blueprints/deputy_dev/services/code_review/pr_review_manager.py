@@ -167,6 +167,7 @@ class PRReviewManager:
             workspace_slug=workspace_slug,
             auth_handler=auth_handler,
             repo_id=repo_id,
+            fetch_pr_details=True,
         )
         comment_service = await CommentFactory.initialize(
             vcs_type=vcs_type,
