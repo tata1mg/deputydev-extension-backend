@@ -25,13 +25,17 @@ config = CONFIG.config
 
 @smart_code.route("/", methods=["POST"])
 async def pool_assistance_api(_request: Request, **kwargs):
-    payload = _request.custom_json()
-    headers = _request.headers
-    query_params = _request.request_params()
-    request_id = headers.get("X-REQUEST-ID", "No request_id found")
-    payload["request_id"] = request_id
-    response = await CodeReviewTrigger.perform_review(payload, query_params=query_params)
-    return send_response(response)
+    try:
+        payload = _request.custom_json()
+        headers = _request.headers
+        query_params = _request.request_params()
+        request_id = headers.get("X-REQUEST-ID", "No request_id found")
+        payload["request_id"] = request_id
+        response = await CodeReviewTrigger.perform_review(payload, query_params=query_params)
+        return send_response(response)
+    except Exception as e:
+        logger.exception(e)
+        raise e
 
 
 # For testing directly on local without queue, not used in PRODUCTION
