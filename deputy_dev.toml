@@ -22,9 +22,9 @@ confidence_score = 0.9              # Threshold of confidence_score for a commen
 
 [code_review_agent.agents.code_communication]
 enable = true
-custom_prompt = "use Sphinx style docstring, specifically document utility functions line by line"
+custom_prompt = ""
 is_override = true
-confidence_score = 0.7
+confidence_score = 0.98
 
 [code_review_agent.agents.performance_optimisation]
 enable = true

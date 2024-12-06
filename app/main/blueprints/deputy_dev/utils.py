@@ -546,3 +546,21 @@ def create_optimized_batches(texts: List[str], max_tokens: int, model: str) -> L
         batches.append(current_batch)
 
     return batches
+
+
+def repo_meta_info_prompt(app_settings):
+    language = app_settings.get("language")
+    framework = app_settings.get("framework")
+    parts = []
+    if language:
+        parts.append(f"{language}")
+    if framework:
+        parts.append(f"{framework} framework")
+
+    # Join parts with "with" if both language and framework exist
+    prompt = (
+        f"The code given to you is using {' with '.join(parts)}. Treat yourself as an expert in these technologies."
+        if parts
+        else ""
+    )
+    return prompt
