@@ -1,10 +1,19 @@
 # flake8: noqa
+from app.main.blueprints.deputy_dev.constants.constants import (
+    CUSTOM_PROMPT_INSTRUCTIONS,
+)
 from app.main.blueprints.deputy_dev.constants.prompts.v2.system_prompts import (
     CHAT_COMMENT_PROMPT_LINE,
     CHAT_COMMENT_PROMPT_WHOLE_PR,
 )
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
-from app.main.blueprints.deputy_dev.utils import append_line_numbers
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
+from app.main.blueprints.deputy_dev.utils import (
+    append_line_numbers,
+    repo_meta_info_prompt,
+)
 
 
 class ChatPromptService:
@@ -30,15 +39,24 @@ class ChatPromptService:
 
     @classmethod
     def __build_system_prompt(cls, is_line_specific_question):
-        return CHAT_COMMENT_PROMPT_LINE if is_line_specific_question else CHAT_COMMENT_PROMPT_WHOLE_PR
+        system_prompt = CHAT_COMMENT_PROMPT_LINE if is_line_specific_question else CHAT_COMMENT_PROMPT_WHOLE_PR
+        settings = get_context_value("setting")
+        repo_info_prompt = repo_meta_info_prompt(settings["app"])
+        if repo_info_prompt:
+            system_prompt = f"{system_prompt}\n{repo_info_prompt}"
+        return system_prompt
 
     @classmethod
     def __build_user_promptr(cls, is_line_specific_question, pr_diff, question_info, user_story, comment_thread):
-        return (
+        user_prompt = (
             cls.__build_user_prompt_line(pr_diff, question_info, user_story, comment_thread)
             if is_line_specific_question
             else cls.__build_user_prompt_whole_pr(pr_diff, question_info, user_story, comment_thread)
         )
+        chat_custom_prompt = get_context_value("setting")["chat"]["custom_prompt"]
+        if chat_custom_prompt and chat_custom_prompt.strip():
+            user_prompt = f"{user_prompt}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{chat_custom_prompt}"
+        return user_prompt
 
     @classmethod
     def __build_user_prompt_whole_pr(cls, pr_diff, question_info, user_story, comment_thread):
