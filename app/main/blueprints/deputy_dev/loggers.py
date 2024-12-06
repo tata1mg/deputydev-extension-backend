@@ -16,7 +16,7 @@ class AppLogger:
 
     @classmethod
     def log_error(cls, message):
-        logger.error(cls.build_message(message))
+        logger.exception(cls.build_message(message))
 
     @classmethod
     def log_warn(cls, message):
