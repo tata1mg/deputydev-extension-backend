@@ -1,4 +1,4 @@
-from app.common.utils.app_utils import get_vcs_repo_name_slug
+from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.pr_approval_request import PRApprovalRequest
 
@@ -32,6 +32,8 @@ class PRApprovalWebhook:
             "scm_pr_id": str(payload["pullrequest"]["id"]),
             "scm_approval_time": payload["approval"]["date"],
             "pr_created_at": payload["pullrequest"]["created_on"],
+            "workspace": payload["repository"]["workspace"]["slug"],
+            "workspace_slug": payload["repository"]["workspace"]["slug"],
         }
         return PRApprovalRequest(**parsed_payload)
 
@@ -48,6 +50,8 @@ class PRApprovalWebhook:
             "scm_pr_id": str(payload["pull_request"]["number"]),
             "scm_approval_time": payload["review"]["submitted_at"],
             "pr_created_at": payload["pull_request"]["created_at"],
+            "workspace": payload["organization"]["login"],
+            "workspace_slug": payload["organization"]["login"],
         }
         return PRApprovalRequest(**parsed_payload)
 
@@ -64,5 +68,7 @@ class PRApprovalWebhook:
             "scm_pr_id": str(payload["object_attributes"]["iid"]),
             "scm_approval_time": payload["object_attributes"]["updated_at"],
             "pr_created_at": payload["object_attributes"]["created_at"],
+            "workspace": payload["project"]["namespace"],
+            "workspace_slug": get_gitlab_workspace_slug(payload["project"]["path_with_namespace"]),
         }
         return PRApprovalRequest(**parsed_payload)
