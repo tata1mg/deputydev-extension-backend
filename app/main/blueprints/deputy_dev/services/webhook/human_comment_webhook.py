@@ -1,4 +1,4 @@
-from app.common.utils.app_utils import get_vcs_repo_name_slug
+from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.human_comment_request import (
     HumanCommentRequest,
@@ -33,6 +33,8 @@ class HumanCommentWebhook:
             "actor": payload["actor"]["display_name"],
             "scm_pr_id": str(payload["pullrequest"]["id"]),
             "pr_created_at": payload["pullrequest"]["created_on"],
+            "workspace": payload["repository"]["workspace"]["slug"],
+            "workspace_slug": payload["repository"]["workspace"]["slug"],
         }
         return HumanCommentRequest(**parsed_payload)
 
@@ -48,6 +50,8 @@ class HumanCommentWebhook:
             "actor": payload["comment"]["user"]["login"],
             "scm_pr_id": str(payload["pull_request"]["number"]),
             "pr_created_at": payload["pull_request"]["created_at"],
+            "workspace": payload["organization"]["login"],
+            "workspace_slug": payload["organization"]["login"],
         }
         return HumanCommentRequest(**parsed_payload)
 
@@ -63,5 +67,7 @@ class HumanCommentWebhook:
             "actor": payload["user"]["username"],
             "scm_pr_id": str(payload["merge_request"]["iid"]),
             "pr_created_at": payload["object_attributes"]["created_at"],
+            "workspace": payload["project"]["namespace"],
+            "workspace_slug": get_gitlab_workspace_slug(payload["project"]["path_with_namespace"]),
         }
         return HumanCommentRequest(**parsed_payload)
