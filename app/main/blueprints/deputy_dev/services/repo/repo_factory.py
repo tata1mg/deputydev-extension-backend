@@ -25,7 +25,11 @@ class RepoFactory:
         repo_id=None,
         fetch_pr_details=False,
     ) -> BaseRepo:
-        # IF PR DETAILS REQUIRED PASS fetch_pr_details true
+        """
+        - IF PR DETAILS REQUIRED PASS fetch_pr_details true
+        - If fetch_pr_details=True, repo_id is set inside the initialize() method.
+        - If fetch_pr_details=False, repo_id should be passed as an argument.
+        """
         if vcs_type not in cls.FACTORIES:
             raise ValueError("Incorrect vcs type passed")
         _klass = cls.FACTORIES[vcs_type]
