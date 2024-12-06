@@ -53,7 +53,10 @@ class StatsCollectionTrigger:
             data = {"payload": parsed_payload.dict(), "vcs_type": vcs_type, "stats_type": stats_type}
             if not is_request_from_blocked_repo(data["payload"].get("repo_name")):
                 self.repo_service = await self.repo_instance(parsed_payload, vcs_type)
-                if parsed_payload.pr_state == PRStatus.MERGED.value:
+                if (
+                    stats_type == MetaStatCollectionTypes.PR_CLOSE.value
+                    and parsed_payload.pr_state == PRStatus.MERGED.value
+                ):
                     await self.update_repo_setting(parsed_payload, vcs_type)
                 is_eligible_for_review = await self.is_repo_eligible_for_review()
                 if is_eligible_for_review or await PRService.fetch_pr(
