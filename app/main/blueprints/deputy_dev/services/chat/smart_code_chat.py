@@ -35,6 +35,7 @@ from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
     ChatPromptService,
 )
 from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
@@ -124,6 +125,10 @@ class SmartCodeChatManager:
         if workspace_dto:
             set_context_values(team_id=workspace_dto.team_id)
             team_id = workspace_dto.team_id
+        # This creates repo entry in db if not exist.
+        await RepoService.find_or_create_with_workspace_id(
+            scm_workspace_id=chat_request.repo.workspace_id, pr_model=repo.pr_model()
+        )
         setting = await SettingService(repo, team_id).build()
         if not setting["chat"]["enable"]:
             # TODO: fix this after merging incremental review changes.
