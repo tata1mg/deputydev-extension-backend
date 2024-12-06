@@ -68,6 +68,7 @@ class ChatWebhook:
                 "commit_id": request_payload["pullrequest"]["destination"]["commit"]["hash"],
                 "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "workspace_slug": request_payload["repository"]["workspace"]["slug"],
+                "repo_id": request_payload["repository"]["uuid"],
             },
             "author_info": {
                 "name": request_payload["actor"]["display_name"],
@@ -108,6 +109,7 @@ class ChatWebhook:
                 "workspace": request_payload["organization"]["login"],
                 "pr_id": request_payload["pull_request"]["number"],
                 "repo_name": get_vcs_repo_name_slug(request_payload["pull_request"]["head"]["repo"]["full_name"]),
+                "repo_id": str(request_payload["pull_request"]["head"]["repo"]["id"]),
                 "commit_id": request_payload["comment"]["commit_id"],
                 "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "workspace_slug": request_payload["organization"]["login"],
