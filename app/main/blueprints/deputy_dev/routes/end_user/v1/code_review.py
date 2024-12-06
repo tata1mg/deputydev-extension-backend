@@ -2,6 +2,7 @@ from sanic import Blueprint, Sanic
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
 
+from app.common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,
 )
@@ -24,18 +25,15 @@ config = CONFIG.config
 
 
 @smart_code.route("/", methods=["POST"])
-async def pool_assistance_api(_request: Request, **kwargs):
-    try:
-        payload = _request.custom_json()
-        headers = _request.headers
-        query_params = _request.request_params()
-        request_id = headers.get("X-REQUEST-ID", "No request_id found")
-        payload["request_id"] = request_id
-        response = await CodeReviewTrigger.perform_review(payload, query_params=query_params)
-        return send_response(response)
-    except Exception as e:
-        logger.exception(e)
-        raise e
+@exception_logger
+async def publish_code_review(_request: Request, **kwargs):
+    payload = _request.custom_json()
+    headers = _request.headers
+    query_params = _request.request_params()
+    request_id = headers.get("X-REQUEST-ID", "No request_id found")
+    payload["request_id"] = request_id
+    response = await CodeReviewTrigger.perform_review(payload, query_params=query_params)
+    return send_response(response)
 
 
 # For testing directly on local without queue, not used in PRODUCTION
@@ -52,6 +50,7 @@ async def review_pr_in_sync(_request: Request, **kwargs):
 
 
 @smart_code.route("/chat", methods=["POST"])
+@exception_logger
 async def chat_assistance_api(_request: Request, **kwargs):
     payload = _request.custom_json()
     query_params = _request.request_params()
@@ -64,6 +63,7 @@ async def chat_assistance_api(_request: Request, **kwargs):
 
 
 @smart_code.route("/stats-collection", methods=["POST"])
+@exception_logger
 async def compute_pr_close_metrics(_request: Request, **kwargs):
     logger.info("Request received for stats-collection")
     payload = _request.custom_json()
