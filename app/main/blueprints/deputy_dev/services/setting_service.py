@@ -244,6 +244,6 @@ class SettingService:
                 setting = Configurations(**payload)
                 await setting.save()
             else:
-                payload["id"] = setting.id
+                payload["id"] = saved_setting.id
                 setting = Configurations(**payload)
                 await setting.save(update_fields=["configuration", "error"], force_update=True)
