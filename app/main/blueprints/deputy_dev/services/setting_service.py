@@ -191,12 +191,13 @@ class SettingService:
             repo_level_settings = None
         if error or repo_level_settings:
             repo = await self.repo_service.fetch_repo()
-            await self.create_or_update_setting(
-                configurable_id=repo.id,
-                configurable_type=SettingLevel.REPO.value,
-                error=error,
-                setting=repo_level_settings,
-            )
+            if repo:
+                await self.create_or_update_setting(
+                    configurable_id=repo.id,
+                    configurable_type=SettingLevel.REPO.value,
+                    error=error,
+                    setting=repo_level_settings,
+                )
 
     def repo_setting_cache_key(self):
         scm_workspace_id = self.repo_service.workspace_id
@@ -206,6 +207,8 @@ class SettingService:
 
     async def fetch_repo_setting_from_db(self):
         repo = await self.repo_service.fetch_repo()
+        if not repo:
+            return {}, ""
         setting = await Configurations.get_or_none(configurable_id=repo.id, configurable_type=SettingLevel.REPO.value)
         if setting:
             if setting.configuration:

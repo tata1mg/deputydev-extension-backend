@@ -327,12 +327,13 @@ class BaseRepo(ABC):
             return {}, ""
 
     async def fetch_repo(self):
-        scm_workspace_id = self.workspace_id
-        repo_name = self.repo_name
-        scm = self.vcs_type
-        workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
-        repo = await Repos.get_or_none(workspace_id=workspace.id, name=repo_name)
-        return repo
+        if self.repo_id:
+            scm_workspace_id = self.workspace_id
+            scm_repo_id = self.repo_id
+            scm = self.vcs_type
+            workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
+            repo = await Repos.get_or_none(workspace_id=workspace.id, scm_repo_id=scm_repo_id)
+            return repo
 
     def exclude_pr_diff(self, pr_diff):
         settings = get_context_value("setting") or {}
