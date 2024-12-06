@@ -11,3 +11,5 @@ class PRApprovalRequest(BaseModel):
     scm_pr_id: str
     scm_approval_time: str
     pr_created_at: Optional[str] = None
+    workspace: Optional[str] = None
+    workspace_slug: Optional[str] = None
