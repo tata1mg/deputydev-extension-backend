@@ -12,6 +12,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 
 
 class OpenAIPRSummaryAgent(AgentServiceBase):
@@ -21,6 +24,7 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         # setting = get_context_value("setting")
         # self.model = setting[AgentTypes.PR_SUMMARY.value]["model"]
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
+        self.custom_prompt = get_context_value("setting")[AgentTypes.PR_SUMMARY.value].get("custom_prompt", "")
 
     def get_with_reflection_system_prompt_pass1(self):
         return """

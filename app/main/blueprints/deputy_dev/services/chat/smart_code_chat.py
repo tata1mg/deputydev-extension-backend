@@ -131,8 +131,9 @@ class SmartCodeChatManager:
         )
         setting = await SettingService(repo, team_id).build()
         if not setting["chat"]["enable"]:
-            # TODO: fix this after merging incremental review changes.
-            await comment_service.create_comment_on_parent("Chat feature is disable for this repo.")
+            await comment_service.create_comment_on_parent(
+                "Chat feature is disable for this repo.", chat_request.comment.id, ""
+            )
             return
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
@@ -189,7 +190,6 @@ class SmartCodeChatManager:
             comment_thread=context.get("comment_thread"),
             chat_request=chat_request,
         )
-
         conversation_message = build_openai_conversation_message(
             system_message=system_prompt, user_message=user_message
         )
