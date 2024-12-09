@@ -46,14 +46,14 @@ class SettingService:
     def validate_settings(cls, base_settings, override_settings, key_path=""):
         error = ""
         if not override_settings:
-            return
+            return error
         for key, value in base_settings.items():
-            key_path += key + "."
+            current_path = f"{key_path}{key}"
             if key in override_settings and override_settings[key] is not None:
-                if not isinstance(value, type(override_settings[key])):
-                    error += f"Type of {key_path} should be {type(value)}.\n"
-                if not error and isinstance(value, dict):
-                    error += cls.validate_settings(value, override_settings[key], key_path)
+                if not isinstance(override_settings[key], type(value)):
+                    error += f"Type of {current_path} should be {type(value).__name__}.\n"
+                elif isinstance(value, dict):
+                    error += cls.validate_settings(value, override_settings[key], current_path + ".")
         return error
 
     async def repo_level_settings(self):
