@@ -9,8 +9,9 @@ from app.common.service_clients.github.github_repo_client import GithubRepoClien
 from app.main.blueprints.deputy_dev.constants.repo import (
     PR_NOT_FOUND,
     VCS_REPO_URL_MAP,
-    VCSTypes,
+    VCSTypes
 )
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dto.pr.github_pr import GitHubPrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
@@ -223,7 +224,7 @@ class GithubRepo(BaseRepo):
                 settings = toml.loads(decoded_settings)
                 return settings, ""
             except toml.TomlDecodeError as e:
-                logger.error(f"Invalid TOML: {e}")
-                return {}, str(e)
+                error = f"{SettingErrorMessage.DEFAULT_SETTING}{str(e)}"
+                return {}, error
         else:
             return {}, ""

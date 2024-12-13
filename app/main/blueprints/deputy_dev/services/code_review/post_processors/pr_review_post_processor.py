@@ -119,16 +119,10 @@ class PRReviewPostProcessor:
 
     async def process_affirmation_message(self):
         error = get_context_value("setting_error")
-        if error:
-            await self.affirmation_service.create_affirmation_reply(
-                message_type=AffirmationMessagesTypes.DEFAULT_SETTING_REVIEW.value,
-                commit_id=self.pr_model.commit_id(),
-                additional_context={"error": error},
-            )
-        else:
-            await self.affirmation_service.create_affirmation_reply(
-                message_type=self.review_status, commit_id=self.pr_model.commit_id()
-            )
+        additional_context = {"error": f"\n{error}" if error else ""}
+        await self.affirmation_service.create_affirmation_reply(
+            message_type=self.review_status, commit_id=self.pr_model.commit_id(), additional_context=additional_context
+        )
 
     async def post_process_pr_with_comments(
         self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None

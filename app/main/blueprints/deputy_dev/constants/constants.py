@@ -55,17 +55,19 @@ class AffirmationMessagesTypes(Enum):
     DEFAULT_SETTING_REVIEW = "DEFAULT_SETTING_REVIEW"
 
 
+class SettingErrorMessage:
+    DEFAULT_SETTING = "Default settings applied as custom settings validation failed due to:\n"
+    CUSTOM_PROMPT_LENGTH_EXCEED = "For the agents whose custom prompt exceeded the defined length limit, default prompt is used. Validation Error:\n"
+
+
 PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.IN_PROGRESS.value: "DeputyDev has started reviewing your pull request.",
-    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}",
+    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}{error}",
     PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value: "DeputyDev encountered an error cloning the repository for commit {commit_id}. Please verify your repository settings or PR and try again.",
     PrStatusTypes.REJECTED_LARGE_SIZE.value: "This PR for commit {commit_id} is too large. Ideal PRs should not exceed 150-200 lines. Large PRs are harder to review and more likely to be rejected or reverted. Please consider breaking down your changes into smaller, more manageable pull requests.",
     PrStatusTypes.REJECTED_NO_DIFF.value: "There is no code difference for commit {commit_id} to review in this pull request. Please ensure there are changes in the PR before requesting a review.",
     PrStatusTypes.REJECTED_INVALID_REQUEST.value: "There seems to be an issue with this pull request for commit {commit_id}. Please make sure the PR is set up correctly and try again.",
     PrStatusTypes.ALREADY_REVIEWED.value: "DeputyDev has already reviewed this PR on commit {commit_id}",
-    AffirmationMessagesTypes.DEFAULT_SETTING_REVIEW.value: """Your PR is reviewed with default settings. The custom settings provided seems to have error.
-        Please fix it to attain optimum review accuracy and relevancy:
-        ERROR: {error}""",
     PrStatusTypes.FEATURES_DISABLED.value: "Code review and PR summary features are currently disabled in your repository/organization settings. To enable these features, please update your settings.",
 }
 
@@ -256,3 +258,6 @@ CUSTOM_PROMPT_INSTRUCTIONS = """The above defined instructions are default and m
 
 User-provided instructions:
 """
+
+
+CUSTOM_PROMPT_CHAR_LIMIT = 4000
