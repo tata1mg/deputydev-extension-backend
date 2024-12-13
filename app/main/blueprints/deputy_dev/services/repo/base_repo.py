@@ -27,6 +27,7 @@ from app.main.blueprints.deputy_dev.utils import (
     ignore_files,
     parse_collection_name,
 )
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 
 
 class BaseRepo(ABC):
@@ -321,8 +322,8 @@ class BaseRepo(ABC):
                 settings = toml.loads(settings.text)
                 return settings, ""
             except toml.TomlDecodeError as e:
-                logger.error(f"Invalid TOML: {e}")
-                return {}, str(e)
+                error = f"{SettingErrorMessage.DEFAULT_SETTING}{str(e)}"
+                return {}, error
         else:
             return {}, ""
 
