@@ -69,13 +69,13 @@ class SettingService:
         return error
 
     @classmethod
-    async def validate_custom_prompts(cls, setting):
+    def validate_custom_prompts(cls, setting):
         error = ""
         agents_setting = setting.get("code_review_agent", {}).get("agents", {})
         for key, value in agents_setting.items():
             if value.get("custom_prompt") and len(value.get("custom_prompt")) > CUSTOM_PROMPT_CHAR_LIMIT:
-                value["custom_prompt"] = ""
                 error += f"Custom prompt length for {key} agent is {len(value.get('custom_prompt'))}, exceeding {CUSTOM_PROMPT_CHAR_LIMIT}.\n"
+                value["custom_prompt"] = ""
         if error:
             error = f"{SettingErrorMessage.CUSTOM_PROMPT_LENGTH_EXCEED}{error}"
         return error
@@ -108,31 +108,33 @@ class SettingService:
 
         # If settings are found in the cache:
         elif setting is not None:
+            error = await RepoSettingCache.get(cache_key + "_error")
+            if error:
+                set_context_values(setting_error=error)
             return setting  # Return the cached settings.
 
         # If no relevant cache entry is found (cache miss):
         else:
-            # Fetch settings and potential error information from the database.
+            # Fetch repository settings from the database along with any errors encountered.
             setting, error = await self.fetch_repo_setting_from_db()
 
-            # If an error occurred while fetching settings:
+            # Determine the cache value based on the result.
             if error:
-                setting_cache = -2  # Mark the cache to indicate an error occurred.
-                set_context_values(setting_error=error)  # Set error context.
-                # Cache the error details for future use.
-                await RepoSettingCache.set(cache_key + "_error", error)
-
-            # If no settings are found in the database:
+                # Case 1: An error occurred while fetching settings.
+                # If no settings were fetched, mark the cache with -2 to indicate an error.
+                # If settings were fetched but with an error, cache the settings and log the error.
+                setting_cache = -2 if not setting else setting
+                set_context_values(setting_error=error)  # Log the error in the context for debugging.
+                await RepoSettingCache.set(cache_key + "_error", error)  # Cache the error details.
             elif not setting:
+                # Case 2: No settings found in the database.
                 setting_cache = -1  # Mark the cache to indicate no settings are available.
-
-            # If settings are successfully retrieved from the database:
             else:
-                setting_cache = setting  # Store the retrieved settings in the cache.
+                # Case 3: Settings successfully retrieved without any errors.
+                setting_cache = setting  # Cache the retrieved settings.
 
-            # Cache the resolved state (settings, no settings, or error marker).
+            # Cache the final resolved state (settings, no settings, or error marker).
             await RepoSettingCache.set(cache_key, setting_cache)
-
             return setting  # Return the retrieved settings (or an empty dictionary if absent).
 
     def remove_repo_specific_setting(self, setting):
