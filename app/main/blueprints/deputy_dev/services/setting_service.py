@@ -228,7 +228,7 @@ class SettingService:
 
         return base_config
 
-    def _merge_agents(self, base_agents: Dict[str, Any], override_agents: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_agents(self, base_agents, override_agents):
         """
         Merge the `agents` key from `code_review_agent`, ensuring custom rules are applied.
         """
