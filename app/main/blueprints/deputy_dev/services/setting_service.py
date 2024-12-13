@@ -5,7 +5,7 @@ import toml
 from torpedo.exceptions import BadRequestException
 
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
-from app.main.blueprints.deputy_dev.constants.constants import SettingLevel
+from app.main.blueprints.deputy_dev.constants.constants import SettingLevel, CUSTOM_PROMPT_CHAR_LIMIT
 from app.main.blueprints.deputy_dev.models.dao import Configurations
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     context_var,
@@ -16,7 +16,8 @@ from app.main.blueprints.deputy_dev.utils import (
     get_workspace,
     update_payload_with_jwt_data,
 )
-
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 
 class SettingService:
     DD_LEVEL_SETTINGS = toml.load(Path("./settings.toml"))
@@ -43,7 +44,15 @@ class SettingService:
         return final_setting
 
     @classmethod
-    def validate_settings(cls, base_settings, override_settings, key_path=""):
+    def validate_settings(cls, base_settings, override_settings):
+        error = cls.validate_types(base_settings, override_settings)
+        if error:
+            return f"{SettingErrorMessage.DEFAULT_SETTING}{error}", True
+        error = cls.validate_custom_prompts(override_settings)
+        return error, False
+
+    @classmethod
+    def validate_types(cls, base_settings, override_settings, key_path=""):
         error = ""
         if not override_settings:
             return error
@@ -53,7 +62,19 @@ class SettingService:
                 if not isinstance(override_settings[key], type(value)):
                     error += f"Type of {current_path} should be {type(value).__name__}.\n"
                 elif isinstance(value, dict):
-                    error += cls.validate_settings(value, override_settings[key], current_path + ".")
+                    error += cls.validate_types(value, override_settings[key], current_path + ".")
+        return error
+
+    @classmethod
+    async def validate_custom_prompts(cls, setting):
+        error = ""
+        agents_setting = setting.get("code_review_agent", {}).get("agents", {})
+        for key, value in agents_setting.items():
+            if value.get("custom_prompt") and len(value.get("custom_prompt")) > CUSTOM_PROMPT_CHAR_LIMIT:
+                value["custom_prompt"] = ""
+                error += f"Custom prompt length for {key} agent is {len(value.get('custom_prompt'))}, exceeding {CUSTOM_PROMPT_CHAR_LIMIT}.\n"
+        if error:
+            error = f"{SettingErrorMessage.CUSTOM_PROMPT_LENGTH_EXCEED}{error}"
         return error
 
     async def repo_level_settings(self):
@@ -179,12 +200,14 @@ class SettingService:
     async def update_repo_setting(self):
         cache_key = self.repo_setting_cache_key()
         repo_level_settings, error = await self.repo_service.get_settings(self.default_branch)
-        if repo_level_settings:
-            error = self.validate_settings(self.dd_level_settings(), repo_level_settings)
+        is_invalid_setting = True if error else False
+        if repo_level_settings and not is_invalid_setting:
+            error, is_invalid_setting = self.validate_settings(self.dd_level_settings(), repo_level_settings)
         if not repo_level_settings and not error:
             repo_level_settings = -1
-        if error:
-            repo_level_settings = -2
+        elif error:
+            if is_invalid_setting:
+                repo_level_settings = -2
             await RepoSettingCache.set(cache_key + "_error", error)
         await RepoSettingCache.set(cache_key, repo_level_settings)
         if repo_level_settings in [-1, -2]:  # Save in DB
@@ -212,7 +235,7 @@ class SettingService:
         setting = await Configurations.get_or_none(configurable_id=repo.id, configurable_type=SettingLevel.REPO.value)
         if setting:
             if setting.configuration:
-                return setting.configuration, ""
+                return setting.configuration, setting.error or ""
             else:
                 return {}, setting.error
         return {}, ""
