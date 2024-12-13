@@ -5,7 +5,11 @@ import toml
 from torpedo.exceptions import BadRequestException
 
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
-from app.main.blueprints.deputy_dev.constants.constants import SettingLevel, CUSTOM_PROMPT_CHAR_LIMIT
+from app.main.blueprints.deputy_dev.constants.constants import (
+    CUSTOM_PROMPT_CHAR_LIMIT,
+    SettingErrorMessage,
+    SettingLevel,
+)
 from app.main.blueprints.deputy_dev.models.dao import Configurations
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     context_var,
@@ -16,8 +20,7 @@ from app.main.blueprints.deputy_dev.utils import (
     get_workspace,
     update_payload_with_jwt_data,
 )
-from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
-from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
+
 
 class SettingService:
     DD_LEVEL_SETTINGS = toml.load(Path("./settings.toml"))
