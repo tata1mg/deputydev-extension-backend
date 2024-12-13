@@ -1,17 +1,16 @@
 import base64
 
 import toml
-from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 from app.main.blueprints.deputy_dev.constants.repo import (
     PR_NOT_FOUND,
     VCS_REPO_URL_MAP,
-    VCSTypes
+    VCSTypes,
 )
-from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dto.pr.github_pr import GitHubPrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse

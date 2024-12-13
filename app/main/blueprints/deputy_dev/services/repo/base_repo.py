@@ -11,6 +11,7 @@ from torpedo import CONFIG
 
 from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dao import Repos, Workspaces
@@ -27,7 +28,6 @@ from app.main.blueprints.deputy_dev.utils import (
     ignore_files,
     parse_collection_name,
 )
-from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
 
 
 class BaseRepo(ABC):

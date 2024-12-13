@@ -4,7 +4,6 @@ from typing import Dict, List
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
-    AffirmationMessagesTypes,
     BucketStatus,
     BucketTypes,
     ExperimentStatusTypes,
