@@ -237,7 +237,7 @@ class SettingService:
             if setting.configuration:
                 return setting.configuration, setting.error or ""
             else:
-                return {}, setting.error
+                return {}, setting.error or ""
         return {}, ""
 
     @classmethod
