@@ -28,6 +28,7 @@ from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
+    get_context_value,
 )
 
 
@@ -564,3 +565,13 @@ def repo_meta_info_prompt(app_settings):
         else ""
     )
     return prompt
+
+
+def fetch_setting_errors(error_types):
+    errors = get_context_value("setting_error")
+    error_message = ""
+    if errors and any(error_type in errors for error_type in error_types):
+        for error_type in error_types:
+            if errors[error_type]:
+                error_message += errors[error_type] + "\n"
+    return error_message
