@@ -45,7 +45,7 @@ class BitbucketCommentHelper:
     def format_chat_thread_comment(cls, comment, chat_request: ChatRequest) -> dict:
         comment_payload = {
             "content": {"raw": format_comment(comment)},
-            "parent": {"id": chat_request.comment.parent},
+            "parent": {"id": chat_request.comment.id},
             "inline": {"path": chat_request.comment.path},
         }
         return comment_payload
