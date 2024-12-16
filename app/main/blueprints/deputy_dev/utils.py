@@ -229,7 +229,7 @@ def format_comment(data):
 
 def get_bucket_name(data):
     buckets = data.get("buckets")
-    if buckets and len(buckets) == 1:
+    if buckets and not data.get("is_summarized"):
         return buckets[0]
     return ""
 
@@ -564,3 +564,8 @@ def repo_meta_info_prompt(app_settings):
         else ""
     )
     return prompt
+
+
+def format_chat_comment_thread_comment(comment):
+    """Append comment Start and Comment End in each comment that we add in Comment thread in DD chat flow"""
+    return "Comment Start: \n" + comment + "\nComment End \n"

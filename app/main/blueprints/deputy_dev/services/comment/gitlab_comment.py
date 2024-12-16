@@ -61,7 +61,7 @@ class GitlabComment(BaseComment):
             logger.error(f"unable to comment on github PR {self.meta_data}")
         comment["scm_comment_id"] = str(response.json()["id"])
 
-    async def fetch_comment_thread(self, chat_request, depth=0):
+    async def fetch_comment_thread(self, chat_request):
         """
         Fetches the comment thread for a comment_id
 
