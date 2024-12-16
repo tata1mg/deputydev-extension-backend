@@ -5,7 +5,7 @@ from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
-from app.main.blueprints.deputy_dev.constants.constants import SettingErrorMessage
+from app.main.blueprints.deputy_dev.constants.constants import SettingErrorType, SETTING_ERROR_MESSAGE
 from app.main.blueprints.deputy_dev.constants.repo import (
     PR_NOT_FOUND,
     VCS_REPO_URL_MAP,
@@ -223,7 +223,8 @@ class GithubRepo(BaseRepo):
                 settings = toml.loads(decoded_settings)
                 return settings, ""
             except toml.TomlDecodeError as e:
-                error = f"{SettingErrorMessage.DEFAULT_SETTING}{str(e)}"
+                `error_type = SettingErrorType.INVALID_SETTING.value`
+                error = {error_type: f"{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"}
                 return {}, error
         else:
             return {}, ""

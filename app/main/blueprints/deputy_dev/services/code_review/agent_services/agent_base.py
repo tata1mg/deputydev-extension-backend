@@ -37,7 +37,7 @@ class AgentServiceBase(ABC):
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
             "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
             "REVIEW_COMMENTS_By_JUNIOR_DEVELOPER": comments,
-            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": await self.context_service. get_relevant_chunk(),
+            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": await self.context_service.get_relevant_chunk(),
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),

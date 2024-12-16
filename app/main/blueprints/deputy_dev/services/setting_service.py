@@ -50,10 +50,10 @@ class SettingService:
     @classmethod
     def validate_settings(cls, base_settings, override_settings):
         errors = {}
-        error = cls.validate_types(base_settings, override_settings)
-        if error:
+        error_message = cls.validate_types(base_settings, override_settings)
+        if error_message:
             error_type = SettingErrorType.INVALID_SETTING.value
-            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error_message}"
             return errors, True
         errors.update(cls.validate_custom_prompts(override_settings))
         return errors, False
