@@ -51,15 +51,27 @@ class PrStatusTypes(Enum):
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
 
 
+CUSTOM_PROMPT_CHAR_LIMIT = 4000
+
+
 class AffirmationMessagesTypes(Enum):
     DEFAULT_SETTING_REVIEW = "DEFAULT_SETTING_REVIEW"
 
 
-class SettingErrorMessage:
-    DEFAULT_SETTING = "Default settings applied as custom settings validation failed due to:\n"
-    CUSTOM_PROMPT_LENGTH_EXCEED = "For the agents whose custom prompt exceeded the defined length limit, default prompt is used. Validation Error:\n"
+class SettingErrorType(Enum):
+    INVALID_SETTING = "INVALID_SETTING"
+    CUSTOM_PROMPT_LENGTH_EXCEED = "CUSTOM_PROMPT_LENGTH_EXCEED"
+    INVALID_CHAT_SETTING = "INVALID_CHAT_SETTING"
 
 
+SETTING_ERROR_MESSAGE = {
+    SettingErrorType.INVALID_SETTING.value: "Default settings applied as custom settings validation failed due to:\n",
+    SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters: \n",
+    SettingErrorType.INVALID_CHAT_SETTING.value: f"Default prompt is getting used for chat as Custom Prompt exceed the defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters.",
+}
+
+CODE_REVIEW_ERRORS = [SettingErrorType.INVALID_SETTING.value, SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value]
+CHAT_ERRORS = [SettingErrorType.INVALID_SETTING.value, SettingErrorType.INVALID_CHAT_SETTING.value]
 PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.IN_PROGRESS.value: "DeputyDev has started reviewing your pull request.",
     PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}{error}",
@@ -258,6 +270,3 @@ CUSTOM_PROMPT_INSTRUCTIONS = """The above defined instructions are default and m
 
 User-provided instructions:
 """
-
-
-CUSTOM_PROMPT_CHAR_LIMIT = 4000

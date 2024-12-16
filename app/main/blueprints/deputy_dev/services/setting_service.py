@@ -7,7 +7,8 @@ from torpedo.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_CHAR_LIMIT,
-    SettingErrorMessage,
+    SettingErrorType,
+    SETTING_ERROR_MESSAGE,
     SettingLevel,
 )
 from app.main.blueprints.deputy_dev.models.dao import Configurations
@@ -48,11 +49,14 @@ class SettingService:
 
     @classmethod
     def validate_settings(cls, base_settings, override_settings):
+        errors = {}
         error = cls.validate_types(base_settings, override_settings)
         if error:
-            return f"{SettingErrorMessage.DEFAULT_SETTING}{error}", True
-        error = cls.validate_custom_prompts(override_settings)
-        return error, False
+            error_type = SettingErrorType.INVALID_SETTING.value
+            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+            return errors, True
+        errors.update(cls.validate_custom_prompts(override_settings))
+        return errors, False
 
     @classmethod
     def validate_types(cls, base_settings, override_settings, key_path=""):
@@ -70,15 +74,38 @@ class SettingService:
 
     @classmethod
     def validate_custom_prompts(cls, setting):
-        error = ""
+        errors = {}
+        errors.update(cls._validate_agent_prompts(setting))
+        errors.update(cls._validate_chat_prompt(setting))
+        return errors
+
+    @classmethod
+    def _validate_agent_prompts(cls, setting):
+        error, errors = "", {}
         agents_setting = setting.get("code_review_agent", {}).get("agents", {})
         for key, value in agents_setting.items():
             if value.get("custom_prompt") and len(value.get("custom_prompt")) > CUSTOM_PROMPT_CHAR_LIMIT:
-                error += f"Custom prompt length for {key} agent is {len(value.get('custom_prompt'))}, exceeding {CUSTOM_PROMPT_CHAR_LIMIT}.\n"
+                error += f"Custom prompt length of {key} agent is {len(value.get('custom_prompt'))}. \n"
                 value["custom_prompt"] = ""
+        summary_custom_prompt = setting.get("pr_summary", {}).get("custom_prompt", "")
+        if len(summary_custom_prompt) > CUSTOM_PROMPT_CHAR_LIMIT:
+            error += f"Custom prompt length of pr_summary agent is {len(summary_custom_prompt)}."
+            setting["pr_summary"]["custom_prompt"] = ""
         if error:
-            error = f"{SettingErrorMessage.CUSTOM_PROMPT_LENGTH_EXCEED}{error}"
-        return error
+            error_type = SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value
+            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+        return errors
+
+    @classmethod
+    def _validate_chat_prompt(cls, setting):
+        error, errors = "", {}
+        chat_custom_prompt = setting.get("chat", {}).get("custom_prompt", "")
+        if len(chat_custom_prompt) > CUSTOM_PROMPT_CHAR_LIMIT:
+            error_type = SettingErrorType.INVALID_CHAT_SETTING.value
+            error = f", provided prompt length is {len(chat_custom_prompt)}."
+            setting["chat"]["custom_prompt"] = ""
+            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+        return errors
 
     async def repo_level_settings(self):
         """
@@ -240,10 +267,10 @@ class SettingService:
         setting = await Configurations.get_or_none(configurable_id=repo.id, configurable_type=SettingLevel.REPO.value)
         if setting:
             if setting.configuration:
-                return setting.configuration, setting.error or ""
+                return setting.configuration, setting.error or {}
             else:
-                return {}, setting.error or ""
-        return {}, ""
+                return {}, setting.error or {}
+        return {}, {}
 
     @classmethod
     async def create_or_update_org_settings(cls, payload, query_params):
