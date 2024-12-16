@@ -10,6 +10,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     ChatTypes,
     MessageTypes,
     MetaStatCollectionTypes,
+    CHAT_ERRORS,
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
@@ -47,6 +48,7 @@ from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook impor
 )
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
+    get_context_value,
 )
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
     WorkspaceService,
@@ -57,6 +59,7 @@ from app.main.blueprints.deputy_dev.utils import (
     is_human_comment,
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
+    fetch_setting_errors,
 )
 
 config = CONFIG.config
@@ -162,10 +165,18 @@ class SmartCodeChatManager:
         llm_comment_response = await cls.get_comments_from_llm(
             context, config.get("FEATURE_MODELS").get("PR_CHAT"), chat_request
         )
+        comment = cls.append_settings_error(llm_comment_response)
         logger.info(f"Process chat comment response: {llm_comment_response}")
-        await comment_service.process_chat_comment(
-            comment=llm_comment_response, chat_request=chat_request, add_note=add_note
-        )
+        await comment_service.process_chat_comment(comment=comment, chat_request=chat_request, add_note=add_note)
+
+    @classmethod
+    def append_settings_error(cls, comment):
+        error_message = fetch_setting_errors(CHAT_ERRORS)
+        if error_message:
+            error_message = f"""Warning: {error_message}
+            {comment}
+            """
+            return error_message
 
     @classmethod
     async def get_comments_from_llm(cls, context: dict, model: str, chat_request: ChatRequest) -> str:
