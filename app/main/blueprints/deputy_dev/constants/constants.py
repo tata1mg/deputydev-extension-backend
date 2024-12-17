@@ -53,10 +53,6 @@ class PrStatusTypes(Enum):
 CUSTOM_PROMPT_CHAR_LIMIT = 4000
 
 
-class AffirmationMessagesTypes(Enum):
-    DEFAULT_SETTING_REVIEW = "DEFAULT_SETTING_REVIEW"
-
-
 class SettingErrorType(Enum):
     INVALID_SETTING = "INVALID_SETTING"
     CUSTOM_PROMPT_LENGTH_EXCEED = "CUSTOM_PROMPT_LENGTH_EXCEED"
@@ -66,11 +62,11 @@ class SettingErrorType(Enum):
 
 SETTING_ERROR_MESSAGE = {
     SettingErrorType.INVALID_TOML.value: """
-    Default settings applied as deputydev.toml file is not a valid toml file. 
-    Errors: 
+    Default settings applied as deputydev.toml file is not a valid toml file.
+    Errors:
     """,
     SettingErrorType.INVALID_SETTING.value: """
-    Default settings applied as custom settings validation failed. 
+    Default settings applied as custom settings validation failed.
     Errors:
     """,
     SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"""
