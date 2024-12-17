@@ -84,7 +84,7 @@ CHAT_ERRORS = [
 ]
 PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.IN_PROGRESS.value: "DeputyDev has started reviewing your pull request.",
-    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}{error}",
+    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}.{error}",
     PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value: "DeputyDev encountered an error cloning the repository for commit {commit_id}. Please verify your repository settings or PR and try again.",
     PrStatusTypes.REJECTED_LARGE_SIZE.value: "This PR for commit {commit_id} is too large. Ideal PRs should not exceed 150-200 lines. Large PRs are harder to review and more likely to be rejected or reverted. Please consider breaking down your changes into smaller, more manageable pull requests.",
     PrStatusTypes.REJECTED_NO_DIFF.value: "There is no code difference for commit {commit_id} to review in this pull request. Please ensure there are changes in the PR before requesting a review.",
