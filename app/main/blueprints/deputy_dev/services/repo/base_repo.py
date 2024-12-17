@@ -12,8 +12,8 @@ from torpedo import CONFIG
 from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.main.blueprints.deputy_dev.constants.constants import (
-    SettingErrorType,
     SETTING_ERROR_MESSAGE,
+    SettingErrorType,
 )
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.loggers import AppLogger

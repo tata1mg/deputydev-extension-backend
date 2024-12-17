@@ -4,11 +4,11 @@ from typing import Dict, List
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
+    CODE_REVIEW_ERRORS,
     BucketStatus,
     BucketTypes,
     ExperimentStatusTypes,
     PrStatusTypes,
-    CODE_REVIEW_ERRORS,
 )
 from app.main.blueprints.deputy_dev.models.dao import PRComments
 from app.main.blueprints.deputy_dev.models.dao.comment_bucket_mapping import (
@@ -36,9 +36,6 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-)
 from app.main.blueprints.deputy_dev.utils import fetch_setting_errors
 
 config = CONFIG.config

@@ -6,11 +6,11 @@ from torpedo import CONFIG
 from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.app_utils import build_openai_conversation_message
 from app.main.blueprints.deputy_dev.constants.constants import (
+    CHAT_ERRORS,
     BitbucketBots,
     ChatTypes,
     MessageTypes,
     MetaStatCollectionTypes,
-    CHAT_ERRORS,
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
@@ -48,18 +48,17 @@ from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook impor
 )
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
-    get_context_value,
 )
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
     WorkspaceService,
 )
 from app.main.blueprints.deputy_dev.utils import (
+    fetch_setting_errors,
     format_code_blocks,
     get_vcs_auth_handler,
     is_human_comment,
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
-    fetch_setting_errors,
 )
 
 config = CONFIG.config
