@@ -63,11 +63,11 @@ class SettingErrorType(Enum):
 SETTING_ERROR_MESSAGE = {
     SettingErrorType.INVALID_TOML.value: """
     Default settings applied as deputydev.toml file is not a valid toml file.
-    Errors:
+     Errors:
     """,
     SettingErrorType.INVALID_SETTING.value: """
     Default settings applied as custom settings validation failed.
-    Errors:
+     Errors:
     """,
     SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"""
     Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters:
