@@ -572,6 +572,6 @@ def fetch_setting_errors(error_types):
     error_message = ""
     if errors and any(error_type in errors for error_type in error_types):
         for error_type in error_types:
-            if errors[error_type]:
+            if errors.get(error_type):
                 error_message += errors[error_type] + "\n"
     return error_message

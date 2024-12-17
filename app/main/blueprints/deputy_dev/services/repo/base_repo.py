@@ -12,7 +12,6 @@ from torpedo import CONFIG
 from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.main.blueprints.deputy_dev.constants.constants import (
-    SettingErrorMessage,
     SettingErrorType,
     SETTING_ERROR_MESSAGE,
 )
@@ -326,7 +325,7 @@ class BaseRepo(ABC):
                 settings = toml.loads(settings.text)
                 return settings, {}
             except toml.TomlDecodeError as e:
-                error_type = SettingErrorType.INVALID_SETTING.value
+                error_type = SettingErrorType.INVALID_TOML.value
                 error = {error_type: f"{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"}
                 return {}, error
         else:
