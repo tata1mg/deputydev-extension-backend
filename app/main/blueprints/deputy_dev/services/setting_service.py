@@ -53,7 +53,7 @@ class SettingService:
         error_message = cls.validate_types(base_settings, override_settings)
         if error_message:
             error_type = SettingErrorType.INVALID_SETTING.value
-            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error_message}"
+            errors[error_type] = f"""{SETTING_ERROR_MESSAGE[error_type]}{error_message}"""
             return errors, True
         errors.update(cls.validate_custom_prompts(override_settings))
         return errors, False
@@ -93,7 +93,7 @@ class SettingService:
             setting["pr_summary"]["custom_prompt"] = ""
         if error:
             error_type = SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value
-            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+            errors[error_type] = f"""{SETTING_ERROR_MESSAGE[error_type]}{error}"""
         return errors
 
     @classmethod
@@ -104,7 +104,7 @@ class SettingService:
             error_type = SettingErrorType.INVALID_CHAT_SETTING.value
             error = f", provided prompt length is {len(chat_custom_prompt)}."
             setting["chat"]["custom_prompt"] = ""
-            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+            errors[error_type] = f"""{SETTING_ERROR_MESSAGE[error_type]}{error}"""
         return errors
 
     async def repo_level_settings(self):
