@@ -166,17 +166,17 @@ class SmartCodeChatManager:
             context, config.get("FEATURE_MODELS").get("PR_CHAT"), chat_request
         )
         comment = cls.append_settings_error(llm_comment_response)
-        logger.info(f"Process chat comment response: {llm_comment_response}")
+        logger.info(f"Process chat comment response: {comment}")
         await comment_service.process_chat_comment(comment=comment, chat_request=chat_request, add_note=add_note)
 
     @classmethod
     def append_settings_error(cls, comment):
         error_message = fetch_setting_errors(CHAT_ERRORS)
         if error_message:
-            error_message = f"""Warning: {error_message}
+            comment = f"""Warning: {error_message}
             {comment}
             """
-            return error_message
+        return comment
 
     @classmethod
     async def get_comments_from_llm(cls, context: dict, model: str, chat_request: ChatRequest) -> str:
