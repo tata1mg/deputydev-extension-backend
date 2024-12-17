@@ -18,7 +18,7 @@ class BedrockServiceClient:
             service_name=CONFIG.config["AWS"]["BEDROCK_SERVICE_NAME"],
             aws_access_key_id=CONFIG.config["AWS"].get("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=CONFIG.config["AWS"].get("AWS_SECRET_ACCESS_KEY"),
-            aws_session_token=CONFIG.config["AWS"].get("AWS_SESSION_TOKEN"),
+            # aws_session_token=CONFIG.config["AWS"].get("AWS_SESSION_TOKEN"),
             region_name=CONFIG.config["AWS"]["AWS_REGION"],
             config=config,
         ) as client:
