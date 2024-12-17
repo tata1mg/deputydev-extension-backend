@@ -66,8 +66,8 @@ class SettingErrorType(Enum):
 
 
 SETTING_ERROR_MESSAGE = {
-    SettingErrorType.INVALID_TOML.value: "Default settings applied as deputydev.toml file is not a valid toml file. ERROR: \n",
-    SettingErrorType.INVALID_SETTING.value: "Default settings applied as custom settings validation failed due to:\n",
+    SettingErrorType.INVALID_TOML.value: "Default settings applied as deputydev.toml file is not a valid toml file. Errors: \n",
+    SettingErrorType.INVALID_SETTING.value: "Default settings applied as custom settings validation failed. Errors:\n",
     SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters: \n",
     SettingErrorType.INVALID_CHAT_SETTING.value: f"Default prompt is getting used for chat as Custom Prompt exceed the defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters.",
 }
