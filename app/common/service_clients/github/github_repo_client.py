@@ -248,19 +248,13 @@ class GithubRepoClient(BaseSCMClient):
 
     async def get_pr_comments(self) -> list:
         """
-        Get the latest commit SHA of a pull request on GitHub.
-
-        Args:
-            user_name (str): The owner of the repository.
-            repo_name (str): The name of the repository.
-            pr_id (int): The ID number of the pull request.
-            headers (dict, optional): Additional headers to pass in the request.
-
+        Get all the comments on a PR in GitHub.
+        Note: In API response we get comments in ascending order of created_at
         Returns:
-            dict: Response containing the latest commit SHA.
+            dict: List of comments in PR.
         """
         headers = {}
-        commits = []
+        comments = []
 
         # Set headers for authorization and content type
         headers["Accept"] = "application/vnd.github+json"
@@ -270,13 +264,15 @@ class GithubRepoClient(BaseSCMClient):
             path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls/{self.pr_id}/comments?page={page}&per_page=100"
             response = await self.get(path, headers=headers)
             if response.status_code != 200:
-                raise Exception(f"Error fetching commits: {response.status_code}, {response.text}")
+                AppLogger.log_warn(f"Error fetching comments: {response.status_code}, {response.text}")
+                return comments
             data = response.json()
+            # Returns empty list incase we pass page with no comments
             if not data:
                 break
-            commits.extend(data)
+            comments.extend(data)
             page += 1
-        return commits
+        return comments
 
     async def get_file(self, branch_name, file_path):
         url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/contents/{file_path}?ref={branch_name}"
