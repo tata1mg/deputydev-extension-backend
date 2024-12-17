@@ -5,7 +5,10 @@ from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
-from app.main.blueprints.deputy_dev.constants.constants import SettingErrorType, SETTING_ERROR_MESSAGE
+from app.main.blueprints.deputy_dev.constants.constants import (
+    SETTING_ERROR_MESSAGE,
+    SettingErrorType,
+)
 from app.main.blueprints.deputy_dev.constants.repo import (
     PR_NOT_FOUND,
     VCS_REPO_URL_MAP,
