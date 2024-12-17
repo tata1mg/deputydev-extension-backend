@@ -326,7 +326,7 @@ class BaseRepo(ABC):
                 return settings, {}
             except toml.TomlDecodeError as e:
                 error_type = SettingErrorType.INVALID_TOML.value
-                error = {error_type: f"{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"}
+                error = {error_type: f"""{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"""}
                 return {}, error
         else:
             return {}, {}
