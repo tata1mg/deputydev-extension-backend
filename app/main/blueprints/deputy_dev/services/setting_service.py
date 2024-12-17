@@ -7,8 +7,8 @@ from torpedo.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_CHAR_LIMIT,
-    SettingErrorType,
     SETTING_ERROR_MESSAGE,
+    SettingErrorType,
     SettingLevel,
 )
 from app.main.blueprints.deputy_dev.models.dao import Configurations
