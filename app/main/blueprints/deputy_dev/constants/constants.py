@@ -6,7 +6,6 @@ from torpedo.common_utils import CONFIG
 from app.common.constants.constants import ExtendedEnum
 
 MAX_PR_DIFF_TOKEN_LIMIT = CONFIG.config["MAX_PR_DIFF_TOKEN_LIMIT"]
-COMMENTS_DEPTH = 7
 PR_SIZE_TOO_BIG_MESSAGE = (
     "This PR is too large. Ideal PRs are not more than 150-200 lines."
     " Large PRs are harder to review and more likely to be rejected or "
