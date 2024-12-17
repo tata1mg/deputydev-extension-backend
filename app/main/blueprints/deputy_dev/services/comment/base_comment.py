@@ -33,7 +33,7 @@ class BaseComment(ABC):
         self.workspace_slug = workspace_slug
 
     @abstractmethod
-    async def fetch_comment_thread(self, chat_request, depth=0):
+    async def fetch_comment_thread(self, chat_request):
         """
         Fetches comment thread
         Args:

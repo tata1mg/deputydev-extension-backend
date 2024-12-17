@@ -251,6 +251,8 @@ class CommentBlendingEngine:
                     response_type=prompt.get("structure_type"),
                 )
                 summarized_comments = json.loads(response.choices[0].message.content)
+                for comment in summarized_comments.get("comments", []):
+                    comment["is_summarized"] = True
                 processed_comments.extend(summarized_comments.get("comments"))
 
                 self.filtered_comments = processed_comments
