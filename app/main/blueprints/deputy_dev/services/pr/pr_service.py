@@ -4,6 +4,7 @@ from sanic.log import logger
 from tortoise.exceptions import IntegrityError
 
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dao import PullRequests, Repos, Workspaces
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
@@ -25,7 +26,7 @@ class PRService:
                 pr_dto = PullRequestDTO(**await row.to_dict())
                 return pr_dto
         except IntegrityError as e:
-            logger.error(f"Error creating PR: {e}")
+            AppLogger.log_warn(f"Integrity error creating PR: {e}")
             return None
         except Exception as ex:
             logger.error("not able to insert pr details {} exception {}".format(pr_dto.dict(), ex))
@@ -79,7 +80,8 @@ class PRService:
 
             try:
                 pr_dto = await PRService.db_update(payload=failed_update_payload, filters={"id": failed_pr_dto.id})
-            except IntegrityError:  # Case where Other entry exists with same source and destination commit
+            except IntegrityError as ex:  # Case where Other entry exists with same source and destination commit
+                AppLogger.log_warn(f"Integrity error updating PR: {ex}")
                 return
         else:
             pr_model.meta_info = {
