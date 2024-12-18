@@ -8,7 +8,7 @@ class Configurations(Base):
     configurable_id = fields.BigIntField()
     configurable_type = fields.CharField(max_length=100, null=False)
     configuration = fields.JSONField(null=True)
-    error = fields.TextField(null=True)
+    error = fields.JSONField(null=True)
 
     class Meta:
         table = "configurations"

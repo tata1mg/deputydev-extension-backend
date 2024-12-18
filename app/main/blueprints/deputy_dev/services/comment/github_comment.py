@@ -2,6 +2,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
@@ -9,7 +10,10 @@ from app.main.blueprints.deputy_dev.services.comment.helpers.github_comment_help
     GithubCommentHelper,
 )
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
-from app.main.blueprints.deputy_dev.utils import format_comment
+from app.main.blueprints.deputy_dev.utils import (
+    format_chat_comment_thread_comment,
+    format_comment,
+)
 
 config = CONFIG.config
 
@@ -63,7 +67,7 @@ class GithubComment(BaseComment):
             logger.error(f"unable to comment on github PR {self.meta_data}")
         comment["scm_comment_id"] = str(response.json()["id"])
 
-    async def fetch_comment_thread(self, chat_request, depth=0):
+    async def fetch_comment_thread(self, chat_request):
         """
         Fetches the comment thread for a comment_id
 
@@ -80,15 +84,24 @@ class GithubComment(BaseComment):
             return comment_thread
 
         try:
-            all_pr_comments = await self.repo_client.get_pr_comments()
-
+            all_pr_comments = await self.repo_client.get_pr_comments()  # in ascending order of created_at
+            parent_comment_body = ""
             for comment in all_pr_comments:
+                # In github all comments in a root comment in a thread have same parent as root comment.
+                # So collecting all comments with same parent as chat_request parent, as they belong to same thread.
                 if comment.get("in_reply_to_id") == first_parent_id and comment["id"] != chat_request.comment.id:
-                    comment_thread += "\n" + comment["body"]
+                    comment_thread += "\n" + format_chat_comment_thread_comment(comment["body"])
+                if comment.get("id") == first_parent_id:
+                    parent_comment_body = format_chat_comment_thread_comment(comment["body"]) + "\n"
+
+            comment_thread = parent_comment_body + comment_thread
 
             return comment_thread
-        except Exception as e:
-            logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
+        except KeyError as e:
+            AppLogger.log_warn(f"Missing required field in comment data: {e}")
+            return ""
+        except ValueError as e:
+            AppLogger.log_warn(f"Invalid data format in comments: {e}")
             return ""
 
     async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
