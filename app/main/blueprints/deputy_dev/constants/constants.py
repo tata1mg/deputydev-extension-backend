@@ -6,7 +6,6 @@ from torpedo.common_utils import CONFIG
 from app.common.constants.constants import ExtendedEnum
 
 MAX_PR_DIFF_TOKEN_LIMIT = CONFIG.config["MAX_PR_DIFF_TOKEN_LIMIT"]
-COMMENTS_DEPTH = 7
 PR_SIZE_TOO_BIG_MESSAGE = (
     "This PR is too large. Ideal PRs are not more than 150-200 lines."
     " Large PRs are harder to review and more likely to be rejected or "
@@ -51,21 +50,49 @@ class PrStatusTypes(Enum):
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
 
 
-class AffirmationMessagesTypes(Enum):
-    DEFAULT_SETTING_REVIEW = "DEFAULT_SETTING_REVIEW"
+CUSTOM_PROMPT_CHAR_LIMIT = 4000
 
 
+class SettingErrorType(Enum):
+    INVALID_SETTING = "INVALID_SETTING"
+    CUSTOM_PROMPT_LENGTH_EXCEED = "CUSTOM_PROMPT_LENGTH_EXCEED"
+    INVALID_CHAT_SETTING = "INVALID_CHAT_SETTING"
+    INVALID_TOML = "INVALID_TOML"
+
+
+SETTING_ERROR_MESSAGE = {
+    SettingErrorType.INVALID_TOML.value: """
+    Default settings applied as deputydev.toml file is not a valid toml file.
+     Errors:
+    """,
+    SettingErrorType.INVALID_SETTING.value: """
+    Default settings applied as custom settings validation failed.
+     Errors:
+    """,
+    SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"""
+    Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters:
+    """,
+    SettingErrorType.INVALID_CHAT_SETTING.value: f"""Default prompt is getting used for chat as Custom Prompt exceed the defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters""",
+}
+
+CODE_REVIEW_ERRORS = [
+    SettingErrorType.INVALID_TOML.value,
+    SettingErrorType.INVALID_SETTING.value,
+    SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value,
+]
+CHAT_ERRORS = [
+    SettingErrorType.INVALID_TOML.value,
+    SettingErrorType.INVALID_SETTING.value,
+    SettingErrorType.INVALID_CHAT_SETTING.value,
+]
 PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.IN_PROGRESS.value: "DeputyDev has started reviewing your pull request.",
-    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}",
+    PrStatusTypes.COMPLETED.value: "DeputyDev has completed a review of your pull request for commit {commit_id}.{error}",
     PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value: "DeputyDev encountered an error cloning the repository for commit {commit_id}. Please verify your repository settings or PR and try again.",
     PrStatusTypes.REJECTED_LARGE_SIZE.value: "This PR for commit {commit_id} is too large. Ideal PRs should not exceed 150-200 lines. Large PRs are harder to review and more likely to be rejected or reverted. Please consider breaking down your changes into smaller, more manageable pull requests.",
     PrStatusTypes.REJECTED_NO_DIFF.value: "There is no code difference for commit {commit_id} to review in this pull request. Please ensure there are changes in the PR before requesting a review.",
     PrStatusTypes.REJECTED_INVALID_REQUEST.value: "There seems to be an issue with this pull request for commit {commit_id}. Please make sure the PR is set up correctly and try again.",
     PrStatusTypes.ALREADY_REVIEWED.value: "DeputyDev has already reviewed this PR on commit {commit_id}",
-    AffirmationMessagesTypes.DEFAULT_SETTING_REVIEW.value: """Your PR is reviewed with default settings. The custom settings provided seems to have error.
-        Please fix it to attain optimum review accuracy and relevancy:
-        ERROR: {error}""",
     PrStatusTypes.FEATURES_DISABLED.value: "Code review and PR summary features are currently disabled in your repository/organization settings. To enable these features, please update your settings.",
 }
 

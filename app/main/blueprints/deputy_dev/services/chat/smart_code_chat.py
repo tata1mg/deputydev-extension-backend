@@ -6,6 +6,7 @@ from torpedo import CONFIG
 from app.common.services.openai.openai_llm_service import OpenAILLMService
 from app.common.utils.app_utils import build_openai_conversation_message
 from app.main.blueprints.deputy_dev.constants.constants import (
+    CHAT_ERRORS,
     BitbucketBots,
     ChatTypes,
     MessageTypes,
@@ -52,6 +53,7 @@ from app.main.blueprints.deputy_dev.services.workspace.workspace_service import 
     WorkspaceService,
 )
 from app.main.blueprints.deputy_dev.utils import (
+    fetch_setting_errors,
     format_code_blocks,
     get_vcs_auth_handler,
     is_human_comment,
@@ -162,10 +164,18 @@ class SmartCodeChatManager:
         llm_comment_response = await cls.get_comments_from_llm(
             context, config.get("FEATURE_MODELS").get("PR_CHAT"), chat_request
         )
-        logger.info(f"Process chat comment response: {llm_comment_response}")
-        await comment_service.process_chat_comment(
-            comment=llm_comment_response, chat_request=chat_request, add_note=add_note
-        )
+        comment = cls.append_settings_error(llm_comment_response)
+        logger.info(f"Process chat comment response: {comment}")
+        await comment_service.process_chat_comment(comment=comment, chat_request=chat_request, add_note=add_note)
+
+    @classmethod
+    def append_settings_error(cls, comment):
+        error_message = fetch_setting_errors(CHAT_ERRORS)
+        if error_message:
+            comment = f"""Warning: {error_message}
+            {comment}
+            """
+        return comment
 
     @classmethod
     async def get_comments_from_llm(cls, context: dict, model: str, chat_request: ChatRequest) -> str:
