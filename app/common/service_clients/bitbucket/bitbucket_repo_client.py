@@ -65,17 +65,21 @@ class BitbucketRepoClient(BaseSCMClient):
     async def get_pr_comments(self) -> list:
         """
         Get all comments for the pull request, handling pagination.
-
+        Note: In API response we get comments in ascending order of created_at
         Returns:
             list: List of all comments for the pull request.
         """
         comments = []
-        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments"
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments?pagelen=100"
 
         while url:
             response = await self.get(url)
+            if response.status_code != 200:
+                AppLogger.log_warn(f"Error fetching comments: {response.status_code}, {response.text}")
+                return comments
             data = response.json()
             comments.extend(data.get("values", []))
+            # next is none incase there are no more comments and while loop breaks
             url = data.get("next")
 
         return comments

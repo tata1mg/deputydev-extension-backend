@@ -2,7 +2,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.service_clients.bitbucket import BitbucketRepoClient
-from app.main.blueprints.deputy_dev.constants.constants import COMMENTS_DEPTH
+from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
@@ -10,6 +10,7 @@ from app.main.blueprints.deputy_dev.services.comment.helpers.bitbucket_comment_h
     BitbucketCommentHelper,
 )
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
+from app.main.blueprints.deputy_dev.utils import format_chat_comment_thread_comment
 
 config = CONFIG.config
 
@@ -46,34 +47,93 @@ class BitbucketComment(BaseComment):
         )
         return response
 
-    async def fetch_comment_thread(self, chat_request, depth=0):
+    async def fetch_comment_thread(self, chat_request):
         """
-        Create a comment on a parent comment in pull request.
+        Fetches comment thread by finding root node and building thread recursively.
 
-        Parameters:
-        - comment (str): The comment that needs to be added
-
-        Returns:
-        - Dict[str, Any]: A dictionary containing the response from the server.
+        Example:
+        comment1 (root)
+        └── comment2
+            ├── comment3
+            │   └── comment4
+            ├── comment5 (#dd)
+            └── comment6
+                └── comment7
         """
-        comment_id = chat_request.comment.id
-        try:
-            if depth >= COMMENTS_DEPTH:
-                return ""  # Stop recursion when depth exceeds 7
-
-            response = await self.repo_client.get_comment_details(comment_id)
-            comment_thread = ""
-            if response.status_code == 200:
-                comment_data = response.json()
-                comment_thread += comment_data["content"]["raw"]
-                if "parent" in comment_data:
-                    parent_comment_id = comment_data["parent"]["id"]
-                    parent_thread = await self.fetch_comment_thread(parent_comment_id, depth + 1)
-                    comment_thread += "\n" + parent_thread
-            return comment_thread
-        except Exception as e:
-            logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
+        if not chat_request.comment.parent:
             return ""
+
+        try:
+            # Fetch all comments once
+            all_comments = await self.repo_client.get_pr_comments()  # in ascending order of created_at
+            if not all_comments:
+                return ""
+
+            comment_map = {comment["id"]: comment for comment in all_comments}
+
+            children_map = {}
+            for comment in all_comments:
+                parent_id = comment.get("parent", {}).get("id")
+                if parent_id:
+                    if parent_id not in children_map:
+                        children_map[parent_id] = []
+                    children_map[parent_id].append(comment)
+
+            root_comment_id = chat_request.comment.parent
+
+            while root_comment_id:
+                current_comment = comment_map.get(root_comment_id)
+                parent_id = current_comment.get("parent", {}).get("id")
+                if current_comment.get("parent", {}).get("id"):
+                    root_comment_id = parent_id
+
+            # Build thread starting from root comment
+            thread_comments = []
+            await self._build_comment_thread(
+                root_comment_id, comment_map, children_map, thread_comments, chat_request.comment.id
+            )
+
+            if not thread_comments:
+                return ""
+
+            # Comments are already in ascending order, so childeren_map maintains order of insertion
+            # So thread comments will always be in sorted order of time as parent comments are processed before children and siblings in order of time as they are present in comment_map
+            thread = ""
+            for comment in thread_comments:
+                formatted_comment = format_chat_comment_thread_comment(comment["content"]["raw"]) + "\n"
+                thread += formatted_comment
+            return thread
+
+        except Exception as e:
+            AppLogger.log_warn(f"Error processing comment thread: {e}")
+            return ""
+
+    async def _build_comment_thread(self, comment_id, comment_map, children_map, thread_comments, request_comment_id):
+        """
+        Recursively builds comment thread starting from root.
+
+        Args:
+            comment_id: Current comment ID
+            comment_map: Map of comment IDs to comments
+            children_map: Map of parent IDs to children
+            thread_comments: List to collect thread comments
+            request_comment_id: ID of the #dd comment to exclude
+        """
+        try:
+            # Process current comment if not #dd
+            if comment_id != request_comment_id:
+                current_comment = comment_map.get(comment_id)
+                if current_comment and current_comment.get("content", {}).get("raw"):
+                    thread_comments.append(current_comment)
+
+            # Process all children recursively
+            for child in children_map.get(comment_id, []):
+                if child["id"] != request_comment_id:
+                    await self._build_comment_thread(
+                        child["id"], comment_map, children_map, thread_comments, request_comment_id
+                    )
+        except Exception as e:
+            AppLogger.log_error(f"Error building thread from comment {comment_id}: {e}")
 
     async def create_pr_comment(self, comment: str, model: str):
         comment_payload = {"content": {"raw": comment}}

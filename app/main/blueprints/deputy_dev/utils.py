@@ -27,6 +27,7 @@ from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
     set_context_values,
 )
 
@@ -229,7 +230,7 @@ def format_comment(data):
 
 def get_bucket_name(data):
     buckets = data.get("buckets")
-    if buckets and len(buckets) == 1:
+    if buckets and not data.get("is_summarized"):
         return buckets[0]
     return ""
 
@@ -564,3 +565,18 @@ def repo_meta_info_prompt(app_settings):
         else ""
     )
     return prompt
+
+
+def format_chat_comment_thread_comment(comment):
+    """Append comment Start and Comment End in each comment that we add in Comment thread in DD chat flow"""
+    return "Comment Start: \n" + comment + "\nComment End \n"
+
+
+def fetch_setting_errors(error_types):
+    errors = get_context_value("setting_error")
+    error_message = ""
+    if errors and any(error_type in errors for error_type in error_types):
+        for error_type in error_types:
+            if errors.get(error_type):
+                error_message += errors[error_type] + "\n"
+    return error_message
