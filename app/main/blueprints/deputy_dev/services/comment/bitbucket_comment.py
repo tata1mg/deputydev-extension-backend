@@ -86,6 +86,8 @@ class BitbucketComment(BaseComment):
                 parent_id = current_comment.get("parent", {}).get("id")
                 if current_comment.get("parent", {}).get("id"):
                     root_comment_id = parent_id
+                else:
+                    break
 
             # Build thread starting from root comment
             thread_comments = []
