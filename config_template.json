@@ -176,12 +176,22 @@
   },
   "DB_CONNECTIONS": {
     "connections": {
+      "deputy_dev_replica": {
+        "credentials": {
+          "host": "localhost",
+          "port": 5432,
+          "user": "",
+          "password": "",
+          "database": "deputy_dev1"
+        },
+        "engine": "tortoise.backends.asyncpg"
+      },
       "default": {
         "engine": "tortoise.backends.asyncpg",
         "credentials": {
           "host": "localhost",
           "port": 5432,
-          "user": "anand",
+          "user": "",
           "password": "",
           "database": "scrit"
         }
