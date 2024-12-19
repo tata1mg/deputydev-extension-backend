@@ -50,6 +50,17 @@ class PrStatusTypes(Enum):
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
 
 
+REJECTED_STATUS_TYPES = [
+    PrStatusTypes.REJECTED_EXPERIMENT.value,
+    PrStatusTypes.REJECTED_LARGE_SIZE.value,
+    PrStatusTypes.REJECTED_ALREADY_MERGED.value,
+    PrStatusTypes.REJECTED_ALREADY_DECLINED.value,
+    PrStatusTypes.REJECTED_NO_DIFF.value,
+    PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value,
+    PrStatusTypes.REJECTED_INVALID_REQUEST.value,
+]
+
+
 class AffirmationMessagesTypes(Enum):
     DEFAULT_SETTING_REVIEW = "DEFAULT_SETTING_REVIEW"
 

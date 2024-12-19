@@ -1,5 +1,3 @@
-import asyncio
-
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -90,7 +88,7 @@ class SmartCodeChatManager:
             human_comment_payload = await HumanCommentWebhook.parse_payload(payload)
             await cls.handle_human_comment(human_comment_payload, vcs_type)
         elif comment_payload.author_info.name not in BitbucketBots.list():
-            asyncio.ensure_future(cls.handle_chat_request(comment_payload, vcs_type=vcs_type))
+            await cls.handle_chat_request(comment_payload, vcs_type=vcs_type)
         else:
             logger.info(f"Comment rejected due to not falling in supported criteria {comment_payload}")
 

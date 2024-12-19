@@ -17,3 +17,7 @@ class VCSFailureMessages(Enum):
     GITHUB_VALIDATION_FAIL = "Validation Failed"
     GITHUB_INCORRECT_LINE_NUMBER = "pull_request_review_thread.line"
     GITHUB_INCORRECT_FILE_PATH = "pull_request_review_thread.path"
+
+
+class Connections(Enum):
+    DEPUTY_DEV_REPLICA = "deputy_dev_replica"
