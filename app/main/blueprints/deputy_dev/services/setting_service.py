@@ -86,11 +86,11 @@ class SettingService:
         agents_setting = setting.get("code_review_agent", {}).get("agents", {})
         for key, value in agents_setting.items():
             if value.get("custom_prompt") and len(value.get("custom_prompt")) > CUSTOM_PROMPT_CHAR_LIMIT:
-                error += f"Custom prompt length of {key} agent is {len(value.get('custom_prompt'))}. \n"
+                error += f"- {key} agent: {len(value.get('custom_prompt'))} characters.\n"
                 value["custom_prompt"] = ""
         summary_custom_prompt = setting.get("pr_summary", {}).get("custom_prompt", "")
         if len(summary_custom_prompt) > CUSTOM_PROMPT_CHAR_LIMIT:
-            error += f"Custom prompt length of pr_summary agent is {len(summary_custom_prompt)}."
+            error += f"- pr_summary agent: {len(summary_custom_prompt)} characters."
             setting["pr_summary"]["custom_prompt"] = ""
         if error:
             error_type = SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value
@@ -105,7 +105,7 @@ class SettingService:
             error_type = SettingErrorType.INVALID_CHAT_SETTING.value
             error = f", provided prompt length is {len(chat_custom_prompt)}."
             setting["chat"]["custom_prompt"] = ""
-            errors[error_type] = f"""{SETTING_ERROR_MESSAGE[error_type]}{error}"""
+            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
         return errors
 
     async def repo_level_settings(self):
@@ -295,29 +295,58 @@ class SettingService:
         return base_agents
 
     async def update_repo_setting(self):
+        """
+        For understanding of errors:
+        -> there are two type of errors
+            -> A error that makes the complete repo_level setting invalid (Invalid Toml, Type mismatch with DD setting)
+                In this case, is_invalid_setting = True
+            -> A error because of that we drop specific attributes (CustomPrompt length exceed), we still use repo level setting
+                but drop custom_prompt for specific agents.
+                In this case, is_invalid_setting = False
+        """
+        # Generate the cache key for storing repository settings.
         cache_key = self.repo_setting_cache_key()
+
+        # Fetch the repository-level settings using the default branch.
+        # If there is an error, it might indicate an invalid setting.
         repo_level_settings, error = await self.repo_service.get_settings(self.default_branch)
-        is_invalid_setting = True if error else False
+        is_invalid_setting = True if error else False  # if error exists that means TOML is invalid
+
+        # Validate the fetched repository settings against the default settings.
+        # This is required to check if there are mismatches or errors in the attributes.
+        # If type mismatch we set is_invalid_setting = True
         if repo_level_settings and not is_invalid_setting:
             error, is_invalid_setting = self.validate_settings(self.dd_level_settings(), repo_level_settings)
+
+        # Handle cases where no settings are found or there is an error.
         if not repo_level_settings and not error:
+            # No settings available and no error: use a placeholder value (-1).
             repo_level_settings = -1
         elif error:
+            # If there is an error, check if the entire setting is invalid.
             if is_invalid_setting:
+                # Invalid setting error: use a placeholder value (-2).
                 repo_level_settings = -2
+            # Cache the error for further reference.
             await RepoSettingCache.set(cache_key + "_error", error)
+
+        # Cache the current repository settings or the placeholder value.
         await RepoSettingCache.set(cache_key, repo_level_settings)
+
+        # If the setting is completely invalid (-1 or -2), store None in the database.
         if repo_level_settings in [-1, -2]:  # Save in DB
             repo_level_settings = None
-        if error or repo_level_settings:
-            repo = await self.repo_service.fetch_repo()
-            if repo:
-                await self.create_or_update_setting(
-                    configurable_id=repo.id,
-                    configurable_type=SettingLevel.REPO.value,
-                    error=error,
-                    setting=repo_level_settings,
-                )
+
+        # Fetch repository details to associate settings with a specific repository.
+        repo = await self.repo_service.fetch_repo()
+        if repo:
+            # Create or update the settings in the database.
+            await self.create_or_update_setting(
+                configurable_id=repo.id,
+                configurable_type=SettingLevel.REPO.value,
+                error=error,
+                setting=repo_level_settings,
+            )
 
     def repo_setting_cache_key(self):
         scm_workspace_id = self.repo_service.workspace_id
@@ -353,20 +382,56 @@ class SettingService:
 
     @classmethod
     async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting):
-        if error or setting:
-            payload = {
-                "configurable_id": configurable_id,
-                "configurable_type": configurable_type,
-                "configuration": setting,
-                "error": error,
-            }
-            saved_setting = await Configurations.get_or_none(
-                configurable_id=configurable_id, configurable_type=configurable_type
-            )
-            if not saved_setting:
-                setting = Configurations(**payload)
-                await setting.save()
-            else:
+        """
+        Creates or updates a configuration setting based on the given parameters.
+        Deletes the setting if no error or valid configuration is provided.
+        """
+        # Prepare the payload with the necessary data for the configuration.
+        payload = {
+            "configurable_id": configurable_id,
+            "configurable_type": configurable_type,
+            "configuration": setting,
+            "error": error,
+        }
+
+        # Fetch the existing setting for the given configurable ID and type.
+        saved_setting = await Configurations.get_or_none(
+            configurable_id=configurable_id, configurable_type=configurable_type
+        )
+
+        # If no saved setting exists:
+        if not saved_setting:
+            # Create a new setting only if there is an error or a valid configuration.
+            if error or setting:
+                setting = Configurations(**payload)  # Instantiate a new configuration object.
+                await setting.save()  # Save the new configuration to the database.
+
+        # If a saved setting already exists:
+        else:
+            # Update the setting if there is an error or a valid configuration.
+            if error or setting:
+                # Add the ID of the existing setting to the payload.
                 payload["id"] = saved_setting.id
-                setting = Configurations(**payload)
+                setting = Configurations(**payload)  # Create an updated configuration object.
+                # Save and update specific fields (`configuration` and `error`) in the database.
                 await setting.save(update_fields=["configuration", "error"], force_update=True)
+            else:
+                # If neither error nor valid configuration exists, delete the saved setting.
+                await saved_setting.delete()
+
+    @classmethod
+    def fetch_setting_errors(cls, error_types):
+        # Retrieve the current context's setting errors (if any).
+        errors = get_context_value("setting_error")
+        error_message = ""
+
+        # Check if errors exist and if any of the specified error types are present in the errors.
+        if errors and any(error_type in errors for error_type in error_types):
+            # Iterate through the provided error types.
+            for error_type in error_types:
+                # If the current error type exists in the errors dictionary, append its message to error_message.
+                if errors.get(error_type):
+                    error_message += errors[error_type] + "\n\n"
+
+        # Return the concatenated error messages.
+        return error_message

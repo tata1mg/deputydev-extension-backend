@@ -1,3 +1,5 @@
+import asyncio
+
 from torpedo import CONFIG
 
 from app.common.utils.app_utils import convert_to_datetime
@@ -57,7 +59,7 @@ class StatsCollectionTrigger:
                     stats_type == MetaStatCollectionTypes.PR_CLOSE.value
                     and parsed_payload.pr_state == PRStatus.MERGED.value
                 ):
-                    await self.update_repo_setting(parsed_payload, vcs_type)
+                    asyncio.create_task(self.update_repo_setting(parsed_payload, vcs_type))
                 is_eligible_for_review = await self.is_repo_eligible_for_review()
                 if is_eligible_for_review or await PRService.fetch_pr(
                     scm_workspace_id=parsed_payload.scm_workspace_id,
@@ -150,5 +152,7 @@ class StatsCollectionTrigger:
         return False
 
     async def is_repo_eligible_for_review(self):
-        setting = await SettingService(self.repo_service, self.workspace.team_id).build()
-        return setting["code_review_agent"]["enable"]
+        # TODO: This is done temporarily for fixing latency  issue
+        return True
+        # setting = await SettingService(self.repo_service, self.workspace.team_id).build()
+        # return setting["code_review_agent"]["enable"]

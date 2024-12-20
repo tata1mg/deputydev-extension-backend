@@ -1,3 +1,5 @@
+import asyncio
+
 from sanic import Blueprint, Sanic
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
@@ -58,7 +60,7 @@ async def chat_assistance_api(_request: Request, **kwargs):
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
     payload["request_id"] = request_id
     # TODO - Unfulfilled parameter - comment
-    await SmartCodeChatManager.chat(payload, query_params)
+    asyncio.ensure_future(SmartCodeChatManager.chat(payload, query_params))
     return send_response(f"Processing Started with Request ID : {request_id}")
 
 
