@@ -1,11 +1,14 @@
 import base64
 
 import toml
-from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
+from app.main.blueprints.deputy_dev.constants.constants import (
+    SETTING_ERROR_MESSAGE,
+    SettingErrorType,
+)
 from app.main.blueprints.deputy_dev.constants.repo import (
     PR_NOT_FOUND,
     VCS_REPO_URL_MAP,
@@ -223,7 +226,8 @@ class GithubRepo(BaseRepo):
                 settings = toml.loads(decoded_settings)
                 return settings, ""
             except toml.TomlDecodeError as e:
-                logger.error(f"Invalid TOML: {e}")
-                return {}, str(e)
+                error_type = SettingErrorType.INVALID_TOML.value
+                error = {error_type: f"""{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"""}
+                return {}, error
         else:
             return {}, ""
