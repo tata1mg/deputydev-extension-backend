@@ -283,3 +283,6 @@ CUSTOM_PROMPT_INSTRUCTIONS = """The above defined instructions are default and m
 
 User-provided instructions:
 """
+
+
+AGENT_SEVERITY_WEIGHT_MAPPING = {"EXTREME": 5, "HIGH": 4, "MEDIUM": 3, "LOW": 2, "NEGLIGIBLE": 1}
