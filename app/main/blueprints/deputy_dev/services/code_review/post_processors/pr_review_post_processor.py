@@ -37,6 +37,7 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.utils import fetch_setting_errors
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 
 config = CONFIG.config
 
@@ -116,8 +117,8 @@ class PRReviewPostProcessor:
         await self.process_affirmation_message()
 
     async def process_affirmation_message(self):
-        error_message = fetch_setting_errors(CODE_REVIEW_ERRORS)
-        additional_context = {"error": f"\n{error_message}" if error_message else ""}
+        error_message = SettingService.fetch_setting_errors(CODE_REVIEW_ERRORS)
+        additional_context = {"error": f"\n\n{error_message}" if error_message else ""}
         await self.affirmation_service.create_affirmation_reply(
             message_type=self.review_status, commit_id=self.pr_model.commit_id(), additional_context=additional_context
         )
