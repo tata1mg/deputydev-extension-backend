@@ -27,6 +27,7 @@ from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
     set_context_values,
 )
 
