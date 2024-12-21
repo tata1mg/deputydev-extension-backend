@@ -473,7 +473,7 @@ class SettingService:
             if errors:
                 raise BadRequestException(f"Invalid Setting: {errors}")
             await cls.create_or_update_setting(workspace.team_id, SettingLevel.TEAM.value, errors, setting)
-        except toml.TomlDecodeError as e:
+        except (toml.TomlDecodeError, TypeError) as e:
             raise BadRequestException(f"Invalid toml: {e}")
 
 
