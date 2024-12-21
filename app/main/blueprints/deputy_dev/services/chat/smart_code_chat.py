@@ -51,7 +51,6 @@ from app.main.blueprints.deputy_dev.services.workspace.workspace_service import 
     WorkspaceService,
 )
 from app.main.blueprints.deputy_dev.utils import (
-    fetch_setting_errors,
     format_code_blocks,
     get_vcs_auth_handler,
     is_human_comment,

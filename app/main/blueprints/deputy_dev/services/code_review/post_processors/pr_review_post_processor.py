@@ -36,7 +36,6 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 )
 from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
-from app.main.blueprints.deputy_dev.utils import fetch_setting_errors
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 
 config = CONFIG.config
