@@ -375,7 +375,6 @@ class SettingService:
 
         except toml.TomlDecodeError as e:
             raise BadRequestException(f"Invalid toml: {e}")
-
     async def update_repo_agents(self, repo, repo_settings):
         if not repo_settings:
             return
@@ -469,6 +468,8 @@ class SettingService:
             else:
                 return {}, setting.error or {}
         return {}, {}
+
+
 
     @classmethod
     async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting):
