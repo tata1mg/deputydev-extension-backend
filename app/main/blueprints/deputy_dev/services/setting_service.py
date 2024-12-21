@@ -12,7 +12,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     SettingLevel,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao import Configurations, Agents
+from app.main.blueprints.deputy_dev.models.dao import Configurations, Agents, Repos
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     context_var,
     get_context_value,
@@ -354,35 +354,82 @@ class SettingService:
     async def create_or_update_repo_setting(self, repo, repo_settings, error):
         if repo:
             repo_settings = await self.normalize_invalid_setting_for_db(repo_settings)
-            await self.update_repo_agents(repo, repo_settings)
+            existing_setting = self.fetch_setting(repo.id, SettingLevel.REPO.value)
+            await self.update_repo_agents(repo.id, repo_settings, existing_setting)
             await self.create_or_update_setting(
                 configurable_id=repo.id,
                 configurable_type=SettingLevel.REPO.value,
                 error=error,
                 setting=repo_settings,
+                saved_setting=existing_setting,
             )
 
-    async def update_repo_agents(self, repo, repo_settings):
+    @classmethod
+    async def fetch_setting(cls, configurable_id, configurable_type):
+        # Fetch the existing setting for the given configurable ID and type.
+        setting = await Configurations.get_or_none(configurable_id=configurable_id, configurable_type=configurable_type)
+        return setting
+
+    async def update_repo_agents(self, repo_id, repo_settings, repo_existing_settings):
         if not repo_settings:
             return
+        repo_existing_settings = repo_existing_settings.configuration if repo_existing_settings else {}
         team_settings = await self.team_level_settings()
-        dd_agents, repo_agents, team_agents = self.level_wise_agents(team_settings, repo_settings)
-        current_agents = self.agents_analytics_info(dd_agents, team_agents, repo_agents)
-        saved_agents = await self.fetch_repo_agents(repo.id)
-        updated_agents = self.updated_agents(repo.id, saved_agents, current_agents)
-        await self.upsert_agents(updated_agents)
+        dd_agents = self.agents(self.DD_LEVEL_SETTINGS)
+        team_agents = self.agents(team_settings)
+        repo_agents = self.agents(repo_settings)
+        repo_existing_agents = self.agents(repo_existing_settings)
+        updated_agent_ids, deleted_agent_ids = self.updated_and_deleted_agent_ids(repo_existing_agents, repo_agents)
+        if updated_agent_ids or deleted_agent_ids:
+            agents_data = self.agents_analytics_info(dd_agents, team_agents, repo_agents)
+            agents_ids_to_update = updated_agent_ids + deleted_agent_ids
+            updated_agents = self.create_agents_objects(repo_id, agents_ids_to_update, agents_data)
+            await self.upsert_agents(updated_agents)
 
-    async def update_org_agents(self):
-        pass
+    @classmethod
+    async def update_team_agents(cls, team_id, updated_team_setting, existing_team_setting):
+        if not updated_team_setting:
+            return
+        existing_team_setting = existing_team_setting.configuration if existing_team_setting else {}
+        updated_agent_ids, deleted_agent_ids = cls.updated_and_deleted_agent_ids(
+            updated_team_setting, existing_team_setting
+        )
+        if updated_agent_ids or deleted_agent_ids:
+            repo_ids = await Repos.filter(team_id=team_id).values_list("id", flat=True)
+            repo_settings = await cls.repo_settings_by_ids(repo_ids)
+            agents_ids_to_update = updated_agent_ids + deleted_agent_ids
+            dd_agents = cls.agents(cls.DD_LEVEL_SETTINGS)
+            team_agents = cls.agents(updated_team_setting)
+            updated_agents = []
+            for repo_id in repo_ids:
+                repo_setting = repo_settings.get(repo_id) or {}
+                repo_agents = cls.agents(repo_setting)
+                agents_data = cls.agents_analytics_info(dd_agents, team_agents, repo_agents)
+                updated_agents.extend(cls.create_agents_objects(repo_id, agents_ids_to_update, agents_data))
+            await cls.upsert_agents(updated_agents)
 
-    def level_wise_agents(self, team_setting, repo_setting):
-        team_agents, repo_agents = {}, {}
-        dd_agents = self.DD_LEVEL_SETTINGS.get("code_review_agent", {}).get("agents") or {}
-        if repo_setting:
-            repo_agents = repo_setting.get("code_review_agent", {}).get("agents") or {}
-        if team_setting:
-            team_agents = team_setting.get("code_review_agent", {}).get("agents") or {}
-        return dd_agents, repo_agents, team_agents
+    @classmethod
+    async def repo_settings_by_ids(cls, repo_ids):
+        repo_settings = await Configurations.filter(
+            configurable_id__in=repo_ids, configurable_type=SettingLevel.REPO.value
+        )
+        settings_by_ids = {setting.configurable_id: setting.configuration for setting in repo_settings}
+        return settings_by_ids
+
+    @classmethod
+    def create_agents_objects(cls, repo_id, agent_ids, agents_data):
+        agent_objects = []
+        for agent_id in agent_ids:
+            if agent_id in agents_data:
+                agent = {"repo_id": repo_id, **agents_data[agent_id]}
+                agent_objects.append(Agents(**agent))
+        return agent_objects
+
+    @classmethod
+    def agents(cls, setting):
+        if setting:
+            return setting.get("code_review_agent", {}).get("agents") or {}
+        return {}
 
     @staticmethod
     async def upsert_agents(agents):
@@ -394,46 +441,51 @@ class SettingService:
                 update_fields=["display_name", "agent_name", "updated_at"],
             )
 
+    @classmethod
+    def updated_and_deleted_agent_ids(cls, existing_agents, updated_agents):
+        existing_agents = cls.agent_data_by_id(existing_agents)
+        updated_agents = cls.agent_data_by_id(updated_agents)
+        updated_agent_ids, deleted_agent_ids = [], []
+        for agent_id, agent in updated_agents.items():
+            # agent_id not in existing_agents -> new agent added
+            # agent != existing_agents[agent_id] -> agent updated
+            if agent_id not in existing_agents or agent != existing_agents[agent_id]:
+                updated_agent_ids.append(agent_id)
+        deleted_agent_ids = [aid for aid in existing_agents if aid not in updated_agents]
+        return updated_agent_ids, deleted_agent_ids
+
     @staticmethod
-    async def fetch_repo_agents(repo_id):
-        agents = await Agents.filter(repo_id=repo_id)
+    def agent_data_by_id(agents):
         agents_by_id = {
-            agent.agent_id: {"agent_name": agent.agent_name, "display_name": agent.display_name} for agent in agents
+            data["agent_id"]: {"agent_name": agent_name, "display_name": data.get("display_name", "")}
+            for agent_name, data in agents.items()
         }
         return agents_by_id
 
     @staticmethod
-    def updated_agents(repo_id, saved_agents, current_agents):
-        updated_agents = []
-        for agent_id, agent in current_agents:
-            if agent_id not in saved_agents or agent != saved_agents[agent_id]:
-                agent.update({"repo_id": repo_id, "agent_id": agent_id})
-                updated_agents.append(Agents(**agent))
-        return updated_agents
-
-    @staticmethod
-    def agents_analytics_info(dd_agents, org_agents, repo_agents):
+    def agents_analytics_info(dd_agents, team_agents, repo_agents):
+        """Info at repo level or org level may be insuffiecient so fetch info from all levels"""
         # Combine agents from all levels
         combined_agents = {}
 
-        for level_agents in [dd_agents, org_agents, repo_agents]:
+        for level_agents in [dd_agents, team_agents, repo_agents]:
             if not level_agents:
                 continue
 
             for agent_name, agent_info in level_agents.items():
-                agent_id = agent_info.get("agent_id")
+                agent_id = agent_info["agent_id"]
 
                 if agent_id in combined_agents:
                     # Update with lower-level agent name and display name
                     combined_agents[agent_id]["agent_name"] = agent_name
-                    combined_agents[agent_id]["display_name"] = agent_info.get(
-                        "display_name", combined_agents[agent_id]["display_name"]
+                    combined_agents[agent_id]["display_name"] = (
+                        agent_info.get("display_name") or combined_agents[agent_id]["display_name"]
                     )
                 else:
                     # Add new agent entry
                     combined_agents[agent_id] = {
                         "agent_name": agent_name,
-                        "display_name": agent_info.get("display_name"),
+                        "display_name": agent_info.get("display_name") or "",
                     }
 
         return combined_agents
@@ -472,13 +524,16 @@ class SettingService:
             errors, is_invalid_setting = cls.validate_settings(cls.dd_level_settings(), setting)
             if errors:
                 raise BadRequestException(f"Invalid Setting: {errors}")
-            await cls.create_or_update_setting(workspace.team_id, SettingLevel.TEAM.value, errors, setting)
+            existing_setting = await cls.fetch_setting(workspace.team_id, SettingLevel.TEAM.value)
+            await cls.update_team_agents(workspace.team_id, setting, existing_setting)
+            await cls.create_or_update_setting(
+                workspace.team_id, SettingLevel.TEAM.value, errors, setting, existing_setting
+            )
         except (toml.TomlDecodeError, TypeError) as e:
             raise BadRequestException(f"Invalid toml: {e}")
 
-
     @classmethod
-    async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting):
+    async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting, saved_setting):
         """
         Creates or updates a configuration setting based on the given parameters.
         Deletes the setting if no error or valid configuration is provided.
@@ -490,11 +545,6 @@ class SettingService:
             "configuration": setting,
             "error": error,
         }
-
-        # Fetch the existing setting for the given configurable ID and type.
-        saved_setting = await Configurations.get_or_none(
-            configurable_id=configurable_id, configurable_type=configurable_type
-        )
 
         # If no saved setting exists:
         if not saved_setting:
