@@ -12,7 +12,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     SettingLevel,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao import Configurations
+from app.main.blueprints.deputy_dev.models.dao import Configurations, Agents
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     context_var,
     get_context_value,
@@ -239,8 +239,6 @@ class SettingService:
     #                 base_config[key] = override_config[key]
     #     return base_config
 
-    from typing import Any, Dict, List
-
     def merge_setting(self, base_config, override_config):
         """
         Merges an override configuration into a base configuration with specific rules for hierarchical inheritance
@@ -304,49 +302,155 @@ class SettingService:
                 but drop custom_prompt for specific agents.
                 In this case, is_invalid_setting = False
         """
-        # Generate the cache key for storing repository settings.
+        # Generate the cache key
         cache_key = self.repo_setting_cache_key()
 
-        # Fetch the repository-level settings using the default branch.
-        # If there is an error, it might indicate an invalid setting.
+        # Fetch repo-level settings
         repo_level_settings, error = await self.repo_service.get_settings(self.default_branch)
+
+        # Check if settings are invalid
         is_invalid_setting = True if error else False  # if error exists that means TOML is invalid
 
         # Validate the fetched repository settings against the default settings.
         # This is required to check if there are mismatches or errors in the attributes.
         # If type mismatch we set is_invalid_setting = True
         if repo_level_settings and not is_invalid_setting:
-            error, is_invalid_setting = self.validate_settings(self.dd_level_settings(), repo_level_settings)
+            error, is_invalid_setting = self.validate_repo_settings(repo_level_settings)
 
-        # Handle cases where no settings are found or there is an error.
+        # Handle error and cache settings
+        repo_level_settings = await self.handle_error_and_cache(
+            error, is_invalid_setting, repo_level_settings, cache_key
+        )
+
+        # Fetch repo details
+        repo = await self.repo_service.fetch_repo()
+
+        # Create or update the setting in the DB
+        await self.create_or_update_repo_setting(repo, repo_level_settings, error)
+
+    def validate_repo_settings(self, repo_level_settings):
+        if repo_level_settings:
+            error, is_invalid_setting = self.validate_settings(self.dd_level_settings(), repo_level_settings)
+        else:
+            error, is_invalid_setting = None, True  # In case of missing repo level settings
+        return error, is_invalid_setting
+
+    async def handle_error_and_cache(self, error, is_invalid_setting, repo_level_settings, cache_key):
         if not repo_level_settings and not error:
-            # No settings available and no error: use a placeholder value (-1).
             repo_level_settings = -1
         elif error:
-            # If there is an error, check if the entire setting is invalid.
             if is_invalid_setting:
-                # Invalid setting error: use a placeholder value (-2).
                 repo_level_settings = -2
-            # Cache the error for further reference.
             await RepoSettingCache.set(cache_key + "_error", error)
 
-        # Cache the current repository settings or the placeholder value.
         await RepoSettingCache.set(cache_key, repo_level_settings)
+        return repo_level_settings
 
-        # If the setting is completely invalid (-1 or -2), store None in the database.
-        if repo_level_settings in [-1, -2]:  # Save in DB
+    async def normalize_invalid_setting_for_db(self, repo_level_settings):
+        if repo_level_settings in [-1, -2]:
             repo_level_settings = None
+        return repo_level_settings
 
-        # Fetch repository details to associate settings with a specific repository.
-        repo = await self.repo_service.fetch_repo()
+    async def create_or_update_repo_setting(self, repo, repo_settings, error):
         if repo:
-            # Create or update the settings in the database.
+            repo_settings = await self.normalize_invalid_setting_for_db(repo_settings)
+            await self.update_repo_agents(repo, repo_settings)
             await self.create_or_update_setting(
                 configurable_id=repo.id,
                 configurable_type=SettingLevel.REPO.value,
                 error=error,
-                setting=repo_level_settings,
+                setting=repo_settings,
             )
+
+    @classmethod
+    async def create_or_update_org_settings(cls, payload, query_params):
+        try:
+            payload = update_payload_with_jwt_data(query_params, payload)
+            setting = toml.loads(payload["setting"])
+            workspace = await get_workspace(scm=payload["vcs_type"], scm_workspace_id=payload["scm_workspace_id"])
+            error = cls.validate_settings(cls.dd_level_settings(), setting)
+            if error:
+                raise BadRequestException(f"Invalid toml: {error}")
+            await cls.create_or_update_setting(workspace.team_id, SettingLevel.TEAM.value, error, setting)
+
+        except toml.TomlDecodeError as e:
+            raise BadRequestException(f"Invalid toml: {e}")
+
+    async def update_repo_agents(self, repo, repo_settings):
+        if not repo_settings:
+            return
+        team_settings = await self.team_level_settings()
+        dd_agents, repo_agents, team_agents = self.level_wise_agents(team_settings, repo_settings)
+        current_agents = self.agents_analytics_info(dd_agents, team_agents, repo_agents)
+        saved_agents = await self.fetch_repo_agents(repo.id)
+        updated_agents = self.updated_agents(repo.id, saved_agents, current_agents)
+        await self.upsert_agents(updated_agents)
+
+    async def update_org_agents(self):
+        pass
+
+    def level_wise_agents(self, team_setting, repo_setting):
+        team_agents, repo_agents = {}, {}
+        dd_agents = self.DD_LEVEL_SETTINGS.get("code_review_agent", {}).get("agents") or {}
+        if repo_setting:
+            repo_agents = repo_setting.get("code_review_agent", {}).get("agents") or {}
+        if team_setting:
+            team_agents = team_setting.get("code_review_agent", {}).get("agents") or {}
+        return dd_agents, repo_agents, team_agents
+
+    @staticmethod
+    async def upsert_agents(agents):
+        if agents:
+            await Agents.bulk_create(
+                agents,
+                batch_size=100,
+                on_conflict=["agent_id", "repo_id"],
+                update_fields=["display_name", "agent_name", "updated_at"],
+            )
+
+    @staticmethod
+    async def fetch_repo_agents(repo_id):
+        agents = await Agents.filter(repo_id=repo_id)
+        agents_by_id = {
+            agent.agent_id: {"agent_name": agent.agent_name, "display_name": agent.display_name} for agent in agents
+        }
+        return agents_by_id
+
+    @staticmethod
+    def updated_agents(repo_id, saved_agents, current_agents):
+        updated_agents = []
+        for agent_id, agent in current_agents:
+            if agent_id not in saved_agents or agent != saved_agents[agent_id]:
+                agent.update({"repo_id": repo_id, "agent_id": agent_id})
+                updated_agents.append(Agents(**agent))
+        return updated_agents
+
+    @staticmethod
+    def agents_analytics_info(dd_agents, org_agents, repo_agents):
+        # Combine agents from all levels
+        combined_agents = {}
+
+        for level_agents in [dd_agents, org_agents, repo_agents]:
+            if not level_agents:
+                continue
+
+            for agent_name, agent_info in level_agents.items():
+                agent_id = agent_info.get("agent_id")
+
+                if agent_id in combined_agents:
+                    # Update with lower-level agent name and display name
+                    combined_agents[agent_id]["agent_name"] = agent_name
+                    combined_agents[agent_id]["display_name"] = agent_info.get(
+                        "display_name", combined_agents[agent_id]["display_name"]
+                    )
+                else:
+                    # Add new agent entry
+                    combined_agents[agent_id] = {
+                        "agent_name": agent_name,
+                        "display_name": agent_info.get("display_name"),
+                    }
+
+        return combined_agents
 
     def repo_setting_cache_key(self):
         scm_workspace_id = self.repo_service.workspace_id
@@ -365,20 +469,6 @@ class SettingService:
             else:
                 return {}, setting.error or {}
         return {}, {}
-
-    @classmethod
-    async def create_or_update_org_settings(cls, payload, query_params):
-        try:
-            payload = update_payload_with_jwt_data(query_params, payload)
-            setting = toml.loads(payload["setting"])
-            workspace = await get_workspace(scm=payload["vcs_type"], scm_workspace_id=payload["scm_workspace_id"])
-            error = cls.validate_settings(cls.dd_level_settings(), setting)
-            if error:
-                raise BadRequestException(f"Invalid toml: {error}")
-            await cls.create_or_update_setting(workspace.team_id, SettingLevel.TEAM.value, error, setting)
-
-        except toml.TomlDecodeError as e:
-            raise BadRequestException(f"Invalid toml: {e}")
 
     @classmethod
     async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting):

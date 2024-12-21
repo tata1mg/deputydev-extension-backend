@@ -24,6 +24,7 @@ class PRComments(Base):
         "created_at",
         "updated_at",
         "meta_info",
+        "agent"
     }
 
     id = fields.BigIntField(pk=True)
@@ -39,6 +40,8 @@ class PRComments(Base):
     scm_author_id = fields.CharField(max_length=100)
     author_name = fields.CharField(max_length=1000)
     meta_info = fields.JSONField(null=True)
+    weight = fields.IntField()
+    agent = fields.ForeignKeyField("dao.Agents")
 
     class Meta:
         table = "pr_comments"
