@@ -303,14 +303,21 @@ class SettingService:
 
     @classmethod
     async def create_or_update_org_settings(cls, payload, query_params):
+        """
+        While passing payload as json, don't send null in any key instead send ""
+        """
         try:
             payload = update_payload_with_jwt_data(query_params, payload)
-            setting = toml.loads(payload["setting"])
+            if isinstance(payload["setting"], dict):
+                toml_settings = toml.dumps(payload["setting"])
+                setting = toml.loads(toml_settings)
+            else:
+                setting = toml.loads(payload["setting"])
             workspace = await get_workspace(scm=payload["vcs_type"], scm_workspace_id=payload["scm_workspace_id"])
-            error = cls.validate_settings(cls.dd_level_settings(), setting)
-            if error:
-                raise BadRequestException(f"Invalid toml: {error}")
-            await cls.create_or_update_setting(workspace.team_id, SettingLevel.TEAM.value, error, setting)
+            errors, is_invalid_setting = cls.validate_settings(cls.dd_level_settings(), setting)
+            if errors:
+                raise BadRequestException(f"Invalid Setting: {errors}")
+            await cls.create_or_update_setting(workspace.team_id, SettingLevel.TEAM.value, errors, setting)
 
         except toml.TomlDecodeError as e:
             raise BadRequestException(f"Invalid toml: {e}")
