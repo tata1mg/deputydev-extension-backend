@@ -74,7 +74,7 @@ class AgentFactory:
 
     def initialize_custom_agents(self):
         all_agents = get_context_value("setting")["code_review_agents"]["agents"]
-        for agent_name, agent_setting in all_agents.itmes():
+        for agent_name, agent_setting in all_agents.items():
             if agent_setting["is_custom_agent"] and agent_setting["enable"]:
                 agent_class = self.create_custom_agent(agent_name, self.context_service, self.reflection_enabled)
                 self.factories[agent_name] = agent_class
