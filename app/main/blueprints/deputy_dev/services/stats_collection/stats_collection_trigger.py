@@ -30,6 +30,7 @@ from app.main.blueprints.deputy_dev.utils import (
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
 )
+from sanic.log import logger
 
 
 class StatsCollectionTrigger:
@@ -88,6 +89,8 @@ class StatsCollectionTrigger:
         self.default_branch = await self.repo_service.get_default_branch()
         if self.default_branch == parsed_payload.destination_branch:
             await SettingService(self.repo_service, self.workspace.team_id, self.default_branch).update_repo_setting()
+            # TODO: No need of this logger
+            logger.info("Settings Updated")
 
     @classmethod
     def get_stats_collection_type(cls, vcs_type, payload):
