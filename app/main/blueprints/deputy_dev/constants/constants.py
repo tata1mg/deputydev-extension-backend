@@ -69,6 +69,7 @@ class SettingErrorType(Enum):
     CUSTOM_PROMPT_LENGTH_EXCEED = "CUSTOM_PROMPT_LENGTH_EXCEED"
     INVALID_CHAT_SETTING = "INVALID_CHAT_SETTING"
     INVALID_TOML = "INVALID_TOML"
+    MISSING_KEY = "MISSING_KEY"
 
 
 SETTING_ERROR_MESSAGE = {
@@ -76,6 +77,7 @@ SETTING_ERROR_MESSAGE = {
     SettingErrorType.INVALID_SETTING.value: "Default settings applied as custom settings validation failed.\n\nErrors:",
     SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters:\n\n",
     SettingErrorType.INVALID_CHAT_SETTING.value: f"Default prompt is getting used for chat as Custom Prompt exceed the defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters",
+    SettingErrorType.MISSING_KEY.value: f"Following Agents are skipped as mandatory keys are missing in setting file: \n\nAgents: "
 }
 
 CODE_REVIEW_ERRORS = [
