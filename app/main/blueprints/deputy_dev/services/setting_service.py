@@ -60,6 +60,13 @@ class SettingService:
         return errors, False
 
     @classmethod
+    def validate_agents(cls, agents):
+        errors = {}
+        for agent_name, agent_data in agents.items():
+            if "agent_id" not in agent_data:
+                agents.pop(agent_name)
+
+    @classmethod
     def validate_types(cls, base_settings, override_settings, key_path=""):
         error = ""
         if not override_settings:
@@ -239,7 +246,8 @@ class SettingService:
     #                 base_config[key] = override_config[key]
     #     return base_config
 
-    def merge_setting(self, base_config, override_config):
+    @classmethod
+    def merge_setting(cls, base_config, override_config):
         """
         Merges an override configuration into a base configuration with specific rules for hierarchical inheritance
         and `is_override` constraints. This function is typically used to combine configurations from
@@ -265,9 +273,9 @@ class SettingService:
 
             if isinstance(base_value, dict):
                 if key == "agents":
-                    base_config[key] = self._merge_agents(base_value, override_config[key])
+                    base_config[key] = cls._merge_agents(base_value, override_config[key])
                 else:
-                    base_config[key] = self.merge_setting(base_value, override_config[key])
+                    base_config[key] = cls.merge_setting(base_value, override_config[key])
 
             elif key == "enable":
                 if base_config.get("is_override", True):
@@ -279,13 +287,14 @@ class SettingService:
 
         return base_config
 
-    def _merge_agents(self, base_agents, override_agents):
+    @classmethod
+    def _merge_agents(cls, base_agents, override_agents):
         """
         Merge the `agents` key from `code_review_agent`, ensuring custom rules are applied.
         """
         for key, override_value in override_agents.items():
             if key in base_agents:
-                base_agents[key] = self.merge_setting(base_agents[key], override_value)
+                base_agents[key] = cls.merge_setting(base_agents[key], override_value)
             else:
                 base_agents[key] = override_value
             base_agents[key]["is_custom_agent"] = key not in AgentTypes.list()
@@ -314,8 +323,9 @@ class SettingService:
         # Validate the fetched repository settings against the default settings.
         # This is required to check if there are mismatches or errors in the attributes.
         # If type mismatch we set is_invalid_setting = True
+        team_settings = await self.team_level_settings()
         if repo_level_settings and not is_invalid_setting:
-            error, is_invalid_setting = self.validate_repo_settings(repo_level_settings)
+            error, is_invalid_setting = self.validate_repo_settings(repo_level_settings, team_settings)
 
         # Handle error and cache settings
         repo_level_settings = await self.handle_error_and_cache(
@@ -326,14 +336,48 @@ class SettingService:
         repo = await self.repo_service.fetch_repo()
 
         # Create or update the setting in the DB
-        await self.create_or_update_repo_setting(repo, repo_level_settings, error)
+        await self.create_or_update_repo_setting(repo, repo_level_settings, error, team_settings)
 
-    def validate_repo_settings(self, repo_level_settings):
-        if repo_level_settings:
-            error, is_invalid_setting = self.validate_settings(self.dd_level_settings(), repo_level_settings)
+    def validate_repo_settings(self, repo_settings, team_settings):
+        if repo_settings:
+            errors, is_invalid_setting = self.validate_settings(self.dd_level_settings(), repo_settings)
+            errors.update(self.validate_repo_merged_setting(self.dd_level_settings(), team_settings, repo_settings))
         else:
-            error, is_invalid_setting = None, True  # In case of missing repo level settings
-        return error, is_invalid_setting
+            errors, is_invalid_setting = None, True  # In case of missing repo level settings
+        return errors, is_invalid_setting
+
+    @classmethod
+    def validate_repo_merged_setting(cls, dd_setting, team_setting, repo_setting):
+        settings = cls.merge_setting(dd_setting, team_setting)
+        settings = cls.merge_setting(settings, repo_setting)
+        return cls.validate_mandatory_keys(settings, repo_setting)
+
+    @classmethod
+    def validate_team_merged_setting(cls, dd_setting, team_setting):
+        settings = cls.merge_setting(dd_setting, team_setting)
+        return cls.validate_mandatory_keys(settings, team_setting)
+
+    @classmethod
+    def validate_mandatory_keys(cls, settings, lowest_level_setting):
+        errors = cls.validate_agents_keys(cls.agents(settings), lowest_level_setting)
+        return errors
+
+    @staticmethod
+    def validate_agents_keys(agents, lowest_level_setting):
+        errors = {}
+        error = ""
+        for agent_name, agent_data in agents.items():
+            missing_keys = []
+            for key in ["agent_id", "display_name", "severity"]:
+                if not agent_data.get(key):
+                    missing_keys.append([key])
+            if missing_keys:
+                lowest_level_setting["code_review_agent"]["agents"].pop(agent_name)
+                error += f"- {agent_name}: {str(missing_keys)}\n"
+        if error:
+            error_type = SettingErrorType.MISSING_KEY.value
+            errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
+        return errors
 
     async def handle_error_and_cache(self, error, is_invalid_setting, repo_level_settings, cache_key):
         if not repo_level_settings and not error:
@@ -351,11 +395,11 @@ class SettingService:
             repo_level_settings = None
         return repo_level_settings
 
-    async def create_or_update_repo_setting(self, repo, repo_settings, error):
+    async def create_or_update_repo_setting(self, repo, repo_settings, error, team_settings):
         if repo:
             repo_settings = await self.normalize_invalid_setting_for_db(repo_settings)
             existing_setting = await self.fetch_setting(repo.id, SettingLevel.REPO.value)
-            await self.update_repo_agents(repo.id, repo_settings, existing_setting)
+            await self.update_repo_agents(repo.id, repo_settings, existing_setting, team_settings)
             await self.create_or_update_setting(
                 configurable_id=repo.id,
                 configurable_type=SettingLevel.REPO.value,
@@ -370,11 +414,10 @@ class SettingService:
         setting = await Configurations.get_or_none(configurable_id=configurable_id, configurable_type=configurable_type)
         return setting
 
-    async def update_repo_agents(self, repo_id, repo_settings, repo_existing_settings):
+    async def update_repo_agents(self, repo_id, repo_settings, repo_existing_settings, team_settings):
         if not repo_settings:
             return
         repo_existing_settings = repo_existing_settings.configuration if repo_existing_settings else {}
-        team_settings = await self.team_level_settings()
         dd_agents = self.agents(self.DD_LEVEL_SETTINGS)
         team_agents = self.agents(team_settings)
         repo_agents = self.agents(repo_settings)
@@ -393,9 +436,7 @@ class SettingService:
         existing_team_setting = existing_team_setting.configuration if existing_team_setting else {}
         team_agents = cls.agents(updated_team_setting)
         existing_team_agents = cls.agents(existing_team_setting)
-        updated_agent_ids, deleted_agent_ids = cls.updated_and_deleted_agent_ids(
-            team_agents, existing_team_agents
-        )
+        updated_agent_ids, deleted_agent_ids = cls.updated_and_deleted_agent_ids(team_agents, existing_team_agents)
         if updated_agent_ids or deleted_agent_ids:
             repo_ids = await Repos.filter(team_id=team_id).values_list("id", flat=True)
             repo_settings = await cls.repo_settings_by_ids(repo_ids)
@@ -464,33 +505,43 @@ class SettingService:
         }
         return agents_by_id
 
-    @staticmethod
-    def agents_analytics_info(dd_agents, team_agents, repo_agents):
-        """Info at repo level or org level may be insuffiecient so fetch info from all levels"""
-        # Combine agents from all levels
-        combined_agents = {}
+    @classmethod
+    def agents_analytics_info(cls, dd_agents, team_agents, repo_agents):
+        return cls.agents_analytics_info_recursive([dd_agents, team_agents, repo_agents])
 
-        for level_agents in [dd_agents, team_agents, repo_agents]:
-            if not level_agents:
-                continue
+    @classmethod
+    def agents_analytics_info_recursive(cls, level_agents_list, combined_agents=None):
+        """Recursively fetch and combine agents info from all levels."""
+        if combined_agents is None:
+            combined_agents = {}
 
-            for agent_name, agent_info in level_agents.items():
+        if not level_agents_list:
+            return combined_agents
+
+        current_level_agents = level_agents_list[0]
+
+        if current_level_agents:
+            for agent_name, agent_info in current_level_agents.items():
                 agent_id = agent_info["agent_id"]
-
                 if agent_id in combined_agents:
                     # Update with lower-level agent name and display name
                     combined_agents[agent_id]["agent_name"] = agent_name
-                    combined_agents[agent_id]["display_name"] = (
-                        agent_info.get("display_name") or combined_agents[agent_id]["display_name"]
+                    combined_agents[agent_id]["display_name"] = agent_info.get("display_name") or combined_agents[
+                        agent_id
+                    ].get("display_name", "")
+                    combined_agents[agent_id]["severity"] = agent_info.get("severity") or combined_agents[agent_id].get(
+                        "severity", ""
                     )
                 else:
                     # Add new agent entry
                     combined_agents[agent_id] = {
                         "agent_name": agent_name,
                         "display_name": agent_info.get("display_name") or "",
+                        "severity": agent_info.get("severity"),
                     }
 
-        return combined_agents
+        # Recursively process the remaining levels
+        return cls.agents_analytics_info_recursive(level_agents_list[1:], combined_agents)
 
     def repo_setting_cache_key(self):
         scm_workspace_id = self.repo_service.workspace_id
@@ -511,7 +562,7 @@ class SettingService:
         return {}, {}
 
     @classmethod
-    async def create_or_update_org_settings(cls, payload, query_params):
+    async def create_or_update_team_settings(cls, payload, query_params):
         """
         While passing payload as json, don't send null in any key instead send ""
         """
@@ -523,7 +574,7 @@ class SettingService:
             else:
                 setting = toml.loads(payload["setting"])
             workspace = await get_workspace(scm=payload["vcs_type"], scm_workspace_id=payload["scm_workspace_id"])
-            errors, is_invalid_setting = cls.validate_settings(cls.dd_level_settings(), setting)
+            errors = cls.validate_team_settings(cls.dd_level_settings(), setting)
             if errors:
                 raise BadRequestException(f"Invalid Setting: {errors}")
             existing_setting = await cls.fetch_setting(workspace.team_id, SettingLevel.TEAM.value)
@@ -533,6 +584,12 @@ class SettingService:
             )
         except (toml.TomlDecodeError, TypeError) as e:
             raise BadRequestException(f"Invalid toml: {e}")
+
+    @classmethod
+    def validate_team_settings(cls, dd_setting, org_setting):
+        errors, is_invalid_setting = cls.validate_settings(dd_setting, org_setting)
+        errors.update(cls.validate_team_merged_setting(dd_setting, org_setting))
+        return errors
 
     @classmethod
     async def create_or_update_setting(cls, configurable_id, configurable_type, error, setting, saved_setting):
