@@ -63,27 +63,28 @@ class GithubRepoClient(BaseSCMClient):
         path = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls/{self.pr_id}/comments"
         try:
             result = await self.post(url=path, json=payload, headers=headers)
+            result_json = await result.json()
             if result.status_code == 201:
                 return result
             elif result.status_code == 422:
                 if (
-                    result.json().get("message") == VCSFailureMessages.GITHUB_VALIDATION_FAIL.value
-                    and result.json().get("errors", [{}])[0].get("field")
+                    result_json.get("message") == VCSFailureMessages.GITHUB_VALIDATION_FAIL.value
+                    and result_json.get("errors", [{}])[0].get("field")
                     == VCSFailureMessages.GITHUB_INCORRECT_LINE_NUMBER.value
                 ):
                     AppLogger.log_warn(
-                        f"Unable to create comment on pr due to invalid line - {result.status_code} {result.json()}"
+                        f"Unable to create comment on pr due to invalid line - {result.status_code} {result_json}"
                     )
                 if (
-                    result.json().get("message") == VCSFailureMessages.GITHUB_VALIDATION_FAIL.value
-                    and result.json().get("errors", [{}])[0].get("field")
+                    result_json.get("message") == VCSFailureMessages.GITHUB_VALIDATION_FAIL.value
+                    and result_json.get("errors", [{}])[0].get("field")
                     == VCSFailureMessages.GITHUB_INCORRECT_FILE_PATH.value
                 ):
                     AppLogger.log_warn(
-                        f"Unable to create comment on pr due to invalid path - {result.status_code} {result.json()}"
+                        f"Unable to create comment on pr due to invalid path - {result.status_code} {result_json}"
                     )
             else:
-                AppLogger.log_error(f"Unable to create comment on pr - {result.status_code} {result.json()}")
+                AppLogger.log_error(f"Unable to create comment on pr - {result.status_code} {result_json}")
             return result
         except Exception as ex:
             logger.error(
@@ -206,9 +207,10 @@ class GithubRepoClient(BaseSCMClient):
 
         response = await self.patch(path, headers=headers, json=payload)
         if response.status_code == 200:
-            return response.json()
+            return await response.json()
         else:
-            AppLogger.log_error("PR couldn't updated {}".format(response.json()))
+            error_json = await response.json()
+            AppLogger.log_error("PR couldn't updated {}".format(error_json))
 
     async def get_pr_commits(self) -> list:
         """
@@ -232,7 +234,7 @@ class GithubRepoClient(BaseSCMClient):
                 )
                 break
 
-            data = response.json()
+            data = await response.json()
             if not data:
                 break
 
@@ -266,7 +268,7 @@ class GithubRepoClient(BaseSCMClient):
             if response.status_code != 200:
                 AppLogger.log_warn(f"Error fetching comments: {response.status_code}, {response.text}")
                 return comments
-            data = response.json()
+            data = await response.json()
             # Returns empty list incase we pass page with no comments
             if not data:
                 break

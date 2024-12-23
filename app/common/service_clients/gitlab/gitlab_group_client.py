@@ -13,13 +13,13 @@ class GitlabGroupClient(BaseSCMClient):
         url = "https://gitlab.com/api/v4/groups/"
         response = await self.get(url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     async def get_group_webhooks(self, group_id):
         url = f"https://gitlab.com/api/v4/groups/{group_id}/hooks"
         response = await self.get(url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     async def create_webhooks(
         self, group_id, name: str, description: str, webhook_url: str, events_dict: dict, token: str
@@ -38,7 +38,7 @@ class GitlabGroupClient(BaseSCMClient):
 
         response = await self.post(url=url, json=data)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     def _get_webhook_events(self, pull_requests: bool):
         return {

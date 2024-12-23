@@ -103,7 +103,7 @@ class GithubRepo(BaseRepo):
             if not response or response.status_code != 200:
                 AppLogger.log_error(f"unable to get pr details {self.meta_data} status code {response.status_code} ")
                 raise BadRequestException(f"unable to get pr details for {self.meta_data}")
-            self.pr_json_data = response.json()
+            self.pr_json_data = await response.json()
 
         pr_model = GitHubPrModel(self.pr_json_data)
         data = {
@@ -134,7 +134,7 @@ class GithubRepo(BaseRepo):
         pr_diff_stats_response = await self.repo_client.get_pr_diff_stats()
 
         if pr_diff_stats_response:
-            return pr_diff_stats_response.json()
+            return await pr_diff_stats_response.json()
 
     async def get_file_stats_from_commits(self, current_commit, last_reviewed_commit):
         """
@@ -145,9 +145,10 @@ class GithubRepo(BaseRepo):
             last_reviewed_commit (str): Last reviewed commit SHA
         """
         diff_stats_response = await self.repo_client.get_commit_diff_stats(current_commit, last_reviewed_commit)
+        diff_stats_response_json = await diff_stats_response.json()
 
         if diff_stats_response:
-            return diff_stats_response.json().get("files", [])
+            return diff_stats_response_json.get("files", [])
 
     async def get_pr_stats(self):
         if self.pr_stats:
