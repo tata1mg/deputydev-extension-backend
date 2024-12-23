@@ -354,7 +354,7 @@ class SettingService:
     async def create_or_update_repo_setting(self, repo, repo_settings, error):
         if repo:
             repo_settings = await self.normalize_invalid_setting_for_db(repo_settings)
-            existing_setting = self.fetch_setting(repo.id, SettingLevel.REPO.value)
+            existing_setting = await self.fetch_setting(repo.id, SettingLevel.REPO.value)
             await self.update_repo_agents(repo.id, repo_settings, existing_setting)
             await self.create_or_update_setting(
                 configurable_id=repo.id,
@@ -391,15 +391,17 @@ class SettingService:
         if not updated_team_setting:
             return
         existing_team_setting = existing_team_setting.configuration if existing_team_setting else {}
+        team_agents = cls.agents(updated_team_setting)
+        existing_team_agents = cls.agents(existing_team_setting)
         updated_agent_ids, deleted_agent_ids = cls.updated_and_deleted_agent_ids(
-            updated_team_setting, existing_team_setting
+            team_agents, existing_team_agents
         )
         if updated_agent_ids or deleted_agent_ids:
             repo_ids = await Repos.filter(team_id=team_id).values_list("id", flat=True)
             repo_settings = await cls.repo_settings_by_ids(repo_ids)
             agents_ids_to_update = updated_agent_ids + deleted_agent_ids
             dd_agents = cls.agents(cls.DD_LEVEL_SETTINGS)
-            team_agents = cls.agents(updated_team_setting)
+
             updated_agents = []
             for repo_id in repo_ids:
                 repo_setting = repo_settings.get(repo_id) or {}
