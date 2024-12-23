@@ -17,7 +17,7 @@ class BitbucketWorkspaceClient(BaseSCMClient):
         url = f"{self.bitbucket_url}/2.0/user/permissions/workspaces"
         response = await self.get(url=url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     # ---------------------------------------------------------------------------- #
 
@@ -25,7 +25,7 @@ class BitbucketWorkspaceClient(BaseSCMClient):
         url = f"{self.bitbucket_url}/2.0/workspaces/{workspace}/hooks"
         response = await self.get(url=url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     async def create_webhooks(
         self,
@@ -55,16 +55,16 @@ class BitbucketWorkspaceClient(BaseSCMClient):
 
         response = await self.post(url=url, json=data)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     async def get_active_users(self, workspace):
         url = f"{self.bitbucket_url}/2.0/workspaces/{workspace}/members"
         response = await self.get(url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     async def get_all_repos(self, workspace):
         url = f"{self.bitbucket_url}/2.0/repositories/{workspace}"
         response = await self.get(url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()

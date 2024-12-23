@@ -188,7 +188,7 @@ class BitbucketRepo(BaseRepo):
         )
 
         if pr_diff_stats_response:
-            files_changed_data = pr_diff_stats_response.json()
+            files_changed_data = await pr_diff_stats_response.json()
             if files_changed_data and files_changed_data.get("values"):
                 files_changed_data = files_changed_data["values"]
                 total_added = 0

@@ -24,7 +24,7 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
     AffirmationService,
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
-from app.main.blueprints.deputy_dev.services.comment.comment_bucket_mapping_Service import (
+from app.main.blueprints.deputy_dev.services.comment.comment_bucket_mapping_service import (
     CommentBucketMappingService,
 )
 from app.main.blueprints.deputy_dev.services.comment.pr_comments_service import (

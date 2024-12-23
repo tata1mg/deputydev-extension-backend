@@ -59,7 +59,8 @@ class GitlabComment(BaseComment):
 
         if not response or response.status_code != 201:
             logger.error(f"unable to comment on github PR {self.meta_data}")
-        comment["scm_comment_id"] = str(response.json()["id"])
+        response_json = await response.json()
+        comment["scm_comment_id"] = str(response_json["id"])
 
     async def fetch_comment_thread(self, chat_request):
         """
