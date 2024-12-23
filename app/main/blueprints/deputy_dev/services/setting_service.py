@@ -423,7 +423,7 @@ class SettingService:
         agent_objects = []
         for agent_id in agent_ids:
             if agent_id in agents_data:
-                agent = {"repo_id": repo_id, **agents_data[agent_id]}
+                agent = {"repo_id": repo_id, "agent_id": agent_id, **agents_data[agent_id]}
                 agent_objects.append(Agents(**agent))
         return agent_objects
 
