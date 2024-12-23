@@ -71,7 +71,7 @@ class BaseSCMClient:
 
         if response.status_code not in [200, 201, 204]:
             AppLogger.log_warn(
-                f"service request failed with status code {response.status_code} and error {response.json()}"
+                f"service request failed with status code {response.status_code} and error {await response.json()}"
             )
 
         return response

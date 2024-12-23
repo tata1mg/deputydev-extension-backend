@@ -68,5 +68,5 @@ class AffirmationService:
         )
 
         if comment_response and comment_response.status_code in [200, 201]:
-            comment_details = {"comment_id": comment_response.json()["id"]}
+            comment_details = {"comment_id": await comment_response.json()["id"]}
             await AffirmationCache.set(self.cache_key, comment_details)
