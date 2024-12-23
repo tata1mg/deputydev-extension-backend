@@ -61,6 +61,7 @@ class BaseRepo(ABC):
         self.auth_handler = auth_handler
         self.workspace_slug = workspace_slug
         self.pr_commit_diff = None
+        self.repo_client = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
