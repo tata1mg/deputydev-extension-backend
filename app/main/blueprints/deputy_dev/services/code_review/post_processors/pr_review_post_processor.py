@@ -232,13 +232,14 @@ class PRReviewPostProcessor:
             # fetch all agents based on "agent_id" and "repo_id"
             # save in agent_comment_mapping table
             for bucket in comment_data["buckets"]:
-                agent_id = agents_by_id[bucket["agent_id"]].id
-                agent_uuid = bucket["agent_id"]
-                agent_mappings_to_save.append(
-                    AgentCommentMappings(
-                        pr_comment_id=comment_id, agent_id=agent_id, weight=agents_by_agent_id[agent_uuid]["weight"]
+                agent_id = bucket["agent_id"]
+                if agent_id in agents_by_id:
+                    agent = agents_by_id[agent_id]
+                    agent_mappings_to_save.append(
+                        AgentCommentMappings(
+                            pr_comment_id=comment_id, agent_id=agent.id, weight=agents_by_agent_id[agent_id]["weight"]
+                        )
                     )
-                )
         await AgentCommentMappingService.bulk_insert(agent_mappings_to_save)
         return llm_comments
 
