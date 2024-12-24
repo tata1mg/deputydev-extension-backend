@@ -165,8 +165,8 @@ class PRReviewPostProcessor:
         agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
         agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
         for comment in llm_comments:
-            for agent_id in comment["agent_ids"]:
-                weight = agents_by_agent_id[agent_id]["weight"]
+            for bucket in comment["buckets"]:
+                weight = agents_by_agent_id[bucket["agent_id"]]["weight"]
                 weight_counts_data[weight] = weight_counts_data.get(weight, 0) + 1
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
@@ -211,7 +211,8 @@ class PRReviewPostProcessor:
         )
         agent_ids = []
         for comment in valid_llm_comments:
-            agent_ids.extend(comment["agent_ids"])
+            for bucket in comment.get("buckets") or []:
+                agent_ids.append(bucket["agent_id"])
         agent_filter = {"repo_id": pr_dto.repo_id, "agent_id__in": agent_ids}
         agents = await DB.get_by_filters(
             Agents,
@@ -221,19 +222,21 @@ class PRReviewPostProcessor:
         comments_by_ids = {}
         inserted_comments_dict = {comment.scm_comment_id: comment for comment in inserted_comments}
         for valid_comment in valid_llm_comments:
-            if valid_comment["scm_comment_id"] in inserted_comments_dict:
-                inserted_comment = inserted_comments_dict[valid_comment["scm_comment_id"]]
+            scm_comment_id = str(valid_comment["scm_comment_id"])
+            if scm_comment_id in inserted_comments_dict:
+                inserted_comment = inserted_comments_dict[scm_comment_id]
                 comments_by_ids[inserted_comment.id] = valid_comment
         agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
         agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
         for comment_id, comment_data in comments_by_ids.items():
             # fetch all agents based on "agent_id" and "repo_id"
             # save in agent_comment_mapping table
-            for agent_id in comment_data["agent_ids"]:
-                agent_id = agents_by_id[agent_id].id
+            for bucket in comment_data["buckets"]:
+                agent_id = agents_by_id[bucket["agent_id"]].id
+                agent_uuid = bucket["agent_id"]
                 agent_mappings_to_save.append(
                     AgentCommentMappings(
-                        pr_comment_id=comment_id, agent_id=agent_id, weight=agents_by_agent_id[agent_id]["weight"]
+                        pr_comment_id=comment_id, agent_id=agent_id, weight=agents_by_agent_id[agent_uuid]["weight"]
                     )
                 )
         await AgentCommentMappingService.bulk_insert(agent_mappings_to_save)

@@ -14,8 +14,8 @@ class AgentCommentMappings(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    pr_comment_id = fields.ForeignKeyField("dao.PRComments")
-    agent_id = fields.ForeignKeyField("dao.Agents")
+    pr_comment = fields.ForeignKeyField("dao.PRComments")
+    agent = fields.ForeignKeyField("dao.Agents")
     weight = fields.FloatField()
 
     class Meta:
