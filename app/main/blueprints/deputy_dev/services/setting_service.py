@@ -193,59 +193,6 @@ class SettingService:
     def dd_level_settings(cls):
         return cls.DD_LEVEL_SETTINGS
 
-    # def merge_setting(self, base_config, override_config):
-    #     """
-    #     Merges an override configuration into a base configuration with specific rules for hierarchical inheritance
-    #     and `is_override` constraints. This function is typically used to combine configurations from
-    #     multiple levels, such as organization or repository levels, into a final configuration.
-    #
-    #     Rules:
-    #     - If a key exists in the `base_config` but not in `override_config`, the base value remains unchanged.
-    #     - If a value in `base_config` is a dictionary, the function recursively merges the nested dictionary from `override_config`.
-    #     - For the `enable` field:
-    #         - Allow override if `is_override` not set in base config or `is_override` is True
-    #         - If `is_override` is `False`, the `enable` field cannot be overridden by `override_config`.
-    #     - For all other fields (non-dict fields), values from `override_config` take precedence.
-    #     - For the key `[code_review_agent][agents]`:
-    #         - If a key exists in both base and override, the value from override takes precedence.
-    #         - If a key does not exist in base, it is added from override.
-    #     """
-    #
-    #     # Return the base config as-is if there's no override config
-    #     if not override_config:
-    #         return base_config
-    #
-    #     # Iterate over each key-value pair in the base configuration
-    #     for key, value in base_config.items():
-    #         # Skip keys not in the override config or with None values in the override config
-    #         if key not in override_config or override_config[key] is None:
-    #             continue
-    #
-    #         # If the base value is a dictionary, recursively merge dictionaries from both configs
-    #         if isinstance(value, dict):
-    #             if key == "code_review_agent" and "agents" in value:
-    #                 # Handle specific union for `[code_review_agent][agents]`
-    #                 agents_base = value.get("agents", {})
-    #                 agents_override = override_config[key].get("agents", {})
-    #                 merged_agents = {**agents_base, **agents_override}
-    #                 value["agents"] = merged_agents
-    #             else:
-    #                 base_config[key] = self.merge_setting(value, override_config[key])
-    #
-    #         else:
-    #             # Handle the 'enable' field based on `is_override` rules
-    #             if key == "enable":
-    #                 # Allow override if `is_override` not set in base config or `is_override` is True
-    #                 if "is_override" not in base_config or base_config["is_override"]:
-    #                     base_config[key] = override_config[key]
-    #             elif key in ["exclusions", "inclusions"]:
-    #                 # for ["exclusions", "inclusions"] union of complete hierarchy is required.
-    #                 base_config[key] = list(set(base_config[key]) | set(override_config[key]))
-    #             else:
-    #                 # For non-'enable' fields, apply the override config value directly
-    #                 base_config[key] = override_config[key]
-    #     return base_config
-
     @classmethod
     def merge_setting(cls, base_config, override_config):
         """
@@ -368,7 +315,7 @@ class SettingService:
         error = ""
         for agent_name, agent_data in agents.items():
             missing_keys = []
-            for key in ["agent_id", "display_name", "severity"]:
+            for key in ["agent_id", "display_name", "weight"]:
                 if not agent_data.get(key):
                     missing_keys.append([key])
             if missing_keys:

@@ -51,7 +51,7 @@ class CommentBlendingEngine:
         Filters comments based on confidence score limit and reformats them to a standard list structure.
         """
         confidence_filtered_comments = []
-
+        agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
         for agent, data in self.llm_comments.items():
             confidence_threshold = self.llm_confidence_score_limit[agent]["confidence_score_limit"]
             comments = data.get("response", [])
@@ -66,7 +66,7 @@ class CommentBlendingEngine:
                             "file_path": comment["file_path"],
                             "line_number": comment["line_number"],
                             "comment": comment["comment"],
-                            "buckets": [comment["bucket"]],
+                            "buckets": [{"name": comment["bucket"], "agent_id": agent_settings[agent]["agent_id"]}],
                             "confidence_score": comment["confidence_score"],
                             "corrective_code": comment.get("corrective_code", ""),
                             "model": data.get("model"),
@@ -159,6 +159,7 @@ class CommentBlendingEngine:
                     "line_number": line_number,
                     "comments": [],
                     "buckets": [],
+                    "agent_ids": [],
                     "corrective_code": [],
                     "confidence_scores": [],  # Will be used to calculate average confidence score of combined comments
                     "model": comment.get("model"),
@@ -192,7 +193,7 @@ class CommentBlendingEngine:
                             "file_path": file_path,
                             "line_number": line_number,
                             "comment": data["comments"][0],
-                            "bucket": data["buckets"],
+                            "buckets": data["buckets"],
                             "corrective_code": data["corrective_code"][0] if data["corrective_code"] else "",
                             "confidence_score": data["confidence_scores"][0],
                             "model": data["model"],
@@ -222,7 +223,7 @@ class CommentBlendingEngine:
                 "file_path": comment["file_path"],
                 "line_number": comment["line_number"],
                 "comment": comment["comment"],
-                "buckets": comment["bucket"],
+                "buckets": comment["buckets"],
                 "corrective_code": comment["corrective_code"],
                 "confidence_score": comment["confidence_score"],
                 "model": comment["model"],
