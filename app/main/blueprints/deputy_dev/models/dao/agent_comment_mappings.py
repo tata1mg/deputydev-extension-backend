@@ -8,7 +8,7 @@ class AgentCommentMappings(Base):
         "id",
         "pr_comment_id",
         "agent_id",
-        "weight"
+        "weight",
         "created_at",
         "updated_at",
     }

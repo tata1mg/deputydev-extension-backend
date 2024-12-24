@@ -317,7 +317,7 @@ class SettingService:
             missing_keys = []
             for key in ["agent_id", "display_name", "weight"]:
                 if not agent_data.get(key):
-                    missing_keys.append([key])
+                    missing_keys.append(key)
             if missing_keys:
                 lowest_level_setting["code_review_agent"]["agents"].pop(agent_name)
                 error += f"- {agent_name}: {str(missing_keys)}\n"
