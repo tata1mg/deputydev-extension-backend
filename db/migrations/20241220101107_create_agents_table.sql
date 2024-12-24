@@ -12,10 +12,10 @@ CREATE TABLE agents
 );
 
 -- Add separate index on agent_id
-CREATE INDEX idx_agent_id ON agents (agent_id);
+CREATE INDEX agents_agent_id ON agents (agent_id);
 
 -- Add separate index on repo_id
-CREATE INDEX idx_repo_id ON agents (repo_id);
+CREATE INDEX agents_repo_id ON agents (repo_id);
 
 -- migrate:down
 drop table agents;
