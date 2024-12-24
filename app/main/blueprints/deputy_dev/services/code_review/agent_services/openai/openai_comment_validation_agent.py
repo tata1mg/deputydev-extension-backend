@@ -52,7 +52,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "comment": "Consider refactoring this function to improve readability.",
                 "confidence_score": 0.85,
                 "corrective_code": "def my_function(...): pass",
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }},
             {{
                 "file_path": "src/utils.py",
@@ -60,7 +60,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "comment": "Replace '==' with 'is' for comparison.",
                 "confidence_score": 0.92,
                 "corrective_code": "if x is None: pass",
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }}
         ]
         
@@ -73,7 +73,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
             'comment': '<Same comment as provided in input comment>',
             'corrective_code': '<Corrective code for the comment suggested. Same as provide in input>',
             'is_valid': <boolean value telling whether the comment is actually relevant or not>,
-            'bucket': <Bucket in which the commnet falls. Keep it same as given in input comment>
+            "buckets": <This is list of buckets [{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}]>,
             }}]
             ```
             
@@ -86,14 +86,14 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "comment": "Consider refactoring this function to improve readability.",
                 "corrective_code": "def my_function(...): pass"
                 "is_valid": true,
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }},
             {{
                 "file_path": "src/utils.py",
                 "line_number": 27,
                 "comment": "Replace '==' with 'is' for comparison.",
                 "is_valid": false,
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }}
         ]
         ```
