@@ -24,7 +24,6 @@ class PRComments(Base):
         "created_at",
         "updated_at",
         "meta_info",
-        "agent",
     }
 
     id = fields.BigIntField(pk=True)
