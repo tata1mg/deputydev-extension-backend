@@ -137,6 +137,8 @@ class PRService:
 
     @classmethod
     async def update_meta_info(cls, id, loc_changed, token_count):
+        # This function is not getting used can remove
+        # TODO: PRDIFF Need to check usage of this function as we dropping pr_diff_tokens
         pr_dto = await PRService.db_get({"id": id})
         if pr_dto:
             meta_info = pr_dto.meta_info or {}

@@ -144,8 +144,7 @@ class SmartCodeChatManager:
             comment = chat_request.comment.raw.lower()
 
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
-
-            diff = await repo.get_effective_pr_diff()
+            diff = await repo.get_effective_pr_diff("chat")
             user_story_description = await JiraManager(issue_id=repo.pr_details.issue_id).get_description_text()
             comment_thread = await comment_service.fetch_comment_thread(chat_request)
             comment_context = {

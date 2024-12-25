@@ -597,3 +597,16 @@ class SettingService:
             agent_data = {"agent_name": agent_name, **agent_data}
             agents[str(agent_data["agent_id"])] = agent_data
         return agents
+
+    @staticmethod
+    def chat_setting():
+        setting = get_context_value("setting")
+        return setting.get("chat", {}) if setting else {}
+
+    @classmethod
+    def pre_defined_agents_id(cls, agent_name):
+        return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"][agent_name]["agent_id"]
+
+    @classmethod
+    def summary_agent_id(cls):
+        return cls.DD_LEVEL_SETTINGS["pr_summary"]["agent_id"]

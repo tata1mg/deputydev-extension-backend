@@ -61,6 +61,7 @@ class GithubRepo(BaseRepo):
         response = await self.repo_client.get_pr_diff()
         if response and response.status_code != 200:
             return PR_NOT_FOUND
+        # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
         self.pr_diff = self.exclude_pr_diff(response.text)
         return self.pr_diff
 
@@ -86,6 +87,7 @@ class GithubRepo(BaseRepo):
         )
         if response and response.status_code != 200:
             return PR_NOT_FOUND
+        # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
         self.pr_commit_diff = self.exclude_pr_diff(response.text)
         return self.pr_commit_diff
 

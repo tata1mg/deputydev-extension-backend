@@ -41,7 +41,7 @@ class SingleAgentPRReviewManager:
 
     async def get_code_review_comments(self):
         relevant_chunk, embedding_input_tokens = await ChunkingManger.get_relevant_chunk(self.repo_service)
-
+        # TODO: PRDIFF pass operation and agent_uuid in get_pr_diff function
         llm_response, pr_summary, tokens_data, meta_info_to_save = await self.parallel_pr_review_with_gpt_models(
             await self.context_service.get_pr_diff(),
             self.repo_service.pr_details,

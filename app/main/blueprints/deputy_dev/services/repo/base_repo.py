@@ -21,16 +21,15 @@ from app.main.blueprints.deputy_dev.models.dao import Repos, Workspaces
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
+from app.main.blueprints.deputy_dev.services.pr_diff_service import PRDiffService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
 from app.main.blueprints.deputy_dev.utils import (
     categorize_loc,
     format_summary_loc_time_text,
-    ignore_files,
     parse_collection_name,
 )
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 
 
 class BaseRepo(ABC):
@@ -61,6 +60,7 @@ class BaseRepo(ABC):
         self.auth_handler = auth_handler
         self.workspace_slug = workspace_slug
         self.pr_commit_diff = None
+        self.pr_diff_service = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -188,16 +188,20 @@ class BaseRepo(ABC):
         """
         raise NotImplementedError()
 
-    async def get_effective_pr_diff(self):
+    async def get_effective_pr_diff(self, operation="code_review", agent_id=None):
         """
         Determines whether to fetch the full PR diff or a specific commit diff.
         Returns:
             str: The appropriate diff based on context.
         """
-        pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
-        if pr_reviewable_on_commit:
-            return await self.get_commit_diff()
-        return await self.get_pr_diff()
+        if not self.pr_diff_service:
+            pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
+            if pr_reviewable_on_commit:
+                pr_diff = await self.get_commit_diff()
+            else:
+                pr_diff = await self.get_pr_diff()
+            self.pr_diff_service = PRDiffService(pr_diff)
+        return self.pr_diff_service.get_pr_diff(operation, agent_id)
 
     @abstractmethod
     async def get_pr_diff(self):
@@ -259,6 +263,11 @@ class BaseRepo(ABC):
         raise NotImplementedError()
 
     async def get_pr_diff_token_count(self) -> int:
+        # TODO: PRDIFF get_pr_diff_token_count function will return list of agents and their pr_diff_tokens
+        #  This function is called from two places
+        #  first time insertion of pr while code review
+        #  when pr is large
+        # TODO: PRDIFF pass operation and agent_id in get_effective_pr_diff
         pr_diff = await self.get_effective_pr_diff()
         if not pr_diff or pr_diff == PR_NOT_FOUND:
             return 0
@@ -339,26 +348,3 @@ class BaseRepo(ABC):
             workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
             repo = await Repos.get_or_none(workspace_id=workspace.id, scm_repo_id=scm_repo_id)
             return repo
-
-    @staticmethod
-    def exclude_pr_diff(pr_diff, operation="code_review", agent_id=None):
-        """
-        - operations can be code_review, chat, summary
-        - in case of code_review agent_id is mandatory
-        """
-        settings = get_context_value("setting") or {}
-        inclusions, exclusions = [], []
-        if operation == "code_review":
-            code_review_agent = settings.get("code_review_agent", {})
-            agents = SettingService.get_agents_by_uuid()
-            inclusions = set(code_review_agent.get("inclusions", [])) | set(agents[agent_id].get("inclusions", []))
-            exclusions = set(code_review_agent.get("exclusions", [])) | set(agents[agent_id].get("exclusions", []))
-        elif operation == "chat":
-            chat_setting = settings["chat"]
-            inclusions = chat_setting.get("inclusions", [])
-            exclusions = chat_setting.get("exclusions", [])
-        elif operation == "pr_summary":
-            summary_setting = settings["pr_summary"]
-            inclusions = summary_setting.get("inclusions", [])
-            exclusions = summary_setting.get("exclusions", [])
-        return ignore_files(pr_diff, list(exclusions), list(inclusions))
