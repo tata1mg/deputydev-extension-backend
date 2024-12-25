@@ -588,3 +588,12 @@ class SettingService:
 
         # Return the concatenated error messages.
         return error_message
+
+    @staticmethod
+    def get_agents_by_uuid():
+        agent_setting = get_context_value("setting")["code_review_agent"]["agents"]
+        agents = {}
+        for agent_name, agent_data in agent_setting.items():
+            agent_data = {"agent_name": agent_name, **agent_data}
+            agents[str(agent_data["agent_id"])] = agent_data
+        return agents
