@@ -129,7 +129,7 @@ class PRService:
     @classmethod
     async def get_bulk_prs_by_filter(cls, query_params):
         all_prs = await DB.raw_sql(
-            "SELECT * FROM pull_requests where id>={} and id<{}".format(
+            "SELECT * FROM pull_requests where id>={} and id<{} and scm_close_time is null and (pr_state='OPEN' or pr_state='APPROVED')".format(
                 query_params.get("start"), query_params.get("end")
             )
         )
