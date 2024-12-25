@@ -107,6 +107,7 @@ class GitlabRepo(BaseRepo):
         return comments
 
     async def get_pr_diff(self):
+        # TODO: PRDIFF accept operation and agent_id here
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.
 
@@ -125,6 +126,7 @@ class GitlabRepo(BaseRepo):
             return PR_NOT_FOUND
 
         if response:
+            # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
             combined_pr_diff = self.create_combined_diff_text(response["changes"])
             self.pr_diff = self.exclude_pr_diff(combined_pr_diff)
         return self.pr_diff
@@ -154,6 +156,8 @@ class GitlabRepo(BaseRepo):
 
         if response:
             combined_repo_diff = self.create_combined_diff_text(response["changes"])
+            # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
+            # and self.pr_commit_diff = combined_repo_diff
             self.pr_commit_diff = self.exclude_pr_diff(combined_repo_diff)
         return self.pr_commit_diff
 
@@ -186,6 +190,8 @@ class GitlabRepo(BaseRepo):
 
         pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
 
+        # TODO: PRDIFF pr_reviewable_on_commit in handled in get_effective_pr_diff, we can update this line
+        # We should consider complete pr_diff for this as we are doing for bitbucket and github
         pr_diff = await self.get_commit_diff() if pr_reviewable_on_commit else await self.get_effective_pr_diff()
         diff_lines = pr_diff.split("\n")
 
