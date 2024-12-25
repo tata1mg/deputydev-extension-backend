@@ -88,59 +88,68 @@ def format_code_block(code_block: str) -> str:
     return code_block
 
 
-def ignore_files(pr_diff, excluded_files=None):
+def ignore_files(pr_diff, excluded_files=None, included_files=None):
     if not excluded_files:
         excluded_files = []
+    if not included_files:
+        included_files = []
     resp_text = ""
     for d in pr_diff.split("diff --git "):
-        if not any(keyword in d for keyword in excluded_files):
+        if is_any_regex_present(d, included_files) or not is_any_regex_present(d, excluded_files):
             resp_text += d
     return resp_text
 
 
-def files_to_exclude(exclusions, inclusions, repo_dir=""):
-    """
-    Computes the final list of excluded files or folders after applying inclusions and exclusions.
+def is_any_regex_present(text, regex_list):
+    for pattern in regex_list:
+        if re.search(pattern, text):
+            return True
+    return False
 
-    :param repo_dir: The root directory path for the repository.
-    :param exclusions: List of paths (relative to repo_dir) to be excluded.
-    :param inclusions: List of paths (relative to repo_dir) to be included even if they are within exclusions.
-    :return: A set of paths (relative to repo_dir) that are effectively excluded.
-    """
-    exclusions = {os.path.join(repo_dir, path) for path in exclusions}
-    inclusions = {os.path.join(repo_dir, path) for path in inclusions}
 
-    final_exclusions = set()
-
-    def is_path_excluded(path, exclusions, inclusions):
-        """
-        Determines if a path should be excluded based on exclusions and inclusions.
-        """
-        for exclusion in exclusions:
-            if os.path.commonpath([path, exclusion]) == exclusion:
-                for inclusion in inclusions:
-                    if os.path.commonpath([path, inclusion]) == inclusion:
-                        return False
-                return True
-        return False
-
-    # Process exclusions, filtering out overridden paths
-    for exclusion in exclusions:
-        if not any(os.path.commonpath([exclusion, inclusion]) == inclusion for inclusion in inclusions):
-            final_exclusions.add(exclusion)
-
-    # Add nested files and folders to the final exclusions
-    for exclusion in exclusions:
-        for root, dirs, files in os.walk(exclusion):
-            for item in dirs + files:
-                full_path = os.path.join(root, item)
-                if is_path_excluded(full_path, exclusions, inclusions):
-                    final_exclusions.add(full_path)
-
-    # Convert final exclusions to relative paths
-    relative_exclusions = {os.path.relpath(path, repo_dir) for path in final_exclusions}
-
-    return relative_exclusions
+# def files_to_exclude(exclusions, inclusions, repo_dir=""):
+#     """
+#     Computes the final list of excluded files or folders after applying inclusions and exclusions.
+#
+#     :param repo_dir: The root directory path for the repository.
+#     :param exclusions: List of paths (relative to repo_dir) to be excluded.
+#     :param inclusions: List of paths (relative to repo_dir) to be included even if they are within exclusions.
+#     :return: A set of paths (relative to repo_dir) that are effectively excluded.
+#     """
+#     exclusions = {os.path.join(repo_dir, path) for path in exclusions}
+#     inclusions = {os.path.join(repo_dir, path) for path in inclusions}
+#
+#     final_exclusions = set()
+#
+#     def is_path_excluded(path, exclusions, inclusions):
+#         """
+#         Determines if a path should be excluded based on exclusions and inclusions.
+#         """
+#         for exclusion in exclusions:
+#             if os.path.commonpath([path, exclusion]) == exclusion:
+#                 for inclusion in inclusions:
+#                     if os.path.commonpath([path, inclusion]) == inclusion:
+#                         return False
+#                 return True
+#         return False
+#
+#     # Process exclusions, filtering out overridden paths
+#     for exclusion in exclusions:
+#         if not any(os.path.commonpath([exclusion, inclusion]) == inclusion for inclusion in inclusions):
+#             final_exclusions.add(exclusion)
+#
+#     # Add nested files and folders to the final exclusions
+#     for exclusion in exclusions:
+#         for root, dirs, files in os.walk(exclusion):
+#             for item in dirs + files:
+#                 full_path = os.path.join(root, item)
+#                 if is_path_excluded(full_path, exclusions, inclusions):
+#                     final_exclusions.add(full_path)
+#
+#     # Convert final exclusions to relative paths
+#     relative_exclusions = {os.path.relpath(path, repo_dir) for path in final_exclusions}
+#
+#     return relative_exclusions
 
 
 def get_filtered_response(response: dict, confidence_filter_score: float) -> bool:
@@ -413,6 +422,7 @@ async def get_workspace(scm, scm_workspace_id) -> Workspaces:
 
 async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
     workspace = await get_workspace(scm_workspace_id=scm_workspace_id, scm=vcs_type)
+    # workspace = await Workspaces.get(id=scm_workspace_id)
     set_context_values(dd_workspace_id=workspace.id)
     if vcs_type == "github":
         # tokenable_type = "workspace"

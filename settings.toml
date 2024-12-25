@@ -20,10 +20,11 @@ exclusions = [
     "README.md",
     "chromedriver",
     "local_execute.sh",
-    "local_build.sh"
+    "local_build.sh",
+    "app/modules/pharma_pdp/pre_processors/sku/drug/"
 ]
 
-inclusions = []
+inclusions = ["app/modules/pharma_pdp/pre_processors/sku/drug/drug_static_pre_processor.py"]
 [code_review_agent.agents.security]
 agent_id = "c62142f5-3992-476d-9131-bf85e1beffb7"
 display_name = "Security"

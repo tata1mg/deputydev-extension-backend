@@ -26,11 +26,11 @@ from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
 )
 from app.main.blueprints.deputy_dev.utils import (
     categorize_loc,
-    files_to_exclude,
     format_summary_loc_time_text,
     ignore_files,
     parse_collection_name,
 )
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 
 
 class BaseRepo(ABC):
@@ -340,10 +340,25 @@ class BaseRepo(ABC):
             repo = await Repos.get_or_none(workspace_id=workspace.id, scm_repo_id=scm_repo_id)
             return repo
 
-    def exclude_pr_diff(self, pr_diff):
+    @staticmethod
+    def exclude_pr_diff(pr_diff, operation="code_review", agent_id=None):
+        """
+        - operations can be code_review, chat, summary
+        - in case of code_review agent_id is mandatory
+        """
         settings = get_context_value("setting") or {}
-        code_review_agent = settings.get("code_review_agent", {})
-        inclusions = code_review_agent.get("inclusions", [])
-        exclusions = code_review_agent.get("exclusions", [])
-        excluded_files = files_to_exclude(exclusions, inclusions, self.repo_dir)
-        return ignore_files(pr_diff, excluded_files)
+        inclusions, exclusions = [], []
+        if operation == "code_review":
+            code_review_agent = settings.get("code_review_agent", {})
+            agents = SettingService.get_agents_by_uuid()
+            inclusions = set(code_review_agent.get("inclusions", [])) | set(agents[agent_id].get("inclusions", []))
+            exclusions = set(code_review_agent.get("exclusions", [])) | set(agents[agent_id].get("exclusions", []))
+        elif operation == "chat":
+            chat_setting = settings["chat"]
+            inclusions = chat_setting.get("inclusions", [])
+            exclusions = chat_setting.get("exclusions", [])
+        elif operation == "pr_summary":
+            summary_setting = settings["pr_summary"]
+            inclusions = summary_setting.get("inclusions", [])
+            exclusions = summary_setting.get("exclusions", [])
+        return ignore_files(pr_diff, list(exclusions), list(inclusions))

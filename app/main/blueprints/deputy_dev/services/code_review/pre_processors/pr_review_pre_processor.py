@@ -253,13 +253,12 @@ class PRReviewPreProcessor:
         elif pr_diff == "":
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_NO_DIFF.value
-        else:
-            if self.pr_diff_token_count > MAX_PR_DIFF_TOKEN_LIMIT:
-                await self.comment_service.create_pr_comment(
-                    comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
-                )
-                self.is_valid = False
-                self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
+        elif self.pr_diff_token_count > MAX_PR_DIFF_TOKEN_LIMIT:
+            await self.comment_service.create_pr_comment(
+                comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+            )
+            self.is_valid = False
+            self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
 
     def validate_pr_state_for_review(self):
         pr_state = self.pr_model.scm_state()
