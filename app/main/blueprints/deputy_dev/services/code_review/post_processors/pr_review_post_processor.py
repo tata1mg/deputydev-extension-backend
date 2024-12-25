@@ -55,6 +55,11 @@ class PRReviewPostProcessor:
 
     async def post_process_pr_large_pr(self, pr_dto: PullRequestDTO, tokens_data):
         self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
+        """
+        This is large_pr_case
+        # TODO: PRDIFF {"tokens":{"pr_diff_tokens":239}}
+        updated will be  {"tokens":{"security":239, "error": 500}}
+        """
         await PRService.db_update(
             payload={
                 "review_status": self.review_status,

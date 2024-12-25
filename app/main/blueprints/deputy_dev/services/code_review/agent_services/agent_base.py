@@ -21,7 +21,12 @@ from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 
 
 class AgentServiceBase(ABC):
-    def __init__(self, context_service: ContextService, is_reflection_enabled: bool, agent_name):
+    def __init__(
+        self,
+        context_service: ContextService,
+        is_reflection_enabled: bool,
+        agent_name,
+    ):
         self.context_service = context_service
         self.is_reflection_enabled = is_reflection_enabled
         self.agent_name = agent_name
@@ -30,17 +35,20 @@ class AgentServiceBase(ABC):
         agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
         self.comment_confidence_score = agent_settings.get(self.agent_name, {}).get("confidence_score")
         self.custom_prompt = agent_settings.get(self.agent_name, {}).get("custom_prompt", "")
+        self.agent_id = None
 
     async def format_user_prompt(self, prompt: str, comments: str = None):
         prompt_variables = {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
-            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
+            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
+                append_line_no_info=True, agent_id=self.agent_id
+            ),
             "REVIEW_COMMENTS_By_JUNIOR_DEVELOPER": comments,
             "CONTEXTUALLY_RELATED_CODE_SNIPPETS": await self.context_service.get_relevant_chunk(),
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
-            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
+            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
         }
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)

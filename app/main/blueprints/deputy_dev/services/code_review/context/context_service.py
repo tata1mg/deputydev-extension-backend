@@ -32,6 +32,7 @@ class ContextService:
         self.confluence_doc_data_tokens = None
         self.tiktoken = TikToken()
         self.pr_status = None
+        self.pr_diff_service = None
 
     async def get_relevant_chunk(self):
         if not self.relevant_chunk:
@@ -52,14 +53,14 @@ class ContextService:
             self.pr_description_tokens = self.tiktoken.count(self.pr_description)
         return self.pr_description
 
-    async def get_pr_diff(self, append_line_no_info=False):
-        if not self.pr_diff:
-            self.pr_diff = await self.repo_service.get_effective_pr_diff()
-            self.pr_diff_tokens = self.tiktoken.count(self.pr_diff)
+    async def get_pr_diff(self, append_line_no_info=False, operation="code_review", agent_id=None):
+        pr_diff = await self.repo_service.get_effective_pr_diff(operation, agent_id)
+        # TODO: PRDIFF update pr_diff_tokens logic to store tokens agent_uuid wise and for chat and pr_summary
+        self.pr_diff_tokens = self.tiktoken.count(self.pr_diff)
         if append_line_no_info:
-            return append_line_numbers(self.pr_diff)
+            return append_line_numbers(pr_diff)
         else:
-            return self.pr_diff
+            return pr_diff
 
     async def get_user_story(self):
         if self.jira_story:
