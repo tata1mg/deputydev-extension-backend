@@ -422,7 +422,6 @@ async def get_workspace(scm, scm_workspace_id) -> Workspaces:
 
 async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
     workspace = await get_workspace(scm_workspace_id=scm_workspace_id, scm=vcs_type)
-    # workspace = await Workspaces.get(id=scm_workspace_id)
     set_context_values(dd_workspace_id=workspace.id)
     if vcs_type == "github":
         # tokenable_type = "workspace"

@@ -107,7 +107,6 @@ class GitlabRepo(BaseRepo):
         return comments
 
     async def get_pr_diff(self):
-        # TODO: PRDIFF accept operation and agent_id here
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.
 
