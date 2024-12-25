@@ -149,7 +149,7 @@ class BackfillManager:
                     auth_handler=auth_handler,
                 )
                 pr_detail = await self.client.get_pr_details()
-                pr_model = GitHubPrModel(pr_detail.json())
+                pr_model = GitHubPrModel(await pr_detail.json())
             if pr_model.scm_state() == "MERGED" or pr_model.scm_state() == "DECLINED":
                 pr_closed_at = convert_to_datetime(pr_model.scm_updation_time())
                 await PRService.db_update(
