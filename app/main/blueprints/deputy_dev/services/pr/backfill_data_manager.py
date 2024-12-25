@@ -131,7 +131,7 @@ class BackfillManager:
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         for row in pr_rows:
             repo_dto = await RepoService.db_get({"id": row["repo_id"]})
-            if repo_dto.team_id == 1:
+            if repo_dto.team_id == 1 and repo_dto.scm == "bitbucket":
                 onemg_workspace_id = "{eac19072-5edc-44b0-a9fc-206356051d1e}"
                 auth_handler = await get_vcs_auth_handler(onemg_workspace_id, "bitbucket")
                 self.client = BitbucketRepoClient(
@@ -139,6 +139,17 @@ class BackfillManager:
                 )
                 pr_detail = await self.client.get_pr_details()
                 pr_model = BitbucketPrModel(pr_detail)
+            elif repo_dto.team_id == 1 and repo_dto.scm == "github":
+                onemg_workspace_id = "142996019"
+                auth_handler = await get_vcs_auth_handler(onemg_workspace_id, "github")
+                self.client = GithubRepoClient(
+                    workspace_slug="tata1mg",
+                    repo=name_to_slug(repo_dto.name),
+                    pr_id=int(row["scm_pr_id"]),
+                    auth_handler=auth_handler,
+                )
+                pr_detail = await self.client.get_pr_details()
+                pr_model = GitHubPrModel(await pr_detail.json())
             else:
                 traya_workspace_id = "129746479"
                 auth_handler = await get_vcs_auth_handler(traya_workspace_id, "github")
