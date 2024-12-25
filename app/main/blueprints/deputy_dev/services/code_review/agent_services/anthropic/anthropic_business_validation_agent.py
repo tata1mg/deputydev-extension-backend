@@ -13,7 +13,6 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.BUSINESS_LOGIC_VALIDATION.value)
         self.agent_id = SettingService.pre_defined_agents_id(AgentTypes.BUSINESS_LOGIC_VALIDATION.value)
-        self.operation = "code_review"
 
     def get_with_reflection_system_prompt_pass1(self):
         return """

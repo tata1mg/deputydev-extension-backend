@@ -21,10 +21,9 @@ exclusions = [
     "chromedriver",
     "local_execute.sh",
     "local_build.sh",
-    "app/modules/pharma_pdp/pre_processors/sku/drug/"
 ]
 
-inclusions = ["app/modules/pharma_pdp/pre_processors/sku/drug/drug_static_pre_processor.py"]
+inclusions = []
 [code_review_agent.agents.security]
 agent_id = "c62142f5-3992-476d-9131-bf85e1beffb7"
 display_name = "Security"
@@ -98,6 +97,7 @@ is_override = true
 custom_prompt = ""
 
 [pr_summary]
+agent_id = "294c1355-38c7-4f69-8914-c95c92e16dbb"
 enable = true
 model = "gpt-4o"
 is_override = true
