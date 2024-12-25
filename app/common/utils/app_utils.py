@@ -209,3 +209,10 @@ def name_to_slug(input_str) -> str:
     lower_str = input_str.lower()
     result_str = lower_str.replace(" ", "-")
     return result_str
+
+
+def safe_index(lst, item, default=None):
+    try:
+        return lst.index(item)
+    except ValueError:
+        return default

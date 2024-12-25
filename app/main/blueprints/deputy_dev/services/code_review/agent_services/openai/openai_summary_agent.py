@@ -12,6 +12,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
@@ -25,6 +26,7 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         # self.model = setting[AgentTypes.PR_SUMMARY.value]["model"]
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
         self.custom_prompt = get_context_value("setting")[AgentTypes.PR_SUMMARY.value].get("custom_prompt", "")
+        self.agent_id = SettingService.summary_agent_id()
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -69,6 +71,7 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         }
 
     def get_agent_specific_tokens_data(self):
+        # TODO: PRDIFF update self.context_service.pr_diff_tokens to  self.context_service.pr_diff_tokens[agent_uuid]
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,

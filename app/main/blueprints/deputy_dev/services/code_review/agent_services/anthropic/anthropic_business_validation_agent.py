@@ -6,11 +6,14 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 
 
 class AnthropicBusinessValidationAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.BUSINESS_LOGIC_VALIDATION.value)
+        self.agent_id = SettingService.pre_defined_agents_id(AgentTypes.BUSINESS_LOGIC_VALIDATION.value)
+        self.operation = "code_review"
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -217,6 +220,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         """
 
     def get_agent_specific_tokens_data(self):
+        # TODO: PRDIFF update self.context_service.pr_diff_tokens to  self.context_service.pr_diff_tokens[agent_uuid]
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,

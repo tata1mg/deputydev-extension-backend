@@ -133,6 +133,8 @@ class PRReviewPreProcessor:
             last_reviewed_commit=last_reviewed_commit,
             has_reviewed_entry=has_reviewed_entry,
         )
+        # TODO: PRDIFF now get_pr_diff_token_count will return each agent count so dirently assign it's return value
+        #  to self.agents_tokens
         self.pr_diff_token_count = await self.repo_service.get_pr_diff_token_count()
         self.meta_info["tokens"] = {TokenTypes.PR_DIFF_TOKENS.value: self.pr_diff_token_count}
         self.loc_changed = await self.repo_service.get_loc_changed_count()
@@ -246,6 +248,7 @@ class PRReviewPreProcessor:
         )
 
     async def validate_pr_diff(self):
+        # TODO PRDIFF check how to handle  get_effective_pr_diff here as we don't have specific agents here.
         pr_diff = await self.repo_service.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False

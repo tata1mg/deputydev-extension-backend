@@ -121,14 +121,16 @@ class BitbucketRepo(BaseRepo):
         Raises:
             ValueError: If the pull request diff cannot be retrieved.
         """
-        if self.pr_diff:
-            return self.pr_diff
+        # if self.pr_diff:
+        #     return self.pr_diff
 
         pr_diff, status_code = await self.repo_client.get_pr_diff()
         if status_code == 404:
             return PR_NOT_FOUND
-        self.pr_diff = self.exclude_pr_diff(pr_diff.text, agent_id="c62142f5-3992-476d-9131-bf85e1beffb7")
-        return self.pr_diff
+        return pr_diff
+        # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
+        # self.pr_diff = self.exclude_pr_diff(pr_diff.text, agent_id="c62142f5-3992-476d-9131-bf85e1beffb7")
+        # return self.pr_diff
 
     async def get_commit_diff(self):
         """
@@ -154,6 +156,7 @@ class BitbucketRepo(BaseRepo):
             return PR_NOT_FOUND
 
         if commit_diff:
+            # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
             self.pr_commit_diff = self.exclude_pr_diff(commit_diff.text)
         return self.pr_commit_diff
 
