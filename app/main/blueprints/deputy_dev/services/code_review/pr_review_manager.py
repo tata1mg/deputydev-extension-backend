@@ -90,6 +90,8 @@ class PRReviewManager:
         pr_dto = None
 
         try:
+            if data.get("repo_name") == "hkplus-ios":
+                return
             tokens_data, execution_start_time = None, datetime.now()
             is_reviewable_request, pr_dto = await PRReviewPreProcessor(
                 repo_service, comment_service, affirmation_service
