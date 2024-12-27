@@ -1,3 +1,5 @@
+from torpedo import CONFIG
+
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
     ConfluenceManager,
 )
@@ -9,6 +11,9 @@ from app.main.blueprints.deputy_dev.services.chunking.chunking_manager import (
 )
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
+from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
+    get_context_value,
+)
 from app.main.blueprints.deputy_dev.utils import append_line_numbers
 
 
@@ -35,8 +40,9 @@ class ContextService:
 
     async def get_relevant_chunk(self):
         if not self.relevant_chunk:
+            use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
             self.relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunk(
-                self.repo_service
+                self.repo_service, use_new_chunking=use_new_chunking, use_llm_re_ranking=False
             )
         return self.relevant_chunk
 
