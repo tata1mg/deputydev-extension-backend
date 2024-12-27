@@ -103,7 +103,10 @@ def create_chunk_str_to_contents(chunks: List[ChunkInfo]) -> Dict[str, str]:
     Returns:
         Dict[str, str]: A dictionary mapping each chunk's denotation to its content.
     """
-    return {chunk.denotation: chunk.get_chunk_content(add_ellipsis=False, add_lines=False) for chunk in chunks}
+    return {
+        chunk.denotation: chunk.get_chunk_content_with_meta_data(add_ellipsis=False, add_lines=False)
+        for chunk in chunks
+    }
 
 
 async def compute_vector_search_scores(query: str, chunks: List[ChunkInfo]) -> dict:

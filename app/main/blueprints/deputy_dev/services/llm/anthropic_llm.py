@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from torpedo import CONFIG
 
@@ -14,9 +14,9 @@ class Anthropic(LLMInterface):
         self.anthropic_client = None
         self.model_settings: dict = CONFIG.config["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
-    def build_llm_message(self, prompt: Dict[str, str]):
+    def build_llm_message(self, prompt: Dict[str, str], previous_responses: List[Any] = []):
         user_message = {"role": "user", "content": prompt["user_message"]}
-        messages = [user_message]
+        messages = (previous_responses or []) + [user_message]
         body = json.dumps(
             {
                 "anthropic_version": self.model_settings["VERSION"],
