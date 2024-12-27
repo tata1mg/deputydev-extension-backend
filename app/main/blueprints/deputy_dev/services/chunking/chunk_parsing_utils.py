@@ -133,28 +133,32 @@ def read_file(file_name: str) -> str:
         return ""
 
 
-def create_chunks(source: str) -> list[str]:
+def create_chunks(source: str, use_new_chunking: False) -> list[str]:
     """
     Converts the content of a file into chunks of code.
 
     Args:
         source (str): The path to the file to be processed.
+        use_new_chunking (bool): Flag to enable new chunking
 
     Returns:
         list[str]: A list of code chunks extracted from the file.
     """
     file_contents = read_file(source)
-    chunks = chunk_source(file_contents, path=source)
+    chunks = chunk_source(file_contents, path=source, use_new_chunking=use_new_chunking)
     return chunks
 
 
-def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[ChunkInfo], list[Document]]:
+def source_to_chunks(
+    directory: str, config: ChunkConfig = None, use_new_chunking: bool = False
+) -> tuple[list[ChunkInfo], list[Document]]:
     """
     Converts code files within a directory into chunks of code.
 
     Args:
         directory (str): The path to the directory containing code files.
         config (ChunkConfig, optional): Configuration for chunking. Defaults to None.
+        use_new_chunking (bool) : Flag to enable new chunking
 
     Returns:
         tuple[list[ChunkInfo], list[Document]]: A tuple containing a list of chunk information and a list of docs.
@@ -182,7 +186,7 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
 
     # Iterate over each file and create chunks
     for file in file_list:
-        all_chunks.extend(create_chunks(file))
+        all_chunks.extend(create_chunks(file, use_new_chunking))
 
     # Convert chunks to Document objects
     all_docs: List[Document] = chunks_to_docs(all_chunks, len(directory) + 1)
@@ -195,7 +199,7 @@ def source_to_chunks(directory: str, config: ChunkConfig = None) -> tuple[list[C
     return all_chunks, all_docs
 
 
-async def get_chunks(directory: str) -> Tuple[List[ChunkInfo], List[Document]]:
+async def get_chunks(directory: str, use_new_chunking: bool) -> Tuple[List[ChunkInfo], List[Document]]:
     """
     Asynchronously retrieves chunks and documents from a given directory.
 
@@ -204,6 +208,7 @@ async def get_chunks(directory: str) -> Tuple[List[ChunkInfo], List[Document]]:
 
     Args:
         directory (str): The directory from which to retrieve chunks and documents.
+        use_new_chunking(bool): Flag to enable new chunking
 
     Returns:
         Tuple[List[ChunkInfo], List[Document]]: A tuple containing two lists:
@@ -213,7 +218,7 @@ async def get_chunks(directory: str) -> Tuple[List[ChunkInfo], List[Document]]:
     # Instantiate an event loop object for main thread
     loop = asyncio.get_event_loop()
 
-    result = await loop.run_in_executor(executor, source_to_chunks, directory)
+    result = await loop.run_in_executor(executor, source_to_chunks, directory, None, use_new_chunking)
     all_chunks = result[0]
     all_docs = result[1]
     return all_chunks, all_docs
