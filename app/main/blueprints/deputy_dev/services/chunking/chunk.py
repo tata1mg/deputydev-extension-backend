@@ -612,7 +612,7 @@ def chunk_content(content: str, line_count: int = 30, overlap: int = 15):
     while start < total_lines:
         end = min(start + line_count, total_lines)
         chunk = "\n".join(lines[start:end])
-        chunks.append(chunk)
+        chunks.append((start, end, chunk))
         start += line_count - overlap
 
     return chunks
@@ -647,12 +647,11 @@ def chunk_source(
         overlap = 0
         get_chunks = chunk_content(content, line_count, overlap)
         chunks = []
-        for idx, chunk in enumerate(get_chunks):
-            end = min((idx + 1) * (line_count - overlap), len(content.split("\n")))
+        for chunk_info in get_chunks:
             new_snippet = ChunkInfo(
-                content=content,
-                start=idx * (line_count - overlap),
-                end=end,
+                content=chunk_info[2],
+                start=chunk_info[0],
+                end=chunk_info[1],
                 source=path,
             )
             chunks.append(new_snippet)
