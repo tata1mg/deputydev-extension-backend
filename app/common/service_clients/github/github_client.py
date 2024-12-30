@@ -21,7 +21,7 @@ class GithubClient(BaseSCMClient):
         url = f"{self.BASE_URL}/orgs/{org_name}/hooks"
         response = await self.get(url=url)
         response.raise_for_status()
-        return response.json()
+        return await response.json()
 
     async def create_org_webhook(self, org_name, webhook_url, events, secret):
         url = f"{self.BASE_URL}/orgs/{org_name}/hooks"
@@ -38,6 +38,6 @@ class GithubClient(BaseSCMClient):
         }
 
         response = await self.post(url=url, json=data)
-        content = response.json()
+        content = await response.json()
         response.raise_for_status()
         return content

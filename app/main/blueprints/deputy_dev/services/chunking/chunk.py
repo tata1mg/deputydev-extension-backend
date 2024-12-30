@@ -1,7 +1,7 @@
 import re
 import traceback
-from dataclasses import dataclass
-from typing import Union
+from dataclasses import dataclass, field
+from typing import Dict, List, Tuple, Union
 
 import tree_sitter_javascript
 from sanic.log import logger
@@ -37,7 +37,7 @@ def get_parser(language: str) -> Parser:
     return parser
 
 
-def get_line_number(index: int, source_code: str) -> int:
+def get_line_number(index: int, source_code: bytes) -> int:
     """
     Gets the line number corresponding to a given character index in the source code.
 
@@ -76,6 +76,104 @@ def non_whitespace_len(s: str) -> int:
 
 
 @dataclass
+class NeoSpan:
+    """
+    Represents a slice of a string.
+
+    Attributes:
+        start (int): The starting index of the span.
+        end (int): The ending index of the span.
+    """
+
+    start: Tuple[int, int] = (0, 0)
+    end: Tuple[int, int] = (0, 0)
+    metadata: dict = field(
+        default_factory=lambda: {
+            "hierarchy": [],  # Fixed typo in 'hierarchy'
+            "dechunk": False,
+            "import_only_chunk": True,
+            "all_functions": [],
+            "all_classes": [],
+        }
+    )
+    # Example value for metadata
+
+    # {
+    #     "hierarchy": [{"type": "class", "value": "a"}, {"type": "function", "value": "fun1"},
+    #                  {"type": "function", "value": "fun2"}],
+    #     "dechunk": False,
+    #     "import_only_chunk": a,
+    #     "all_functions": [],  # used to get all functions if a chunk is import only chunk
+    #     "all_classes": []  # used to get all classes if a chunk is import only chunk
+    # }
+
+    def extract_lines(self, source_code: str) -> str:
+        """
+        Extracts the corresponding substring of string source_code by lines.
+        """
+        return "\n".join(source_code.splitlines()[self.start[0] : self.end[0] + 1])
+
+    def __add__(self, other: "NeoSpan") -> "NeoSpan":
+        """
+        Concatenates two NeoSpan
+        """
+        final_start = self.start if self.start else other.start
+        final_end = other.end if other.end else self.end
+        final_metadata = self.__combine_meta_data(other.metadata)
+        return NeoSpan(
+            final_start,
+            final_end,
+            metadata=final_metadata,
+        )
+
+    def __combine_meta_data(self, other_meta_data: Dict) -> Dict:
+        """
+        Combines metadata from two NeoSpan objects.
+        Returns a new metadata dictionary instead of modifying in place.
+        """
+        if other_meta_data is None:
+            return self.metadata.copy()
+
+        def deduplicate_hierarchy(hierarchy_list):
+            """Removes duplicate dictionaries from the hierarchy list while preserving order."""
+            seen = set()
+            deduped = []
+            for _items in hierarchy_list:
+                item_tuple = tuple(sorted(_items.items()))  # Sort items to ensure consistent comparison
+                if item_tuple not in seen:
+                    seen.add(item_tuple)
+                    deduped.append(_items)
+            return deduped
+
+        combined_hierarchy = self.metadata.get("hierarchy", []) + other_meta_data.get("hierarchy", [])
+        return {
+            "hierarchy": deduplicate_hierarchy(combined_hierarchy),
+            "dechunk": self.metadata["dechunk"] and other_meta_data.get("dechunk"),
+            "import_only_chunk": self.metadata["import_only_chunk"] or other_meta_data.get("import_only_chunk"),
+            "all_functions": list(set(self.metadata["all_functions"] + other_meta_data.get("all_functions", []))),
+            "all_classes": list(set(self.metadata["all_classes"] + other_meta_data.get("all_classes", []))),
+        }
+
+    def add_function_in_hierarchy(self, function_name):
+        self.metadata["hierarchy"].append({"type": "function", "value": function_name})
+
+    def add_class_in_hierarchy(self, class_name):
+        self.metadata["hierarchy"].append({"type": "class", "value": class_name})
+
+    def set_all_functions(self, all_functions):
+        self.metadata["all_functions"] = all_functions
+
+    def set_all_classes(self, all_classes):
+        self.metadata["all_classes"] = all_classes
+
+    def __len__(self) -> int:
+        """
+        Computes the length of lines in the NeoSpan
+        """
+        return self.end[0] - self.start[0] + 1
+
+
+@dataclass
 class Span:
     """
     Represents a slice of a string.
@@ -87,6 +185,15 @@ class Span:
 
     start: int = 0
     end: int = 0
+    metadata: dict = field(
+        default_factory=lambda: {
+            "hierarchy": [],  # Fixed typo in 'hierarchy'
+            "dechunk": False,
+            "import_only_chunk": False,
+            "all_functions": [],
+            "all_classes": [],
+        }
+    )
 
     def __post_init__(self):
         """
@@ -95,12 +202,12 @@ class Span:
         if self.end is None:
             self.end = self.start
 
-    def extract(self, s: str) -> str:
+    def extract(self, s: bytes) -> str:
         """
         Extracts the corresponding substring of string s.
 
         Args:
-            s (str): The input string.
+            s (bytes): The code bytes.
 
         Returns:
             str: The extracted substring.
@@ -146,7 +253,251 @@ class Span:
         Returns:
             int: The length of the span.
         """
-        return self.end - self.start
+        return self.end - self.start + 1
+
+
+def is_node_breakable(node: Node) -> bool:
+    return node.type in ("function_definition", "class_definition", "decorated_definition")
+
+
+def extract_name(node):
+    """
+    Recursively extract the name from a node, handling different possible structures
+    """
+    # Direct identifier check
+    if node.type == "identifier":
+        return node.text.decode("utf-8")
+
+    # Search in direct children for an identifier
+    for child in node.children:
+        if child.type == "identifier":
+            return child.text.decode("utf-8")
+
+    # Recursive search for nested definitions
+    for child in node.children:
+        # Check for nested class or function definitions
+        if child.type in ["class_definition", "function_definition"]:
+            name = extract_name(child)
+            if name:
+                return name
+
+    return None
+
+
+def chunk_node_with_meta_data(
+    node: Node,
+    max_chars: int,
+    source_code: bytes,
+    hierarchy: list[dict] = None,
+    pending_decorators=None,
+    all_classes=None,
+    all_functions=None,
+) -> list[NeoSpan]:
+    """
+    Chunk node code while maintaining full parent class and function metadata.
+    Properly handles decorators by associating them with their respective class/function definitions.
+    """
+    if hierarchy is None:
+        hierarchy = []
+
+    if pending_decorators is None:
+        pending_decorators = []
+
+    chunks: list[NeoSpan] = []
+    current_chunk: NeoSpan = None
+    node_children = node.children
+
+    # Handle decorators for class or function definitions
+    def create_chunk_with_decorators(start_point, end_point, decorators=None, current_node=None):
+        if decorators:
+            # Start from the first decorator
+            actual_start = decorators[0].start
+        else:
+            actual_start = start_point
+
+        return NeoSpan(
+            actual_start,
+            end_point,
+            metadata={
+                "hierarchy": hierarchy.copy(),
+                "meta_start": actual_start[0] + 1,
+                "dechunk": not is_node_breakable(node),
+                "import_only_chunk": not hierarchy and not is_node_breakable(current_node),
+                "all_functions": [],
+                "all_classes": [],
+            },
+        )
+
+    # Determine if the current node is a class or function
+    if node.type == "class_definition":
+        class_name_node = next((child for child in node.children if child.type == "identifier"), None)
+        class_name = class_name_node.text.decode("utf-8") if class_name_node else "UnknownClass"
+        hierarchy.append({"type": "class", "value": class_name})
+        all_classes.append(class_name)
+
+        # If this is a class definition and we have pending decorators, create a chunk including them
+        if pending_decorators:
+            current_chunk = create_chunk_with_decorators(node.start_point, node.end_point, pending_decorators, node)
+            pending_decorators.clear()
+
+    elif node.type == "function_definition":
+        func_name_node = next((child for child in node.children if child.type == "identifier"), None)
+        func_name = func_name_node.text.decode("utf-8") if func_name_node else "UnknownFunction"
+        hierarchy.append({"type": "function", "value": func_name})
+        all_functions.append(func_name)
+
+        # If this is a function definition and we have pending decorators, create a chunk including them
+        if pending_decorators:
+            current_chunk = create_chunk_with_decorators(node.start_point, node.end_point, pending_decorators, node)
+            pending_decorators.clear()
+
+    for child in node_children:
+        if child.type in ["class_definition"]:
+            class_name = extract_name(child)
+            if class_name:
+                all_classes.append(class_name)
+
+        if child.type in ["function_definition", "decorated_definition"]:
+            func_name = extract_name(child)
+            if func_name:
+                all_functions.append(func_name)
+
+        if child.type == "decorator":
+            # Store the decorator for the next class or function definition
+            pending_decorators.append(NeoSpan(child.start_point, child.end_point))
+            continue
+
+        elif child.end_byte - child.start_byte > max_chars:
+            # Finalize the current chunk
+            if current_chunk:
+                chunks.append(current_chunk)
+            current_chunk = None
+            # Recursively process large nodes
+            chunks.extend(
+                chunk_node_with_meta_data(
+                    child,
+                    max_chars,
+                    source_code,
+                    hierarchy,
+                    pending_decorators,
+                    all_classes,
+                    all_functions,
+                )
+            )
+
+        elif (
+            child.end_byte - child.start_byte + (len(current_chunk) if current_chunk else 0) > max_chars
+        ) or is_node_breakable(child):
+            # Split the current chunk if it exceeds the maximum size
+            if current_chunk:
+                chunks.append(current_chunk)
+
+            current_chunk = create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+
+        else:
+            # Append the current child to the chunk
+            if current_chunk:
+                current_chunk += create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+            else:
+                current_chunk = create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+
+    # Finalize the last chunk
+    if current_chunk:
+        chunks.append(current_chunk)
+    if is_node_breakable(node) and hierarchy and len(hierarchy) > 0:
+        hierarchy.pop()
+    return chunks
+
+
+def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[NeoSpan]:
+    """
+    Combine chunks intelligently, ensuring chunks with `dechunk` set to `False` are not merged
+    with previous chunks, and chunks are split if their combined size exceeds `coalesce`.
+
+    Args:
+        chunks (list): List of Span objects to process.
+        coalesce (int): Maximum character length of combined chunks before splitting.
+        source_code (bytes): The source code bytes used for content extraction.
+
+    Returns:
+        list: List of combined and properly dechunked Span objects.
+    """
+    if len(chunks) == 0:
+        return []
+    elif len(chunks) == 1:
+        return chunks
+
+    new_chunks = []
+    current_chunk = chunks[0]
+
+    for idx, chunk in enumerate(chunks[1:]):
+        # Do not combine if the chunk's metadata[0]["dechunk"] is False
+        if chunk.metadata["dechunk"] is False:
+            if current_chunk and len(current_chunk) > 0:
+                new_chunks.append(current_chunk)
+            current_chunk = chunk
+            continue
+
+        # Combine the current chunk
+        if current_chunk:
+            current_chunk += chunk
+        else:
+            current_chunk = chunk
+
+        # Extract and process the combined content
+        stripped_contents = current_chunk.extract_lines(source_code.decode("utf-8")).strip()
+        first_char = stripped_contents[0] if stripped_contents else ""
+
+        # Handle closing brackets and parentheses
+        if first_char in [")", "}", "]"] and new_chunks:
+            new_chunks[-1] += chunk
+            current_chunk = None
+        # Split based on size or newline condition
+        elif non_whitespace_len(current_chunk.extract_lines(source_code.decode("utf-8"))) > coalesce:
+            new_chunks.append(current_chunk)
+            current_chunk = None
+
+    # Append any remaining chunk
+    if current_chunk and len(current_chunk) > 0:
+        new_chunks.append(current_chunk)
+
+    return new_chunks
+
+
+def chunk_code_with_metadata(
+    tree,
+    source_code: bytes,
+    MAX_CHARS=CHARACTER_SIZE,
+    coalesce=100,
+) -> list[NeoSpan]:
+    """
+    Chunk the AST tree based on maximum characters and coalesce size.
+
+    Args:
+        tree: The AST tree.
+        source_code (bytes): The source code bytes.
+        MAX_CHARS (int): Maximum characters per chunk.
+        coalesce (int): Coalesce size.
+
+    Returns:
+        list[Span]: List of chunks.
+    """
+    # Create initial chunks with metadata
+    all_classes, all_functions = [], []
+    chunks = chunk_node_with_meta_data(
+        tree.root_node,
+        max_chars=MAX_CHARS,
+        source_code=source_code,
+        all_functions=all_functions,
+        all_classes=all_classes,
+    )
+    for chunk in chunks:
+        if chunk.metadata["import_only_chunk"]:
+            chunk.set_all_classes(list(set(all_classes)))
+            chunk.set_all_functions(list(set(all_functions)))
+
+    new_chunks = dechunk(chunks, coalesce=coalesce, source_code=source_code)
+    return new_chunks
 
 
 def chunk_code(
@@ -154,7 +505,7 @@ def chunk_code(
     source_code: bytes,
     MAX_CHARS=CHARACTER_SIZE,
     coalesce=100,
-) -> list["Span"]:
+) -> List[Span]:
     """
     Chunk the AST tree based on maximum characters and coalesce size.
 
@@ -195,8 +546,10 @@ def chunk_code(
         end = get_line_number(chunks[0].end, source_code)
         return [Span(0, end)]
     for i in range(len(chunks) - 1):
-        chunks[i].end = chunks[i + 1].start
-    chunks[-1].end = tree.root_node.end_byte
+        chunks[i].end = chunks[i + 1].start  # sets the last byte of chunk to start byte of suceessiding chunk
+    chunks[
+        -1
+    ].end = tree.root_node.end_byte  # sets the last byte of chunk to start byte of suceessiding chunk for last chunk
 
     # 3. Combining small chunks with bigger ones
     new_chunks = []
@@ -259,17 +612,18 @@ def chunk_content(content: str, line_count: int = 30, overlap: int = 15):
     while start < total_lines:
         end = min(start + line_count, total_lines)
         chunk = "\n".join(lines[start:end])
-        chunks.append(chunk)
+        chunks.append((start, end, chunk))
         start += line_count - overlap
 
     return chunks
 
 
+def supported_new_chunk_language(language):
+    return language in ["python"]
+
+
 def chunk_source(
-    content: str,
-    path: str,
-    MAX_CHARS=CHARACTER_SIZE,
-    coalesce=80,
+    content: str, path: str, MAX_CHARS=CHARACTER_SIZE, coalesce=80, use_new_chunking=False
 ) -> list[ChunkInfo]:
     """
     Chunk the given content into smaller segments.
@@ -279,6 +633,7 @@ def chunk_source(
         path (str): The file path of the content.
         MAX_CHARS (int, optional): Maximum characters per chunk. Defaults to 1200.
         coalesce (int, optional): Coalesce parameter for chunking. Defaults to 80.
+        use_new_chunking (bool): Use new chunking strategy
 
     Returns:
         List[ChunkInfo]: A list of ChunkInfo objects representing the chunks of content.
@@ -292,32 +647,52 @@ def chunk_source(
         overlap = 0
         get_chunks = chunk_content(content, line_count, overlap)
         chunks = []
-        for idx, chunk in enumerate(get_chunks):
-            end = min((idx + 1) * (line_count - overlap), len(content.split("\n")))
+        for chunk_info in get_chunks:
             new_snippet = ChunkInfo(
-                content=content,
-                start=idx * (line_count - overlap),
-                end=end,
+                content=chunk_info[2],
+                start=chunk_info[0],
+                end=chunk_info[1],
                 source=path,
             )
             chunks.append(new_snippet)
         return chunks
     try:
+        final_chunks = []
         parser = get_parser(language)
         tree = parser.parse(content.encode("utf-8"))
-        get_chunks = chunk_code(tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce)
-        chunks = []
-        for chunk in get_chunks:
-            new_snippet = ChunkInfo(
-                content=content,
-                start=chunk.start,
-                end=chunk.end,
-                source=path,
+        is_eligible_for_new_chunking = use_new_chunking and supported_new_chunk_language(language)
+        if is_eligible_for_new_chunking:
+            all_current_file_chunks = chunk_code_with_metadata(
+                tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce
             )
-            chunks.append(new_snippet)
-        return chunks
+        else:
+            all_current_file_chunks = chunk_code(tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS)
+        already_visited_chunk = set({})
+        file_contents = content.splitlines()
+        for chunk in all_current_file_chunks:
+            if is_eligible_for_new_chunking:
+                new_snippet = ChunkInfo(
+                    content="\n".join(file_contents[chunk.start[0] : chunk.end[0] + 1]),
+                    start=chunk.start[0],
+                    end=chunk.end[0],
+                    source=path,
+                    metadata=chunk.metadata,
+                )
+            else:
+                new_snippet = ChunkInfo(
+                    content="\n".join(file_contents[chunk.start : chunk.end + 1]),
+                    start=chunk.start,
+                    end=chunk.end,
+                    source=path,
+                    metadata=chunk.metadata,
+                )
+            # remove duplicate chunks
+            if new_snippet.denotation not in already_visited_chunk:
+                final_chunks.append(new_snippet)
+                already_visited_chunk.add(new_snippet.denotation)
+        return final_chunks
     except Exception:
-        logger.error(traceback.format_exc())
+        logger.error(chunk + traceback.format_exc())
         return []
 
 

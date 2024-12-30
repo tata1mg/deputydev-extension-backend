@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import typing as t
 
-import requests  # TODO: why not aiohttp
+import aiohttp
 
+from app.common.adapter.http_response_adapter import AiohttpToRequestsAdapter
 from app.common.exception import RefreshTokenFailed
 from app.common.exception.exception import RateLimitError
+from app.common.service_clients.session_manager import SessionManager
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
@@ -17,6 +19,11 @@ class BaseSCMClient:
     def __init__(self, auth_handler: AuthHandler):
         self.auth_handler: AuthHandler = auth_handler
         self.workspace_token_headers = None
+        self._session = None
+        self._session_manager = SessionManager()
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        return await self._session_manager.get_session()
 
     async def request(
         self,
@@ -64,7 +71,7 @@ class BaseSCMClient:
 
         if response.status_code not in [200, 201, 204]:
             AppLogger.log_warn(
-                f"service request failed with status code {response.status_code} and error {response.json()}"
+                f"service request failed with status code {response.status_code} and error {await response.json()}"
             )
 
         return response
@@ -86,8 +93,12 @@ class BaseSCMClient:
         data: t.Any = None,
         json: t.Any = None,
     ):
-        response = requests.request(method, url, params=params, headers=headers, data=data, json=json)
-        return response
+        session = await self._get_session()
+        async with session.request(
+            method=method, url=url, params=params, headers=headers, data=data, json=json
+        ) as response:
+            content = await response.read()
+            return AiohttpToRequestsAdapter(response, content)
 
     # ---------------------------------------------------------------------------- #
     #                                 HTTP METHODS                                 #

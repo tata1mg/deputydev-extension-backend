@@ -68,5 +68,6 @@ newrelic.ini
 .vscode
 .pytest_cache
 .env
+.python-version
 
 db/schema.sql
