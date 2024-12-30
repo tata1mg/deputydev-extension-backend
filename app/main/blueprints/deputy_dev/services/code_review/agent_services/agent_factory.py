@@ -48,6 +48,7 @@ class AgentFactory:
         self.context_service = context_service
         self.reflection_enabled = reflection_enabled
         self.factories = deepcopy(self.FACTORIES)
+        self.initialize_custom_agents()
 
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
         prompts = {}

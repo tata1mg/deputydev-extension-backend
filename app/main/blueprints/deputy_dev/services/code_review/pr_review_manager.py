@@ -96,15 +96,15 @@ class PRReviewManager:
             ).pre_process_pr()
             if not is_reviewable_request:
                 return
-            llm_comments, tokens_data, meta_info_to_save, is_large_pr = (
-                cls.llm_comments_v2(),
-                cls.tokens(),
-                cls.meta_info_to_save(),
-                False,
-            )
-            # llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
-            #     repo_service, comment_service, data["prompt_version"]
+            # llm_comments, tokens_data, meta_info_to_save, is_large_pr = (
+            #     cls.llm_comments_v2(),
+            #     cls.tokens(),
+            #     cls.meta_info_to_save(),
+            #     False,
             # )
+            llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
+                repo_service, comment_service, data["prompt_version"]
+            )
             meta_info_to_save["execution_start_time"] = execution_start_time
             await PRReviewPostProcessor(repo_service, comment_service, affirmation_service).post_process_pr(
                 pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save

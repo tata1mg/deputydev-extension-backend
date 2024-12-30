@@ -56,7 +56,6 @@ class ContextService:
     async def get_pr_diff(self, append_line_no_info=False, operation="code_review", agent_id=None):
         pr_diff = await self.repo_service.get_effective_pr_diff(operation, agent_id)
         self.pr_diff_service = self.repo_service.pr_diff_service
-        # TODO: PRDIFF update pr_diff_tokens logic to store tokens agent_uuid wise and for chat and pr_summary
         self.pr_diff_tokens = self.pr_diff_service.pr_diffs_token_counts(operation)
         if append_line_no_info:
             return append_line_numbers(pr_diff)
