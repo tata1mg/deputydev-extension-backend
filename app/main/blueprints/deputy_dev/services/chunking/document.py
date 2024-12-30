@@ -33,8 +33,8 @@ def chunks_to_docs(chunks: List[ChunkInfo], len_dir: int) -> List[Document]:
     for chunk in chunks:
         docs.append(
             Document(
-                title=f"{chunk.source[len_dir:]}:{chunk.start}-{chunk.end}",
-                content=chunk.get_chunk_content(add_ellipsis=False, add_lines=False),
+                title=f"{chunk.source[len_dir:]}:{chunk.start+1}-{chunk.end+1}",
+                content=chunk.get_chunk_content_with_meta_data(add_ellipsis=False, add_lines=False),
             )
         )
     return docs

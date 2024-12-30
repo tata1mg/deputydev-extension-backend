@@ -25,7 +25,9 @@ class Issue(Base):
             query_params["fields"] = fields
         try:
             response = await self.get(url, params=query_params)
-            return response.json()
+            issue_details = await response.json()
+            logger.info(f"Jira issue details {issue_details}")
+            return issue_details
         except Exception as e:
             logger.error("Exception occurred while fetching issue details from jira: {}".format(e))
         return {}

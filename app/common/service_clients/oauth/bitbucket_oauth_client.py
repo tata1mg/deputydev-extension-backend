@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from enum import Enum
 
-import requests
+from aiohttp import BasicAuth
 from torpedo import CONFIG
+
+from app.common.service_clients.session_manager import SessionManager
 
 
 class GrantType(str, Enum):
@@ -17,6 +19,7 @@ class BitbucketOAuthClient:
 
     CLIENT_ID = CONFIG.config["BITBUCKET"]["CLIENT_ID"]
     CLIENT_SECRET = CONFIG.config["BITBUCKET"]["CLIENT_SECRET"]
+    SESSION_MANAGER = SessionManager()
 
     @classmethod
     async def get_access_token(cls, code: str) -> dict:
@@ -24,18 +27,17 @@ class BitbucketOAuthClient:
         url = cls.OAUTH2_ENDPOINT
 
         # Basic HTTP Auth
-        auth = (cls.CLIENT_ID, cls.CLIENT_SECRET)
+        auth = BasicAuth(cls.CLIENT_ID, cls.CLIENT_SECRET)
 
         data = {
             "grant_type": GrantType.AUTHORISATION.value,
             "code": code,
             # "redirect_uri": "https://www.1mg.com/",
         }
-        response = requests.post(url=url, auth=auth, data=data)
-
-        content = response.json()
-        response.raise_for_status()
-        return content
+        session = await cls.SESSION_MANAGER.get_session()
+        async with session.post(url=url, auth=auth, data=data) as response:
+            response.raise_for_status()
+            return await response.json()
 
     @classmethod
     async def refresh_access_token(cls, refresh_token: str) -> str:
@@ -43,15 +45,14 @@ class BitbucketOAuthClient:
         url = cls.OAUTH2_ENDPOINT
 
         # Basic HTTP Auth
-        auth = (cls.CLIENT_ID, cls.CLIENT_SECRET)
+        auth = BasicAuth(cls.CLIENT_ID, cls.CLIENT_SECRET)
 
         data = {
             "grant_type": GrantType.REFRESH.value,
             "refresh_token": refresh_token,
             # "redirect_uri": "https://www.1mg.com/",
         }
-
-        response = requests.post(url=url, auth=auth, data=data)
-        content = response.json()
-        response.raise_for_status()
-        return content
+        session = await cls.SESSION_MANAGER.get_session()
+        async with session.post(url=url, auth=auth, data=data) as response:
+            response.raise_for_status()
+            return await response.json()

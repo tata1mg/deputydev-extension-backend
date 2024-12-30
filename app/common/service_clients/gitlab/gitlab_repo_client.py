@@ -22,7 +22,8 @@ class GitlabRepoClient(BaseSCMClient):
         query_params = {"search": workspace_slug}
         path = f"{self.gitlab_url}/namespaces"
         response = requests.get(path, params=query_params)
-        return response.json()[0]["id"]
+        response_json = await response.json()
+        return response_json[0]["id"]
 
     async def create_pr_comment(self, comment_payload: dict):
         """
@@ -88,7 +89,7 @@ class GitlabRepoClient(BaseSCMClient):
         if response.status_code != 200:
             logger.error(f"Unable to process PR - {self.pr_id}: {response.content}")
             return
-        return response.json()
+        return await response.json()
 
     async def update_pr_details(self, payload) -> dict:
         """
@@ -102,7 +103,7 @@ class GitlabRepoClient(BaseSCMClient):
         url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}"
         workspace_token_headers = await self.get_ws_token_headers()
         response = await self.put(url, json=payload, headers=workspace_token_headers, skip_headers=True)
-        return response.json()
+        return await response.json()
 
     async def get_pr_diff(self):
         """
@@ -113,10 +114,11 @@ class GitlabRepoClient(BaseSCMClient):
         """
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/changes"
         response = await self.get(diff_url)
+        response_json = await response.json()
         if response.status_code not in [200, 404]:
             error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
-        return response.json(), response.status_code
+        return response_json, response.status_code
 
     async def get_commit_diff(self, base_commit, destination_commit):
         """
@@ -131,18 +133,19 @@ class GitlabRepoClient(BaseSCMClient):
         """
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/repository/compare?from={base_commit}&to={destination_commit}"
         response = await self.get(diff_url)
+        response_json = await response.json()
 
         if response.status_code not in [200, 404]:
             error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
-        return response.json(), response.status_code
+        return response_json, response.status_code
 
     async def get_discussion_comments(self, discussion_id):
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions/{discussion_id}/notes"
         response = await self.get(diff_url)
         if response.status_code != 200:
             logger.error(f"Unable to retrieve discussoin thread comments- {self.pr_id}: {response._content}")
-        return response.json()
+        return await response.json()
 
     async def create_discussion_comment(self, comment_payload, discussion_id):
         workspace_token_headers = await self.get_ws_token_headers()
@@ -150,7 +153,7 @@ class GitlabRepoClient(BaseSCMClient):
         response = await self.post(diff_url, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
         if response.status_code != 200:
             logger.error(f"Unable to retrieve discussoin thread comments- {self.pr_id}: {response._content}")
-        return response.json()
+        return await response.json()
 
     async def get_pr_commits(self) -> list:
         """Get all commits in a GitLab merge request with pagination"""
@@ -161,7 +164,7 @@ class GitlabRepoClient(BaseSCMClient):
         )
 
         if response and response.status_code == 200:
-            return response.json()
+            return await response.json()
 
         AppLogger.log_error(
             f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"

@@ -31,6 +31,7 @@ class BaseComment(ABC):
         self.repo_id = repo_id
         self.auth_handler = auth_handler
         self.workspace_slug = workspace_slug
+        self.repo_client = None
 
     @abstractmethod
     async def fetch_comment_thread(self, chat_request):

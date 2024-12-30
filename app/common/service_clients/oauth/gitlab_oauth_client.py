@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from enum import Enum
 
-import requests
 from torpedo import CONFIG
+
+from app.common.service_clients.session_manager import SessionManager
 
 
 class GrantType(str, Enum):
@@ -19,6 +20,7 @@ class GitlabOAuthClient:
     CLIENT_SECRET = CONFIG.config["GITLAB"]["CLIENT_SECRET"]
 
     REDIRECT_URL = "https://1mg.com"
+    SESSION_MANAGER = SessionManager()
 
     @classmethod
     async def get_access_token(cls, code: str) -> str:
@@ -33,9 +35,10 @@ class GitlabOAuthClient:
             "redirect_uri": cls.REDIRECT_URL,
         }
 
-        response = requests.post(url=url, json=data)
-        content = response.json()
-        response.raise_for_status()
+        session = await cls.SESSION_MANAGER.get_session()
+        async with session.post(url=url, json=data) as response:
+            response.raise_for_status()
+            return await response.json()
 
         # parse for token
 
@@ -47,8 +50,6 @@ class GitlabOAuthClient:
         #     "refresh_token": "8257e65c97202ed1726cf9571600918f3bffb2544b26e00a61df9897668c33a1",
         #     "created_at": 1607635748,
         # }
-
-        return content
 
     @classmethod
     async def refresh_access_token(cls, refresh_token: str) -> str:
@@ -63,9 +64,10 @@ class GitlabOAuthClient:
             "redirect_uri": cls.REDIRECT_URL,
         }
 
-        response = requests.post(url, json=data)
-        content = response.json()
-        response.raise_for_status()
+        session = await cls.SESSION_MANAGER.get_session()
+        async with session.post(url=url, json=data) as response:
+            response.raise_for_status()
+            return await response.json()
 
         # e.g. resp
         # {
@@ -75,5 +77,3 @@ class GitlabOAuthClient:
         #     "refresh_token": "803c1fd487fec35562c205dac93e9d8e08f9d3652a24079d704df3039df1158f",
         #     "created_at": 1628711391,
         # }
-
-        return content
