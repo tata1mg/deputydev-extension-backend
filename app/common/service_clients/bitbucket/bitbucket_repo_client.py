@@ -38,7 +38,8 @@ class BitbucketRepoClient(BaseSCMClient):
         if response.status_code != 200:
             AppLogger.log_error(f"Unable to get PR details: error message {response._content}")
             return
-        return response.json()
+        response_json = await response.json()
+        return response_json
 
     async def update_pr_details(self, payload) -> dict:
         """
@@ -52,15 +53,16 @@ class BitbucketRepoClient(BaseSCMClient):
         diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}"
         workspace_token_headers = await self.get_ws_token_headers()
         response = await self.put(diff_url, json=payload, headers=workspace_token_headers, skip_headers=True)
+        response_json = await response.json()
         if response.status_code == 200:
-            return response.json()
+            return response_json
         elif (
             response.status_code == 400
-            and response.json().get("error", {}).get("message") == VCSFailureMessages.BITBUCKET_PR_UPDATE_FAIL.value
+            and response_json.get("error", {}).get("message") == VCSFailureMessages.BITBUCKET_PR_UPDATE_FAIL.value
         ):
-            AppLogger.log_warn(f"PR couldn't updated due to not open {response.json()}")
+            AppLogger.log_warn(f"PR couldn't updated due to not open {response_json}")
         else:
-            AppLogger.log_error(f"PR couldn't updated {response.json()}")
+            AppLogger.log_error(f"PR couldn't updated {response_json}")
 
     async def get_pr_comments(self) -> list:
         """
@@ -77,7 +79,7 @@ class BitbucketRepoClient(BaseSCMClient):
             if response.status_code != 200:
                 AppLogger.log_warn(f"Error fetching comments: {response.status_code}, {response.text}")
                 return comments
-            data = response.json()
+            data = await response.json()
             comments.extend(data.get("values", []))
             # next is none incase there are no more comments and while loop breaks
             url = data.get("next")
@@ -186,7 +188,7 @@ class BitbucketRepoClient(BaseSCMClient):
         )
         response = await self.get(url)
         if response.status_code == 200:
-            data = response.json()
+            data = await response.json()
             return sum(file["lines_added"] + file["lines_removed"] for file in data["values"])
         else:
             return 0
@@ -217,7 +219,8 @@ class BitbucketRepoClient(BaseSCMClient):
         response = await self.get(url, params={"pagelen": 100})
 
         if response and response.status_code == 200:
-            return response.json().get("values", [])
+            response_json = await response.json()
+            return response_json.get("values", [])
 
         AppLogger.log_error(
             f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"

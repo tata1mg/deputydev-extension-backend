@@ -67,6 +67,7 @@ class AffirmationService:
             config.get("FEATURE_MODELS").get("PR_REVIEW"),
         )
 
-        if comment_response and comment_response.status_code in [200, 201]:
-            comment_details = {"comment_id": comment_response.json()["id"]}
+        comment_response_json = await comment_response.json()
+        if comment_response_json and comment_response.status_code in [200, 201]:
+            comment_details = {"comment_id": comment_response_json["id"]}
             await AffirmationCache.set(self.cache_key, comment_details)

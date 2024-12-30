@@ -1,8 +1,11 @@
 from sanic.log import logger
 
 from app.common.service_clients.bitbucket import BitbucketRepoClient
+from app.common.service_clients.github.github_repo_client import GithubRepoClient
 from app.common.utils.app_utils import convert_to_datetime, name_to_slug
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
+from app.main.blueprints.deputy_dev.models.dto.pr.bitbucket_pr import BitbucketPrModel
+from app.main.blueprints.deputy_dev.models.dto.pr.github_pr import GitHubPrModel
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
@@ -127,25 +130,53 @@ class BackfillManager:
         """
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         for row in pr_rows:
-            repo_dto = await RepoService.db_get({"id": row["repo_id"]})
-            auth_handler = await get_vcs_auth_handler(repo_dto.workspace_id, "bitbucket")
-            self.bitbucket_client = BitbucketRepoClient(
-                "tata1mg", name_to_slug(repo_dto.name), row["scm_pr_id"], auth_handler
-            )
-            pr_detail = await self.bitbucket_client.get_pr_details()
-            if pr_detail["state"] == "MERGED" or pr_detail["state"] == "DECLINED":
-                pr_closed_at = convert_to_datetime(pr_detail["updated_on"])
-                await PRService.db_update(
-                    payload={"scm_close_time": pr_closed_at, "pr_state": pr_detail["state"]},
-                    filters={"id": row["id"]},
-                )
-                logger.info(f"Marked data to merge / decline state for PR row - {row['id']}")
-            else:
-                await PRService.db_update(
-                    payload={"pr_state": pr_detail["state"]},
-                    filters={"id": row["id"]},
-                )
-                logger.info(f"Marked data to open state for PR row - {row['id']}")
+            try:
+                repo_dto = await RepoService.db_get({"id": row["repo_id"]})
+                if repo_dto.team_id == 1 and repo_dto.scm == "bitbucket":
+                    onemg_workspace_id = "{eac19072-5edc-44b0-a9fc-206356051d1e}"
+                    auth_handler = await get_vcs_auth_handler(onemg_workspace_id, "bitbucket")
+                    self.client = BitbucketRepoClient(
+                        "tata1mg", name_to_slug(repo_dto.name), int(row["scm_pr_id"]), auth_handler
+                    )
+                    pr_detail = await self.client.get_pr_details()
+                    pr_model = BitbucketPrModel(pr_detail)
+                elif repo_dto.team_id == 1 and repo_dto.scm == "github":
+                    onemg_workspace_id = "142996019"
+                    auth_handler = await get_vcs_auth_handler(onemg_workspace_id, "github")
+                    self.client = GithubRepoClient(
+                        workspace_slug="tata1mg",
+                        repo=name_to_slug(repo_dto.name),
+                        pr_id=int(row["scm_pr_id"]),
+                        auth_handler=auth_handler,
+                    )
+                    pr_detail = await self.client.get_pr_details()
+                    pr_model = GitHubPrModel(await pr_detail.json())
+                else:
+                    traya_workspace_id = "129746479"
+                    auth_handler = await get_vcs_auth_handler(traya_workspace_id, "github")
+                    self.client = GithubRepoClient(
+                        workspace_slug="trayalabs1",
+                        repo=name_to_slug(repo_dto.name),
+                        pr_id=int(row["scm_pr_id"]),
+                        auth_handler=auth_handler,
+                    )
+                    pr_detail = await self.client.get_pr_details()
+                    pr_model = GitHubPrModel(await pr_detail.json())
+                if pr_model.scm_state() == "MERGED" or pr_model.scm_state() == "DECLINED":
+                    pr_closed_at = convert_to_datetime(pr_model.scm_updation_time())
+                    await PRService.db_update(
+                        payload={"scm_close_time": pr_closed_at, "pr_state": pr_model.scm_state()},
+                        filters={"id": row["id"]},
+                    )
+                    logger.info(f"Marked data to merge / decline state for PR row - {row['id']}")
+            except Exception as error:
+                logger.info(f"Error occured for {row['id']} error: {error} pr_details: {pr_detail}")
+            # else:
+            #     await PRService.db_update(
+            #         payload={"pr_state": pr_detail["state"]},
+            #         filters={"id": row["id"]},
+            #     )
+            #     logger.info(f"Marked data to open state for PR row - {row['id']}")
 
     async def backfill_pr_approval_time(self, query_params):
         """
