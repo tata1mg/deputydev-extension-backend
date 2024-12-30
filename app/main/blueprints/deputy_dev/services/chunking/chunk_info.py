@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -16,6 +18,7 @@ class ChunkInfo(BaseModel):
     start: int
     end: int
     source: str
+    metadata: Optional[dict] = None
 
     def get_chunk_content(self, add_ellipsis: bool = True, add_lines: bool = True):
         """
@@ -28,10 +31,8 @@ class ChunkInfo(BaseModel):
         Returns:
             str: The snippet of the chunk.
         """
-        lines = self.content.splitlines()
         snippet = "\n".join(
-            (f"{i + self.start}: {line}" if add_lines else line)
-            for i, line in enumerate(lines[max(self.start - 1, 0) : self.end])
+            (f"{i+1 + self.start}: {line}" if add_lines else line) for i, line in enumerate(self.content.splitlines())
         )
         if add_ellipsis:
             if self.start > 1:
@@ -39,6 +40,44 @@ class ChunkInfo(BaseModel):
             if self.end < self.content.count("\n") + 1:
                 snippet = snippet + "\n..."
         return snippet
+
+    def get_chunk_content_with_meta_data(
+        self, add_ellipsis: bool = True, add_lines: bool = True, add_class_function_info=True
+    ):
+        chunk_content = self.get_chunk_content(add_ellipsis, add_lines)
+        if not self.metadata:
+            return chunk_content
+
+        meta_data = self.get_meta_data_notes(add_class_function_info)
+        if meta_data:
+            return f"<meta_data>{meta_data}\n</meta_data>\n<code>\n{chunk_content}\n</code>"
+        else:
+            return chunk_content
+
+    def get_meta_data_notes(self, add_class_function_info):
+        # prepare hierarchy
+        chunk_final_meta_data = ""
+        if add_class_function_info and self.metadata["all_classes"]:
+            chunk_final_meta_data += (
+                f"\n Below classes may use the imports in this snippet: \n {self.metadata['all_classes']}"
+            )
+        if add_class_function_info and self.metadata["all_functions"]:
+            chunk_final_meta_data += (
+                f"\n Below functions may use the imports in this snippet: \n {self.metadata['all_functions']}\n"
+            )
+
+        hierarchy_data = []
+        hierarchy_seperator = "\t"
+
+        for idx, hierarchy in enumerate(self.metadata["hierarchy"]):
+            indent = hierarchy_seperator * idx
+            hierarchy_data.append(f"{indent}{hierarchy['type']}  {hierarchy['value']}")
+            hierarchy_data.append(f"{indent}{hierarchy_seperator}...")  # Add ellipsis at current indent level
+        if hierarchy_data:
+            chunk_final_meta_data += "Snippet hierarchy represented in pseudo code format: \n"
+            chunk_final_meta_data += "\n".join(hierarchy_data)
+            chunk_final_meta_data += "\n"
+        return chunk_final_meta_data
 
     @property
     def denotation(self) -> str:
@@ -48,7 +87,7 @@ class ChunkInfo(BaseModel):
         Returns:
             str: The denotation of the source chunk in the format "{source}:{start}-{end}".
         """
-        return f"{self.source}:{self.start}-{self.end}"
+        return f"{self.source}:{self.start+1}-{self.end+1}"
 
     def get_xml(self, add_lines: bool = True) -> str:
         """
@@ -60,4 +99,4 @@ class ChunkInfo(BaseModel):
         Returns:
             str: The source chunk in XML format.
         """
-        return f"""<chunk source="{self.denotation}">\n{self.get_chunk_content(add_lines)}\n</chunk>"""
+        return f"""<chunk source="{self.denotation}">\n{self.get_chunk_content_with_meta_data(add_lines, add_class_function_info=False)}\n</chunk>"""

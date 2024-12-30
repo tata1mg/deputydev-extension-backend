@@ -18,7 +18,9 @@ class Page(Base):
             query_params = {"expand": "body.storage,body.view"}
             try:
                 response = await self.get(url, params=query_params)
-                return response.json()
+                confluence_doc_data = await response.json()
+                logger.info(f"Confluence issue details {confluence_doc_data}")
+                return confluence_doc_data
             except Exception as e:
                 logger.error("Exception occured while fetching issue details from jira: {}".format(e))
                 return {}
