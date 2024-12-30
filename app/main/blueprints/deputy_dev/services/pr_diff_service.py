@@ -2,6 +2,7 @@ from app.common.utils.app_utils import safe_index
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.utils import ignore_files
+from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 
 
 class PRDiffService:
@@ -9,6 +10,7 @@ class PRDiffService:
         self.pr_diff = pr_diff
         self.pr_diff_mappings = {}
         self.pr_diffs = []
+        self.tiktoken = TikToken()
 
     def get_pr_diff(self, operation="code_review", agent_id=None):
         if not self.pr_diff_mappings:
@@ -89,3 +91,16 @@ class PRDiffService:
             inclusions = summary_setting.get("inclusions", [])
             exclusions = summary_setting.get("exclusions", [])
         return ignore_files(self.pr_diff, list(exclusions), list(inclusions))
+
+    def pr_diffs_token_counts(self, operation="code_review"):
+        pr_diff_token_count = {}
+        if not self.pr_diff_mappings:
+            self.get_pr_diff_mappings(operation)
+        if operation == "chat":
+            diff_index = self.pr_diff_mappings.get("chat")
+            pr_diff_token_count["chat"] = self.tiktoken.count(self.pr_diffs[diff_index])
+        else:
+            for agent_id, agent_data in self.pr_diff_mappings.items():
+                diff_index = self.pr_diff_mappings[agent_id]
+                pr_diff_token_count[agent_id] = self.tiktoken.count(self.pr_diffs[diff_index])
+        return pr_diff_token_count
