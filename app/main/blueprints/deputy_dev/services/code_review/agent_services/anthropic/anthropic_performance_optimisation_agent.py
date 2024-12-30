@@ -238,10 +238,9 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         """
 
     def get_agent_specific_tokens_data(self):
-        # TODO: PRDIFF update self.context_service.pr_diff_tokens to  self.context_service.pr_diff_tokens[agent_uuid]
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
             TokenTypes.RELEVANT_CHUNK.value: self.context_service.embedding_input_tokens,
         }
