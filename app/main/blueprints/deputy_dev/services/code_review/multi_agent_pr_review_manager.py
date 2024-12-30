@@ -100,10 +100,10 @@ class MultiAgentPRReviewManager:
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
             self.llm_comments = {}
-            # TODO: PRDIFF now get_pr_diff_token_count will return each agent count so dirently assign it's return value
+            # TODO: PRDIFF now get_pr_diff_token_count will return each agent count so directly assign it's return value
             #  to self.agents_tokens
             pr_diff_tokens_count = await self.repo_service.get_pr_diff_token_count()
-            self.agents_tokens = {"pr_diff_tokens": pr_diff_tokens_count}
+            self.agents_tokens = pr_diff_tokens_count
             return
         t1 = time.time() * 1000
         await self._make_llm_calls()

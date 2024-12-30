@@ -100,6 +100,14 @@ def ignore_files(pr_diff, excluded_files=None, included_files=None):
     return resp_text
 
 
+def is_path_included(path, excluded_files=None, included_files=None):
+    if not excluded_files:
+        excluded_files = []
+    if not included_files:
+        included_files = []
+    return is_any_regex_present(path, included_files) or not is_any_regex_present(path, excluded_files)
+
+
 def is_any_regex_present(text, regex_list):
     for pattern in regex_list:
         if re.search(pattern, text):

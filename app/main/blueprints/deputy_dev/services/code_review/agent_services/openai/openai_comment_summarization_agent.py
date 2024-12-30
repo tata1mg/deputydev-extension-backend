@@ -189,7 +189,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         """
 
     async def get_system_n_user_prompt(self, comments):
-        # TODO: PRDIFF pass operation and agent_uuid in get_pr_diff function
+        # in get_pr_diff function agent_id is not passed so it will return pr_diff using only global exclusion/inclusion
         pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
         system_message = self.get_comments_summarization_system_prompt()
         user_message = self.get_comments_summarization_user_prompt().format(
