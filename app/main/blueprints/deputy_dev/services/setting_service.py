@@ -589,13 +589,16 @@ class SettingService:
         # Return the concatenated error messages.
         return error_message
 
-    @staticmethod
-    def get_agents_by_uuid():
-        agent_setting = get_context_value("setting")["code_review_agent"]["agents"]
+    @classmethod
+    def get_uuid_wise_agents(cls):
+        setting = get_context_value("setting")
+        agent_setting = setting["code_review_agent"]["agents"]
+        pr_summary_setting = setting["pr_summary"]
         agents = {}
         for agent_name, agent_data in agent_setting.items():
             agent_data = {"agent_name": agent_name, **agent_data}
             agents[str(agent_data["agent_id"])] = agent_data
+        agents[cls.summary_agent_id()] = {"agent_name": "pr_summary", **pr_summary_setting}
         return agents
 
     @staticmethod
@@ -610,3 +613,22 @@ class SettingService:
     @classmethod
     def summary_agent_id(cls):
         return cls.DD_LEVEL_SETTINGS["pr_summary"]["agent_id"]
+
+    @classmethod
+    def get_agent_inclusion_exclusions(cls, agent_id=None):
+        setting = get_context_value("setting")
+        if agent_id == cls.summary_agent_id():
+            # TODO: check this again when pr_summary inclusion_exclusion discussed
+            inclusions = setting["pr_summary"]["inclusions"]
+            exclusions = setting["pr_summary"]["exclusions"]
+            return inclusions, exclusions
+        else:
+            global_exclusions = setting["code_review_agent"]["exclusions"] or []
+            global_inclusions = setting["code_review_agent"]["inclusions"] or []
+            agents = cls.get_uuid_wise_agents()
+            if agent_id:
+                inclusions = set(global_inclusions) | set(agents[agent_id].get("inclusions", []))
+                exclusions = set(global_exclusions) | set(agents[agent_id].get("exclusions", []))
+                return list(inclusions), list(exclusions)
+            else:
+                return list(global_inclusions), list(global_exclusions)

@@ -60,7 +60,7 @@ class BaseRepo(ABC):
         self.auth_handler = auth_handler
         self.workspace_slug = workspace_slug
         self.pr_commit_diff = None
-        self.pr_diff_service = None
+        self.pr_diff_service: PRDiffService = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -194,6 +194,10 @@ class BaseRepo(ABC):
         Returns:
             str: The appropriate diff based on context.
         """
+        await self.initialize_pr_diff_service()
+        return self.pr_diff_service.get_pr_diff(operation, agent_id)
+
+    async def initialize_pr_diff_service(self):
         if not self.pr_diff_service:
             pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
             if pr_reviewable_on_commit:
@@ -201,7 +205,6 @@ class BaseRepo(ABC):
             else:
                 pr_diff = await self.get_pr_diff()
             self.pr_diff_service = PRDiffService(pr_diff)
-        return self.pr_diff_service.get_pr_diff(operation, agent_id)
 
     @abstractmethod
     async def get_pr_diff(self):
@@ -262,16 +265,12 @@ class BaseRepo(ABC):
     async def get_loc_changed_count(self) -> int:
         raise NotImplementedError()
 
-    async def get_pr_diff_token_count(self) -> int:
-        # TODO: PRDIFF get_pr_diff_token_count function will return list of agents and their pr_diff_tokens
+    async def get_pr_diff_token_count(self, operation="code_review") -> int:
         #  This function is called from two places
         #  first time insertion of pr while code review
-        #  when pr is large
-        # TODO: PRDIFF pass operation and agent_id in get_effective_pr_diff
-        pr_diff = await self.get_effective_pr_diff()
-        if not pr_diff or pr_diff == PR_NOT_FOUND:
-            return 0
-        return get_token_count(pr_diff)
+        #  second time when pr is large
+        await self.initialize_pr_diff_service()
+        return self.pr_diff_service.pr_diffs_token_counts_agent_name_wise(operation)
 
     async def generate_pr_description(self, pr_summary: str) -> str:
         """

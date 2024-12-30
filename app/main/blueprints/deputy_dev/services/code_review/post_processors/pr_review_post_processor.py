@@ -57,8 +57,8 @@ class PRReviewPostProcessor:
         self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
         """
         This is large_pr_case
-        # TODO: PRDIFF {"tokens":{"pr_diff_tokens":239}}
-        updated will be  {"tokens":{"security":239, "error": 500}}
+        # TODO: PRDIFF tokens_data = {"pr_diff_tokens":239}
+        updated will be  tokens_data = {"security":239, "error": 720}
         """
         await PRService.db_update(
             payload={

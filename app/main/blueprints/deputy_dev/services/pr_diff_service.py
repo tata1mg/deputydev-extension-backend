@@ -1,4 +1,5 @@
-from app.common.utils.app_utils import safe_index
+from app.common.utils.app_utils import safe_index, get_token_count
+from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.utils import ignore_files
@@ -10,7 +11,6 @@ class PRDiffService:
         self.pr_diff = pr_diff
         self.pr_diff_mappings = {}
         self.pr_diffs = []
-        self.tiktoken = TikToken()
 
     def get_pr_diff(self, operation="code_review", agent_id=None):
         if not self.pr_diff_mappings:
@@ -31,7 +31,6 @@ class PRDiffService:
         if operation == "code_review":
             self.code_review_global_pr_diff_mapping()
             self.code_review_agents_pr_diff_mapping()
-            self.summary_pr_diff_mapping()
         elif operation == "chat":
             self.chat_pr_diff_mapping()
 
@@ -39,13 +38,13 @@ class PRDiffService:
         self.pr_diff_mappings["complete_pr_diff"] = 0
         self.pr_diffs.append(self.pr_diff)
 
-    def summary_pr_diff_mapping(self):
-        pr_summary_diff = self.exclude_pr_diff(operation="pr_summary")
-        agent_id = SettingService.summary_agent_id()
-        self.map_pr_diff(key=agent_id, extracted_pr_diff=pr_summary_diff)
+    # def summary_pr_diff_mapping(self):
+    #     pr_summary_diff = self.exclude_pr_diff(operation="pr_summary")
+    #     agent_id = SettingService.summary_agent_id()
+    #     self.map_pr_diff(key=agent_id, extracted_pr_diff=pr_summary_diff)
 
     def code_review_agents_pr_diff_mapping(self):
-        uuid_wise_agents = SettingService.get_agents_by_uuid()
+        uuid_wise_agents = SettingService.get_uuid_wise_agents()
         for agent_id in uuid_wise_agents:
             agent_pr_diff = self.exclude_pr_diff(agent_id=agent_id)
             self.map_pr_diff(key=agent_id, extracted_pr_diff=agent_pr_diff)
@@ -74,33 +73,38 @@ class PRDiffService:
         settings = get_context_value("setting") or {}
         inclusions, exclusions = [], []
         if operation == "code_review":
-            code_review_agent = settings.get("code_review_agent", {})
-            agents = SettingService.get_agents_by_uuid()
-            if agent_id:
-                inclusions = set(code_review_agent.get("inclusions", [])) | set(agents[agent_id].get("inclusions", []))
-                exclusions = set(code_review_agent.get("exclusions", [])) | set(agents[agent_id].get("exclusions", []))
-            else:
-                inclusions = set(code_review_agent.get("inclusions", []))
-                exclusions = set(code_review_agent.get("exclusions", []))
+            inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
         elif operation == "chat":
+            # TODO: Need to confirm that we want exclusions/inclusions in chat or not
             chat_setting = settings["chat"]
             inclusions = chat_setting.get("inclusions", [])
             exclusions = chat_setting.get("exclusions", [])
-        elif operation == "pr_summary":
-            summary_setting = settings["pr_summary"]
-            inclusions = summary_setting.get("inclusions", [])
-            exclusions = summary_setting.get("exclusions", [])
         return ignore_files(self.pr_diff, list(exclusions), list(inclusions))
 
     def pr_diffs_token_counts(self, operation="code_review"):
         pr_diff_token_count = {}
-        if not self.pr_diff_mappings:
-            self.get_pr_diff_mappings(operation)
         if operation == "chat":
-            diff_index = self.pr_diff_mappings.get("chat")
-            pr_diff_token_count["chat"] = self.tiktoken.count(self.pr_diffs[diff_index])
+            pr_diff_token_count["chat"] = self.count_pr_diff_tokens(operation)
         else:
-            for agent_id, agent_data in self.pr_diff_mappings.items():
-                diff_index = self.pr_diff_mappings[agent_id]
-                pr_diff_token_count[agent_id] = self.tiktoken.count(self.pr_diffs[diff_index])
+            for agent_id in SettingService.get_uuid_wise_agents():
+                pr_diff_token_count[agent_id] = self.count_pr_diff_tokens(operation, agent_id)
         return pr_diff_token_count
+
+    def count_pr_diff_tokens(self, operation="code_review", agent_id=None):
+        pr_diff = self.get_pr_diff(operation, agent_id)
+        if pr_diff and pr_diff != PR_NOT_FOUND:
+            return get_token_count(pr_diff)
+        else:
+            return 0
+
+    def pr_diffs_token_counts_agent_name_wise(self, operation="code_review"):
+        pr_diff_token_count = self.pr_diffs_token_counts(operation)
+        if operation == "code_review":
+            pr_diff_token_count_agent_name_wise = {}
+            agents_uuid_wise = SettingService.get_uuid_wise_agents()
+            for agent_id, token_count in pr_diff_token_count.items():
+                agent_name = agents_uuid_wise[agent_id]["agent_name"]
+                pr_diff_token_count_agent_name_wise[agent_name] = token_count
+            return pr_diff_token_count_agent_name_wise
+        else:
+            return pr_diff_token_count
