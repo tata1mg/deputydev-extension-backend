@@ -100,7 +100,7 @@ class BitbucketRepoClient(BaseSCMClient):
         if response.status_code not in [200, 404]:
             error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
-        return response, response.status_code
+        return response._content, response.status_code
 
     async def get_commit_diff(self, base_commit, destination_commit):
         """
@@ -118,7 +118,7 @@ class BitbucketRepoClient(BaseSCMClient):
         if response.status_code not in [200, 404]:
             error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}"
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
-        return response, response.status_code
+        return await response.json(), response.status_code
 
     async def create_comment_on_pr(self, comment: dict, model: str):
         """
