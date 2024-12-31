@@ -127,6 +127,7 @@ class BitbucketRepo(BaseRepo):
         pr_diff, status_code = await self.repo_client.get_pr_diff()
         if status_code == 404:
             return PR_NOT_FOUND
+        pr_diff = await pr_diff.json()
         return pr_diff
         # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
         # self.pr_diff = self.exclude_pr_diff(pr_diff.text, agent_id="c62142f5-3992-476d-9131-bf85e1beffb7")
