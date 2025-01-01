@@ -99,12 +99,12 @@ class PRReviewManager:
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
                 repo_service, comment_service, data["prompt_version"]
             )
-            llm_comments, tokens_data, meta_info_to_save, is_large_pr = (
-                cls.llm_comments_v2(),
-                cls.tokens(),
-                cls.meta_info_to_save(),
-                False,
-            )
+            # llm_comments, tokens_data, meta_info_to_save, is_large_pr = (
+            #     cls.llm_comments_v2(),
+            #     cls.tokens(),
+            #     cls.meta_info_to_save(),
+            #     False,
+            # )
             meta_info_to_save["execution_start_time"] = execution_start_time
             await PRReviewPostProcessor(repo_service, comment_service, affirmation_service).post_process_pr(
                 pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
@@ -326,15 +326,9 @@ class PRReviewManager:
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
-        _review_object = _review_klass(repo_service, prompt_version)
-        return
-        (
-            llm_response,
-            pr_summary,
-            tokens_data,
-            meta_info_to_save,
-            _is_large_pr,
-        ) = await _review_object.get_code_review_comments()
+        llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
+            repo_service, prompt_version
+        ).get_code_review_comments()
 
         # We will only post summary for forst PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):

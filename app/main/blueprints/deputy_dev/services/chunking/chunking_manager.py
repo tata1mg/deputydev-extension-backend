@@ -27,7 +27,7 @@ class ChunkingManger:
         # clone the repo
         all_chunks, all_docs = await get_chunks(repo.repo_dir, use_new_chunking)
         logger.info("Completed chunk creation")
-        query = repo.get_effective_pr_diff()
+        query = await repo.get_effective_pr_diff()
         # Perform a search based on the diff content to find relevant chunks
         content_to_lexical_score_list, input_tokens = await perform_search(
             all_docs=all_docs, all_chunks=all_chunks, query=query

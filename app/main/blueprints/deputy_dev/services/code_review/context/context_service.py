@@ -41,7 +41,7 @@ class ContextService:
 
     async def get_relevant_chunk(self):
         if not self.relevant_chunk:
-            use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+            use_new_chunking = False and get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
             self.relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunk(
                 self.repo_service, use_new_chunking=use_new_chunking, use_llm_re_ranking=False
             )

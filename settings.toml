@@ -34,6 +34,7 @@ is_override = true
 exclusions = []
 inclusions = []
 confidence_score = 0.9              # Threshold of confidence_score for a comment to qualify to be made on PR
+objective = ""
 
 [code_review_agent.agents.code_communication]
 agent_id = "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"
@@ -45,6 +46,7 @@ is_override = true
 exclusions = []
 inclusions = []
 confidence_score = 0.98
+objective = ""
 
 [code_review_agent.agents.performance_optimisation]
 agent_id = "5932a405-96cb-4508-bfd4-443397583f95"
@@ -56,6 +58,7 @@ is_override = true
 exclusions = []
 inclusions = []
 confidence_score = 0.9
+objective = ""
 
 [code_review_agent.agents.code_maintainability]
 agent_id = "ccfe1b06-f5f2-42b1-a209-4d560edbd5f4"
@@ -67,6 +70,7 @@ is_override = true
 exclusions = []
 inclusions = []
 confidence_score = 0.9
+objective = ""
 
 [code_review_agent.agents.error]
 agent_id = "4a3f593d-73cd-41d6-85a0-dc96c17ce9bb"
@@ -78,6 +82,7 @@ is_override = true
 exclusions = []
 inclusions = []
 confidence_score = 0.9
+objective = ""
 
 [code_review_agent.agents.business_logic_validation]
 agent_id = "9fa43db8-4a3d-43e8-95c0-de96ed58e606"
@@ -89,6 +94,7 @@ is_override = true
 exclusions = []
 inclusions = []
 confidence_score = 0.9
+objective = ""
 
 [chat]
 enable = true
