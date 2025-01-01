@@ -14,7 +14,6 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.CODE_MAINTAINABILITY.value)
         self.agent_id = SettingService.pre_defined_agents_id_via_name(AgentTypes.CODE_MAINTAINABILITY.value)
 
-
     def get_with_reflection_system_prompt_pass1(self):
         return """
         You are a senior developer tasked with reviewing a pull request for code quality and
@@ -121,8 +120,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>{ARCHITECTURE | REUSABILITY | MAINTAINABILITY | CODE ROBUSTNESS | CODE QUALITY |
-        READABILITY} - Either one of them depending on in which bucket the comment is falling.</bucket>
+        <bucket>{$BUCKET} - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code maintainability issue found -->
         </comments>
@@ -307,8 +305,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>{ARCHITECTURE | REUSABILITY | MAINTAINABILITY | CODE ROBUSTNESS | CODE QUALITY |
-        READABILITY} - Either one of them depending on in which bucket the comment is falling.</bucket>
+        <bucket>{$BUCKET} - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code maintainability issue found -->
         </comments>

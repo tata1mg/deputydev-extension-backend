@@ -1,6 +1,6 @@
 from tortoise import fields
+
 from .base import Base
-import uuid
 
 
 class Agents(Base):

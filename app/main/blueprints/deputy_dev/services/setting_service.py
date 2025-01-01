@@ -8,11 +8,11 @@ from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSetting
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_CHAR_LIMIT,
     SETTING_ERROR_MESSAGE,
+    AgentTypes,
     SettingErrorType,
     SettingLevel,
-    AgentTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao import Configurations, Agents, Repos
+from app.main.blueprints.deputy_dev.models.dao import Agents, Configurations, Repos
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     context_var,
     get_context_value,
@@ -61,7 +61,6 @@ class SettingService:
 
     @classmethod
     def validate_agents(cls, agents):
-        errors = {}
         for agent_name, agent_data in agents.items():
             if "agent_id" not in agent_data:
                 agents.pop(agent_name)
@@ -305,21 +304,21 @@ class SettingService:
         return cls.validate_mandatory_keys(settings, team_setting)
 
     @classmethod
-    def validate_mandatory_keys(cls, settings, lowest_level_setting):
-        errors = cls.validate_agents_keys(cls.agents(settings), lowest_level_setting)
+    def validate_mandatory_keys(cls, settings, merged_setting):
+        errors = cls.validate_agents_keys(cls.agents(settings), merged_setting)
         return errors
 
     @staticmethod
-    def validate_agents_keys(agents, lowest_level_setting):
+    def validate_agents_keys(agents, merged_setting):
         errors = {}
         error = ""
         for agent_name, agent_data in agents.items():
             missing_keys = []
-            for key in ["agent_id", "display_name", "weight"]:
+            for key in ["agent_id", "display_name", "weight", "objective"]:
                 if not agent_data.get(key):
                     missing_keys.append(key)
             if missing_keys:
-                lowest_level_setting["code_review_agent"]["agents"].pop(agent_name)
+                merged_setting["code_review_agent"]["agents"].pop(agent_name)
                 error += f"- {agent_name}: {str(missing_keys)}\n"
         if error:
             error_type = SettingErrorType.MISSING_KEY.value

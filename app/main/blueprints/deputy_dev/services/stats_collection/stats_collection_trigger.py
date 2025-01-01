@@ -1,5 +1,6 @@
 import asyncio
 
+from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.utils.app_utils import convert_to_datetime
@@ -30,7 +31,6 @@ from app.main.blueprints.deputy_dev.utils import (
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
 )
-from sanic.log import logger
 
 
 class StatsCollectionTrigger:
