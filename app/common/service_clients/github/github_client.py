@@ -8,7 +8,7 @@ class GithubClient(BaseSCMClient):
     BASE_URL = CONFIG.config["GITHUB"]["HOST"]
 
     @override
-    async def _auth_headers(self) -> dict:
+    async def auth_headers(self) -> dict:
         access_token = await self.auth_handler.access_token()
         headers = {
             "Content-Type": "application/vnd.github+json",

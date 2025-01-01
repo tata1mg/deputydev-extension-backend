@@ -1,3 +1,4 @@
+from app.common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.bitbucket_comment import (
@@ -5,7 +6,6 @@ from app.main.blueprints.deputy_dev.services.comment.bitbucket_comment import (
 )
 from app.main.blueprints.deputy_dev.services.comment.github_comment import GithubComment
 from app.main.blueprints.deputy_dev.services.comment.gitlab_comment import GitlabComment
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 
 class CommentFactory:

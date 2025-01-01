@@ -1,8 +1,8 @@
 from sanic.log import logger
 
-from app.main.blueprints.deputy_dev.models.dao.feedbacks import Feedbacks
+from app.common.services.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres.feedbacks import Feedbacks
 from app.main.blueprints.deputy_dev.models.dto.feedback_dto import FeedbackDTO
-from app.main.blueprints.deputy_dev.services.db.db import DB
 
 
 class FeedbackService:

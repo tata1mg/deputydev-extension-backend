@@ -2,6 +2,10 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.services.openai.openai_llm_service import OpenAILLMService
+from app.common.services.pr.pr_factory import PRFactory
+from app.common.services.prompt.chat_prompt_service import ChatPromptService
+from app.common.services.repo.repo_factory import RepoFactory
+from app.common.services.repository.repo.repo_service import RepoService
 from app.common.utils.app_utils import build_openai_conversation_message
 from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
@@ -30,11 +34,6 @@ from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
-from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
-    ChatPromptService,
-)
-from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
-from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
@@ -57,6 +56,10 @@ from app.main.blueprints.deputy_dev.utils import (
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
 )
+
+# from app.main.blueprints.one_dev.services.webhook_handlers.suggestion_code_generation_manager import (
+#     SuggestionCodeGenerationManager,
+# )
 
 config = CONFIG.config
 
@@ -82,6 +85,11 @@ class SmartCodeChatManager:
         logger.info(f"Comment payload: {comment_payload}")
         if is_request_from_blocked_repo(comment_payload.repo.repo_name):
             return
+
+        # if comment_payload.comment.raw.strip().startswith("#suggestion"):
+        #     asyncio.ensure_future(SuggestionCodeGenerationManager.process_suggestion(comment_payload, vcs_type))
+        #     return
+
         if (
             is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw)
             and ExperimentService.is_eligible_for_experiment()
@@ -96,16 +104,26 @@ class SmartCodeChatManager:
     @classmethod
     async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type):
         auth_handler = await get_vcs_auth_handler(chat_request.repo.workspace_id, vcs_type)
+
         repo = await RepoFactory.repo(
+            vcs_type=vcs_type,
+            repo_name=chat_request.repo.repo_name,
+            workspace=chat_request.repo.repo_name,
+            workspace_slug=chat_request.repo.workspace_slug,
+            workspace_id=chat_request.repo.workspace_id,
+            auth_handler=auth_handler,
+        )
+
+        pr = await PRFactory.pr(
             vcs_type=vcs_type,
             repo_name=chat_request.repo.repo_name,
             pr_id=chat_request.repo.pr_id,
             workspace=chat_request.repo.workspace,
             workspace_slug=chat_request.repo.workspace_slug,
             workspace_id=chat_request.repo.workspace_id,
-            repo_id=chat_request.repo.repo_id,
             auth_handler=auth_handler,
             fetch_pr_details=True,
+            repo_service=repo,
         )
 
         comment_service = await CommentFactory.initialize(
@@ -114,7 +132,7 @@ class SmartCodeChatManager:
             pr_id=chat_request.repo.pr_id,
             workspace=chat_request.repo.workspace,
             workspace_slug=chat_request.repo.workspace_slug,
-            pr_details=repo.pr_details,
+            pr_details=pr.pr_details,
             repo_id=chat_request.repo.repo_id,
             auth_handler=auth_handler,
         )
@@ -124,9 +142,10 @@ class SmartCodeChatManager:
         if workspace_dto:
             set_context_values(team_id=workspace_dto.team_id)
             team_id = workspace_dto.team_id
+
         # This creates repo entry in db if not exist.
         await RepoService.find_or_create_with_workspace_id(
-            scm_workspace_id=chat_request.repo.workspace_id, pr_model=repo.pr_model()
+            scm_workspace_id=chat_request.repo.workspace_id, pr_model=pr.pr_model()
         )
         setting = await SettingService(repo, team_id).build()
         if not setting["chat"]["enable"]:
@@ -137,7 +156,7 @@ class SmartCodeChatManager:
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
         add_note = comment.startswith(ChatTypes.SCRIT.value)
-        chat_type = await CommentPreprocessor.process_chat(chat_request, repo.pr_model())
+        chat_type = await CommentPreprocessor.process_chat(chat_request, pr.pr_model())
         if chat_type == MessageTypes.UNKNOWN.value:
             logger.info(f"Chat processing rejected due to unknown tag with payload : {chat_request}")
         elif chat_type == MessageTypes.CHAT.value:
@@ -145,8 +164,8 @@ class SmartCodeChatManager:
 
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
-            diff = await repo.get_effective_pr_diff()
-            user_story_description = await JiraManager(issue_id=repo.pr_details.issue_id).get_description_text()
+            diff = await pr.get_effective_pr_diff()
+            user_story_description = await JiraManager(issue_id=pr.pr_details.issue_id).get_description_text()
             comment_thread = await comment_service.fetch_comment_thread(chat_request)
             comment_context = {
                 "comment_thread": comment_thread,
