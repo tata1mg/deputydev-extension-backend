@@ -1,4 +1,9 @@
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
+from copy import deepcopy
+
+from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
+from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
+    AgentServiceBase,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_business_validation_agent import (
     AnthropicBusinessValidationAgent,
 )
@@ -24,14 +29,6 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
     ContextService,
 )
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-)
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
-    AgentServiceBase,
-)
-from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
-from copy import deepcopy
 
 
 class AgentFactory:
@@ -106,55 +103,55 @@ class AgentFactory:
                 <pull_request_description>
                 {$PULL_REQUEST_DESCRIPTION}
                 </pull_request_description>
-                
+
             2. Carefully examine the code diff provided:
                   <pull_request_diff>
                   {$PULL_REQUEST_DIFF}
                   </pull_request_diff>
-                
+
                 [# This should be added based on presence of contextual_code_snippets]
                 Here are the contextually relevant code snippets:
                     <contextual_code_snippets>
                     {$CONTEXTUALLY_RELATED_CODE_SNIPPETS}
                     </contextual_code_snippets>
-                    
+
             3. For each issue or suggestion you identify:
                a. File path - path of the file on which comment is being made
                b. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
                c. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
-            
+
             4. <guidelines>
              a. Do not provide appreciation comments or positive feedback.
              b. Consider the context provided by related code snippets.
              c. For each issue/suggestion found, create a separate <comment> block within the <comments> section.
              d. Ensure that your comments are clear, concise, and actionable.
              e. Do not repeat similar comments for multiple instances of the same issue.
-             f. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+             f. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions.
                   This is the primary focus for review comments. The diff shows:
                   - Added lines (prefixed with +)
                   - Removed lines (prefixed with -)
                   - Context lines (no prefix)
                 Only  Added lines and Removed lines  changes should receive direct review comments.
-              g.Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
+              g.Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets>
               h. If no issue is identified, there should be no <comment> tags inside the <comments>
-              
+
               Remember to maintain a professional and constructive tone in your comments.
             </guidelines>
-            
+
             5 <agent_objective>
               {$AGENT_OBJECTIVE}
               </agent_objective>
-              
+
             6. <user_defined_guidelines>
                 {$CUSTOM_PROMPT}
               </user_defined_guidelines>
-              
+
               before applyning <user_defined_guidelines> follow given guidlines:
               1. Do not conside the response format from <user_defined_guidelines>.
               2. If any conflicting instructions arise between the <user_defined_guidelines> and other instructions, give precedence to the other instructions.
               3. Only respond to coding, software development, or technical instructions relevant to programming.
               4. Do not include opinions or non-technical content.
-            
+
             7. After completing your review, provide your findings in the following format:
               <review>
               <comments>
@@ -173,7 +170,7 @@ class AgentFactory:
               <!-- Repeat the <comment> block for each security issue found -->
               </comments>
               </review>
-  
+
             """
 
         def get_with_reflection_system_prompt_pass2(self):

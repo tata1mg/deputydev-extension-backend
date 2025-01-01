@@ -135,16 +135,15 @@ class PRService:
         )
         return all_prs
 
-    @classmethod
-    async def update_meta_info(cls, id, loc_changed, token_count):
-        # This function is not getting used can remove
-        # TODO: PRDIFF Need to check usage of this function as we dropping pr_diff_tokens
-        pr_dto = await PRService.db_get({"id": id})
-        if pr_dto:
-            meta_info = pr_dto.meta_info or {}
-            meta_info.pop("pr_diff_tokens", None)
-            meta_info.setdefault("tokens", {})["pr_diff_tokens"] = token_count
-            await PRService.db_update(payload={"meta_info": meta_info, "loc_changed": loc_changed}, filters={"id": id})
+    # @classmethod
+    # async def update_meta_info(cls, id, loc_changed, token_count):
+    #     # This function is not getting used can remove
+    #     pr_dto = await PRService.db_get({"id": id})
+    #     if pr_dto:
+    #         meta_info = pr_dto.meta_info or {}
+    #         meta_info.pop("pr_diff_tokens", None)
+    #         meta_info.setdefault("tokens", {})["pr_diff_tokens"] = token_count
+    #         await PRService.db_update(payload={"meta_info": meta_info, "loc_changed": loc_changed}, filters={"id": id})
 
     @classmethod
     def get_completed_pr_filters(cls, pr_dto: PullRequestDTO) -> dict:

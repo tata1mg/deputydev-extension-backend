@@ -1,31 +1,26 @@
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import List
 
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
-    BucketStatus,
-    BucketTypes,
     ExperimentStatusTypes,
     PrStatusTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao import PRComments
-from app.main.blueprints.deputy_dev.models.dao import AgentCommentMappings, Agents
-from app.main.blueprints.deputy_dev.models.dto.bucket_dto import BucketDTO
+from app.main.blueprints.deputy_dev.models.dao import Agents, PRComments
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
-from app.main.blueprints.deputy_dev.services.bucket.bucket_service import BucketService
 from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
     PRScoreHelper,
 )
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
-from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import (
     AgentCommentMappings,
     AgentCommentMappingService,
 )
+from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.pr_comments_service import (
     CommentService,
 )
@@ -55,11 +50,6 @@ class PRReviewPostProcessor:
 
     async def post_process_pr_large_pr(self, pr_dto: PullRequestDTO, tokens_data):
         self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
-        """
-        This is large_pr_case
-        # TODO: PRDIFF tokens_data = {"pr_diff_tokens":239}
-        updated will be  tokens_data = {"security":239, "error": 720}
-        """
         await PRService.db_update(
             payload={
                 "review_status": self.review_status,

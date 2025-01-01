@@ -13,9 +13,6 @@ from app.main.blueprints.deputy_dev.services.chunking.chunk_parsing_utils import
 from app.main.blueprints.deputy_dev.services.llm.anthropic_llm import Anthropic
 from app.main.blueprints.deputy_dev.services.search import perform_search
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-)
 from app.main.blueprints.deputy_dev.utils import is_path_included
 
 
@@ -135,13 +132,13 @@ class ChunkingManger:
                 Please sort and filter the following chunks based on the user's query, so that it can be used as a context for a LLM to answer the query.
                 The user query is as follows -
                 <user_query>{query}</user_query>
-    
+
                 <important>Please do check and ensure that you keep most of the chunks that are relevant. If one function is selected, keep all chunks related to that function.</important>
-    
+
                 {get_focus_chunk_prompt(focus_chunks)}
                 Here are the related chunks found by similarity search from the codebase:
                 {render_snippet_array(related_chunk)}
-    
+
                 Please send the sorted and filtered chunks in the following format:
                 <important> Keep all the chunks that are relevant to the user query, do not be too forceful in removing out context</important>
                 Please preserve line numbers, source and other metadata of the chunks passed.

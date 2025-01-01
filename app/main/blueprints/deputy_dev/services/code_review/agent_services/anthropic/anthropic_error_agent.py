@@ -102,7 +102,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         diff)</line_number>
         <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
         points)</confidence_score>
-        <bucket>{ERROR}</bucket>
+        <bucket>{$BUCKET} - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each error found -->
         </comments>
@@ -270,7 +270,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         diff)</line_number>
         <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
         points)</confidence_score>
-        <bucket>{ERROR}</bucket>
+        <bucket>{$BUCKET} - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each error found -->
         </comments>
