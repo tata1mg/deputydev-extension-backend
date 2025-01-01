@@ -8,16 +8,16 @@ from sanic.log import logger
 from torpedo import CONFIG, Task, TaskExecutor
 
 from app.common.constants.constants import TimeFormat
-from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
+from app.common.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.utils import get_foundation_model_name
 
 
 def service_client_wrapper(service_name):
     def wrapped(func):
-        async def wrapper(*args):
+        async def wrapper(*args, **kwargs):
             try:
                 t1 = time.time() * 1000
-                response = await func(*args)
+                response = await func(*args, **kwargs)
                 t2 = time.time() * 1000
                 logger.debug("Time taken for {}-{} API - {} ms".format(service_name, func.__name__, t2 - t1))
                 return response

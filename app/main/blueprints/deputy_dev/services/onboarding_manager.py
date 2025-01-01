@@ -7,7 +7,7 @@ from tortoise.transactions import in_transaction
 
 from app.common.exception.exception import SignUpError, TeamNotFound
 from app.main.blueprints.deputy_dev.constants.onboarding import UserRoles
-from app.main.blueprints.deputy_dev.models.dao import Teams, Users, UserTeams
+from app.main.blueprints.deputy_dev.models.dao.postgres import Teams, Users, UserTeams
 from app.main.blueprints.deputy_dev.models.request import (
     OnboardingRequest,
     SignUpRequest,

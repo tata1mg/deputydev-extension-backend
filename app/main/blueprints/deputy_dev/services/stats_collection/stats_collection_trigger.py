@@ -2,6 +2,7 @@ import asyncio
 
 from torpedo import CONFIG
 
+from app.common.services.repo.repo_factory import RepoFactory
 from app.common.utils.app_utils import convert_to_datetime
 from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
@@ -9,8 +10,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     PRStatus,
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
@@ -75,7 +75,6 @@ class StatsCollectionTrigger:
         repo = await RepoFactory.repo(
             vcs_type=vcs_type,
             repo_name=payload.repo_name,
-            pr_id=payload.scm_pr_id,
             workspace=payload.workspace,
             workspace_slug=payload.workspace_slug,
             workspace_id=payload.scm_workspace_id,

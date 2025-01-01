@@ -1,7 +1,7 @@
 from abc import ABC
 
 from app.common.constants.constants import Connections
-from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.common.services.repository.db import DB
 
 
 class BaseAnalytics(ABC):
