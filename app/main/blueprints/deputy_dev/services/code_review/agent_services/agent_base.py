@@ -33,6 +33,7 @@ class AgentServiceBase(ABC):
         self.tiktoken = TikToken()
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"]
         agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
+        self.agent_setting = agent_settings.get(self.agent_name, {})
         self.comment_confidence_score = agent_settings.get(self.agent_name, {}).get("confidence_score")
         self.custom_prompt = agent_settings.get(self.agent_name, {}).get("custom_prompt", "")
         self.agent_id = None
@@ -49,9 +50,22 @@ class AgentServiceBase(ABC):
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
+            "AGENT_OBJECTIVE": self.agent_objective(self.agent_name),
+            "CUSTOM_PROMPT": self.custom_prompt or "",
+            "BUCKET": self.agent_setting.get("display_name")
         }
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)
+
+    def format_system_prompt(self, prompt: str):
+        prompt_variables = {
+            "AGENT_NAME": self.agent_name
+        }
+        template = Template(prompt)
+        return template.safe_substitute(prompt_variables)
+
+    def agent_objective(self, agent_name):
+        return self.agent_setting.get("objective", "")
 
     async def get_system_n_user_prompt(self, reflection_iteration=None, previous_review_comments=None):
         if self.is_reflection_enabled:
@@ -91,6 +105,7 @@ class AgentServiceBase(ABC):
     async def get_with_reflection_prompt_pass_1(self):
         system_message = self.get_with_reflection_system_prompt_pass1()
         system_message = self.inject_system_prompt(system_message)
+        system_message = self.format_system_prompt(system_message)
         user_prompt = self.get_with_reflection_user_prompt_pass1()
         user_prompt = self.inject_custom_prompt(user_prompt)
         user_message = await self.format_user_prompt(user_prompt)
@@ -101,6 +116,7 @@ class AgentServiceBase(ABC):
             "parse": False,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
+
 
     async def get_with_reflection_prompt_pass_2(self, previous_review_comments):
         system_message = self.get_with_reflection_system_prompt_pass2()
@@ -117,7 +133,7 @@ class AgentServiceBase(ABC):
         }
 
     def inject_custom_prompt(self, user_prompt):
-        if self.custom_prompt and self.custom_prompt.strip():
+        if not self.agent_setting["is_custom_agent"] and self.custom_prompt and self.custom_prompt.strip():
             return f"{user_prompt}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.custom_prompt}"
         return user_prompt
 
@@ -131,7 +147,7 @@ class AgentServiceBase(ABC):
         return f"{system_prompt}\n{repo_info_prompt}"
 
     async def get_without_reflection_prompt(self):
-        system_message = self.get_without_reflection_system_prompt()
+        system_message = self.format_system_prompt(self.get_without_reflection_system_prompt())
         system_message = self.inject_system_prompt(system_message)
         user_message = await self.format_user_prompt(self.get_without_reflection_user_prompt())
         return {

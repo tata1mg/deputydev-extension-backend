@@ -607,7 +607,12 @@ class SettingService:
         return setting.get("chat", {}) if setting else {}
 
     @classmethod
-    def pre_defined_agents_id(cls, agent_name):
+    def agents_settings(cls):
+        setting = get_context_value("setting")
+        return setting["code_review_agent"]["agents"]
+
+    @classmethod
+    def pre_defined_agents_id_via_name(cls, agent_name):
         return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"][agent_name]["agent_id"]
 
     @classmethod
@@ -619,8 +624,8 @@ class SettingService:
         setting = get_context_value("setting")
         if agent_id == cls.summary_agent_id():
             # TODO: check this again when pr_summary inclusion_exclusion discussed
-            inclusions = setting["pr_summary"]["inclusions"]
-            exclusions = setting["pr_summary"]["exclusions"]
+            inclusions = setting["pr_summary"].get("inclusions") or []
+            exclusions = setting["pr_summary"].get("exclusions") or []
             return inclusions, exclusions
         else:
             global_exclusions = setting["code_review_agent"]["exclusions"] or []
@@ -632,3 +637,8 @@ class SettingService:
                 return list(inclusions), list(exclusions)
             else:
                 return list(global_inclusions), list(global_exclusions)
+
+    @classmethod
+    def agent_id(cls, agent_name):
+        agent_settings = cls.agents_settings()
+        return agent_settings[agent_name]["agent_id"]
