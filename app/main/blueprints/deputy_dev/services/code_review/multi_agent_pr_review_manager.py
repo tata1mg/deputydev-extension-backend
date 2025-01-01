@@ -20,6 +20,7 @@ from app.main.blueprints.deputy_dev.services.llm.multi_agents_manager import (
     MultiAgentsLLMManager,
 )
 from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
@@ -105,13 +106,11 @@ class MultiAgentPRReviewManager:
             pr_diff_tokens_count = await self.repo_service.get_pr_diff_token_count()
             self.agents_tokens = pr_diff_tokens_count
             return
-        t1 = time.time() * 1000
         await self._make_llm_calls()
-        t2 = time.time() * 1000
-        AppLogger.log_info(f"Time taken in LLM call - {t2 - t1} ms")
         self.populate_meta_info()
 
     def exclude_disabled_agents(self):
+        # TODO check what will be impact if we make this agent_id based.
         setting = get_context_value("setting")
         for agent, agent_setting in setting["code_review_agent"]["agents"].items():
             if not agent_setting["enable"] or not setting["code_review_agent"]["enable"]:
@@ -124,9 +123,18 @@ class MultiAgentPRReviewManager:
         self.populate_pr_summary()
 
     async def execute_pass_2(self):
-        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
+        self.exclude_pass_1_specific_agents()
         self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
         await self.__execute_pass()
+
+    def exclude_pass_1_specific_agents(self):
+        # exclude summary agent
+        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
+        # exclude custom_agents
+        agents_settings = SettingService.agents_settings()
+        for agent_name, agent_setting in agents_settings.items():
+            if agent_setting["is_custom_agent"]:
+                self.exclude_agent.add(agent_name)
 
     async def get_code_review_comments(self):
         self.exclude_disabled_agents()
