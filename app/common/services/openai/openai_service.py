@@ -1,15 +1,16 @@
 import json
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 import requests
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.caches import DeputyDevCache
+from app.common.caches.common import CommonCache
 from app.common.constants.error_messages import ErrorMessages
 from app.common.service_clients.openai.openai import OpenAIServiceClient
 from app.common.services.openai.base_client import BaseClient
+from app.common.services.tiktoken import TikToken
 from app.common.utils.app_utils import hash_sha256
 from app.main.blueprints.deputy_dev.constants import (
     EMBEDDING_MODEL,
@@ -17,7 +18,6 @@ from app.main.blueprints.deputy_dev.constants import (
 )
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.context_var import identifier
-from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
@@ -42,9 +42,14 @@ class OpenAIManager(BaseClient):
         response = await OpenAIServiceClient().create_embedding(
             input=batch, model=EMBEDDING_MODEL, encoding_format="float"
         )
+
         cut_dim = np.array([data.embedding for data in response.data])
         normalized_dim = self.normalize_l2(cut_dim)
         # save results to redis
+
+        if len(batch) == 1:
+            logger.info(f"Input text: {batch[0]}")
+            logger.info(f"Embedding: {normalized_dim}")
         return normalized_dim, response.usage.prompt_tokens
 
     def get_cache_prefix(self):
@@ -57,7 +62,7 @@ class OpenAIManager(BaseClient):
             prefix_key = f"{team_id}:{repo_name}"
         return prefix_key
 
-    async def create_embeddings(self, batch: Tuple[str]) -> Optional[List[float]]:
+    async def create_embeddings(self, batch: List[str]) -> Optional[List[float]]:
         """
         Create embeddings for a batch of text strings.
 
@@ -73,7 +78,7 @@ class OpenAIManager(BaseClient):
         except requests.exceptions.Timeout as e:
             AppLogger.log_error(f"Timeout error occurred while embedding: {e}")
         except Exception as e:
-            AppLogger.log_error(e)
+            AppLogger.log_warn(e)
             if any(self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT for text in batch):
                 new_batch = []
                 for text in batch:
@@ -91,7 +96,7 @@ class OpenAIManager(BaseClient):
         return new_embeddings, input_tokens
 
     # We can make the get_embeddings function more generic as redis layer should not be part of openai class
-    async def get_embeddings(self, batch: Tuple[str], store_embeddings: bool = True) -> np.ndarray:
+    async def get_embeddings(self, batch: List[str], store_embeddings: bool = True) -> np.ndarray:
         """
         Gets embeddings for a batch of texts.
 
@@ -109,13 +114,11 @@ class OpenAIManager(BaseClient):
             batch = self.tiktoken_client.split_text_by_tokens(batch[0])
             embeddings, input_tokens = await self.create_embeddings(batch=batch)
 
-            result = self.process_embeddings(np.array(embeddings))
-
-            return np.array(result), input_tokens
+            return np.array(embeddings), input_tokens
         embeddings: List[np.ndarray] = [None] * len(batch)
         cache_keys = [f"{key}:{hash_sha256(text)}" if key else hash_sha256(text) for text in batch]
         try:
-            for i, cache_value in enumerate(await DeputyDevCache.mget(cache_keys)):
+            for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
                 if cache_value:
                     embeddings[i] = np.array(json.loads(cache_value))
         except Exception as e:
@@ -140,13 +143,12 @@ class OpenAIManager(BaseClient):
                 batch_embeddings = embeddings[i : i + 100]
 
                 # Store the current batch in Redis
-                await DeputyDevCache.mset_with_expire(
+                await CommonCache.mset_with_expire(
                     {
                         cache_key: json.dumps(embedding.tolist())
                         for cache_key, embedding in zip(batch_keys, batch_embeddings)
                     }
                 )
-
             embeddings = np.array(embeddings)
         except Exception:
             logger.error("Failed to store embeddings in cache, returning without storing")

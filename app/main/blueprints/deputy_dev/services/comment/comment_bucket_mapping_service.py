@@ -1,7 +1,7 @@
-from app.main.blueprints.deputy_dev.models.dao.comment_bucket_mapping import (
+from app.common.services.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres.comment_bucket_mapping import (
     CommentBucketMapping,
 )
-from app.main.blueprints.deputy_dev.services.db.db import DB
 
 
 class CommentBucketMappingService:
