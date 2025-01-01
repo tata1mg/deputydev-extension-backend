@@ -1,12 +1,9 @@
-import time
-
 from torpedo import CONFIG
 
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     MultiAgentReflectionIteration,
 )
-from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
     AgentFactory,
 )
@@ -101,8 +98,6 @@ class MultiAgentPRReviewManager:
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
             self.llm_comments = {}
-            # TODO: PRDIFF now get_pr_diff_token_count will return each agent count so directly assign it's return value
-            #  to self.agents_tokens
             pr_diff_tokens_count = await self.repo_service.get_pr_diff_token_count()
             self.agents_tokens = pr_diff_tokens_count
             return
@@ -145,7 +140,6 @@ class MultiAgentPRReviewManager:
         return self.return_final_response()
 
     def populate_meta_info(self):
-        # TODO: PRDIFF No changes required in this function
         for agent, prompt in self.current_prompts.items():
             agent_identifier = prompt["key"] + prompt["reflection_iteration"]
             self.agents_tokens[agent_identifier] = prompt.pop("tokens")

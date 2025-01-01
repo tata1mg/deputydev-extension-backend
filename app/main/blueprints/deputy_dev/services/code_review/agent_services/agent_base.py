@@ -52,15 +52,13 @@ class AgentServiceBase(ABC):
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
             "AGENT_OBJECTIVE": self.agent_objective(self.agent_name),
             "CUSTOM_PROMPT": self.custom_prompt or "",
-            "BUCKET": self.agent_setting.get("display_name")
+            "BUCKET": self.agent_setting.get("display_name"),
         }
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)
 
     def format_system_prompt(self, prompt: str):
-        prompt_variables = {
-            "AGENT_NAME": self.agent_name
-        }
+        prompt_variables = {"AGENT_NAME": self.agent_name}
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)
 
@@ -116,7 +114,6 @@ class AgentServiceBase(ABC):
             "parse": False,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
-
 
     async def get_with_reflection_prompt_pass_2(self, previous_review_comments):
         system_message = self.get_with_reflection_system_prompt_pass2()
