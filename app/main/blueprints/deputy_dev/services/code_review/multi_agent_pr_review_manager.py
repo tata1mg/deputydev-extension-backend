@@ -2,6 +2,10 @@ import time
 
 from torpedo import CONFIG
 
+from app.common.services.llm.multi_agents_manager import MultiAgentsLLMManager
+from app.common.services.pr.base_pr import BasePR
+from app.common.services.repo.base_repo import BaseRepo
+from app.common.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     MultiAgentReflectionIteration,
@@ -16,19 +20,15 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
 )
-from app.main.blueprints.deputy_dev.services.llm.multi_agents_manager import (
-    MultiAgentsLLMManager,
-)
-from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
-from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
 
 
 class MultiAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, prompt_version=None):
+    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, prompt_version=None):
         self.repo_service = repo_service
+        self.pr_service = pr_service
         self.multi_agent_enabled = None
         self.reflection_enabled = None
         self.pr_diff = None
@@ -44,7 +44,7 @@ class MultiAgentPRReviewManager:
         self.filtered_comments = None
         self.pr_summary = None
         self.exclude_agent = set()
-        self.context_service = ContextService(repo_service)
+        self.context_service = ContextService(repo_service, pr_service)
         self.agent_factory = AgentFactory(
             reflection_enabled=self._is_reflection_enabled(), context_service=self.context_service
         )
@@ -100,7 +100,7 @@ class MultiAgentPRReviewManager:
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
             self.llm_comments = {}
-            pr_diff_tokens_count = await self.repo_service.get_pr_diff_token_count()
+            pr_diff_tokens_count = await self.pr_service.get_pr_diff_token_count()
             self.agents_tokens = {"pr_diff_tokens": pr_diff_tokens_count}
             return
         t1 = time.time() * 1000

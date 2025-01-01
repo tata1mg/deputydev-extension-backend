@@ -4,6 +4,7 @@ from string import Template
 
 from torpedo import CONFIG
 
+from app.common.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
     MultiAgentReflectionIteration,
@@ -13,7 +14,6 @@ from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )

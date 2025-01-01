@@ -1,8 +1,8 @@
 from sanic.log import logger
 
-from app.main.blueprints.deputy_dev.models.dao import Workspaces
-from app.main.blueprints.deputy_dev.models.dto.workspace_dto import WorkspaceDTO
-from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.common.models.dto.workspace_dto import WorkspaceDTO
+from app.common.services.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres import Workspaces
 
 
 class WorkspaceService:

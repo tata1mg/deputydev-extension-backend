@@ -2,6 +2,9 @@ from typing import Optional
 
 from torpedo import CONFIG
 
+from app.common.services.pr.base_pr import BasePR
+from app.common.services.repo.base_repo import BaseRepo
+from app.common.services.repository.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -20,9 +23,7 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
-from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
@@ -35,10 +36,17 @@ config = CONFIG.config
 
 
 class PRReviewPreProcessor:
-    def __init__(self, repo_service: BaseRepo, comment_service: BaseComment, affirmation_service: AffirmationService):
+    def __init__(
+        self,
+        repo_service: BaseRepo,
+        pr_service: BasePR,
+        comment_service: BaseComment,
+        affirmation_service: AffirmationService,
+    ):
         self.repo_service = repo_service
+        self.pr_service = pr_service
         self.comment_service = comment_service
-        self.pr_model = repo_service.pr_model()
+        self.pr_model = pr_service.pr_model()
         self.experiment_set = None
         self.is_valid = True
         self.review_status = PrStatusTypes.IN_PROGRESS.value
@@ -133,9 +141,9 @@ class PRReviewPreProcessor:
             last_reviewed_commit=last_reviewed_commit,
             has_reviewed_entry=has_reviewed_entry,
         )
-        self.pr_diff_token_count = await self.repo_service.get_pr_diff_token_count()
+        self.pr_diff_token_count = await self.pr_service.get_pr_diff_token_count()
         self.meta_info["tokens"] = {TokenTypes.PR_DIFF_TOKENS.value: self.pr_diff_token_count}
-        self.loc_changed = await self.repo_service.get_loc_changed_count()
+        self.loc_changed = await self.pr_service.get_loc_changed_count()
 
         # Check for failed PR
         failed_pr_filters = {
@@ -205,7 +213,7 @@ class PRReviewPreProcessor:
         Returns:
             bool: True if PR should be fully reviewed (rebase detected or merge commits present)
         """
-        commits = await self.repo_service.get_pr_commits()
+        commits = await self.pr_service.get_pr_commits()
         if not commits:
             return True
 
@@ -246,7 +254,7 @@ class PRReviewPreProcessor:
         )
 
     async def validate_pr_diff(self):
-        pr_diff = await self.repo_service.get_effective_pr_diff()
+        pr_diff = await self.pr_service.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_INVALID_REQUEST.value
@@ -305,7 +313,9 @@ class PRReviewPreProcessor:
         )
 
     async def validate_repo_clone(self):
-        _, is_repo_cloned = await self.repo_service.clone_repo()  # return code 128 signifies bad request to github
+        _, is_repo_cloned = await self.repo_service.clone_branch(
+            self.pr_service.branch_name, "code_review"
+        )  # return code 128 signifies bad request to github
         if not is_repo_cloned:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value

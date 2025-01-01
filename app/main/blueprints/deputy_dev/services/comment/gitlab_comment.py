@@ -2,13 +2,13 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.service_clients.gitlab.gitlab_repo_client import GitlabRepoClient
+from app.common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.helpers.gitlab_comment_helper import (
     GitlabCommentHelper,
 )
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.utils import format_comment
 
 config = CONFIG.config

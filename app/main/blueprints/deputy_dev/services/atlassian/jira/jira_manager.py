@@ -43,6 +43,13 @@ class JiraManager:
         ).get_issue_details(issue_id=self.issue_id, fields=fields)
         return self.issue_details
 
+    async def comment_on_issue(self, comment):
+        if not self.is_jira_integrations_enabled:
+            return {}
+        self.issue_details = await Issue(
+            auth_handler=self.auth_handler, client_account_id=self.client_account_id
+        ).comment_on_issue(issue_id=self.issue_id, comment=comment)
+
     async def get_confluence_link_attached(self) -> Optional[str]:
         """
         extracts confluence links from jira description
