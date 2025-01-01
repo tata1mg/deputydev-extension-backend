@@ -61,9 +61,7 @@ class GithubRepo(BaseRepo):
         response = await self.repo_client.get_pr_diff()
         if response and response.status_code != 200:
             return PR_NOT_FOUND
-        # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
-        self.pr_diff = self.exclude_pr_diff(response.text)
-        return self.pr_diff
+        return response.text
 
     async def get_commit_diff(self):
         """
@@ -79,17 +77,13 @@ class GithubRepo(BaseRepo):
         Raises:
             ValueError: If the repo diff cannot be retrieved.
         """
-        if self.pr_commit_diff:
-            return self.pr_commit_diff
 
         response = await self.repo_client.get_commit_diff(
             self.pr_details.commit_id, get_context_value("last_reviewed_commit")
         )
         if response and response.status_code != 200:
             return PR_NOT_FOUND
-        # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
-        self.pr_commit_diff = self.exclude_pr_diff(response.text)
-        return self.pr_commit_diff
+        return response.text
 
     async def get_pr_details(self) -> PullRequestResponse:
         """

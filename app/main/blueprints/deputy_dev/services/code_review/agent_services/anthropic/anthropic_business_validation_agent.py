@@ -81,7 +81,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>{USER_STORY} - Always this value since its a business logic validation agent</bucket>
+        <bucket>{$BUCKET} - Always this value do not change this</bucket>
         </comment>
         </comments>
         </review>
@@ -211,7 +211,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>USER_STORY</bucket>
+        <bucket>{$BUCKET} - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each issue that you find regarding business logic validation -->
         </comments>

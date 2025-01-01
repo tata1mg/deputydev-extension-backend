@@ -9,13 +9,11 @@ import toml
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.main.blueprints.deputy_dev.constants.constants import (
     SETTING_ERROR_MESSAGE,
     SettingErrorType,
 )
-from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.dao import Repos, Workspaces
 from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
@@ -190,6 +188,7 @@ class BaseRepo(ABC):
         raise NotImplementedError()
 
     async def get_effective_pr_diff(self, operation="code_review", agent_id=None):
+        # TODO: Document this function
         """
         Determines whether to fetch the full PR diff or a specific commit diff.
         Returns:

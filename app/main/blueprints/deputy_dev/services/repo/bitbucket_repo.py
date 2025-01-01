@@ -140,19 +140,13 @@ class BitbucketRepo(BaseRepo):
         Raises:
             ValueError: If the repo diff cannot be retrieved.
         """
-        if self.pr_commit_diff:
-            return self.pr_commit_diff
 
         commit_diff, status_code = await self.repo_client.get_commit_diff(
             self.pr_details.commit_id, get_context_value("last_reviewed_commit")
         )
         if status_code == 404:
             return PR_NOT_FOUND
-
-        if commit_diff:
-            # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
-            self.pr_commit_diff = self.exclude_pr_diff(commit_diff.text)
-        return self.pr_commit_diff
+        return commit_diff.text if commit_diff else ""
 
     def __get_issue_id(self, title) -> str:
         title_html = title.get("html", "")

@@ -117,18 +117,13 @@ class GitlabRepo(BaseRepo):
         Raises:
             ValueError: If the pull request diff cannot be retrieved.
         """
-        if self.pr_diff:
-            return self.pr_diff
-
         response, status_code = await self.repo_client.get_pr_diff()
         if status_code == 404:
             return PR_NOT_FOUND
 
         if response:
-            # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
             combined_pr_diff = self.create_combined_diff_text(response["changes"])
-            self.pr_diff = self.exclude_pr_diff(combined_pr_diff)
-        return self.pr_diff
+            return combined_pr_diff
 
     async def get_commit_diff(self):
         """
@@ -144,8 +139,6 @@ class GitlabRepo(BaseRepo):
         Raises:
             ValueError: If the repo diff cannot be retrieved.
         """
-        if self.pr_commit_diff:
-            return self.pr_commit_diff
 
         response, status_code = await self.repo_client.get_commit_diff(
             self.pr_details.commit_id, get_context_value("last_reviewed_commit")
@@ -155,10 +148,7 @@ class GitlabRepo(BaseRepo):
 
         if response:
             combined_repo_diff = self.create_combined_diff_text(response["changes"])
-            # TODO: remove exclude_pr_diff from here and move it to effective_pr_diff
-            # and self.pr_commit_diff = combined_repo_diff
-            self.pr_commit_diff = self.exclude_pr_diff(combined_repo_diff)
-        return self.pr_commit_diff
+            return combined_repo_diff
 
     @staticmethod
     def create_combined_diff_text(changes):

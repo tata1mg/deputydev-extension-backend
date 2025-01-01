@@ -2,6 +2,7 @@ from typing import Optional
 
 from torpedo import CONFIG
 
+from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -9,7 +10,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     PRReviewExperimentSet,
     PRStatus,
     PrStatusTypes,
-    TokenTypes,
 )
 from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
@@ -133,8 +133,6 @@ class PRReviewPreProcessor:
             last_reviewed_commit=last_reviewed_commit,
             has_reviewed_entry=has_reviewed_entry,
         )
-        # TODO: PRDIFF now get_pr_diff_token_count will return each agent count so dirently assign it's return value
-        #  to self.agents_tokens
         self.pr_diff_token_count = await self.repo_service.get_pr_diff_token_count()
         self.meta_info["tokens"] = self.pr_diff_token_count
         self.loc_changed = await self.repo_service.get_loc_changed_count()
@@ -248,7 +246,6 @@ class PRReviewPreProcessor:
         )
 
     async def validate_pr_diff(self):
-        # TODO: PRDIFF check how to handle  get_effective_pr_diff here as we don't have specific agents here.
         pr_diff = await self.repo_service.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
@@ -256,18 +253,12 @@ class PRReviewPreProcessor:
         elif pr_diff == "":
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_NO_DIFF.value
-        else:
-            pr_diff_service = self.repo_service.pr_diff_service
-            pr_diff_tokens = pr_diff_service.pr_diffs_token_counts()
-            # TODO: PRDIFF update logic of large_pr_diff
-            #  need to confirm that we want to check pr_diff for each agent individually or not.
-            is_large_pr_diff = False
-            if is_large_pr_diff:
-                await self.comment_service.create_pr_comment(
-                    comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
-                )
-                self.is_valid = False
-                self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
+        elif get_token_count(pr_diff) > MAX_PR_DIFF_TOKEN_LIMIT:
+            await self.comment_service.create_pr_comment(
+                comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+            )
+            self.is_valid = False
+            self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
 
     def validate_pr_state_for_review(self):
         pr_state = self.pr_model.scm_state()
