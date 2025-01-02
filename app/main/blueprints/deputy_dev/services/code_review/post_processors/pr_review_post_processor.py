@@ -3,12 +3,14 @@ from typing import List
 
 from torpedo import CONFIG
 
+from app.common.services.pr.base_pr import BasePR
+from app.common.services.repository.db import DB
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
     ExperimentStatusTypes,
     PrStatusTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao import Agents, PRComments
+from app.main.blueprints.deputy_dev.models.dao.postgres import Agents, PRComments
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
     PRScoreHelper,
@@ -24,12 +26,10 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.comment.pr_comments_service import (
     CommentService,
 )
-from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
@@ -39,10 +39,10 @@ config = CONFIG.config
 
 
 class PRReviewPostProcessor:
-    def __init__(self, repo_service: BaseRepo, comment_service: BaseComment, affirmation_service: AffirmationService):
-        self.repo_service = repo_service
+    def __init__(self, pr_service: BasePR, comment_service: BaseComment, affirmation_service: AffirmationService):
+        self.pr_service = pr_service
         self.comment_service = comment_service
-        self.pr_model = repo_service.pr_model()
+        self.pr_model = pr_service.pr_model()
         self.affirmation_service = affirmation_service
         self.completed_pr_count = 0
         self.review_status = None
@@ -105,7 +105,7 @@ class PRReviewPostProcessor:
         is_large_pr: bool,
         extra_info: dict = None,
     ):
-        self.loc_changed = await self.repo_service.get_loc_changed_count()
+        self.loc_changed = await self.pr_service.get_loc_changed_count()
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
         if is_large_pr:
@@ -114,7 +114,6 @@ class PRReviewPostProcessor:
             await self.post_process_pr_with_comments(pr_dto, llm_comments, tokens_data, extra_info)
         else:
             await self.post_process_pr_no_comments(pr_dto, tokens_data, extra_info)
-
         await self.process_affirmation_message()
 
     async def process_affirmation_message(self):

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.main.blueprints.deputy_dev.constants.constants import PRStatus
 
@@ -33,5 +33,4 @@ class PullRequestDTO(BaseModel):
     pr_state: str = PRStatus.OPEN.value
     scm_approval_time: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

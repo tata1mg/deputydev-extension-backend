@@ -1,8 +1,8 @@
 from sanic.log import logger
 
-from app.main.blueprints.deputy_dev.models.dao import PRComments
+from app.common.services.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres import PRComments
 from app.main.blueprints.deputy_dev.models.dto.pr_comments_dto import PRCommentsDTO
-from app.main.blueprints.deputy_dev.services.db.db import DB
 
 
 class CommentService:

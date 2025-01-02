@@ -10,6 +10,10 @@ from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
+from app.common.services.authentication.jwt import JWTHandler
+from app.common.services.credentials import AuthHandler, AuthHandlerFactory
+from app.common.services.repository.db import DB
+from app.common.services.tiktoken import TikToken
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
     BitbucketBots,
@@ -17,15 +21,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.loggers import AppLogger
-from app.main.blueprints.deputy_dev.models.dao import Integrations, Workspaces
-from app.main.blueprints.deputy_dev.services.credentials import (
-    AuthHandler,
-    GithubAuthHandler,
-    create_auth_handler,
-)
-from app.main.blueprints.deputy_dev.services.db.db import DB
-from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
-from app.main.blueprints.deputy_dev.services.tiktoken import TikToken
+from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations, Workspaces
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
     set_context_values,
@@ -428,6 +424,11 @@ async def get_workspace(scm, scm_workspace_id) -> Workspaces:
     return workspace
 
 
+async def get_workspace_by_team_id(team_id, scm) -> Workspaces:
+    workspace = await Workspaces.get(team_id=team_id, scm=scm)
+    return workspace
+
+
 async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
     workspace = await get_workspace(scm_workspace_id=scm_workspace_id, scm=vcs_type)
     set_context_values(dd_workspace_id=workspace.id)
@@ -441,7 +442,7 @@ async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
         integration_id = workspace.integration_id
         tokenable_id = integration_id
 
-    auth_handler = create_auth_handler(integration=vcs_type, tokenable_id=tokenable_id)
+    auth_handler = AuthHandlerFactory.create_auth_handler(integration=vcs_type, tokenable_id=tokenable_id)
     return auth_handler
 
 
@@ -462,7 +463,7 @@ async def get_auth_handler(client: str, team_id: str | None = None, workspace_id
         # tokenable_type = "integration"
         tokenable_id = integration_info["id"]
 
-    auth_handler = create_auth_handler(integration=client, tokenable_id=int(tokenable_id))
+    auth_handler = AuthHandlerFactory.create_auth_handler(integration=client, tokenable_id=int(tokenable_id))
     return auth_handler, integration_info
 
 
@@ -501,7 +502,7 @@ def update_payload_with_jwt_data(query_params: dict, payload: dict) -> dict:
         payload = handle_old_request(query_params, payload)
         return payload
     try:
-        decoded_token = JWTService.decode(jwt_token)
+        decoded_token = JWTHandler(signing_key=CONFIG.config["WEBHOOK_JWT_SIGNING_KEY"]).verify_token(jwt_token)
     except Exception as e:
         raise BadRequestException(f"Invalid JWT token: {e}")
 
@@ -535,35 +536,6 @@ def handle_old_request(query_params: dict, payload: dict) -> dict:
     elif vcs_type == VCSTypes.github.value:
         payload["scm_workspace_id"] = payload["organization"]["id"]
     return payload
-
-
-def create_optimized_batches(texts: List[str], max_tokens: int, model: str) -> List[List[str]]:
-    tiktoken_client = TikToken()
-    batches = []
-    current_batch = []
-    currrent_batch_token_count = 0
-
-    for text in texts:
-        text_token_count = tiktoken_client.count(text, model=model)
-
-        if text_token_count > max_tokens:  # Single text exceeds max tokens
-            truncated_text = tiktoken_client.truncate_string(text=text, max_tokens=max_tokens, model=model)
-            batches.append([truncated_text])
-            logger.warn(f"Text with token count {text_token_count} exceeds the max token limit of {max_tokens}.")
-            continue
-
-        if currrent_batch_token_count + text_token_count > max_tokens:
-            batches.append(current_batch)
-            current_batch = [text]
-            currrent_batch_token_count = text_token_count
-        else:
-            current_batch.append(text)
-            currrent_batch_token_count += text_token_count
-
-    if current_batch:
-        batches.append(current_batch)
-
-    return batches
 
 
 def repo_meta_info_prompt(app_settings):
