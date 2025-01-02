@@ -1,6 +1,9 @@
 from copy import deepcopy
 
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes, AgentIds
+from app.main.blueprints.deputy_dev.constants.constants import (
+    AgentTypes,
+    TokenTypes,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
 )
