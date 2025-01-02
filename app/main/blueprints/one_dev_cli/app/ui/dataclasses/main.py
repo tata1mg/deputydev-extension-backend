@@ -1,0 +1,9 @@
+from enum import Enum
+
+
+class FlowStatus(Enum):
+    INITIALIZED = "INITIALIZED"
+    PLAN_GENERATED = "PLAN_GENERATED"
+    CODE_GENERATED = "CODE_GENERATED"
+    DIFF_APPLIED = "DIFF_APPLIED"
+    PR_CREATED = "PR_CREATED"

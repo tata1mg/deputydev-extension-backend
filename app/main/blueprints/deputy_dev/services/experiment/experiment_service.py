@@ -2,12 +2,12 @@ from sanic.log import logger
 from torpedo import CONFIG
 from tortoise.expressions import F
 
+from app.common.services.repository.db import DB
 from app.main.blueprints.deputy_dev.caches.ab_experiment import ABExperimentCache
 from app.main.blueprints.deputy_dev.constants.constants import ExperimentStatusTypes
-from app.main.blueprints.deputy_dev.models.dao import Experiments
+from app.main.blueprints.deputy_dev.models.dao.postgres import Experiments
 from app.main.blueprints.deputy_dev.models.dto.experiments_dto import ExperimentsDTO
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
-from app.main.blueprints.deputy_dev.services.db.db import DB
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )
