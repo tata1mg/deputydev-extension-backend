@@ -95,6 +95,8 @@ class MultiAgentPRReviewManager:
 
     async def __execute_pass(self):
         await self._build_prompts()
+        if not self.current_prompts:
+            return
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
             self.llm_comments = {}
@@ -105,11 +107,15 @@ class MultiAgentPRReviewManager:
         self.populate_meta_info()
 
     def exclude_disabled_agents(self):
-        # TODO check what will be impact if we make this agent_id based.
+        pre_defined_agents = SettingService.pre_defined_agents_uuid_wise()
         setting = get_context_value("setting")
         for agent, agent_setting in setting["code_review_agent"]["agents"].items():
             if not agent_setting["enable"] or not setting["code_review_agent"]["enable"]:
-                self.exclude_agent.add(agent)
+                agent_id = agent_setting["agent_id"]
+                if agent_setting["is_custom_agent"]:
+                    self.exclude_agent.add(agent)
+                else:
+                    self.exclude_agent.add(pre_defined_agents[agent_id]["agent_name"])
         if not setting[AgentTypes.PR_SUMMARY.value]["enable"]:
             self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
 

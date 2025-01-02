@@ -107,13 +107,23 @@ class AgentServiceBase(ABC):
         user_prompt = self.get_with_reflection_user_prompt_pass1()
         user_prompt = self.inject_custom_prompt(user_prompt)
         user_message = await self.format_user_prompt(user_prompt)
+        structure_type, parse = self.get_structure_type_and_parse_value()
         return {
             "system_message": system_message,
             "user_message": user_message,
-            "structure_type": "text",
-            "parse": False,
+            "structure_type": structure_type,
+            "parse": parse,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
+
+    def get_structure_type_and_parse_value(self, pass_number=1):
+        if pass_number == 1:
+            if self.agent_setting["is_custom_agent"]:
+                return "xml", True
+            else:
+                return "text", False
+        else:
+            return "xml", True
 
     async def get_with_reflection_prompt_pass_2(self, previous_review_comments):
         system_message = self.get_with_reflection_system_prompt_pass2()
@@ -121,11 +131,12 @@ class AgentServiceBase(ABC):
         user_prompt = self.get_with_reflection_user_prompt_pass2()
         user_prompt = self.inject_custom_prompt(user_prompt)
         user_message = await self.format_user_prompt(user_prompt, previous_review_comments)
+        structure_type, parse = self.get_structure_type_and_parse_value()
         return {
             "system_message": system_message,
             "user_message": user_message,
-            "structure_type": "xml",
-            "parse": True,
+            "structure_type": structure_type,
+            "parse": parse,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
 

@@ -248,7 +248,7 @@ def format_comment(data):
 def get_bucket_name(data):
     buckets = data.get("buckets")
     if buckets and not data.get("is_summarized"):
-        return buckets[0]
+        return buckets[0]["name"]
     return ""
 
 
