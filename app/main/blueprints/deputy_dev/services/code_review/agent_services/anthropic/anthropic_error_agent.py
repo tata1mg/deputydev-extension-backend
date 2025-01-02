@@ -11,8 +11,9 @@ from app.main.blueprints.deputy_dev.services.setting_service import SettingServi
 
 class AnthropicErrorAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        super().__init__(context_service, is_reflection_enabled, AgentTypes.ERROR.value)
-        self.agent_id = SettingService.pre_defined_agents_id_via_name(AgentTypes.ERROR.value)
+        agent_name = SettingService.predefined_name_to_custom_name(AgentTypes.ERROR.value)
+        super().__init__(context_service, is_reflection_enabled, agent_name)
+        self.agent_id = SettingService.agent_id_by_custom_name(agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -102,7 +103,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         diff)</line_number>
         <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
         points)</confidence_score>
-        <bucket>$BUCKET - Always this value do not change this</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each error found -->
         </comments>
@@ -270,7 +271,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         diff)</line_number>
         <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
         points)</confidence_score>
-        <bucket>$BUCKET - Always this value do not change this</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each error found -->
         </comments>

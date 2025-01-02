@@ -107,15 +107,10 @@ class MultiAgentPRReviewManager:
         self.populate_meta_info()
 
     def exclude_disabled_agents(self):
-        pre_defined_agents = SettingService.pre_defined_agents_uuid_wise()
         setting = get_context_value("setting")
         for agent, agent_setting in setting["code_review_agent"]["agents"].items():
             if not agent_setting["enable"] or not setting["code_review_agent"]["enable"]:
-                agent_id = agent_setting["agent_id"]
-                if agent_setting["is_custom_agent"]:
-                    self.exclude_agent.add(agent)
-                else:
-                    self.exclude_agent.add(pre_defined_agents[agent_id]["agent_name"])
+                self.exclude_agent.add(agent)
         if not setting[AgentTypes.PR_SUMMARY.value]["enable"]:
             self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
 
