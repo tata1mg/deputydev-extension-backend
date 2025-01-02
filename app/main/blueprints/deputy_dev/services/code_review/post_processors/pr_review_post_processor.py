@@ -71,7 +71,7 @@ class PRReviewPostProcessor:
             payload={
                 "review_status": self.review_status,
                 "meta_info": self.pr_meta_info(pr_dto, tokens_data, extra_info=extra_info),
-                "quality_score": self.get_pr_score([], {}),
+                "quality_score": self.get_pr_score([]),
                 "iteration": self.completed_pr_count + 1,
                 "loc_changed": self.loc_changed,
             },

@@ -182,16 +182,16 @@ class PRReviewManager:
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
-        # llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
-        #     repo_service, prompt_version
-        # ).get_code_review_comments()
-        llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = (
-            cls.llm_comments(),
-            "",
-            cls.tokens(),
-            cls.meta_info_to_save(),
-            False,
-        )
+        llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
+            repo_service, prompt_version
+        ).get_code_review_comments()
+        # llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = (
+        #     cls.llm_comments(),
+        #     "",
+        #     cls.tokens(),
+        #     cls.meta_info_to_save(),
+        #     False,
+        # )
         # We will only post summary for forst PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
             await repo_service.update_pr_description(pr_summary.get("response"))

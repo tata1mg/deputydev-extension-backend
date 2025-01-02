@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
+from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes, AgentIds
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
 )
@@ -34,8 +34,8 @@ from app.main.blueprints.deputy_dev.services.setting_service import SettingServi
 class AgentFactory:
     FACTORIES = {
         AgentTypes.SECURITY.value: AnthropicSecurityAgent,
-        AgentTypes.CODE_COMMUNICATION.value: AnthropicPerformanceOptimisationAgent,
-        AgentTypes.PERFORMANCE_OPTIMISATION.value: AnthropicCodeCommunicationAgent,
+        AgentTypes.CODE_COMMUNICATION.value: AnthropicCodeCommunicationAgent,
+        AgentTypes.PERFORMANCE_OPTIMISATION.value: AnthropicPerformanceOptimisationAgent,
         AgentTypes.CODE_MAINTAINABILITY.value: AnthropicCodeMaintainabilityAgent,
         AgentTypes.ERROR.value: AnthropicErrorAgent,
         AgentTypes.BUSINESS_LOGIC_VALIDATION.value: AnthropicBusinessValidationAgent,
@@ -50,9 +50,9 @@ class AgentFactory:
 
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
         prompts = {}
-        for agent in self.get_agents():
-
-            _klass = self.factories.get(agent)
+        for agent in SettingService.agents_settings().keys():
+            predefined_name = SettingService.custom_name_to_predefined_name(agent)
+            _klass = self.factories.get(predefined_name)
             if not _klass or agent in exclude_agents:
                 continue
 
@@ -71,15 +71,6 @@ class AgentFactory:
         }
         return prompts, meta_info
 
-    def get_agents(self):
-        # TODO: handle the condition when pre-defined agents name changes
-        agents_list = AgentTypes.list()
-        agents = SettingService.agents_settings()
-        for agent_name, agent_data in agents.items():
-            if agent_data["is_custom_agent"]:
-                agents_list.append(agent_name)
-        return agents
-
     def initialize_custom_agents(self):
         for agent_name, agent_setting in SettingService.agents_settings().items():
             if agent_setting["is_custom_agent"] and agent_setting["enable"]:
@@ -89,7 +80,7 @@ class AgentFactory:
     def create_custom_agent(self, agent_name, context_service, is_reflection_enabled):
         def init_method(self, *args, **kwargs):
             super(self.__class__, self).__init__(context_service, is_reflection_enabled, agent_name)
-            self.agent_id = SettingService.agent_id(agent_name)
+            self.agent_id = SettingService.agent_id_by_custom_name(agent_name)
 
         def get_with_reflection_system_prompt_pass1(self):
             return "You are a senior developer tasked with reviewing a pull request. You are acting like an agent whose name is {$AGENT_NAME}"
@@ -165,7 +156,7 @@ class AgentFactory:
               <file_path>file path on which the comment is to be made</file_path>
               <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
               <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal points</confidence_score>
-              <bucket>$BUCKET - Always this value do not change this</bucket>
+              <bucket>$BUCKET</bucket>
               </comment>
               <!-- Repeat the <comment> block for each security issue found -->
               </comments>
