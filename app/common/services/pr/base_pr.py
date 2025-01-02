@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod
-
-
 import toml
 from torpedo import CONFIG
 from app.main.blueprints.deputy_dev.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
@@ -18,12 +16,10 @@ from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
 from app.main.blueprints.deputy_dev.utils import (
     categorize_loc,
     format_summary_loc_time_text,
-    ignore_files,
-    files_to_exclude,
 )
 from app.common.services.credentials import AuthHandler
 from app.common.services.repo.base_repo import BaseRepo
-from app.main.blueprints.deputy_dev.models.dao import Repos, Workspaces
+from app.main.blueprints.deputy_dev.models.dao.postgres import Repos, Workspaces
 
 
 class BasePR(ABC):
@@ -240,11 +236,3 @@ class BasePR(ABC):
             workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
             repo = await Repos.get_or_none(workspace_id=workspace.id, scm_repo_id=scm_repo_id)
             return repo
-
-    def exclude_pr_diff(self, pr_diff):
-        settings = get_context_value("setting") or {}
-        code_review_agent = settings.get("code_review_agent", {})
-        inclusions = code_review_agent.get("inclusions", [])
-        exclusions = code_review_agent.get("exclusions", [])
-        excluded_files = files_to_exclude(exclusions, inclusions, "")
-        return ignore_files(pr_diff, excluded_files)

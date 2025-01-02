@@ -10,7 +10,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     ExperimentStatusTypes,
     PrStatusTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao.postgres import Agents, PRComments
+from app.main.blueprints.deputy_dev.models.dao.postgres import Agents, PRComments, AgentCommentMappings
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
     PRScoreHelper,
@@ -18,10 +18,7 @@ from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
-from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import (
-    AgentCommentMappings,
-    AgentCommentMappingService,
-)
+from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import AgentCommentMappingService
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.pr_comments_service import (
     CommentService,

@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from .base import Base
+from app.common.models.dao.postgres.base import Base
 
 
 class AgentCommentMappings(Base):

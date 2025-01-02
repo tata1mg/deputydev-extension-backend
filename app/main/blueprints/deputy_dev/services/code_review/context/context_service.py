@@ -47,11 +47,12 @@ class ContextService:
 
     async def get_relevant_chunk(self):
         if not self.relevant_chunk:
-            use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+            # TODO: remove False from here
+            use_new_chunking = (
+                False and get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+            )
             self.relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-                query=self.pr_service.pr_commit_diff
-                if get_context_value("pr_reviewable_on_commit")
-                else self.pr_service.pr_diff,
+                query=await self.pr_service.get_effective_pr_diff(),
                 local_repo=GitRepo(self.repo_service.repo_dir),
                 use_new_chunking=use_new_chunking,
                 use_llm_re_ranking=False,
@@ -60,6 +61,7 @@ class ContextService:
                 search_type=SearchTypes.NATIVE,
                 process_executor=process_executor,
             )
+
         return self.relevant_chunk
 
     def get_pr_title(self):
@@ -76,7 +78,7 @@ class ContextService:
 
     async def get_pr_diff(self, append_line_no_info=False, operation="code_review", agent_id=None):
         pr_diff = await self.pr_service.get_effective_pr_diff(operation, agent_id)
-        self.pr_diff_service = self.repo_service.pr_diff_service
+        self.pr_diff_service = self.pr_service.pr_diff_service
         self.pr_diff_tokens = self.pr_diff_service.pr_diffs_token_counts(operation)
         if append_line_no_info:
             return append_line_numbers(pr_diff)
