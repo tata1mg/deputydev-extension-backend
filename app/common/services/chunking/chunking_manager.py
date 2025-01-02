@@ -17,6 +17,9 @@ from app.common.services.prompt.factory import PromptFeatureFactory
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.search.search import perform_search
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.utils import is_path_included
+from torpedo import CONFIG
 
 
 class ChunkingManger:
@@ -263,8 +266,44 @@ class ChunkingManger:
         related_chunk = [
             chunk for chunk in related_chunk if chunk.content not in [chunk.content for chunk in focus_chunks_details]
         ]
+        # TODO: will update this after code finalization of relevant chunks
+        return cls.agent_wise_relevant_chunks(related_chunk), input_tokens
+        # if not use_llm_re_ranking:
+        #     return await cls.sort_and_filter_chunks_by_heuristic(focus_chunks_details + related_chunk), input_tokens
+        # else:
+        #     return await cls.sort_and_filter_chunks_by_llm(focus_chunks_details, related_chunk, query), input_tokens
 
-        if not use_llm_re_ranking:
-            return await cls.sort_and_filter_chunks_by_heuristic(focus_chunks_details + related_chunk), input_tokens
-        else:
-            return await cls.sort_and_filter_chunks_by_llm(focus_chunks_details, related_chunk, query), input_tokens
+    @classmethod
+    def agent_wise_relevant_chunks(cls, ranked_snippets_list):
+        NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
+        agents = SettingService.get_uuid_wise_agents()
+        remaining_agents = len(agents)
+
+        relevant_chunks = {agent_id: [] for agent_id in agents}
+
+        for snippet in ranked_snippets_list:
+            if remaining_agents == 0:
+                break
+
+            path = snippet.denotation
+
+            for agent_id, agent_info in agents.items():
+                # Skip if the agent already has the required number of chunks
+                if len(relevant_chunks[agent_id]) >= NO_OF_CHUNKS:
+                    continue
+
+                inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
+
+                # Check if the path is relevant
+                if is_path_included(path, exclusions, inclusions):
+                    relevant_chunks[agent_id].append(snippet)
+
+                    # Decrement the counter when the agent reaches the chunk limit
+                    if len(relevant_chunks[agent_id]) == NO_OF_CHUNKS:
+                        remaining_agents -= 1
+
+                        # Exit the loop early if all agents are fulfilled
+                        if remaining_agents == 0:
+                            break
+
+        return relevant_chunks
