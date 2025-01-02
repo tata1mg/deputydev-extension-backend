@@ -131,7 +131,7 @@ class AgentServiceBase(ABC):
         user_prompt = self.get_with_reflection_user_prompt_pass2()
         user_prompt = self.inject_custom_prompt(user_prompt)
         user_message = await self.format_user_prompt(user_prompt, previous_review_comments)
-        structure_type, parse = self.get_structure_type_and_parse_value()
+        structure_type, parse = self.get_structure_type_and_parse_value(pass_number=2)
         return {
             "system_message": system_message,
             "user_message": user_message,

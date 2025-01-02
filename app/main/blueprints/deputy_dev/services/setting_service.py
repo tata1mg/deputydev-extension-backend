@@ -8,7 +8,6 @@ from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSetting
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_CHAR_LIMIT,
     SETTING_ERROR_MESSAGE,
-    AgentTypes,
     SettingErrorType,
     SettingLevel,
 )
@@ -26,6 +25,9 @@ from app.main.blueprints.deputy_dev.utils import (
 
 class SettingService:
     DD_LEVEL_SETTINGS = toml.load(Path("./settings.toml"))
+    PREDEFINED_AGENTS_IDS_AND_NAMES = {
+        setting["agent_id"]: name for name, setting in DD_LEVEL_SETTINGS["code_review_agent"]["agents"].items()
+    }
     repo_specific_keys = ["app"]
 
     def __init__(self, repo_service, team_id=None, default_branch=None):
@@ -238,13 +240,17 @@ class SettingService:
         """
         Merge the `agents` key from `code_review_agent`, ensuring custom rules are applied.
         """
+        base_agent_ids = {agent_setting["agent_id"]: agent_name for agent_name, agent_setting in base_agents.items()}
         for key, override_value in override_agents.items():
-            if key in base_agents:
-                base_agents[key] = cls.merge_setting(base_agents[key], override_value)
+            agent_id = override_value["agent_id"]
+            if agent_id in base_agent_ids:
+                base_agent_name = base_agent_ids[agent_id]
+                base_agents[key] = cls.merge_setting(base_agents[base_agent_name], override_value)
+                if key != base_agent_name:
+                    del base_agents[base_agent_name]
             else:
                 base_agents[key] = override_value
-            # TODO make is_custom_agent logic agent_id wise and agent name can change.
-            base_agents[key]["is_custom_agent"] = key not in AgentTypes.list()
+            base_agents[key]["is_custom_agent"] = agent_id not in cls.PREDEFINED_AGENTS_IDS_AND_NAMES
 
         return base_agents
 
@@ -612,21 +618,8 @@ class SettingService:
         return setting["code_review_agent"]["agents"]
 
     @classmethod
-    def pre_defined_agents_id_via_name(cls, agent_name):
-        return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"][agent_name]["agent_id"]
-
-    @classmethod
     def pre_defined_agents(cls):
         return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"]
-
-    @classmethod
-    def pre_defined_agents_uuid_wise(cls):
-        pre_defined_agents = cls.pre_defined_agents()
-        agents = {}
-        for agent_name, agent_data in pre_defined_agents.items():
-            agent_data = {"agent_name": agent_name, **agent_data}
-            agents[str(agent_data["agent_id"])] = agent_data
-        return agents
 
     @classmethod
     def summary_agent_id(cls):
@@ -652,6 +645,34 @@ class SettingService:
                 return list(global_inclusions), list(global_exclusions)
 
     @classmethod
-    def agent_id(cls, agent_name):
+    def agent_id_by_custom_name(cls, agent_name):
         agent_settings = cls.agents_settings()
         return agent_settings[agent_name]["agent_id"]
+
+    @classmethod
+    def predefined_name_to_custom_name(cls, agent_name):
+        pre_defined_agents = cls.pre_defined_agents()
+        if agent_name in pre_defined_agents:
+            agent_id = pre_defined_agents[agent_name]["agent_id"]
+            uuid_wise_agents = cls.get_uuid_wise_agents()
+            return uuid_wise_agents[agent_id]["agent_name"]
+        else:
+            return agent_name
+
+    @classmethod
+    def custom_name_to_predefined_name(cls, agent_name):
+        # In case of custom agent predefined_name will be same as custom agent
+        all_agents = cls.agents_settings()
+        if all_agents[agent_name]["is_custom_agent"]:
+            return agent_name
+        else:
+            return cls.PREDEFINED_AGENTS_IDS_AND_NAMES[all_agents[agent_name]["agent_id"]]
+
+    @classmethod
+    def predefined_name_by_id(cls, agent_id):
+        return cls.PREDEFINED_AGENTS_IDS_AND_NAMES.get(agent_id)
+
+    @classmethod
+    def custom_name_by_id(cls, agent_id):
+        agents_settings = cls.get_uuid_wise_agents()
+        return agents_settings[agent_id]["agent_name"]
