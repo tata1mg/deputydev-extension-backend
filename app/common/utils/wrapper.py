@@ -41,3 +41,25 @@ def exception_logger(func):
                 raise _ex
 
         return sync_wrapper
+
+
+def measure_time(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        import time
+
+        start_time = time.perf_counter()
+        result = await func(*args, **kwargs)
+        print(f"{func.__name__} took {time.perf_counter() - start_time} seconds")
+        return result
+
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        import time
+
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} took {time.perf_counter() - start_time} seconds")
+        return result
+
+    return wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper

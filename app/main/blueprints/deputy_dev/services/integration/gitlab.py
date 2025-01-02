@@ -6,10 +6,10 @@ from tortoise.transactions import in_transaction
 
 from app.common.exception.exception import OnboardingError
 from app.common.service_clients.gitlab.gitlab_group_client import GitlabGroupClient
-from app.main.blueprints.deputy_dev.models.dao import Integrations, Workspaces
+from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations, Workspaces
 from app.main.blueprints.deputy_dev.models.request import OnboardingRequest
 
-from ..credentials import GitlabAuthHandler
+from ......common.services.credentials import GitlabAuthHandler
 from .base import SCM, Integration
 
 

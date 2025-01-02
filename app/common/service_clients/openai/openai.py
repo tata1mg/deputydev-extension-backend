@@ -43,5 +43,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         return completion
 
     async def create_embedding(self, input, model: str, encoding_format: str):
-        embeddings = await self.__client.embeddings.create(input=input, model=model, encoding_format=encoding_format)
+        embeddings = await self.__client.embeddings.create(
+            input=input, model=model, encoding_format=encoding_format, timeout=2
+        )
         return embeddings
