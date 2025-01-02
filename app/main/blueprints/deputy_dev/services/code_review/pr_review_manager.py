@@ -99,12 +99,6 @@ class PRReviewManager:
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
                 repo_service, comment_service, data["prompt_version"]
             )
-            # llm_comments, tokens_data, meta_info_to_save, is_large_pr = (
-            #     cls.llm_comments_v2(),
-            #     cls.tokens(),
-            #     cls.meta_info_to_save(),
-            #     False,
-            # )
             meta_info_to_save["execution_start_time"] = execution_start_time
             await PRReviewPostProcessor(repo_service, comment_service, affirmation_service).post_process_pr(
                 pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
@@ -124,198 +118,60 @@ class PRReviewManager:
             repo_service.delete_repo()
 
     @classmethod
+    def meta_info_to_save(cls):
+        return {"issue_id": "OS-1718", "confluence_doc_id": None}
+
+    @classmethod
     def llm_comments(cls):
         return [
             {
-                "file_path": "app/modules/pharma_pdp/services/cacha_managers/interacting_brands_by_drug_id_cache_manager.py",
-                "line_number": "12",
-                "comment": "The `InteractingBrandsByDrugIdCacheManager` class has been updated with caching functionality, but there's no error handling or fallback mechanism implemented. This could lead to potential issues if the cache or the content service fails.",
-                "buckets": ["CODE_ROBUSTNESS"],
-                "agent_ids": ["ccfe1b06-f5f2-42b1-a209-4d560edbd5f4"],
-                "corrective_code": 'async def interacting_drugs_data(cls, cache_key_data, headers):\n    drug_id = cache_key_data["drug_id"]\n    if is_blank(drug_id):\n        return None\n\n    try:\n        interacting_drugs = await ContentServiceClient.drug_interaction_by_drug_id(drug_id)\n    except Exception as e:\n        logger.error(f"Error fetching drug interaction data: {str(e)}")\n        return None  # Consider returning a default or cached value here\n\n    if is_blank(interacting_drugs):\n        return None\n\n    interacting_drug_hash = {}\n    # Process the interacting drugs data...\n\n    return interacting_drug_hash',
-                "confidence_score": 0.9,
+                "file_path": "app/modules/pharma_pdp/utils/utility.py",
+                "line_number": "712",
+                "comment": "Critical: The function 'error_function' contains a deliberate division by zero error, which will cause a runtime exception and crash the program. This is a severe logical error that needs to be addressed immediately.",
+                "buckets": [{"name": "ERROR", "agent_id": "255c5d79-b3ce-4b0b-aa6d-f96096aa6a2f"}],
+                "corrective_code": 'def error_function(cls):\n    # Remove the division by zero\n    # Add appropriate error handling or logic here\n    return "Function executed successfully"',
+                "confidence_score": 1.0,
                 "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": True,
-                "scm_comment_id": 581083728,
+                "is_valid": None,
+                "scm_comment_id": 582203559,
+            },
+            {
+                "file_path": "app/modules/pharma_pdp/utils/utility.py",
+                "line_number": "713",
+                "comment": "High: The function 'error_function' contains unreachable code after the division by zero error. This is a logical error as the second line will never be executed due to the exception raised by the first line.",
+                "buckets": [{"name": "ERROR", "agent_id": "255c5d79-b3ce-4b0b-aa6d-f96096aa6a2f"}],
+                "corrective_code": 'def error_function(cls):\n    # Remove both lines and implement proper functionality\n    return "Function executed successfully"',
+                "confidence_score": 1.0,
+                "model": "CLAUDE_3_POINT_5_SONNET",
+                "is_valid": None,
+                "scm_comment_id": 582203563,
             },
             {
                 "file_path": "app/modules/pharma_pdp/utils/utility.py",
                 "line_number": "711",
-                "comment": "- **MAINTAINABILITY**: The `is_tata_neu_affiliate` method is duplicated in the Utils class. This violates the DRY (Don't Repeat Yourself) principle and can lead to confusion and maintenance issues.",
-                "corrective_code": '# Remove the duplicate method:\n# @staticmethod\n# def is_tata_neu_affiliate(user_context) -> bool:\n#     """Checks if user is tata neu affiliated\n# \n#     Args:\n#         user_context (UserContext): user context in headers\n# \n#     Returns:\n#         bool: True if user is affiliated to tata neu\n#     """\n#     return user_context.affiliate_source == "tcp"\n\n# Keep only one instance of the method',
-                "confidence_score": 0.95,
-                "buckets": ["MAINTAINABILITY"],
-                "agent_ids": ["ccfe1b06-f5f2-42b1-a209-4d560edbd5f4", "4a3f593d-73cd-41d6-85a0-dc96c17ce9bb"],
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "agent": None,
-                "is_valid": True,
-                "is_summarized": True,
-                "scm_comment_id": 581083734,
-            },
-        ]
-
-    @classmethod
-    def llm_comments_v2(cls):
-        return [
-            {
-                "file_path": "app/modules/pharma_pdp/services/sku/drug/drug_static_service.py",
-                "line_number": "166",
-                "comment": "The `DrugStaticService` now uses `child_drug_id` instead of `drug_id` for fetching medicine interactions. This change might have implications for other parts of the system. Consider adding a comment explaining the reason for this change and its potential impact.",
-                "buckets": [{"name": "CODE_QUALITY", "agent_id": "ccfe1b06-f5f2-42b1-a209-4d560edbd5f4"}],
+                "comment": "Medium: The 'error_function' is defined as an instance method (using 'cls' parameter) but it doesn't use any class or instance attributes. This is a semantic error that could lead to confusion and potential bugs in the future.",
+                "buckets": [{"name": "ERROR", "agent_id": "255c5d79-b3ce-4b0b-aa6d-f96096aa6a2f"}],
+                "corrective_code": '@staticmethod\ndef error_function():\n    # Implement proper functionality here\n    return "Function executed successfully"',
                 "confidence_score": 0.9,
-                "corrective_code": "\nasync def medicine_interaction(self):\n    if self.sku.child_drug_id:\n        try:\n            # Using child_drug_id instead of drug_id for more specific interaction data\n            # Note: This change may affect other parts of the system that rely on drug_id\n            # TODO: Update related components to use child_drug_id where appropriate\n            return await InteractingBrandsByDrugIdCacheManager.interacting_drugs(\n                self.sku.child_drug_id, self.headers\n            )\n        except BaseSanicException:\n            pass\n    return None\n",
                 "model": "CLAUDE_3_POINT_5_SONNET",
                 "is_valid": None,
-                "scm_comment_id": 581102197,
-            },
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "711",
-                "comment": "The utility method `is_tata_neu_affiliate` has been added, but it appears to be a duplicate of an existing method. Remove the duplicate method to avoid confusion and maintain a single source of truth.",
-                "buckets": [{"name": "CODE_QUALITY", "agent_id": "ccfe1b06-f5f2-42b1-a209-4d560edbd5f4"}],
-                "confidence_score": 0.95,
-                "corrective_code": '\n# Remove the following duplicate method:\n# @staticmethod\n# def is_tata_neu_affiliate(user_context) -> bool:\n#     """Checks if user is tata neu affiliated\n#\n#     Args:\n#         user_context (UserContext): user context in headers\n#\n#     Returns:\n#         bool: True if user is affiliated to tata neu\n#     """\n#     return user_context.affiliate_source == "tcp"\n\n# Keep only the original method\n',
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-                "scm_comment_id": 581102198,
-            },
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "+711",
-                "comment": "The `is_tata_neu_affiliate` method in the `Utils` class appears to be duplicated. This could lead to confusion and maintenance issues in the future.",
-                "buckets": [{"name": "ERROR", "agent_id": "4a3f593d-73cd-41d6-85a0-dc96c17ce9bb"}],
-                "confidence_score": 0.95,
-                "corrective_code": '\n# Remove the duplicate method and keep only one instance of is_tata_neu_affiliate\nclass Utils:\n    # ... other methods ...\n\n    @staticmethod\n    def is_tata_neu_affiliate(user_context) -> bool:\n        """Checks if user is tata neu affiliated\n\n        Args:\n            user_context (UserContext): user context in headers\n\n        Returns:\n            bool: True if user is affiliated to tata neu\n        """\n        return user_context.affiliate_source == "tcp"\n\n    # Remove the duplicate method\n',
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-                "scm_comment_id": 581102199,
+                "scm_comment_id": 582203565,
             },
         ]
 
     @classmethod
     def tokens(cls):
         return {
-            "securityPASS_1": {
+            "error_agentPASS_1": {
                 "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "system_prompt": 69,
-                "user_prompt": 26133,
-                "input_tokens": 30998,
-                "output_tokens": 1025,
-            },
-            "performance_optimisationPASS_1": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "system_prompt": 90,
-                "user_prompt": 30206,
-                "input_tokens": 31091,
-                "output_tokens": 960,
-            },
-            "code_communicationPASS_1": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "pr_user_story": 0,
-                "pr_confluence": None,
-                "system_prompt": 89,
-                "user_prompt": 26195,
-                "input_tokens": 35920,
-                "output_tokens": 540,
-            },
-            "code_maintainabilityPASS_1": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "system_prompt": 104,
-                "user_prompt": 30510,
-                "input_tokens": 36291,
-                "output_tokens": 1497,
-            },
-            "errorPASS_1": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "system_prompt": 78,
-                "user_prompt": 30176,
-                "input_tokens": 35905,
-                "output_tokens": 284,
-            },
-            "pr_summaryPASS_1": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "system_prompt": 110,
-                "user_prompt": 16711,
-                "input_tokens": 16832,
-                "output_tokens": 387,
-            },
-            "securityPASS_2": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "system_prompt": 69,
-                "user_prompt": 26263,
-                "input_tokens": 31132,
-                "output_tokens": 349,
-            },
-            "performance_optimisationPASS_2": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "system_prompt": 84,
-                "user_prompt": 30265,
-                "input_tokens": 31360,
-                "output_tokens": 1213,
-            },
-            "code_communicationPASS_2": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "pr_user_story": 0,
-                "pr_confluence": None,
-                "system_prompt": 78,
-                "user_prompt": 26469,
-                "input_tokens": 35972,
-                "output_tokens": 810,
-            },
-            "code_maintainabilityPASS_2": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "system_prompt": 126,
-                "user_prompt": 30653,
-                "input_tokens": 36492,
-                "output_tokens": 1209,
-            },
-            "errorPASS_2": {
-                "pr_title": 6,
-                "pr_description": 3901,
-                "pr_diff_tokens": 16693,
-                "relevant_chunk": 5390,
-                "system_prompt": 99,
-                "user_prompt": 30449,
-                "input_tokens": 36192,
-                "output_tokens": 414,
-            },
-        }
-
-    @classmethod
-    def meta_info_to_save(cls):
-        import datetime
-
-        return {
-            "issue_id": "OS-1518",
-            "confluence_doc_id": None,
-            "execution_start_time": datetime.datetime(2024, 12, 23, 20, 24, 46, 606084),
+                "pr_description": 0,
+                "pr_diff_tokens": 2047,
+                "relevant_chunk": 2043,
+                "system_prompt": 51,
+                "user_prompt": 9190,
+                "input_tokens": 11895,
+                "output_tokens": 546,
+            }
         }
 
     @classmethod
@@ -326,10 +182,16 @@ class PRReviewManager:
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
-        llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
-            repo_service, prompt_version
-        ).get_code_review_comments()
-
+        # llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
+        #     repo_service, prompt_version
+        # ).get_code_review_comments()
+        llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = (
+            cls.llm_comments(),
+            "",
+            cls.tokens(),
+            cls.meta_info_to_save(),
+            False,
+        )
         # We will only post summary for forst PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
             await repo_service.update_pr_description(pr_summary.get("response"))

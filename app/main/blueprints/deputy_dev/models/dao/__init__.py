@@ -16,6 +16,7 @@ __all__ = [
     "UserTeams",
     "AgentCommentMappings",
     "Configurations",
+    "Agents"
 ]
 
 from .agent_comment_mappings import AgentCommentMappings
@@ -35,3 +36,4 @@ from .tokens import Tokens
 from .user_teams import UserTeams
 from .users import Users
 from .workspaces import Workspaces
+from .agents import Agents
