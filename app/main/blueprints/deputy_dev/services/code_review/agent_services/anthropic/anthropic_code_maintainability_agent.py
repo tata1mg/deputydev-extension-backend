@@ -120,7 +120,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>{$BUCKET} - Always this value do not change this</bucket>
+        <bucket>$BUCKET - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code maintainability issue found -->
         </comments>
@@ -305,7 +305,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>{$BUCKET} - Always this value do not change this</bucket>
+        <bucket>$BUCKET - Always this value do not change this</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code maintainability issue found -->
         </comments>

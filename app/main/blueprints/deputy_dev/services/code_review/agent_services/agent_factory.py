@@ -72,7 +72,7 @@ class AgentFactory:
         return prompts, meta_info
 
     def get_agents(self):
-        return ["test_case_validation"]
+        # TODO: handle the condition when pre-defined agents name changes
         agents_list = AgentTypes.list()
         agents = SettingService.agents_settings()
         for agent_name, agent_data in agents.items():
@@ -156,7 +156,7 @@ class AgentFactory:
               <review>
               <comments>
               <comment>
-              <description>Describe the issue, its potential impact, and its severity (Critical, High, Medium, Low) in detail and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
+              <description>Describe the issue, its potential impact,  in detail and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
               <corrective_code>
               Rewrite the code snippet. How the code should be written ideally.
               Add this section under <![CDATA[ ]]> for avoiding xml paring error.
@@ -165,7 +165,7 @@ class AgentFactory:
               <file_path>file path on which the comment is to be made</file_path>
               <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
               <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal points</confidence_score>
-              <bucket>{$BUCKET} - Always this value do not change this</bucket>
+              <bucket>$BUCKET - Always this value do not change this</bucket>
               </comment>
               <!-- Repeat the <comment> block for each security issue found -->
               </comments>

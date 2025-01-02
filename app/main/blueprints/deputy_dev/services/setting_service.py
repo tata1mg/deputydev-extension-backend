@@ -223,7 +223,7 @@ class SettingService:
                 else:
                     base_config[key] = cls.merge_setting(base_value, override_config[key])
 
-            elif key == "enable":
+            elif key == "enable" or key == "is_override":
                 if base_config.get("is_override", True):
                     base_config[key] = override_config[key]
             elif key in ["exclusions", "inclusions"]:
@@ -243,6 +243,7 @@ class SettingService:
                 base_agents[key] = cls.merge_setting(base_agents[key], override_value)
             else:
                 base_agents[key] = override_value
+            # TODO make is_custom_agent logic agent_id wise and agent name can change.
             base_agents[key]["is_custom_agent"] = key not in AgentTypes.list()
 
         return base_agents
@@ -304,12 +305,12 @@ class SettingService:
         return cls.validate_mandatory_keys(settings, team_setting)
 
     @classmethod
-    def validate_mandatory_keys(cls, settings, merged_setting):
-        errors = cls.validate_agents_keys(cls.agents(settings), merged_setting)
+    def validate_mandatory_keys(cls, merged_setting, level_specific_setting):
+        errors = cls.validate_agents_keys(cls.agents(merged_setting), level_specific_setting)
         return errors
 
     @staticmethod
-    def validate_agents_keys(agents, merged_setting):
+    def validate_agents_keys(agents, level_specific_setting):
         errors = {}
         error = ""
         for agent_name, agent_data in agents.items():
@@ -318,7 +319,7 @@ class SettingService:
                 if not agent_data.get(key):
                     missing_keys.append(key)
             if missing_keys:
-                merged_setting["code_review_agent"]["agents"].pop(agent_name)
+                level_specific_setting["code_review_agent"]["agents"].pop(agent_name)
                 error += f"- {agent_name}: {str(missing_keys)}\n"
         if error:
             error_type = SettingErrorType.MISSING_KEY.value
@@ -613,6 +614,19 @@ class SettingService:
     @classmethod
     def pre_defined_agents_id_via_name(cls, agent_name):
         return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"][agent_name]["agent_id"]
+
+    @classmethod
+    def pre_defined_agents(cls):
+        return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"]
+
+    @classmethod
+    def pre_defined_agents_uuid_wise(cls):
+        pre_defined_agents = cls.pre_defined_agents()
+        agents = {}
+        for agent_name, agent_data in pre_defined_agents.items():
+            agent_data = {"agent_name": agent_name, **agent_data}
+            agents[str(agent_data["agent_id"])] = agent_data
+        return agents
 
     @classmethod
     def summary_agent_id(cls):

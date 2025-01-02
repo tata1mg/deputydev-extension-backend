@@ -8,6 +8,7 @@ from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
 class PRDiffService:
+    # TODO: add docstrings in functions of this class
     def __init__(self, pr_diff):
         self.pr_diff = pr_diff
         self.pr_diff_mappings = {}
