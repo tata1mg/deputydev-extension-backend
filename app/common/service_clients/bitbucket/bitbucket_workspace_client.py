@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
+from app.common.services.credentials import AuthHandler
 
 from ..base_scm_client import BaseSCMClient
 

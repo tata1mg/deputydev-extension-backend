@@ -6,8 +6,8 @@ from torpedo.exceptions import HTTPRequestException
 
 from app.common.constants.constants import VCSFailureMessages
 from app.common.service_clients.base_scm_client import BaseSCMClient
+from app.common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.loggers import AppLogger
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 config = CONFIG.config
 
