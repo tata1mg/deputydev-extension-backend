@@ -52,27 +52,48 @@ class AgentFactory:
         self.initialize_custom_agents()
 
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
-        prompts = {}
-        for agent in SettingService.agents_settings().keys():
-            predefined_name = SettingService.custom_name_to_predefined_name(agent)
-            _klass = self.factories.get(predefined_name)
-            if not _klass or agent in exclude_agents:
-                continue
-
-            agent_instance = _klass(self.context_service, self.reflection_enabled)
-            agent_callable = await agent_instance.should_execute()
-            if not agent_callable:
-                continue
-
-            prompts[agent] = await agent_instance.get_system_n_user_prompt(
-                reflection_stage, previous_review_comments.get(agent, {}).get("response")
-            )
+        prompts = await self.build_code_review_agents_prompt(reflection_stage, previous_review_comments, exclude_agents)
+        prompt = await self.build_pr_summary_prompt(reflection_stage, previous_review_comments, exclude_agents)
+        if prompt:
+            prompts[AgentTypes.PR_SUMMARY.value] = prompt
 
         meta_info = {
             "issue_id": self.context_service.issue_id,
             "confluence_doc_id": self.context_service.confluence_id,
         }
         return prompts, meta_info
+
+    async def build_pr_summary_prompt(self, reflection_stage, previous_review_comments, exclude_agents):
+        agent = AgentTypes.PR_SUMMARY.value
+        _klass = self.factories[agent]
+        prompt = self.__build_prompts(agent, _klass, reflection_stage, previous_review_comments, exclude_agents)
+        return prompt
+
+    async def build_code_review_agents_prompt(self, reflection_stage, previous_review_comments, exclude_agents):
+        prompts = {}
+        for agent in SettingService.agents_settings().keys():
+            predefined_name = SettingService.custom_name_to_predefined_name(agent)
+            _klass = self.factories.get(predefined_name)
+            prompt = await self.__build_prompts(
+                agent, _klass, reflection_stage, previous_review_comments, exclude_agents
+            )
+            if prompt:
+                prompts[agent] = prompt
+        return prompts
+
+    async def __build_prompts(self, agent, agent_class, reflection_stage, previous_review_comments, exclude_agents):
+        if not agent_class or agent in exclude_agents:
+            return
+
+        agent_instance = agent_class(self.context_service, self.reflection_enabled)
+        agent_callable = await agent_instance.should_execute()
+        if not agent_callable:
+            return
+
+        prompt = await agent_instance.get_system_n_user_prompt(
+            reflection_stage, previous_review_comments.get(agent, {}).get("response")
+        )
+        return prompt
 
     def initialize_custom_agents(self):
         for agent_name, agent_setting in SettingService.agents_settings().items():
