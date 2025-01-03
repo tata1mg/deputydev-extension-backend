@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BucketDTO(BaseModel):
@@ -12,5 +12,4 @@ class BucketDTO(BaseModel):
     description: Optional[str] = ""
     is_llm_suggested: Optional[bool] = False
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

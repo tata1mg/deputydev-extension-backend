@@ -1,6 +1,9 @@
 from copy import deepcopy
 
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes, AgentIds
+from app.main.blueprints.deputy_dev.constants.constants import (
+    AgentTypes,
+    TokenTypes,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
 )
@@ -161,7 +164,8 @@ class AgentFactory:
               <!-- Repeat the <comment> block for each security issue found -->
               </comments>
               </review>
-
+            
+            8. Do not change the bucket name.
             """
 
         def get_with_reflection_system_prompt_pass2(self):

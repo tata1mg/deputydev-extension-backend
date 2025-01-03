@@ -200,7 +200,8 @@
     "apps": {
       "dao": {
         "models": [
-          "app.main.blueprints.deputy_dev.models.dao"
+          "app.main.blueprints.deputy_dev.models.dao.postgres",
+          "app.main.blueprints.one_dev.models.dao.postgres"
         ],
         "default_connection": "default"
       }
@@ -264,16 +265,29 @@
       "INPUT_TOKENS_LIMIT": 130000
     }
   },
+  "GIT_ACTORS": {
+    "BITBUCKET": {
+      "NAME": "DeputyDev",
+      "EMAIL": "bot-email@bot.bot"
+    }
+  },
   "FEATURE_MODELS": {
     "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
     "PR_SUMMARY": "GPT_4_O_MODEL",
     "PR_CHAT": "GPT_4_O_MODEL",
+    "CODE_GENERATION": "CLAUDE_3_POINT_5_SONNET",
+    "CHUNK_DESCRIPTION": "CLAUDE_3_POINT_5_SONNET",
     "COMMENT_VALIDATION": "GPT_4_O_MODEL",
     "COMMENT_SUMMARIZATION": "GPT_4_O_MODEL",
     "RE_RANKING": "CLAUDE_3_POINT_5_SONNET"
   },
+  "ONE_DEV": {
+    "HOST": "http://localhost:8084",
+    "TIMEOUT": 10000
+  },
   "OPENAI_TIMEOUT": 1000,
   "TEAMS_ENABLED_FOR_EXPERIMENT": [123456, 23456],
+  "JWT_SECRET_KEY": "***REMOVED***",
   "TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING": [1, 2],
   "AIOHTTP": {
     "LIMIT": 0,

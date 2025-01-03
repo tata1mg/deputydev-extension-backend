@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from torpedo import CONFIG
 
-from app.common.service_clients.session_manager import SessionManager
+from app.common.request_clients.http.base_http_session_manager import SessionManager
 
 
 class AtlassianOAuthClient:
