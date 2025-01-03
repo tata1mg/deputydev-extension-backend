@@ -3,8 +3,8 @@ from sanic.log import logger
 from torpedo.exceptions import HTTPRequestException
 
 from app.common.service_clients.base_scm_client import BaseSCMClient
+from app.common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.loggers import AppLogger
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 
 class GitlabRepoClient(BaseSCMClient):
@@ -39,7 +39,7 @@ class GitlabRepoClient(BaseSCMClient):
         """
         path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/notes"
         workspace_token_headers = await self.get_ws_token_headers()
-        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
+        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
     async def create_comment_on_parent(self, comment_payload: dict, parent_id):
@@ -55,7 +55,7 @@ class GitlabRepoClient(BaseSCMClient):
         """
         path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions/{parent_id}/notes"
         workspace_token_headers = await self.get_ws_token_headers()
-        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
+        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
     async def create_pr_review_comment(self, comment_payload: dict):
@@ -72,7 +72,7 @@ class GitlabRepoClient(BaseSCMClient):
         """
         path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions"
         workspace_token_headers = await self.get_ws_token_headers()
-        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
+        response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
     async def get_pr_details(self) -> dict:
@@ -102,7 +102,7 @@ class GitlabRepoClient(BaseSCMClient):
         """
         url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}"
         workspace_token_headers = await self.get_ws_token_headers()
-        response = await self.put(url, json=payload, headers=workspace_token_headers, skip_headers=True)
+        response = await self.put(url, json=payload, headers=workspace_token_headers, skip_auth_headers=True)
         return await response.json()
 
     async def get_pr_diff(self):
@@ -150,7 +150,9 @@ class GitlabRepoClient(BaseSCMClient):
     async def create_discussion_comment(self, comment_payload, discussion_id):
         workspace_token_headers = await self.get_ws_token_headers()
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions/{discussion_id}/notes"
-        response = await self.post(diff_url, json=comment_payload, headers=workspace_token_headers, skip_headers=True)
+        response = await self.post(
+            diff_url, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True
+        )
         if response.status_code != 200:
             logger.error(f"Unable to retrieve discussoin thread comments- {self.pr_id}: {response._content}")
         return await response.json()

@@ -1,5 +1,6 @@
 from enum import Enum
 
+from app.common.services.repository.repo.repo_service import RepoService
 from app.main.blueprints.deputy_dev.constants.constants import (
     ChatTypes,
     FeedbackTypes,
@@ -11,8 +12,7 @@ from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.services.feedback.feedback_service import (
     FeedbackService,
 )
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
     WorkspaceService,
 )
@@ -50,7 +50,9 @@ class CommentPreprocessor(Enum):
             scm_workspace_id=pr_model.scm_workspace_id(),
         )
         if workspace_dto:
-            repo_dto = await RepoService.find(scm_repo_id=pr_model.scm_repo_id(), workspace_id=workspace_dto.id)
+            repo_dto = await RepoService.db_get(
+                filters=dict(scm_repo_id=pr_model.scm_repo_id(), workspace_id=workspace_dto.id), fetch_one=True
+            )
             if repo_dto:
                 pr_dto = await PRService.find(filters={"scm_pr_id": pr_model.scm_pr_id(), "repo_id": repo_dto.id})
         payload = {

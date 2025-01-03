@@ -1,10 +1,12 @@
 from sanic.log import logger
 
+from app.common.services.repository.db import DB
 from app.main.blueprints.deputy_dev.caches.buckets_cache import BucketsCache
 from app.main.blueprints.deputy_dev.constants.constants import BucketStatus
-from app.main.blueprints.deputy_dev.models.dao import Buckets
+from app.main.blueprints.deputy_dev.models.dao.postgres import Buckets
 from app.main.blueprints.deputy_dev.models.dto.bucket_dto import BucketDTO
-from app.main.blueprints.deputy_dev.services.db.db import DB
+
+# TODO: can we delete this file
 
 
 class BucketService:

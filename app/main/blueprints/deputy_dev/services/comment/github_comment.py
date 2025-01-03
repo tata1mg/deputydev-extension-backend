@@ -2,6 +2,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.common.service_clients.github.github_repo_client import GithubRepoClient
+from app.common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
@@ -9,7 +10,6 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.comment.helpers.github_comment_helper import (
     GithubCommentHelper,
 )
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.utils import (
     format_chat_comment_thread_comment,
     format_comment,

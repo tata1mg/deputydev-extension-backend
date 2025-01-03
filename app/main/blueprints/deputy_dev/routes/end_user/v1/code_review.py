@@ -14,7 +14,7 @@ from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger imp
 from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
     PRReviewManager,
 )
-from app.main.blueprints.deputy_dev.services.pr.backfill_data_manager import (
+from app.main.blueprints.deputy_dev.services.repository.pr.backfill_data_manager import (
     BackfillManager,
 )
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (

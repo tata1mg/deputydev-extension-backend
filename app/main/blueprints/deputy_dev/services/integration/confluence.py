@@ -3,10 +3,10 @@ from __future__ import annotations
 from tortoise.transactions import in_transaction
 
 from app.common.service_clients.oauth import AtlassianOAuthClient
-from app.main.blueprints.deputy_dev.models.dao import Integrations
+from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations
 from app.main.blueprints.deputy_dev.models.request import OnboardingRequest
 
-from ..credentials import ConfluenceAuthHandler
+from ......common.services.credentials import ConfluenceAuthHandler
 from .base import Integration
 
 

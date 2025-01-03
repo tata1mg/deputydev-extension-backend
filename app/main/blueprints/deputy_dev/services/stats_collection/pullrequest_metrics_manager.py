@@ -12,7 +12,7 @@ from app.main.blueprints.deputy_dev.models.pr_close_request import PRCloseReques
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_base import (
     StatsCollectionBase,
 )

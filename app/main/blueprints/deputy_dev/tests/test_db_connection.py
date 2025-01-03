@@ -1,5 +1,5 @@
-from app.main.blueprints.deputy_dev.models.dao import PRComments
-from app.main.blueprints.deputy_dev.services.db.db import DB
+from app.common.services.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres import PRComments
 
 
 class TestDbConnection:
