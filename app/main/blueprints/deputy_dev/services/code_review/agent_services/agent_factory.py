@@ -66,7 +66,7 @@ class AgentFactory:
     async def build_pr_summary_prompt(self, reflection_stage, previous_review_comments, exclude_agents):
         agent = AgentTypes.PR_SUMMARY.value
         _klass = self.factories[agent]
-        prompt = self.__build_prompts(agent, _klass, reflection_stage, previous_review_comments, exclude_agents)
+        prompt = await self.__build_prompts(agent, _klass, reflection_stage, previous_review_comments, exclude_agents)
         return prompt
 
     async def build_code_review_agents_prompt(self, reflection_stage, previous_review_comments, exclude_agents):

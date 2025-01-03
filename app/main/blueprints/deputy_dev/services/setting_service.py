@@ -627,6 +627,10 @@ class SettingService:
         return cls.DD_LEVEL_SETTINGS["pr_summary"]["agent_id"]
 
     @classmethod
+    def summary_agent_setting(cls):
+        return cls.DD_LEVEL_SETTINGS["pr_summary"]
+
+    @classmethod
     def get_agent_inclusion_exclusions(cls, agent_id=None):
         setting = get_context_value("setting")
         if agent_id == cls.summary_agent_id():
@@ -677,3 +681,7 @@ class SettingService:
     def custom_name_by_id(cls, agent_id):
         agents_settings = cls.get_uuid_wise_agents()
         return agents_settings[agent_id]["agent_name"]
+
+    @classmethod
+    def agent_setting_by_name(cls, agent_name):
+        return cls.agents_settings().get(agent_name, {})

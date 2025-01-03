@@ -118,6 +118,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
 
     async def get_system_n_user_prompt(self, comments):
         pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
+        # TODO: handle relevant chunks for comment validation prompt as no agent_id assigned
         relevant_chunks = await self.context_service.get_relevant_chunk()
         system_message = self.get_comments_validation_system_prompt()
         user_message = self.get_comments_validation_user_prompt().format(
