@@ -19,6 +19,8 @@ from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 
+from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+
 
 class AgentServiceBase(ABC):
     def __init__(
@@ -32,11 +34,8 @@ class AgentServiceBase(ABC):
         self.agent_name = agent_name
         self.tiktoken = TikToken()
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"]
-        agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
-        self.agent_setting = agent_settings.get(self.agent_name, {})
-        self.comment_confidence_score = agent_settings.get(self.agent_name, {}).get("confidence_score")
-        self.custom_prompt = agent_settings.get(self.agent_name, {}).get("custom_prompt", "")
-        self.agent_id = None
+        self.agent_setting = SettingService.agent_setting_by_name(agent_name)
+        self.agent_id = self.agent_setting.get("agent_id")
 
     async def format_user_prompt(self, prompt: str, comments: str = None):
         prompt_variables = {
@@ -51,7 +50,7 @@ class AgentServiceBase(ABC):
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
             "AGENT_OBJECTIVE": self.agent_objective(self.agent_name),
-            "CUSTOM_PROMPT": self.custom_prompt or "",
+            "CUSTOM_PROMPT": self.agent_setting.get("custom_prompt") or "",
             "BUCKET": self.agent_setting.get("display_name"),
         }
         template = Template(prompt)
@@ -80,7 +79,7 @@ class AgentServiceBase(ABC):
     def get_additional_info_prompt(self, tokens_info, reflection_iteration):
         return {
             "key": self.agent_name,
-            "comment_confidence_score": self.comment_confidence_score,
+            "comment_confidence_score": self.agent_setting.get("confidence_score"),
             "model": self.model,
             "tokens": tokens_info,
             "reflection_iteration": reflection_iteration,
@@ -141,8 +140,9 @@ class AgentServiceBase(ABC):
         }
 
     def inject_custom_prompt(self, user_prompt):
-        if not self.agent_setting["is_custom_agent"] and self.custom_prompt and self.custom_prompt.strip():
-            return f"{user_prompt}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.custom_prompt}"
+        custom_prompt = self.agent_setting.get("custom_prompt")
+        if not self.agent_setting.get("is_custom_agent", False) and custom_prompt and custom_prompt.strip():
+            return f"{user_prompt}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{custom_prompt}"
         return user_prompt
 
     def inject_system_prompt(self, system_prompt):
