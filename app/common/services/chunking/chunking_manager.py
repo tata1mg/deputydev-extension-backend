@@ -229,7 +229,7 @@ class ChunkingManger:
         use_new_chunking: bool = True,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateAsyncClient] = None,
-    ) -> Tuple[str, int]:
+    ) -> Tuple[dict, int]:
         # Get all chunks from the repository
         focus_chunks_details = await cls.get_focus_chunk(
             query,
