@@ -120,80 +120,16 @@ class PRReviewManager:
             repo_service.delete_local_repo()
 
     @classmethod
-    def meta_info_to_save(cls):
-        return {"issue_id": "OS-1718", "confluence_doc_id": None}
-
-    @classmethod
-    def llm_comments(cls):
-        return [
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "712",
-                "comment": "Critical: The function 'error_function' contains a deliberate division by zero error, which will cause a runtime exception and crash the program. This is a severe logical error that needs to be addressed immediately.",
-                "buckets": [{"name": "ERROR", "agent_id": "255c5d79-b3ce-4b0b-aa6d-f96096aa6a2f"}],
-                "corrective_code": 'def error_function(cls):\n    # Remove the division by zero\n    # Add appropriate error handling or logic here\n    return "Function executed successfully"',
-                "confidence_score": 1.0,
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-                "scm_comment_id": 582203559,
-            },
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "713",
-                "comment": "High: The function 'error_function' contains unreachable code after the division by zero error. This is a logical error as the second line will never be executed due to the exception raised by the first line.",
-                "buckets": [{"name": "ERROR", "agent_id": "255c5d79-b3ce-4b0b-aa6d-f96096aa6a2f"}],
-                "corrective_code": 'def error_function(cls):\n    # Remove both lines and implement proper functionality\n    return "Function executed successfully"',
-                "confidence_score": 1.0,
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-                "scm_comment_id": 582203563,
-            },
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "711",
-                "comment": "Medium: The 'error_function' is defined as an instance method (using 'cls' parameter) but it doesn't use any class or instance attributes. This is a semantic error that could lead to confusion and potential bugs in the future.",
-                "buckets": [{"name": "ERROR", "agent_id": "255c5d79-b3ce-4b0b-aa6d-f96096aa6a2f"}],
-                "corrective_code": '@staticmethod\ndef error_function():\n    # Implement proper functionality here\n    return "Function executed successfully"',
-                "confidence_score": 0.9,
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-                "scm_comment_id": 582203565,
-            },
-        ]
-
-    @classmethod
-    def tokens(cls):
-        return {
-            "error_agentPASS_1": {
-                "pr_title": 6,
-                "pr_description": 0,
-                "pr_diff_tokens": 2047,
-                "relevant_chunk": 2043,
-                "system_prompt": 51,
-                "user_prompt": 9190,
-                "input_tokens": 11895,
-                "output_tokens": 546,
-            }
-        }
-
-    @classmethod
     def check_no_pr_comments(cls, llm_response):
         return not llm_response
 
     @classmethod
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, pr_service: BasePR, prompt_version):
-        is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
+        is_agentic_review_enabled = False and CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
             repo_service, pr_service, prompt_version
         ).get_code_review_comments()
-        # llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = (
-        #     cls.llm_comments(),
-        #     "",
-        #     cls.tokens(),
-        #     cls.meta_info_to_save(),
-        #     False,
-        # )
         # We will only post summary for first PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
             await pr_service.update_pr_description(pr_summary.get("response"))
