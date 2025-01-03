@@ -33,6 +33,15 @@ from app.main.blueprints.deputy_dev.utils import (
     get_filtered_response,
     get_foundation_model_name,
 )
+from app.common.utils.executor import process_executor
+from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from app.common.services.embedding.managers.openai_embedding_manager import (
+    OpenAIEmbeddingManager,
+)
+from app.common.services.search.dataclasses.main import SearchTypes
+from app.common.services.chunking.chunking_handler import (
+    render_snippet_array,
+)
 
 
 class SingleAgentPRReviewManager:
@@ -43,16 +52,25 @@ class SingleAgentPRReviewManager:
         self.context_service = ContextService(repo_service=repo_service, pr_service=pr_service)
 
     async def get_code_review_comments(self):
-        relevant_chunk, embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-            query=self.pr_service.pr_commit_diff
-            if get_context_value("pr_reviewable_on_commit")
-            else self.pr_service.pr_diff,
-            codebase_path=self.repo_service.repo_dir,
+        use_new_chunking = (
+            False and get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
         )
+        relevant_chunk, embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
+            query=await self.pr_service.get_effective_pr_diff(),
+            local_repo=GitRepo(self.repo_service.repo_dir),
+            use_new_chunking=use_new_chunking,
+            use_llm_re_ranking=False,
+            embedding_manager=OpenAIEmbeddingManager,
+            chunkable_files_with_hashes={},
+            search_type=SearchTypes.NATIVE,
+            process_executor=process_executor,
+        )
+        # TODO: change this logic after relevant chunk changes
+        relevant_chunk = render_snippet_array(list(relevant_chunk.values())[0])
 
         llm_response, pr_summary, tokens_data, meta_info_to_save = await self.parallel_pr_review_with_gpt_models(
             await self.context_service.get_pr_diff(),
-            self.repo_service.pr_details,
+            self.pr_service.pr_details,
             relevant_chunk,
             prompt_version=self.prompt_version,
         )
