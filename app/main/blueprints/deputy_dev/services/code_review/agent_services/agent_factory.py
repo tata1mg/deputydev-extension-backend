@@ -104,7 +104,6 @@ class AgentFactory:
     def create_custom_agent(self, agent_name, context_service, is_reflection_enabled):
         def init_method(self, *args, **kwargs):
             super(self.__class__, self).__init__(context_service, is_reflection_enabled, agent_name)
-            self.agent_id = SettingService.agent_id_by_custom_name(agent_name)
 
         def get_with_reflection_system_prompt_pass1(self):
             return "You are a senior developer tasked with reviewing a pull request. You are acting like an agent whose name is {$AGENT_NAME}"

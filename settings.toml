@@ -108,3 +108,4 @@ enable = true
 model = "gpt-4o"
 is_override = true
 custom_prompt = ""
+is_custom_agent = false
