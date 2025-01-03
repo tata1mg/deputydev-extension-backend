@@ -1,6 +1,6 @@
 from sanic.log import logger
 
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
+from app.common.services.credentials import AuthHandler
 
 from .base import Base
 

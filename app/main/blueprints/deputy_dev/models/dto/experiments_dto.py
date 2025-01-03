@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.main.blueprints.deputy_dev.constants.constants import PRStatus
 
@@ -25,5 +25,4 @@ class ExperimentsDTO(BaseModel):
     updated_at: Optional[datetime] = None
     pr_state: str = PRStatus.OPEN.value
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

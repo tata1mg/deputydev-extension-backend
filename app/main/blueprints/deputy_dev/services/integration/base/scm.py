@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.services.jwt_service import JWTService
+from app.common.services.authentication.jwt import JWTHandler
 
-from ...credentials import AuthHandler
+from .......common.services.credentials import AuthHandler
 
 
 class SCM(ABC):
@@ -30,7 +30,7 @@ class SCM(ABC):
             "prompt_version": "v2",
             "scm_workspace_id": scm_workspace_id,
         }
-        token = JWTService.encode(payload=payload)
+        token = JWTHandler(signing_key=CONFIG.config["WEBHOOK_JWT_SIGNING_KEY"]).create_token(payload=payload)
 
         return f"{base_url}?data={token}"
 

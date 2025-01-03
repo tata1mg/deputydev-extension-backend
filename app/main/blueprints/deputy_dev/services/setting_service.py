@@ -4,6 +4,7 @@ from pathlib import Path
 import toml
 from torpedo.exceptions import BadRequestException
 
+from app.common.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_CHAR_LIMIT,
@@ -11,7 +12,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     SettingErrorType,
     SettingLevel,
 )
-from app.main.blueprints.deputy_dev.models.dao import Agents, Configurations, Repos
+from app.main.blueprints.deputy_dev.models.dao.postgres import Agents, Configurations, Repos
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     context_var,
     get_context_value,
@@ -30,7 +31,7 @@ class SettingService:
     }
     repo_specific_keys = ["app"]
 
-    def __init__(self, repo_service, team_id=None, default_branch=None):
+    def __init__(self, repo_service: BaseRepo, team_id=None, default_branch=None):
         self.repo_service = repo_service
         self.team_id = team_id
         self.default_branch = default_branch

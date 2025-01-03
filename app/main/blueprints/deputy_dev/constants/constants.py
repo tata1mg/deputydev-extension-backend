@@ -277,6 +277,17 @@ class AgentIds(ExtendedEnum):
     PR_SUMMARY = "294c1355-38c7-4f69-8914-c95c92e16dbb"
 
 
+class Feature(ExtendedEnum):
+    GENERATE_CODE = "generate_code"
+    PLAN_TASK = "task_planner"
+    GENERATE_DOCSTRING = "generate_docstring"
+    APPLY_SUGGESTION = "apply_suggestion"
+    UPDATE_PR_SUGGESTION = "update_pr_suggestions"
+    CODE_DIFF_GENERATOR = "code_diff_generator"
+    GENERATE_TEST_CASES = "generate_test_cases"
+    GENERATE_TEST_CASE_PLANNER = "generate_test_case_planner"
+
+
 class MultiAgentReflectionIteration(Enum):
     PASS_1 = "PASS_1"
     PASS_2 = "PASS_2"
