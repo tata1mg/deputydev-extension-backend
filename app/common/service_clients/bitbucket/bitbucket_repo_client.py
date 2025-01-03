@@ -4,8 +4,8 @@ from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import HTTPRequestException
 
+from app.common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.loggers import AppLogger
-from app.main.blueprints.deputy_dev.services.credentials import AuthHandler
 
 from ...constants.constants import VCSFailureMessages
 from ..base_scm_client import BaseSCMClient
@@ -52,7 +52,7 @@ class BitbucketRepoClient(BaseSCMClient):
         """
         diff_url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}"
         workspace_token_headers = await self.get_ws_token_headers()
-        response = await self.put(diff_url, json=payload, headers=workspace_token_headers, skip_headers=True)
+        response = await self.put(diff_url, json=payload, headers=workspace_token_headers, skip_auth_headers=True)
         response_json = await response.json()
         if response.status_code == 200:
             return response_json
@@ -133,7 +133,7 @@ class BitbucketRepoClient(BaseSCMClient):
         """
         workspace_token_headers = await self.get_ws_token_headers()
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments"
-        response = await self.post(url, json=comment, headers=workspace_token_headers, skip_headers=True)
+        response = await self.post(url, json=comment, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
     async def get_comment_details(self, comment_id):
@@ -226,6 +226,35 @@ class BitbucketRepoClient(BaseSCMClient):
             f"Unable to retrieve commits and hence PR is reviewed with full diff - {self.pr_id}: {response._content}"
         )
         return []
+
+    async def create_pr(self, payload):
+        """
+        Create a PR on Bitbucket.
+
+        Returns:
+            dict: PR creation response
+        """
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests"
+        workspace_token_headers = await self.get_ws_token_headers()
+        response = await self.post(url, json=payload, headers=workspace_token_headers, skip_auth_headers=True)
+        return await response.json()
+
+    async def list_prs(self, state="OPEN"):
+        """
+        List all PRs on Bitbucket.
+
+        Returns:
+            dict: PR list response
+        """
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests"
+        response = await self.get(url, params={"state": state})
+        return await response.json()
+
+    async def create_issue_comment(self, issue_id, comment):
+        url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/issues/{issue_id}/comments"
+        payload = {"content": {"raw": comment}}
+        response = await self.post(url, json=payload)
+        return await response.json()
 
     async def get_file(self, branch_name, file_path):
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/src/{branch_name}/{file_path}"

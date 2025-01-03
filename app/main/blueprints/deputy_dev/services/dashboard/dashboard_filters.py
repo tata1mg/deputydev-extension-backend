@@ -3,12 +3,12 @@ from torpedo import Task, TaskExecutor
 from torpedo.exceptions import BadRequestException, TaskExecutorException
 
 from app.common.constants.constants import Connections
+from app.common.services.repository.db import DB
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import (
     DashboardQueries,
     StatusTypes,
     TileTypes,
 )
-from app.main.blueprints.deputy_dev.services.db.db import DB
 
 
 class DashboardFiltersManager:

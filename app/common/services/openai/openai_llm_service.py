@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import List
 
 from app.common.service_clients.openai.openai import OpenAIServiceClient
 from app.common.services.openai.openai_service import OpenAIManager
@@ -12,7 +12,7 @@ class OpenAILLMService:
     def __init__(self, client_type: str = "openai") -> None:
         self.client_type = client_type
 
-    async def get_embeddings(self, input_data: List[Any], store_embeddings: bool = True) -> List[List[float]]:
+    async def get_embeddings(self, input_data: List[str], store_embeddings: bool = True) -> List[List[float]]:
         """
         Get embeddings from the Language Model service.
 

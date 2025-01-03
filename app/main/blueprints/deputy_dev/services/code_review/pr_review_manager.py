@@ -5,6 +5,10 @@ from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.common.services.pr.base_pr import BasePR
+from app.common.services.pr.pr_factory import PRFactory
+from app.common.services.repo.base_repo import BaseRepo
+from app.common.services.repo.repo_factory import RepoFactory
 from app.common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -33,9 +37,7 @@ from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
 from app.main.blueprints.deputy_dev.services.context_var import identifier
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.base_repo import BaseRepo
-from app.main.blueprints.deputy_dev.services.repo.repo_factory import RepoFactory
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
     set_context_values,
@@ -85,22 +87,22 @@ class PRReviewManager:
         Returns:
             None
         """
-        repo_service, comment_service = await cls.initialise_services(data)
+        repo_service, pr_service, comment_service = await cls.initialise_services(data)
         affirmation_service = AffirmationService(data, comment_service)
         pr_dto = None
 
         try:
             tokens_data, execution_start_time = None, datetime.now()
             is_reviewable_request, pr_dto = await PRReviewPreProcessor(
-                repo_service, comment_service, affirmation_service
+                repo_service, pr_service, comment_service, affirmation_service
             ).pre_process_pr()
             if not is_reviewable_request:
                 return
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
-                repo_service, comment_service, data["prompt_version"]
+                repo_service, comment_service, pr_service, data["prompt_version"]
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
-            await PRReviewPostProcessor(repo_service, comment_service, affirmation_service).post_process_pr(
+            await PRReviewPostProcessor(pr_service, comment_service, affirmation_service).post_process_pr(
                 pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
             )
 
@@ -115,7 +117,7 @@ class PRReviewManager:
                 )
             raise ex
         finally:
-            repo_service.delete_repo()
+            repo_service.delete_local_repo()
 
     @classmethod
     def meta_info_to_save(cls):
@@ -179,11 +181,11 @@ class PRReviewManager:
         return not llm_response
 
     @classmethod
-    async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, prompt_version):
+    async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, pr_service: BasePR, prompt_version):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
-            repo_service, prompt_version
+            repo_service, pr_service, prompt_version
         ).get_code_review_comments()
         # llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = (
         #     cls.llm_comments(),
@@ -192,9 +194,9 @@ class PRReviewManager:
         #     cls.meta_info_to_save(),
         #     False,
         # )
-        # We will only post summary for forst PR review request
+        # We will only post summary for first PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
-            await repo_service.update_pr_description(pr_summary.get("response"))
+            await pr_service.update_pr_description(pr_summary.get("response"))
 
         if _is_large_pr:
             await comment_service.create_pr_comment(
@@ -204,6 +206,7 @@ class PRReviewManager:
             await comment_service.create_pr_comment("LGTM!!", config.get("FEATURE_MODELS").get("PR_REVIEW"))
         else:
             await comment_service.post_bots_comments(llm_response)
+
         return llm_response, tokens_data, meta_info_to_save, _is_large_pr
 
     @classmethod
@@ -224,12 +227,21 @@ class PRReviewManager:
         repo_service = await RepoFactory.repo(
             vcs_type=vcs_type,
             repo_name=repo_name,
-            pr_id=pr_id,
             workspace=workspace,
             workspace_id=scm_workspace_id,
             workspace_slug=workspace_slug,
             auth_handler=auth_handler,
             repo_id=repo_id,
+        )
+        pr_service = await PRFactory.pr(
+            vcs_type=vcs_type,
+            repo_name=repo_name,
+            workspace=workspace,
+            workspace_id=scm_workspace_id,
+            workspace_slug=workspace_slug,
+            auth_handler=auth_handler,
+            pr_id=pr_id,
+            repo_service=repo_service,
             fetch_pr_details=True,
         )
         comment_service = await CommentFactory.initialize(
@@ -238,8 +250,9 @@ class PRReviewManager:
             pr_id=pr_id,
             workspace=workspace,
             workspace_slug=workspace_slug,
-            pr_details=repo_service.pr_details,
+            pr_details=pr_service.pr_details,
             auth_handler=auth_handler,
             repo_id=repo_id,
         )
-        return repo_service, comment_service
+
+        return repo_service, pr_service, comment_service

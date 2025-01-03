@@ -3,9 +3,9 @@ from abc import ABC
 from sanic.log import logger
 
 from app.common.exception import RetryException
+from app.common.services.repository.repo.repo_service import RepoService
 from app.common.utils.app_utils import convert_to_datetime
-from app.main.blueprints.deputy_dev.services.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.repo.repo_service import RepoService
+from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     set_context_values,
 )
@@ -68,7 +68,9 @@ class StatsCollectionBase(ABC):
                 f"workspace not registered"
             )
         set_context_values(team_id=self.workspace_dto.team_id)
-        self.repo_dto = await RepoService.find(scm_repo_id=payload["scm_repo_id"], workspace_id=self.workspace_dto.id)
+        self.repo_dto = await RepoService.db_get(
+            filters=dict(scm_repo_id=payload["scm_repo_id"], workspace_id=self.workspace_dto.id), fetch_one=True
+        )
         if not self.repo_dto:
             raise RetryException(
                 f"{self.stats_type} webhook failed for repo {payload['repo_name']} due to" f"repo not registered"
