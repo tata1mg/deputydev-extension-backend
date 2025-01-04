@@ -37,7 +37,7 @@ class ConfigFetcher:
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
             "HOST_AND_TIMEOUT": {
-                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
+                "HOST": "https://api.deputydev.ai",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
         }
