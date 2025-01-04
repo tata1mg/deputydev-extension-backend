@@ -14,20 +14,7 @@ class Anthropic(BaseLLMProvider):
         self.anthropic_client = None
         self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
-    def build_llm_message(self, prompt: Dict[str, str], previous_responses: List[Any] = []):
-        user_message = {"role": "user", "content": prompt["user_message"]}
-        messages = (previous_responses or []) + [user_message]
-        body = json.dumps(
-            {
-                "anthropic_version": self.model_settings["VERSION"],
-                "max_tokens": self.model_settings["MAX_TOKENS"],
-                "system": prompt["system_message"],
-                "messages": messages,
-            }
-        )
-        return body
-
-    def build_llm_messages(self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []) -> str:
+    def build_llm_message(self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []) -> str:
         user_message = {"role": "user", "content": prompt["user_message"]}
         messages = (previous_responses or []) + [user_message]
         body = json.dumps(
