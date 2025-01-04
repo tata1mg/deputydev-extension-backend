@@ -34,7 +34,7 @@ class LLMHandler:
         client = self.model_to_provider_class_map[detected_llm]()
         model_config = ConfigManager.configs["LLM_MODELS"].get(detected_llm.value)
         prompt = self.prompt.get_prompt()
-        llm_message = client.build_llm_messages(prompt, previous_responses)
+        llm_message = client.build_llm_message(prompt, previous_responses)
 
         parsed_response, input_tokens, output_tokens = await self.get_llm_response(
             client=client, messages=llm_message, model=model_config.get("NAME"), structure_type="text"
