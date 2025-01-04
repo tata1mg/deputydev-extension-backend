@@ -8,7 +8,7 @@ class JWTHandler:
     A class to generate and verify JWT tokens.
     """
 
-    def __init__(self, signing_key: str, algorithm=""):
+    def __init__(self, signing_key: str, algorithm="HS256"):
         """
         Initialize the JWTHandler.
 

@@ -51,7 +51,6 @@ class AuthTokenValidator(AsyncValidator):
             raise ValidationError(message=str(ex))
 
         except Exception:
-            print(traceback.format_exc())
             raise ValidationError(message="Auth token verification failed. Please enter a valid auth token.")
 
 
