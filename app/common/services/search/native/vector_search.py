@@ -72,7 +72,9 @@ def create_chunk_str_to_contents(chunks: List[ChunkInfo]) -> Dict[str, str]:
         Dict[str, str]: A dictionary mapping each chunk's denotation to its content.
     """
     return {
-        chunk.denotation: chunk.get_chunk_content_with_meta_data(add_ellipsis=False, add_lines=False)
+        chunk.denotation: chunk.get_chunk_content_with_meta_data(
+            add_ellipsis=False, add_lines=False, add_class_function_info=True
+        )
         for chunk in chunks
     }
 

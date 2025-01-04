@@ -2,16 +2,15 @@ import asyncio
 
 from torpedo import CONFIG
 
-from app.common.services.repo.repo_factory import RepoFactory
-from app.common.utils.app_utils import convert_to_datetime
+from app.backend_common.services.repo.repo_factory import RepoFactory
+from app.backend_common.services.workspace.workspace_service import WorkspaceService
+from app.backend_common.utils.app_utils import convert_to_datetime
+from app.common.constants.constants import PRStatus, VCSTypes
 from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     MetaStatCollectionTypes,
-    PRStatus,
 )
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
@@ -22,8 +21,8 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
     PullRequestCloseWebhook,
 )
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,

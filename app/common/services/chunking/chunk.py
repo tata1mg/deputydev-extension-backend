@@ -5,7 +5,6 @@ from typing import List, Optional, Set, Tuple, Union
 
 import tree_sitter_javascript
 from sanic.log import logger
-from torpedo import CONFIG
 from tree_sitter import Language, Node, Parser
 from tree_sitter_languages import get_parser as tree_sitter_get_parser
 
@@ -15,11 +14,12 @@ from app.common.services.chunking.dataclass.main import (
     ChunkMetadataHierachyObject,
     ChunkNodeType,
 )
+from app.common.utils.config_manager import ConfigManager
 
 from ..tiktoken import TikToken
 from .chunk_info import ChunkInfo, ChunkSourceDetails
 
-CHARACTER_SIZE = CONFIG.config["CHUNKING"]["CHARACTER_SIZE"]
+CHARACTER_SIZE = ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
 
 
 def get_parser(language: str) -> Parser:
@@ -696,8 +696,8 @@ def chunk_pr_diff(diff_content: str, max_lines: int = 200, overlap: int = 15) ->
     file_pattern = re.compile(r"^a/.+ b/.+$")  # Our files start with a/b
     tiktoken_client = TikToken()
 
-    pr_diff_token_count = tiktoken_client.count(diff_content, CONFIG.config["EMBEDDING"]["MODEL"])
-    embeeding_token_limit = CONFIG.config["EMBEDDING"]["TOKEN_LIMIT"]
+    pr_diff_token_count = tiktoken_client.count(diff_content, ConfigManager.configs["EMBEDDING"]["MODEL"])
+    embeeding_token_limit = ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"]
 
     if pr_diff_token_count < embeeding_token_limit:
         return [diff_content]

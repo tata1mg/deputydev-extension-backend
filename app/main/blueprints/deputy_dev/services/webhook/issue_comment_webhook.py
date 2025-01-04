@@ -1,7 +1,7 @@
 from typing import Optional
 
-from app.common.utils.app_utils import get_vcs_repo_name_slug
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
+from app.backend_common.utils.app_utils import get_vcs_repo_name_slug
+from app.common.constants.constants import VCSTypes
 from app.main.blueprints.deputy_dev.models.issue_comment_request import (
     IssueCommentRequest,
 )

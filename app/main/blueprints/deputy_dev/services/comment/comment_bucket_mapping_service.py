@@ -1,4 +1,4 @@
-from app.common.services.repository.db import DB
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.comment_bucket_mapping import (
     CommentBucketMapping,
 )

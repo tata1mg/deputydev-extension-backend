@@ -1,6 +1,6 @@
 from typing import List
 
-from app.common.services.embedding.managers.openai_embedding_manager import (
+from app.backend_common.services.embedding.openai_embedding_manager import (
     OpenAIEmbeddingManager,
 )
 from app.main.blueprints.one_dev.services.embedding.dataclasses.main import (

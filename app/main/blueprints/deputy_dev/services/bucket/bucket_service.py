@@ -1,6 +1,6 @@
 from sanic.log import logger
 
-from app.common.services.repository.db import DB
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.caches.buckets_cache import BucketsCache
 from app.main.blueprints.deputy_dev.constants.constants import BucketStatus
 from app.main.blueprints.deputy_dev.models.dao.postgres import Buckets

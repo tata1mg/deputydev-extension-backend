@@ -5,6 +5,10 @@ from git.config import GitConfigParser
 from prompt_toolkit import PromptSession
 from prompt_toolkit.validation import ValidationError
 
+from app.common.utils.config_manager import ConfigManager
+from app.main.blueprints.one_dev_cli.app.exceptions.exceptions import (
+    InvalidVersionException,
+)
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
     LocalUserDetails,
 )
@@ -20,7 +24,7 @@ from app.main.blueprints.one_dev_cli.app.ui.screens.dataclasses.main import (
     ScreenType,
 )
 
-DEPUTYDEV_AUTH_TOKEN = "DEPUTYDEV_AUTH_TOKEN"
+DEPUTYDEV_AUTH_TOKEN = ConfigManager.configs["AUTH_TOKEN_ENV_VAR"]
 
 
 class AuthTokenValidator(AsyncValidator):
@@ -41,6 +45,10 @@ class AuthTokenValidator(AsyncValidator):
                 return
             else:
                 raise ValidationError(message="Auth token is invalid. Please enter a valid auth token.")
+
+        except InvalidVersionException as ex:
+            raise ValidationError(message=str(ex))
+
         except Exception:
             raise ValidationError(message="Auth token verification failed. Please enter a valid auth token.")
 
@@ -77,7 +85,7 @@ class Authentication(BaseScreenHandler):
             prompt_message=f"Enter your auth token (you can set this in {DEPUTYDEV_AUTH_TOKEN} env variable): ",
             validator=AuthTokenValidator(self.app_context),
             app_context=self.app_context,
-            validate_while_typing=True,
+            validate_while_typing=False,
         )
 
         global_user_name, global_user_email = self.get_global_git_user()

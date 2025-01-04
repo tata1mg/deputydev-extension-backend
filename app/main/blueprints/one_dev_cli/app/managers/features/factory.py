@@ -1,13 +1,18 @@
 import asyncio
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Optional, Type, Union
 
-from weaviate import WeaviateAsyncClient
-
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
+from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.one_dev_cli.app.constants.cli import CLIFeatures
+from app.main.blueprints.one_dev_cli.app.exceptions.exceptions import (
+    InvalidVersionException,
+)
 from app.main.blueprints.one_dev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
 )
@@ -35,7 +40,7 @@ from app.main.blueprints.one_dev_cli.app.managers.features.handlers.generate_and
 from app.main.blueprints.one_dev_cli.app.managers.features.handlers.iterative_chat import (
     IterativeChatHandler,
 )
-from app.main.blueprints.one_dev_cli.app.managers.features.handlers.plan_code_generation import (
+from app.main.blueprints.one_dev_cli.app.managers.features.handlers.plan_to_code import (
     PlanCodeGenerationHandler,
 )
 from app.main.blueprints.one_dev_cli.app.managers.features.handlers.test_case_generation import (
@@ -64,13 +69,14 @@ class FeatureFactory:
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
-        weaviate_client: WeaviateAsyncClient,
+        weaviate_client: WeaviateSyncAndAsyncClients,
         embedding_manager: BaseEmbeddingManager,
         chunkable_files_with_hashes: Dict[str, str],
         auth_token: str,
         pr_config: Optional[PRConfig] = None,
         session_id: Optional[str] = None,
         registered_repo_details: Optional[RegisteredRepo] = None,
+        usage_hash: Optional[str] = None,
     ) -> Union[FinalSuccessJob, FinalFailedJob]:
         handler = cls.feature_handler_map[feature](
             process_executor=process_executor,
@@ -85,9 +91,13 @@ class FeatureFactory:
             pr_config=pr_config,
             session_id=session_id,
             registered_repo_details=registered_repo_details,
+            usage_hash=usage_hash,
         )
-        await handler.validate_and_set_final_payload()
-        feature_job = await handler.handle_feature()
+        try:
+            await handler.validate_and_set_final_payload()
+            feature_job = await handler.handle_feature()
+        except InvalidVersionException as ex:
+            return FinalFailedJob(display_message=str(ex))
 
         # poll for the job status
         while True:
@@ -110,5 +120,6 @@ class FeatureFactory:
                         next_action=feature_job.redirections.error_redirect,
                     )
             except Exception:
+                AppLogger.log_debug(traceback.format_exc())
                 return FinalFailedJob(display_message="Your request to the server failed. Please try again later.")
-            await asyncio.sleep(5)
+            await asyncio.sleep(ConfigManager.configs["POLLING_INTERVAL"])

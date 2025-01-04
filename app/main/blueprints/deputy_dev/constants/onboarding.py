@@ -6,19 +6,6 @@ class UserRoles(str, Enum):
     MEMBER = "member"
 
 
-class TokenType(str, Enum):
-    ACCESS = "access"
-    REFRESH = "refresh"
-    INSTALLATION = "installation"  # github instalation id
-    WORKSPACE_ACCESS = "workspace_access"
-
-
-class TokenableType(str, Enum):
-    TEAM = "team"
-    INTEGRATION = "integration"
-    WORKSPACE = "workspace"
-
-
 class IntegrationClient(str, Enum):
     # -- scm --
     BITBUCKET = "bitbucket"

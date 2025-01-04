@@ -3,8 +3,8 @@ from typing import Dict, List
 
 from torpedo import CONFIG
 
-from app.common.services.pr.base_pr import BasePR
-from app.common.services.repository.db import DB
+from app.backend_common.repository.db import DB
+from app.backend_common.services.pr.base_pr import BasePR
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
     BucketStatus,
@@ -36,7 +36,9 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 
 config = CONFIG.config
 
@@ -106,6 +108,7 @@ class PRReviewPostProcessor:
         self.loc_changed = await self.pr_service.get_loc_changed_count()
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
+        print(1)
         if is_large_pr:
             await self.post_process_pr_large_pr(pr_dto, tokens_data)
         elif llm_comments:

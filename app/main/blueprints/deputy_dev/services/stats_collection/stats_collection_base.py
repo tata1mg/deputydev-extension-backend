@@ -2,16 +2,12 @@ from abc import ABC
 
 from sanic.log import logger
 
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.services.workspace.workspace_service import WorkspaceService
+from app.backend_common.utils.app_utils import convert_to_datetime
 from app.common.exception import RetryException
-from app.common.services.repository.repo.repo_service import RepoService
-from app.common.utils.app_utils import convert_to_datetime
+from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    set_context_values,
-)
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
-)
 from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
 
 
