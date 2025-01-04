@@ -1,8 +1,17 @@
-from typing import Any, Dict, Optional, Union
-
-from torpedo import CONFIG
+from typing import Any, Dict, Optional
 
 from app.common.request_clients.http.base_http_client import BaseHTTPClient
+from app.main.blueprints.one_dev_cli.app.clients.constants import (
+    APP_VERSION,
+    HOST,
+    LIMIT,
+    LIMIT_PER_HOST,
+    TIMEOUT,
+    TTL_DNS_CACHE,
+)
+from app.main.blueprints.one_dev_cli.app.exceptions.exceptions import (
+    InvalidVersionException,
+)
 
 
 class OneDevClient(BaseHTTPClient):
@@ -10,10 +19,47 @@ class OneDevClient(BaseHTTPClient):
     Class to handle all the inter service requests to OneDev service
     """
 
-    def __init__(self):
-        _one_dev_config: Dict[str, Union[str, int]] = CONFIG.config["ONE_DEV"]
-        self._host: str = _one_dev_config["HOST"]
-        super().__init__(timeout=_one_dev_config["TIMEOUT"])
+    def __init__(self, host_and_timeout: Optional[Dict[str, Any]] = None):
+        self._host: str = host_and_timeout["HOST"] if host_and_timeout is not None else HOST
+        super().__init__(
+            timeout=host_and_timeout["TIMEOUT"] if host_and_timeout is not None else TIMEOUT,
+            limit=LIMIT,
+            limit_per_host=LIMIT_PER_HOST,
+            ttl_dns_cache=TTL_DNS_CACHE,
+        )
+
+    def build_common_headers(self, headers):
+        headers = headers or {}
+        headers.update({"x-cli-app-version": APP_VERSION})
+        return headers
+
+    async def request(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        skip_auth_headers: bool = False,
+    ):
+        headers = self.build_common_headers(headers)
+        if not skip_auth_headers:
+            auth_headers = await self.auth_headers()
+            headers.update(auth_headers)
+        response = await self._request(
+            method=method,
+            url=url,
+            params=params,
+            headers=headers,
+            data=data,
+            json=json,
+        )
+        parsed_response = await response.json()
+        if parsed_response["status_code"] == 400:
+            if parsed_response.get("meta") and parsed_response["meta"]["error_code"] == 101:
+                raise InvalidVersionException(message=parsed_response["error"]["message"])
+        return response
 
     async def generate_code(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
         path = "/end_user/v1/generate-code"
@@ -45,7 +91,7 @@ class OneDevClient(BaseHTTPClient):
         result = await self.post(url=self._host + path, json=payload, headers=headers)
         return (await result.json()).get("data")
 
-    async def plan_code_generation(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    async def plan_to_code(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
         path = "/end_user/v1/plan-code-generation"
         result = await self.post(url=self._host + path, json=payload, headers=headers)
         return (await result.json()).get("data")
@@ -68,4 +114,9 @@ class OneDevClient(BaseHTTPClient):
     async def verify_auth_token(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
         path = "/end_user/v1/verify-auth-token"
         result = await self.post(url=self._host + path, json=payload, headers=headers)
+        return (await result.json()).get("data")
+
+    async def get_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        path = "/end_user/v1/get-configs"
+        result = await self.get(url=self._host + path, headers=headers)
         return (await result.json()).get("data")

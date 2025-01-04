@@ -1,19 +1,14 @@
 # flake8: noqa
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.constants.constants import (
-    AgentTypes,
-    PRStatus,
-    TokenTypes,
-)
+from app.common.constants.constants import PRStatus
+from app.common.utils.context_vars import get_context_value
+from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
-)
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
 )
 
 

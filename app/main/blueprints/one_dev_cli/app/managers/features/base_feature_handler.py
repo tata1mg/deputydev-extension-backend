@@ -3,11 +3,11 @@ from abc import ABC
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Optional, Union
 
-from weaviate import WeaviateAsyncClient
-
-from app.common.services.chunking.chunking_handler import read_file
+from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
+from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.utils.file_utils import read_file
 from app.main.blueprints.one_dev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
     FeatureHandlingRedirections,
@@ -31,7 +31,7 @@ class BaseFeatureHandler(ABC):
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
-        weaviate_client: WeaviateAsyncClient,
+        weaviate_client: WeaviateSyncAndAsyncClients,
         embedding_manager: BaseEmbeddingManager,
         chunkable_files_with_hashes: Dict[str, str],
         auth_token: str,
@@ -39,6 +39,7 @@ class BaseFeatureHandler(ABC):
         session_id: Optional[str] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
+        usage_hash: Optional[str] = None,
     ):
         self.process_executor = process_executor
         self.local_user_details = local_user_details
@@ -53,23 +54,40 @@ class BaseFeatureHandler(ABC):
         self.session_id = session_id
         self.apply_diff = apply_diff
         self.registered_repo_details = registered_repo_details
+        self.usage_hash = usage_hash
 
         self.redirections: FeatureHandlingRedirections = FeatureHandlingRedirections(
             success_redirect=FeatureNextAction.ERROR_OUT_AND_END,
             error_redirect=FeatureNextAction.ERROR_OUT_AND_END,
         )
 
-    def _get_selected_text(self, text_selection_query: TextSelectionQuery) -> str:
+    def _get_selected_text(self, text_selection_query: TextSelectionQuery) -> ChunkInfo:
         abs_filepath = os.path.join(self.local_repo.repo_path, text_selection_query.file_path)
         file_content = read_file(abs_filepath)
 
         if text_selection_query.start_line is None or text_selection_query.end_line is None:
-            return file_content
+            return ChunkInfo(
+                content=file_content,
+                source_details=ChunkSourceDetails(
+                    file_path=text_selection_query.file_path,
+                    file_hash="",
+                    start_line=1,
+                    end_line=len(file_content.splitlines()),
+                ),
+            )
         line_wise_file_content = file_content.splitlines()
         selected_text = "\n".join(
             line_wise_file_content[text_selection_query.start_line - 1 : text_selection_query.end_line]
         )
-        return selected_text
+        return ChunkInfo(
+            content=selected_text,
+            source_details=ChunkSourceDetails(
+                file_path=text_selection_query.file_path,
+                file_hash="",
+                start_line=text_selection_query.start_line,
+                end_line=text_selection_query.end_line,
+            ),
+        )
 
     async def handle_feature(self) -> FeatureHandlingResult:
         raise NotImplementedError(self.NOT_IMPLEMENTED_MSG)

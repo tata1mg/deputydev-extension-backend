@@ -1,9 +1,12 @@
-from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
+from app.backend_common.utils.app_utils import (
+    get_gitlab_workspace_slug,
+    get_vcs_repo_name_slug,
+)
+from app.common.constants.constants import VCSTypes
 from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     GitlabActions,
 )
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 
 
 class PRWebhook:

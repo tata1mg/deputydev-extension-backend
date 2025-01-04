@@ -1,4 +1,4 @@
-from app.common.services.sqs.base_subscriber import BaseSubscriber
+from app.main.blueprints.deputy_dev.services.sqs.base_subscriber import BaseSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_factory import (
     StatsCollectionFactory,
 )

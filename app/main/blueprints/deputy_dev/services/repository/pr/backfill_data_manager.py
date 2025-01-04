@@ -1,12 +1,14 @@
 from sanic.log import logger
 
-from app.common.service_clients.bitbucket import BitbucketRepoClient
-from app.common.service_clients.github.github_repo_client import GithubRepoClient
-from app.common.services.repository.repo.repo_service import RepoService
-from app.common.utils.app_utils import convert_to_datetime, name_to_slug
+from app.backend_common.models.dto.pr.bitbucket_pr import BitbucketPrModel
+from app.backend_common.models.dto.pr.github_pr import GitHubPrModel
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
+from app.backend_common.service_clients.github.github_repo_client import (
+    GithubRepoClient,
+)
+from app.backend_common.utils.app_utils import convert_to_datetime, name_to_slug
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
-from app.main.blueprints.deputy_dev.models.dto.pr.bitbucket_pr import BitbucketPrModel
-from app.main.blueprints.deputy_dev.models.dto.pr.github_pr import GitHubPrModel
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
@@ -58,6 +60,7 @@ class BackfillManager:
                 pr_detail = await self.bitbucket_client.get_pr_details()
                 if row.scm_close_time is None and row.close_time_in_sec is None:
                     if pr_detail["state"] == "MERGED" or pr_detail["state"] == "DECLINED":
+
                         all_comments = await self.bitbucket_client.get_pr_comments()
                         llm_comment_count, human_comment_count = count_bot_and_human_comments_bitbucket(all_comments)
 
@@ -129,6 +132,7 @@ class BackfillManager:
             query_params: The query parameters containing start and end date for data retrieval.
         """
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
+
         for row in pr_rows:
             try:
                 repo_dto = await RepoService.db_get({"id": row["repo_id"]})

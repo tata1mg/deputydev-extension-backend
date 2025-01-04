@@ -2,7 +2,6 @@ from typing import List
 
 from sanic.log import logger
 
-from app.common.service_clients.labs import LabsClient
 from app.main.blueprints.jiva.models.chat import (
     ChatTypeCallAgent,
     ChatTypeMsg,
@@ -24,7 +23,8 @@ async def show_lab_sku_card(identifier: str, city: str) -> List[any]:
     """
     city = "Delhi"
     logger.info("Test identifier: {}  City: {}".format(identifier, city))
-    sku_details = await LabsClient.get_lab_sku_details(identifier, city)
+    # sku_details = await LabsClient.get_lab_sku_details(identifier, city)
+    sku_details = None
     if not sku_details:
         return [
             ChatTypeMsg.model_validate(
