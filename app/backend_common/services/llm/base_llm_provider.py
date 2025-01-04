@@ -41,7 +41,7 @@ class BaseLLMProvider(ABC):
         return tasks
 
     @abstractmethod
-    def build_llm_messages(self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []) -> str:
+    def build_llm_message(self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []) -> str:
         """
         Formats the conversation as required by the specific LLM.
         Args:
