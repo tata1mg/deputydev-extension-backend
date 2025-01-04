@@ -7,8 +7,14 @@ from app.common.request_clients.http.base_http_session_manager import SessionMan
 
 
 class BaseHTTPClient:
-    def __init__(self, timeout: Optional[int] = None):
-        self._session_manager = SessionManager()
+    def __init__(
+        self,
+        timeout: Optional[int] = None,
+        limit: Optional[int] = None,
+        limit_per_host: Optional[int] = None,
+        ttl_dns_cache: Optional[int] = None,
+    ):
+        self._session_manager = SessionManager(limit=limit, limit_per_host=limit_per_host, ttl_dns_cache=ttl_dns_cache)
         self._timeout = timeout
 
     # The following methods are the internal API for the client
@@ -120,3 +126,6 @@ class BaseHTTPClient:
         return await self.request(
             "DELETE", url, headers=headers, data=data, json=json, skip_auth_headers=skip_auth_headers
         )
+
+    async def close_session(self):
+        await self._session_manager.close()

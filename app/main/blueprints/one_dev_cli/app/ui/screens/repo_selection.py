@@ -160,19 +160,19 @@ class RepoSelection(BaseScreenHandler):
                 )
             )
             print_formatted_text(FormattedText([("#4e9a06", "Repository type: Git")]))
-            if self.app_context.registered_repo_details:
-                print_formatted_text(
-                    FormattedText(
-                        [
-                            (
-                                "#4e9a06",
-                                f"Repository is registered with ID: {self.app_context.registered_repo_details.repo_id}",
-                            )
-                        ]
-                    )
-                )
-            else:
-                print_formatted_text(FormattedText([("#c4a000", "Repository is not registered")]))
+            # if self.app_context.registered_repo_details:
+            #     print_formatted_text(
+            #         FormattedText(
+            #             [
+            #                 (
+            #                     "#4e9a06",
+            #                     f"Repository is registered with ID: {self.app_context.registered_repo_details.repo_id}",
+            #                 )
+            #             ]
+            #         )
+            #     )
+            # else:
+            #     print_formatted_text(FormattedText([("#c4a000", "Repository is not registered")]))
         else:
             print_formatted_text(FormattedText([("#4e9a06", "Repository type: Non-VCS")]))
             print_formatted_text(

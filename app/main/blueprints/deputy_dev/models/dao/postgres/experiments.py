@@ -1,7 +1,7 @@
 from tortoise import fields
 from tortoise_wrapper.db.fields import CITextField, NaiveDatetimeField
 
-from app.common.models.dao.postgres.base import Base
+from app.backend_common.models.dao.postgres.base import Base
 
 
 class Experiments(Base):

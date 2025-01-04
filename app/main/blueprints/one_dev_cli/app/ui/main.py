@@ -1,9 +1,9 @@
 import argparse
 import asyncio
 import logging
-import os
 import signal
 import sys
+import traceback
 import warnings
 from concurrent.futures import ProcessPoolExecutor
 from io import StringIO
@@ -11,6 +11,8 @@ from types import FrameType
 from typing import Dict, List, Optional, Tuple, Type
 
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.one_dev_cli.app.constants.cli import CLIOperations
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
@@ -36,15 +38,12 @@ from app.main.blueprints.one_dev_cli.app.ui.screens.repo_initialization import (
 )
 from app.main.blueprints.one_dev_cli.app.ui.screens.repo_selection import RepoSelection
 
-os.environ["PYTHONWARNINGS"] = "ignore:resource_tracker:UserWarning"
-
-log_stream = StringIO()
-# Configure the root logger
-logging.basicConfig(
-    stream=log_stream,  # All logs go to this file
-    level=logging.DEBUG,  # Capture all levels (DEBUG, INFO, WARNING, etc.)
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# log_stream = StringIO()
+# # Configure the root logger
+# logging.basicConfig(
+#     stream=log_stream,  # All logs go to this file
+#     level=logging.DEBUG,  # Capture all levels (DEBUG, INFO, WARNING, etc.)
+# )
 warnings.filterwarnings("ignore")
 
 
@@ -54,8 +53,10 @@ cleanup_in_progress = False
 def handle_keyboard_interrupt():
     global cleanup_in_progress
     if cleanup_in_progress:
+        print("Second KeyboardInterrupt detected during cleanup. Force exiting.")
         sys.exit(0)
     else:
+        print("KeyboardInterrupt detected. Starting cleanup.")
         cleanup_in_progress = True
 
 
@@ -81,7 +82,6 @@ def init_args(parser: argparse.ArgumentParser):
         help=f"Operation to perform. Possible values: {', '.join(CLIOperations.__members__)}",
     )
     operation_group.add_argument("--query", help="Query from the user")
-    operation_group.add_argument("--jira-ticket", help="JIRA ticket ID")
     operation_group.add_argument(
         "--selected-text",
         help="The text selection to apply the operation on. Should be in the format file_path_relative_to_repo_root:start_line-end_line",
@@ -102,7 +102,12 @@ def init_args(parser: argparse.ArgumentParser):
 
     # config options
     config_group = parser.add_argument_group("Config Options")
-    config_group.add_argument("--debug", help="Path to the config file")
+    config_group.add_argument("--debug", help="Run in debug mode", action="store_true")
+    config_group.add_argument(
+        "--clean-cache",
+        help="Clean the cache. Use this to clean up if its taking more storage on your system. This might slow down DD CLI",
+        action="store_true",
+    )
 
 
 def validate_and_get_repo_id(repo: GitRepo, team_registered_repos: List[Dict[str, str]]) -> str:
@@ -114,7 +119,7 @@ def validate_and_get_repo_id(repo: GitRepo, team_registered_repos: List[Dict[str
 
 async def run_new_feature_session(
     app_context: AppContext,
-) -> Tuple[AppContext, FeatureNextAction]:
+) -> Tuple[AppContext, Optional[FeatureNextAction], Optional[ScreenType]]:
     new_session_screens: List[Type[BaseScreenHandler]] = [
         Authentication,
         RepoSelection,
@@ -124,12 +129,14 @@ async def run_new_feature_session(
     for screen in new_session_screens:
         app_context, redirect_screen = await screen(app_context).render()
         if redirect_screen == ScreenType.EXIT:
-            return app_context, FeatureNextAction.ERROR_OUT_AND_END
+            return app_context, FeatureNextAction.ERROR_OUT_AND_END, None
+        if redirect_screen == ScreenType.HOME:
+            return app_context, None, ScreenType.HOME
 
     next_action, session_id = await FeatureRunner(app_context).run_feature()
     if session_id:
         app_context.session_id = session_id
-    return app_context, next_action
+    return app_context, next_action, None
 
 
 async def render_home(app_context: AppContext) -> AppContext:
@@ -139,9 +146,12 @@ async def render_home(app_context: AppContext) -> AppContext:
         return app_context
 
     redirect_screen: Optional[ScreenType] = None
-    app_context, next_action = await run_new_feature_session(app_context)
-    if next_action == FeatureNextAction.CONTINUE_CHAT:
-        app_context, redirect_screen = await ChatScreen(app_context).render()
+    app_context, next_action, screen_redirect = await run_new_feature_session(app_context)
+    if screen_redirect:
+        redirect_screen = screen_redirect
+    else:
+        if next_action == FeatureNextAction.CONTINUE_CHAT:
+            app_context, redirect_screen = await ChatScreen(app_context).render()
 
     if redirect_screen == ScreenType.HOME:
         await render_home(app_context)
@@ -150,19 +160,35 @@ async def render_home(app_context: AppContext) -> AppContext:
 
 
 async def main(process_executor: ProcessPoolExecutor):
+    one_dev_client = OneDevClient(ConfigManager.configs["HOST_AND_TIMEOUT"])
     parser = argparse.ArgumentParser(description="OneDev CLI")
     init_args(parser)
-    one_dev_client = OneDevClient()
 
     # get parsed user query
     args = parser.parse_args()
 
+    if args.debug:
+        AppLogger.set_logger_config(
+            debug=True,
+            stream=sys.stderr,
+        )
+    else:
+        # suppress logging
+        logging.basicConfig(
+            stream=StringIO(),
+            level=logging.DEBUG,
+        )
+
     async with AppContext(args=args, one_dev_client=one_dev_client, process_executor=process_executor) as app_context:
         try:
             redirect_screen: Optional[ScreenType] = None
-            app_context, next_action = await run_new_feature_session(app_context)
-            if next_action == FeatureNextAction.CONTINUE_CHAT:
-                app_context, redirect_screen = await ChatScreen(app_context).render()
+            app_context, next_action, screen_redirect = await run_new_feature_session(app_context)
+
+            if screen_redirect:
+                redirect_screen = screen_redirect
+            else:
+                if next_action == FeatureNextAction.CONTINUE_CHAT:
+                    app_context, redirect_screen = await ChatScreen(app_context).render()
 
             if redirect_screen == ScreenType.HOME:
                 app_context = await render_home(app_context)
@@ -170,11 +196,16 @@ async def main(process_executor: ProcessPoolExecutor):
             await Exit(app_context).render()
         except Exception as _ex:
             print(f"CLI encountered an unexpected error: {_ex}")
+            AppLogger.log_debug(traceback.format_exc())
             print("Exiting ...")
         except KeyboardInterrupt:
             handle_keyboard_interrupt()
 
 
+def run_main():
+    with ProcessPoolExecutor(max_workers=ConfigManager.configs["NUMBER_OF_WORKERS"]) as executor:
+        asyncio.run(main(executor))
+
+
 if __name__ == "__main__":
-    with ProcessPoolExecutor(max_workers=1) as executor:
-        asyncio.run(main(process_executor=executor))
+    run_main()

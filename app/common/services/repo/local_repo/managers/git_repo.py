@@ -131,7 +131,6 @@ class GitRepo(BaseLocalRepo):
         self.repo.index.commit(message=commit_message, author=actor)
 
     async def push_to_remote(self, branch_name: str, remote_repo_url: str):
-        # create a new remote or update existing remote for deputy_dev
         selected_remote = next((remote for remote in self.repo.remotes if remote.url == remote_repo_url), None)
         if not selected_remote:
             selected_remote = self.repo.create_remote(name=uuid4().hex, url=remote_repo_url)

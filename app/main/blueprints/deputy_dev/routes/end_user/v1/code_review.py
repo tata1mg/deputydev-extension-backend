@@ -4,7 +4,7 @@ from sanic import Blueprint, Sanic
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
 
-from app.common.utils.wrapper import exception_logger
+from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,
 )

@@ -7,10 +7,7 @@ from typing import Any, Dict, List
 from sanic.log import logger
 
 from app.common.services.chunking.document import Document
-from app.main.blueprints.deputy_dev.services.tokenizer import (
-    ContentTokenizer,
-    compute_document_tokens,
-)
+from app.common.services.tokenizer import ContentTokenizer, compute_document_tokens
 
 
 class LexicalSearch:

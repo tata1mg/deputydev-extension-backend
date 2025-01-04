@@ -23,7 +23,7 @@ from app.common.services.prompt.feature_prompts.docs_generation.factory import (
 from app.common.services.prompt.feature_prompts.iterative_code_chat.factory import (
     IterativeCodeChatPromptFactory,
 )
-from app.common.services.prompt.feature_prompts.plan_code_generation.factory import (
+from app.common.services.prompt.feature_prompts.plan_to_code.factory import (
     PlanCodeGenerationPromptFactory,
 )
 from app.common.services.prompt.feature_prompts.task_plan_generation.factory import (

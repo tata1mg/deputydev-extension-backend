@@ -6,6 +6,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyPressEvent
 from prompt_toolkit.patch_stdout import patch_stdout
 
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
     FeatureNextAction,
@@ -20,6 +21,7 @@ from app.main.blueprints.one_dev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
+from app.main.blueprints.one_dev_cli.app.ui.screens.exit import Exit
 from app.main.blueprints.one_dev_cli.app.ui.screens.pr_config_selection import (
     PRConfigSelection,
 )
@@ -41,10 +43,19 @@ class ChatScreen(BaseScreenHandler):
             return HTML("[^C]Exit")
         if self.app_context.current_status == FlowStatus.CODE_GENERATED:
             if self.app_context.registered_repo_details:
-                return HTML("[^C]Exit    [^P]Create PR    [^D]Apply Diff")
-            return HTML("[^C]Exit    [^D]Apply Diff")
+                toolbar_text = "[^C]Exit    "
+                if CLIFeatures.GENERATE_AND_APPLY_DIFF.value in ConfigManager.configs["ENABLED_FEATURES"]:
+                    toolbar_text += "[^D]Apply Diff    "
+                if "PR_CREATION_ENABLED" in ConfigManager.configs and ConfigManager.configs["PR_CREATION_ENABLED"]:
+                    toolbar_text += "[^P]Create PR    "
+                return HTML(toolbar_text.strip())
+            if CLIFeatures.GENERATE_AND_APPLY_DIFF.value in ConfigManager.configs["ENABLED_FEATURES"]:
+                return HTML("[^C]Exit    [^D]Apply Diff")
+            return HTML("[^C]Exit")
         if self.app_context.current_status == FlowStatus.PLAN_GENERATED:
-            return HTML("[^C]Exit    [^D]Generate code from plan")
+            if CLIFeatures.PLAN_CODE_GENERATION.value in ConfigManager.configs["ENABLED_FEATURES"]:
+                return HTML("[^C]Exit    [^D]Generate code from plan")
+            return HTML("[^C]Exit")
 
     async def fetch_pr_config_and_create_pr(self):
         self.app_context.operation = CLIFeatures.GENERATE_AND_APPLY_DIFF
@@ -57,31 +68,36 @@ class ChatScreen(BaseScreenHandler):
         bindings = KeyBindings()
 
         if self.app_context.current_status == FlowStatus.CODE_GENERATED:
+            if CLIFeatures.GENERATE_AND_APPLY_DIFF.value in ConfigManager.configs["ENABLED_FEATURES"]:
 
-            @bindings.add("c-d")
-            async def _(event: KeyPressEvent):
-                self.app_context.operation = CLIFeatures.GENERATE_AND_APPLY_DIFF
-                app = event.app
-                app.exit(result=FeatureRunner(self.app_context).run_feature())
+                @bindings.add("c-d")
+                async def _(event: KeyPressEvent):
+                    self.app_context.operation = CLIFeatures.GENERATE_AND_APPLY_DIFF
+                    app = event.app
+                    app.exit(result=FeatureRunner(self.app_context).run_feature())
 
             if self.app_context.registered_repo_details:
+                if "PR_CREATION_ENABLED" in ConfigManager.configs and ConfigManager.configs["PR_CREATION_ENABLED"]:
 
-                @bindings.add("c-p")
-                async def _(event: KeyPressEvent):
-                    app = event.app
-                    app.exit(result=self.fetch_pr_config_and_create_pr())
+                    @bindings.add("c-p")
+                    async def _(event: KeyPressEvent):
+                        app = event.app
+                        app.exit(result=self.fetch_pr_config_and_create_pr())
 
         elif self.app_context.current_status == FlowStatus.PLAN_GENERATED:
+            if CLIFeatures.PLAN_CODE_GENERATION.value in ConfigManager.configs["ENABLED_FEATURES"]:
 
-            @bindings.add("c-d")
-            async def _(event: KeyPressEvent):
-                self.app_context.operation = CLIFeatures.PLAN_CODE_GENERATION
-                app = event.app
-                app.exit(result=FeatureRunner(self.app_context).run_feature())
+                @bindings.add("c-d")
+                async def _(event: KeyPressEvent):
+                    self.app_context.operation = CLIFeatures.PLAN_CODE_GENERATION
+                    app = event.app
+                    app.exit(result=FeatureRunner(self.app_context).run_feature())
 
         return bindings
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
+        if CLIFeatures.ITERATIVE_CHAT.value not in ConfigManager.configs["ENABLED_FEATURES"]:
+            return await Exit(app_context=self.app_context).render()
         with patch_stdout():
             message: Union[
                 str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]

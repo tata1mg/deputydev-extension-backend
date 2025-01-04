@@ -1,6 +1,8 @@
 from enum import Enum
 
-from app.common.services.repository.repo.repo_service import RepoService
+from app.backend_common.models.dto.pr.base_pr import BasePrModel
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.main.blueprints.deputy_dev.constants.constants import (
     ChatTypes,
     FeedbackTypes,
@@ -8,14 +10,10 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.dto.feedback_dto import FeedbackDTO
-from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
 from app.main.blueprints.deputy_dev.services.feedback.feedback_service import (
     FeedbackService,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
-)
 
 
 class CommentPreprocessor(Enum):
