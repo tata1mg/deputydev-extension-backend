@@ -1,5 +1,4 @@
 import os
-import traceback
 from typing import Any, Dict, Tuple
 
 from git.config import GitConfigParser
