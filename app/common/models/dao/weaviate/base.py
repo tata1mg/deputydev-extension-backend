@@ -1,12 +1,13 @@
 from abc import ABC
 from typing import Any, Dict, List
 
-from weaviate.classes.config import DataType, Property
+from weaviate.classes.config import DataType, Property, ReferenceProperty
 
 
 class Base(ABC):
 
     properties: List[Property]
+    references: List[ReferenceProperty]
     collection_name: str
 
     # this gives all the properties of the class to the instance

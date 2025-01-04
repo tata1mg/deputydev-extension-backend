@@ -2,15 +2,16 @@ import time
 
 from torpedo import CONFIG
 
-from app.common.services.llm.multi_agents_manager import MultiAgentsLLMManager
-from app.common.services.pr.base_pr import BasePR
-from app.common.services.repo.base_repo import BaseRepo
+from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMManager
+from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.services.repo.base_repo import BaseRepo
 from app.common.services.tiktoken import TikToken
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     MultiAgentReflectionIteration,
 )
-from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
     AgentFactory,
 )
@@ -19,9 +20,6 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 )
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
-)
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
 )
 
 

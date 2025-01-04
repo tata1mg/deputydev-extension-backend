@@ -1,6 +1,9 @@
 from weaviate.classes.config import DataType, Property, Tokenization
 
 from app.common.models.dao.weaviate.base import Base
+from app.common.models.dao.weaviate.constants.collection_names import (
+    CHUNKS_COLLECTION_NAME,
+)
 
 
 class Chunks(Base):
@@ -17,17 +20,9 @@ class Chunks(Base):
             name="text",
             data_type=DataType.TEXT,
             vectorize_property_name=False,
-            tokenization=Tokenization.TRIGRAM,
+            tokenization=Tokenization.WORD,
             skip_vectorization=True,
             index_searchable=True,
         ),
-        Property(
-            name="last_used_at",
-            data_type=DataType.DATE,
-            vectorize_property_name=False,
-            tokenization=None,
-            skip_vectorization=True,
-            index_range_filters=True,
-        ),
     ]
-    collection_name = "chunks"
+    collection_name = CHUNKS_COLLECTION_NAME

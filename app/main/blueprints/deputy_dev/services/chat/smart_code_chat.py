@@ -1,12 +1,15 @@
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.services.openai.openai_llm_service import OpenAILLMService
-from app.common.services.pr.pr_factory import PRFactory
-from app.common.services.prompt.chat_prompt_service import ChatPromptService
-from app.common.services.repo.repo_factory import RepoFactory
-from app.common.services.repository.repo.repo_service import RepoService
-from app.common.utils.app_utils import build_openai_conversation_message
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
+from app.backend_common.services.pr.pr_factory import PRFactory
+from app.backend_common.services.repo.repo_factory import RepoFactory
+from app.backend_common.services.workspace.workspace_service import WorkspaceService
+from app.backend_common.utils.app_utils import build_openai_conversation_message
+from app.backend_common.utils.formatting import format_code_blocks
+from app.common.constants.constants import VCSTypes
+from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
     BitbucketBots,
@@ -14,7 +17,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MessageTypes,
     MetaStatCollectionTypes,
 )
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.human_comment_request import (
     HumanCommentRequest,
@@ -34,7 +36,9 @@ from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
 from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
     ExperimentService,
 )
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
+    ChatPromptService,
+)
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
     StatsCollectionTrigger,
@@ -43,14 +47,10 @@ from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWeb
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
 )
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    set_context_values,
-)
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import (
-    format_code_blocks,
     get_vcs_auth_handler,
     is_human_comment,
     is_request_from_blocked_repo,
