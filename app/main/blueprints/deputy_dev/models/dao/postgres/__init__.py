@@ -19,11 +19,11 @@ __all__ = [
     "Agents",
 ]
 
-from .agent_comment_mappings import AgentCommentMappings
-from .agents import Agents
 from .......backend_common.models.dao.postgres.repos import Repos
 from .......backend_common.models.dao.postgres.tokens import Tokens
 from .......backend_common.models.dao.postgres.workspaces import Workspaces
+from .agent_comment_mappings import AgentCommentMappings
+from .agents import Agents
 from .buckets import Buckets
 from .configurations import Configurations
 from .experiments import Experiments

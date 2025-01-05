@@ -1,12 +1,6 @@
 from copy import deepcopy
 
-from app.main.blueprints.deputy_dev.constants.constants import (
-    AgentTypes,
-    TokenTypes,
-)
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
-    AgentServiceBase,
-)
+from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_business_validation_agent import (
     AnthropicBusinessValidationAgent,
 )
@@ -16,8 +10,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropi
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_code_maintainability_agent import (
     AnthropicCodeMaintainabilityAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_custom_agent import \
-    AnthropicCustomAgent
+from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_custom_agent import (
+    AnthropicCustomAgent,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.anthropic.anthropic_error_agent import (
     AnthropicErrorAgent,
 )
@@ -33,7 +28,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.o
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 
 
 class AgentFactory:
@@ -100,5 +97,7 @@ class AgentFactory:
     def initialize_anthropic_custom_agents(self):
         for agent_name, agent_setting in SettingService.agents_settings().items():
             if agent_setting["is_custom_agent"] and agent_setting["enable"]:
-                agent_class = AnthropicCustomAgent.create_custom_agent(agent_name, self.context_service, self.reflection_enabled)
+                agent_class = AnthropicCustomAgent.create_custom_agent(
+                    agent_name, self.context_service, self.reflection_enabled
+                )
                 self.factories[agent_name] = agent_class

@@ -1,8 +1,8 @@
-from app.common.utils.app_utils import get_token_count, safe_index
-from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
+from app.backend_common.utils.app_utils import get_token_count, safe_index
+from app.common.constants.constants import PR_NOT_FOUND
+from app.common.utils.context_vars import get_context_value
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import ignore_files
 
