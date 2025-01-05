@@ -147,6 +147,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         11. Do not comment on unchanged code unless directly impacted by the changes.
         12. Do not duplicate comments for similar issues across different locations.
         13. If you are suggesting any comment that is already catered please don't include those comment in response.
+        14. Do not change the provided bucket name.
         
         Begin your review now, focusing on providing valuable feedback to improve the code quality and
         maintainability of the pull request.
@@ -278,6 +279,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         - Do not comment on unchanged code unless directly impacted by the changes.
         - Do not duplicate comments for similar issues across different locations.
         - If you are suggesting any comment that is already catered please don't include those comment in response.
+        - Do not change the provided bucket name.
         </guidelines>
         
         Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
