@@ -5,6 +5,9 @@ from typing import Dict, Union
 from sanic.log import logger
 from torpedo import CONFIG, Task
 
+from app.backend_common.services.embedding.openai_embedding_manager import (
+    OpenAIEmbeddingManager,
+)
 from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
@@ -17,8 +20,12 @@ from app.backend_common.utils.app_utils import (
 )
 from app.backend_common.utils.formatting import append_line_numbers, format_code_blocks
 from app.common.services.chunking.chunking_manager import ChunkingManger
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
+from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
+from app.common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     SCRIT_SUMMARY_PROMPT,
@@ -27,24 +34,7 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
     ContextService,
 )
 from app.main.blueprints.deputy_dev.services.prompt.prompt_service import PromptService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-)
-from app.main.blueprints.deputy_dev.utils import (
-    append_line_numbers,
-    format_code_blocks,
-    get_filtered_response,
-    get_foundation_model_name,
-)
-from app.common.utils.executor import process_executor
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
-from app.common.services.embedding.managers.openai_embedding_manager import (
-    OpenAIEmbeddingManager,
-)
-from app.common.services.search.dataclasses.main import SearchTypes
-from app.common.services.chunking.chunking_handler import (
-    render_snippet_array,
-)
+from app.main.blueprints.deputy_dev.utils import get_filtered_response
 
 
 class SingleAgentPRReviewManager:

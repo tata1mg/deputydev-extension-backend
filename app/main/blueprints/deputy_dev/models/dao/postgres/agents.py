@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from app.common.models.dao.postgres.base import Base
+from app.backend_common.models.dao.postgres.base import Base
 
 
 class Agents(Base):

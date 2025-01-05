@@ -6,7 +6,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 
 
 class AnthropicCodeMaintainabilityAgent(AgentServiceBase):

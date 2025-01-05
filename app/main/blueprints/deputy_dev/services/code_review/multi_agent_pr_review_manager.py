@@ -4,7 +4,6 @@ from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMM
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.common.services.tiktoken import TikToken
-from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
@@ -19,7 +18,9 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
 )
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 
 
 class MultiAgentPRReviewManager:

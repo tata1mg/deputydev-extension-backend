@@ -3,6 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, List, Optional, Tuple
 
 from sanic.log import logger
+from torpedo import CONFIG
 
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
@@ -17,9 +18,10 @@ from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsync
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.search.search import perform_search
 from app.common.utils.file_utils import read_file
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import is_path_included
-from torpedo import CONFIG
 
 
 class ChunkingManger:
@@ -157,21 +159,21 @@ class ChunkingManger:
 
     @classmethod
     async def get_relevant_chunks(
-            cls,
-            query: str,
-            chunkable_files_with_hashes: Dict[str, str],
-            local_repo: BaseLocalRepo,
-            embedding_manager: BaseEmbeddingManager,
-            process_executor: ProcessPoolExecutor,
-            focus_files: List[str] = [],
-            focus_chunks: List[str] = [],
-            query_vector: Optional[List[float]] = None,
-            only_focus_code_chunks: bool = False,
-            search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
-            weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
-            usage_hash: Optional[str] = None,
-            chunking_handler: Optional[BaseChunker] = None,
-            reranker: Optional[BaseChunkReranker] = None,
+        cls,
+        query: str,
+        chunkable_files_with_hashes: Dict[str, str],
+        local_repo: BaseLocalRepo,
+        embedding_manager: BaseEmbeddingManager,
+        process_executor: ProcessPoolExecutor,
+        focus_files: List[str] = [],
+        focus_chunks: List[str] = [],
+        query_vector: Optional[List[float]] = None,
+        only_focus_code_chunks: bool = False,
+        search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
+        weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
+        usage_hash: Optional[str] = None,
+        chunking_handler: Optional[BaseChunker] = None,
+        reranker: Optional[BaseChunkReranker] = None,
     ) -> Tuple[str, int]:
         # Get all chunks from the repository
         focus_chunks_details = await cls.get_focus_chunk(
