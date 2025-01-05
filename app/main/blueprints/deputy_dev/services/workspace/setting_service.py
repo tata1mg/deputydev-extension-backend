@@ -10,7 +10,6 @@ from app.common.constants.constants import (
     SETTING_ERROR_MESSAGE,
     SettingErrorType,
 )
-from app.main.blueprints.deputy_dev.models.dao.postgres import Agents, Configurations, Repos
 from app.common.utils.context_vars import (
     context_var,
     get_context_value,
@@ -18,7 +17,11 @@ from app.common.utils.context_vars import (
 )
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
 from app.main.blueprints.deputy_dev.constants.constants import SettingLevel
-from app.main.blueprints.deputy_dev.models.dao.postgres import Configurations
+from app.main.blueprints.deputy_dev.models.dao.postgres import (
+    Agents,
+    Configurations,
+    Repos,
+)
 from app.main.blueprints.deputy_dev.utils import (
     get_workspace,
     update_payload_with_jwt_data,

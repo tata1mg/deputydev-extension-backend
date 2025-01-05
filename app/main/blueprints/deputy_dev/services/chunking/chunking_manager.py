@@ -12,7 +12,9 @@ from app.main.blueprints.deputy_dev.services.chunking.chunk_parsing_utils import
 )
 from app.main.blueprints.deputy_dev.services.llm.anthropic_llm import Anthropic
 from app.main.blueprints.deputy_dev.services.search import perform_search
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import is_path_included
 
 

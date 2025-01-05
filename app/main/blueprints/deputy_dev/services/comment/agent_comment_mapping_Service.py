@@ -1,7 +1,7 @@
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.agent_comment_mappings import (
     AgentCommentMappings,
 )
-from app.common.services.repository.db import DB
 
 
 class AgentCommentMappingService:

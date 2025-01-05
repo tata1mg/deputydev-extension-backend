@@ -1,5 +1,11 @@
 from enum import Enum
 
+PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
+PR_SIZING_TEXT = (
+    "\n\n **Size {category}:** This PR changes include {loc} lines and should take approximately {time}\n\n"
+)
+PR_NOT_FOUND = "PR does not exist"
+
 
 class TimeFormat(Enum):
     SECONDS = "SECONDS"
