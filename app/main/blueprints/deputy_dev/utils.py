@@ -341,3 +341,30 @@ def repo_meta_info_prompt(app_settings):
 def format_chat_comment_thread_comment(comment):
     """Append comment Start and Comment End in each comment that we add in Comment thread in DD chat flow"""
     return "Comment Start: \n" + comment + "\nComment End \n"
+
+
+def ignore_files(pr_diff, excluded_files=None, included_files=None):
+    if not excluded_files:
+        excluded_files = []
+    if not included_files:
+        included_files = []
+    resp_text = ""
+    for d in pr_diff.split("diff --git "):
+        if is_any_regex_present(d, included_files) or not is_any_regex_present(d, excluded_files):
+            resp_text += d
+    return resp_text
+
+
+def is_path_included(path, excluded_files=None, included_files=None):
+    if not excluded_files:
+        excluded_files = []
+    if not included_files:
+        included_files = []
+    return is_any_regex_present(path, included_files) or not is_any_regex_present(path, excluded_files)
+
+
+def is_any_regex_present(text, regex_list):
+    for pattern in regex_list:
+        if re.search(pattern, text):
+            return True
+    return False
