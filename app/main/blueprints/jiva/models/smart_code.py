@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
+from app.common.constants.constants import VCSTypes
 
 
 class SmartCodeReqeustModel(BaseModel):

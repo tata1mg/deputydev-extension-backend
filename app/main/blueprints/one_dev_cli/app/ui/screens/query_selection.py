@@ -8,6 +8,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev_cli.app.constants.cli import CLIFeatures, CLIOperations
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
     TextSnippet,
@@ -33,28 +34,18 @@ INT_MIN = -2147483648
 
 class OperationCompleter(Completer):
     def get_completions(self, document: Document, complete_event: CompleteEvent):
-        yield Completion(
-            CLIOperations.CODE_GENERATION.value,
-            start_position=INT_MIN,
-        )
+        all_enabled_operations: List[CLIOperations] = []
+        for feature in ConfigManager.configs["ENABLED_FEATURES"]:
+            try:
+                all_enabled_operations.append(CLIOperations(feature))
+            except Exception:
+                pass
 
-        # Underline completion.
-        yield Completion(
-            CLIOperations.DOCS_GENERATION.value,
-            start_position=INT_MIN,
-        )
-
-        # Specify class name, which will be looked up in the style sheet.
-        yield Completion(
-            CLIOperations.TASK_PLANNER.value,
-            start_position=INT_MIN,
-        )
-
-        # Specify class name, which will be looked up in the style sheet.
-        yield Completion(
-            CLIOperations.TEST_GENERATION.value,
-            start_position=INT_MIN,
-        )
+        for operation in all_enabled_operations:
+            yield Completion(
+                operation.value,
+                start_position=INT_MIN,
+            )
 
 
 class FilePathCompleter(Completer):
@@ -70,9 +61,6 @@ class FilePathCompleter(Completer):
         # if text is empty, show nothing
         if not text:
             return
-
-        if "," in text:
-            text = text.split(",")[-1]
 
         # if text is at least one character, show all file paths which start with the text
         abs_repo_path = self.app_context.local_repo.repo_path
@@ -95,7 +83,12 @@ class FilePathCompleter(Completer):
 class OperationValidator(AsyncValidator):
     async def validation_core(self, input_text: str) -> None:
         try:
-            CLIOperations(input_text)
+            input_enum = CLIOperations(input_text)
+            if input_enum.value not in ConfigManager.configs["ENABLED_FEATURES"]:
+                raise ValidationError(
+                    message=f"Operation {input_enum.value} is not a valid operation",
+                    cursor_position=len(input_text),
+                )
         except Exception:
             raise ValidationError(message="Invalid operation", cursor_position=len(input_text))
 
@@ -116,6 +109,13 @@ class FileSelectionValidator(AsyncValidator):
         # check if path is a file
         if not os.path.isfile(abs_filepath):
             raise ValidationError(message="Invalid file path")
+
+        # try to open the file to check if it is readable
+        try:
+            with open(abs_filepath, "r", encoding="utf-8") as f:
+                _ = f.readlines()
+        except Exception:
+            raise ValidationError(message="Unreadable file (UTF-8 encoding is required)")
 
 
 class MultiFileSelectionValidator(AsyncValidator):
@@ -169,6 +169,8 @@ class TextSelectionValidator(AsyncValidator):
                 message="Invalid text selection format. Please enter in the format: file_path:start_line-end_line. Path must be relative to the repository root."
             )
 
+        await FileSelectionValidator(app_context=self.app_context).validation_core(filepath)
+
         # check if file exists, is readable and has the lines
         try:
             abs_filepath = os.path.join(self.app_context.local_repo.repo_path, filepath)
@@ -199,14 +201,17 @@ class TextSelectionOrLimitedLengthFileSelectionValidator(AsyncValidator):
             and await FileSelectionValidator(app_context=self.app_context).validation_core(input_text) is None
         ):
             abs_filepath = os.path.join(self.app_context.local_repo.repo_path, input_text)
-            with open(abs_filepath, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-                if len(lines) > self.max_file_line_length:
-                    raise ValidationError(
-                        message=f"File length exceeds {self.max_file_line_length} lines. Please provide a text selection instead."
-                    )
+            try:
+                with open(abs_filepath, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    if len(lines) > self.max_file_line_length:
+                        raise ValidationError(
+                            message=f"File length exceeds {self.max_file_line_length} lines. Please provide a text selection instead."
+                        )
 
-            is_valid_file = True
+                is_valid_file = True
+            except Exception:
+                raise ValidationError(message="Invalid file path")
 
         if not is_valid_file:
             await TextSelectionValidator(app_context=self.app_context).validation_core(input_text)
@@ -302,7 +307,7 @@ class QuerySelection(BaseScreenHandler):
             focus_files, _ = await validate_existing_text_arg_or_get_input(
                 session=self.session,
                 arg_name="Focus_files",
-                prompt_message="[OPTIONAL]Enter focus files [COMMA SEPERATED](filepath_relative_to_repo_root):",
+                prompt_message="[OPTIONAL]Enter focus files [COMMA SEPARATED](filepath_relative_to_repo_root):",
                 validator=MultiFileSelectionValidator(self.app_context),
                 app_context=self.app_context,
                 completer=FilePathCompleter(self.app_context),
@@ -311,7 +316,7 @@ class QuerySelection(BaseScreenHandler):
             focus_snippets, _ = await validate_existing_text_arg_or_get_input(
                 session=self.session,
                 arg_name="focus_snippets",
-                prompt_message="[OPTIONAL]Enter focus snippets [COMMA SEPERATED](filepath_relative_to_repo_root:start_line-end_line):",
+                prompt_message="[OPTIONAL]Enter focus snippets [COMMA SEPARATED](filepath_relative_to_repo_root:start_line-end_line):",
                 validator=MultiTextSelectionValidator(self.app_context),
                 app_context=self.app_context,
                 completer=FilePathCompleter(self.app_context),

@@ -69,3 +69,60 @@ ALL_EXTENSIONS = {
     **TSX_EXTENSIONS,
     **EXTENSION_TO_LANGUAGE,
 }
+
+
+class LLMProviders(Enum):
+    OPENAI = "OPENAI"
+    ANTHROPIC = "ANTHROPIC"
+
+
+class TokenableType(str, Enum):
+    TEAM = "team"
+    INTEGRATION = "integration"
+    WORKSPACE = "workspace"
+
+
+class TokenType(str, Enum):
+    ACCESS = "access"
+    REFRESH = "refresh"
+    INSTALLATION = "installation"  # github instalation id
+    WORKSPACE_ACCESS = "workspace_access"
+
+
+class VCSTypes(str, Enum):
+    bitbucket = "bitbucket"
+    gitlab = "gitlab"
+    github = "github"
+
+
+class PRStatus(Enum):
+    OPEN = "OPEN"
+    MERGED = "MERGED"
+    DECLINED = "DECLINED"
+    APPROVED = "approved"
+
+
+class SettingErrorType(Enum):
+    INVALID_SETTING = "INVALID_SETTING"
+    CUSTOM_PROMPT_LENGTH_EXCEED = "CUSTOM_PROMPT_LENGTH_EXCEED"
+    INVALID_CHAT_SETTING = "INVALID_CHAT_SETTING"
+    INVALID_TOML = "INVALID_TOML"
+
+
+CUSTOM_PROMPT_CHAR_LIMIT = 4000
+
+
+SETTING_ERROR_MESSAGE = {
+    SettingErrorType.INVALID_TOML.value: "Default settings applied as deputydev.toml file is not a valid toml file.\n\nErrors:",
+    SettingErrorType.INVALID_SETTING.value: "Default settings applied as custom settings validation failed.\n\nErrors:",
+    SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters:\n\n",
+    SettingErrorType.INVALID_CHAT_SETTING.value: f"Default prompt is getting used for chat as Custom Prompt exceed the defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters",
+}
+
+
+class LLMModelNames(ExtendedEnum):
+    GPT_3_5_TURBO = "gpt-3.5-turbo"
+    GPT_4 = "gpt-4"
+    GPT_4_PREVIEW = "gpt-4-1106-preview"
+    GPT_4_O = "gpt-4o"
+    GPT_TEXT_EMBEDDING_3_SMALL = "text-embedding-3-small"

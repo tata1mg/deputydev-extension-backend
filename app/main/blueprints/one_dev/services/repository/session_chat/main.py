@@ -2,7 +2,7 @@ from typing import List, Union
 
 from sanic.log import logger
 
-from app.common.services.repository.db import DB
+from app.backend_common.repository.db import DB
 from app.main.blueprints.one_dev.models.dao.postgres.session_chats import SessionChats
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 

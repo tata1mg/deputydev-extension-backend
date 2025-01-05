@@ -3,10 +3,11 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "one_dev_cli"
+name = "deputy_dev_cli"
 version = "0.1.0-alpha"
-description = "One Dev CLI"
+description = "Deputy Dev CLI"
 authors = [{ name = "Tata1mg", email = "author@example.com" }]
+requires-python = ">=3.9,<3.10"
 
 dependencies = [
     "tortoise-orm==0.21.3",
@@ -27,15 +28,14 @@ dependencies = [
     "prompt-toolkit==3.0.48",
     "xxhash==3.5.0",
     "weaviate-client==4.9.6",
-    "torpedo @ git+ssh://git@bitbucket.org/tata1mg/torpedo.git@3.6.1-rc2",
-    "cache-wrapper @ git+ssh://git@bitbucket.org/tata1mg/cache_wrapper.git@2.4.1",
-    "tortoise-wrapper @ git+ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git@0.6.2",
-    "commonutils @ git+ssh://git@bitbucket.org/tata1mg/commonutils.git@DD-315-botocore-upgrade"
+    "sanic==22.12.0",
+    "gitpython==3.1.27",
 ]
 
 [project.scripts]
-deputydev-cli = "app.main.blueprints.one_dev_cli.app.ui.main:main"
+deputydev-cli = "app.main.blueprints.one_dev_cli.app.ui.main:run_main"
 
 
 [tool.setuptools.packages.find]
 where = ["."]
+exclude = ["app.backend_common*", "app.main.blueprints.deputy_dev*", "app.main.blueprints.jiva*", "app.main.blueprints.one_dev.*", "app.main.blueprints.one_dev"]

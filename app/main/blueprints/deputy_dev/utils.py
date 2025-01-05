@@ -1,31 +1,25 @@
 # flake8: noqa
 from __future__ import annotations
 
-import os
 import re
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
+from app.backend_common.models.dao.postgres.workspaces import Workspaces
+from app.backend_common.repository.db import DB
+from app.backend_common.services.credentials import AuthHandler, AuthHandlerFactory
+from app.common.constants.constants import VCSTypes
 from app.common.services.authentication.jwt import JWTHandler
-from app.common.services.credentials import AuthHandler, AuthHandlerFactory
-from app.common.services.repository.db import DB
-from app.common.services.tiktoken import TikToken
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
     BitbucketBots,
-    PRDiffSizingLabel,
 )
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
-from app.main.blueprints.deputy_dev.loggers import AppLogger
-from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations, Workspaces
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-    set_context_values,
-)
+from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations
 
 
 def remove_special_char(char, input_string):
@@ -84,78 +78,6 @@ def format_code_block(code_block: str) -> str:
     return code_block
 
 
-def ignore_files(pr_diff, excluded_files=None, included_files=None):
-    if not excluded_files:
-        excluded_files = []
-    if not included_files:
-        included_files = []
-    resp_text = ""
-    for d in pr_diff.split("diff --git "):
-        if is_any_regex_present(d, included_files) or not is_any_regex_present(d, excluded_files):
-            resp_text += d
-    return resp_text
-
-
-def is_path_included(path, excluded_files=None, included_files=None):
-    if not excluded_files:
-        excluded_files = []
-    if not included_files:
-        included_files = []
-    return is_any_regex_present(path, included_files) or not is_any_regex_present(path, excluded_files)
-
-
-def is_any_regex_present(text, regex_list):
-    for pattern in regex_list:
-        if re.search(pattern, text):
-            return True
-    return False
-
-
-# def files_to_exclude(exclusions, inclusions, repo_dir=""):
-#     """
-#     Computes the final list of excluded files or folders after applying inclusions and exclusions.
-#
-#     :param repo_dir: The root directory path for the repository.
-#     :param exclusions: List of paths (relative to repo_dir) to be excluded.
-#     :param inclusions: List of paths (relative to repo_dir) to be included even if they are within exclusions.
-#     :return: A set of paths (relative to repo_dir) that are effectively excluded.
-#     """
-#     exclusions = {os.path.join(repo_dir, path) for path in exclusions}
-#     inclusions = {os.path.join(repo_dir, path) for path in inclusions}
-#
-#     final_exclusions = set()
-#
-#     def is_path_excluded(path, exclusions, inclusions):
-#         """
-#         Determines if a path should be excluded based on exclusions and inclusions.
-#         """
-#         for exclusion in exclusions:
-#             if os.path.commonpath([path, exclusion]) == exclusion:
-#                 for inclusion in inclusions:
-#                     if os.path.commonpath([path, inclusion]) == inclusion:
-#                         return False
-#                 return True
-#         return False
-#
-#     # Process exclusions, filtering out overridden paths
-#     for exclusion in exclusions:
-#         if not any(os.path.commonpath([exclusion, inclusion]) == inclusion for inclusion in inclusions):
-#             final_exclusions.add(exclusion)
-#
-#     # Add nested files and folders to the final exclusions
-#     for exclusion in exclusions:
-#         for root, dirs, files in os.walk(exclusion):
-#             for item in dirs + files:
-#                 full_path = os.path.join(root, item)
-#                 if is_path_excluded(full_path, exclusions, inclusions):
-#                     final_exclusions.add(full_path)
-#
-#     # Convert final exclusions to relative paths
-#     relative_exclusions = {os.path.relpath(path, repo_dir) for path in final_exclusions}
-#
-#     return relative_exclusions
-
-
 def get_filtered_response(response: dict, confidence_filter_score: float) -> bool:
     """
     Filters the response based on the given confidence filter score.
@@ -170,50 +92,6 @@ def get_filtered_response(response: dict, confidence_filter_score: float) -> boo
     """
     confidence_score = response.get("confidence_score")
     return response.get("comment") and float(confidence_score) >= float(confidence_filter_score)
-
-
-def format_code_blocks(comment: str) -> str:
-    """
-    Replace all occurrences of the pattern with triple backticks without preceding spaces and added a \n before ```
-    Args:
-        comment (string): Comment provided by llm
-
-    Returns:
-      string: formatted_comment without triple backticks without preceding spaces
-    """
-    pattern = re.compile(r"\s*```")
-
-    formatted_comment = pattern.sub("\n```", comment)
-
-    return formatted_comment
-
-
-def format_comment_bucket_name(input_string: str) -> str:
-    """
-    Convert a given string to uppercase and replace spaces with underscores,
-    preparing it for storage as a CITEXT field in a database.
-    Args:
-        input_string (str): The string to be converted.
-    Returns:
-        str: The converted string in uppercase with spaces replaced by underscores.
-
-    Example:
-        >>> convert_to_ci_text_field("runtime error")
-        'RUNTIME_ERROR'
-    """
-    # Convert the input string to uppercase
-    uppercase_string = input_string.upper()
-    # Replace spaces with underscores
-    ci_text_field = uppercase_string.replace(" ", "_")
-    return ci_text_field
-
-
-def parse_collection_name(name: str) -> str:
-    # Replace any non-alphanumeric characters with hyphens
-    name = re.sub(r"[^\w-]", "--", name)
-    # Ensure the name is between 3 and 63 characters and starts/ends with alphanumeric
-    name = re.sub(r"^(-*\w{0,61}\w)-*$", r"\1", name[:63].ljust(3, "x"))
-    return name
 
 
 def get_corrective_code(data):
@@ -246,66 +124,6 @@ def get_bucket_name(data):
     if buckets and not data.get("is_summarized"):
         return buckets[0]["name"]
     return ""
-
-
-def append_line_numbers(pr_diff: str) -> str:
-    """Append line numbers to PR diff
-    Args:
-        pr_diff (str): pr diff returned from git diff
-    Returns:
-        str: pr_diff with line number
-    """
-
-    result = []
-    current_file = None
-    original_line_number = 0
-    new_line_number = 0
-
-    lines = pr_diff.split("\n")
-    for line in lines:
-        # Match the start of a new file diff
-        file_match = re.match(r"^\+\+\+ b/(.+)$", line)
-        if file_match:
-            current_file = file_match.group(1)
-            result.append(line)
-            continue
-
-        # Match the line number info
-        line_info_match = re.match(r"^@@ -(\d+),\d+ \+(\d+),\d+ @@", line)
-        if line_info_match:
-            original_line_number = int(line_info_match.group(1))
-            new_line_number = int(line_info_match.group(2))
-            result.append(line)
-            continue
-
-        # Handle added lines
-        if line.startswith("+") and not line.startswith("+++"):
-            if current_file:
-                result.append(f"<+{new_line_number}> {line}")
-            new_line_number += 1
-            continue
-
-        # Handle removed lines
-        if line.startswith("-") and not line.startswith("---"):
-            if current_file:
-                result.append(f"<-{original_line_number}> {line}")
-            original_line_number += 1
-            continue
-
-        # Handle unchanged lines
-        if not line.startswith("-") and not line.startswith("+") and not line.startswith("@@"):
-            if current_file:
-                result.append(f"<+{new_line_number}> {line}")
-            new_line_number += 1
-            original_line_number += 1
-
-    return "\n".join(result)
-
-
-def get_foundation_model_name():
-    model_config = CONFIG.config.get("SCRIT_MODEL")
-    model = model_config["MODEL"]
-    return model
 
 
 def get_approval_time_from_participants_bitbucket(participants):
@@ -355,42 +173,6 @@ def count_bot_and_human_comments_bitbucket(comments: List[Dict]) -> Tuple[int, i
                     human_comment_count += 1
 
     return bot_comment_count, human_comment_count
-
-
-def categorize_loc(loc: int) -> tuple:
-    """
-    Categorizes the number of lines of code (LOC) into predefined size categories.
-
-    Args:
-        loc (int): The total number of lines of code.
-
-    Returns:
-        str: The size category based on the number of lines of code.
-            - "XS" for 0-9 lines
-            - "S" for 10-29 lines
-            - "M" for 30-99 lines
-            - "L" for 100-499 lines
-            - "XL" for 500-999 lines
-            - "XXL" for 1000+ lines
-    """
-    if loc < 10:
-        return PRDiffSizingLabel.XS.value, PRDiffSizingLabel.XS_TIME.value
-    elif loc < 30:
-        return PRDiffSizingLabel.S.value, PRDiffSizingLabel.S_TIME.value
-    elif loc < 100:
-        return PRDiffSizingLabel.M.value, PRDiffSizingLabel.M_TIME.value
-    elif loc < 500:
-        return PRDiffSizingLabel.L.value, PRDiffSizingLabel.L_TIME.value
-    elif loc < 1000:
-        return PRDiffSizingLabel.XL.value, PRDiffSizingLabel.XL_TIME.value
-    else:
-        return PRDiffSizingLabel.XXL.value, PRDiffSizingLabel.XXL_TIME.value
-
-
-def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
-    if category == PRDiffSizingLabel.XXL.value:
-        return "1000+", f"{time} to review, potentially spread across multiple sessions"
-    return str(loc), f"{time} to review"
 
 
 def extract_line_number_from_llm_response(line_number: str):

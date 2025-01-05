@@ -29,7 +29,7 @@ class ChunkInfo(BaseModel):
     source_details: ChunkSourceDetails
     metadata: Optional[ChunkMetadata] = None
 
-    def get_chunk_content(self, add_ellipsis: bool = True, add_lines: bool = True):
+    def get_chunk_content(self, add_ellipsis: bool = False, add_lines: bool = True):
         """
         Get a content of the chunk.
 
@@ -81,7 +81,7 @@ class ChunkInfo(BaseModel):
         return chunk_final_meta_data
 
     def get_chunk_content_with_meta_data(
-        self, add_ellipsis: bool = True, add_lines: bool = True, add_class_function_info: bool = True
+        self, add_ellipsis: bool = False, add_lines: bool = True, add_class_function_info: bool = True
     ) -> str:
         chunk_content = self.get_chunk_content(add_ellipsis=add_ellipsis, add_lines=add_lines)
 
@@ -112,4 +112,4 @@ class ChunkInfo(BaseModel):
         return f"{self.source_details.file_path}:{self.source_details.start_line}-{self.source_details.end_line}"
 
     def get_xml(self) -> str:
-        return f"""<chunk source="{self.denotation}">\n{self.get_chunk_content_with_meta_data(add_class_function_info=False)}\n</chunk>"""
+        return f"""<chunk source="{self.denotation}">\n{self.get_chunk_content_with_meta_data(add_class_function_info=True, add_lines=True)}\n</chunk>"""

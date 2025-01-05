@@ -2,19 +2,20 @@ from typing import Optional
 
 from torpedo import CONFIG
 
-from app.common.services.pr.base_pr import BasePR
-from app.common.services.repo.base_repo import BaseRepo
-from app.common.services.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.services.pr.base_pr import PR_NOT_FOUND, BasePR
+from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.services.workspace.workspace_service import WorkspaceService
+from app.common.constants.constants import PRStatus
+from app.common.utils.context_vars import set_context_values
 from app.common.utils.app_utils import get_token_count
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
     ExperimentStatusTypes,
     PRReviewExperimentSet,
-    PRStatus,
     PrStatusTypes,
 )
-from app.main.blueprints.deputy_dev.constants.repo import PR_NOT_FOUND
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
@@ -24,13 +25,10 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    set_context_values,
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
 )
-from app.main.blueprints.deputy_dev.services.workspace.workspace_service import (
-    WorkspaceService,
-)
+
 
 config = CONFIG.config
 

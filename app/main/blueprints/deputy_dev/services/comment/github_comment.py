@@ -1,11 +1,13 @@
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.service_clients.github.github_repo_client import GithubRepoClient
-from app.common.services.credentials import AuthHandler
-from app.main.blueprints.deputy_dev.loggers import AppLogger
+from app.backend_common.service_clients.github.github_repo_client import (
+    GithubRepoClient,
+)
+from app.backend_common.services.credentials import AuthHandler
+from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
+from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
-from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.helpers.github_comment_helper import (
     GithubCommentHelper,

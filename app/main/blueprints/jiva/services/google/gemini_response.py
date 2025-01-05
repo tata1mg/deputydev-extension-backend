@@ -1,8 +1,8 @@
 import ujson
 from langchain.document_loaders import PyPDFLoader
 
+from app.backend_common.service_clients.gemini.gemini_pro import GeminiProServiceClient
 from app.common.constants.error_messages import ErrorMessages
-from app.common.service_clients.gemini.gemini_pro import GeminiProServiceClient
 from app.common.utils.headers import Headers
 from app.main.blueprints.jiva.constants.prompts.v1.prompts import USER_LOCATION
 from app.main.blueprints.jiva.models.chat import ChatModel, ChatTypeMsg

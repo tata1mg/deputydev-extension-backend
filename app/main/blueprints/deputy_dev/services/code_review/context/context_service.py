@@ -1,14 +1,19 @@
 from torpedo import CONFIG
 
-from app.common.services.chunking.chunking_manager import ChunkingManger
-from app.common.services.embedding.managers.openai_embedding_manager import (
+from app.backend_common.services.embedding.openai_embedding_manager import (
     OpenAIEmbeddingManager,
 )
-from app.common.services.pr.base_pr import BasePR
-from app.common.services.repo.base_repo import BaseRepo
+from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.formatting import append_line_numbers
+from app.common.services.chunking.chunker.handlers.non_vector_db_chunker import (
+    NonVectorDBChunker,
+)
+from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
+from app.common.utils.context_vars import get_context_value
 from app.common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
     ConfluenceManager,
@@ -16,10 +21,6 @@ from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_man
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-)
-from app.main.blueprints.deputy_dev.utils import append_line_numbers
 
 
 class ContextService:
@@ -47,19 +48,21 @@ class ContextService:
 
     async def get_relevant_chunk(self):
         if not self.relevant_chunk:
-            # TODO: remove False from here
-            use_new_chunking = (
-                False and get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+            use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+            local_repo = GitRepo(self.repo_service.repo_dir)
+            chunker = NonVectorDBChunker(
+                local_repo=local_repo,
+                process_executor=process_executor,
+                use_new_chunking=use_new_chunking,
             )
             self.relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
                 query=await self.pr_service.get_effective_pr_diff(),
-                local_repo=GitRepo(self.repo_service.repo_dir),
-                use_new_chunking=use_new_chunking,
-                use_llm_re_ranking=False,
-                embedding_manager=OpenAIEmbeddingManager,
+                local_repo=local_repo,
+                embedding_manager=OpenAIEmbeddingManager(),
                 chunkable_files_with_hashes={},
                 search_type=SearchTypes.NATIVE,
                 process_executor=process_executor,
+                chunking_handler=chunker,
             )
 
         return self.relevant_chunk

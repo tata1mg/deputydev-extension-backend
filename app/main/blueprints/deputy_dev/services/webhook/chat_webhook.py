@@ -1,8 +1,11 @@
 from sanic.log import logger
 
-from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
+from app.backend_common.utils.app_utils import (
+    get_gitlab_workspace_slug,
+    get_vcs_repo_name_slug,
+)
+from app.common.constants.constants import VCSTypes
 from app.main.blueprints.deputy_dev.constants.constants import GithubActions
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import remove_special_char
 
