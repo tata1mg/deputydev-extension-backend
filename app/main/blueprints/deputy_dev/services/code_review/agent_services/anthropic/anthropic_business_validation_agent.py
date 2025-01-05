@@ -91,6 +91,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         Remember:
         - Map exactly 1 comment to each comment tag in the output response.
         - Focus only on business logic correctness. Do not comment on any other aspects of code review.
+        - Do not change the provided bucket name.
         - Provide clear and actionable feedback in your comments only for critical issues.
         - Use the confidence score to indicate how certain you are about each issue you raise.
         - Need not to do the appreciation comments for the things that are done correctly.
@@ -179,6 +180,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         only for understanding impact of change. 
         12.  comment should not be on unchanged code unless directly impacted by the changes.
         13.  comment should not be duplicated for similar issues across different locations.
+        14. Do not change the provided bucket name.
         
         Remember, your primary goal is to ensure that the changes in the pull request accurately implement
         the requirements specified in the user story and product research document. Do not get sidetracked

@@ -102,6 +102,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         -  Carefully analyze each change in the diff.
         -  Focus solely on major performance issues that could substantially impact system efficiency.
         -  Do not provide appreciation comments or positive feedback.
+        -  Do not change the provided bucket name.
         -  Consider the context provided by contextually related code snippets.
         -  For each finding or improvement, create a separate <comment> block within the <comments> section.
         -  If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
@@ -204,6 +205,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         12.  comment should not be on unchanged code unless directly impacted by the changes.
         13.  comment should not be duplicated for similar issues across different locations.
         14.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        15.  Do not change the provided bucket name.
         </guidelines>
         
         Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 

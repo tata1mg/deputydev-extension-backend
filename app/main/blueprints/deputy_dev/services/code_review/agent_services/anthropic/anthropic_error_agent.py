@@ -117,6 +117,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         -  Focus solely on major error-related issues as outlined above.
         -  Do not comment on minor issues or hypothetical edge cases
         -  Do not provide appreciation comments or positive feedback.
+        - Do not change the provided bucket name.
         -  Consider the context provided by related code snippets.
         -  For each error found, create a separate <comment> block within the <comments> section.
         -  Ensure that your comments are clear, concise, and actionable.
@@ -243,6 +244,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         10.  comment should not be on unchanged code unless directly impacted by the changes.
         11.  comment should not be duplicated for similar issues across different locations.
         12.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        13. Do not change the provided bucket name.
         </guidelines>
         
         Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
