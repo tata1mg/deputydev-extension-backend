@@ -1,6 +1,6 @@
 import json
 
-from app.common.caches import Jiva
+from app.backend_common.caches import Jiva
 from app.main.blueprints.jiva.constants import JivaChatTypes
 from app.main.blueprints.jiva.constants.prompts.v1.prompts import INSTRUCTIONS
 from app.main.blueprints.jiva.models.chat import (

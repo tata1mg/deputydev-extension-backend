@@ -1,7 +1,7 @@
 from sanic.log import logger
 
-from app.common.services.pr.pr_factory import PRFactory
-from app.common.services.repo.base_repo import BaseRepo
+from app.backend_common.services.pr.pr_factory import PRFactory
+from app.backend_common.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.constants.constants import Feature
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.code_generation.code_generation_handler import (

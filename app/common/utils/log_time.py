@@ -1,13 +1,42 @@
 from datetime import datetime, timezone
 from functools import wraps
+from typing import Union
 
 from sanic.log import logger
 
 from app.common.constants.constants import TimeFormat
-from app.common.utils.app_utils import get_time_difference
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    set_context_values,
-)
+from app.common.utils.context_vars import set_context_values
+
+
+def get_time_difference(
+    start_time: Union[datetime, str], end_time: Union[datetime, str], format: TimeFormat = TimeFormat.MINUTES.value
+) -> float:
+    """
+    Calculate the time difference between two datetime values.
+
+    Parameters:
+    start_time (Union[datetime, str]): The start time in datetime or ISO 8601 string format.
+    end_time (Union[datetime, str]): The end time in datetime or ISO 8601 string format.
+    format (TimeFormat): The format for the time difference ('seconds' or 'minutes'). Default is 'minutes'.
+
+    Returns:
+    float: The time difference in the specified format.
+    """
+    if isinstance(start_time, str):
+        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+    if start_time.tzinfo != timezone.utc:
+        start_time.astimezone(timezone.utc)
+
+    if isinstance(end_time, str):
+        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+    if end_time.tzinfo != timezone.utc:
+        end_time.astimezone(timezone.utc)
+
+    time_difference = (end_time - start_time).total_seconds()
+    if format == TimeFormat.MINUTES.value:
+        return time_difference / 60
+    else:
+        return time_difference
 
 
 def log_time(func):

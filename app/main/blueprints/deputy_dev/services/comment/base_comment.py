@@ -3,12 +3,12 @@ from typing import List, Union
 
 from torpedo import Task
 
-from app.common.services.credentials import AuthHandler
-from app.common.utils.app_utils import get_task_response
+from app.backend_common.services.credentials import AuthHandler
+from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
+from app.backend_common.utils.app_utils import get_task_response
+from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputy_dev.constants import SCRIT_DEPRECATION_NOTIFICATION
-from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
-from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 
 
 class BaseComment(ABC):

@@ -1,8 +1,10 @@
 from functools import wraps
 
 from torpedo import CONFIG, Request
+from torpedo.exceptions import BadRequestException
 
 from app.common.services.authentication.jwt import JWTHandler
+from app.main.blueprints.one_dev.services.auth.login_by_team import TeamLogin
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
@@ -21,6 +23,9 @@ def authenticate(func):
         # decode the token
         token = authorization_header.split(" ")[1]
         token_data = JWTHandler(signing_key=CONFIG.config["JWT_SECRET_KEY"]).verify_token(token)
+        verification_status = await TeamLogin.verify_token_data(token_data=token_data)
+        if verification_status["status"] != "VERIFIED":
+            raise BadRequestException("Auth token not verified")
         headers = _request.headers
 
         # get user name and user email

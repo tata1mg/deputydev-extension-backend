@@ -22,6 +22,9 @@ class Claude3Point5DocsGenerationPrompt(BaseClaude3Point5SonnetPrompt):
             Here is the code you need to generate docstrings for:
             {self.params.get("query")}
 
+            Make sure that you do not change the structure of the code or rename anything. Code should not be touched.
+            Also, make sure to give out documentation in such a way that in a subsequent prompt, I can generate the diff to be applied on the source code.
+
         """
 
         if self.params.get("custom_instructions"):
@@ -31,7 +34,7 @@ class Claude3Point5DocsGenerationPrompt(BaseClaude3Point5SonnetPrompt):
 
         """
 
-        user_message += """
+        user_message += f"""
             The relevant code chunks in relation to the provided code are as follows:
             {self.params.get("relevant_chunks")}
 

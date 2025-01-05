@@ -1,7 +1,7 @@
-from app.common.services.credentials.factory import AuthHandlerFactory
-from app.common.services.repo.repo_factory import RepoFactory
-from app.common.services.repository.repo.repo_service import RepoService
-from app.common.services.repository.workspace.main import WorkspaceService
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.workspace.main import WorkspaceService
+from app.backend_common.services.credentials.factory import AuthHandlerFactory
+from app.backend_common.services.repo.repo_factory import RepoFactory
 
 
 class ReposHandler:

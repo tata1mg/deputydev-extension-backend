@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Union
 
 from sanic.log import logger
 
-from app.common.services.repository.db import DB
+from app.backend_common.repository.db import DB
 from app.main.blueprints.one_dev.models.dao.postgres.job import Job
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 

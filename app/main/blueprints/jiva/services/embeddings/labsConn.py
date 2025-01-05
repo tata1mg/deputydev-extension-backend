@@ -1,8 +1,8 @@
-from commonutils.utils import Singleton
 from langchain.vectorstores.pgvector import PGVector
 from torpedo import CONFIG
 
-from app.common.services.openai.openaiembedding import OpenAIEmbeddingsCustom
+from app.backend_common.services.openai.openaiembedding import OpenAIEmbeddingsCustom
+from app.common.utils.singleton import Singleton
 
 config = CONFIG.config
 

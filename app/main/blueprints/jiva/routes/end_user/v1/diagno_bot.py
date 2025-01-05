@@ -4,7 +4,7 @@ from sanic import Blueprint, Websocket
 from sanic_ext import validate
 from torpedo import Request
 
-from app.common.utils.wrapper import http_v4_wrapper
+from app.backend_common.utils.wrapper import http_v4_wrapper
 from app.main.blueprints.jiva.models.chat import ChatModel
 from app.main.blueprints.jiva.services.bots.diagnoBot import DiagnoBotManager
 

@@ -6,7 +6,7 @@ from torpedo import CONFIG
 
 from app.common.services.authentication.jwt import JWTHandler
 
-from .......common.services.credentials import AuthHandler
+from .......backend_common.services.credentials import AuthHandler
 
 
 class SCM(ABC):

@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from app.common.services.sqs.base_subscriber import BaseSubscriber
+from app.main.blueprints.deputy_dev.services.sqs.base_subscriber import BaseSubscriber
 
 from ..code_review.pr_review_manager import PRReviewManager
 

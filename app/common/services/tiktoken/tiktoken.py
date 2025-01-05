@@ -1,7 +1,9 @@
 import tiktoken
 
-from app.main.blueprints.deputy_dev.constants import EMBEDDING_TOKEN_LIMIT
-from app.main.blueprints.deputy_dev.constants.constants import LLMModelNames
+from app.common.constants.constants import LLMModelNames
+from app.common.utils.config_manager import ConfigManager
+
+EMBEDDING_TOKEN_LIMIT = ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"]
 
 
 class TikToken:

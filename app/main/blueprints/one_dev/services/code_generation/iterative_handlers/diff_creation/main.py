@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Tuple
 
+from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
+from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.common.constants.constants import LLModels, PromptFeatures
-from app.common.services.llm.dataclasses.main import LLMMeta
-from app.common.services.llm.handler import LLMHandler
 from app.common.services.prompt.factory import PromptFeatureFactory
-from app.common.services.repo.repo_factory import RepoFactory
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.helpers.code_application import (
     CodeApplicationHandler,

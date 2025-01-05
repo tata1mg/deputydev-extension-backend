@@ -51,7 +51,7 @@ class Claude3Point5TestCaseGenerationPrompt(BaseClaude3Point5SonnetPrompt):
 
         user_message += f"""
             Here are some chunks of code related to the above code taken from the repository:
-            {self.params.get("code_context")}
+            {self.params.get("relevant_chunks")}
 
             <important> Write test cases for the selected code only. Do not try to add your own methods/functions. </important>
 

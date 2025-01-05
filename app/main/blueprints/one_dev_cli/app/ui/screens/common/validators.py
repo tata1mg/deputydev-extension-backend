@@ -1,13 +1,17 @@
+import asyncio
 from abc import abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Tuple
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import Completer
+from prompt_toolkit.completion import CompleteEvent, Completer
 from prompt_toolkit.document import Document
 from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.validation import ValidationError, Validator
+from prompt_toolkit.validation import ThreadedValidator, ValidationError, Validator
 
 from app.main.blueprints.one_dev_cli.app.ui.screens.dataclasses.main import AppContext
+
+thread_executor = ThreadPoolExecutor(max_workers=1)
 
 
 class AsyncValidator(Validator):
@@ -19,19 +23,31 @@ class AsyncValidator(Validator):
         await self.validation_core(document.text)
 
     def validate(self, document: Document) -> None:
-        # this will run validation_core synchronously on a separate thread
-        import asyncio
-        from concurrent.futures import ThreadPoolExecutor
-
         # Run validation_core in a separate thread since it's async
-        with ThreadPoolExecutor() as executor:
-            future = executor.submit(lambda: asyncio.run(self.validation_core(document.text)))
+        # This allows us to bypass a core issue with prompt toolkit where
+        # validation is sometimes done in async mode even if the program is
+        # running in an event loop.
+
+        # This class allows us to make validations completely async in Prompt Toolkit,
+        # and makes use of future object to wait in a synchronous context without
+        # freezing the main thread, which in turn makes the UI freeze.
+
+        def run_async_validation():
+            loop = None
             try:
-                future.result()  # Wait for and get the result, will raise any validation errors
-            except ValidationError as e:
-                raise e
-            except Exception as e:
-                raise ValidationError(str(e))
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(self.validation_core(document.text))
+
+        try:
+            thread_executor.submit(run_async_validation).result()
+        except ValidationError as e:
+            raise e
+        except Exception as e:
+            raise ValidationError(message=str(e))
 
 
 class TextValidator(AsyncValidator):
@@ -41,7 +57,7 @@ class TextValidator(AsyncValidator):
 
 
 class DummyCompleter(Completer):
-    def get_completions(self, document, complete_event):
+    def get_completions(self, document: Document, complete_event: CompleteEvent):
         while False:
             yield
 
@@ -104,7 +120,7 @@ async def validate_existing_text_arg_or_get_input(
         with patch_stdout():
             final_value = await session.prompt_async(
                 prompt_message,
-                validator=validator_to_use,
+                validator=ThreadedValidator(validator_to_use),
                 validate_while_typing=validate_while_typing,
                 default=default,
                 completer=completer or DummyCompleter(),

@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from app.main.blueprints.deputy_dev.constants.constants import PRStatus
+from app.common.constants.constants import PRStatus
 
 
 class ExperimentsDTO(BaseModel):

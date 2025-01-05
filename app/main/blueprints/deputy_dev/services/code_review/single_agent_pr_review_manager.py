@@ -5,25 +5,28 @@ from typing import Dict, Union
 from sanic.log import logger
 from torpedo import CONFIG, Task
 
-from app.common.services.chunking.chunking_manager import ChunkingManger
-from app.common.services.openai.openai_llm_service import OpenAILLMService
-from app.common.services.pr.base_pr import BasePR
-from app.common.services.prompt.prompt_service import PromptService
-from app.common.services.repo.base_repo import BaseRepo
-from app.common.services.tiktoken import TikToken
-from app.common.utils.app_utils import (
+from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
+from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
+from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.app_utils import (
     build_openai_conversation_message,
+    get_foundation_model_name,
     get_task_response,
     get_token_count,
 )
+from app.backend_common.utils.formatting import append_line_numbers, format_code_blocks
+from app.common.services.chunking.chunking_manager import ChunkingManger
+from app.common.services.tiktoken import TikToken
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     SCRIT_SUMMARY_PROMPT,
 )
-from app.main.blueprints.deputy_dev.models.repo import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.prompt.prompt_service import PromptService
 from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
     get_context_value,
 )

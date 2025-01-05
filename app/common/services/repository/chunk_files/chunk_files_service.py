@@ -1,18 +1,20 @@
+import asyncio
 from typing import Dict, List
 
 from sanic.log import logger
-from weaviate import WeaviateAsyncClient
 from weaviate.classes.query import Filter
 from weaviate.collections.classes.data import DataObject
 
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dto.chunk_file_dto import ChunkFileDTO
+from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 
 
 class ChunkFilesService:
-    def __init__(self, weaviate_client: WeaviateAsyncClient):
+    def __init__(self, weaviate_client: WeaviateSyncAndAsyncClients):
         self.weaviate_client = weaviate_client
-        self.collection = weaviate_client.collections.get(ChunkFiles.collection_name)
+        self.async_collection = weaviate_client.async_client.collections.get(ChunkFiles.collection_name)
+        self.sync_collection = weaviate_client.sync_client.collections.get(ChunkFiles.collection_name)
 
     async def get_chunk_files_by_commit_hashes(self, file_to_commit_hashes: Dict[str, str]) -> List[ChunkFileDTO]:
         BATCH_SIZE = 1000
@@ -27,7 +29,7 @@ class ChunkFilesService:
                 batch_pairs = file_commit_pairs[i : i + BATCH_SIZE]
 
                 # Single query per batch without offset pagination
-                batch_files = await self.collection.query.fetch_objects(
+                batch_files = await self.async_collection.query.fetch_objects(
                     filters=Filter.any_of(
                         [
                             Filter.all_of(
@@ -60,6 +62,20 @@ class ChunkFilesService:
             raise ex
 
     async def bulk_insert(self, chunks: List[ChunkFileDTO]) -> None:
-        await self.collection.data.insert_many(
-            [DataObject(properties=chunk.model_dump(mode="json", exclude={"id"})) for chunk in chunks]
-        )
+        batch_size = 200
+        for i in range(0, len(chunks), batch_size):
+            batch = chunks[i : i + batch_size]
+            await self.async_collection.data.insert_many(
+                [DataObject(properties=chunk.model_dump(mode="json", exclude={"id"})) for chunk in batch]
+            )
+            await asyncio.sleep(0.2)  # sleep has been added for controlled insertion
+
+    def cleanup_old_chunk_files(self, chunk_hashes_to_clean: List[str]) -> None:
+        batch_size = 500
+        for i in range(0, len(chunk_hashes_to_clean), batch_size):
+            chunk_hashes_batch = chunk_hashes_to_clean[i : i + batch_size]
+            self.sync_collection.data.delete_many(
+                Filter.any_of(
+                    [Filter.by_property("chunk_hash").equal(chunk_hash) for chunk_hash in chunk_hashes_batch]
+                ),
+            )
