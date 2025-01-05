@@ -96,6 +96,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         - Provide specific line numbers and file paths for each finding.
         - Assign appropriate confidence scores based on your certainty of the findings or suggestion
         - Do not provide appreciation comments or positive feedback.
+        - Do not change the provided bucket name.
         - <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
             This is the primary focus for review comments. The diff shows:
             - Added lines (prefixed with +)
@@ -194,6 +195,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         10.  comment should not be on unchanged code unless directly impacted by the changes.
         11.  comment should not be duplicated for similar issues across different locations.
         12.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        13.  Do not change the provided bucket name.
         </guidelines>
         
         
