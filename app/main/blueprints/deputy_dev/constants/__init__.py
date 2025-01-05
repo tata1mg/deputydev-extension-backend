@@ -7,8 +7,6 @@ __all__ = [
     "EMBEDDING_TOKEN_LIMIT",
     "SCRIT_DEPRECATION_NOTIFICATION",
     "SCRIT_TAG",
-    "PR_SUMMARY_TEXT",
-    "PR_SIZING_TEXT",
     "PRReviewExperimentSet",
     "ExperimentStatusTypes",
     "BitbucketBots",
@@ -23,23 +21,21 @@ __all__ = [
     "AbAnalysisDates",
     "AbAnalysisPhases",
 ]
+from .....backend_common.services.openai.openai_service import EMBEDDING_MODEL
+from .....backend_common.utils.formatting import PRDiffSizingLabel
+from .....common.constants.constants import LLMModelNames
+from .....common.services.tiktoken.tiktoken import EMBEDDING_TOKEN_LIMIT
 from .ab_analysis_constants import AbAnalysisDates, AbAnalysisPhases, AbAnalysisQueries
 from .constants import (
     BATCH_SIZE,
-    EMBEDDING_MODEL,
-    EMBEDDING_TOKEN_LIMIT,
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
-    PR_SIZING_TEXT,
-    PR_SUMMARY_TEXT,
     REJECTED_STATUS_TYPES,
     SCRIT_DEPRECATION_NOTIFICATION,
     SCRIT_TAG,
     BitbucketBots,
     ExperimentStatusTypes,
-    LLMModelNames,
     LLMModels,
-    PRDiffSizingLabel,
     PRReviewExperimentSet,
 )
 from .dashboard_constants import DashboardQueries, GraphTypes

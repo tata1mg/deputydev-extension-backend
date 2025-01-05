@@ -1,6 +1,8 @@
-from app.common.utils.app_utils import get_gitlab_workspace_slug, get_vcs_repo_name_slug
-from app.main.blueprints.deputy_dev.constants.constants import PRStatus
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
+from app.backend_common.utils.app_utils import (
+    get_gitlab_workspace_slug,
+    get_vcs_repo_name_slug,
+)
+from app.common.constants.constants import PRStatus, VCSTypes
 from app.main.blueprints.deputy_dev.models.pr_close_request import PRCloseRequest
 
 

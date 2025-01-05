@@ -1,0 +1,77 @@
+import base64
+from typing import Optional, Tuple
+
+import toml
+from torpedo import CONFIG
+
+from app.backend_common.service_clients.github.github_repo_client import (
+    GithubRepoClient,
+)
+from app.backend_common.services.credentials import AuthHandler
+from app.backend_common.services.repo.base_repo import BaseRepo
+from app.common.constants.constants import (
+    SETTING_ERROR_MESSAGE,
+    SettingErrorType,
+    VCSTypes,
+)
+
+
+class GithubRepo(BaseRepo):
+    def __init__(
+        self,
+        workspace: str,
+        repo_name: str,
+        workspace_id: str,
+        workspace_slug: str,
+        auth_handler: AuthHandler,
+        repo_id: str = None,
+    ):
+        super().__init__(
+            vcs_type=VCSTypes.github.value,
+            workspace=workspace,
+            repo_name=repo_name,
+            workspace_id=workspace_id,
+            workspace_slug=workspace_slug,
+            repo_id=repo_id,
+            auth_handler=auth_handler,
+        )
+        self.repo_client = GithubRepoClient(
+            workspace_slug=workspace_slug, repo=repo_name, pr_id=None, auth_handler=auth_handler
+        )
+        self.token = ""  # Assuming I will get token here
+
+    """
+    Manages Github Repo
+    """
+
+    async def get_repo_url(self):
+        self.token = await self.auth_handler.access_token()
+        return "https://x-token-auth:{token}@github.com/{workspace_slug}/{repo_name}.git".format(
+            token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
+        )
+
+    async def get_settings(self, branch_name):
+        settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
+        if settings:
+            try:
+                decoded_settings = base64.b64decode(settings).decode("utf-8")
+                settings = toml.loads(decoded_settings)
+                return settings, ""
+            except toml.TomlDecodeError as e:
+                error_type = SettingErrorType.INVALID_TOML.value
+                error = {error_type: f"""{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"""}
+                return {}, error
+        else:
+            return {}, ""
+
+    async def is_pr_open_between_branches(
+        self, source_branch: str, destination_branch: str
+    ) -> Tuple[bool, Optional[str]]:
+        prs = await self.repo_client.list_prs(source=source_branch, destination=destination_branch)
+        if prs:
+            pr = prs[0]  # get first pr
+            return True, pr["url"]
+        return False, None
+
+    def get_remote_url_without_token(self):
+        return f"git@github.com:{self.workspace_slug}/{self.repo_name}.git"

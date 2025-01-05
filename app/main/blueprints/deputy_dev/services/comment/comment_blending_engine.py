@@ -2,9 +2,10 @@ import asyncio
 import json
 from typing import List
 
-from app.common.services.llm.providers.openai_llm import OpenaiLLM
-from app.main.blueprints.deputy_dev.constants.constants import LLMModelNames
-from app.main.blueprints.deputy_dev.loggers import AppLogger
+from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
+from app.common.constants.constants import LLMModelNames
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.openai_comment_summarization_agent import (
     OpenAICommentSummarizationAgent,
 )
@@ -13,9 +14,6 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.o
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
-)
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
 )
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
 

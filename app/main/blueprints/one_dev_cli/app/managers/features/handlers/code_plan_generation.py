@@ -1,11 +1,12 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional, Union
 
-from weaviate import WeaviateAsyncClient
-
 from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
+from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.services.search.dataclasses.main import SearchTypes
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.one_dev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
@@ -30,7 +31,7 @@ class CodePlanGenerationHandler(BaseFeatureHandler):
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
-        weaviate_client: WeaviateAsyncClient,
+        weaviate_client: WeaviateSyncAndAsyncClients,
         embedding_manager: BaseEmbeddingManager,
         chunkable_files_with_hashes: Dict[str, str],
         auth_token: str,
@@ -38,6 +39,7 @@ class CodePlanGenerationHandler(BaseFeatureHandler):
         session_id: Optional[str] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
+        usage_hash: Optional[str] = None,
     ):
         super().__init__(
             process_executor=process_executor,
@@ -53,6 +55,7 @@ class CodePlanGenerationHandler(BaseFeatureHandler):
             session_id=session_id,
             apply_diff=apply_diff,
             registered_repo_details=registered_repo_details,
+            usage_hash=usage_hash,
         )
 
     async def validate_and_set_final_payload(self):
@@ -79,7 +82,8 @@ class CodePlanGenerationHandler(BaseFeatureHandler):
             weaviate_client=self.weaviate_client,
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
-            use_llm_re_ranking=False,
+            search_type=SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE,
+            usage_hash=self.usage_hash,
         )
 
         final_payload["relevant_chunks"] = relevant_chunks

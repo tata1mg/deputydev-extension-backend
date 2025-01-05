@@ -3,7 +3,7 @@ from enum import Enum
 from tortoise import fields
 from tortoise_wrapper.db import CITextField, NaiveDatetimeField
 
-from .......common.models.dao.postgres.base import Base
+from .......backend_common.models.dao.postgres.base import Base
 
 
 class PullRequests(Base):

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from tortoise.transactions import in_transaction
 
-from app.common.service_clients.oauth import AtlassianOAuthClient
+from app.backend_common.service_clients.oauth import AtlassianOAuthClient
 from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations
 from app.main.blueprints.deputy_dev.models.request import OnboardingRequest
 
-from ......common.services.credentials import JiraAuthHandler
+from ......backend_common.services.credentials import JiraAuthHandler
 from .base import Integration
 
 

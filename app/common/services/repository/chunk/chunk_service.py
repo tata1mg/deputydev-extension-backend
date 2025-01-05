@@ -1,24 +1,27 @@
+import asyncio
 from typing import List
 
 from sanic.log import logger
-from weaviate import WeaviateAsyncClient
 from weaviate.classes.query import Filter
 from weaviate.collections.classes.data import DataObject
+from weaviate.util import generate_uuid5
 
 from app.common.models.dao.weaviate.chunks import Chunks
 from app.common.models.dto.chunk_dto import ChunkDTO, ChunkDTOWithVector
+from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 
 
 class ChunkService:
-    def __init__(self, weaviate_client: WeaviateAsyncClient):
+    def __init__(self, weaviate_client: WeaviateSyncAndAsyncClients):
         self.weaviate_client = weaviate_client
-        self.collection = weaviate_client.collections.get(Chunks.collection_name)
+        self.async_collection = weaviate_client.async_client.collections.get(Chunks.collection_name)
+        self.sync_collection = weaviate_client.sync_client.collections.get(Chunks.collection_name)
 
     async def perform_filtered_vector_hybrid_search(
         self, chunk_hashes: List[str], query: str, query_vector: List[float], limit: int = 20, alpha: float = 0.7
     ) -> List[ChunkDTO]:
         try:
-            all_chunks = await self.collection.query.hybrid(
+            all_chunks = await self.async_collection.query.hybrid(
                 filters=Filter.by_property("chunk_hash").contains_any(chunk_hashes),
                 query=query,
                 limit=limit,
@@ -44,7 +47,7 @@ class ChunkService:
             # Process chunk hashes in batches
             for i in range(0, len(chunk_hashes), BATCH_SIZE):
                 batch_hashes = chunk_hashes[i : i + BATCH_SIZE]
-                batch_chunks = await self.collection.query.fetch_objects(
+                batch_chunks = await self.async_collection.query.fetch_objects(
                     filters=Filter.any_of(
                         [Filter.by_property("chunk_hash").equal(chunk_hash) for chunk_hash in batch_hashes]
                     ),
@@ -72,12 +75,22 @@ class ChunkService:
         batch_size = 100
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i : i + batch_size]
-            await self.collection.data.insert_many(
+            await self.async_collection.data.insert_many(
                 [
                     DataObject(
                         properties=chunk.dto.model_dump(mode="json", exclude={"id"}),
                         vector=chunk.vector,
+                        uuid=generate_uuid5(chunk.dto.chunk_hash),
                     )
                     for chunk in batch
                 ]
+            )
+            await asyncio.sleep(0.2)
+
+    def cleanup_old_chunks(self, chunk_hashes_to_clean: List[str]) -> None:
+        batch_size = 500
+        for i in range(0, len(chunk_hashes_to_clean), batch_size):
+            batch = chunk_hashes_to_clean[i : i + batch_size]
+            self.sync_collection.data.delete_many(
+                Filter.all_of([Filter.by_id().not_equal(generate_uuid5(chunk_hash)) for chunk_hash in batch])
             )

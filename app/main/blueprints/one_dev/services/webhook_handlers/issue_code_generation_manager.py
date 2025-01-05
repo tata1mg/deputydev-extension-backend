@@ -2,16 +2,14 @@ import re
 
 from sanic.log import logger
 
-from app.common.services.repo.repo_factory import RepoFactory
+from app.backend_common.services.repo.repo_factory import RepoFactory
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import Feature
 from app.main.blueprints.deputy_dev.services.code_generation.code_generation_handler import (
     CodeGenerationHandler,
 )
 from app.main.blueprints.deputy_dev.services.webhook.issue_comment_webhook import (
     IssueCommentWebhook,
-)
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
 )
 from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,

@@ -11,6 +11,5 @@ class ChunkFileDTO(BaseModel):
     file_hash: str
     start_line: int
     end_line: int
-    last_used_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

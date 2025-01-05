@@ -1,6 +1,6 @@
 from sanic.log import logger
 
-from app.common.services.repository.db import DB
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres import PRComments
 from app.main.blueprints.deputy_dev.models.dto.pr_comments_dto import PRCommentsDTO
 

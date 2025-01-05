@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 from sanic.log import logger
 
-from app.common.utils.app_utils import convert_to_datetime
+from app.backend_common.utils.app_utils import convert_to_datetime
 from app.main.blueprints.deputy_dev.constants.constants import MetaStatCollectionTypes
 from app.main.blueprints.deputy_dev.models.pr_approval_request import PRApprovalRequest
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService

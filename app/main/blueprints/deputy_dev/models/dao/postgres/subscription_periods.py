@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from .......common.models.dao.postgres.base import Base
+from .......backend_common.models.dao.postgres.base import Base
 
 
 class SubscriptionPeriods(Base):

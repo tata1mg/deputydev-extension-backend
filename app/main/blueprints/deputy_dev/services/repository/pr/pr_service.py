@@ -3,20 +3,16 @@ from typing import Optional
 from sanic.log import logger
 from tortoise.exceptions import IntegrityError
 
-from app.common.services.repository.db import DB
-from app.common.services.repository.repo.repo_service import RepoService
+from app.backend_common.models.dao.postgres.repos import Repos
+from app.backend_common.models.dao.postgres.workspaces import Workspaces
+from app.backend_common.models.dto.pr.base_pr import BasePrModel
+from app.backend_common.repository.db import DB
+from app.backend_common.repository.repo.repo_service import RepoService
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
-from app.main.blueprints.deputy_dev.loggers import AppLogger
-from app.main.blueprints.deputy_dev.models.dao.postgres import (
-    PullRequests,
-    Repos,
-    Workspaces,
-)
-from app.main.blueprints.deputy_dev.models.dto.pr.base_pr import BasePrModel
+from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-)
 
 
 class PRService:
