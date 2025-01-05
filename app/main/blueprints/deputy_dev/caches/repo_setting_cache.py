@@ -1,4 +1,4 @@
-from app.common.caches.base import Base
+from app.backend_common.caches.base import Base
 
 
 class RepoSettingCache(Base):

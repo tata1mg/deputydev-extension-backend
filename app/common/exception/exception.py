@@ -20,7 +20,6 @@ class RefreshTokenFailed(Exception):
         super().__init__(f"Error Refreshing Tokens: {self.message}")
 
 
-# should be derived from torpedo
 class InvalidIntegrationClient(Exception):
     """
     Exception raised for invalid integration client errors.

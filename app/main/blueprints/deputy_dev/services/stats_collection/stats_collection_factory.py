@@ -2,8 +2,8 @@ from copy import deepcopy
 
 from sanic.log import logger
 
+from app.common.constants.constants import VCSTypes
 from app.main.blueprints.deputy_dev.constants.constants import MetaStatCollectionTypes
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
 from app.main.blueprints.deputy_dev.services.stats_collection.human_comment_collection_manager import (
     HumanCommentCollectionManager,
 )

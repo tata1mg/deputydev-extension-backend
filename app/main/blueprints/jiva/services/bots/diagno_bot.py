@@ -4,9 +4,9 @@ import ujson
 from openai.types.chat import ChatCompletionMessage
 
 import app.main.blueprints.jiva.services.openai.openai_tools as OpenAITools
+from app.backend_common.service_clients import OpenAIServiceClient
+from app.backend_common.services.openai.openaiembedding import OpenAIEmbeddingsCustom
 from app.common.constants.error_messages import ErrorMessages
-from app.common.service_clients import OpenAIServiceClient
-from app.common.services.openai.openaiembedding import OpenAIEmbeddingsCustom
 from app.main.blueprints.jiva.constants.prompts.v1.prompts import (
     CHAT_START_MSG,
     INSTRUCTIONS,

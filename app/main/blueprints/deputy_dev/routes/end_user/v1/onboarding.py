@@ -7,7 +7,9 @@ from app.main.blueprints.deputy_dev.models.request import (
     OnboardingRequest,
     SignUpRequest,
 )
-from app.main.blueprints.deputy_dev.services.onboarding_manager import OnboardingManager
+from app.main.blueprints.deputy_dev.services.workspace.onboarding_manager import (
+    OnboardingManager,
+)
 
 onboarding_bp = Blueprint("onboarding", url_prefix="/onboard")
 

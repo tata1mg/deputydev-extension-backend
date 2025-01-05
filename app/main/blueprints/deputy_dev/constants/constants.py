@@ -17,10 +17,6 @@ SCRIT_TAG = "#scrit"
 SCRIT_DEPRECATION_NOTIFICATION = (
     "Note :- #scrit is deprecated and will be removed with next releases. Recommended to use - #deputydev or #dd"
 )
-PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
-PR_SIZING_TEXT = (
-    "\n\n **Size {category}:** This PR changes include {loc} lines and should take approximately {time}\n\n"
-)
 
 
 class LLMModels(Enum):
@@ -170,25 +166,10 @@ MODEL_MAPPING = {
 }
 
 
-class LLMModelNames(ExtendedEnum):
-    GPT_3_5_TURBO = "gpt-3.5-turbo"
-    GPT_4 = "gpt-4"
-    GPT_4_PREVIEW = "gpt-4-1106-preview"
-    GPT_4_O = "gpt-4o"
-    GPT_TEXT_EMBEDDING_3_SMALL = "text-embedding-3-small"
-
-
 class ExperimentStatusTypes(Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     REJECTED_LARGE_SIZE = "REJECTED_LARGE_SIZE"
-
-
-class PRStatus(Enum):
-    OPEN = "OPEN"
-    MERGED = "MERGED"
-    DECLINED = "DECLINED"
-    APPROVED = "approved"
 
 
 class GithubActions(Enum):
@@ -214,21 +195,6 @@ class MetaStatCollectionTypes(Enum):
     PR_CLOSE = "pr_close"
     HUMAN_COMMENT = "human comment"
     PR_APPROVAL_TIME = "pr_approval"
-
-
-class PRDiffSizingLabel(Enum):
-    XS = "XS"
-    S = "S"
-    M = "M"
-    L = "L"
-    XL = "XL"
-    XXL = "XXL"
-    XS_TIME = "5-15 minutes"
-    S_TIME = "15-30 minutes"
-    M_TIME = "30-60 minutes"
-    L_TIME = "1-3 hours"
-    XL_TIME = "3-6 hours"
-    XXL_TIME = "6+ hours"
 
 
 class CombinedTagsList:
@@ -292,14 +258,6 @@ class MultiAgentReflectionIteration(Enum):
     PASS_1 = "PASS_1"
     PASS_2 = "PASS_2"
 
-
-class LLMProviders(Enum):
-    OPENAI = "OPENAI"
-    ANTHROPIC = "ANTHROPIC"
-
-
-EMBEDDING_MODEL = CONFIG.config.get("EMBEDDING").get("MODEL")
-EMBEDDING_TOKEN_LIMIT = CONFIG.config.get("EMBEDDING").get("TOKEN_LIMIT")
 
 CUSTOM_PROMPT_INSTRUCTIONS = """The above defined instructions are default and must be adhered to. While users are allowed to define custom instructions, these customizations must align with the default guidelines to prevent misuse. Please follow these guidelines before considering the user-provided instructions::
 1. Do not change the default response format.

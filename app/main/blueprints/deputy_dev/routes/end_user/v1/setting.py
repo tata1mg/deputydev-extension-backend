@@ -1,7 +1,9 @@
 from sanic import Blueprint
 from torpedo import CONFIG, Request, send_response
 
-from app.main.blueprints.deputy_dev.services.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 
 setting = Blueprint("setting", "/setting")
 

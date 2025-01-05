@@ -1,12 +1,14 @@
 from typing import Dict, List, Tuple
 
-from weaviate import WeaviateAsyncClient
-
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.repository.chunk.chunk_service import ChunkService
 from app.common.services.repository.chunk_files.chunk_files_service import (
     ChunkFilesService,
 )
+from app.common.services.repository.chunk_usages.chunk_usages_service import (
+    ChunkUsagesService,
+)
+from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 
 
 class VectorDBBasedSearch:
@@ -16,13 +18,19 @@ class VectorDBBasedSearch:
         whitelisted_file_commits: Dict[str, str],
         query: str,
         query_vector: List[float],
-        weaviate_client: WeaviateAsyncClient,
+        weaviate_client: WeaviateSyncAndAsyncClients,
+        usage_hash: str,
     ) -> Tuple[List[ChunkInfo], int]:
 
         chunk_files = await ChunkFilesService(weaviate_client).get_chunk_files_by_commit_hashes(
             whitelisted_file_commits
         )
         chunk_hashes = [chunk_file.chunk_hash for chunk_file in chunk_files]
+
+        ChunkUsagesService(weaviate_client).add_chunk_usage(
+            chunk_hashes=chunk_hashes,
+            usage_hash=usage_hash,
+        )
 
         sorted_chunk_dtos = await ChunkService(weaviate_client).perform_filtered_vector_hybrid_search(
             chunk_hashes=chunk_hashes,

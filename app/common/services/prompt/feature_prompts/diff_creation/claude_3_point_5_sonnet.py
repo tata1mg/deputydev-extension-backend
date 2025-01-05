@@ -13,13 +13,13 @@ class Claude3Point5DiffCreationPrompt(BaseClaude3Point5SonnetPrompt):
 
     def get_prompt(self):
         system_message = """
-                You are a senior developer who has a huge amount of experience in applying code diff. You will be given some blocks of code in the previous conversation
-                and you would be asked to get diffs that could be applied to the original code chunks given in the conversation chain.
+                You are a senior developer who has a huge amount of experience in applying code diff. You will be given some blocks of code or documentation in the previous conversation
+                and you would be asked to get diffs that could be applied to the original code chunks given in the conversation chain in the first chat.
             """
 
         user_message = """
-            For the code you just wrote, please provide the diff, pr title and commit description that needs to be applied.
-            1. Go through each chunk in the initial query, and provide a diff for all the modifications that need to be made. The diff chunk should contain the line numbers from original chunk, and the content should be the data those lines should be replaced with.
+            For the code or documentation you just wrote, please provide the diff, pr title and commit description that needs to be applied.
+            1. Go through each chunk in the initial query, and provide a diff for all the modifications that need to be made on them. The diff chunk should contain the line numbers from original chunk, and the content should be the data those lines should be replaced with.
             2. If a new file needs to be created, provide the diff for the new file as a new chunk of code, with the file path.
             3. Do not use any human understandable lines or comments to signify the diff like "remove existing code", "add new code", etc.
             4. Provide the complete diff without missing any lines.

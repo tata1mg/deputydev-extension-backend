@@ -5,17 +5,19 @@ from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.common.services.pr.base_pr import BasePR
-from app.common.services.pr.pr_factory import PRFactory
-from app.common.services.repo.base_repo import BaseRepo
-from app.common.services.repo.repo_factory import RepoFactory
+from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.services.pr.pr_factory import PRFactory
+from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.services.repo.repo_factory import RepoFactory
+from app.backend_common.services.workspace.context_var import identifier
+from app.common.constants.constants import VCSTypes
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value, set_context_values
 from app.common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
     PrStatusTypes,
 )
-from app.main.blueprints.deputy_dev.constants.repo import VCSTypes
-from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
     MultiAgentPRReviewManager,
@@ -36,12 +38,7 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
-from app.main.blueprints.deputy_dev.services.context_var import identifier
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
-    set_context_values,
-)
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]

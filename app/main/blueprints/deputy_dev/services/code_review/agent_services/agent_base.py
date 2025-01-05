@@ -5,17 +5,15 @@ from string import Template
 from torpedo import CONFIG
 
 from app.common.services.tiktoken import TikToken
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
     MultiAgentReflectionIteration,
     TokenTypes,
 )
-from app.main.blueprints.deputy_dev.loggers import AppLogger
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
-)
-from app.main.blueprints.deputy_dev.services.workspace.context_vars import (
-    get_context_value,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 

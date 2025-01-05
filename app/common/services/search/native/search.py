@@ -1,28 +1,25 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Tuple
 
-from torpedo import CONFIG
-
-from app.common.services.chunking.chunking_handler import source_to_chunks
+from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.search.native.lexical_search import lexical_search
+from app.common.utils.config_manager import ConfigManager
 
 from ...chunking.chunk_info import ChunkInfo
 from .vector_search import compute_vector_search_scores
 
 
 class NativeSearch:
-    NO_OF_CHUNKS: int = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
+    NO_OF_CHUNKS: int = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
     @classmethod
     async def perform_search(
         cls,
         query: str,
-        local_repo: BaseLocalRepo,
         embedding_manager: BaseEmbeddingManager,
+        chunking_handler: BaseChunker,
         process_executor: ProcessPoolExecutor,
-        use_new_chunking: bool = True,
     ) -> Tuple[List[ChunkInfo], int]:
         """
         Perform a search operation on documents and document chunks.
@@ -35,12 +32,7 @@ class NativeSearch:
         Returns:
             Dict[int, float]: Search results containing scores for each document chunk.
         """
-        all_chunks, all_docs = await source_to_chunks(
-            local_repo,
-            use_new_chunking,
-            use_vector_store=False,
-            process_executor=process_executor,
-        )
+        all_chunks, all_docs = await chunking_handler.create_chunks_and_docs()
 
         # Perform lexical search
         content_to_lexical_score_list = await lexical_search(query, all_docs, process_executor)
