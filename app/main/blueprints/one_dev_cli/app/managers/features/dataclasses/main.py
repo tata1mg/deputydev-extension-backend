@@ -48,6 +48,7 @@ class PRConfig(BaseModel):
 
 
 class FinalSuccessJob(BaseModel):
+    job_id: int
     session_id: str
     display_response: Optional[str] = None
     diff: Optional[Dict[str, List[Tuple[int, int, str]]]] = None
@@ -58,6 +59,7 @@ class FinalSuccessJob(BaseModel):
 
 
 class FinalFailedJob(BaseModel):
+    job_id: Optional[int] = None
     display_message: str
     next_action: FeatureNextAction = FeatureNextAction.ERROR_OUT_AND_END
 

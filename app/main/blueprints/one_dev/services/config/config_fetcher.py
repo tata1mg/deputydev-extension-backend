@@ -38,6 +38,7 @@ class ConfigFetcher:
             "USE_VECTOR_DB": True,
             "HOST_AND_TIMEOUT": {
                 "HOST": "https://api.deputydev.ai",
+                # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
         }

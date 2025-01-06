@@ -113,11 +113,13 @@ class FeatureFactory:
                     return FinalSuccessJob(
                         **job_status["response"],
                         next_action=feature_job.redirections.success_redirect,
+                        job_id=feature_job.job_id,
                     )
                 elif job_status.get("status") == "FAILED":
                     return FinalFailedJob(
                         display_message=job_status["response"]["message"],
                         next_action=feature_job.redirections.error_redirect,
+                        job_id=feature_job.job_id,
                     )
             except Exception:
                 AppLogger.log_debug(traceback.format_exc())

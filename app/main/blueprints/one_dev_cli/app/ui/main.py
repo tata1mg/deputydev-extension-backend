@@ -84,7 +84,7 @@ def init_args(parser: argparse.ArgumentParser):
     operation_group.add_argument("--query", help="Query from the user")
     operation_group.add_argument(
         "--selected-text",
-        help="The text selection to apply the operation on. Should be in the format file_path_relative_to_repo_root:start_line-end_line",
+        help="The text selection to apply the operation on. Should be in the format file_path_relative_to_repo_root:start_line-end_line [Only applicable to TEST_GENERATION and DOCS_GENERATION]",
     )
 
     # PR and Diff options
@@ -98,14 +98,14 @@ def init_args(parser: argparse.ArgumentParser):
 
     # Authentication options
     auth_group = parser.add_argument_group("Authentication Options")
-    auth_group.add_argument("--auth-token", help="Authentication token")
+    auth_group.add_argument("--deputydev-auth-token", help="Authentication token")
 
     # config options
     config_group = parser.add_argument_group("Config Options")
     config_group.add_argument("--debug", help="Run in debug mode", action="store_true")
     config_group.add_argument(
         "--clean-cache",
-        help="Clean the cache. Use this to clean up if its taking more storage on your system. This might slow down DD CLI",
+        help="Clean the cache. Use this to clean up if its taking more storage on your system. This might slow down DeputyDev CLI's initialization process",
         action="store_true",
     )
 
@@ -161,7 +161,7 @@ async def render_home(app_context: AppContext) -> AppContext:
 
 async def main(process_executor: ProcessPoolExecutor):
     one_dev_client = OneDevClient(ConfigManager.configs["HOST_AND_TIMEOUT"])
-    parser = argparse.ArgumentParser(description="OneDev CLI")
+    parser = argparse.ArgumentParser(description="DeputyDev CLI")
     init_args(parser)
 
     # get parsed user query
