@@ -85,5 +85,7 @@ class CodeApplicationHandler:
         return existing_pr, pr_link
 
     def apply_diff(self):
+        print("Applying diff on local repo...")
+        print(f"Diff: {self.diff}")
         self.repo_service.apply_diff_on_local_repo(self.diff)
         self.is_diff_applied = True
