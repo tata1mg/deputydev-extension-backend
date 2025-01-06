@@ -73,7 +73,7 @@ class DocsGenerationHandler(BaseFeatureHandler):
             )
 
         selected_text = self._get_selected_text(self.query).get_xml()
-        query = selected_text + "   \n  " + self.query.custom_instructions if self.query.custom_instructions else ""
+        query = selected_text + ("   \n  " + self.query.custom_instructions if self.query.custom_instructions else "")
         final_payload["query"] = selected_text
         if self.query.custom_instructions:
             final_payload["custom_instructions"] = self.query.custom_instructions
