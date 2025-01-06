@@ -40,15 +40,20 @@ class RepoPathCompleter(Completer):
         # if text is at least one character, show all file paths which start with the text
         abs_repo_path = os.path.join(text)
 
+        get_last_path_component = abs_repo_path.split("/")[-1]
+        if get_last_path_component:
+            abs_repo_path = abs_repo_path[: -len(get_last_path_component)]
+
         current_yields = 0
         for root, dirs, _ in os.walk(abs_repo_path):
             for dir in dirs:
                 abs_current_file_path = os.path.join(root, dir)
-                if abs_current_file_path.startswith(abs_repo_path):
+                if abs_current_file_path.startswith(abs_repo_path + get_last_path_component):
+
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_file_path[len(abs_repo_path) :],
+                        abs_current_file_path[len(abs_repo_path) + len(get_last_path_component) :],
                         start_position=0,
                     )
                     current_yields += 1
