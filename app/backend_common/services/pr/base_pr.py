@@ -126,7 +126,6 @@ class BasePR(ABC):
             pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
             if pr_reviewable_on_commit:
                 pr_diff = await self.get_commit_diff()
-                pr_diff = pr_diff.json
             else:
                 pr_diff = await self.get_pr_diff()
             self.pr_diff_service = PRDiffService(pr_diff)
