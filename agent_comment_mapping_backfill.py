@@ -117,11 +117,11 @@ try:
     for bucket_name, agent_name in bucket_to_agent_mapping.items():
         cursor.execute(
             """
-            SELECT a.id, bcm.pr_comment_id
+            SELECT a.id, cbm.pr_comment_id
             FROM buckets b
-            JOIN bucket_comment_mapping bcm ON b.id = bcm.bucket_id
-            JOIN pr_comments pc ON bcm.pr_comment_id = pc.id
-            JOIN agents a ON a.name = %s AND a.repo_id = pc.repo_id
+            JOIN comment_bucket_mapping cbm ON b.id = cbm.bucket_id
+            JOIN pr_comments pc ON cbm.pr_comment_id = pc.id
+            JOIN agents a ON a.agent_name = %s AND a.repo_id = pc.repo_id
             WHERE b.name = %s;
             """,
             (agent_name, bucket_name),
