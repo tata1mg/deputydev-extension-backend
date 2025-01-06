@@ -1,11 +1,12 @@
 from typing import Any, Coroutine, Dict, Optional, Tuple, Union
 
-from prompt_toolkit import PromptSession
+from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyPressEvent
 from prompt_toolkit.patch_stdout import patch_stdout
 
+from app.common.constants.feedbacks import UpvoteDownvoteFeedbacks
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
@@ -48,13 +49,14 @@ class ChatScreen(BaseScreenHandler):
                     toolbar_text += "[^D]Apply Diff    "
                 if "PR_CREATION_ENABLED" in ConfigManager.configs and ConfigManager.configs["PR_CREATION_ENABLED"]:
                     toolbar_text += "[^P]Create PR    "
+                toolbar_text += "Is this helpful?: [^W]👍 [^S]👎"
                 return HTML(toolbar_text.strip())
             if CLIFeatures.GENERATE_AND_APPLY_DIFF.value in ConfigManager.configs["ENABLED_FEATURES"]:
-                return HTML("[^C]Exit    [^D]Apply Diff")
+                return HTML("[^C]Exit    [^D]Apply Diff    Is this helpful?: [^W]👍 [^S]👎")
             return HTML("[^C]Exit")
         if self.app_context.current_status == FlowStatus.PLAN_GENERATED:
             if CLIFeatures.PLAN_CODE_GENERATION.value in ConfigManager.configs["ENABLED_FEATURES"]:
-                return HTML("[^C]Exit    [^D]Generate code from plan")
+                return HTML("[^C]Exit    [^D]Generate code from plan    Is this helpful?: [^W]👍 [^S]👎")
             return HTML("[^C]Exit")
 
     async def fetch_pr_config_and_create_pr(self):
@@ -92,6 +94,51 @@ class ChatScreen(BaseScreenHandler):
                     self.app_context.operation = CLIFeatures.PLAN_CODE_GENERATION
                     app = event.app
                     app.exit(result=FeatureRunner(self.app_context).run_feature())
+
+        if self.app_context.current_status in [FlowStatus.PLAN_GENERATED, FlowStatus.CODE_GENERATED]:
+            @bindings.add("c-w")
+            async def _(event: KeyPressEvent):
+                if not self.app_context.session_id or not self.app_context.auth_token:
+                    print_formatted_text("Error while recording feedback. Please contact support.")
+                    return
+                headers = {
+                    "Authorization": f"Bearer {self.app_context.auth_token}",
+                    "X-Session-Id": self.app_context.session_id,
+                }
+                if self.app_context.local_user_details and self.app_context.local_user_details.email:
+                    headers["X-User-Email"] = self.app_context.local_user_details.email
+                if self.app_context.local_user_details and self.app_context.local_user_details.name:
+                    headers["X-User-Name"] = self.app_context.local_user_details.name
+                try:
+                    await self.app_context.one_dev_client.record_feedback(payload={
+                        "feedback": UpvoteDownvoteFeedbacks.UPVOTE.value,
+                        "job_id": self.app_context.last_operation_job_id,
+                    }, headers=headers)
+                    print_formatted_text("Thanks for your feedback! 🙏")
+                except Exception:
+                    print_formatted_text("Error while recording feedback. Please contact support.")
+
+            @bindings.add("c-s")
+            async def _(event: KeyPressEvent):
+                if not self.app_context.session_id or not self.app_context.auth_token:
+                    print_formatted_text("Error while recording feedback. Please contact support.")
+                    return
+                headers = {
+                    "Authorization": f"Bearer {self.app_context.auth_token}",
+                    "X-Session-Id": self.app_context.session_id,
+                }
+                if self.app_context.local_user_details and self.app_context.local_user_details.email:
+                    headers["X-User-Email"] = self.app_context.local_user_details.email
+                if self.app_context.local_user_details and self.app_context.local_user_details.name:
+                    headers["X-User-Name"] = self.app_context.local_user_details.name
+                try:
+                    await self.app_context.one_dev_client.record_feedback(payload={
+                        "feedback": UpvoteDownvoteFeedbacks.DOWNVOTE.value,
+                        "job_id": self.app_context.last_operation_job_id,
+                    }, headers=headers)
+                    print_formatted_text("Thanks for your feedback! 🙏")
+                except Exception:
+                    print_formatted_text("Error while recording feedback. Please contact support.")
 
         return bindings
 

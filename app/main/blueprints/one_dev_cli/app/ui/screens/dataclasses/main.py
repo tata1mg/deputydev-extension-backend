@@ -58,6 +58,7 @@ class AppContext(BaseModel):
     local_user_details: Optional[LocalUserDetails] = None
     process_executor: Optional[ProcessPoolExecutor] = None
     usage_hash: Optional[str] = None
+    last_operation_job_id: Optional[int] = None
 
     current_status: FlowStatus = FlowStatus.INITIALIZED
 
