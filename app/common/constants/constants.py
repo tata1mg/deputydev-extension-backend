@@ -1,10 +1,14 @@
 from enum import Enum
 
+from app.common.utils.config_manager import ConfigManager
+
 PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
 PR_SIZING_TEXT = (
     "\n\n **Size {category}:** This PR changes include {loc} lines and should take approximately {time}\n\n"
 )
 PR_NOT_FOUND = "PR does not exist"
+LARGE_NO_OF_CHUNKS = 100
+NO_OF_CHUNKS_FOR_LLM = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
 
 class TimeFormat(Enum):

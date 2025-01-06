@@ -3,10 +3,13 @@ from abc import ABC
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Optional, Union
 
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.utils.file_utils import read_file
 from app.main.blueprints.one_dev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.one_dev_cli.app.managers.features.dataclasses.main import (
@@ -62,10 +65,15 @@ class BaseFeatureHandler(ABC):
         )
 
     def _get_selected_text(self, text_selection_query: TextSelectionQuery) -> ChunkInfo:
-        abs_filepath = os.path.join(self.local_repo.repo_path, text_selection_query.file_path)
+        abs_filepath = os.path.join(
+            self.local_repo.repo_path, text_selection_query.file_path
+        )
         file_content = read_file(abs_filepath)
 
-        if text_selection_query.start_line is None or text_selection_query.end_line is None:
+        if (
+            text_selection_query.start_line is None
+            or text_selection_query.end_line is None
+        ):
             return ChunkInfo(
                 content=file_content,
                 source_details=ChunkSourceDetails(
@@ -77,7 +85,9 @@ class BaseFeatureHandler(ABC):
             )
         line_wise_file_content = file_content.splitlines()
         selected_text = "\n".join(
-            line_wise_file_content[text_selection_query.start_line - 1 : text_selection_query.end_line]
+            line_wise_file_content[
+                text_selection_query.start_line - 1 : text_selection_query.end_line
+            ]
         )
         return ChunkInfo(
             content=selected_text,
@@ -94,3 +104,10 @@ class BaseFeatureHandler(ABC):
 
     async def validate_and_set_final_payload(self) -> None:
         raise NotImplementedError(self.NOT_IMPLEMENTED_MSG)
+
+    @classmethod
+    def handle_relevant_chunks(cls, search_type, chunks):
+        if search_type == SearchTypes.VECTOR_DB_BASED:
+            return render_snippet_array(chunks)
+        else:
+            return render_snippet_array(chunks[:NO_OF_CHUNKS_FOR_LLM])

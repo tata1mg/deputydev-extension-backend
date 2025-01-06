@@ -637,14 +637,11 @@ class SettingService:
     @classmethod
     def get_agent_inclusion_exclusions(cls, agent_id=None):
         setting = get_context_value("setting")
+        global_exclusions = setting["code_review_agent"]["exclusions"] or []
+        global_inclusions = setting["code_review_agent"]["inclusions"] or []
         if agent_id == cls.summary_agent_id():
-            # TODO: check this again when pr_summary inclusion_exclusion discussed
-            inclusions = setting["pr_summary"].get("inclusions") or []
-            exclusions = setting["pr_summary"].get("exclusions") or []
-            return inclusions, exclusions
+            return list(global_inclusions), list(global_exclusions)
         else:
-            global_exclusions = setting["code_review_agent"]["exclusions"] or []
-            global_inclusions = setting["code_review_agent"]["inclusions"] or []
             agents = cls.get_uuid_wise_agents()
             if agent_id:
                 inclusions = set(global_inclusions) | set(agents[agent_id].get("inclusions", []))
