@@ -60,7 +60,7 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
                 payload={"texts": batch, "store_embeddings": store_embeddings},
                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.auth_token}"},
             )
-            print(f"Time taken for embedding batch via API: {time.perf_counter() - time_start}")
+            AppLogger.log_debug(f"Time taken for embedding batch via API: {time.perf_counter() - time_start}")
             embeddings.extend(embedding_result["embeddings"])
             tokens_used += embedding_result["tokens_used"]
 
