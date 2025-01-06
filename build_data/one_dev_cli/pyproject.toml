@@ -3,9 +3,9 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deputy_dev_cli"
-version = "0.1.0-alpha"
-description = "Deputy Dev CLI"
+name = "deputydev_cli"
+version = "0.1.0b0"
+description = "DeputyDev CLI"
 authors = [{ name = "Tata1mg", email = "author@example.com" }]
 requires-python = ">=3.9,<3.10"
 
@@ -32,9 +32,14 @@ dependencies = [
     "gitpython==3.1.27",
 ]
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"your_package_name" = ["pyarmor_runtime_000000/pyarmor_runtime.so"]
+
 [project.scripts]
 deputydev-cli = "app.main.blueprints.one_dev_cli.app.ui.main:run_main"
-
 
 [tool.setuptools.packages.find]
 where = ["."]

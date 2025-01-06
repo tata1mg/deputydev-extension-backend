@@ -1,7 +1,10 @@
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
+from prompt_toolkit.completion import CompleteEvent, Completer, Completion
+from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
@@ -25,6 +28,35 @@ from app.main.blueprints.one_dev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
+
+
+class RepoPathCompleter(Completer):
+    def get_completions(self, document: Document, complete_event: CompleteEvent):
+        text = document.text
+        # if text is empty, show nothing
+        if not text:
+            return
+
+        # if text is at least one character, show all file paths which start with the text
+        abs_repo_path = os.path.join(text)
+
+        get_last_path_component = abs_repo_path.split("/")[-1]
+        if get_last_path_component:
+            abs_repo_path = abs_repo_path[: -len(get_last_path_component)]
+
+        current_yields = 0
+        for root, dirs, _ in os.walk(abs_repo_path):
+            for dir in dirs:
+                abs_current_file_path = os.path.join(root, dir)
+                if abs_current_file_path.startswith(abs_repo_path + get_last_path_component):
+
+                    if current_yields >= 7:
+                        return
+                    yield Completion(
+                        abs_current_file_path[len(abs_repo_path) + len(get_last_path_component) :],
+                        start_position=0,
+                    )
+                    current_yields += 1
 
 
 class RepoPathValidator(AsyncValidator):
@@ -100,10 +132,21 @@ class RepoSelection(BaseScreenHandler):
             validator=RepoPathValidator(self.app_context),
             app_context=self.app_context,
             default=current_dir_repo.repo_path if current_dir_repo and isinstance(current_dir_repo, GitRepo) else "",
+            completer=RepoPathCompleter(),
         )
-        self.app_context.init_manager = InitializationManager(
-            repo_path, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor
-        )
+        if self.app_context.init_manager:
+            # repeat initialization
+            if self.app_context.init_manager.repo_path != repo_path:
+                self.app_context.init_manager = InitializationManager(
+                    repo_path,
+                    auth_token=self.app_context.auth_token,
+                    process_executor=self.app_context.process_executor,
+                    weaviate_client=self.app_context.init_manager.weaviate_client,
+                )
+        else:
+            self.app_context.init_manager = InitializationManager(
+                repo_path, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor
+            )
         self.app_context.local_repo = self.app_context.init_manager.get_local_repo()
 
         # if local repo is a git repo, get the branch to use
