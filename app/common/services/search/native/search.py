@@ -59,6 +59,6 @@ class NativeSearch:
             all_chunks,
             key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
             reverse=True,
-        )[: cls.NO_OF_CHUNKS]
+        )
 
         return ranked_snippets_list, input_tokens
