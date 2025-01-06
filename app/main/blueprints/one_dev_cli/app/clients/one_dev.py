@@ -90,6 +90,11 @@ class OneDevClient(BaseHTTPClient):
         path = "/end_user/v1/iterative-chat"
         result = await self.post(url=self._host + path, json=payload, headers=headers)
         return (await result.json()).get("data")
+    
+    async def record_feedback(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+        path = "/end_user/v1/record-feedback"
+        result = await self.post(url=self._host + path, json=payload, headers=headers)
+        return (await result.json()).get("data")
 
     async def plan_to_code(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
         path = "/end_user/v1/plan-code-generation"

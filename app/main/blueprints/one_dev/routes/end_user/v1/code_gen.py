@@ -25,6 +25,8 @@ from app.main.blueprints.one_dev.services.code_generation.features.test_case_gen
 from app.main.blueprints.one_dev.services.code_generation.features.test_case_generator.main import (
     TestCaseGenerationHandler,
 )
+from app.main.blueprints.one_dev.services.code_generation.feedback.dataclasses.main import CodeGenerationFeedbackInput
+from app.main.blueprints.one_dev.services.code_generation.feedback.main import FeedbackService
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.diff_creation.dataclasses.main import (
     DiffCreationInput,
 )
@@ -176,5 +178,16 @@ async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
     payload = _request.custom_json()
     response = await OneDevEmbeddingManager.create_embeddings(
         payload=OneDevEmbeddingPayload(**payload, auth_data=auth_data)
+    )
+    return send_response(response)
+
+@code_gen.route("/record-feedback", methods=["POST"])
+@validate_cli_version
+@ensure_session_id
+@authenticate
+async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
+    payload = _request.custom_json()
+    response = await FeedbackService.record_feedback(
+        payload=CodeGenerationFeedbackInput(**payload)
     )
     return send_response(response)
