@@ -55,6 +55,7 @@ class TestCaseGenerationHandler(BaseFeatureHandler):
             session_id=session_id,
             apply_diff=apply_diff,
             registered_repo_details=registered_repo_details,
+            usage_hash=usage_hash,
         )
 
     async def validate_and_set_final_payload(self):
