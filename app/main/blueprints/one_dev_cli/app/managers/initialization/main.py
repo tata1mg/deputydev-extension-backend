@@ -118,6 +118,8 @@ class InitializationManager:
         return sync_client
 
     async def initialize_vector_db(self, should_clean: bool = False) -> WeaviateSyncAndAsyncClients:
+        if self.weaviate_client:
+            return self.weaviate_client
         async_client = await self.initialize_vector_db_async()
         sync_client = self.initialize_vector_db_sync()
 
