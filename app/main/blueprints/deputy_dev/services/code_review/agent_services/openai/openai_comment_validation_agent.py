@@ -134,7 +134,9 @@ class OpenAICommentValidationAgent(AgentServiceBase):
         }
 
     def agent_relevant_chunk(self, relevant_chunks):
-        return render_snippet_array(relevant_chunks["relevant_chunks"])
+        relevant_chunks_indexes = relevant_chunks["comment_validation_relevant_chunks_mapping"]
+        chunks = [relevant_chunks["relevant_chunks"][index] for index in relevant_chunks_indexes]
+        return render_snippet_array(chunks)
 
     async def get_with_reflection_system_prompt_pass1(self):
         pass

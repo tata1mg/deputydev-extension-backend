@@ -75,8 +75,8 @@ class ContextService:
             agents = SettingService.get_uuid_wise_agents()
             remaining_agents = len(agents)
             code_snippet_list = []
-
-            relevant_chunks_mapping = {agent_id: [] for agent_id in agents}
+            comment_validation_relevant_chunks_mapping = []
+            relevant_chunks_mapping = {agent_id: [] for agent_id, agent_data in agents.items() if agent_data["enable"]}
 
             for snippet in ranked_snippets_list:
                 if remaining_agents == 0:
@@ -84,7 +84,7 @@ class ContextService:
 
                 path = snippet.denotation
 
-                for agent_id, agent_info in agents.items():
+                for agent_id in relevant_chunks_mapping:
                     # Skip if the agent already has the required number of chunks
                     if len(relevant_chunks_mapping[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
                         continue
@@ -94,9 +94,11 @@ class ContextService:
                     # Check if the path is relevant
                     if is_path_included(path, exclusions, inclusions):
                         index = safe_index(code_snippet_list, snippet)
-                        if index:
+                        if index is not None:
                             relevant_chunks_mapping[agent_id].append(index)
                         else:
+                            if agent_id != SettingService.summary_agent_id():
+                                comment_validation_relevant_chunks_mapping.append(len(code_snippet_list))
                             relevant_chunks_mapping[agent_id].append(len(code_snippet_list))
                             code_snippet_list.append(snippet)
                         # Decrement the counter when the agent reaches the chunk limit
@@ -110,10 +112,10 @@ class ContextService:
             self.relevant_chunk = {
                 "relevant_chunks_mapping": relevant_chunks_mapping,
                 "relevant_chunks": code_snippet_list,
+                "comment_validation_relevant_chunks_mapping": comment_validation_relevant_chunks_mapping,
             }
 
         return self.relevant_chunk
-
 
     def get_pr_title(self):
         if not self.pr_title:
