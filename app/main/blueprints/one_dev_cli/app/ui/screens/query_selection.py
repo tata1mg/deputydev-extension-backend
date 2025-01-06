@@ -250,13 +250,16 @@ class QuerySelection(BaseScreenHandler):
         return ScreenType.QUERY_SELECTION
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
-        print_formatted_text(FormattedText([("#729fcf", "Supported operations -")]))
         print_formatted_text(
             FormattedText(
                 [
                     (
+                        "#ffff00",
+                        "• CODE_GENERATION - "
+                    ),
+                    (
                         "#729fcf",
-                        'CODE_GENERATION - You can explain desired functionality in natural language text along with files and code snippets you want to focus on. The AI "understands" your descriptions and generates contextually relevant code.',
+                        'You can explain desired functionality in natural language text along with files and code snippets you want to focus on. The AI "understands" your descriptions and generates contextually relevant code.\n',
                     )
                 ]
             )
@@ -265,8 +268,12 @@ class QuerySelection(BaseScreenHandler):
             FormattedText(
                 [
                     (
+                        "#ffff00",
+                        "• DOCS_GENERATION - "
+                    ),
+                    (
                         "#729fcf",
-                        "DOCS_GENERATION - Provide your code (class, function or file) with a custom prompt to generate docstrings",
+                        "Provide your code (class, function or file) with a custom prompt to generate docstrings\n",
                     )
                 ]
             )
@@ -275,8 +282,12 @@ class QuerySelection(BaseScreenHandler):
             FormattedText(
                 [
                     (
+                        "#ffff00",
+                        "• TASK_PLANNER - "
+                    ),
+                    (
                         "#729fcf",
-                        "TASK_PLANNER - Not ready to code? Generate an execution plan to write code snippets in a structured manner",
+                        "Not ready to code? Generate an execution plan to write code snippets in a structured manner\n",
                     )
                 ]
             )
@@ -285,8 +296,12 @@ class QuerySelection(BaseScreenHandler):
             FormattedText(
                 [
                     (
+                        "#ffff00",
+                        "• TEST_GENERATION - "
+                    ),
+                    (
                         "#729fcf",
-                        "TEST_GENERATION - Provide your code snippets and a custom prompt to generate tailored unit tests",
+                        "Provide your code snippets and a custom prompt to generate tailored unit tests\n",
                     )
                 ]
             )
