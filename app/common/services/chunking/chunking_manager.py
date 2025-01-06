@@ -202,16 +202,6 @@ class ChunkingManger:
         )
         reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)
         return reranked_chunks, input_tokens
-        # filter out the focus chunks from the related chunks if any, based on content
-        # if not agent_wise_chunks:
-        #     reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)
-        #     return render_snippet_array(reranked_chunks), input_tokens
-        # else:
-        #     agent_wise_chunks = cls.agent_wise_relevant_chunks(related_chunk)
-        #     for agent_id, code_chunks in agent_wise_chunks.items():
-        #         reranked_chunks = await cls.rerank_related_chunks(query, code_chunks, reranker, focus_chunks_details)
-        #         agent_wise_chunks[agent_id] = render_snippet_array(reranked_chunks)
-        #     return agent_wise_chunks, input_tokens
 
     @classmethod
     def exclude_focused_chunks(cls, related_chunk, focus_chunks_details):
