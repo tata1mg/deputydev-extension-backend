@@ -75,7 +75,7 @@ class ChunkingManger:
                 ChunkInfo(
                     content=file_content,
                     source_details=ChunkSourceDetails(
-                        file_path=abs_filepath, file_hash="", start_line=int(lines[0]), end_line=int(lines[1])
+                        file_path=filepath, file_hash="", start_line=int(lines[0]), end_line=int(lines[1])
                     ),
                 )
             )

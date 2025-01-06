@@ -30,9 +30,15 @@ from app.main.blueprints.one_dev_cli.app.managers.embedding.embedding_manager im
 
 
 class InitializationManager:
-    def __init__(self, repo_path: str, auth_token: str, process_executor: ProcessPoolExecutor) -> None:
+    def __init__(
+        self,
+        repo_path: str,
+        auth_token: str,
+        process_executor: ProcessPoolExecutor,
+        weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
+    ) -> None:
         self.repo_path = repo_path
-        self.weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None
+        self.weaviate_client: Optional[WeaviateSyncAndAsyncClients] = weaviate_client
         self.local_repo = None
         self.embedding_manager = OneDevEmbeddingManager(auth_token=auth_token)
         self.process_executor = process_executor
@@ -118,6 +124,8 @@ class InitializationManager:
         return sync_client
 
     async def initialize_vector_db(self, should_clean: bool = False) -> WeaviateSyncAndAsyncClients:
+        if self.weaviate_client:
+            return self.weaviate_client
         async_client = await self.initialize_vector_db_async()
         sync_client = self.initialize_vector_db_sync()
 

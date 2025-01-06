@@ -81,7 +81,7 @@ class Authentication(BaseScreenHandler):
             self.app_context.args.auth_token = current_auth_token
         (self.app_context.auth_token, _is_existing_arg_valid,) = await validate_existing_text_arg_or_get_input(
             session=self.session,
-            arg_name="auth_token",
+            arg_name="deputydev_auth_token",
             prompt_message=f"Enter your auth token (you can set this in {DEPUTYDEV_AUTH_TOKEN} env variable): ",
             validator=AuthTokenValidator(self.app_context),
             app_context=self.app_context,
