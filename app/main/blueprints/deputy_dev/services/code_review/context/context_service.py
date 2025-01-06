@@ -5,7 +5,9 @@ from app.backend_common.services.embedding.openai_embedding_manager import (
 )
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.app_utils import safe_index
 from app.backend_common.utils.formatting import append_line_numbers
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunker.handlers.non_vector_db_chunker import (
     NonVectorDBChunker,
 )
@@ -21,6 +23,8 @@ from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_man
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import SettingService
+from app.main.blueprints.deputy_dev.utils import is_path_included
 
 
 class ContextService:
@@ -47,25 +51,69 @@ class ContextService:
         self.pr_diff_service = None
 
     async def get_relevant_chunk(self):
+        use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+        local_repo = GitRepo(self.repo_service.repo_dir)
+        chunker = NonVectorDBChunker(
+            local_repo=local_repo,
+            process_executor=process_executor,
+            use_new_chunking=use_new_chunking,
+        )
+        relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
+            query=await self.pr_service.get_effective_pr_diff(),
+            local_repo=local_repo,
+            embedding_manager=OpenAIEmbeddingManager(),
+            chunkable_files_with_hashes={},
+            search_type=SearchTypes.NATIVE,
+            process_executor=process_executor,
+            chunking_handler=chunker,
+        )
+        return relevant_chunk
+
+    async def agent_wise_relevant_chunks(self):
         if not self.relevant_chunk:
-            use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
-            local_repo = GitRepo(self.repo_service.repo_dir)
-            chunker = NonVectorDBChunker(
-                local_repo=local_repo,
-                process_executor=process_executor,
-                use_new_chunking=use_new_chunking,
-            )
-            self.relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-                query=await self.pr_service.get_effective_pr_diff(),
-                local_repo=local_repo,
-                embedding_manager=OpenAIEmbeddingManager(),
-                chunkable_files_with_hashes={},
-                search_type=SearchTypes.NATIVE,
-                process_executor=process_executor,
-                chunking_handler=chunker,
-            )
+            ranked_snippets_list = await self.get_relevant_chunk()
+            agents = SettingService.get_uuid_wise_agents()
+            remaining_agents = len(agents)
+            code_snippet_list = []
+
+            relevant_chunks_mapping = {agent_id: [] for agent_id in agents}
+
+            for snippet in ranked_snippets_list:
+                if remaining_agents == 0:
+                    break
+
+                path = snippet.denotation
+
+                for agent_id, agent_info in agents.items():
+                    # Skip if the agent already has the required number of chunks
+                    if len(relevant_chunks_mapping[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
+                        continue
+
+                    inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
+
+                    # Check if the path is relevant
+                    if is_path_included(path, exclusions, inclusions):
+                        index = safe_index(code_snippet_list, snippet)
+                        if index:
+                            relevant_chunks_mapping[agent_id].append(index)
+                        else:
+                            relevant_chunks_mapping[agent_id].append(len(code_snippet_list))
+                            code_snippet_list.append(snippet)
+                        # Decrement the counter when the agent reaches the chunk limit
+                        if len(relevant_chunks_mapping[agent_id]) == NO_OF_CHUNKS_FOR_LLM:
+                            remaining_agents -= 1
+
+                            # Exit the loop early if all agents are fulfilled
+                            if remaining_agents == 0:
+                                break
+
+            self.relevant_chunk = {
+                "relevant_chunks_mapping": relevant_chunks_mapping,
+                "relevant_chunks": code_snippet_list,
+            }
 
         return self.relevant_chunk
+
 
     def get_pr_title(self):
         if not self.pr_title:

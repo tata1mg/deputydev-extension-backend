@@ -58,9 +58,6 @@ class SingleAgentPRReviewManager:
             search_type=SearchTypes.NATIVE,
             process_executor=process_executor,
         )
-        # TODO: change this logic after relevant chunk changes
-        relevant_chunk = render_snippet_array(list(relevant_chunk.values())[0])
-
         llm_response, pr_summary, tokens_data, meta_info_to_save = await self.parallel_pr_review_with_gpt_models(
             await self.context_service.get_pr_diff(),
             self.pr_service.pr_details,
