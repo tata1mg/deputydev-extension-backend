@@ -16,6 +16,8 @@ __all__ = [
     "CommentBucketMapping",
     "Configurations",
     "Tokens",
+    "Agents",
+    "AgentCommentMappings"
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos
@@ -35,3 +37,5 @@ from .subscriptions import Subscriptions
 from .teams import Teams
 from .user_teams import UserTeams
 from .users import Users
+from .agents import Agents
+from .agent_comment_mappings import AgentCommentMappings
