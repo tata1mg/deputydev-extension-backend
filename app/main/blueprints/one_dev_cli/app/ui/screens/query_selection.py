@@ -253,56 +253,44 @@ class QuerySelection(BaseScreenHandler):
         print_formatted_text(
             FormattedText(
                 [
-                    (
-                        "#ffff00",
-                        "• CODE_GENERATION - "
-                    ),
+                    ("#ffff00", "• CODE_GENERATION - "),
                     (
                         "#729fcf",
                         'You can explain desired functionality in natural language text along with files and code snippets you want to focus on. The AI "understands" your descriptions and generates contextually relevant code.\n',
-                    )
+                    ),
                 ]
             )
         )
         print_formatted_text(
             FormattedText(
                 [
-                    (
-                        "#ffff00",
-                        "• DOCS_GENERATION - "
-                    ),
+                    ("#ffff00", "• DOCS_GENERATION - "),
                     (
                         "#729fcf",
                         "Provide your code (class, function or file) with a custom prompt to generate docstrings\n",
-                    )
+                    ),
                 ]
             )
         )
         print_formatted_text(
             FormattedText(
                 [
-                    (
-                        "#ffff00",
-                        "• TASK_PLANNER - "
-                    ),
+                    ("#ffff00", "• TASK_PLANNER - "),
                     (
                         "#729fcf",
                         "Not ready to code? Generate an execution plan to write code snippets in a structured manner\n",
-                    )
+                    ),
                 ]
             )
         )
         print_formatted_text(
             FormattedText(
                 [
-                    (
-                        "#ffff00",
-                        "• TEST_GENERATION - "
-                    ),
+                    ("#ffff00", "• TEST_GENERATION - "),
                     (
                         "#729fcf",
                         "Provide your code snippets and a custom prompt to generate tailored unit tests\n",
-                    )
+                    ),
                 ]
             )
         )
