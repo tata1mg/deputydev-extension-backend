@@ -250,38 +250,50 @@ class QuerySelection(BaseScreenHandler):
         return ScreenType.QUERY_SELECTION
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
-        print_formatted_text(FormattedText([("#729fcf", "Supported operations -")]))
         print_formatted_text(
             FormattedText(
                 [
+                    ("#ffff00", "• CODE_GENERATION - "),
                     (
                         "#729fcf",
-                        "CODE_GENERATION - Generate code snippets from user query",
-                    )
+                        'You can explain desired functionality in natural language text along with files and code snippets you want to focus on. The AI "understands" your descriptions and generates contextually relevant code.\n',
+                    ),
                 ]
             )
         )
         print_formatted_text(
             FormattedText(
                 [
+                    ("#ffff00", "• DOCS_GENERATION - "),
                     (
                         "#729fcf",
-                        "DOCS_GENERATION - Generate doc-strings for selected text",
-                    )
+                        "Provide your code (class, function or file) with a custom prompt to generate docstrings\n",
+                    ),
                 ]
             )
         )
         print_formatted_text(
             FormattedText(
                 [
+                    ("#ffff00", "• TASK_PLANNER - "),
                     (
                         "#729fcf",
-                        "TASK_PLANNER - Generate task plans from user query",
-                    )
+                        "Not ready to code? Generate an execution plan to write code snippets in a structured manner\n",
+                    ),
                 ]
             )
         )
-        print_formatted_text(FormattedText([("#729fcf", "TEST_GENERATION - Generate test cases for selected text")]))
+        print_formatted_text(
+            FormattedText(
+                [
+                    ("#ffff00", "• TEST_GENERATION - "),
+                    (
+                        "#729fcf",
+                        "Provide your code snippets and a custom prompt to generate tailored unit tests\n",
+                    ),
+                ]
+            )
+        )
 
         operation, _ = await validate_existing_text_arg_or_get_input(
             session=self.session,

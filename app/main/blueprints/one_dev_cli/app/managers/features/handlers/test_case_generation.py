@@ -55,6 +55,7 @@ class TestCaseGenerationHandler(BaseFeatureHandler):
             session_id=session_id,
             apply_diff=apply_diff,
             registered_repo_details=registered_repo_details,
+            usage_hash=usage_hash,
         )
 
     async def validate_and_set_final_payload(self):
@@ -72,13 +73,12 @@ class TestCaseGenerationHandler(BaseFeatureHandler):
             )
 
         selected_text = self._get_selected_text(self.query).get_xml()
-        query = selected_text + "   \n  " + self.query.custom_instructions if self.query.custom_instructions else ""
+        query = selected_text + ("   \n  " + self.query.custom_instructions if self.query.custom_instructions else "")
         final_payload["query"] = selected_text
         if self.query.custom_instructions:
             final_payload["custom_instructions"] = self.query.custom_instructions
 
         query_vector = await self.embedding_manager.embed_text_array(texts=[query], store_embeddings=False)
-        final_payload["query"] = query
         relevant_chunks, _ = await ChunkingManger.get_relevant_chunks(
             query=query,
             local_repo=self.local_repo,
