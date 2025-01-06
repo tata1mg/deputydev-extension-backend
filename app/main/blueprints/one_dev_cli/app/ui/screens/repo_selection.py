@@ -101,9 +101,16 @@ class RepoSelection(BaseScreenHandler):
             app_context=self.app_context,
             default=current_dir_repo.repo_path if current_dir_repo and isinstance(current_dir_repo, GitRepo) else "",
         )
-        self.app_context.init_manager = InitializationManager(
-            repo_path, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor
-        )
+        if self.app_context.init_manager:
+            # repeat initialization
+            if self.app_context.init_manager.repo_path != repo_path:
+                self.app_context.init_manager = InitializationManager(
+                    repo_path, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor, weaviate_client=self.app_context.init_manager.weaviate_client
+                )
+        else:
+            self.app_context.init_manager = InitializationManager(
+                repo_path, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor
+            )
         self.app_context.local_repo = self.app_context.init_manager.get_local_repo()
 
         # if local repo is a git repo, get the branch to use
