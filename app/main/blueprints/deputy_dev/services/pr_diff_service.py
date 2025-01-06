@@ -40,11 +40,6 @@ class PRDiffService:
         self.pr_diff_mappings["complete_pr_diff"] = 0
         self.pr_diffs.append(self.pr_diff)
 
-    # def summary_pr_diff_mapping(self):
-    #     pr_summary_diff = self.exclude_pr_diff(operation="pr_summary")
-    #     agent_id = SettingService.summary_agent_id()
-    #     self.map_pr_diff(key=agent_id, extracted_pr_diff=pr_summary_diff)
-
     def code_review_agents_pr_diff_mapping(self):
         uuid_wise_agents = SettingService.get_uuid_wise_agents()
         for agent_id in uuid_wise_agents:
@@ -77,7 +72,6 @@ class PRDiffService:
         if operation == "code_review":
             inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
         elif operation == "chat":
-            # TODO: Need to confirm that we want exclusions/inclusions in chat or not
             chat_setting = settings["chat"]
             inclusions = chat_setting.get("inclusions", [])
             exclusions = chat_setting.get("exclusions", [])

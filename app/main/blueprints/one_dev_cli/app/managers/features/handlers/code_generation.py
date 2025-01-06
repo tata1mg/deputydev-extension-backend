@@ -1,7 +1,9 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional, Union
 
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunking_manager import ChunkingManger
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
@@ -61,13 +63,19 @@ class CodeGenerationHandler(BaseFeatureHandler):
 
     async def validate_and_set_final_payload(self):
         if not isinstance(self.query, PlainTextQuery):
-            raise ValueError(f"Expected {PlainTextQuery.__name__} but got {type(self.query).__name__}")
+            raise ValueError(
+                f"Expected {PlainTextQuery.__name__} but got {type(self.query).__name__}"
+            )
 
         final_payload: Dict[str, Any] = dict()
 
         final_payload["query"] = self.query.text
 
-        if self.pr_config and self.registered_repo_details and isinstance(self.local_repo, GitRepo):
+        if (
+            self.pr_config
+            and self.registered_repo_details
+            and isinstance(self.local_repo, GitRepo)
+        ):
             final_payload["create_pr"] = True
             final_payload["pr_config"] = dict(
                 source_branch=self.pr_config.source_branch,
@@ -81,8 +89,14 @@ class CodeGenerationHandler(BaseFeatureHandler):
         if self.apply_diff:
             final_payload["apply_diff"] = True
 
-        query_vector = await self.embedding_manager.embed_text_array(texts=[self.query.text], store_embeddings=False)
-
+        query_vector = await self.embedding_manager.embed_text_array(
+            texts=[self.query.text], store_embeddings=False
+        )
+        search_type = (
+            SearchTypes.VECTOR_DB_BASED
+            if ConfigManager.configs["USE_VECTOR_DB"]
+            else SearchTypes.NATIVE
+        )
         relevant_chunks, _ = await ChunkingManger.get_relevant_chunks(
             query=self.query.text,
             local_repo=self.local_repo,
@@ -90,17 +104,16 @@ class CodeGenerationHandler(BaseFeatureHandler):
             process_executor=self.process_executor,
             focus_files=self.query.focus_files,
             focus_chunks=[
-                f"{chunk.file_path}:{chunk.start_line}-{chunk.end_line}" for chunk in self.query.focus_snippets
+                f"{chunk.file_path}:{chunk.start_line}-{chunk.end_line}"
+                for chunk in self.query.focus_snippets
             ],
             weaviate_client=self.weaviate_client,
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
-            search_type=SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE,
+            search_type=search_type,
             usage_hash=self.usage_hash,
         )
-
-        final_payload["relevant_chunks"] = relevant_chunks
-
+        final_payload["relevant_chunks"] = self.handle_relevant_chunks(search_type, relevant_chunks)
         self.final_payload = final_payload
 
         self.redirections = FeatureHandlingRedirections(
