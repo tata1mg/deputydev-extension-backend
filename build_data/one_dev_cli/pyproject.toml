@@ -3,9 +3,9 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deputy_dev_cli"
+name = "deputydev_cli"
 version = "0.1.0-alpha"
-description = "Deputy Dev CLI"
+description = "DeputyDev CLI"
 authors = [{ name = "Tata1mg", email = "author@example.com" }]
 requires-python = ">=3.9,<3.10"
 

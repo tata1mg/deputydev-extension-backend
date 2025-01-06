@@ -81,6 +81,8 @@ class FeatureRunner:
                             feature_response=resp,
                             app_context=self.app_context,
                         ).handle_response()
+                        if isinstance(resp, FinalSuccessJob):
+                            self.app_context.last_operation_job_id = resp.job_id
                         return resp.next_action, (resp.session_id if isinstance(resp, FinalSuccessJob) else None)
 
         raise ValueError("Invalid app context to run feature")
