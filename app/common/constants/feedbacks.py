@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class UpvoteDownvoteFeedbacks(Enum):
-    UPVOTE = 'UPVOTE'
-    DOWNVOTE = 'DOWNVOTE'
+    UPVOTE = "UPVOTE"
+    DOWNVOTE = "DOWNVOTE"

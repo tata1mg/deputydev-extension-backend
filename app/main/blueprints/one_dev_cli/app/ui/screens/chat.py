@@ -96,6 +96,7 @@ class ChatScreen(BaseScreenHandler):
                     app.exit(result=FeatureRunner(self.app_context).run_feature())
 
         if self.app_context.current_status in [FlowStatus.PLAN_GENERATED, FlowStatus.CODE_GENERATED]:
+
             @bindings.add("c-w")
             async def _(event: KeyPressEvent):
                 if not self.app_context.session_id or not self.app_context.auth_token:
@@ -110,10 +111,13 @@ class ChatScreen(BaseScreenHandler):
                 if self.app_context.local_user_details and self.app_context.local_user_details.name:
                     headers["X-User-Name"] = self.app_context.local_user_details.name
                 try:
-                    await self.app_context.one_dev_client.record_feedback(payload={
-                        "feedback": UpvoteDownvoteFeedbacks.UPVOTE.value,
-                        "job_id": self.app_context.last_operation_job_id,
-                    }, headers=headers)
+                    await self.app_context.one_dev_client.record_feedback(
+                        payload={
+                            "feedback": UpvoteDownvoteFeedbacks.UPVOTE.value,
+                            "job_id": self.app_context.last_operation_job_id,
+                        },
+                        headers=headers,
+                    )
                     print_formatted_text("Thanks for your feedback! 🙏")
                 except Exception:
                     print_formatted_text("Error while recording feedback. Please contact support.")
@@ -132,10 +136,13 @@ class ChatScreen(BaseScreenHandler):
                 if self.app_context.local_user_details and self.app_context.local_user_details.name:
                     headers["X-User-Name"] = self.app_context.local_user_details.name
                 try:
-                    await self.app_context.one_dev_client.record_feedback(payload={
-                        "feedback": UpvoteDownvoteFeedbacks.DOWNVOTE.value,
-                        "job_id": self.app_context.last_operation_job_id,
-                    }, headers=headers)
+                    await self.app_context.one_dev_client.record_feedback(
+                        payload={
+                            "feedback": UpvoteDownvoteFeedbacks.DOWNVOTE.value,
+                            "job_id": self.app_context.last_operation_job_id,
+                        },
+                        headers=headers,
+                    )
                     print_formatted_text("Thanks for your feedback! 🙏")
                 except Exception:
                     print_formatted_text("Error while recording feedback. Please contact support.")
