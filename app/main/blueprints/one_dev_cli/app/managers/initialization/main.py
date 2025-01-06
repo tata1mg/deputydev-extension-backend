@@ -30,7 +30,13 @@ from app.main.blueprints.one_dev_cli.app.managers.embedding.embedding_manager im
 
 
 class InitializationManager:
-    def __init__(self, repo_path: str, auth_token: str, process_executor: ProcessPoolExecutor, weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None) -> None:
+    def __init__(
+        self,
+        repo_path: str,
+        auth_token: str,
+        process_executor: ProcessPoolExecutor,
+        weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
+    ) -> None:
         self.repo_path = repo_path
         self.weaviate_client: Optional[WeaviateSyncAndAsyncClients] = weaviate_client
         self.local_repo = None

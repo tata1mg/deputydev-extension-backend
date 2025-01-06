@@ -9,7 +9,9 @@ from app.main.blueprints.one_dev.models.dto.job_feedback import JobFeedbackDTO
 
 class JobFeedbackService:
     @classmethod
-    async def db_get(cls, filters: dict[str, Any], fetch_one: bool=False) -> Optional[Union[List[JobFeedbackDTO], JobFeedbackDTO]]:
+    async def db_get(
+        cls, filters: dict[str, Any], fetch_one: bool = False
+    ) -> Optional[Union[List[JobFeedbackDTO], JobFeedbackDTO]]:
         try:
             code_generation_jobs = await DB.by_filters(model_name=JobFeedback, where_clause=filters, fetch_one=False)
             if code_generation_jobs and fetch_one:
