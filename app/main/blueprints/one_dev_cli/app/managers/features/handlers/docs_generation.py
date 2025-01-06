@@ -2,6 +2,7 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional, Union
 
 from app.common.services.chunking.chunking_manager import ChunkingManger
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
@@ -60,7 +61,9 @@ class DocsGenerationHandler(BaseFeatureHandler):
 
     async def validate_and_set_final_payload(self):
         if not isinstance(self.query, TextSelectionQuery):
-            raise ValueError(f"Expected {TextSelectionQuery.__name__} but got {type(self.query).__name__}")
+            raise ValueError(
+                f"Expected {TextSelectionQuery.__name__} but got {type(self.query).__name__}"
+            )
 
         final_payload: Dict[str, Any] = dict()
 
@@ -73,13 +76,23 @@ class DocsGenerationHandler(BaseFeatureHandler):
             )
 
         selected_text = self._get_selected_text(self.query).get_xml()
-        query = selected_text + "   \n  " + self.query.custom_instructions if self.query.custom_instructions else ""
+        query = (
+            selected_text + "   \n  " + self.query.custom_instructions
+            if self.query.custom_instructions
+            else ""
+        )
         final_payload["query"] = selected_text
         if self.query.custom_instructions:
             final_payload["custom_instructions"] = self.query.custom_instructions
 
-        query_vector = await self.embedding_manager.embed_text_array(texts=[query], store_embeddings=False)
-
+        query_vector = await self.embedding_manager.embed_text_array(
+            texts=[query], store_embeddings=False
+        )
+        search_type = (
+            SearchTypes.VECTOR_DB_BASED
+            if ConfigManager.configs["USE_VECTOR_DB"]
+            else SearchTypes.NATIVE
+        )
         relevant_chunks, _ = await ChunkingManger.get_relevant_chunks(
             query=query,
             local_repo=self.local_repo,
@@ -90,11 +103,11 @@ class DocsGenerationHandler(BaseFeatureHandler):
             weaviate_client=self.weaviate_client,
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
-            search_type=SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE,
+            search_type=search_type,
             usage_hash=self.usage_hash,
         )
 
-        final_payload["relevant_chunks"] = relevant_chunks
+        final_payload["relevant_chunks"] = self.handle_relevant_chunks(search_type, relevant_chunks)
 
         self.final_payload = final_payload
 

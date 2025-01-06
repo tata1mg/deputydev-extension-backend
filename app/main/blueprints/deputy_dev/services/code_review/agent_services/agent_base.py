@@ -4,6 +4,7 @@ from string import Template
 
 from torpedo import CONFIG
 
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.tiktoken import TikToken
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
@@ -15,6 +16,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.helpers.chunking_helper import ChunkingHelper
 from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
     SettingService,
 )
@@ -37,6 +39,7 @@ class AgentServiceBase(ABC):
         self.agent_id = self.agent_setting.get("agent_id")
 
     async def format_user_prompt(self, prompt: str, comments: str = None):
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
         prompt_variables = {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
@@ -44,7 +47,7 @@ class AgentServiceBase(ABC):
                 append_line_no_info=True, agent_id=self.agent_id
             ),
             "REVIEW_COMMENTS_By_JUNIOR_DEVELOPER": comments,
-            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": (await self.context_service.get_relevant_chunk())[self.agent_id],
+            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": self.agent_relevant_chunk(relevant_chunks),
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
@@ -213,3 +216,10 @@ class AgentServiceBase(ABC):
             f"Prompt: {self.agent_name} token count {token_count} exceeds the allowed limit of {model_input_token_limit}."
         )
         return True
+
+    def agent_relevant_chunk(self, relevant_chunks:dict):
+        relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
+        agent_relevant_chunks = []
+        for index in relevant_chunks_index:
+            agent_relevant_chunks.append(relevant_chunks["relevant_chunks"][index])
+        return render_snippet_array(agent_relevant_chunks)

@@ -3,6 +3,7 @@ import json
 
 from torpedo import CONFIG
 
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
@@ -118,8 +119,8 @@ class OpenAICommentValidationAgent(AgentServiceBase):
 
     async def get_system_n_user_prompt(self, comments):
         pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
-        # TODO: handle relevant chunks for comment validation prompt as no agent_id assigned
-        relevant_chunks = await self.context_service.get_relevant_chunk()
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
+        relevant_chunks = self.agent_relevant_chunk(relevant_chunks)
         system_message = self.get_comments_validation_system_prompt()
         user_message = self.get_comments_validation_user_prompt().format(
             pr_diff=pr_diff, relevant_code_snippets=relevant_chunks, comments=json.dumps(comments)
@@ -131,6 +132,9 @@ class OpenAICommentValidationAgent(AgentServiceBase):
             "parse": False,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
+
+    def agent_relevant_chunk(self, relevant_chunks):
+        return render_snippet_array(relevant_chunks["relevant_chunks"])
 
     async def get_with_reflection_system_prompt_pass1(self):
         pass

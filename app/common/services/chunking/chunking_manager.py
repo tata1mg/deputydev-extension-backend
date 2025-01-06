@@ -1,10 +1,9 @@
 import os
 from concurrent.futures import ProcessPoolExecutor
-from typing import Dict, List, Optional, Tuple
-
+from typing import Dict, List, Optional, Tuple, Union
 from sanic.log import logger
-from torpedo import CONFIG
 
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.reranker.base_chunk_reranker import BaseChunkReranker
@@ -18,10 +17,6 @@ from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsync
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.search.search import perform_search
 from app.common.utils.file_utils import read_file
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
-    SettingService,
-)
-from app.main.blueprints.deputy_dev.utils import is_path_included
 
 
 class ChunkingManger:
@@ -63,7 +58,7 @@ class ChunkingManger:
             usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
-        return custom_context_code_chunks + sorted_chunks
+        return custom_context_code_chunks + sorted_chunks[:NO_OF_CHUNKS_FOR_LLM]
 
     @classmethod
     async def get_relevant_context_from_focus_snippets(
@@ -153,9 +148,8 @@ class ChunkingManger:
             process_executor=process_executor,
             weaviate_client=weaviate_client,
             usage_hash=usage_hash,
-            agent_wise_chunks=False,
+            agent_wise_chunks=agent_wise_chunks,
         )
-
         return sorted_chunks, input_tokens
 
     @classmethod
@@ -175,8 +169,7 @@ class ChunkingManger:
         usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
         reranker: Optional[BaseChunkReranker] = None,
-        agent_wise_chunks=False,
-    ) -> Tuple[str, int]:
+    ) -> Tuple[list[ChunkInfo], int]:
         # Get all chunks from the repository
         focus_chunks_details = await cls.get_focus_chunk(
             query,
@@ -193,7 +186,7 @@ class ChunkingManger:
             chunking_handler=chunking_handler,
         )
         if only_focus_code_chunks and focus_chunks_details:
-            return render_snippet_array(focus_chunks_details), 0
+            return focus_chunks_details, 0
 
         related_chunk, input_tokens = await cls.get_related_chunk_from_codebase_repo(
             query,
@@ -206,49 +199,30 @@ class ChunkingManger:
             weaviate_client=weaviate_client,
             usage_hash=usage_hash,
             chunking_handler=chunking_handler,
-            agent_wise_chunks=agent_wise_chunks
         )
+        reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)
+        return reranked_chunks, input_tokens
         # filter out the focus chunks from the related chunks if any, based on content
+        # if not agent_wise_chunks:
+        #     reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)
+        #     return render_snippet_array(reranked_chunks), input_tokens
+        # else:
+        #     agent_wise_chunks = cls.agent_wise_relevant_chunks(related_chunk)
+        #     for agent_id, code_chunks in agent_wise_chunks.items():
+        #         reranked_chunks = await cls.rerank_related_chunks(query, code_chunks, reranker, focus_chunks_details)
+        #         agent_wise_chunks[agent_id] = render_snippet_array(reranked_chunks)
+        #     return agent_wise_chunks, input_tokens
+
+    @classmethod
+    def exclude_focused_chunks(cls, related_chunk, focus_chunks_details):
         related_chunk = [
             chunk for chunk in related_chunk if chunk.content not in [chunk.content for chunk in focus_chunks_details]
         ]
-
-        reranker_to_use = reranker or HeuristicBasedChunkReranker()
-        reranked_chunks = await reranker_to_use.rerank(focus_chunks_details, related_chunk, query)
-
-        return render_snippet_array(reranked_chunks), input_tokens
+        return related_chunk
 
     @classmethod
-    def agent_wise_relevant_chunks(cls, ranked_snippets_list):
-        NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
-        agents = SettingService.get_uuid_wise_agents()
-        remaining_agents = len(agents)
-
-        relevant_chunks = {agent_id: [] for agent_id in agents}
-
-        for snippet in ranked_snippets_list:
-            if remaining_agents == 0:
-                break
-
-            path = snippet.denotation
-
-            for agent_id, agent_info in agents.items():
-                # Skip if the agent already has the required number of chunks
-                if len(relevant_chunks[agent_id]) >= NO_OF_CHUNKS:
-                    continue
-
-                inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
-
-                # Check if the path is relevant
-                if is_path_included(path, exclusions, inclusions):
-                    relevant_chunks[agent_id].append(snippet)
-
-                    # Decrement the counter when the agent reaches the chunk limit
-                    if len(relevant_chunks[agent_id]) == NO_OF_CHUNKS:
-                        remaining_agents -= 1
-
-                        # Exit the loop early if all agents are fulfilled
-                        if remaining_agents == 0:
-                            break
-
-        return relevant_chunks
+    async def rerank_related_chunks(cls, query, related_chunk, reranker, focus_chunks_details):
+        related_chunk = cls.exclude_focused_chunks(related_chunk, focus_chunks_details)
+        reranker_to_use = reranker or HeuristicBasedChunkReranker()
+        reranked_chunks = await reranker_to_use.rerank(focus_chunks_details, related_chunk, query)
+        return reranked_chunks
