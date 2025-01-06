@@ -256,7 +256,7 @@ class QuerySelection(BaseScreenHandler):
                 [
                     (
                         "#729fcf",
-                        "CODE_GENERATION - Generate code snippets from user query",
+                        'CODE_GENERATION - You can explain desired functionality in natural language text along with files and code snippets you want to focus on. The AI "understands" your descriptions and generates contextually relevant code.',
                     )
                 ]
             )
@@ -266,7 +266,7 @@ class QuerySelection(BaseScreenHandler):
                 [
                     (
                         "#729fcf",
-                        "DOCS_GENERATION - Generate doc-strings for selected text",
+                        "DOCS_GENERATION - Provide your code (class, function or file) with a custom prompt to generate docstrings",
                     )
                 ]
             )
@@ -276,12 +276,21 @@ class QuerySelection(BaseScreenHandler):
                 [
                     (
                         "#729fcf",
-                        "TASK_PLANNER - Generate task plans from user query",
+                        "TASK_PLANNER - Not ready to code? Generate an execution plan to write code snippets in a structured manner",
                     )
                 ]
             )
         )
-        print_formatted_text(FormattedText([("#729fcf", "TEST_GENERATION - Generate test cases for selected text")]))
+        print_formatted_text(
+            FormattedText(
+                [
+                    (
+                        "#729fcf",
+                        "TEST_GENERATION - Provide your code snippets and a custom prompt to generate tailored unit tests",
+                    )
+                ]
+            )
+        )
 
         operation, _ = await validate_existing_text_arg_or_get_input(
             session=self.session,
