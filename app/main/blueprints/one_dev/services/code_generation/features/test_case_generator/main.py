@@ -30,6 +30,7 @@ class TestCaseGenerationHandler(BaseCodeGenFeature[TestCaseGenerationInput]):
         cls, payload: TestCaseGenerationInput, job_id: int, llm_meta: List[LLMMeta]
     ) -> Dict[str, Any]:
 
+        print("Payload: ", payload.query)
         init_params = {
             "query": payload.query,
             "relevant_chunks": payload.relevant_chunks,
