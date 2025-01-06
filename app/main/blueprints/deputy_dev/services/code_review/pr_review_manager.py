@@ -122,7 +122,7 @@ class PRReviewManager:
 
     @classmethod
     async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, pr_service: BasePR, prompt_version):
-        is_agentic_review_enabled = False and CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
+        is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
             repo_service, pr_service, prompt_version
