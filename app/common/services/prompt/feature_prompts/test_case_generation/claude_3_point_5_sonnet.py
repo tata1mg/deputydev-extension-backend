@@ -75,8 +75,6 @@ class Claude3Point5TestCaseGenerationPrompt(BaseClaude3Point5SonnetPrompt):
         final_query_resp = None
         is_task_done = None
 
-        print("LLM Response: ", llm_response)
-
         if "<response>" in llm_response:
             final_query_resp = llm_response.split("<response>")[1].split("</response>")[0].strip()
         if "<is_task_done>true</is_task_done>" in llm_response:
