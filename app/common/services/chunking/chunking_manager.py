@@ -63,7 +63,6 @@ class ChunkingManger:
             usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
-
         return custom_context_code_chunks + sorted_chunks
 
     @classmethod
@@ -137,6 +136,7 @@ class ChunkingManger:
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
         usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
+        agent_wise_chunks=False,
     ) -> Tuple[List[ChunkInfo], int]:
 
         logger.info("Completed chunk creation")
@@ -153,6 +153,7 @@ class ChunkingManger:
             process_executor=process_executor,
             weaviate_client=weaviate_client,
             usage_hash=usage_hash,
+            agent_wise_chunks=False,
         )
 
         return sorted_chunks, input_tokens
@@ -174,6 +175,7 @@ class ChunkingManger:
         usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
         reranker: Optional[BaseChunkReranker] = None,
+        agent_wise_chunks=False,
     ) -> Tuple[str, int]:
         # Get all chunks from the repository
         focus_chunks_details = await cls.get_focus_chunk(
@@ -204,6 +206,7 @@ class ChunkingManger:
             weaviate_client=weaviate_client,
             usage_hash=usage_hash,
             chunking_handler=chunking_handler,
+            agent_wise_chunks=agent_wise_chunks
         )
         # filter out the focus chunks from the related chunks if any, based on content
         related_chunk = [
