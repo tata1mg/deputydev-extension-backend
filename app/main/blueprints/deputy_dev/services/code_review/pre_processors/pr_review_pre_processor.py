@@ -254,7 +254,7 @@ class PRReviewPreProcessor:
         )
 
     async def validate_pr_diff(self):
-        pr_diff = await self.pr_service.get_effective_pr_diff()
+        pr_diff = await self.pr_diff_handler.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_INVALID_REQUEST.value
