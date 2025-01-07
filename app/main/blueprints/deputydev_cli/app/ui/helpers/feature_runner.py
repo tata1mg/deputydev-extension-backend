@@ -88,4 +88,3 @@ class FeatureRunner:
                         return resp.next_action, (resp.session_id if isinstance(resp, FinalSuccessJob) else None)
 
         raise ValueError("Invalid app context to run feature")
-
