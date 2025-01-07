@@ -1,3 +1,4 @@
+from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.utils.app_utils import get_token_count, safe_index
 from app.common.constants.constants import PR_NOT_FOUND
 from app.common.utils.context_vars import get_context_value
@@ -7,21 +8,36 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 from app.main.blueprints.deputy_dev.utils import ignore_files
 
 
-class PRDiffService:
+class PRDiffHandler:
     """
     Service that manages the PR diffs and their mappings, and provides operations for retrieving and processing them.
     """
 
-    def __init__(self, pr_diff: str):
+    def __init__(self, pr_service: BasePR):
         """
         Initializes the PRDiffService with the provided PR diff.
 
-        :param pr_diff: The PR diff to be processed.
-        :type pr_diff: str
+        :param pr_service: An instance of a PR service (implementing BasePR)
+        :type pr_service: BasePR
         """
-        self.pr_diff = pr_diff  # Original PR diff content
+        self.pr_service = pr_service
+        self.pr_diff = None  # Original PR diff content
         self.pr_diff_mappings = {}  # Maps operation/agent to indices in pr_diffs
         self.pr_diffs = []  # List of unique PR diffs for efficient memory usage
+
+    async def get_effective_pr_diff(self, operation="code_review", agent_id=None) -> str:
+        """
+        Determines whether to fetch the full PR diff or a specific commit diff.
+
+        Args:
+            operation (str): The context of the operation (e.g., "code_review", "chat").
+            agent_id (str, optional): The agent's unique ID, if applicable.
+
+        Returns:
+            str: The appropriate PR diff based on the operation and agent.
+        """
+        self.pr_diff = await self.pr_service.get_commit_diff_or_pr_diff()
+        return self.get_pr_diff(operation, agent_id)
 
     def get_pr_diff(self, operation: str = "code_review", agent_id: str = None) -> str:
         """
@@ -216,3 +232,6 @@ class PRDiffService:
             return pr_diff_token_count_agent_name_wise
         else:
             return pr_diff_token_count
+
+    async def get_pr_diff_token_count(self, operation="code_review") -> dict:
+        return self.pr_diffs_token_counts_agent_name_wise(operation)
