@@ -24,6 +24,8 @@ exclusions = [
 ]
 
 inclusions = []
+
+# Objective have no use for pre-defined agents, Added this to make agents simmillar and extensible.
 [code_review_agent.agents.security]
 agent_id = "c62142f5-3992-476d-9131-bf85e1beffb7"
 display_name = "Security"

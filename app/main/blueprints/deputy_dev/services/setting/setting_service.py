@@ -14,7 +14,6 @@ from torpedo.exceptions import BadRequestException
 class SettingService:
     Helper = SettingHelper
     Validator = SettingValidator
-    repo_specific_keys = ["app"]
 
     def __init__(self, repo_service: BaseRepo, team_id=None, default_branch=None):
         self.repo_service = repo_service
@@ -28,8 +27,8 @@ class SettingService:
         self.default_branch = await self.repo_service.get_default_branch()
         repo_level_settings = await self.repo_level_settings()
         team_level_settings = await self.team_level_settings()
-        team_level_settings = self.remove_repo_specific_setting(team_level_settings)
-        base_settings = self.dd_level_settings()
+        team_level_settings = self.Helper.remove_repo_specific_setting(team_level_settings)
+        base_settings = self.Helper.dd_level_settings()
         final_setting = copy.deepcopy(base_settings)
         final_setting = self.Helper.merge_setting(final_setting, team_level_settings)
         final_setting = self.Helper.merge_setting(final_setting, repo_level_settings)
@@ -63,14 +62,6 @@ class SettingService:
             await RepoSettingCache.set(cache_key, setting_cache)
             return setting
 
-    def remove_repo_specific_setting(self, setting):
-        if setting:
-            for key in self.repo_specific_keys:
-                if setting.get(key):
-                    for nested_key in setting[key]:
-                        setting[key][nested_key] = None
-        return setting
-
     async def team_level_settings(self):
         configuration = {}
         if self.team_id:
@@ -80,17 +71,13 @@ class SettingService:
             return configuration.configuration if configuration else {}
         return configuration
 
-    @classmethod
-    def dd_level_settings(cls):
-        return cls.Helper.DD_LEVEL_SETTINGS
-
     async def update_repo_setting(self):
         cache_key = self.repo_setting_cache_key()
         repo_level_settings, error = await self.repo_service.get_settings(self.default_branch)
         is_invalid_setting = True if error else False
         team_settings = await self.team_level_settings()
         if repo_level_settings and not is_invalid_setting:
-            error, is_invalid_setting = SettingValidator.validate_repo_settings(repo_level_settings, team_settings)
+            error, is_invalid_setting = self.Validator.validate_repo_settings(repo_level_settings, team_settings)
         repo_level_settings = await self.handle_error_and_cache(
             error, is_invalid_setting, repo_level_settings, cache_key
         )
@@ -135,7 +122,7 @@ class SettingService:
         if not repo_settings:
             return
         repo_existing_settings = repo_existing_settings.configuration if repo_existing_settings else {}
-        dd_agents = self.Helper.agents(self.DD_LEVEL_SETTINGS)
+        dd_agents = self.Helper.agents(self.Helper.DD_LEVEL_SETTINGS)
         team_agents = self.Helper.agents(team_settings)
         repo_agents = self.Helper.agents(repo_settings)
         repo_existing_agents = self.Helper.agents(repo_existing_settings)
@@ -206,7 +193,7 @@ class SettingService:
             else:
                 setting = toml.loads(payload["setting"])
             workspace = await get_workspace(scm=payload["vcs_type"], scm_workspace_id=payload["scm_workspace_id"])
-            errors = cls.Validator.validate_team_settings(cls.dd_level_settings(), setting)
+            errors = cls.Validator.validate_team_settings(cls.Helper.dd_level_settings(), setting)
             if errors:
                 raise BadRequestException(f"Invalid Setting: {errors}")
             existing_setting = await cls.fetch_setting(workspace.team_id, SettingLevel.TEAM.value)
@@ -267,3 +254,20 @@ class SettingService:
                 await setting.save(update_fields=["configuration", "error"], force_update=True)
             else:
                 await saved_setting.delete()
+
+    @classmethod
+    def fetch_setting_errors(cls, error_types):
+        # Retrieve the current context's setting errors (if any).
+        errors = get_context_value("setting_error")
+        error_message = ""
+
+        # Check if errors exist and if any of the specified error types are present in the errors.
+        if errors and any(error_type in errors for error_type in error_types):
+            # Iterate through the provided error types.
+            for error_type in error_types:
+                # If the current error type exists in the errors dictionary, append its message to error_message.
+                if errors.get(error_type):
+                    error_message += errors[error_type] + "\n\n"
+
+        # Return the concatenated error messages.
+        return error_message

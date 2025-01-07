@@ -34,7 +34,7 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 

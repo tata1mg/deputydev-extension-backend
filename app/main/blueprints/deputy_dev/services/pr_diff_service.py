@@ -1,7 +1,7 @@
 from app.backend_common.utils.app_utils import get_token_count, safe_index
 from app.common.constants.constants import PR_NOT_FOUND
 from app.common.utils.context_vars import get_context_value
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import ignore_files
@@ -41,7 +41,7 @@ class PRDiffService:
         self.pr_diffs.append(self.pr_diff)
 
     def code_review_agents_pr_diff_mapping(self):
-        uuid_wise_agents = SettingService.get_uuid_wise_agents()
+        uuid_wise_agents = SettingService.Helper.get_uuid_wise_agents()
         for agent_id in uuid_wise_agents:
             agent_pr_diff = self.exclude_pr_diff(agent_id=agent_id)
             self.map_pr_diff(key=agent_id, extracted_pr_diff=agent_pr_diff)
@@ -70,7 +70,7 @@ class PRDiffService:
         settings = get_context_value("setting") or {}
         inclusions, exclusions = [], []
         if operation == "code_review":
-            inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
+            inclusions, exclusions = SettingService.Helper.get_agent_inclusion_exclusions(agent_id)
         elif operation == "chat":
             chat_setting = settings["chat"]
             inclusions = chat_setting.get("inclusions", [])
@@ -82,7 +82,7 @@ class PRDiffService:
         if operation == "chat":
             pr_diff_token_count["chat"] = self.count_pr_diff_tokens(operation)
         else:
-            for agent_id in SettingService.get_uuid_wise_agents():
+            for agent_id in SettingService.Helper.get_uuid_wise_agents():
                 pr_diff_token_count[agent_id] = self.count_pr_diff_tokens(operation, agent_id)
         return pr_diff_token_count
 
@@ -97,7 +97,7 @@ class PRDiffService:
         pr_diff_token_count = self.pr_diffs_token_counts(operation)
         if operation == "code_review":
             pr_diff_token_count_agent_name_wise = {}
-            agents_uuid_wise = SettingService.get_uuid_wise_agents()
+            agents_uuid_wise = SettingService.Helper.get_uuid_wise_agents()
             for agent_id, token_count in pr_diff_token_count.items():
                 agent_name = agents_uuid_wise[agent_id]["agent_name"]
                 pr_diff_token_count_agent_name_wise[agent_name] = token_count
