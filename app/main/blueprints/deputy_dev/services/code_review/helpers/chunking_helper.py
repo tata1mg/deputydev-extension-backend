@@ -1,5 +1,7 @@
 from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import is_path_included
 
 

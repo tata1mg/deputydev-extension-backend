@@ -1,6 +1,7 @@
 import os
 from concurrent.futures import ProcessPoolExecutor
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
+
 from sanic.log import logger
 
 from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
@@ -10,7 +11,6 @@ from app.common.services.chunking.reranker.base_chunk_reranker import BaseChunkR
 from app.common.services.chunking.reranker.handlers.heuristic_based import (
     HeuristicBasedChunkReranker,
 )
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
@@ -74,7 +74,7 @@ class ChunkingManger:
                 ChunkInfo(
                     content=file_content,
                     source_details=ChunkSourceDetails(
-                        file_path=abs_filepath, file_hash="", start_line=int(lines[0]), end_line=int(lines[1])
+                        file_path=filepath, file_hash="", start_line=int(lines[0]), end_line=int(lines[1])
                     ),
                 )
             )
