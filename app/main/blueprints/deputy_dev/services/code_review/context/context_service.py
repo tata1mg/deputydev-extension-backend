@@ -23,7 +23,9 @@ from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_man
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import SettingService
+from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import is_path_included
 
 

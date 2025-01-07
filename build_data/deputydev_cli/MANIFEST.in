@@ -1,0 +1,2 @@
+recursive-include pyarmor_runtime_000000 *.*
+global-include *.so
