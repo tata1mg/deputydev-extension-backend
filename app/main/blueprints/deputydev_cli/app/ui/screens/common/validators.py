@@ -6,10 +6,10 @@ from typing import Optional, Tuple
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import CompleteEvent, Completer
 from prompt_toolkit.document import Document
-from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.validation import ThreadedValidator, ValidationError, Validator
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyPressEvent
+from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit.validation import ThreadedValidator, ValidationError, Validator
 
 from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import AppContext
 
@@ -124,7 +124,7 @@ async def validate_existing_text_arg_or_get_input(
         if completer and only_complete_on_completer_selection:
             key_bindings = KeyBindings()
 
-            @key_bindings.add('enter')
+            @key_bindings.add("enter")
             def _handle_enter(event: KeyPressEvent) -> None:
                 """Custom behavior for the Enter key."""
                 buffer = event.app.current_buffer
@@ -142,7 +142,7 @@ async def validate_existing_text_arg_or_get_input(
                 validate_while_typing=validate_while_typing,
                 default=default,
                 completer=completer or DummyCompleter(),
-                key_bindings=key_bindings
+                key_bindings=key_bindings,
             )
     return final_value, is_existing_arg_valid
 
