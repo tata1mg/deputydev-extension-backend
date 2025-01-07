@@ -25,21 +25,7 @@ class PRDiffHandler:
         self.pr_diff_mappings = {}  # Maps operation/agent to indices in pr_diffs
         self.pr_diffs = []  # List of unique PR diffs for efficient memory usage
 
-    async def get_effective_pr_diff(self, operation="code_review", agent_id=None) -> str:
-        """
-        Determines whether to fetch the full PR diff or a specific commit diff.
-
-        Args:
-            operation (str): The context of the operation (e.g., "code_review", "chat").
-            agent_id (str, optional): The agent's unique ID, if applicable.
-
-        Returns:
-            str: The appropriate PR diff based on the operation and agent.
-        """
-        self.pr_diff = await self.pr_service.get_commit_diff_or_pr_diff()
-        return self.get_pr_diff(operation, agent_id)
-
-    def get_pr_diff(self, operation: str = "code_review", agent_id: str = None) -> str:
+    async def get_effective_pr_diff(self, operation: str = "code_review", agent_id: str = None) -> str:
         """
         Retrieves the PR diff based on the operation and optionally the agent ID.
 
@@ -51,9 +37,11 @@ class PRDiffHandler:
         :return: The corresponding PR diff.
         :rtype: str
         """
+        if not self.pr_diff:
+            self.pr_diff = await self.pr_service.get_commit_diff_or_pr_diff()
         # If no mappings exist, populate them
         if not self.pr_diff_mappings:
-            self.get_pr_diff_mappings(operation)
+            self.set_pr_diff_mappings(operation)
 
         # Choose the correct PR diff based on the operation and agent ID
         if operation == "chat":
@@ -67,7 +55,7 @@ class PRDiffHandler:
         # Return the corresponding PR diff from the list
         return self.pr_diffs[diff_index]
 
-    def get_pr_diff_mappings(self, operation: str):
+    def set_pr_diff_mappings(self, operation: str):
         """
         Populates the mappings for the PR diffs based on the operation.
 
@@ -167,7 +155,7 @@ class PRDiffHandler:
         # Return the filtered PR diff with exclusions and inclusions
         return ignore_files(self.pr_diff, list(exclusions), list(inclusions))
 
-    def pr_diffs_token_counts(self, operation: str = "code_review") -> dict:
+    async def pr_diffs_token_counts(self, operation: str = "code_review") -> dict:
         """
         Counts the number of tokens in the PR diffs for each agent or operation.
 
@@ -181,14 +169,14 @@ class PRDiffHandler:
 
         # Count tokens for each agent or operation
         if operation == "chat":
-            pr_diff_token_count["chat"] = self.count_pr_diff_tokens(operation)
+            pr_diff_token_count["chat"] = await self.count_pr_diff_tokens(operation)
         else:
             for agent_id in SettingService.Helper.get_uuid_wise_agents():
-                pr_diff_token_count[agent_id] = self.count_pr_diff_tokens(operation, agent_id)
+                pr_diff_token_count[agent_id] = await self.count_pr_diff_tokens(operation, agent_id)
 
         return pr_diff_token_count
 
-    def count_pr_diff_tokens(self, operation: str = "code_review", agent_id: str = None) -> int:
+    async def count_pr_diff_tokens(self, operation: str = "code_review", agent_id: str = None) -> int:
         """
         Counts the number of tokens in a specific PR diff.
 
@@ -201,7 +189,7 @@ class PRDiffHandler:
         :rtype: int
         """
         # Retrieve the correct PR diff
-        pr_diff = self.get_pr_diff(operation, agent_id)
+        pr_diff = await self.get_effective_pr_diff(operation, agent_id)
 
         # Return the token count if the PR diff is found
         if pr_diff and pr_diff != PR_NOT_FOUND:
@@ -209,7 +197,7 @@ class PRDiffHandler:
         else:
             return 0
 
-    def pr_diffs_token_counts_agent_name_wise(self, operation: str = "code_review") -> dict:
+    async def pr_diffs_token_counts_agent_name_wise(self, operation: str = "code_review") -> dict:
         """
         Counts the PR diff tokens and maps them to agent names.
 
@@ -220,7 +208,7 @@ class PRDiffHandler:
         :rtype: dict
         """
         # Get the token counts for the specified operation
-        pr_diff_token_count = self.pr_diffs_token_counts(operation)
+        pr_diff_token_count = await self.pr_diffs_token_counts(operation)
 
         # If the operation is "code_review", map the counts to agent names
         if operation == "code_review":
@@ -234,4 +222,4 @@ class PRDiffHandler:
             return pr_diff_token_count
 
     async def get_pr_diff_token_count(self, operation="code_review") -> dict:
-        return self.pr_diffs_token_counts_agent_name_wise(operation)
+        return await self.pr_diffs_token_counts_agent_name_wise(operation)

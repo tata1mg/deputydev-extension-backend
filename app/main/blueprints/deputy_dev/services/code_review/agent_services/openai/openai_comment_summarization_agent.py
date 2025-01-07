@@ -1,5 +1,6 @@
 # flake8: noqa
 import json
+from string import Template
 
 from torpedo import CONFIG
 
@@ -62,7 +63,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         - Consider the PR diff and comments closely while providing summary.
         
         ### Input Comments that needs to be summarized: 
-        {comments}
+        ${COMMENTS}
     
         Below is a sample input structure for the comments you will receive:
         
@@ -166,7 +167,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         ```
         
         PR Diff on which comments needs to be validated:
-        {pr_diff}
+        ${PR_DIFF}
     
     
         ### Additional Guardrails
@@ -192,9 +193,9 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         # in get_pr_diff function agent_id is not passed so it will return pr_diff using only global exclusion/inclusion
         pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
         system_message = self.get_comments_summarization_system_prompt()
-        user_message = self.get_comments_summarization_user_prompt().format(
-            pr_diff=pr_diff, comments=json.dumps(comments)
-        )
+        user_message = self.get_comments_summarization_user_prompt()
+        user_message = Template(user_message)
+        user_message = user_message.safe_substitute({"PR_DIFF": pr_diff, "COMMENTS": json.dumps(comments)})
         return {
             "system_message": system_message,
             "user_message": user_message,
