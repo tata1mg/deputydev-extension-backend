@@ -1,5 +1,6 @@
 # flake8: noqa
 import json
+from string import Template
 
 from torpedo import CONFIG
 
@@ -39,7 +40,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
         - If a comment is made for a change which is already being catered in the PR diff, mark that comment as invalid
         
         ### Input Comments that needs to be validated: 
-        {comments}
+        ${COMMENTS}
         
         Below is a sample input structure for the comments you will receive:
         
@@ -100,10 +101,10 @@ class OpenAICommentValidationAgent(AgentServiceBase):
         ```
         
         PR Diff on which comments needs to be validated:
-        <pr_diff>{pr_diff}</pr_diff>
+        <pr_diff>${PR_DIFF}</pr_diff>
         
         Relevant Code Snippets used to get context of changes in PR diff:
-        <relevant_chunks_in_repo>{relevant_code_snippets}</relevant_chunks_in_repo>
+        <relevant_chunks_in_repo>${RELEVANT_CHUNKS}</relevant_chunks_in_repo>
         
         ### Guardrails:
         - Do not remove relevant comments. 
@@ -118,13 +119,9 @@ class OpenAICommentValidationAgent(AgentServiceBase):
          """
 
     async def get_system_n_user_prompt(self, comments):
-        pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
-        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
-        relevant_chunks = self.agent_relevant_chunk(relevant_chunks)
         system_message = self.get_comments_validation_system_prompt()
-        user_message = self.get_comments_validation_user_prompt().format(
-            pr_diff=pr_diff, relevant_code_snippets=relevant_chunks, comments=json.dumps(comments)
-        )
+        prompt = self.get_comments_validation_user_prompt()
+        user_message = await self.format_user_prompt(prompt, comments)
         return {
             "system_message": system_message,
             "user_message": user_message,
@@ -132,6 +129,14 @@ class OpenAICommentValidationAgent(AgentServiceBase):
             "parse": False,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
+
+    async def format_user_prompt(self, prompt, comments):
+        pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
+        relevant_chunks = self.agent_relevant_chunk(relevant_chunks)
+        prompt = Template(prompt)
+        prompt_variables = {"PR_DIFF": pr_diff, "RELEVANT_CHUNKS": relevant_chunks, "COMMENTS": json.dumps(comments)}
+        return prompt.safe_substitute(prompt_variables)
 
     def agent_relevant_chunk(self, relevant_chunks):
         relevant_chunks_indexes = relevant_chunks["comment_validation_relevant_chunks_mapping"]
