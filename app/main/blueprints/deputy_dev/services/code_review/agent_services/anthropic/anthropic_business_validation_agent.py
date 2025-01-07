@@ -177,6 +177,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         only for understanding impact of change. 
         12.  comment should not be on unchanged code unless directly impacted by the changes.
         13.  comment should not be duplicated for similar issues across different locations.
+        14. Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
         
         Remember, your primary goal is to ensure that the changes in the pull request accurately implement
         the requirements specified in the user story and product research document. Do not get sidetracked
