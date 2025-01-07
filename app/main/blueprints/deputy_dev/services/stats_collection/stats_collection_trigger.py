@@ -12,6 +12,9 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MetaStatCollectionTypes,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
@@ -21,9 +24,6 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 )
 from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
     PullRequestCloseWebhook,
-)
-from app.main.blueprints.deputy_dev.services.setting.setting_service import (
-    SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,

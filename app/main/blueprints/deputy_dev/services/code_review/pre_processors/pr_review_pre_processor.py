@@ -16,6 +16,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     PRReviewExperimentSet,
     PrStatusTypes,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
@@ -39,6 +40,7 @@ class PRReviewPreProcessor:
         pr_service: BasePR,
         comment_service: BaseComment,
         affirmation_service: AffirmationService,
+        pr_diff_handler: PRDiffHandler,
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service
@@ -54,6 +56,7 @@ class PRReviewPreProcessor:
         self.affirmation_service = affirmation_service
         self.completed_pr_count = 0
         self.loc_changed = 0
+        self.pr_diff_handler = pr_diff_handler
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
@@ -138,7 +141,7 @@ class PRReviewPreProcessor:
             last_reviewed_commit=last_reviewed_commit,
             has_reviewed_entry=has_reviewed_entry,
         )
-        self.pr_diff_token_count = await self.pr_service.get_pr_diff_token_count()
+        self.pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
         self.meta_info["tokens"] = self.pr_diff_token_count
         self.loc_changed = await self.pr_service.get_loc_changed_count()
 
