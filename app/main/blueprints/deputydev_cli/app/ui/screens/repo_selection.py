@@ -3,7 +3,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
-from prompt_toolkit.completion import CompleteEvent, Completer, Completion, ThreadedCompleter
+from prompt_toolkit.completion import (
+    CompleteEvent,
+    Completer,
+    Completion,
+    ThreadedCompleter,
+)
 from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError

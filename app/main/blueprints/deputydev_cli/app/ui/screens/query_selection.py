@@ -57,6 +57,8 @@ class FilePathCompleter(Completer):
         super().__init__()
 
     def get_completions_on_text(self, text: str):
+        if not self.app_context.local_repo:
+            return
         # if text is at least one character, show all file paths which start with the text
         abs_repo_path = self.app_context.local_repo.repo_path
         abs_file_path = os.path.join(abs_repo_path, text)
@@ -89,9 +91,6 @@ class FilePathCompleter(Completer):
             dirs[:] = []
 
     def get_completions(self, document: Document, complete_event: CompleteEvent):
-        if not self.app_context.local_repo:
-            return
-
         text = document.text
         # if text is empty, show nothing
         if not text:
@@ -106,9 +105,6 @@ class MultiFilePathCompleter(Completer):
         super().__init__()
 
     def get_completions(self, document: Document, complete_event: CompleteEvent):
-        if not self.app_context.local_repo:
-            return
-
         text = document.text
         # if text is empty, show nothing
         if not text:
