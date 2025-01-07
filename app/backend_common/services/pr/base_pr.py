@@ -14,7 +14,7 @@ from app.backend_common.utils.formatting import (
 from app.common.constants.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
-from app.main.blueprints.deputy_dev.constants.constants import (
+from app.common.constants.constants import (
     SETTING_ERROR_MESSAGE,
     SettingErrorType,
 )

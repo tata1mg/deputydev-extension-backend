@@ -6,14 +6,14 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
 
 class AnthropicSecurityAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        agent_name = SettingService.predefined_name_to_custom_name(AgentTypes.SECURITY.value)
+        agent_name = SettingService.Helper.predefined_name_to_custom_name(AgentTypes.SECURITY.value)
         super().__init__(context_service, is_reflection_enabled, agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
