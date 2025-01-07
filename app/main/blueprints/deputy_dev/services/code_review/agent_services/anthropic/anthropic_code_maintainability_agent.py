@@ -276,7 +276,7 @@ class AnthropicCodeMaintainabilityAgent(AgentServiceBase):
         only for understanding impact of change. 
         - Do not comment on unchanged code unless directly impacted by the changes.
         - Do not duplicate comments for similar issues across different locations.
-        - If you are suggesting any comment that is already catered please don't include those comment in response.
+        - Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
         </guidelines>
         
         Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
