@@ -188,10 +188,7 @@ class BasePR(ABC):
     async def get_loc_changed_count(self) -> int:
         raise NotImplementedError()
 
-    async def get_pr_diff_token_count(self, operation="code_review") -> int:
-        #  This function is called from two places
-        #  first time insertion of pr while code review
-        #  second time when pr is large
+    async def get_pr_diff_token_count(self, operation="code_review") -> dict:
         await self.initialize_pr_diff_service()
         return self.pr_diff_service.pr_diffs_token_counts_agent_name_wise(operation)
 
