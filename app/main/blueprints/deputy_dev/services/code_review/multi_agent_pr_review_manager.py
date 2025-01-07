@@ -102,7 +102,7 @@ class MultiAgentPRReviewManager:
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
             self.llm_comments = {}
-            pr_diff_tokens_count = await self.pr_service.get_pr_diff_token_count()
+            pr_diff_tokens_count = await self.pr_diff_handler.get_pr_diff_token_count()
             self.agents_tokens = pr_diff_tokens_count
             return
         await self._make_llm_calls()
