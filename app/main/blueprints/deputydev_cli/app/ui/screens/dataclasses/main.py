@@ -88,3 +88,5 @@ class AppContext(BaseModel):
         # Reset query args except for auth token
         self.args = argparse.Namespace()
         self.args.deputydev_auth_token = self.auth_token
+        self.args.clean_cache = False
+        self.args.repo_path = None
