@@ -11,42 +11,77 @@ class SettingHelper:
     REPO_SPECIFIC_KEYS = ["app"]
 
     @classmethod
-    def merge_setting(cls, base_config, override_config):
+    def merge_setting(cls, base_config: dict, override_config: dict) -> dict:
+        """
+        Merges the override configuration into the base configuration.
+
+        Parameters:
+        - base_config (dict): The base configuration to be updated.
+        - override_config (dict): The configuration with overriding values.
+
+        Returns:
+        - dict: The merged configuration.
+        """
         if not override_config:
             return base_config
 
         for key, base_value in base_config.items():
+            # Skip if the key does not exist or is None in the override config
             if key not in override_config or override_config[key] is None:
                 continue
 
+            # Recursive merging for nested dictionaries
             if isinstance(base_value, dict):
                 if key == "agents":
                     base_config[key] = cls._merge_agents(base_value, override_config[key])
                 else:
                     base_config[key] = cls.merge_setting(base_value, override_config[key])
 
-            elif key == "enable" or key == "is_override":
+            # Overriding simple boolean flags based on specific keys
+            elif key in ["enable", "is_override"]:
                 if base_config.get("is_override", True):
                     base_config[key] = override_config[key]
+
+            # Union of lists for inclusion and exclusion settings
             elif key in ["exclusions", "inclusions"]:
                 base_config[key] = list(set(base_value) | set(override_config[key]))
+
+            # Default behavior for other keys
             else:
                 base_config[key] = override_config[key]
 
         return base_config
 
     @classmethod
-    def _merge_agents(cls, base_agents, override_agents):
+    def _merge_agents(cls, base_agents: dict, override_agents: dict) -> dict:
+        """
+        Merges agent configurations from the override into the base agents.
+
+        Parameters:
+        - base_agents (dict): The base agent configurations.
+        - override_agents (dict): The overriding agent configurations.
+
+        Returns:
+        - dict: The merged agent configurations.
+        """
+        # Mapping of agent IDs to agent names in the base agents
         base_agent_ids = {agent_setting["agent_id"]: agent_name for agent_name, agent_setting in base_agents.items()}
+
         for key, override_value in override_agents.items():
             agent_id = override_value["agent_id"]
+
+            # If agent ID exists in the base agents, merge the configurations
             if agent_id in base_agent_ids:
                 base_agent_name = base_agent_ids[agent_id]
                 base_agents[key] = cls.merge_setting(base_agents[base_agent_name], override_value)
+                # Remove the old agent name if the new name differs
                 if key != base_agent_name:
                     del base_agents[base_agent_name]
             else:
+                # Add new agent configurations if agent ID is not in base agents
                 base_agents[key] = override_value
+
+            # Mark the agent as custom if it is not predefined
             base_agents[key]["is_custom_agent"] = agent_id not in cls.PREDEFINED_AGENTS_IDS_AND_NAMES
 
         return base_agents
