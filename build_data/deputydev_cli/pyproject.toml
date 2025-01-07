@@ -6,8 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "deputydev_cli"
 version = "0.1.0b1"
 description = "DeputyDev CLI"
-authors = [{ name = "Tata1mg", email = "deputydev@1mg.com" }]
+authors = [{ name = "Tata 1mg", email = "deputydev@1mg.com" }]
 requires-python = ">=3.9,<3.10"
+homepage = "https://deputydev.ai"
 
 dependencies = [
     "tortoise-orm==0.21.3",
