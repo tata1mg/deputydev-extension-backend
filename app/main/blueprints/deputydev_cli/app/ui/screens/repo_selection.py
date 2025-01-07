@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
-from prompt_toolkit.completion import CompleteEvent, Completer, Completion
+from prompt_toolkit.completion import CompleteEvent, Completer, Completion, ThreadedCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
@@ -45,7 +45,7 @@ class RepoPathCompleter(Completer):
             abs_repo_path = abs_repo_path[: -len(get_last_path_component)]
 
         current_yields = 0
-        for root, dirs, _ in os.walk(abs_repo_path):
+        for root, dirs, _ in os.walk(abs_repo_path, topdown=True):
             for dir in dirs:
                 abs_current_file_path = os.path.join(root, dir)
                 if abs_current_file_path.startswith(abs_repo_path + get_last_path_component):
@@ -57,6 +57,8 @@ class RepoPathCompleter(Completer):
                         start_position=0,
                     )
                     current_yields += 1
+            # prevent os.walk from going into subdirectories
+            dirs[:] = []
 
 
 class RepoPathValidator(AsyncValidator):
@@ -132,7 +134,7 @@ class RepoSelection(BaseScreenHandler):
             validator=RepoPathValidator(self.app_context),
             app_context=self.app_context,
             default=current_dir_repo.repo_path if current_dir_repo and isinstance(current_dir_repo, GitRepo) else "",
-            completer=RepoPathCompleter(),
+            completer=ThreadedCompleter(RepoPathCompleter()),
         )
         if self.app_context.init_manager:
             # repeat initialization
