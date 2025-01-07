@@ -28,7 +28,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.o
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
@@ -70,8 +70,8 @@ class AgentFactory:
 
     async def build_code_review_agents_prompt(self, reflection_stage, previous_review_comments, exclude_agents):
         prompts = {}
-        for agent in SettingService.agents_settings().keys():
-            predefined_name = SettingService.custom_name_to_predefined_name(agent)
+        for agent in SettingService.Helper.agents_settings().keys():
+            predefined_name = SettingService.Helper.custom_name_to_predefined_name(agent)
             _klass = self.factories.get(predefined_name)
             prompt = await self.__build_prompts(
                 agent, _klass, reflection_stage, previous_review_comments, exclude_agents
@@ -95,7 +95,7 @@ class AgentFactory:
         return prompt
 
     def initialize_anthropic_custom_agents(self):
-        for agent_name, agent_setting in SettingService.agents_settings().items():
+        for agent_name, agent_setting in SettingService.Helper.agents_settings().items():
             if agent_setting["is_custom_agent"] and agent_setting["enable"]:
                 agent_class = AnthropicCustomAgent.create_custom_agent(
                     agent_name, self.context_service, self.reflection_enabled

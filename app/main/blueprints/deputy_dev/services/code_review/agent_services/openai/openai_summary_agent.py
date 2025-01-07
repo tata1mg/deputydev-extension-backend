@@ -10,7 +10,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
@@ -20,8 +20,8 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.PR_SUMMARY.value)
         # TODO: for now not picking model from setting, This can be updated if required:
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
-        self.agent_setting = SettingService.summary_agent_setting()
-        self.agent_id = SettingService.summary_agent_id()
+        self.agent_setting = SettingService.Helper.summary_agent_setting()
+        self.agent_id = SettingService.Helper.summary_agent_id()
 
     def get_with_reflection_system_prompt_pass1(self):
         return """

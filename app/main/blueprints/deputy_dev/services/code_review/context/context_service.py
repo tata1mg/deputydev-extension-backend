@@ -23,7 +23,7 @@ from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_man
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import is_path_included
@@ -74,7 +74,7 @@ class ContextService:
     async def agent_wise_relevant_chunks(self):
         if not self.relevant_chunk:
             ranked_snippets_list = await self.get_relevant_chunk()
-            agents = SettingService.get_uuid_wise_agents()
+            agents = SettingService.Helper.get_uuid_wise_agents()
             remaining_agents = len(agents)
             code_snippet_list = []
             comment_validation_relevant_chunks_mapping = []
@@ -91,7 +91,7 @@ class ContextService:
                     if len(relevant_chunks_mapping[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
                         continue
 
-                    inclusions, exclusions = SettingService.get_agent_inclusion_exclusions(agent_id)
+                    inclusions, exclusions = SettingService.Helper.get_agent_inclusion_exclusions(agent_id)
 
                     # Check if the path is relevant
                     if is_path_included(path, exclusions, inclusions):
@@ -99,7 +99,7 @@ class ContextService:
                         if index is not None:
                             relevant_chunks_mapping[agent_id].append(index)
                         else:
-                            if agent_id != SettingService.summary_agent_id():
+                            if agent_id != SettingService.Helper.summary_agent_id():
                                 comment_validation_relevant_chunks_mapping.append(len(code_snippet_list))
                             relevant_chunks_mapping[agent_id].append(len(code_snippet_list))
                             code_snippet_list.append(snippet)

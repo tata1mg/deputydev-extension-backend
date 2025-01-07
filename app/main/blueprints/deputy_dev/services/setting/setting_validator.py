@@ -1,4 +1,3 @@
-import toml
 from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType, CUSTOM_PROMPT_CHAR_LIMIT
 from app.main.blueprints.deputy_dev.services.setting.setting_helper import SettingHelper
 
@@ -72,11 +71,12 @@ class SettingValidator:
             errors[error_type] = f"{SETTING_ERROR_MESSAGE[error_type]}{error}"
         return errors
 
-    def validate_repo_settings(self, repo_settings, team_settings):
+    @classmethod
+    def validate_repo_settings(cls, repo_settings, team_settings):
         if repo_settings:
-            errors, is_invalid_setting = self.validate_settings(self.HELPER.dd_level_settings(), repo_settings)
+            errors, is_invalid_setting = cls.validate_settings(cls.HELPER.dd_level_settings(), repo_settings)
             errors.update(
-                self.validate_repo_merged_setting(self.HELPER.dd_level_settings(), team_settings, repo_settings)
+                cls.validate_repo_merged_setting(cls.HELPER.dd_level_settings(), team_settings, repo_settings)
             )
         else:
             errors, is_invalid_setting = None, True  # In case of missing repo level settings

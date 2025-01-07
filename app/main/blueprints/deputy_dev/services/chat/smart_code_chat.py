@@ -47,7 +47,7 @@ from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWeb
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import (

@@ -16,7 +16,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
@@ -34,7 +34,7 @@ class AgentServiceBase(ABC):
         self.agent_name = agent_name
         self.tiktoken = TikToken()
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"]
-        self.agent_setting = SettingService.agent_setting_by_name(agent_name)
+        self.agent_setting = SettingService.Helper.agent_setting_by_name(agent_name)
         self.agent_id = self.agent_setting.get("agent_id")
 
     async def format_user_prompt(self, prompt: str, comments: str = None):

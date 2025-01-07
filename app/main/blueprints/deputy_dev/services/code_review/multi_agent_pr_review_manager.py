@@ -18,7 +18,7 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
@@ -127,7 +127,7 @@ class MultiAgentPRReviewManager:
         # exclude summary agent
         self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
         # exclude custom_agents
-        agents_settings = SettingService.agents_settings()
+        agents_settings = SettingService.Helper.agents_settings()
         for agent_name, agent_setting in agents_settings.items():
             if agent_setting["is_custom_agent"]:
                 self.exclude_agent.add(agent_name)
