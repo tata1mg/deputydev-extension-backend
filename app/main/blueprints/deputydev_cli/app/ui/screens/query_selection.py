@@ -70,7 +70,7 @@ class FilePathCompleter(Completer):
         abs_file_path = os.path.join(abs_repo_path, text)
 
         current_yields = 0
-        for root, _, files in os.walk(abs_repo_path):
+        for root, dirs, files in os.walk(abs_repo_path):
             for file in files:
                 abs_current_file_path = os.path.join(root, file)
                 if abs_current_file_path.startswith(abs_file_path):
@@ -81,6 +81,20 @@ class FilePathCompleter(Completer):
                         start_position=0,
                     )
                     current_yields += 1
+
+            for dir in dirs:
+                abs_current_dir_path = os.path.join(root, dir)
+                if abs_current_dir_path.startswith(abs_file_path):
+                    if current_yields >= 7:
+                        return
+                    yield Completion(
+                        abs_current_dir_path[len(abs_file_path) :],
+                        start_position=0,
+                    )
+                    current_yields += 1
+
+            # prevent os.walk from going into subdirectories
+            dirs[:] = []
 
 
 class OperationValidator(AsyncValidator):
