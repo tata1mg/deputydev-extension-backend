@@ -191,7 +191,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
             Only added lines and Removed lines changes should receive direct review comments.
         10.  comment should not be on unchanged code unless directly impacted by the changes.
         11.  comment should not be duplicated for similar issues across different locations.
-        12.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        12.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
         </guidelines>
         
         
