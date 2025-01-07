@@ -43,22 +43,22 @@ class RepoPathCompleter(Completer):
             return
 
         # if text is at least one character, show all file paths which start with the text
-        abs_repo_path = os.path.join(text)
+        abs_text_path = text
 
-        get_last_path_component = abs_repo_path.split("/")[-1]
-        if get_last_path_component:
-            abs_repo_path = abs_repo_path[: -len(get_last_path_component)]
+        last_path_component = abs_text_path.split("/")[-1]
+        if last_path_component:
+            abs_text_path = abs_text_path[: -len(last_path_component)]
 
         current_yields = 0
-        for root, dirs, _ in os.walk(abs_repo_path, topdown=True):
+        for root, dirs, _ in os.walk(abs_text_path, topdown=True):
             for dir in dirs:
                 abs_current_file_path = os.path.join(root, dir)
-                if abs_current_file_path.startswith(abs_repo_path + get_last_path_component):
+                if abs_current_file_path.startswith(abs_text_path + last_path_component):
 
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_file_path[len(abs_repo_path) + len(get_last_path_component) :],
+                        abs_current_file_path[len(abs_text_path) + len(last_path_component) :],
                         start_position=0,
                     )
                     current_yields += 1
@@ -140,6 +140,7 @@ class RepoSelection(BaseScreenHandler):
             app_context=self.app_context,
             default=current_dir_repo.repo_path if current_dir_repo and isinstance(current_dir_repo, GitRepo) else "",
             completer=ThreadedCompleter(RepoPathCompleter()),
+            only_complete_on_completer_selection=True,
         )
         if self.app_context.init_manager:
             # repeat initialization
