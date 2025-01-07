@@ -17,6 +17,7 @@ from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.common.utils.executor import process_executor
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
     ConfluenceManager,
 )
@@ -30,7 +31,7 @@ from app.main.blueprints.deputy_dev.utils import is_path_included
 
 
 class ContextService:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR):
+    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.pr_title = None
@@ -50,7 +51,7 @@ class ContextService:
         self.confluence_doc_data_tokens = None
         self.tiktoken = TikToken()
         self.pr_status = None
-        self.pr_diff_service = None
+        self.pr_diff_handler = pr_diff_handler
 
     async def get_relevant_chunk(self):
         use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
@@ -61,7 +62,7 @@ class ContextService:
             use_new_chunking=use_new_chunking,
         )
         relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-            query=await self.pr_service.get_effective_pr_diff(),
+            query=await self.pr_diff_handler.get_effective_pr_diff(),
             local_repo=local_repo,
             embedding_manager=OpenAIEmbeddingManager(),
             chunkable_files_with_hashes={},
@@ -155,9 +156,8 @@ class ContextService:
         return self.pr_description
 
     async def get_pr_diff(self, append_line_no_info=False, operation="code_review", agent_id=None):
-        pr_diff = await self.pr_service.get_effective_pr_diff(operation, agent_id)
-        self.pr_diff_service = self.pr_service.pr_diff_service
-        self.pr_diff_tokens = self.pr_diff_service.pr_diffs_token_counts(operation)
+        pr_diff = await self.pr_diff_handler.get_effective_pr_diff(operation, agent_id)
+        self.pr_diff_tokens = self.pr_diff_handler.pr_diffs_token_counts(operation)
         if append_line_no_info:
             return append_line_numbers(pr_diff)
         else:

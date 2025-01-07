@@ -1,5 +1,10 @@
 from typing import Union
-from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType, CUSTOM_PROMPT_CHAR_LIMIT
+
+from app.common.constants.constants import (
+    CUSTOM_PROMPT_CHAR_LIMIT,
+    SETTING_ERROR_MESSAGE,
+    SettingErrorType,
+)
 from app.main.blueprints.deputy_dev.services.setting.setting_helper import SettingHelper
 
 

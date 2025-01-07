@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 
-import toml
-from torpedo import CONFIG
-
+from app.backend_common.models.dao.postgres import Repos, Workspaces
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
@@ -14,12 +12,6 @@ from app.backend_common.utils.formatting import (
 from app.common.constants.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
-from app.common.constants.constants import (
-    SETTING_ERROR_MESSAGE,
-    SettingErrorType,
-)
-from app.backend_common.models.dao.postgres import Repos, Workspaces
-from app.main.blueprints.deputy_dev.services.pr_diff_service import PRDiffService
 
 
 def categorize_loc(loc: int) -> tuple:
@@ -80,7 +72,6 @@ class BasePR(ABC):
         self.pr_commit_diff = None
         self.repo_service = repo_service
         self.repo_client = None
-        self.pr_diff_service: PRDiffService = None
 
     async def initialize(self):
         self.pr_details = await self.get_pr_details()
@@ -111,29 +102,19 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    async def get_effective_pr_diff(self, operation="code_review", agent_id=None) -> str:
+    async def get_commit_diff_or_pr_diff(self):
         """
         Determines whether to fetch the full PR diff or a specific commit diff.
-
-        Args:
-            operation (str): The context of the operation (e.g., "code_review", "chat").
-            agent_id (str, optional): The agent's unique ID, if applicable.
-
         Returns:
-            str: The appropriate PR diff based on the operation and agent.
+            str: The appropriate diff based on context.
         """
-        await self.initialize_pr_diff_service()
-        return self.pr_diff_service.get_pr_diff(operation, agent_id)
-
-    async def initialize_pr_diff_service(self):
-        """
-        Initializes the PR diff service by deciding whether to use the commit diff
-        or the full PR diff based on the context value.
-        """
-        if not self.pr_diff_service:
+        if not self.pr_diff:
             pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
-            pr_diff = await self.get_commit_diff() if pr_reviewable_on_commit else await self.get_pr_diff()
-            self.pr_diff_service = PRDiffService(pr_diff)
+            if pr_reviewable_on_commit:
+                self.pr_diff = await self.get_commit_diff()
+            else:
+                self.pr_diff = await self.get_pr_diff()
+        return self.pr_diff
 
     @abstractmethod
     async def get_pr_diff(self):
@@ -188,10 +169,6 @@ class BasePR(ABC):
     async def get_loc_changed_count(self) -> int:
         raise NotImplementedError()
 
-    async def get_pr_diff_token_count(self, operation="code_review") -> dict:
-        await self.initialize_pr_diff_service()
-        return self.pr_diff_service.pr_diffs_token_counts_agent_name_wise(operation)
-
     async def generate_pr_description(self, pr_summary: str) -> str:
         """
         Generates a pull request (PR) description by combining an existing description
@@ -245,19 +222,6 @@ class BasePR(ABC):
             ]
         """
         raise NotImplementedError()
-
-    async def get_settings(self, branch_name):
-        settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
-        if settings:
-            try:
-                settings = toml.loads(settings.text)
-                return settings, {}
-            except toml.TomlDecodeError as e:
-                error_type = SettingErrorType.INVALID_TOML.value
-                error = {error_type: f"""{SETTING_ERROR_MESSAGE[error_type]}{str(e)}"""}
-                return {}, error
-        else:
-            return {}, {}
 
     async def fetch_repo(self):
         if self.repo_id:

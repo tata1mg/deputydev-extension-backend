@@ -29,6 +29,7 @@ from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     SCRIT_SUMMARY_PROMPT,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
@@ -37,18 +38,23 @@ from app.main.blueprints.deputy_dev.utils import get_filtered_response
 
 
 class SingleAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, prompt_version: None):
+    def __init__(
+        self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version: None
+    ):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.prompt_version = prompt_version
-        self.context_service = ContextService(repo_service=repo_service, pr_service=pr_service)
+        self.context_service = ContextService(
+            repo_service=repo_service, pr_service=pr_service, pr_diff_handler=pr_diff_handler
+        )
+        self.pr_diff_handler = pr_diff_handler
 
     async def get_code_review_comments(self):
         use_new_chunking = (
             False and get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
         )
         relevant_chunk, embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-            query=await self.pr_service.get_effective_pr_diff(),
+            query=await self.pr_diff_handler.get_effective_pr_diff(),
             local_repo=GitRepo(self.repo_service.repo_dir),
             use_new_chunking=use_new_chunking,
             use_llm_re_ranking=False,
