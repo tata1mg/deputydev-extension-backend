@@ -80,7 +80,6 @@ class AppContext(BaseModel):
         self.operation = None
         self.pr_config = None
         self.registered_repo_details = None
-        self.process_executor = None
         self.usage_hash = None
         self.last_operation_job_id = None
         self.current_status = FlowStatus.INITIALIZED
