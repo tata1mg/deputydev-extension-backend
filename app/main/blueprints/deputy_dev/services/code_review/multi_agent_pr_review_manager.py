@@ -9,6 +9,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     MultiAgentReflectionIteration,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
     AgentFactory,
 )
@@ -24,7 +25,7 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class MultiAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, prompt_version=None):
+    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version=None):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.multi_agent_enabled = None
@@ -42,11 +43,12 @@ class MultiAgentPRReviewManager:
         self.filtered_comments = None
         self.pr_summary = None
         self.exclude_agent = set()
-        self.context_service = ContextService(repo_service, pr_service)
+        self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
         self.agent_factory = AgentFactory(
             reflection_enabled=self._is_reflection_enabled(), context_service=self.context_service
         )
         self._is_large_pr = False
+        self.pr_diff_handler = pr_diff_handler
 
     # section setting start
 

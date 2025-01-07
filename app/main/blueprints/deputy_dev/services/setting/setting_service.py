@@ -1,15 +1,30 @@
 import copy
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import toml
+from torpedo.exceptions import BadRequestException
+
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.common.utils.context_vars import (
+    context_var,
+    get_context_value,
+    set_context_values,
+)
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
 from app.main.blueprints.deputy_dev.constants.constants import SettingLevel
-from app.main.blueprints.deputy_dev.models.dao.postgres import Agents, Configurations, Repos
-from app.main.blueprints.deputy_dev.utils import get_workspace, update_payload_with_jwt_data
-from app.common.utils.context_vars import context_var, get_context_value, set_context_values
-from app.main.blueprints.deputy_dev.services.setting.setting_validator import SettingValidator
+from app.main.blueprints.deputy_dev.models.dao.postgres import (
+    Agents,
+    Configurations,
+    Repos,
+)
 from app.main.blueprints.deputy_dev.services.setting.setting_helper import SettingHelper
-from torpedo.exceptions import BadRequestException
-from typing import Any, Dict, List, Optional, Tuple, Union
+from app.main.blueprints.deputy_dev.services.setting.setting_validator import (
+    SettingValidator,
+)
+from app.main.blueprints.deputy_dev.utils import (
+    get_workspace,
+    update_payload_with_jwt_data,
+)
 
 
 class SettingService:
@@ -427,10 +442,7 @@ class SettingService:
 
     @classmethod
     async def update_team_agents(
-            cls,
-            team_id: int,
-            updated_team_setting: dict,
-            existing_team_setting: Union[Configurations, None]
+        cls, team_id: int, updated_team_setting: dict, existing_team_setting: Union[Configurations, None]
     ) -> None:
         """
         Updates the team agents in the database based on the changes in the provided team settings.
@@ -511,12 +523,7 @@ class SettingService:
 
     @classmethod
     async def create_or_update_setting(
-            cls,
-            configurable_id: int,
-            configurable_type: str,
-            error: str,
-            setting: dict,
-            saved_setting
+        cls, configurable_id: int, configurable_type: str, error: str, setting: dict, saved_setting
     ) -> None:
         """
         Creates or updates a configuration record in the database.
