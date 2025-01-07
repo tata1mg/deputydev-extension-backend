@@ -16,7 +16,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.helpers.chunking_helper import ChunkingHelper
 from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
     SettingService,
 )
@@ -217,7 +216,7 @@ class AgentServiceBase(ABC):
         )
         return True
 
-    def agent_relevant_chunk(self, relevant_chunks:dict):
+    def agent_relevant_chunk(self, relevant_chunks: dict):
         relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
         agent_relevant_chunks = []
         for index in relevant_chunks_index:
