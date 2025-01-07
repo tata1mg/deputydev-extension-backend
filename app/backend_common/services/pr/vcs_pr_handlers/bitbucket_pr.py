@@ -211,6 +211,9 @@ class BitbucketPR(BasePR):
             "description": description,
         }
         response = await self.repo_client.create_pr(payload)
+        if response.get("type") == "error":
+            raise ValueError(response.get("error", {}).get("message"))
+
         set_context_values(pr_url=response.get("links", {}).get("html", {}).get("href"))
         return response.get("links", {}).get("html", {}).get("href")
 
