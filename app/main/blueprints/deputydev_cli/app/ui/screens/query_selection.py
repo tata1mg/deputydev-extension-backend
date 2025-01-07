@@ -56,15 +56,7 @@ class FilePathCompleter(Completer):
         self.app_context = app_context
         super().__init__()
 
-    def get_completions(self, document: Document, complete_event: CompleteEvent):
-        if not self.app_context.local_repo:
-            return
-
-        text = document.text
-        # if text is empty, show nothing
-        if not text:
-            return
-
+    def get_completions_on_text(self, text: str):
         # if text is at least one character, show all file paths which start with the text
         abs_repo_path = self.app_context.local_repo.repo_path
         abs_file_path = os.path.join(abs_repo_path, text)
@@ -95,6 +87,35 @@ class FilePathCompleter(Completer):
 
             # prevent os.walk from going into subdirectories
             dirs[:] = []
+
+    def get_completions(self, document: Document, complete_event: CompleteEvent):
+        if not self.app_context.local_repo:
+            return
+
+        text = document.text
+        # if text is empty, show nothing
+        if not text:
+            return
+
+        yield from self.get_completions_on_text(text)
+
+
+class MultiFilePathCompleter(Completer):
+    def __init__(self, app_context: AppContext) -> None:
+        self.app_context = app_context
+        super().__init__()
+
+    def get_completions(self, document: Document, complete_event: CompleteEvent):
+        if not self.app_context.local_repo:
+            return
+
+        text = document.text
+        # if text is empty, show nothing
+        if not text:
+            return
+
+        last_file_path = text.split(",")[-1]
+        yield from FilePathCompleter(self.app_context).get_completions_on_text(last_file_path)
 
 
 class OperationValidator(AsyncValidator):
