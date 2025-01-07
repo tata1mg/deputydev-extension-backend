@@ -18,7 +18,7 @@ from app.common.constants.constants import (
     SETTING_ERROR_MESSAGE,
     SettingErrorType,
 )
-from app.main.blueprints.deputy_dev.models.dao.postgres import Repos, Workspaces
+from app.backend_common.models.dao.postgres import Repos, Workspaces
 from app.main.blueprints.deputy_dev.services.pr_diff_service import PRDiffService
 
 
