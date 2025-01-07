@@ -20,7 +20,6 @@ from app.backend_common.utils.app_utils import (
 )
 from app.backend_common.utils.formatting import append_line_numbers, format_code_blocks
 from app.common.services.chunking.chunking_manager import ChunkingManger
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
