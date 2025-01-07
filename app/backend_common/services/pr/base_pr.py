@@ -111,23 +111,28 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    async def get_effective_pr_diff(self, operation="code_review", agent_id=None):
-        # TODO: Document this function
+    async def get_effective_pr_diff(self, operation="code_review", agent_id=None) -> str:
         """
         Determines whether to fetch the full PR diff or a specific commit diff.
+
+        Args:
+            operation (str): The context of the operation (e.g., "code_review", "chat").
+            agent_id (str, optional): The agent's unique ID, if applicable.
+
         Returns:
-            str: The appropriate diff based on context.
+            str: The appropriate PR diff based on the operation and agent.
         """
         await self.initialize_pr_diff_service()
         return self.pr_diff_service.get_pr_diff(operation, agent_id)
 
     async def initialize_pr_diff_service(self):
+        """
+        Initializes the PR diff service by deciding whether to use the commit diff
+        or the full PR diff based on the context value.
+        """
         if not self.pr_diff_service:
             pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
-            if pr_reviewable_on_commit:
-                pr_diff = await self.get_commit_diff()
-            else:
-                pr_diff = await self.get_pr_diff()
+            pr_diff = await self.get_commit_diff() if pr_reviewable_on_commit else await self.get_pr_diff()
             self.pr_diff_service = PRDiffService(pr_diff)
 
     @abstractmethod
