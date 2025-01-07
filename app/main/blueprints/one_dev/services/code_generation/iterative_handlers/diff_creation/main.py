@@ -5,6 +5,7 @@ from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.common.constants.constants import LLModels, PromptFeatures
 from app.common.services.prompt.factory import PromptFeatureFactory
+from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.helpers.code_application import (
     CodeApplicationHandler,
@@ -110,18 +111,20 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
         if not (payload.pr_config):
             return final_resp
 
-        application_resp = await cls._create_pr_with_generated_diff(
-            payload=payload,
-            diff=final_resp["diff"],
-            commit_message=final_resp["commit_message"],
-            pr_title=final_resp["pr_title"],
-        )
-        await JobService.db_update(
-            filters={"id": job_id},
-            update_data={"status": "DIFF_APPLIED"},
-        )
-
-        final_resp.update(application_resp)
+        try:
+            application_resp = await cls._create_pr_with_generated_diff(
+                payload=payload,
+                diff=final_resp["diff"],
+                commit_message=final_resp["commit_message"],
+                pr_title=final_resp["pr_title"],
+            )
+            await JobService.db_update(
+                filters={"id": job_id},
+                update_data={"status": "DIFF_APPLIED"},
+            )
+            final_resp.update(application_resp)
+        except Exception as ex:
+            AppLogger.log_error(f"PR creation failed - {str(ex)}")
         return final_resp
 
     @classmethod
