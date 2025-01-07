@@ -78,7 +78,7 @@ class Authentication(BaseScreenHandler):
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
         current_auth_token = os.getenv(DEPUTYDEV_AUTH_TOKEN)
         if current_auth_token:
-            self.app_context.args.auth_token = current_auth_token
+            self.app_context.args.deputydev_auth_token = current_auth_token
         (self.app_context.auth_token, _is_existing_arg_valid,) = await validate_existing_text_arg_or_get_input(
             session=self.session,
             arg_name="deputydev_auth_token",
