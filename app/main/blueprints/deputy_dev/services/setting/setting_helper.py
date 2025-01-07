@@ -1,3 +1,5 @@
+import toml
+from pathlib import Path
 from app.common.utils.context_vars import get_context_value
 
 
@@ -6,6 +8,7 @@ class SettingHelper:
     PREDEFINED_AGENTS_IDS_AND_NAMES = {
         setting["agent_id"]: name for name, setting in DD_LEVEL_SETTINGS["code_review_agent"]["agents"].items()
     }
+    REPO_SPECIFIC_KEYS = ["app"]
 
     @classmethod
     def merge_setting(cls, base_config, override_config):
@@ -117,3 +120,81 @@ class SettingHelper:
     @classmethod
     def agents_analytics_info(cls, dd_agents, team_agents, repo_agents):
         return cls.agents_analytics_info_recursive([dd_agents, team_agents, repo_agents])
+
+    @classmethod
+    def dd_level_settings(cls):
+        return cls.DD_LEVEL_SETTINGS
+
+    @classmethod
+    def get_uuid_wise_agents(cls):
+        setting = get_context_value("setting")
+        agent_setting = setting["code_review_agent"]["agents"]
+        pr_summary_setting = setting["pr_summary"]
+        agents = {}
+        for agent_name, agent_data in agent_setting.items():
+            agent_data = {"agent_name": agent_name, **agent_data}
+            agents[str(agent_data["agent_id"])] = agent_data
+        agents[cls.summary_agent_id()] = {"agent_name": "pr_summary", **pr_summary_setting}
+        return agents
+
+    @classmethod
+    def get_agent_inclusion_exclusions(cls, agent_id=None):
+        setting = get_context_value("setting")
+        global_exclusions = setting["code_review_agent"]["exclusions"] or []
+        global_inclusions = setting["code_review_agent"]["inclusions"] or []
+        if agent_id == cls.summary_agent_id():
+            return list(global_inclusions), list(global_exclusions)
+        else:
+            agents = cls.get_uuid_wise_agents()
+            if agent_id:
+                inclusions = set(global_inclusions) | set(agents[agent_id].get("inclusions", []))
+                exclusions = set(global_exclusions) | set(agents[agent_id].get("exclusions", []))
+                return list(inclusions), list(exclusions)
+            else:
+                return list(global_inclusions), list(global_exclusions)
+
+    @classmethod
+    def agent_id_by_custom_name(cls, agent_name):
+        agent_settings = cls.agents_settings()
+        return agent_settings[agent_name]["agent_id"]
+
+    @classmethod
+    def predefined_name_to_custom_name(cls, agent_name):
+        pre_defined_agents = cls.pre_defined_agents()
+        if agent_name in pre_defined_agents:
+            agent_id = pre_defined_agents[agent_name]["agent_id"]
+            uuid_wise_agents = cls.get_uuid_wise_agents()
+            return uuid_wise_agents[agent_id]["agent_name"]
+        else:
+            return agent_name
+
+    @classmethod
+    def custom_name_to_predefined_name(cls, agent_name):
+        # In case of custom agent predefined_name will be same as custom agent
+        all_agents = cls.agents_settings()
+        if all_agents[agent_name]["is_custom_agent"]:
+            return agent_name
+        else:
+            return cls.PREDEFINED_AGENTS_IDS_AND_NAMES[all_agents[agent_name]["agent_id"]]
+
+    @classmethod
+    def predefined_name_by_id(cls, agent_id):
+        return cls.PREDEFINED_AGENTS_IDS_AND_NAMES.get(agent_id)
+
+    @classmethod
+    def custom_name_by_id(cls, agent_id):
+        agents_settings = cls.get_uuid_wise_agents()
+        return agents_settings[agent_id]["agent_name"]
+
+    @classmethod
+    def agent_setting_by_name(cls, agent_name):
+        return cls.agents_settings().get(agent_name, {})
+
+    @classmethod
+    def remove_repo_specific_setting(cls, setting):
+        if setting:
+            for key in cls.REPO_SPECIFIC_KEYS:
+                if setting.get(key):
+                    for nested_key in setting[key]:
+                        setting[key][nested_key] = None
+        return setting

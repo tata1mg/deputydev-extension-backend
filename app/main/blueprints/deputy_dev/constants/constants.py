@@ -3,7 +3,7 @@ from typing import List
 
 from torpedo.common_utils import CONFIG
 
-from app.common.constants.constants import ExtendedEnum
+from app.common.constants.constants import ExtendedEnum, SettingErrorType
 
 MAX_PR_DIFF_TOKEN_LIMIT = CONFIG.config["MAX_PR_DIFF_TOKEN_LIMIT"]
 PR_SIZE_TOO_BIG_MESSAGE = (
@@ -56,25 +56,6 @@ REJECTED_STATUS_TYPES = [
     PrStatusTypes.REJECTED_INVALID_REQUEST.value,
 ]
 
-
-CUSTOM_PROMPT_CHAR_LIMIT = 4000
-
-
-class SettingErrorType(Enum):
-    INVALID_SETTING = "INVALID_SETTING"
-    CUSTOM_PROMPT_LENGTH_EXCEED = "CUSTOM_PROMPT_LENGTH_EXCEED"
-    INVALID_CHAT_SETTING = "INVALID_CHAT_SETTING"
-    INVALID_TOML = "INVALID_TOML"
-    MISSING_KEY = "MISSING_KEY"
-
-
-SETTING_ERROR_MESSAGE = {
-    SettingErrorType.INVALID_TOML.value: "Default settings applied as deputydev.toml file is not a valid toml file.\n\nErrors:",
-    SettingErrorType.INVALID_SETTING.value: "Default settings applied as custom settings validation failed.\n\nErrors:",
-    SettingErrorType.CUSTOM_PROMPT_LENGTH_EXCEED.value: f"Default prompts are getting used for following agents as their custom prompt exceed defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters:\n\n",
-    SettingErrorType.INVALID_CHAT_SETTING.value: f"Default prompt is getting used for chat as Custom Prompt exceed the defined limit of {CUSTOM_PROMPT_CHAR_LIMIT} characters",
-    SettingErrorType.MISSING_KEY.value: "Invalid override or creation of agents due to missing mandatory keys. Default settings are applied for invalid pre-defined agents, while invalid custom agents are skipped. \n\nInvalid Agents:\n\n",
-}
 
 CODE_REVIEW_ERRORS = [
     SettingErrorType.INVALID_TOML.value,
