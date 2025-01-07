@@ -40,7 +40,7 @@ objective = "Responsibility of this agent is checking security issues"
 
 [code_review_agent.agents.code_communication]
 agent_id = "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"
-display_name = "Code Communication"
+display_name = "Documentation"
 weight = 1
 enable = false
 custom_prompt = ""
@@ -88,7 +88,7 @@ objective = "Responsibility of this agent is checking errors in code"
 
 [code_review_agent.agents.business_logic_validation]
 agent_id = "9fa43db8-4a3d-43e8-95c0-de96ed58e606"
-display_name = "Business Logic"
+display_name = "Business Rule"
 enable = false
 weight = 5
 custom_prompt = ""
