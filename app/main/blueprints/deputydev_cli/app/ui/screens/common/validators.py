@@ -8,6 +8,8 @@ from prompt_toolkit.completion import CompleteEvent, Completer
 from prompt_toolkit.document import Document
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.validation import ThreadedValidator, ValidationError, Validator
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding.key_processor import KeyPressEvent
 
 from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import AppContext
 
@@ -89,6 +91,7 @@ async def validate_existing_text_arg_or_get_input(
     default: str = "",
     optional: bool = False,
     completer: Optional[Completer] = None,
+    only_complete_on_completer_selection: bool = False,
 ) -> Tuple[str, bool]:
     final_value: Optional[str] = None
     is_existing_arg_valid = False
@@ -117,6 +120,21 @@ async def validate_existing_text_arg_or_get_input(
 
     # If the existing arg is not valid, get the input from the user
     if not final_value:
+        key_bindings = None
+        if completer and only_complete_on_completer_selection:
+            key_bindings = KeyBindings()
+
+            @key_bindings.add('enter')
+            def _handle_enter(event: KeyPressEvent) -> None:
+                """Custom behavior for the Enter key."""
+                buffer = event.app.current_buffer
+                if buffer.complete_state:
+                    # If the completer is active, select the completion.
+                    buffer.complete_state = None
+                else:
+                    # Otherwise, handle as a normal Enter key.
+                    buffer.validate_and_handle()
+
         with patch_stdout():
             final_value = await session.prompt_async(
                 prompt_message,
@@ -124,6 +142,7 @@ async def validate_existing_text_arg_or_get_input(
                 validate_while_typing=validate_while_typing,
                 default=default,
                 completer=completer or DummyCompleter(),
+                key_bindings=key_bindings
             )
     return final_value, is_existing_arg_valid
 
