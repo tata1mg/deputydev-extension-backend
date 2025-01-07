@@ -237,9 +237,7 @@ class BitbucketRepoClient(BaseSCMClient):
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests"
         workspace_token_headers = await self.get_ws_token_headers()
         response = await self.post(url, json=payload, headers=workspace_token_headers, skip_auth_headers=True)
-        aa = await response.json()
-        print(aa)
-        return aa
+        return await response.json()
 
     async def list_prs(self, state="OPEN"):
         """

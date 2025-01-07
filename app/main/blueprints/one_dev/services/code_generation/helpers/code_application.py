@@ -45,8 +45,6 @@ class CodeApplicationHandler:
         self.repo_service.commit_changes(commit_message=commit_message_prefix + self.commit_message)
         await self.repo_service.push_to_remote(source_branch)
 
-        print("Local changes committed and pushed successfully...")
-
         # create PR if no PR is open between source and destination branches
         pr_link: Optional[str] = None
         existing_pr: bool = True

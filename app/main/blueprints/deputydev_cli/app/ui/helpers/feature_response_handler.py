@@ -51,7 +51,10 @@ class FeatureResponseHandler:
             print_formatted_text(FormattedText([("#32afff", self.feature_response.display_response)]))
         if self.feature_response.diff and not self.feature_response.pr_link:
             self.app_context.local_repo.apply_diff(self.feature_response.diff)
-            print_formatted_text(FormattedText([("#729fcf", "Diff applied successfully")]))
+            if self.app_context.pr_config:
+                print_formatted_text(FormattedText([("#729fcf", "Could not create PR. Applying diff locally...")]))
+            else:
+                print_formatted_text(FormattedText([("#729fcf", "Diff applied successfully")]))
         if (
             self.feature_response.pr_link
             and isinstance(self.app_context.local_repo, GitRepo)
