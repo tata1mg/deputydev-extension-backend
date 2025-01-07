@@ -50,7 +50,6 @@ class AppContext(BaseModel):
     embedding_manager: Optional[BaseEmbeddingManager] = None
     chunkable_files_with_hashes: Optional[Dict[str, str]] = None
     init_manager: Optional[InitializationManager] = None
-    exit_code: Optional[int] = None
     query: Optional[Union[PlainTextQuery, TextSelectionQuery]] = None
     operation: Optional[CLIFeatures] = None
     pr_config: Optional[PRConfig] = None
@@ -73,3 +72,19 @@ class AppContext(BaseModel):
         if self.init_manager:
             await self.init_manager.cleanup()
         return True
+
+    def clean_for_new_session(self):
+        # Reset the app context for a new session
+        self.local_repo = None
+        self.query = None
+        self.operation = None
+        self.pr_config = None
+        self.registered_repo_details = None
+        self.process_executor = None
+        self.usage_hash = None
+        self.last_operation_job_id = None
+        self.current_status = FlowStatus.INITIALIZED
+
+        # Reset query args except for auth token
+        self.args = argparse.Namespace()
+        self.args.deputydev_auth_token = self.auth_token

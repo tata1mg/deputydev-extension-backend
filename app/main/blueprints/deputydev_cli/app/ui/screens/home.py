@@ -26,4 +26,7 @@ class Home(BaseScreenHandler):
             resp = await self.session.prompt_async("Do you want to start a new session? (y/n): ")
             if resp.lower() == "n":
                 return self.app_context, ScreenType.EXIT
+
+        # if the user wants to start a new session, clear the session app context
+        self.app_context.clean_for_new_session()
         return self.app_context, ScreenType.DEFAULT
