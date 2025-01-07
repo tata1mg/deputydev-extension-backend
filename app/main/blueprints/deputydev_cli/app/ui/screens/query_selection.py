@@ -61,28 +61,31 @@ class FilePathCompleter(Completer):
             return
         # if text is at least one character, show all file paths which start with the text
         abs_repo_path = self.app_context.local_repo.repo_path
-        abs_file_path = os.path.join(abs_repo_path, text)
+        abs_text_path = os.path.join(abs_repo_path, text)
+        last_path_component = abs_text_path.split("/")[-1]
+        if last_path_component:
+            abs_text_path = abs_text_path[: -len(last_path_component)]
 
         current_yields = 0
-        for root, dirs, files in os.walk(abs_repo_path):
+        for root, dirs, files in os.walk(abs_text_path, topdown=True):
             for file in files:
                 abs_current_file_path = os.path.join(root, file)
-                if abs_current_file_path.startswith(abs_file_path):
+                if abs_current_file_path.startswith(abs_text_path + last_path_component):
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_file_path[len(abs_file_path) :],
+                        abs_current_file_path[len(abs_text_path) + len(last_path_component) :],
                         start_position=0,
                     )
                     current_yields += 1
 
             for dir in dirs:
                 abs_current_dir_path = os.path.join(root, dir)
-                if abs_current_dir_path.startswith(abs_file_path):
+                if abs_current_dir_path.startswith(abs_text_path + last_path_component):
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_dir_path[len(abs_file_path) :],
+                        abs_current_dir_path[len(abs_text_path) + len(last_path_component) :],
                         start_position=0,
                     )
                     current_yields += 1
@@ -356,7 +359,8 @@ class QuerySelection(BaseScreenHandler):
                 prompt_message="[OPTIONAL]Enter focus files [COMMA SEPARATED](filepath_relative_to_repo_root):",
                 validator=MultiFileSelectionValidator(self.app_context),
                 app_context=self.app_context,
-                completer=FilePathCompleter(self.app_context),
+                completer=MultiFilePathCompleter(self.app_context),
+                only_complete_on_completer_selection=True,
             )
 
             focus_snippets, _ = await validate_existing_text_arg_or_get_input(
@@ -365,7 +369,8 @@ class QuerySelection(BaseScreenHandler):
                 prompt_message="[OPTIONAL]Enter focus snippets [COMMA SEPARATED](filepath_relative_to_repo_root:start_line-end_line):",
                 validator=MultiTextSelectionValidator(self.app_context),
                 app_context=self.app_context,
-                completer=FilePathCompleter(self.app_context),
+                completer=MultiFilePathCompleter(self.app_context),
+                only_complete_on_completer_selection=True,
             )
             text_snippets: List[TextSnippet] = []
             if focus_snippets:
