@@ -60,7 +60,6 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
         input_tokens = 0
         texts = [text if text else " " for text in texts]
 
-        print(f"Embedding {len(texts)} texts using OpenAI's embedding model")
         AppLogger.log_debug(f"Embedding {len(texts)} texts using OpenAI's embedding model")
         batches = cls.create_optimized_batches(
             texts, max_tokens=config["EMBEDDING"]["TOKEN_LIMIT"], model=config["EMBEDDING"]["MODEL"]
