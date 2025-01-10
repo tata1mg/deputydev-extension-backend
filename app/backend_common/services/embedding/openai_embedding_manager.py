@@ -9,6 +9,7 @@ from app.backend_common.services.openai.openai_llm_service import OpenAILLMServi
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.tiktoken.tiktoken import TikToken
 from app.common.utils.app_logger import AppLogger
+from numpy.typing import NDArray
 
 config = CONFIG.config
 
@@ -44,7 +45,7 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
         return batches
 
     @classmethod
-    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[List[np.ndarray], int]:
+    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[NDArray[np.float64], int]:
         """
         Embeds a list of texts using OpenAI's embedding model.
 
@@ -68,7 +69,7 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
 
         max_parallel_tasks = 30
         parallel_batches = []
-        print(f"Starting embedding for loop {len(batches)} in parallel")
+        exponential_backoff = 0.2
         for batch in batches:
             if not batch:
                 continue
@@ -92,6 +93,8 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
 
                 parallel_batches = []
                 if failed_batches:
+                    await asyncio.sleep(exponential_backoff)
+                    exponential_backoff *= 2
                     parallel_batches += failed_batches
                 # store current batch
                 parallel_batches += [batch]
@@ -111,8 +114,10 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
                     embeddings.extend(_data[0])
                     input_tokens += _data[1]
 
-                parallel_batches = []
-                if failed_batches:
-                    parallel_batches += failed_batches
+            parallel_batches = []
+            if failed_batches:
+                await asyncio.sleep(exponential_backoff)
+                exponential_backoff *= 2
+                parallel_batches += failed_batches
 
         return embeddings, input_tokens
