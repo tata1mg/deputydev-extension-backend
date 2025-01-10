@@ -78,40 +78,8 @@ class CommentBlendingEngine:
         """
         Validates each filtered comment against the PR diff using LLM.
         """
-        self.filtered_comments = [
-            {
-                "file_path": "app/tests/utils.py",
-                "line_number": "+22",
-                "comment": "A hardcoded AWS access token is added to the test file. This is a critical security vulnerability as it exposes sensitive credentials directly in the codebase. If this code is committed and pushed to a repository, it could lead to unauthorized access to AWS resources, potentially resulting in data breaches, financial losses, or other security incidents.",
-                "buckets": [{"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
-                "confidence_score": 1.0,
-                "corrective_code": "\n\n# Remove the hardcoded token and use environment variables or a secure secret management system\nimport os\n\nAWS_ACCESS_TOKEN = os.environ.get('AWS_ACCESS_TOKEN')\n# Ensure that the environment variable is set securely in the deployment environment\n\n",
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-            },
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "+711",
-                "comment": "A new function `error_function` is added that deliberately causes a division by zero error. While this is likely intended for testing purposes, it could lead to unexpected behavior or crashes if accidentally called in a production environment. It's generally not advisable to include intentional error-generating code in the main codebase.",
-                "buckets": [{"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
-                "confidence_score": 0.9,
-                "corrective_code": '\n\n# If this function is needed for testing, move it to a dedicated test file\n# Otherwise, remove it entirely\n\n# If it must remain, add clear documentation and error handling:\n@classmethod\ndef error_function(cls):\n    """\n    WARNING: This function intentionally raises a ZeroDivisionError.\n    It should only be used for testing error handling mechanisms.\n    """\n    try:\n        a = 5 / 0\n    except ZeroDivisionError:\n        logger.error("Intentional ZeroDivisionError raised for testing")\n        raise\n    return "This line should never be reached"\n\n',
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-            },
-            {
-                "file_path": "app/modules/pharma_pdp/utils/utility.py",
-                "line_number": "+711",
-                "comment": "The newly added `error_function` in the Utils class intentionally introduces a division by zero error. This will cause a runtime exception when the function is called, potentially crashing the application or causing unexpected behavior.",
-                "buckets": [{"name": "ISSUES", "agent_id": "4a3f593d-73cd-41d6-85a0-dc96c17ce9bb"}],
-                "confidence_score": 0.95,
-                "corrective_code": '\ndef error_function(cls):\n    # Remove or modify the division by zero\n    # For example, you could add a check:\n    denominator = 0\n    if denominator != 0:\n        a = 5 / denominator\n    else:\n        a = 0\n    a = 1 / 5 * a\n    return "check error in function"\n',
-                "model": "CLAUDE_3_POINT_5_SONNET",
-                "is_valid": None,
-            },
-        ]
-        # if not self.filtered_comments:
-        return
+        if not self.filtered_comments:
+            return
 
         validation_data = self.filtered_comments
 
