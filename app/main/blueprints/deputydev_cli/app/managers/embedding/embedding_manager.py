@@ -120,6 +120,8 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
             await asyncio.sleep(exponential_backoff)
             exponential_backoff *= 2
             parallel_batches += failed_batches
+        else:
+            exponential_backoff = 0.2
 
         return tokens_used, last_checkpoint, exponential_backoff, parallel_batches
 
