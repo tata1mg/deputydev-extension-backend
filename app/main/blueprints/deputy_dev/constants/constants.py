@@ -214,16 +214,6 @@ class AgentTypes(ExtendedEnum):
     COMMENT_SUMMARIZATION = "comment_summarization"
 
 
-class AgentIds(ExtendedEnum):
-    SECURITY = "c62142f5-3992-476d-9131-bf85e1beffb7"
-    CODE_COMMUNICATION = "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"
-    PERFORMANCE_OPTIMISATION = "5932a405-96cb-4508-bfd4-443397583f95"
-    CODE_MAINTAINABILITY = "ccfe1b06-f5f2-42b1-a209-4d560edbd5f4"
-    ERROR = "4a3f593d-73cd-41d6-85a0-dc96c17ce9bb"
-    BUSINESS_LOGIC_VALIDATION = "9fa43db8-4a3d-43e8-95c0-de96ed58e606"
-    PR_SUMMARY = "294c1355-38c7-4f69-8914-c95c92e16dbb"
-
-
 class Feature(ExtendedEnum):
     GENERATE_CODE = "generate_code"
     PLAN_TASK = "task_planner"

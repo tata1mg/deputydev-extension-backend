@@ -21,7 +21,6 @@ async def perform_search(
     query_vector: Optional[List[float]] = None,
     weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
     usage_hash: Optional[str] = None,
-    agent_wise_chunks: Optional[bool] = False,
 ) -> Tuple[List[ChunkInfo], int]:
 
     sorted_chunks: List[ChunkInfo] = []
@@ -35,7 +34,6 @@ async def perform_search(
             process_executor=process_executor,
             chunking_handler=chunking_handler,
         )
-        return sorted_chunks, input_tokens
     elif search_type == SearchTypes.VECTOR_DB_BASED:
         if not weaviate_client:
             raise ValueError("Weaviate client is required for vector db based search")

@@ -176,8 +176,6 @@ class GitlabPR(BasePR):
 
         pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
 
-        # TODO: PRDIFF pr_reviewable_on_commit in handled in get_effective_pr_diff, we can update this line
-        # We should consider complete pr_diff for this as we are doing for bitbucket and github
         pr_diff = await self.get_commit_diff() if pr_reviewable_on_commit else await self.get_effective_pr_diff()
         diff_lines = pr_diff.split("\n")
 

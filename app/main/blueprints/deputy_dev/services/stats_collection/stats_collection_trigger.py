@@ -1,6 +1,5 @@
 import asyncio
 
-from sanic.log import logger
 from torpedo import CONFIG
 
 from app.backend_common.services.repo.repo_factory import RepoFactory
@@ -87,8 +86,6 @@ class StatsCollectionTrigger:
         self.default_branch = await self.repo_service.get_default_branch()
         if self.default_branch == parsed_payload.destination_branch:
             await SettingService(self.repo_service, self.workspace.team_id, self.default_branch).update_repo_setting()
-            # TODO: No need of this logger
-            logger.info("Settings Updated")
 
     @classmethod
     def get_stats_collection_type(cls, vcs_type, payload):
