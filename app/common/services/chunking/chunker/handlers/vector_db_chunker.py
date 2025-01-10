@@ -28,7 +28,7 @@ class VectorDBChunker(BaseChunker):
         self.usage_hash = usage_hash
         self.chunkable_files_and_hashes = chunkable_files_and_hashes
 
-    async def add_chunk_embeddings(self, chunks: List[ChunkInfo], embedding_manager: BaseEmbeddingManager) -> None:
+    async def add_chunk_embeddings(self, chunks: List[ChunkInfo]) -> None:
         """
         Adds embeddings to the chunks.
 
@@ -42,7 +42,7 @@ class VectorDBChunker(BaseChunker):
             chunk.get_chunk_content_with_meta_data(add_ellipsis=False, add_lines=False, add_class_function_info=True)
             for chunk in chunks
         ]
-        embeddings, _input_tokens = await embedding_manager.embed_text_array(texts=texts_to_embed)
+        embeddings, _input_tokens = await self.embedding_manager.embed_text_array(texts=texts_to_embed)
         for chunk, embedding in zip(chunks, embeddings):
             chunk.embedding = embedding
 
@@ -60,14 +60,14 @@ class VectorDBChunker(BaseChunker):
             process_executor=self.process_executor,
         )
         if batched_chunks:
-            await self.add_chunk_embeddings(batched_chunks, self.embedding_manager)
+            await self.add_chunk_embeddings(batched_chunks)
             await ChunkVectorScoreManager(
                 local_repo=self.local_repo, weaviate_client=self.weaviate_client
             ).add_differential_chunks_to_store(batched_chunks, usage_hash=self.usage_hash)
         return batched_chunks
 
     def batchify_chunks_for_insertion(
-        self, files_to_chunk: Dict[str, str], max_batch_size_chunking: int = 100
+        self, files_to_chunk: Dict[str, str], max_batch_size_chunking: int = 1200
     ) -> List[List[Tuple[str, str]]]:
         files_to_chunk_items = list(files_to_chunk.items())
         batched_files_to_store: List[List[Tuple[str, str]]] = []

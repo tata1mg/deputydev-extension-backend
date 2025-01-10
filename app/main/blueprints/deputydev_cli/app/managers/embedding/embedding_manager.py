@@ -1,5 +1,8 @@
+import asyncio
 import time
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+from numpy.typing import NDArray
+
 
 import numpy as np
 
@@ -7,20 +10,23 @@ from app.common.services.embedding.base_embedding_manager import BaseEmbeddingMa
 from app.common.services.tiktoken.tiktoken import TikToken
 from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
+from prompt_toolkit.shortcuts.progress_bar import ProgressBarCounter
 
 
 class OneDevEmbeddingManager(BaseEmbeddingManager):
-    def __init__(self, auth_token: str):
+    def __init__(self, auth_token: str, one_dev_client: OneDevClient):
         self.auth_token = auth_token
+        self.oen_dev_client = one_dev_client
 
     @classmethod
     def create_optimized_batches(
-        self, texts: List[str], max_tokens_per_text: int, max_tokens_per_batch: int, model: str
+        cls, texts: List[str], max_tokens_per_text: int, max_tokens_per_batch: int, model: str
     ) -> List[List[str]]:
         tiktoken_client = TikToken()
         batches: List[List[str]] = []
         current_batch = []
         currrent_batch_token_count = 0
+        
 
         for text in texts:
             text_token_count = tiktoken_client.count(text, model=model)
@@ -45,23 +51,120 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
 
         return batches
 
-    async def embed_text_array(self, texts: List[str], store_embeddings: bool = True) -> Tuple[List[np.ndarray], int]:
-        oen_dev_client = OneDevClient()
-        embeddings: List[List[float]] = []
-        tokens_used: int = 0
-
-        iterable_batch = self.create_optimized_batches(
-            texts, max_tokens_per_text=4096, max_tokens_per_batch=2048, model="text-embedding-3-small"
-        )
-
-        for batch in iterable_batch:
+    async def _get_embeddings_for_single_batch(
+        self, batch: List[str], store_embeddings: bool = True
+    ) -> Tuple[Optional[List[List[float]]], int, List[str]]:
+        try:
             time_start = time.perf_counter()
-            embedding_result = await oen_dev_client.create_embedding(
+            embedding_result = await self.oen_dev_client.create_embedding(
                 payload={"texts": batch, "store_embeddings": store_embeddings},
                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.auth_token}"},
             )
             AppLogger.log_debug(f"Time taken for embedding batch via API: {time.perf_counter() - time_start}")
-            embeddings.extend(embedding_result["embeddings"])
-            tokens_used += embedding_result["tokens_used"]
+            return embedding_result["embeddings"], embedding_result["tokens_used"], batch
+        except Exception as e:
+            AppLogger.log_error(f"Failed to get embeddings for batch: {e}")
+            return None, 0, batch
+
+    def _update_embeddings_and_tokens_used(
+        self,
+        all_embeddings: List[List[float]],
+        total_tokens_used: int,
+        failed_batches: List[List[str]],
+        current_batch_embeddings: Optional[List[List[float]]],
+        current_batch_tokens_used: int,
+        current_batch: List[str],
+        last_checkpoint: float,
+        progress_step: Optional[float],
+        progress_bar_counter: Optional[ProgressBarCounter[int]] = None,
+    ) -> Tuple[int, float]:
+        if current_batch_embeddings is None:
+            failed_batches.append(current_batch)
+        else:
+            all_embeddings.extend(current_batch_embeddings)
+            total_tokens_used += current_batch_tokens_used
+
+        if progress_step is not None and progress_bar_counter:
+            while len(all_embeddings) - 1 > int(last_checkpoint):
+                progress_bar_counter.item_completed()
+                last_checkpoint += progress_step
+
+        return total_tokens_used, last_checkpoint
+
+    async def embed_text_array(
+        self,
+        texts: List[str],
+        store_embeddings: bool = True,
+        progress_bar_counter: Optional[ProgressBarCounter[int]] = None,
+        len_checkpoints: Optional[int] = None,
+    ) -> Tuple[NDArray[np.float64], int]:
+        embeddings: List[List[float]] = []
+        tokens_used: int = 0
+        exponential_backoff = 0.2
+
+        iterable_batches = self.create_optimized_batches(
+            texts, max_tokens_per_text=4096, max_tokens_per_batch=2048, model="text-embedding-3-small"
+        )
+
+        max_parallel_tasks = 30
+        parallel_batches: List[List[str]] = []
+        last_checkpoint: float = 0
+        step = (len(texts) / len_checkpoints) if len_checkpoints else None
+
+        AppLogger.log_debug(f"Total batches: {len(iterable_batches)}, Total Texts: {len(texts)}, Total checkpoints: {len_checkpoints}")
+        for batch in iterable_batches:
+            if len(parallel_batches) >= max_parallel_tasks:
+                parallel_tasks = [
+                    self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches
+                ]
+                failed_batches: List[List[str]] = []
+                for single_task in asyncio.as_completed(parallel_tasks):
+                    _embeddings, _tokens_used, data_batch = await single_task
+                    tokens_used, last_checkpoint = self._update_embeddings_and_tokens_used(
+                        embeddings,
+                        tokens_used,
+                        failed_batches,
+                        _embeddings,
+                        _tokens_used,
+                        data_batch,
+                        last_checkpoint,
+                        step,
+                        progress_bar_counter,
+                    )
+                parallel_batches = []
+                if failed_batches:
+                    await asyncio.sleep(exponential_backoff)
+                    exponential_backoff *= 2
+                    parallel_batches += failed_batches
+            # store current batch
+            parallel_batches += [batch]
+
+        while len(parallel_batches) > 0:
+            parallel_tasks = [
+                self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches
+            ]
+            failed_batches: List[List[str]] = []
+            for single_task in asyncio.as_completed(parallel_tasks):
+                _embeddings, _tokens_used, data_batch = await single_task
+                tokens_used, last_checkpoint = self._update_embeddings_and_tokens_used(
+                    embeddings,
+                    tokens_used,
+                    failed_batches,
+                    _embeddings,
+                    _tokens_used,
+                    data_batch,
+                    last_checkpoint,
+                    step,
+                    progress_bar_counter,
+                )
+
+            parallel_batches = []
+            if failed_batches:
+                await asyncio.sleep(exponential_backoff)
+                exponential_backoff *= 2
+                parallel_batches += failed_batches
+
+        if len(embeddings) != len(texts):
+            raise ValueError("Mismatch in number of embeddings and texts")
 
         return np.array(embeddings), tokens_used
