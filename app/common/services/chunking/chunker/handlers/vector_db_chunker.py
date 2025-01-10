@@ -67,7 +67,7 @@ class VectorDBChunker(BaseChunker):
         return batched_chunks
 
     def batchify_chunks_for_insertion(
-        self, files_to_chunk: Dict[str, str], max_batch_size_chunking: int = 1200
+        self, files_to_chunk: Dict[str, str], max_batch_size_chunking: int = 1000
     ) -> List[List[Tuple[str, str]]]:
         files_to_chunk_items = list(files_to_chunk.items())
         batched_files_to_store: List[List[Tuple[str, str]]] = []
