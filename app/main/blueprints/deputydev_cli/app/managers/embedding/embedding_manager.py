@@ -140,7 +140,7 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
             texts, max_tokens_per_text=4096, max_tokens_per_batch=2048, model="text-embedding-3-small"
         )
 
-        max_parallel_tasks = 100
+        max_parallel_tasks = 60
         parallel_batches: List[List[str]] = []
         last_checkpoint: float = 0
         step = (len(texts) / len_checkpoints) if len_checkpoints else None
