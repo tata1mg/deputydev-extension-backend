@@ -11,7 +11,9 @@ from app.common.services.chunking.vector_store.main import ChunkVectorScoreManag
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.utils.app_logger import AppLogger
-from app.main.blueprints.deputydev_cli.app.managers.embedding.embedding_manager import OneDevEmbeddingManager
+from app.main.blueprints.deputydev_cli.app.managers.embedding.embedding_manager import (
+    OneDevEmbeddingManager,
+)
 
 
 class OneDevCLIChunker(VectorDBChunker):
@@ -44,7 +46,9 @@ class OneDevCLIChunker(VectorDBChunker):
             chunk.get_chunk_content_with_meta_data(add_ellipsis=False, add_lines=False, add_class_function_info=True)
             for chunk in chunks
         ]
-        embeddings, _input_tokens = await self.embedding_manager.embed_text_array(texts=texts_to_embed, progress_bar_counter=self.file_progressbar_counter, len_checkpoints=len_checkpoints)
+        embeddings, _input_tokens = await self.embedding_manager.embed_text_array(
+            texts=texts_to_embed, progress_bar_counter=self.file_progressbar_counter, len_checkpoints=len_checkpoints
+        )
         for chunk, embedding in zip(chunks, embeddings):
             chunk.embedding = embedding
 
