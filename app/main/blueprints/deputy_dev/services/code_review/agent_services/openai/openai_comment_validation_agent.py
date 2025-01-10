@@ -37,7 +37,8 @@ class OpenAICommentValidationAgent(AgentServiceBase):
         - Examine each comment based on the PR diff and the surrounding context provided.
         - If a comment is **not relevant** mark it invalid. Only return comments that accurately highlight a valid concern in the context of the PR diff. Ensure that no relevant feedback is missed.
         - Consider the `bucket` information to ensure that the feedback aligns with the purpose of the agent (e.g., a `security` comment should only address potential security issues).
-        - If a comment is made for a change which is already being catered in the PR diff, mark that comment as invalid
+        - If a comment is made for a change which is already being catered in the PR diff, mark that comment as invalid.
+        - If the `corrective_code` and the comment description provided in the comment is already implemented or closely resembles the existing code in the PR diff, mark the comment as invalid.
         
         ### Input Comments that needs to be validated: 
         ${COMMENTS}

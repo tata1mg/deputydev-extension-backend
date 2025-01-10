@@ -206,7 +206,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         only for understanding impact of change. 
         12.  comment should not be on unchanged code unless directly impacted by the changes.
         13.  comment should not be duplicated for similar issues across different locations.
-        14.  If you are suggesting any comment that is already catered please don't include those comment in response.
+        14.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
         15.  Do not change the provided bucket name.
         </guidelines>
         
