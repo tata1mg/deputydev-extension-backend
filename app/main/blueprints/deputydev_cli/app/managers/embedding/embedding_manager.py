@@ -1,16 +1,15 @@
 import asyncio
 import time
 from typing import List, Optional, Tuple
-from numpy.typing import NDArray
-
 
 import numpy as np
+from numpy.typing import NDArray
+from prompt_toolkit.shortcuts.progress_bar import ProgressBarCounter
 
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.tiktoken.tiktoken import TikToken
 from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
-from prompt_toolkit.shortcuts.progress_bar import ProgressBarCounter
 
 
 class OneDevEmbeddingManager(BaseEmbeddingManager):
@@ -26,7 +25,6 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
         batches: List[List[str]] = []
         current_batch = []
         currrent_batch_token_count = 0
-        
 
         for text in texts:
             text_token_count = tiktoken_client.count(text, model=model)
@@ -102,9 +100,7 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
         store_embeddings: bool = True,
         progress_bar_counter: Optional[ProgressBarCounter[int]] = None,
     ) -> Tuple[int, float, float, List[List[str]]]:
-        parallel_tasks = [
-            self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches
-        ]
+        parallel_tasks = [self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches]
         failed_batches: List[List[str]] = []
         for single_task in asyncio.as_completed(parallel_tasks):
             _embeddings, _tokens_used, data_batch = await single_task
@@ -147,10 +143,17 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
         last_checkpoint: float = 0
         step = (len(texts) / len_checkpoints) if len_checkpoints else None
 
-        AppLogger.log_debug(f"Total batches: {len(iterable_batches)}, Total Texts: {len(texts)}, Total checkpoints: {len_checkpoints}")
+        AppLogger.log_debug(
+            f"Total batches: {len(iterable_batches)}, Total Texts: {len(texts)}, Total checkpoints: {len_checkpoints}"
+        )
         for batch in iterable_batches:
             if len(parallel_batches) >= max_parallel_tasks:
-                tokens_used, last_checkpoint, exponential_backoff, parallel_batches = await self._process_parallel_batches(
+                (
+                    tokens_used,
+                    last_checkpoint,
+                    exponential_backoff,
+                    parallel_batches,
+                ) = await self._process_parallel_batches(
                     parallel_batches,
                     embeddings,
                     tokens_used,
