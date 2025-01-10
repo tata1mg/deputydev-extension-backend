@@ -91,6 +91,42 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
 
         return total_tokens_used, last_checkpoint
 
+    async def _process_parallel_batches(
+        self,
+        parallel_batches: List[List[str]],
+        all_embeddings: List[List[float]],
+        tokens_used: int,
+        exponential_backoff: float,
+        last_checkpoint: float,
+        step: Optional[float],
+        store_embeddings: bool = True,
+        progress_bar_counter: Optional[ProgressBarCounter[int]] = None,
+    ) -> Tuple[int, float, float, List[List[str]]]:
+        parallel_tasks = [
+            self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches
+        ]
+        failed_batches: List[List[str]] = []
+        for single_task in asyncio.as_completed(parallel_tasks):
+            _embeddings, _tokens_used, data_batch = await single_task
+            tokens_used, last_checkpoint = self._update_embeddings_and_tokens_used(
+                all_embeddings,
+                tokens_used,
+                failed_batches,
+                _embeddings,
+                _tokens_used,
+                data_batch,
+                last_checkpoint,
+                step,
+                progress_bar_counter,
+            )
+        parallel_batches = []
+        if failed_batches:
+            await asyncio.sleep(exponential_backoff)
+            exponential_backoff *= 2
+            parallel_batches += failed_batches
+
+        return tokens_used, last_checkpoint, exponential_backoff, parallel_batches
+
     async def embed_text_array(
         self,
         texts: List[str],
@@ -106,7 +142,7 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
             texts, max_tokens_per_text=4096, max_tokens_per_batch=2048, model="text-embedding-3-small"
         )
 
-        max_parallel_tasks = 30
+        max_parallel_tasks = 100
         parallel_batches: List[List[str]] = []
         last_checkpoint: float = 0
         step = (len(texts) / len_checkpoints) if len_checkpoints else None
@@ -114,55 +150,30 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
         AppLogger.log_debug(f"Total batches: {len(iterable_batches)}, Total Texts: {len(texts)}, Total checkpoints: {len_checkpoints}")
         for batch in iterable_batches:
             if len(parallel_batches) >= max_parallel_tasks:
-                parallel_tasks = [
-                    self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches
-                ]
-                failed_batches: List[List[str]] = []
-                for single_task in asyncio.as_completed(parallel_tasks):
-                    _embeddings, _tokens_used, data_batch = await single_task
-                    tokens_used, last_checkpoint = self._update_embeddings_and_tokens_used(
-                        embeddings,
-                        tokens_used,
-                        failed_batches,
-                        _embeddings,
-                        _tokens_used,
-                        data_batch,
-                        last_checkpoint,
-                        step,
-                        progress_bar_counter,
-                    )
-                parallel_batches = []
-                if failed_batches:
-                    await asyncio.sleep(exponential_backoff)
-                    exponential_backoff *= 2
-                    parallel_batches += failed_batches
+                tokens_used, last_checkpoint, exponential_backoff, parallel_batches = await self._process_parallel_batches(
+                    parallel_batches,
+                    embeddings,
+                    tokens_used,
+                    exponential_backoff,
+                    last_checkpoint,
+                    step,
+                    store_embeddings,
+                    progress_bar_counter,
+                )
             # store current batch
             parallel_batches += [batch]
 
         while len(parallel_batches) > 0:
-            parallel_tasks = [
-                self._get_embeddings_for_single_batch(batch, store_embeddings) for batch in parallel_batches
-            ]
-            failed_batches: List[List[str]] = []
-            for single_task in asyncio.as_completed(parallel_tasks):
-                _embeddings, _tokens_used, data_batch = await single_task
-                tokens_used, last_checkpoint = self._update_embeddings_and_tokens_used(
-                    embeddings,
-                    tokens_used,
-                    failed_batches,
-                    _embeddings,
-                    _tokens_used,
-                    data_batch,
-                    last_checkpoint,
-                    step,
-                    progress_bar_counter,
-                )
-
-            parallel_batches = []
-            if failed_batches:
-                await asyncio.sleep(exponential_backoff)
-                exponential_backoff *= 2
-                parallel_batches += failed_batches
+            tokens_used, last_checkpoint, exponential_backoff, parallel_batches = await self._process_parallel_batches(
+                parallel_batches,
+                embeddings,
+                tokens_used,
+                exponential_backoff,
+                last_checkpoint,
+                step,
+                store_embeddings,
+                progress_bar_counter,
+            )
 
         if len(embeddings) != len(texts):
             raise ValueError("Mismatch in number of embeddings and texts")
