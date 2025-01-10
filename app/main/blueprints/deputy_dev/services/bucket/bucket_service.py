@@ -6,8 +6,6 @@ from app.main.blueprints.deputy_dev.constants.constants import BucketStatus
 from app.main.blueprints.deputy_dev.models.dao.postgres import Buckets
 from app.main.blueprints.deputy_dev.models.dto.bucket_dto import BucketDTO
 
-# TODO: can we delete this file
-
 
 class BucketService:
     BUCKETS_CACHE_KEY = "buckets"
