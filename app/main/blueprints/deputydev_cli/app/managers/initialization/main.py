@@ -21,6 +21,7 @@ from app.common.services.repo.local_repo.factory import LocalRepoFactory
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
+from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.managers.chunking.chunking_handler import (
     OneDevCLIChunker,
 )
@@ -35,12 +36,13 @@ class InitializationManager:
         repo_path: str,
         auth_token: str,
         process_executor: ProcessPoolExecutor,
+        one_dev_client: OneDevClient,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
     ) -> None:
         self.repo_path = repo_path
         self.weaviate_client: Optional[WeaviateSyncAndAsyncClients] = weaviate_client
         self.local_repo = None
-        self.embedding_manager = OneDevEmbeddingManager(auth_token=auth_token)
+        self.embedding_manager = OneDevEmbeddingManager(auth_token=auth_token, one_dev_client=one_dev_client)
         self.process_executor = process_executor
         self.chunk_cleanup_task = None
 
