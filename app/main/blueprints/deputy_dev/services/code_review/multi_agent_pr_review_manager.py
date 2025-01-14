@@ -136,9 +136,9 @@ class MultiAgentPRReviewManager:
 
     async def get_code_review_comments(self):
         self.exclude_disabled_agents()
-        # await self.execute_pass_1()
+        await self.execute_pass_1()
         if get_context_value("setting")["code_review_agent"]["enable"]:
-            # await self.execute_pass_2() if self._is_reflection_enabled() else None
+            await self.execute_pass_2() if self._is_reflection_enabled() else None
             await self.filter_comments()
         return self.return_final_response()
 
