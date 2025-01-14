@@ -2,12 +2,12 @@ from abc import abstractmethod
 from typing import List, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 class BaseEmbeddingManager:
-    @classmethod
     @abstractmethod
-    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[List[np.ndarray], int]:
+    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[NDArray[np.float64], int]:
         """
         Embeds a list of texts using the embedding model.
 

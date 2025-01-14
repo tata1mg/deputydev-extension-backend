@@ -4,7 +4,7 @@ from app.backend_common.models.dao.postgres.base import Base
 
 
 class Agents(Base):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     agent_id = fields.UUIDField()
     repo_id = fields.BigIntField(null=False)
     display_name = fields.CharField(max_length=100, null=False)
