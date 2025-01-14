@@ -116,7 +116,6 @@ class PRReviewPostProcessor:
         if is_large_pr:
             await self.post_process_pr_large_pr(pr_dto, tokens_data)
         elif llm_comments:
-            AppLogger.log_warn(f"Comments on PR: {llm_comments}")
             await self.post_process_pr_with_comments(pr_dto, llm_comments, tokens_data, extra_info)
         else:
             await self.post_process_pr_no_comments(pr_dto, tokens_data, extra_info)
