@@ -16,11 +16,15 @@ __all__ = [
     "CommentBucketMapping",
     "Configurations",
     "Tokens",
+    "Agents",
+    "AgentCommentMappings",
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos
 from .......backend_common.models.dao.postgres.tokens import Tokens
 from .......backend_common.models.dao.postgres.workspaces import Workspaces
+from .agent_comment_mappings import AgentCommentMappings
+from .agents import Agents
 from .buckets import Buckets
 from .comment_bucket_mapping import CommentBucketMapping
 from .configurations import Configurations
