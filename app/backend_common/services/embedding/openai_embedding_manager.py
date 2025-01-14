@@ -2,6 +2,7 @@ import asyncio
 from typing import List, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -44,7 +45,7 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
         return batches
 
     @classmethod
-    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[List[np.ndarray], int]:
+    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[NDArray[np.float64], int]:
         """
         Embeds a list of texts using OpenAI's embedding model.
 
@@ -59,7 +60,6 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
         input_tokens = 0
         texts = [text if text else " " for text in texts]
 
-        print(f"Embedding {len(texts)} texts using OpenAI's embedding model")
         AppLogger.log_debug(f"Embedding {len(texts)} texts using OpenAI's embedding model")
         batches = cls.create_optimized_batches(
             texts, max_tokens=config["EMBEDDING"]["TOKEN_LIMIT"], model=config["EMBEDDING"]["MODEL"]
@@ -68,7 +68,7 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
 
         max_parallel_tasks = 30
         parallel_batches = []
-        print(f"Starting embedding for loop {len(batches)} in parallel")
+        exponential_backoff = 0.2
         for batch in batches:
             if not batch:
                 continue
@@ -92,6 +92,8 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
 
                 parallel_batches = []
                 if failed_batches:
+                    await asyncio.sleep(exponential_backoff)
+                    exponential_backoff *= 2
                     parallel_batches += failed_batches
                 # store current batch
                 parallel_batches += [batch]
@@ -111,8 +113,10 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
                     embeddings.extend(_data[0])
                     input_tokens += _data[1]
 
-                parallel_batches = []
-                if failed_batches:
-                    parallel_batches += failed_batches
+            parallel_batches = []
+            if failed_batches:
+                await asyncio.sleep(exponential_backoff)
+                exponential_backoff *= 2
+                parallel_batches += failed_batches
 
         return embeddings, input_tokens
