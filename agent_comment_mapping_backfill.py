@@ -6,10 +6,10 @@ from contextlib import contextmanager
 
 # Database connection settings
 db_config = {
-    "dbname": "mars_deputydev_db",
-    "user": "mars_deputydev_user",
-    "password": "mars_deputydev_pass",
-    "host": "marspostgres14.1mginfra.com",
+    "dbname": "deputydev_db",
+    "user": "deputydev_user",
+    "password": "deputydev_pass",
+    "host": "deputydev-postgres.1mginfra.com",
     "port": 5432,
 }
 
