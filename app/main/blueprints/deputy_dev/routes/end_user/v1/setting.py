@@ -14,5 +14,5 @@ config = CONFIG.config
 async def create_org_setting(_request: Request, **kwargs):
     payload = _request.custom_json()
     query_params = _request.request_params()
-    await SettingService.create_or_update_org_settings(payload, query_params=query_params)
+    await SettingService.create_or_update_team_settings(payload, query_params=query_params)
     return send_response("Success")
