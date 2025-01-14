@@ -5,6 +5,9 @@ from typing import Dict, Union
 from sanic.log import logger
 from torpedo import CONFIG, Task
 
+from app.backend_common.services.embedding.openai_embedding_manager import (
+    OpenAIEmbeddingManager,
+)
 from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
@@ -17,12 +20,16 @@ from app.backend_common.utils.app_utils import (
 )
 from app.backend_common.utils.formatting import append_line_numbers, format_code_blocks
 from app.common.services.chunking.chunking_manager import ChunkingManger
+from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
+from app.common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     SCRIT_SUMMARY_PROMPT,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
@@ -31,23 +38,34 @@ from app.main.blueprints.deputy_dev.utils import get_filtered_response
 
 
 class SingleAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, prompt_version: None):
+    def __init__(
+        self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version: None
+    ):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.prompt_version = prompt_version
-        self.context_service = ContextService(repo_service=repo_service, pr_service=pr_service)
+        self.context_service = ContextService(
+            repo_service=repo_service, pr_service=pr_service, pr_diff_handler=pr_diff_handler
+        )
+        self.pr_diff_handler = pr_diff_handler
 
     async def get_code_review_comments(self):
-        relevant_chunk, embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-            query=self.pr_service.pr_commit_diff
-            if get_context_value("pr_reviewable_on_commit")
-            else self.pr_service.pr_diff,
-            codebase_path=self.repo_service.repo_dir,
+        use_new_chunking = (
+            False and get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
         )
-
+        relevant_chunk, embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
+            query=await self.pr_diff_handler.get_effective_pr_diff(),
+            local_repo=GitRepo(self.repo_service.repo_dir),
+            use_new_chunking=use_new_chunking,
+            use_llm_re_ranking=False,
+            embedding_manager=OpenAIEmbeddingManager,
+            chunkable_files_with_hashes={},
+            search_type=SearchTypes.NATIVE,
+            process_executor=process_executor,
+        )
         llm_response, pr_summary, tokens_data, meta_info_to_save = await self.parallel_pr_review_with_gpt_models(
             await self.context_service.get_pr_diff(),
-            self.repo_service.pr_details,
+            self.pr_service.pr_details,
             relevant_chunk,
             prompt_version=self.prompt_version,
         )
