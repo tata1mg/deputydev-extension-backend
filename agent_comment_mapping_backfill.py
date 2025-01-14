@@ -107,6 +107,12 @@ BUCKET_TO_AGENT_MAPPING = {
     "NO_ERROR": "code_communication",
     "CLEAN_CODE": "code_maintainability",
     "COMPATIBILITY": "error",
+    "{SEMANTIC}": "error",
+    "{NO_ISSUE}": "code_communication",
+    "UNNECESSARY": "code_maintainability",
+    "GENERAL": "code_communication",
+    "{IMPROVEMENT}": "code_maintainability",
+    "PERFORMANCE_ERROR": "performance_optimisation",
 }
 
 AGENT_WEIGHT_MAPPING = {
@@ -115,7 +121,7 @@ AGENT_WEIGHT_MAPPING = {
     "code_maintainability": 3,
     "code_communication": 1,
     "business_logic_validation": 5,
-    "performance_optimisation": 3
+    "performance_optimisation": 3,
 }
 
 
@@ -177,7 +183,7 @@ def migrate_data():
                     batch_count = 0
 
                     for i in range(0, len(records), BATCH_SIZE):
-                        batch = records[i:i + BATCH_SIZE]
+                        batch = records[i : i + BATCH_SIZE]
                         insert_batch(cursor, batch)
                         batch_count += 1
                         total_records += len(batch)
