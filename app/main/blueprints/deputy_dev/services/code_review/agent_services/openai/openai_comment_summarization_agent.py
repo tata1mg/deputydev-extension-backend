@@ -152,7 +152,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
                 "file_path": "example/class.py",
                 "line_number": "42",
                 "comment": "- **MAINTAINABILITY**: Duplicated method violates DRY principle and introduces maintenance challenges\\n- **RUNTIME_ERROR**: Unique error handling approach needed",
-                [
+                "buckets": [
                     {"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
                     {"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}
                 ]
@@ -185,7 +185,10 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
             - When merging multiple corrective code suggestions, intelligently combine and take union of them so that the final corrective_code field contains a comprehensive fix for the line in question.
         
         4. No missing comments.
-            - No comments should be missed during processing. If input list contains 5 comments then we should get corresponding 5 comments in output response, each containing a summary as mentioned above.  
+            - No comments should be missed during processing. If input list contains 5 comments then we should get corresponding 5 comments in output response, each containing a summary as mentioned above.
+            
+        5. Unique Buckets:
+            - If multiple comments exist for the same bucket on same line, merge the comments and return only unique buckets for a line in the specified structure.  
     
         """
 
