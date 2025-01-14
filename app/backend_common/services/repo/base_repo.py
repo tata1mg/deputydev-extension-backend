@@ -43,6 +43,7 @@ class BaseRepo(ABC):
         self.repo_id = repo_id
         self.auth_handler = auth_handler
         self.workspace_slug = workspace_slug
+        self.repo_client = None
 
         # local repo
         self.local_repo = None

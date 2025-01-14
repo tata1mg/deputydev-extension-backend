@@ -6,11 +6,15 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 
 
 class AnthropicCodeCommunicationAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        super().__init__(context_service, is_reflection_enabled, AgentTypes.CODE_COMMUNICATION.value)
+        agent_name = SettingService.Helper.predefined_name_to_custom_name(AgentTypes.CODE_COMMUNICATION.value)
+        super().__init__(context_service, is_reflection_enabled, agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -75,7 +79,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         <file_path>file path on which the comment is to be made</file_path>
         <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal points</confidence_score>
-        <bucket>{DOCUMENTATION | DOCSTRING | LOGGING} - Either one of them depending on in which bucket the comment is falling.</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code communication issue found -->
         </comments>
@@ -94,6 +98,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         - Provide specific line numbers and file paths for each finding.
         - Assign appropriate confidence scores based on your certainty of the findings or suggestion
         - Do not provide appreciation comments or positive feedback.
+        - Do not change the provided bucket name.
         - <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
             This is the primary focus for review comments. The diff shows:
             - Added lines (prefixed with +)
@@ -192,6 +197,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         10.  comment should not be on unchanged code unless directly impacted by the changes.
         11.  comment should not be duplicated for similar issues across different locations.
         12.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
+        13.  Do not change the provided bucket name.
         </guidelines>
         
         
@@ -218,7 +224,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         <file_path>file path on which the comment is to be made</file_path>
         <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal points</confidence_score>
-        <bucket>{DOCUMENTATION | DOCSTRING | LOGGING} - Either one of them depending on in which bucket the comment is falling.</bucket>
+         <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code communication issue found -->
         </comments>
@@ -229,7 +235,7 @@ class AnthropicCodeCommunicationAgent(AgentServiceBase):
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
             TokenTypes.RELEVANT_CHUNK.value: self.context_service.embedding_input_tokens,
             TokenTypes.PR_USER_STORY.value: self.context_service.pr_user_story_tokens,
             TokenTypes.PR_CONFLUENCE.value: self.context_service.confluence_doc_data_tokens,

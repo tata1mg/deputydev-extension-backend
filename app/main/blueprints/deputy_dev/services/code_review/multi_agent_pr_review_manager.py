@@ -1,17 +1,15 @@
-import time
-
 from torpedo import CONFIG
 
 from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMManager
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.common.services.tiktoken import TikToken
-from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     MultiAgentReflectionIteration,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
     AgentFactory,
 )
@@ -21,10 +19,13 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 
 
 class MultiAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, prompt_version=None):
+    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version=None):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.multi_agent_enabled = None
@@ -42,11 +43,12 @@ class MultiAgentPRReviewManager:
         self.filtered_comments = None
         self.pr_summary = None
         self.exclude_agent = set()
-        self.context_service = ContextService(repo_service, pr_service)
+        self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
         self.agent_factory = AgentFactory(
             reflection_enabled=self._is_reflection_enabled(), context_service=self.context_service
         )
         self._is_large_pr = False
+        self.pr_diff_handler = pr_diff_handler
 
     # section setting start
 
@@ -95,16 +97,15 @@ class MultiAgentPRReviewManager:
 
     async def __execute_pass(self):
         await self._build_prompts()
+        if not self.current_prompts:
+            return
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
             self.llm_comments = {}
-            pr_diff_tokens_count = await self.pr_service.get_pr_diff_token_count()
-            self.agents_tokens = {"pr_diff_tokens": pr_diff_tokens_count}
+            pr_diff_tokens_count = await self.pr_diff_handler.get_pr_diff_token_count()
+            self.agents_tokens = pr_diff_tokens_count
             return
-        t1 = time.time() * 1000
         await self._make_llm_calls()
-        t2 = time.time() * 1000
-        AppLogger.log_info(f"Time taken in LLM call - {t2 - t1} ms")
         self.populate_meta_info()
 
     def exclude_disabled_agents(self):
@@ -120,9 +121,18 @@ class MultiAgentPRReviewManager:
         self.populate_pr_summary()
 
     async def execute_pass_2(self):
-        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
+        self.exclude_pass_1_specific_agents()
         self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
         await self.__execute_pass()
+
+    def exclude_pass_1_specific_agents(self):
+        # exclude summary agent
+        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
+        # exclude custom_agents
+        agents_settings = SettingService.Helper.agents_settings()
+        for agent_name, agent_setting in agents_settings.items():
+            if agent_setting["is_custom_agent"]:
+                self.exclude_agent.add(agent_name)
 
     async def get_code_review_comments(self):
         self.exclude_disabled_agents()

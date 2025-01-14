@@ -4,6 +4,7 @@ from string import Template
 
 from torpedo import CONFIG
 
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.tiktoken import TikToken
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
@@ -15,33 +16,54 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 
 
 class AgentServiceBase(ABC):
-    def __init__(self, context_service: ContextService, is_reflection_enabled: bool, agent_name):
+    def __init__(
+        self,
+        context_service: ContextService,
+        is_reflection_enabled: bool,
+        agent_name,
+    ):
         self.context_service = context_service
         self.is_reflection_enabled = is_reflection_enabled
         self.agent_name = agent_name
         self.tiktoken = TikToken()
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"]
-        agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
-        self.comment_confidence_score = agent_settings.get(self.agent_name, {}).get("confidence_score")
-        self.custom_prompt = agent_settings.get(self.agent_name, {}).get("custom_prompt", "")
+        self.agent_setting = SettingService.Helper.agent_setting_by_name(agent_name)
+        self.agent_id = self.agent_setting.get("agent_id")
 
     async def format_user_prompt(self, prompt: str, comments: str = None):
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
         prompt_variables = {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
-            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
+            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
+                append_line_no_info=True, agent_id=self.agent_id
+            ),
             "REVIEW_COMMENTS_By_JUNIOR_DEVELOPER": comments,
-            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": await self.context_service.get_relevant_chunk(),
+            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": self.agent_relevant_chunk(relevant_chunks),
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
-            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
+            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
+            "AGENT_OBJECTIVE": self.agent_objective(self.agent_name),
+            "CUSTOM_PROMPT": self.agent_setting.get("custom_prompt") or "",
+            "BUCKET": self.agent_setting.get("display_name"),
         }
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)
+
+    def format_system_prompt(self, prompt: str):
+        prompt_variables = {"AGENT_NAME": self.agent_name}
+        template = Template(prompt)
+        return template.safe_substitute(prompt_variables)
+
+    def agent_objective(self, agent_name):
+        return self.agent_setting.get("objective", "")
 
     async def get_system_n_user_prompt(self, reflection_iteration=None, previous_review_comments=None):
         if self.is_reflection_enabled:
@@ -58,7 +80,7 @@ class AgentServiceBase(ABC):
     def get_additional_info_prompt(self, tokens_info, reflection_iteration):
         return {
             "key": self.agent_name,
-            "comment_confidence_score": self.comment_confidence_score,
+            "comment_confidence_score": self.agent_setting.get("confidence_score"),
             "model": self.model,
             "tokens": tokens_info,
             "reflection_iteration": reflection_iteration,
@@ -81,16 +103,27 @@ class AgentServiceBase(ABC):
     async def get_with_reflection_prompt_pass_1(self):
         system_message = self.get_with_reflection_system_prompt_pass1()
         system_message = self.inject_system_prompt(system_message)
+        system_message = self.format_system_prompt(system_message)
         user_prompt = self.get_with_reflection_user_prompt_pass1()
         user_prompt = self.inject_custom_prompt(user_prompt)
         user_message = await self.format_user_prompt(user_prompt)
+        structure_type, parse = self.get_structure_type_and_parse_value()
         return {
             "system_message": system_message,
             "user_message": user_message,
-            "structure_type": "text",
-            "parse": False,
+            "structure_type": structure_type,
+            "parse": parse,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
+
+    def get_structure_type_and_parse_value(self, pass_number=1):
+        if pass_number == 1:
+            if self.agent_setting["is_custom_agent"]:
+                return "xml", True
+            else:
+                return "text", False
+        else:
+            return "xml", True
 
     async def get_with_reflection_prompt_pass_2(self, previous_review_comments):
         system_message = self.get_with_reflection_system_prompt_pass2()
@@ -98,17 +131,19 @@ class AgentServiceBase(ABC):
         user_prompt = self.get_with_reflection_user_prompt_pass2()
         user_prompt = self.inject_custom_prompt(user_prompt)
         user_message = await self.format_user_prompt(user_prompt, previous_review_comments)
+        structure_type, parse = self.get_structure_type_and_parse_value(pass_number=2)
         return {
             "system_message": system_message,
             "user_message": user_message,
-            "structure_type": "xml",
-            "parse": True,
+            "structure_type": structure_type,
+            "parse": parse,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
 
     def inject_custom_prompt(self, user_prompt):
-        if self.custom_prompt and self.custom_prompt.strip():
-            return f"{user_prompt}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.custom_prompt}"
+        custom_prompt = self.agent_setting.get("custom_prompt")
+        if not self.agent_setting.get("is_custom_agent", False) and custom_prompt and custom_prompt.strip():
+            return f"{user_prompt}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{custom_prompt}"
         return user_prompt
 
     def inject_system_prompt(self, system_prompt):
@@ -121,7 +156,7 @@ class AgentServiceBase(ABC):
         return f"{system_prompt}\n{repo_info_prompt}"
 
     async def get_without_reflection_prompt(self):
-        system_message = self.get_without_reflection_system_prompt()
+        system_message = self.format_system_prompt(self.get_without_reflection_system_prompt())
         system_message = self.inject_system_prompt(system_message)
         user_message = await self.format_user_prompt(self.get_without_reflection_user_prompt())
         return {
@@ -180,3 +215,10 @@ class AgentServiceBase(ABC):
             f"Prompt: {self.agent_name} token count {token_count} exceeds the allowed limit of {model_input_token_limit}."
         )
         return True
+
+    def agent_relevant_chunk(self, relevant_chunks: dict):
+        relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
+        agent_relevant_chunks = []
+        for index in relevant_chunks_index:
+            agent_relevant_chunks.append(relevant_chunks["relevant_chunks"][index])
+        return render_snippet_array(agent_relevant_chunks)

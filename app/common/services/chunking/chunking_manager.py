@@ -4,13 +4,13 @@ from typing import Dict, List, Optional, Tuple
 
 from sanic.log import logger
 
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.reranker.base_chunk_reranker import BaseChunkReranker
 from app.common.services.chunking.reranker.handlers.heuristic_based import (
     HeuristicBasedChunkReranker,
 )
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
@@ -58,8 +58,7 @@ class ChunkingManger:
             usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
-
-        return custom_context_code_chunks + sorted_chunks
+        return custom_context_code_chunks + sorted_chunks[:NO_OF_CHUNKS_FOR_LLM]
 
     @classmethod
     async def get_relevant_context_from_focus_snippets(
@@ -149,7 +148,6 @@ class ChunkingManger:
             weaviate_client=weaviate_client,
             usage_hash=usage_hash,
         )
-
         return sorted_chunks, input_tokens
 
     @classmethod
@@ -169,7 +167,7 @@ class ChunkingManger:
         usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
         reranker: Optional[BaseChunkReranker] = None,
-    ) -> Tuple[str, int]:
+    ) -> Tuple[list[ChunkInfo], int]:
         # Get all chunks from the repository
         focus_chunks_details = await cls.get_focus_chunk(
             query,
@@ -186,7 +184,7 @@ class ChunkingManger:
             chunking_handler=chunking_handler,
         )
         if only_focus_code_chunks and focus_chunks_details:
-            return render_snippet_array(focus_chunks_details), 0
+            return focus_chunks_details, 0
 
         related_chunk, input_tokens = await cls.get_related_chunk_from_codebase_repo(
             query,
@@ -200,12 +198,19 @@ class ChunkingManger:
             usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
-        # filter out the focus chunks from the related chunks if any, based on content
+        reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)
+        return reranked_chunks, input_tokens
+
+    @classmethod
+    def exclude_focused_chunks(cls, related_chunk, focus_chunks_details):
         related_chunk = [
             chunk for chunk in related_chunk if chunk.content not in [chunk.content for chunk in focus_chunks_details]
         ]
+        return related_chunk
 
+    @classmethod
+    async def rerank_related_chunks(cls, query, related_chunk, reranker, focus_chunks_details):
+        related_chunk = cls.exclude_focused_chunks(related_chunk, focus_chunks_details)
         reranker_to_use = reranker or HeuristicBasedChunkReranker()
         reranked_chunks = await reranker_to_use.rerank(focus_chunks_details, related_chunk, query)
-
-        return render_snippet_array(reranked_chunks), input_tokens
+        return reranked_chunks
