@@ -13,7 +13,7 @@ class AgentCommentMappings(Base):
         "updated_at",
     }
 
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     pr_comment = fields.ForeignKeyField("dao.PRComments")
     agent = fields.ForeignKeyField("dao.Agents")
     weight = fields.FloatField()

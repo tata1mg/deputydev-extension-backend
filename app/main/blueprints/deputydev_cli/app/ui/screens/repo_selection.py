@@ -88,7 +88,10 @@ class RepoPathValidator(AsyncValidator):
         # try to initialize the repo
         try:
             init_manager = InitializationManager(
-                input_text, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor
+                input_text,
+                auth_token=self.app_context.auth_token,
+                one_dev_client=self.app_context.one_dev_client,
+                process_executor=self.app_context.process_executor,
             )
             init_manager.get_local_repo()
         except Exception:
@@ -148,12 +151,16 @@ class RepoSelection(BaseScreenHandler):
                 self.app_context.init_manager = InitializationManager(
                     repo_path,
                     auth_token=self.app_context.auth_token,
+                    one_dev_client=self.app_context.one_dev_client,
                     process_executor=self.app_context.process_executor,
                     weaviate_client=self.app_context.init_manager.weaviate_client,
                 )
         else:
             self.app_context.init_manager = InitializationManager(
-                repo_path, auth_token=self.app_context.auth_token, process_executor=self.app_context.process_executor
+                repo_path,
+                auth_token=self.app_context.auth_token,
+                one_dev_client=self.app_context.one_dev_client,
+                process_executor=self.app_context.process_executor,
             )
         self.app_context.local_repo = self.app_context.init_manager.get_local_repo()
 
