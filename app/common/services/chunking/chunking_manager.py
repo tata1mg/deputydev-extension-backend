@@ -131,7 +131,6 @@ class ChunkingManger:
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
         usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
-        agent_wise_chunks=False,
     ) -> Tuple[List[ChunkInfo], int]:
 
         logger.info("Completed chunk creation")
@@ -148,7 +147,6 @@ class ChunkingManger:
             process_executor=process_executor,
             weaviate_client=weaviate_client,
             usage_hash=usage_hash,
-            agent_wise_chunks=agent_wise_chunks,
         )
         return sorted_chunks, input_tokens
 
