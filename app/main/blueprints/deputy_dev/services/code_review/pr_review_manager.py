@@ -18,6 +18,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
     PrStatusTypes,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
     MultiAgentPRReviewManager,
@@ -85,18 +86,19 @@ class PRReviewManager:
             None
         """
         repo_service, pr_service, comment_service = await cls.initialise_services(data)
+        pr_diff_handler = PRDiffHandler(pr_service)
         affirmation_service = AffirmationService(data, comment_service)
         pr_dto = None
 
         try:
             tokens_data, execution_start_time = None, datetime.now()
             is_reviewable_request, pr_dto = await PRReviewPreProcessor(
-                repo_service, pr_service, comment_service, affirmation_service
+                repo_service, pr_service, comment_service, affirmation_service, pr_diff_handler
             ).pre_process_pr()
             if not is_reviewable_request:
                 return
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
-                repo_service, comment_service, pr_service, data["prompt_version"]
+                repo_service, comment_service, pr_service, data["prompt_version"], pr_diff_handler
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
             await PRReviewPostProcessor(pr_service, comment_service, affirmation_service).post_process_pr(
@@ -121,13 +123,19 @@ class PRReviewManager:
         return not llm_response
 
     @classmethod
-    async def review_pr(cls, repo_service: BaseRepo, comment_service: BaseComment, pr_service: BasePR, prompt_version):
+    async def review_pr(
+        cls,
+        repo_service: BaseRepo,
+        comment_service: BaseComment,
+        pr_service: BasePR,
+        prompt_version,
+        pr_diff_handler: PRDiffHandler,
+    ):
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
-            repo_service, pr_service, prompt_version
+            repo_service, pr_service, pr_diff_handler, prompt_version
         ).get_code_review_comments()
-
         # We will only post summary for first PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
             await pr_service.update_pr_description(pr_summary.get("response"))

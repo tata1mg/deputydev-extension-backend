@@ -12,8 +12,7 @@ class Issue(Base):
 
     ISSUE_PATH = "issue"
 
-    async def get_issue_details(self, issue_id: str, fields: str = None):
-
+    async def get_issue_details(self, issue_id: int, fields: str = None):
         # returns no response if issue_id is not present
         if not issue_id:
             return {}
