@@ -1,8 +1,10 @@
 # flake8: noqa
 import json
+from string import Template
 
 from torpedo import CONFIG
 
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
@@ -39,7 +41,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
         - If the `corrective_code` and the comment description provided in the comment is already implemented or closely resembles the existing code in the PR diff, mark the comment as invalid.
         
         ### Input Comments that needs to be validated: 
-        {comments}
+        ${COMMENTS}
         
         Below is a sample input structure for the comments you will receive:
         
@@ -53,7 +55,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "comment": "Consider refactoring this function to improve readability.",
                 "confidence_score": 0.85,
                 "corrective_code": "def my_function(...): pass",
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }},
             {{
                 "file_path": "src/utils.py",
@@ -61,7 +63,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "comment": "Replace '==' with 'is' for comparison.",
                 "confidence_score": 0.92,
                 "corrective_code": "if x is None: pass",
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }}
         ]
         
@@ -74,7 +76,7 @@ class OpenAICommentValidationAgent(AgentServiceBase):
             'comment': '<Same comment as provided in input comment>',
             'corrective_code': '<Corrective code for the comment suggested. Same as provide in input>',
             'is_valid': <boolean value telling whether the comment is actually relevant or not>,
-            'bucket': <Bucket in which the commnet falls. Keep it same as given in input comment>
+            "buckets": <This is list of buckets [{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}]>,
             }}]
             ```
             
@@ -87,23 +89,23 @@ class OpenAICommentValidationAgent(AgentServiceBase):
                 "comment": "Consider refactoring this function to improve readability.",
                 "corrective_code": "def my_function(...): pass"
                 "is_valid": true,
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }},
             {{
                 "file_path": "src/utils.py",
                 "line_number": 27,
                 "comment": "Replace '==' with 'is' for comparison.",
                 "is_valid": false,
-                "bucket": "CODE_MAINTAINABILITY"
+                "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
             }}
         ]
         ```
         
         PR Diff on which comments needs to be validated:
-        <pr_diff>{pr_diff}</pr_diff>
+        <pr_diff>${PR_DIFF}</pr_diff>
         
         Relevant Code Snippets used to get context of changes in PR diff:
-        <relevant_chunks_in_repo>{relevant_code_snippets}</relevant_chunks_in_repo>
+        <relevant_chunks_in_repo>${RELEVANT_CHUNKS}</relevant_chunks_in_repo>
         
         ### Guardrails:
         - Do not remove relevant comments. 
@@ -118,12 +120,9 @@ class OpenAICommentValidationAgent(AgentServiceBase):
          """
 
     async def get_system_n_user_prompt(self, comments):
-        pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
-        relevant_chunks = await self.context_service.get_relevant_chunk()
         system_message = self.get_comments_validation_system_prompt()
-        user_message = self.get_comments_validation_user_prompt().format(
-            pr_diff=pr_diff, relevant_code_snippets=relevant_chunks, comments=json.dumps(comments)
-        )
+        prompt = self.get_comments_validation_user_prompt()
+        user_message = await self.format_user_prompt(prompt, comments)
         return {
             "system_message": system_message,
             "user_message": user_message,
@@ -131,6 +130,19 @@ class OpenAICommentValidationAgent(AgentServiceBase):
             "parse": False,
             "exceeds_tokens": self.has_exceeded_token_limit(system_message, user_message),
         }
+
+    async def format_user_prompt(self, prompt, comments):
+        pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
+        relevant_chunks = self.agent_relevant_chunk(relevant_chunks)
+        prompt = Template(prompt)
+        prompt_variables = {"PR_DIFF": pr_diff, "RELEVANT_CHUNKS": relevant_chunks, "COMMENTS": json.dumps(comments)}
+        return prompt.safe_substitute(prompt_variables)
+
+    def agent_relevant_chunk(self, relevant_chunks):
+        relevant_chunks_indexes = relevant_chunks["comment_validation_relevant_chunks_mapping"]
+        chunks = [relevant_chunks["relevant_chunks"][index] for index in relevant_chunks_indexes]
+        return render_snippet_array(chunks)
 
     async def get_with_reflection_system_prompt_pass1(self):
         pass

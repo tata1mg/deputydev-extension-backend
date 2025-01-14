@@ -6,11 +6,15 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 
 
 class AnthropicErrorAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        super().__init__(context_service, is_reflection_enabled, AgentTypes.ERROR.value)
+        agent_name = SettingService.Helper.predefined_name_to_custom_name(AgentTypes.ERROR.value)
+        super().__init__(context_service, is_reflection_enabled, agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -100,7 +104,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         diff)</line_number>
         <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
         points)</confidence_score>
-        <bucket>{ERROR}</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each error found -->
         </comments>
@@ -115,6 +119,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         -  Focus solely on major error-related issues as outlined above.
         -  Do not comment on minor issues or hypothetical edge cases
         -  Do not provide appreciation comments or positive feedback.
+        - Do not change the provided bucket name.
         -  Consider the context provided by related code snippets.
         -  For each error found, create a separate <comment> block within the <comments> section.
         -  Ensure that your comments are clear, concise, and actionable.
@@ -241,6 +246,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         10.  comment should not be on unchanged code unless directly impacted by the changes.
         11.  comment should not be duplicated for similar issues across different locations.
         12.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
+        13. Do not change the provided bucket name.
         </guidelines>
         
         Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
@@ -268,7 +274,7 @@ class AnthropicErrorAgent(AgentServiceBase):
         diff)</line_number>
         <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
         points)</confidence_score>
-        <bucket>{ERROR}</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each error found -->
         </comments>
@@ -279,6 +285,6 @@ class AnthropicErrorAgent(AgentServiceBase):
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
             TokenTypes.RELEVANT_CHUNK.value: self.context_service.embedding_input_tokens,
         }

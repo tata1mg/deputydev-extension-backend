@@ -3,10 +3,11 @@ from typing import Optional
 from torpedo import CONFIG
 
 from app.backend_common.repository.repo.repo_service import RepoService
-from app.backend_common.services.pr.base_pr import PR_NOT_FOUND, BasePR
+from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
-from app.common.constants.constants import PRStatus
+from app.backend_common.utils.app_utils import get_token_count
+from app.common.constants.constants import PR_NOT_FOUND, PRStatus
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
@@ -14,8 +15,8 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     ExperimentStatusTypes,
     PRReviewExperimentSet,
     PrStatusTypes,
-    TokenTypes,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
@@ -25,7 +26,7 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
@@ -39,6 +40,7 @@ class PRReviewPreProcessor:
         pr_service: BasePR,
         comment_service: BaseComment,
         affirmation_service: AffirmationService,
+        pr_diff_handler: PRDiffHandler,
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service
@@ -54,6 +56,7 @@ class PRReviewPreProcessor:
         self.affirmation_service = affirmation_service
         self.completed_pr_count = 0
         self.loc_changed = 0
+        self.pr_diff_handler = pr_diff_handler
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
@@ -138,8 +141,8 @@ class PRReviewPreProcessor:
             last_reviewed_commit=last_reviewed_commit,
             has_reviewed_entry=has_reviewed_entry,
         )
-        self.pr_diff_token_count = await self.pr_service.get_pr_diff_token_count()
-        self.meta_info["tokens"] = {TokenTypes.PR_DIFF_TOKENS.value: self.pr_diff_token_count}
+        self.pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
+        self.meta_info["tokens"] = self.pr_diff_token_count
         self.loc_changed = await self.pr_service.get_loc_changed_count()
 
         # Check for failed PR
@@ -251,20 +254,19 @@ class PRReviewPreProcessor:
         )
 
     async def validate_pr_diff(self):
-        pr_diff = await self.pr_service.get_effective_pr_diff()
+        pr_diff = await self.pr_diff_handler.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_INVALID_REQUEST.value
         elif pr_diff == "":
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_NO_DIFF.value
-        else:
-            if self.pr_diff_token_count > MAX_PR_DIFF_TOKEN_LIMIT:
-                await self.comment_service.create_pr_comment(
-                    comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
-                )
-                self.is_valid = False
-                self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
+        elif get_token_count(pr_diff) > MAX_PR_DIFF_TOKEN_LIMIT:
+            await self.comment_service.create_pr_comment(
+                comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+            )
+            self.is_valid = False
+            self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
 
     def validate_pr_state_for_review(self):
         pr_state = self.pr_model.scm_state()

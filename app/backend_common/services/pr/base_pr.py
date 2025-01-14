@@ -1,23 +1,17 @@
 from abc import ABC, abstractmethod
 
+from app.backend_common.models.dao.postgres import Repos, Workspaces
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.utils.app_utils import get_token_count
 from app.backend_common.utils.formatting import (
     PRDiffSizingLabel,
     format_summary_loc_time_text,
 )
+from app.common.constants.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
-from app.common.utils.file_filtering import files_to_exclude
-
-PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
-PR_SIZING_TEXT = (
-    "\n\n **Size {category}:** This PR changes include {loc} lines and should take approximately {time}\n\n"
-)
-PR_NOT_FOUND = "PR does not exist"
 
 
 def categorize_loc(loc: int) -> tuple:
@@ -48,16 +42,6 @@ def categorize_loc(loc: int) -> tuple:
         return PRDiffSizingLabel.XL.value, PRDiffSizingLabel.XL_TIME.value
     else:
         return PRDiffSizingLabel.XXL.value, PRDiffSizingLabel.XXL_TIME.value
-
-
-def ignore_files(pr_diff, excluded_files=None):
-    if not excluded_files:
-        excluded_files = []
-    resp_text = ""
-    for d in pr_diff.split("diff --git "):
-        if not any(keyword in d for keyword in excluded_files):
-            resp_text += d
-    return resp_text
 
 
 class BasePR(ABC):
@@ -118,16 +102,19 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    async def get_effective_pr_diff(self):
+    async def get_commit_diff_or_pr_diff(self):
         """
         Determines whether to fetch the full PR diff or a specific commit diff.
         Returns:
             str: The appropriate diff based on context.
         """
-        pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
-        if pr_reviewable_on_commit:
-            return await self.get_commit_diff()
-        return await self.get_pr_diff()
+        if not self.pr_diff:
+            pr_reviewable_on_commit = get_context_value("pr_reviewable_on_commit")
+            if pr_reviewable_on_commit:
+                self.pr_diff = await self.get_commit_diff()
+            else:
+                self.pr_diff = await self.get_pr_diff()
+        return self.pr_diff
 
     @abstractmethod
     async def get_pr_diff(self):
@@ -181,12 +168,6 @@ class BasePR(ABC):
 
     async def get_loc_changed_count(self) -> int:
         raise NotImplementedError()
-
-    async def get_pr_diff_token_count(self) -> int:
-        pr_diff = await self.get_effective_pr_diff()
-        if not pr_diff or pr_diff == PR_NOT_FOUND:
-            return 0
-        return get_token_count(pr_diff)
 
     async def generate_pr_description(self, pr_summary: str) -> str:
         """
@@ -242,10 +223,11 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    def exclude_pr_diff(self, pr_diff):
-        settings = get_context_value("setting") or {}
-        code_review_agent = settings.get("code_review_agent", {})
-        inclusions = code_review_agent.get("inclusions", [])
-        exclusions = code_review_agent.get("exclusions", [])
-        excluded_files = files_to_exclude(exclusions, inclusions, "")
-        return ignore_files(pr_diff, excluded_files)
+    async def fetch_repo(self):
+        if self.repo_id:
+            scm_workspace_id = self.workspace_id
+            scm_repo_id = self.repo_id
+            scm = self.vcs_type
+            workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
+            repo = await Repos.get_or_none(workspace_id=workspace.id, scm_repo_id=scm_repo_id)
+            return repo
