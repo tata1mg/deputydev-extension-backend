@@ -70,17 +70,27 @@ class OneDevCLIChunker(VectorDBChunker):
             await ChunkVectorScoreManager(
                 local_repo=self.local_repo, weaviate_client=self.weaviate_client
             ).add_differential_chunks_to_store(batched_chunks, usage_hash=self.usage_hash)
+        else:
+            if self.file_progressbar_counter:
+                for _ in range(len(files_to_chunk_batch)):
+                    self.file_progressbar_counter.item_completed()
+
         return batched_chunks
 
     async def batch_chunk_inserter(
         self,
         batched_files_to_store: List[List[Tuple[str, str]]],
     ) -> List[ChunkInfo]:
-        if self.progress_bar:
-            total_files = sum(len(batch_files) for batch_files in batched_files_to_store)
+        total_files = sum(len(batch_files) for batch_files in batched_files_to_store)
+        if self.progress_bar and total_files:
             self.file_progressbar_counter = self.progress_bar(
-                range(total_files), label="Setting up DeputyDev's intelligence", remove_when_done=True
+                range(total_files),
+                label="Setting up DeputyDev's intelligence",
+                remove_when_done=True,
             )
             AppLogger.log_debug(f"Processing {len(range(total_files))} batches")
 
-        return await super().batch_chunk_inserter(batched_files_to_store)
+        chunks_to_return = await super().batch_chunk_inserter(batched_files_to_store)
+        if self.file_progressbar_counter:
+            self.file_progressbar_counter.done = True
+        return chunks_to_return
