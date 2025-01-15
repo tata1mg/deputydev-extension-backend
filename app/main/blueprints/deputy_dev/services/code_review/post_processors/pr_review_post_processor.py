@@ -5,6 +5,7 @@ from torpedo import CONFIG
 
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.base_pr import BasePR
+from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
@@ -226,6 +227,7 @@ class PRReviewPostProcessor:
                 comments_by_ids[inserted_comment.id] = valid_comment
         agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
         agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
+        agent_comment_pairs = []
         for comment_id, comment_data in comments_by_ids.items():
             # fetch all agents based on "agent_id" and "repo_id"
             # save in agent_comment_mapping table
@@ -233,11 +235,14 @@ class PRReviewPostProcessor:
                 agent_id = bucket["agent_id"]
                 if agent_id in agents_by_id:
                     agent = agents_by_id[agent_id]
+                    agent_comment_pairs.append((comment_id, agent.id))
                     agent_mappings_to_save.append(
                         AgentCommentMappings(
                             pr_comment_id=comment_id, agent_id=agent.id, weight=agents_by_agent_id[agent_id]["weight"]
                         )
                     )
+        if len(agent_comment_pairs) != len(set(agent_comment_pairs)):
+            AppLogger.log_info(f"Duplicate Agents received: {agent_comment_pairs}")
         await AgentCommentMappingService.bulk_insert(agent_mappings_to_save)
         return llm_comments
 
