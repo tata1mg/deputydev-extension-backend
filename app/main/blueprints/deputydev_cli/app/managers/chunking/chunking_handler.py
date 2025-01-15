@@ -79,7 +79,7 @@ class OneDevCLIChunker(VectorDBChunker):
         if self.progress_bar:
             total_files = sum(len(batch_files) for batch_files in batched_files_to_store)
             self.file_progressbar_counter = self.progress_bar(
-                range(total_files), label="Setting up DeputyDev's intelligence"
+                range(total_files), label="Setting up DeputyDev's intelligence", remove_when_done=True
             )
             AppLogger.log_debug(f"Processing {len(range(total_files))} batches")
 

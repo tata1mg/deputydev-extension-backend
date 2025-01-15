@@ -47,14 +47,16 @@ class ChunkService:
             # Process chunk hashes in batches
             for i in range(0, len(chunk_hashes), BATCH_SIZE):
                 batch_hashes = chunk_hashes[i : i + BATCH_SIZE]
+                print(batch_hashes)
                 batch_chunks = await self.async_collection.query.fetch_objects(
                     filters=Filter.any_of(
-                        [Filter.by_property("chunk_hash").equal(chunk_hash) for chunk_hash in batch_hashes]
+                        [Filter.by_id().equal(generate_uuid5(chunk_hash)) for chunk_hash in batch_hashes]
                     ),
                     limit=MAX_RESULTS_PER_QUERY,
                 )
                 # Break if no more results
                 if batch_chunks.objects:
+                    print(f"Batch {i} has {len(batch_chunks.objects)} chunks")
                     # Convert to DTOs efficiently using list comprehension
                     batch_dtos = [
                         ChunkDTO(**chunk_obj.properties, id=str(chunk_obj.uuid)) for chunk_obj in batch_chunks.objects
@@ -92,5 +94,5 @@ class ChunkService:
         for i in range(0, len(chunk_hashes_to_clean), batch_size):
             batch = chunk_hashes_to_clean[i : i + batch_size]
             self.sync_collection.data.delete_many(
-                Filter.all_of([Filter.by_id().not_equal(generate_uuid5(chunk_hash)) for chunk_hash in batch])
+                Filter.any_of([Filter.by_id().equal(generate_uuid5(chunk_hash)) for chunk_hash in batch])
             )

@@ -118,7 +118,9 @@ class GitRepo(BaseLocalRepo):
             if os.path.exists(os.path.join(self.repo_path, file)):
                 all_files_and_hashes[file] = self._get_file_hash(file)
 
-        return all_files_and_hashes
+        # return all_files_and_hashes
+        # return only 10 files for now
+        return dict(list(all_files_and_hashes.items())[:10])
 
     async def get_chunkable_files(self) -> List[str]:
         files_with_hashes = await self.get_chunkable_files_and_commit_hashes()
