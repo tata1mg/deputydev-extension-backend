@@ -124,6 +124,4 @@ class ChunkUsagesService:
         batch_size = 500
         for i in range(0, len(usage_ids), batch_size):
             batch = usage_ids[i : i + batch_size]
-            self.sync_collection.data.delete_many(
-                Filter.any_of([Filter.by_id().equal(usage_id) for usage_id in batch])
-            )
+            self.sync_collection.data.delete_many(Filter.any_of([Filter.by_id().equal(usage_id) for usage_id in batch]))
