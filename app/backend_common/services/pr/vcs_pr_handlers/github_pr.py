@@ -8,7 +8,7 @@ from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.github_repo import GithubRepo
-from app.common.constants.constants import PR_NOT_FOUND, VCSTypes
+from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value, set_context_values
 
@@ -48,6 +48,8 @@ class GithubPR(BasePR):
             return self.pr_diff
 
         response = await self.repo_client.get_pr_diff()
+        if response and response.status_code == 406:
+            return LARGE_PR_DIFF
         if response and response.status_code != 200:
             return PR_NOT_FOUND
         return response.text
