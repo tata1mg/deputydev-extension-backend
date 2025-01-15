@@ -7,7 +7,7 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import get_token_count
-from app.common.constants.constants import PR_NOT_FOUND, PRStatus
+from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
@@ -261,7 +261,7 @@ class PRReviewPreProcessor:
         elif pr_diff == "":
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_NO_DIFF.value
-        elif get_token_count(pr_diff) > MAX_PR_DIFF_TOKEN_LIMIT:
+        elif pr_diff == LARGE_PR_DIFF or get_token_count(pr_diff) > MAX_PR_DIFF_TOKEN_LIMIT:
             await self.comment_service.create_pr_comment(
                 comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
             )
