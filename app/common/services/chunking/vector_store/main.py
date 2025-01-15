@@ -33,12 +33,16 @@ class ChunkVectorScoreManager:
             weaviate_client=self.weaviate_client
         ).get_chunk_files_by_commit_hashes(file_to_commit_hashes=file_path_commit_hash_map)
 
+        print(f"Commit hashes total: {len(file_path_commit_hash_map)}")
+        print(f"Chunk files in db: {len(chunk_files_in_db)}")
+
         if not chunk_files_in_db:
             return []
 
         stored_chunks = await ChunkService(weaviate_client=self.weaviate_client).get_chunks_by_chunk_hashes(
-            chunk_hashes=[chunk_file.chunk_hash for chunk_file in chunk_files_in_db]
+            chunk_hashes=list({chunk_file.chunk_hash for chunk_file in chunk_files_in_db}),
         )
+        print(f"Stored chunks: {len(stored_chunks)}")
 
         stored_chunks_chunk_dict = {chunk.chunk_hash: chunk for chunk in stored_chunks}
         all_chunk_files_and_chunks = [

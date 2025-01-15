@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Tuple
 
 from sanic.log import logger
 from weaviate.classes.query import Filter, QueryReference
@@ -74,9 +74,9 @@ class ChunkUsagesService:
             logger.exception("Failed to add chunk usage")
             raise ex
 
-    def get_removable_chunk_hashes(
+    def get_removable_chunk_hashes_and_usage_ids(
         self, last_used_lt: datetime, chunk_hashes_to_skip: List[str], chunk_usage_hash_to_skip: List[str]
-    ) -> List[str]:
+    ) -> Tuple[List[str], List[str]]:
         try:
             AppLogger.log_debug(f"Getting removable chunk usages before {last_used_lt}")
             AppLogger.log_debug(f"Skipping {len(chunk_usage_hash_to_skip)} chunk usages")
@@ -107,13 +107,23 @@ class ChunkUsagesService:
 
             all_removable_chunk_hashes: List[str] = []
             for chunk in all_removable_usages.objects:
-                chunk_reference = chunk.references["chunk"]
+                chunk_reference = chunk.references["chunk"] if "chunk" in chunk.references else None
+                if not chunk_reference:
+                    continue
                 for chunk_obj in chunk_reference.objects:
                     if chunk_obj.properties["chunk_hash"] not in chunk_hashes_to_skip:
                         all_removable_chunk_hashes.append(chunk_obj.properties["chunk_hash"])
 
-            return all_removable_chunk_hashes
+            return all_removable_chunk_hashes, [str(usage_obj.uuid) for usage_obj in all_removable_usages.objects]
 
         except Exception as ex:
             logger.exception("Failed to get removable chunk usages")
             raise ex
+
+    def cleanup_old_usages(self, usage_ids: List[str]) -> None:
+        batch_size = 500
+        for i in range(0, len(usage_ids), batch_size):
+            batch = usage_ids[i : i + batch_size]
+            self.sync_collection.data.delete_many(
+                Filter.any_of([Filter.by_id().equal(usage_id) for usage_id in batch])
+            )

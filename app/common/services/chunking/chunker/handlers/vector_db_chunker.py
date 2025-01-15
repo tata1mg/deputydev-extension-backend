@@ -107,7 +107,7 @@ class VectorDBChunker(BaseChunker):
         vector_store_files_and_chunks = await ChunkVectorScoreManager(
             weaviate_client=self.weaviate_client, local_repo=self.local_repo
         ).get_stored_chunk_files_with_chunk_content(file_path_commit_hash_map)
-        existing_files = {vector_file[0].file_path for vector_file in vector_store_files_and_chunks}
+        existing_files = {vector_store_file_and_chunk[0].file_path for vector_store_file_and_chunk in vector_store_files_and_chunks}
 
         files_to_chunk = {
             file: file_hash for file, file_hash in file_path_commit_hash_map.items() if file not in existing_files
