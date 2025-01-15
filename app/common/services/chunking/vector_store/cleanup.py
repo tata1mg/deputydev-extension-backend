@@ -1,5 +1,6 @@
 import time
 from datetime import datetime, timedelta, timezone
+import traceback
 from typing import List, Optional
 
 from app.common.services.repository.chunk.chunk_service import ChunkService
@@ -22,7 +23,7 @@ class ChunkVectorStoreCleaneupManager:
     ):
         self.exclusion_chunk_hashes = exclusion_chunk_hashes
         self.weaviate_client = weaviate_client
-        self.last_used_at_timedelta = timedelta(minutes=3)
+        self.last_used_at_timedelta = timedelta(days=30)
         self.usage_hash = usage_hash
 
     async def _cleanup_chunk_and_chunk_files_objects(self, chunk_hashes_to_clean: List[str]) -> None:
@@ -44,12 +45,16 @@ class ChunkVectorStoreCleaneupManager:
         self,
     ) -> None:
         try:
-            chunk_hashes_to_clean = ChunkUsagesService(weaviate_client=self.weaviate_client).get_removable_chunk_hashes(
+            chunk_hashes_to_clean, usage_ids_to_clean = ChunkUsagesService(weaviate_client=self.weaviate_client).get_removable_chunk_hashes_and_usage_ids(
                 last_used_lt=datetime.now().replace(tzinfo=timezone.utc) - self.last_used_at_timedelta,
                 chunk_hashes_to_skip=self.exclusion_chunk_hashes,
                 chunk_usage_hash_to_skip=[self.usage_hash] if self.usage_hash else [],
             )
             AppLogger.log_debug(f"Cleaning up {len(chunk_hashes_to_clean)} chunks")
+            AppLogger.log_debug(f"Cleaning up {len(usage_ids_to_clean)} usages")
             await self._cleanup_chunk_and_chunk_files_objects(chunk_hashes_to_clean=chunk_hashes_to_clean)
+            ChunkUsagesService(weaviate_client=self.weaviate_client).cleanup_old_usages(
+                usage_ids=usage_ids_to_clean,
+            )
         except Exception as _ex:
             AppLogger.log_debug(message=str(_ex))
