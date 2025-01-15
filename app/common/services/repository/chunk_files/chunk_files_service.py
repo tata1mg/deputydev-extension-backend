@@ -4,11 +4,12 @@ from typing import Dict, List
 from sanic.log import logger
 from weaviate.classes.query import Filter
 from weaviate.collections.classes.data import DataObject
+from weaviate.util import generate_uuid5
 
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dto.chunk_file_dto import ChunkFileDTO
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from weaviate.util import generate_uuid5
+
 
 class ChunkFilesService:
     def __init__(self, weaviate_client: WeaviateSyncAndAsyncClients):
@@ -23,8 +24,6 @@ class ChunkFilesService:
         try:
             # Convert dictionary items to list for batch processing
             file_commit_pairs = list(file_to_commit_hashes.items())
-            print(file_commit_pairs[:5])
-            print(file_to_commit_hashes["Dockerfile"])
 
             # Process in smaller batches
             for i in range(0, len(file_commit_pairs), BATCH_SIZE):
@@ -46,19 +45,6 @@ class ChunkFilesService:
                     limit=MAX_RESULTS_PER_QUERY,
                 )
 
-                # batch_files = await self.async_collection.query.fetch_objects(
-                #     filters=Filter.any_of(
-                #         [
-                #             Filter.all_of(
-                #                 [
-                #                     Filter.by_property("file_path").equal("Dockerfile"),
-                #                     Filter.by_property("file_hash").equal(file_to_commit_hashes["Dockerfile"]),
-                #                 ]
-                #             )
-                #         ]
-                #     ),
-                #     limit=MAX_RESULTS_PER_QUERY,
-                # )
                 # Convert to DTOs efficiently
                 if batch_files.objects:
                     batch_dtos = [
@@ -81,7 +67,13 @@ class ChunkFilesService:
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i : i + batch_size]
             await self.async_collection.data.insert_many(
-                [DataObject(properties=chunk.model_dump(mode="json", exclude={"id"}), uuid=generate_uuid5(f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}")) for chunk in batch]
+                [
+                    DataObject(
+                        properties=chunk.model_dump(mode="json", exclude={"id"}),
+                        uuid=generate_uuid5(f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"),
+                    )
+                    for chunk in batch
+                ]
             )
             await asyncio.sleep(0.2)  # sleep has been added for controlled insertion
 
