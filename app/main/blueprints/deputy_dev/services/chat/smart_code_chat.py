@@ -8,7 +8,7 @@ from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import build_openai_conversation_message
 from app.backend_common.utils.formatting import format_code_blocks
-from app.common.constants.constants import VCSTypes
+from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
@@ -167,6 +167,16 @@ class SmartCodeChatManager:
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
             diff = await pr_diff_handler.get_effective_pr_diff("chat")
+            if diff == PR_NOT_FOUND:
+                await comment_service.create_comment_on_parent(
+                    "Unable to process the request", chat_request.comment.id, ""
+                )
+                return
+            if diff == LARGE_PR_DIFF:
+                await comment_service.create_comment_on_parent(
+                    "PR diff is larger than 20k lines, can not process request", chat_request.comment.id, ""
+                )
+                return
             user_story_description = await JiraManager(issue_id=pr.pr_details.issue_id).get_description_text()
             comment_thread = await comment_service.fetch_comment_thread(chat_request)
             comment_context = {
