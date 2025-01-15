@@ -47,7 +47,6 @@ class ChunkService:
             # Process chunk hashes in batches
             for i in range(0, len(chunk_hashes), BATCH_SIZE):
                 batch_hashes = chunk_hashes[i : i + BATCH_SIZE]
-                print(batch_hashes)
                 batch_chunks = await self.async_collection.query.fetch_objects(
                     filters=Filter.any_of(
                         [Filter.by_id().equal(generate_uuid5(chunk_hash)) for chunk_hash in batch_hashes]
