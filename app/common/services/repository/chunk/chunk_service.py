@@ -56,7 +56,6 @@ class ChunkService:
                 )
                 # Break if no more results
                 if batch_chunks.objects:
-                    print(f"Batch {i} has {len(batch_chunks.objects)} chunks")
                     # Convert to DTOs efficiently using list comprehension
                     batch_dtos = [
                         ChunkDTO(**chunk_obj.properties, id=str(chunk_obj.uuid)) for chunk_obj in batch_chunks.objects

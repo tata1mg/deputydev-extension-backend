@@ -1,6 +1,5 @@
 import time
 from datetime import datetime, timedelta, timezone
-import traceback
 from typing import List, Optional
 
 from app.common.services.repository.chunk.chunk_service import ChunkService
@@ -45,7 +44,9 @@ class ChunkVectorStoreCleaneupManager:
         self,
     ) -> None:
         try:
-            chunk_hashes_to_clean, usage_ids_to_clean = ChunkUsagesService(weaviate_client=self.weaviate_client).get_removable_chunk_hashes_and_usage_ids(
+            chunk_hashes_to_clean, usage_ids_to_clean = ChunkUsagesService(
+                weaviate_client=self.weaviate_client
+            ).get_removable_chunk_hashes_and_usage_ids(
                 last_used_lt=datetime.now().replace(tzinfo=timezone.utc) - self.last_used_at_timedelta,
                 chunk_hashes_to_skip=self.exclusion_chunk_hashes,
                 chunk_usage_hash_to_skip=[self.usage_hash] if self.usage_hash else [],
