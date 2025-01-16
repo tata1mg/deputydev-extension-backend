@@ -1,9 +1,10 @@
-import asyncio
+# import asyncio
 from typing import Dict, List
 
 from sanic.log import logger
 from weaviate.classes.query import Filter
-from weaviate.collections.classes.data import DataObject
+
+# from weaviate.collections.classes.data import DataObject
 from weaviate.util import generate_uuid5
 
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
@@ -63,19 +64,25 @@ class ChunkFilesService:
             raise ex
 
     async def bulk_insert(self, chunks: List[ChunkFileDTO]) -> None:
-        batch_size = 200
-        for i in range(0, len(chunks), batch_size):
-            batch = chunks[i : i + batch_size]
-            await self.async_collection.data.insert_many(
-                [
-                    DataObject(
-                        properties=chunk.model_dump(mode="json", exclude={"id"}),
-                        uuid=generate_uuid5(f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"),
-                    )
-                    for chunk in batch
-                ]
-            )
-            await asyncio.sleep(0.2)  # sleep has been added for controlled insertion
+        # batch_size = 200
+        # for i in range(0, len(chunks), batch_size):
+        #     batch = chunks[i : i + batch_size]
+        #     await self.async_collection.data.insert_many(
+        #         [
+        #             DataObject(
+        #                 properties=chunk.model_dump(mode="json", exclude={"id"}),
+        #                 uuid=generate_uuid5(f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"),
+        #             )
+        #             for chunk in batch
+        #         ]
+        #     )
+        #     await asyncio.sleep(0.2)  # sleep has been added for controlled insertion
+        with self.sync_collection.batch.dynamic() as _batch:
+            for chunk in chunks:
+                _batch.add_object(
+                    properties=chunk.model_dump(mode="json", exclude={"id"}),
+                    uuid=generate_uuid5(f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"),
+                )
 
     def cleanup_old_chunk_files(self, chunk_hashes_to_clean: List[str]) -> None:
         batch_size = 500
