@@ -7,6 +7,7 @@ from app.backend_common.service_clients.github.github_repo_client import (
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.helpers.github_comment_helper import (
@@ -47,10 +48,14 @@ class GithubComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
-    async def create_comment_on_parent(self, comment: str, parent_id, model):
+    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
         """creates comment on whole pr"""
-        comment_payload = {"body": format_comment(comment), "in_reply_to": parent_id}
-        response = await self.repo_client.create_pr_comment(comment_payload)
+        if get_context_value("is_issue_comment"):
+            comment_payload = {"body": format_comment(comment)}
+            response = await self.repo_client.create_issue_comment(comment_payload, parent_id)
+        else:
+            comment_payload = {"body": format_comment(comment), "in_reply_to": parent_id}
+            response = await self.repo_client.create_pr_comment(comment_payload)
         if not response or response.status_code != 201:
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
@@ -107,7 +112,9 @@ class GithubComment(BaseComment):
             AppLogger.log_warn(f"Invalid data format in comments: {e}")
             return ""
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(
+        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
+    ):
         """
         Create a comment on a parent comment in pull request.
 
@@ -117,6 +124,10 @@ class GithubComment(BaseComment):
         Returns:
         - Dict[str, Any]: A dictionary containing the response from the server.
         """
+        if get_context_value("is_issue_comment"):
+            comment_payload = {"body": comment}
+            await self.repo_client.create_issue_comment(comment_payload, chat_request.comment.id)
+            return
         comment = await super().process_chat_comment(comment, chat_request, add_note)
         have_parent = True if chat_request.comment.parent else False
         comment_payload = self.comment_helper.format_chat_comment(comment, chat_request, have_parent=have_parent)

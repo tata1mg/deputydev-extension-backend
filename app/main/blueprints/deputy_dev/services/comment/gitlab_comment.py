@@ -41,7 +41,7 @@ class GitlabComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
-    async def create_comment_on_parent(self, comment: str, parent_id, model):
+    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
         """creates comment on whole pr"""
         comment_payload = {"body": format_comment(comment)}
         response = await self.repo_client.create_comment_on_parent(comment_payload, parent_id)
@@ -88,7 +88,9 @@ class GitlabComment(BaseComment):
             logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
             return ""
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(
+        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
+    ):
         """
         Create a comment on a parent comment in pull request.
 

@@ -40,6 +40,11 @@ class GithubRepoClient(BaseSCMClient):
                 f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} err {ex}"
             )
 
+    async def create_issue_comment(self, payload: dict, issue_id):
+        """Create a comment on PR conversation/issue tab"""
+        url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/issues/{issue_id}/comments"
+        return await self.post(url=url, json=payload)
+
     async def update_pr(self, payload: dict, headers: dict = None):
         """
         Updates PR properties like description
