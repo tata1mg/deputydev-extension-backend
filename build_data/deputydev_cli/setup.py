@@ -1,6 +1,7 @@
 from setuptools import setup
 from setuptools.command.bdist_wheel import bdist_wheel as _bdist_wheel
 
+
 # Subclassing bdist_wheel to mark as non-pure
 class bdist_wheel(_bdist_wheel):
     def finalize_options(self):

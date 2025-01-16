@@ -29,8 +29,8 @@ class AgentServiceBase(ABC):
         self.comment_confidence_score = agent_settings.get(self.agent_name, {}).get("confidence_score")
         self.custom_prompt = agent_settings.get(self.agent_name, {}).get("custom_prompt", "")
 
-    async def format_user_prompt(self, prompt: str, comments: str = None):
-        prompt_variables = {
+    async def required_prompt_variables(self, comments: str = None) -> dict:
+        return {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
             "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
@@ -40,6 +40,9 @@ class AgentServiceBase(ABC):
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
         }
+
+    async def format_user_prompt(self, prompt: str, comments: str = None):
+        prompt_variables = await self.required_prompt_variables(comments)
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)
 
