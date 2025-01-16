@@ -30,6 +30,9 @@ from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_pro
 from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger import (
     CodeReviewTrigger,
 )
+from app.main.blueprints.deputy_dev.services.code_review.pr_summary_manager import (
+    PRSummaryManager,
+)
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
@@ -74,6 +77,14 @@ class SmartCodeChatManager:
         vcs_type = payload.get("vcs_type") or VCSTypes.bitbucket.value
 
         raw_comment = ChatWebhook.get_raw_comment(payload)
+
+        if raw_comment and raw_comment.strip().lower().startswith("#summary"):
+            comment_payload = await ChatWebhook.parse_payload(payload)
+            if not comment_payload:
+                return
+
+            await PRSummaryManager().generate_and_post_summary(comment_payload)
+            return
 
         if raw_comment and raw_comment.strip().lower() == "#review":
             await CodeReviewTrigger.perform_review(payload, query_params)

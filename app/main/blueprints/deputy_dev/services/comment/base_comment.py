@@ -56,12 +56,14 @@ class BaseComment(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def create_comment_on_parent(self, comment: str, parent_id, model: str):
+    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
         """creates comment on whole pr"""
         raise NotImplementedError()
 
     @abstractmethod
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(
+        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
+    ):
         """process"""
         if add_note:
             # This is a temporary addition to convey the user of the deprecation of #scrit
