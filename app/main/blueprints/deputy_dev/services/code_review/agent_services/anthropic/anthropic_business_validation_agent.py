@@ -6,11 +6,15 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 
 
 class AnthropicBusinessValidationAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        super().__init__(context_service, is_reflection_enabled, AgentTypes.BUSINESS_LOGIC_VALIDATION.value)
+        agent_name = SettingService.Helper.predefined_name_to_custom_name(AgentTypes.BUSINESS_LOGIC_VALIDATION.value)
+        super().__init__(context_service, is_reflection_enabled, agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -79,7 +83,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>{USER_STORY} - Always this value since its a business logic validation agent</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         </comments>
         </review>
@@ -89,6 +93,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         Remember:
         - Map exactly 1 comment to each comment tag in the output response.
         - Focus only on business logic correctness. Do not comment on any other aspects of code review.
+        - Do not change the provided bucket name.
         - Provide clear and actionable feedback in your comments only for critical issues.
         - Use the confidence score to indicate how certain you are about each issue you raise.
         - Need not to do the appreciation comments for the things that are done correctly.
@@ -178,6 +183,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         12.  comment should not be on unchanged code unless directly impacted by the changes.
         13.  comment should not be duplicated for similar issues across different locations.
         14. Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
+        15. Do not change the provided bucket name.
         
         Remember, your primary goal is to ensure that the changes in the pull request accurately implement
         the requirements specified in the user story and product research document. Do not get sidetracked
@@ -210,7 +216,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
         points</confidence_score>
-        <bucket>USER_STORY</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each issue that you find regarding business logic validation -->
         </comments>
@@ -221,7 +227,7 @@ class AnthropicBusinessValidationAgent(AgentServiceBase):
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
             TokenTypes.RELEVANT_CHUNK.value: self.context_service.embedding_input_tokens,
             TokenTypes.PR_USER_STORY.value: self.context_service.pr_user_story_tokens,
             TokenTypes.PR_CONFLUENCE.value: self.context_service.confluence_doc_data_tokens,

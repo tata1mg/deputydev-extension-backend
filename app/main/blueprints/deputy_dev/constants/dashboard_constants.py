@@ -193,11 +193,12 @@ class DashboardQueries(Enum):
 
     code_review_time_query = """
         SELECT
-            AVG(EXTRACT(EPOCH FROM (COALESCE(scm_close_time, NOW()) - scm_creation_time)) / 3600) AS avg_code_review_time_in_hours
+            AVG(EXTRACT(EPOCH FROM (scm_close_time - scm_creation_time)) / 3600) AS avg_code_review_time_in_hours
         FROM
             pull_requests
         WHERE
             scm_creation_time IS NOT NULL
+            AND scm_close_time IS NOT NULL
             AND repo_id in ({repo_ids})
             AND created_at >= '{start_date}'
             AND created_at <= '{end_date}'

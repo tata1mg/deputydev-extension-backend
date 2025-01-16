@@ -6,11 +6,15 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 
 
 class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        super().__init__(context_service, is_reflection_enabled, AgentTypes.PERFORMANCE_OPTIMISATION.value)
+        agent_name = SettingService.Helper.predefined_name_to_custom_name(AgentTypes.PERFORMANCE_OPTIMISATION.value)
+        super().__init__(context_service, is_reflection_enabled, agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -86,7 +90,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         <file_path>file path on which the comment is to be made</file_path>
         <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0 upto 2 decimal points</confidence_score>
-        <bucket>{PERFORMANCE | ALGORITHM_EFFICIENCY | DATABASE_PERFORMANCE} - Either one of them depending on in which bucket the comment is falling.</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code communication issue found -->
         </comments>
@@ -100,6 +104,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         -  Carefully analyze each change in the diff.
         -  Focus solely on major performance issues that could substantially impact system efficiency.
         -  Do not provide appreciation comments or positive feedback.
+        -  Do not change the provided bucket name.
         -  Consider the context provided by contextually related code snippets.
         -  For each finding or improvement, create a separate <comment> block within the <comments> section.
         -  If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
@@ -202,6 +207,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         12.  comment should not be on unchanged code unless directly impacted by the changes.
         13.  comment should not be duplicated for similar issues across different locations.
         14.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
+        15.  Do not change the provided bucket name.
         </guidelines>
         
         Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
@@ -227,7 +233,7 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         <file_path>file path on which the comment is to be made</file_path>
         <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
         <confidence_score>floating point confidence score of the comment between 0.0 to 1.0 upto 2 decimal points</confidence_score>
-        <bucket>{PERFORMANCE | ALGORITHM_EFFICIENCY | DATABASE_PERFORMANCE} - Either one of them depending on in which bucket the comment is falling.</bucket>
+        <bucket>$BUCKET</bucket>
         </comment>
         <!-- Repeat the <comment> block for each code communication issue found -->
         </comments>
@@ -239,6 +245,6 @@ class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
             TokenTypes.RELEVANT_CHUNK.value: self.context_service.embedding_input_tokens,
         }

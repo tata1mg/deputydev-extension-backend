@@ -82,7 +82,7 @@ class CodeGenerationHandler(BaseFeatureHandler):
             final_payload["apply_diff"] = True
 
         query_vector = await self.embedding_manager.embed_text_array(texts=[self.query.text], store_embeddings=False)
-
+        search_type = SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE
         relevant_chunks, _ = await ChunkingManger.get_relevant_chunks(
             query=self.query.text,
             local_repo=self.local_repo,
@@ -95,12 +95,10 @@ class CodeGenerationHandler(BaseFeatureHandler):
             weaviate_client=self.weaviate_client,
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
-            search_type=SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE,
+            search_type=search_type,
             usage_hash=self.usage_hash,
         )
-
-        final_payload["relevant_chunks"] = relevant_chunks
-
+        final_payload["relevant_chunks"] = self.handle_relevant_chunks(search_type, relevant_chunks)
         self.final_payload = final_payload
 
         self.redirections = FeatureHandlingRedirections(

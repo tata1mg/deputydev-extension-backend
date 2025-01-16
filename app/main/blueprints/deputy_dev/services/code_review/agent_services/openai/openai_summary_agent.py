@@ -10,16 +10,18 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_ba
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 
 
 class OpenAIPRSummaryAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.PR_SUMMARY.value)
         # TODO: for now not picking model from setting, This can be updated if required:
-        # setting = get_context_value("setting")
-        # self.model = setting[AgentTypes.PR_SUMMARY.value]["model"]
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
-        self.custom_prompt = get_context_value("setting")[AgentTypes.PR_SUMMARY.value].get("custom_prompt", "")
+        self.agent_setting = SettingService.Helper.summary_agent_setting()
+        self.agent_id = SettingService.Helper.summary_agent_id()
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
@@ -70,7 +72,7 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
         }
 
     async def should_execute(self):
