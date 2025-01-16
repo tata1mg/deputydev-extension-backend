@@ -8,7 +8,7 @@ from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 
-class BaseReviewManager:
+class BasePRReviewManager:
     @staticmethod
     def set_identifier(value: str):
         """Set repo_name or any other value to the contextvar identifier

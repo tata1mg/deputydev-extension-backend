@@ -14,6 +14,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
     BitbucketBots,
     ChatTypes,
+    CommentTypes,
     MessageTypes,
     MetaStatCollectionTypes,
 )
@@ -70,6 +71,19 @@ config = CONFIG.config
 
 class SmartCodeChatManager:
     @classmethod
+    def identify_request_type(cls, raw_comment: str) -> str:
+        """Identify the type of request based on the comment."""
+        if not raw_comment:
+            return CommentTypes.UNKNOWN.value
+
+        comment = raw_comment.strip().lower()
+        if comment.startswith("#summary"):
+            return CommentTypes.SUMMARY.value
+        elif comment == "#review":
+            return CommentTypes.REVIEW.value
+        return CommentTypes.CHAT.value
+
+    @classmethod
     async def chat(cls, payload: dict, query_params: dict):
         logger.info(f"Comment payload: {payload}")
         logger.info(f"comment query params {query_params}")
@@ -79,25 +93,29 @@ class SmartCodeChatManager:
 
         raw_comment = ChatWebhook.get_raw_comment(payload)
 
-        if raw_comment and raw_comment.strip().lower().startswith("#summary"):
-            comment_payload = await ChatWebhook.parse_payload(payload)
-            if not comment_payload:
-                return
+        request_type = cls.identify_request_type(raw_comment)
+        await cls.handle_request(request_type, payload, query_params, vcs_type)
 
-            await PRSummaryManager().generate_and_post_summary(comment_payload)
+    @classmethod
+    async def handle_request(cls, request_type: str, payload: dict, query_params: dict, vcs_type: str):
+        """Route the request to appropriate handler based on type."""
+        if request_type == CommentTypes.UNKNOWN.value:
             return
 
-        if raw_comment and raw_comment.strip().lower() == "#review":
+        if request_type == CommentTypes.SUMMARY.value:
+            comment_payload = await ChatWebhook.parse_payload(payload)
+            if comment_payload:
+                await PRSummaryManager.generate_and_post_summary(comment_payload)
+            return
+
+        if request_type == CommentTypes.REVIEW.value:
             await CodeReviewTrigger.perform_review(payload, query_params)
             return
 
+        # Handle regular chat requests
         comment_payload = await ChatWebhook.parse_payload(payload)
-        if not comment_payload:
+        if not comment_payload or is_request_from_blocked_repo(comment_payload.repo.repo_name):
             return
-        logger.info(f"Comment payload: {comment_payload}")
-        if is_request_from_blocked_repo(comment_payload.repo.repo_name):
-            return
-
         # if comment_payload.comment.raw.strip().startswith("#suggestion"):
         #     asyncio.ensure_future(SuggestionCodeGenerationManager.process_suggestion(comment_payload, vcs_type))
         #     return
@@ -109,7 +127,7 @@ class SmartCodeChatManager:
             human_comment_payload = await HumanCommentWebhook.parse_payload(payload)
             await cls.handle_human_comment(human_comment_payload, vcs_type)
         elif comment_payload.author_info.name not in BitbucketBots.list():
-            await cls.handle_chat_request(comment_payload, vcs_type=vcs_type)
+            await cls.handle_chat_request(comment_payload, vcs_type)
         else:
             logger.info(f"Comment rejected due to not falling in supported criteria {comment_payload}")
 
