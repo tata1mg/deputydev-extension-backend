@@ -1,9 +1,10 @@
-import asyncio
+# import asyncio
 from typing import List
 
 from sanic.log import logger
 from weaviate.classes.query import Filter
-from weaviate.collections.classes.data import DataObject
+
+# from weaviate.collections.classes.data import DataObject
 from weaviate.util import generate_uuid5
 
 from app.common.models.dao.weaviate.chunks import Chunks
@@ -72,20 +73,27 @@ class ChunkService:
             raise
 
     async def bulk_insert(self, chunks: List[ChunkDTOWithVector]) -> None:
-        batch_size = 100
-        for i in range(0, len(chunks), batch_size):
-            batch = chunks[i : i + batch_size]
-            await self.async_collection.data.insert_many(
-                [
-                    DataObject(
-                        properties=chunk.dto.model_dump(mode="json", exclude={"id"}),
-                        vector=chunk.vector,
-                        uuid=generate_uuid5(chunk.dto.chunk_hash),
-                    )
-                    for chunk in batch
-                ]
-            )
-            await asyncio.sleep(0.2)
+        # batch_size = 100
+        # for i in range(0, len(chunks), batch_size):
+        #     batch = chunks[i : i + batch_size]
+        #     await self.async_collection.data.insert_many(
+        #         [
+        #             DataObject(
+        #                 properties=chunk.dto.model_dump(mode="json", exclude={"id"}),
+        #                 vector=chunk.vector,
+        #                 uuid=generate_uuid5(chunk.dto.chunk_hash),
+        #             )
+        #             for chunk in batch
+        #         ]
+        #     )
+        #     await asyncio.sleep(0.2)
+        with self.sync_collection.batch.dynamic() as _batch:
+            for chunk in chunks:
+                _batch.add_object(
+                    properties=chunk.dto.model_dump(mode="json", exclude={"id"}),
+                    vector=chunk.vector,
+                    uuid=generate_uuid5(chunk.dto.chunk_hash),
+                )
 
     def cleanup_old_chunks(self, chunk_hashes_to_clean: List[str]) -> None:
         batch_size = 500
