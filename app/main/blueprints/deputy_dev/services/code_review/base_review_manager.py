@@ -71,15 +71,3 @@ class BaseReviewManager:
         )
 
         return repo_service, pr_service, comment_service
-
-    @staticmethod
-    def _prepare_service_data_from_chat_request(chat_request: ChatRequest) -> dict:
-        return {
-            "vcs_type": chat_request.repo.vcs_type,
-            "repo_name": chat_request.repo.repo_name,
-            "pr_id": chat_request.repo.pr_id,
-            "workspace": chat_request.repo.workspace,
-            "workspace_id": chat_request.repo.workspace_id,
-            "repo_id": chat_request.repo.repo_id,
-            "workspace_slug": chat_request.repo.workspace_slug,
-        }
