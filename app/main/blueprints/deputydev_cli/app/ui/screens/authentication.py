@@ -23,6 +23,7 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
+from cli_auth import require_auth
 
 DEPUTYDEV_AUTH_TOKEN = ConfigManager.configs["AUTH_TOKEN_ENV_VAR"]
 
@@ -52,7 +53,7 @@ class AuthTokenValidator(AsyncValidator):
         except Exception:
             raise ValidationError(message="Auth token verification failed. Please enter a valid auth token.")
 
-
+@require_auth
 class Authentication(BaseScreenHandler):
     def __init__(self, app_context: AppContext) -> None:
         super().__init__(app_context)
