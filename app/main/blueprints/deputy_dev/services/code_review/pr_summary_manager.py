@@ -59,12 +59,11 @@ class PRSummaryManager(BaseReviewManager):
         context_service = ContextService(repo_service, pr_service)
         summary_agent = OpenAIPRSummaryAgent(context_service, is_reflection_enabled=False)
 
-        # Get prompts from summary agent
         prompt_data = await summary_agent.get_without_reflection_prompt()
 
         if prompt_data["exceeds_tokens"]:
             await comment_service.create_comment_on_parent(
-                "PR is too large for summarization", chat_request.comment.id, summary_agent.model
+                "PR is too large for summarization", chat_request.comment.id
             )
             return
 
@@ -72,7 +71,6 @@ class PRSummaryManager(BaseReviewManager):
             {"system_message": prompt_data["system_message"], "user_message": prompt_data["user_message"]}
         )
 
-        # Get summary from LLM
         response = await self.llm.call_service_client(
             messages=messages,
             model=CONFIG.config.get("LLM_MODELS").get(summary_agent.model).get("NAME"),
@@ -92,10 +90,6 @@ class PRSummaryManager(BaseReviewManager):
         """
         Parse summary command from comment.
         Returns None if comment doesn't start with #summary.
-
-        Examples:
-        #summary -> SummaryCommand(custom_prompt=None)
-        #summary -prompt "Summarize the PR focusing on security changes" -> SummaryCommand(custom_prompt="Summarize...")
         """
         summary_regx = r"^#summary(?:\s+-prompt\s+(.+))?$"
         if not comment:
