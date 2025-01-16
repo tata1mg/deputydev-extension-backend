@@ -37,27 +37,8 @@ class AgentServiceBase(ABC):
         self.agent_setting = SettingService.Helper.agent_setting_by_name(agent_name)
         self.agent_id = self.agent_setting.get("agent_id")
 
-    async def format_user_prompt(self, prompt: str, comments: str = None):
-        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
-        prompt_variables = {
-            "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
-            "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
-            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
-                append_line_no_info=True, agent_id=self.agent_id
-            ),
-            "REVIEW_COMMENTS_By_JUNIOR_DEVELOPER": comments,
-            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": self.agent_relevant_chunk(relevant_chunks),
-            "USER_STORY": await self.context_service.get_user_story(),
-            "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
-            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
-            "AGENT_OBJECTIVE": self.agent_objective(self.agent_name),
-            "CUSTOM_PROMPT": self.agent_setting.get("custom_prompt") or "",
-            "BUCKET": self.agent_setting.get("display_name"),
-        }
-        template = Template(prompt)
-        return template.safe_substitute(prompt_variables)
-
     async def required_prompt_variables(self, comments: str = None) -> dict:
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
         return {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),

@@ -2,7 +2,6 @@ from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.context_var import identifier
 from app.common.utils.context_vars import set_context_values
-from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )

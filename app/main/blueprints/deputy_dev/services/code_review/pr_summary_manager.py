@@ -17,7 +17,7 @@ from app.main.blueprints.deputy_dev.services.code_review.base_review_manager imp
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
