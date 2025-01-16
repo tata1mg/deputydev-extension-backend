@@ -62,6 +62,9 @@ def get_foundation_model_name():
     return model
 
 
+TIKTOKEN_CLIENT = TikToken()
+
+
 def get_token_count(value: str) -> int:
     """
     Calculate the number of tokens in a given text.
@@ -72,8 +75,7 @@ def get_token_count(value: str) -> int:
     Returns:
     int: The number of tokens in the given text.
     """
-    tiktoken_client = TikToken()
-    token_count = tiktoken_client.count(text=value, model=get_foundation_model_name())
+    token_count = TIKTOKEN_CLIENT.count(text=value, model=get_foundation_model_name())
     return token_count
 
 
@@ -183,3 +185,10 @@ def name_to_slug(input_str) -> str:
     lower_str = input_str.lower()
     result_str = lower_str.replace(" ", "-")
     return result_str
+
+
+def safe_index(lst, item, default=None):
+    try:
+        return lst.index(item)
+    except ValueError:
+        return default

@@ -1,34 +1,33 @@
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import List
 
 from torpedo import CONFIG
 
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.base_pr import BasePR
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
-    BucketStatus,
-    BucketTypes,
     ExperimentStatusTypes,
     PrStatusTypes,
 )
-from app.main.blueprints.deputy_dev.models.dao.postgres import PRComments
-from app.main.blueprints.deputy_dev.models.dao.postgres.comment_bucket_mapping import (
-    CommentBucketMapping,
+from app.main.blueprints.deputy_dev.models.dao.postgres import (
+    AgentCommentMappings,
+    Agents,
+    PRComments,
 )
-from app.main.blueprints.deputy_dev.models.dto.bucket_dto import BucketDTO
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
-from app.main.blueprints.deputy_dev.services.bucket.bucket_service import BucketService
 from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
     PRScoreHelper,
 )
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
-from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
-from app.main.blueprints.deputy_dev.services.comment.comment_bucket_mapping_service import (
-    CommentBucketMappingService,
+from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import (
+    AgentCommentMappingService,
 )
+from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.pr_comments_service import (
     CommentService,
 )
@@ -36,7 +35,7 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
     ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 
@@ -76,7 +75,7 @@ class PRReviewPostProcessor:
             payload={
                 "review_status": self.review_status,
                 "meta_info": self.pr_meta_info(pr_dto, tokens_data, extra_info=extra_info),
-                "quality_score": self.get_pr_score([], {}),
+                "quality_score": self.get_pr_score([]),
                 "iteration": self.completed_pr_count + 1,
                 "loc_changed": self.loc_changed,
             },
@@ -103,7 +102,12 @@ class PRReviewPostProcessor:
             )
 
     async def post_process_pr(
-        self, pr_dto: PullRequestDTO, llm_comments: dict, tokens_data: dict, is_large_pr: bool, extra_info: dict = None
+        self,
+        pr_dto: PullRequestDTO,
+        llm_comments: List[dict],
+        tokens_data: dict,
+        is_large_pr: bool,
+        extra_info: dict = None,
     ):
         self.loc_changed = await self.pr_service.get_loc_changed_count()
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
@@ -127,8 +131,8 @@ class PRReviewPostProcessor:
     async def post_process_pr_with_comments(
         self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
     ):
-        buckets_data, comments = await self.save_llm_comments(pr_dto, llm_comments)
-        await self.update_pr(pr_dto, comments, buckets_data, tokens_data, extra_info=extra_info)
+        comments = await self.save_llm_comments(pr_dto, llm_comments)
+        await self.update_pr(pr_dto, comments, tokens_data, extra_info=extra_info)
         if ExperimentService.is_eligible_for_experiment():
             await ExperimentService.db_update(
                 payload={
@@ -155,47 +159,20 @@ class PRReviewPostProcessor:
         return all_comments
 
     @staticmethod
-    def get_pr_score(llm_comments: list, buckets_data: Dict[str, BucketDTO]):
+    def get_pr_score(llm_comments: list):
         weight_counts_data = {}
+        agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
+        agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
         for comment in llm_comments:
             for bucket in comment["buckets"]:
-                if buckets_data[bucket].status == BucketStatus.ACTIVE.value:
-                    weight_counts_data[buckets_data[bucket].weight] = (
-                        weight_counts_data.get(buckets_data[bucket].weight, 0) + 1
-                    )
+                weight = agents_by_agent_id[bucket["agent_id"]]["weight"]
+                weight_counts_data[weight] = weight_counts_data.get(weight, 0) + 1
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
     @staticmethod
     async def save_llm_comments(pr_dto: PullRequestDTO, llm_comments: List[dict]):
-        all_buckets = await BucketService.get_all_buckets_dict()
-        new_buckets = []
-        unique_buckets = set()
-        for comment in llm_comments:
-            for bucket in comment["buckets"]:
-                if bucket not in all_buckets:
-                    unique_buckets.add(bucket)
-
-        for bucket in unique_buckets:
-            new_buckets.append(
-                BucketDTO(
-                    **{
-                        "name": bucket,
-                        "weight": 0,
-                        "bucket_type": BucketTypes.SUGGESTION.value,
-                        "status": BucketStatus.INACTIVE.value,
-                        "is_llm_suggested": True,
-                    }
-                )
-            )
-
-        if new_buckets:
-            for bucket in new_buckets:
-                await BucketService.db_insert(bucket)
-            # reload buckets
-            all_buckets = await BucketService.get_all_buckets_dict()
-
         comments_to_save = []
-        bucket_mappings_to_save = []
+        agent_mappings_to_save = []
 
         for comment in llm_comments:
             comment_info = {
@@ -231,17 +208,46 @@ class PRReviewPostProcessor:
             PRComments,
             filters=filters_to_fetch_inserted_comments,
         )
+        agent_ids = []
+        for comment in valid_llm_comments:
+            for bucket in comment.get("buckets") or []:
+                agent_ids.append(bucket["agent_id"])
+        agent_filter = {"repo_id": pr_dto.repo_id, "agent_id__in": agent_ids}
+        agents = await DB.get_by_filters(
+            Agents,
+            filters=agent_filter,
+        )
+        agents_by_id = {str(agent.agent_id): agent for agent in agents}
+        comments_by_ids = {}
+        inserted_comments_dict = {comment.scm_comment_id: comment for comment in inserted_comments}
+        for valid_comment in valid_llm_comments:
+            scm_comment_id = str(valid_comment["scm_comment_id"])
+            if scm_comment_id in inserted_comments_dict:
+                inserted_comment = inserted_comments_dict[scm_comment_id]
+                comments_by_ids[inserted_comment.id] = valid_comment
+        agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
+        agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
+        agent_comment_pairs = []
+        for comment_id, comment_data in comments_by_ids.items():
+            # fetch all agents based on "agent_id" and "repo_id"
+            # save in agent_comment_mapping table
+            for bucket in comment_data["buckets"]:
+                agent_id = bucket["agent_id"]
+                if agent_id in agents_by_id:
+                    agent = agents_by_id[agent_id]
+                    agent_comment_pairs.append((comment_id, agent.id))
+                    agent_mappings_to_save.append(
+                        AgentCommentMappings(
+                            pr_comment_id=comment_id, agent_id=agent.id, weight=agents_by_agent_id[agent_id]["weight"]
+                        )
+                    )
+        if len(agent_comment_pairs) != len(set(agent_comment_pairs)):
+            AppLogger.log_info(f"Duplicate Agents received: {agent_comment_pairs}")
+        await AgentCommentMappingService.bulk_insert(agent_mappings_to_save)
+        return llm_comments
 
-        for comment, pr_comment in zip(valid_llm_comments, inserted_comments):
-            for bucket in comment["buckets"]:
-                bucket_id = all_buckets[bucket].id
-                bucket_mappings_to_save.append(CommentBucketMapping(pr_comment_id=pr_comment.id, bucket_id=bucket_id))
-        await CommentBucketMappingService.bulk_insert(bucket_mappings_to_save)
-
-        return all_buckets, llm_comments
-
-    async def update_pr(self, pr_dto: PullRequestDTO, llm_comments, buckets_data, tokens_data, extra_info: dict = None):
-        pr_score = self.get_pr_score(llm_comments, buckets_data)
+    async def update_pr(self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None):
+        pr_score = self.get_pr_score(llm_comments)
         self.review_status = PrStatusTypes.COMPLETED.value
         await PRService.db_update(
             payload={

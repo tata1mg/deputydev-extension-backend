@@ -1,6 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Tuple
 
+from app.common.constants.constants import LARGE_NO_OF_CHUNKS
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.search.native.lexical_search import lexical_search
@@ -59,6 +60,6 @@ class NativeSearch:
             all_chunks,
             key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
             reverse=True,
-        )[: cls.NO_OF_CHUNKS]
+        )[:LARGE_NO_OF_CHUNKS]
 
         return ranked_snippets_list, input_tokens

@@ -5,7 +5,9 @@ from app.backend_common.services.embedding.openai_embedding_manager import (
 )
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.app_utils import safe_index
 from app.backend_common.utils.formatting import append_line_numbers
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunker.handlers.non_vector_db_chunker import (
     NonVectorDBChunker,
 )
@@ -15,16 +17,21 @@ from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.common.utils.executor import process_executor
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
     ConfluenceManager,
 )
 from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import (
     JiraManager,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
+from app.main.blueprints.deputy_dev.utils import is_path_included
 
 
 class ContextService:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR):
+    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.pr_title = None
@@ -44,27 +51,96 @@ class ContextService:
         self.confluence_doc_data_tokens = None
         self.tiktoken = TikToken()
         self.pr_status = None
+        self.pr_diff_handler = pr_diff_handler
 
     async def get_relevant_chunk(self):
+        use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
+        local_repo = GitRepo(self.repo_service.repo_dir)
+        chunker = NonVectorDBChunker(
+            local_repo=local_repo,
+            process_executor=process_executor,
+            use_new_chunking=use_new_chunking,
+        )
+        relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
+            query=await self.pr_diff_handler.get_effective_pr_diff(),
+            local_repo=local_repo,
+            embedding_manager=OpenAIEmbeddingManager(),
+            chunkable_files_with_hashes={},
+            search_type=SearchTypes.NATIVE,
+            process_executor=process_executor,
+            chunking_handler=chunker,
+        )
+        return relevant_chunk
+
+    async def agent_wise_relevant_chunks(self) -> dict:
+        """
+        Retrieves agent-wise relevant chunks by filtering and mapping ranked snippets to agents
+        based on inclusion/exclusion rules. Avoids saving duplicate chunks to optimize memory usage.
+
+        Instead of storing the same snippet multiple times for different agents,
+        the snippets are stored once in code_snippet_list. Agents only store references (indices)
+        to these snippets in relevant_chunks_mapping.
+
+        Returns:
+        - dict: A dictionary containing the following keys:
+            - "relevant_chunks_mapping" (dict): Mapping of agent IDs to the indices of relevant code snippets.
+            - "relevant_chunks" (list): A list of unique code snippets relevant to the agents.
+            - "comment_validation_relevant_chunks_mapping" (list): Indices of snippets for comment validation agents.
+        """
         if not self.relevant_chunk:
-            use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
-            local_repo = GitRepo(self.repo_service.repo_dir)
-            chunker = NonVectorDBChunker(
-                local_repo=local_repo,
-                process_executor=process_executor,
-                use_new_chunking=use_new_chunking,
-            )
-            self.relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
-                query=self.pr_service.pr_commit_diff
-                if get_context_value("pr_reviewable_on_commit")
-                else self.pr_service.pr_diff,
-                local_repo=local_repo,
-                embedding_manager=OpenAIEmbeddingManager(),
-                chunkable_files_with_hashes={},
-                search_type=SearchTypes.NATIVE,
-                process_executor=process_executor,
-                chunking_handler=chunker,
-            )
+            # Get the ranked list of relevant code snippets
+            ranked_snippets_list = await self.get_relevant_chunk()
+            agents = SettingService.Helper.get_uuid_wise_agents()  # Retrieve all agents
+            remaining_agents = len(agents)  # Count of agents yet to be fulfilled
+            code_snippet_list = []  # Unique list of code snippets to avoid duplicates
+            comment_validation_relevant_chunks_mapping = []  # Indices of snippets relevant to comment validation agents
+
+            # Initialize a mapping of agent IDs to relevant chunk indices
+            relevant_chunks_mapping = {agent_id: [] for agent_id, agent_data in agents.items() if agent_data["enable"]}
+
+            for snippet in ranked_snippets_list:
+                if remaining_agents == 0:
+                    break  # Exit early if all agents have enough chunks
+
+                path = snippet.denotation  # Path of the current snippet
+
+                for agent_id in relevant_chunks_mapping:
+                    # Skip agents that already have the required number of chunks
+                    if len(relevant_chunks_mapping[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
+                        continue
+
+                    # Get inclusion/exclusion rules for the agent
+                    inclusions, exclusions = SettingService.Helper.get_agent_inclusion_exclusions(agent_id)
+
+                    # Check if the snippet path is relevant for the agent
+                    if is_path_included(path, exclusions, inclusions):
+                        # Check if the snippet already exists in the code_snippet_list
+                        index = safe_index(code_snippet_list, snippet)
+                        if index is not None:
+                            # If it exists, append its index to the agent's mapping
+                            relevant_chunks_mapping[agent_id].append(index)
+                        else:
+                            # If it doesn't exist, add it to the list and map it to the agent
+                            if agent_id != SettingService.Helper.summary_agent_id():
+                                comment_validation_relevant_chunks_mapping.append(len(code_snippet_list))
+                            relevant_chunks_mapping[agent_id].append(len(code_snippet_list))
+                            code_snippet_list.append(snippet)
+
+                        # Decrement the counter when the agent reaches the chunk limit
+                        if len(relevant_chunks_mapping[agent_id]) == NO_OF_CHUNKS_FOR_LLM:
+                            remaining_agents -= 1
+
+                            # Exit early if all agents are fulfilled
+                            if remaining_agents == 0:
+                                break
+
+            # Save the results to the instance variable
+            self.relevant_chunk = {
+                "relevant_chunks_mapping": relevant_chunks_mapping,
+                "relevant_chunks": code_snippet_list,
+                "comment_validation_relevant_chunks_mapping": comment_validation_relevant_chunks_mapping,
+            }
+
         return self.relevant_chunk
 
     def get_pr_title(self):
@@ -79,14 +155,13 @@ class ContextService:
             self.pr_description_tokens = self.tiktoken.count(self.pr_description)
         return self.pr_description
 
-    async def get_pr_diff(self, append_line_no_info=False):
-        if not self.pr_diff:
-            self.pr_diff = await self.pr_service.get_effective_pr_diff()
-            self.pr_diff_tokens = self.tiktoken.count(self.pr_diff)
+    async def get_pr_diff(self, append_line_no_info=False, operation="code_review", agent_id=None):
+        pr_diff = await self.pr_diff_handler.get_effective_pr_diff(operation, agent_id)
+        self.pr_diff_tokens = await self.pr_diff_handler.pr_diffs_token_counts(operation)
         if append_line_no_info:
-            return append_line_numbers(self.pr_diff)
+            return append_line_numbers(pr_diff)
         else:
-            return self.pr_diff
+            return pr_diff
 
     async def get_user_story(self):
         if self.jira_story:
