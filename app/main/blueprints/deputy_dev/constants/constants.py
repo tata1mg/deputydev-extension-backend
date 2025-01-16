@@ -123,6 +123,13 @@ class ChatTypes(ExtendedEnum):
     DD = "dd"
 
 
+class CommentTypes(ExtendedEnum):
+    CHAT = "chat"
+    REVIEW = "review"
+    SUMMARY = "summary"
+    UNKNOWN = "unknown"
+
+
 class MessageTypes(Enum):
     CHAT = "chat"
     FEEDBACK = "feedback"

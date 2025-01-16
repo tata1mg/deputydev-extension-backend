@@ -18,7 +18,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.code_review.base_review_manager import (
-    BaseReviewManager,
+    BasePRReviewManager,
 )
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
     MultiAgentPRReviewManager,
@@ -42,7 +42,7 @@ NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
 
 
-class PRReviewManager(BaseReviewManager):
+class PRReviewManager(BasePRReviewManager):
     """Manager for processing Pull Request reviews."""
 
     @classmethod
