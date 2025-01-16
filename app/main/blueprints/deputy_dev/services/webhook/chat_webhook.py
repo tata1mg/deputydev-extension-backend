@@ -72,6 +72,7 @@ class ChatWebhook:
                 "commit_id": request_payload["pullrequest"]["destination"]["commit"]["hash"],
                 "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "workspace_slug": request_payload["repository"]["workspace"]["slug"],
+                "repo_id": request_payload["repository"]["uuid"],
                 "vcs_type": VCSTypes.bitbucket.value,
             },
             "author_info": {
@@ -183,8 +184,6 @@ class ChatWebhook:
             return cls._parse_github_pr_review_comment(request_payload)
         elif cls._is_pr_issue_comment(request_payload):
             return cls._parse_github_pr_issue_comment(request_payload)
-
-        return
 
     @classmethod
     def __get_bitbucket_comment(cls, payload):

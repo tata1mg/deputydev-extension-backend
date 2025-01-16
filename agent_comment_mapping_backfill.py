@@ -1,8 +1,9 @@
-import psycopg2
-import psycopg2.extras
-from typing import List, Tuple
 import sys
 from contextlib import contextmanager
+from typing import List, Tuple
+
+import psycopg2
+import psycopg2.extras
 
 # Database connection settings
 db_config = {
