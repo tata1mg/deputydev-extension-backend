@@ -1,5 +1,6 @@
 # flake8: noqa
 import json
+from string import Template
 
 from torpedo import CONFIG
 
@@ -41,7 +42,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
            - When multiple comments on a single line have similar semantic meanings, intelligently merge them to avoid redundancy. Follow these rules:
              - **Same Function or Variable Context**: If comments reference the same function or line context (e.g., missing docstrings, type hints, or complex logic), consolidate them into one summarized bullet.
              - **Unique Comments in Separate Bullets**: If every comment is semantically unique on a line and cannot be clubbed with another bucket comment, create a separate bullet point for each unique comment.
-             - **Single Bullet for Uniform Meaning**: If all comments have the same semantic meaning, combine them into one summary bullet, choosing the most relevant bucket name.
+             - **Single Bullet for Uniform Meaning**: If all comments have the same semantic meaning, combine them into one summary bullet, choosing the most relevant bucket name and make sure agent_id is also selected according to bucket.
              - **Separate Bullets for Mixed Meanings**: If there are subsets of comments with shared meanings, group each subset under a bullet with the most relevant bucket name, using concise language to avoid duplication.
            - Preserve the integrity of all individual bucket values in the input data, but make the output summary concise and grouped based on semantic similarity and don't loose actual context of comment.
         
@@ -62,7 +63,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         - Consider the PR diff and comments closely while providing summary.
         
         ### Input Comments that needs to be summarized: 
-        {comments}
+        ${COMMENTS}
     
         Below is a sample input structure for the comments you will receive:
         
@@ -75,7 +76,10 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
                 "Security: Hardcoded batch size (100) could lead to DoS",
                 "Performance: Fixed batch size needs optimization"
             ],
-            "buckets": ["SECURITY", "PERFORMANCE"],
+            "buckets": [
+                {"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
+                {"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}
+            ],
             "corrective_code": [
                 "BATCH_SIZE = config.get('REDIS_BATCH_SIZE', 100)",
                 "batch_size = max(100, min(1000, total_embeddings // 10))"
@@ -93,7 +97,11 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
                 "CODE_ROBUSTNESS: Code structure leads to maintenance challenges",
                 "RUNTIME_ERROR: Unique error handling approach needed"
             ],
-            "buckets": ["MAINTAINABILITY", "CODE_ROBUSTNESS", "RUNTIME_ERROR"],
+            "buckets": [
+                {"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
+                {"name": "CODE_ROBUSTNESS", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]},
+                {"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}
+            ],
             "corrective_code": [
                 "# Refactor to remove duplication",
                 "# Improve error handling strategy",
@@ -115,7 +123,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
             'comment': '<A single summarized comment for all the comments. Make bucket wise bullets in summary>',
             'corrective_code': '<Intelligently union of combined Corrective code for all the comments provided as a string.>',
             'confidence_score': '<confidence_score field value in input comment>;,
-            'buckets': <List of buckets only for the buckets used as bullet names in the summary; ensure spelling and format match the input exactly>,
+            'buckets': <This is list of buckets [{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}]>,
             'model': <model field value in input comment>,
             'agent': <agent field value in input comment>,
             'is_valid': <is_valid field value in input comment. It can be true, false or null. Return as it is as mentioned in input comment>
@@ -129,7 +137,10 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
                 "file_path": "app/services/cache.py",
                 "line_number": "+138",
                 "comment": "- **SECURITY**: Hardcoded batch size (100) poses potential DoS risk through memory exhaustion\\n- **PERFORMANCE**: Implement dynamic batch sizing for optimal Redis operations",
-                "buckets": ["SECURITY", "PERFORMANCE"],
+                "buckets": [
+                    {"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
+                    {"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}
+                ],
                 "corrective_code": "# Configure dynamic batch size with security limits\nMAX_BATCH_SIZE = config.get('REDIS_MAX_BATCH_SIZE', 1000)\nMIN_BATCH_SIZE = config.get('REDIS_MIN_BATCH_SIZE', 100)\n\nbatch_size = max(MIN_BATCH_SIZE, min(MAX_BATCH_SIZE, total_embeddings // 10))\n\nfor i in range(0, len(cache_keys), batch_size):\n    batch = cache_keys[i:i + batch_size]",
                 "is_valid": true,
                 "confidence_score": 0.95,
@@ -141,7 +152,10 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
                 "file_path": "example/class.py",
                 "line_number": "42",
                 "comment": "- **MAINTAINABILITY**: Duplicated method violates DRY principle and introduces maintenance challenges\\n- **RUNTIME_ERROR**: Unique error handling approach needed",
-                "buckets": ["MAINTAINABILITY", "RUNTIME_ERROR"],
+                "buckets": [
+                    {"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
+                    {"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}
+                ]
                 "corrective_code": "Intelligently combine: # Refactor to remove duplication and standardize method implementation and Implement comprehensive error handling strategy",
                 "is_valid": true,
                 "confidence_score": 0.95,
@@ -153,7 +167,7 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
         ```
         
         PR Diff on which comments needs to be validated:
-        {pr_diff}
+        ${PR_DIFF}
     
     
         ### Additional Guardrails
@@ -171,16 +185,20 @@ class OpenAICommentSummarizationAgent(AgentServiceBase):
             - When merging multiple corrective code suggestions, intelligently combine and take union of them so that the final corrective_code field contains a comprehensive fix for the line in question.
         
         4. No missing comments.
-            - No comments should be missed during processing. If input list contains 5 comments then we should get corresponding 5 comments in output response, each containing a summary as mentioned above.  
+            - No comments should be missed during processing. If input list contains 5 comments then we should get corresponding 5 comments in output response, each containing a summary as mentioned above.
+            
+        5. Unique Buckets:
+            - If multiple comments exist for the same bucket on same line, merge the comments and return only unique buckets for a line in the specified structure.  
     
         """
 
     async def get_system_n_user_prompt(self, comments):
+        # in get_pr_diff function agent_id is not passed so it will return pr_diff using only global exclusion/inclusion
         pr_diff = await self.context_service.get_pr_diff(append_line_no_info=True)
         system_message = self.get_comments_summarization_system_prompt()
-        user_message = self.get_comments_summarization_user_prompt().format(
-            pr_diff=pr_diff, comments=json.dumps(comments)
-        )
+        user_message = self.get_comments_summarization_user_prompt()
+        user_message = Template(user_message)
+        user_message = user_message.safe_substitute({"PR_DIFF": pr_diff, "COMMENTS": json.dumps(comments)})
         return {
             "system_message": system_message,
             "user_message": user_message,

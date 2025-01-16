@@ -3,10 +3,10 @@ import re
 from app.backend_common.models.dto.pr.bitbucket_pr import BitbucketPrModel
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.services.credentials import AuthHandler
-from app.backend_common.services.pr.base_pr import PR_NOT_FOUND, BasePR
+from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.bitbucket_repo import BitbucketRepo
-from app.common.constants.constants import VCSTypes
+from app.common.constants.constants import PR_NOT_FOUND, VCSTypes
 from app.common.utils.context_vars import get_context_value, set_context_values
 
 ATLASSIAN_ISSUE_URL_PREFIX = "https://1mgtech.atlassian.net/browse/"
@@ -115,14 +115,10 @@ class BitbucketPR(BasePR):
         Raises:
             ValueError: If the pull request diff cannot be retrieved.
         """
-        if self.pr_diff:
-            return self.pr_diff
-
         pr_diff, status_code = await self.repo_client.get_pr_diff()
         if status_code == 404:
             return PR_NOT_FOUND
-        self.pr_diff = self.exclude_pr_diff(pr_diff.text)
-        return self.pr_diff
+        return pr_diff.text
 
     async def get_commit_diff(self):
         """
@@ -138,18 +134,13 @@ class BitbucketPR(BasePR):
         Raises:
             ValueError: If the repo diff cannot be retrieved.
         """
-        if self.pr_commit_diff:
-            return self.pr_commit_diff
 
         commit_diff, status_code = await self.repo_client.get_commit_diff(
             self.pr_details.commit_id, get_context_value("last_reviewed_commit")
         )
         if status_code == 404:
             return PR_NOT_FOUND
-
-        if commit_diff:
-            self.pr_commit_diff = self.exclude_pr_diff(commit_diff.text)
-        return self.pr_commit_diff
+        return commit_diff.text if commit_diff else ""
 
     def __get_issue_id(self, title) -> str:
         title_html = title.get("html", "")
