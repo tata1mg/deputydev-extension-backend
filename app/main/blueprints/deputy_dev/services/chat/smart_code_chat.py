@@ -8,7 +8,7 @@ from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import build_openai_conversation_message
 from app.backend_common.utils.formatting import format_code_blocks
-from app.common.constants.constants import VCSTypes
+from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
@@ -17,6 +17,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MessageTypes,
     MetaStatCollectionTypes,
 )
+from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.models.human_comment_request import (
     HumanCommentRequest,
@@ -42,6 +43,9 @@ from app.main.blueprints.deputy_dev.services.experiment.experiment_service impor
 from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
     ChatPromptService,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
     StatsCollectionTrigger,
@@ -49,9 +53,6 @@ from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_t
 from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWebhook
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
-)
-from app.main.blueprints.deputy_dev.services.workspace.setting_service import (
-    SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,
@@ -147,6 +148,7 @@ class SmartCodeChatManager:
             repo_id=chat_request.repo.repo_id,
             auth_handler=auth_handler,
         )
+        pr_diff_handler = PRDiffHandler(pr)
         # Set Team id in context vars
         workspace_dto = await WorkspaceService.find(scm_workspace_id=chat_request.repo.workspace_id, scm=vcs_type)
         team_id = None
@@ -175,7 +177,17 @@ class SmartCodeChatManager:
 
             logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
 
-            diff = await pr.get_effective_pr_diff()
+            diff = await pr_diff_handler.get_effective_pr_diff("chat")
+            if diff == PR_NOT_FOUND:
+                await comment_service.create_comment_on_parent(
+                    "Unable to process the request", chat_request.comment.id, ""
+                )
+                return
+            if diff == LARGE_PR_DIFF:
+                await comment_service.create_comment_on_parent(
+                    "PR diff is larger than 20k lines, can not process request", chat_request.comment.id, ""
+                )
+                return
             user_story_description = await JiraManager(issue_id=pr.pr_details.issue_id).get_description_text()
             comment_thread = await comment_service.fetch_comment_thread(chat_request)
             comment_context = {
