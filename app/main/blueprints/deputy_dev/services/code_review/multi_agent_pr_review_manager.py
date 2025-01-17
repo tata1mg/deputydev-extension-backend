@@ -98,6 +98,7 @@ class MultiAgentPRReviewManager:
     async def __execute_pass(self):
         await self._build_prompts()
         if not self.current_prompts:
+            self.llm_comments = {}
             return
         self.all_prompts_exceed_token_limit()
         if self._is_large_pr:
