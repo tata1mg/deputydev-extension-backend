@@ -39,7 +39,6 @@ class FeatureRunner:
             and self.app_context.embedding_manager is not None
             and self.app_context.chunkable_files_with_hashes is not None
             and self.app_context.auth_token is not None
-            and self.app_context.local_user_details is not None
             and self.app_context.process_executor is not None
             and self.app_context.usage_hash is not None
         ):
@@ -47,7 +46,6 @@ class FeatureRunner:
                 asyncio.create_task(
                     FeatureFactory.handle_feature(
                         process_executor=self.app_context.process_executor,
-                        local_user_details=self.app_context.local_user_details,
                         feature=self.app_context.operation,
                         query=self.app_context.query,
                         one_dev_client=self.app_context.one_dev_client,
