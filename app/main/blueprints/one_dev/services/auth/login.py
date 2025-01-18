@@ -24,7 +24,6 @@ class Login:
             jwt = authorization_header.split(" ")[1]
             session_data = JWTHandler(signing_key=CONFIG.config["JWT_SECRET_KEY"]).verify_token(jwt)
             access_token = session_data.get("access_token")
-            print(access_token)
             response = await SupabaseAuth.verify_auth_token(access_token)
             if not response["valid"]:
                 raise BadRequestException("Auth token not verified")

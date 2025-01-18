@@ -3,6 +3,7 @@ from typing import Any, Dict, Tuple
 import uuid
 import requests
 import time
+import keyring
 
 from git.config import GitConfigParser
 from prompt_toolkit import PromptSession
@@ -26,6 +27,7 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
+from app.main.blueprints.one_dev.routes.end_user.v1.auth import verify_auth_token
 
 DEPUTYDEV_AUTH_TOKEN = ConfigManager.configs["AUTH_TOKEN_ENV_VAR"]
 class Authentication(BaseScreenHandler):
@@ -37,31 +39,20 @@ class Authentication(BaseScreenHandler):
     def screen_type(self) -> ScreenType:
         return ScreenType.AUTHENTICATION
 
-    async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
-        # current_auth_token = os.getenv(DEPUTYDEV_AUTH_TOKEN)
-        # if current_auth_token:
-        #     self.app_context.args.deputydev_auth_token = current_auth_token
-        # (self.app_context.auth_token, _is_existing_arg_valid,) = await validate_existing_text_arg_or_get_input(
-        #     session=self.session,
-        #     arg_name="deputydev_auth_token",
-        #     prompt_message=f"Enter your auth token (you can set this in {DEPUTYDEV_AUTH_TOKEN} env variable): ",
-        #     validator=AuthTokenValidator(self.app_context),
-        #     app_context=self.app_context,
-        #     validate_while_typing=False,
-        # )
+    def store_auth_token(self, token: str):
+        """Stores the auth_token securely using keyring."""
+        keyring.set_password("my_application", "auth_token", token)
 
-        print("Welcome to DeputyDev CLI!")
+    def load_auth_token(self) -> str:
+        """Loads the auth_token securely using keyring."""
+        return keyring.get_password("my_application", "auth_token")
 
-        BASE_URL = 'http://localhost:3000'
-        device_code = str(uuid.uuid4())
-        is_cli = True
-
-        auth_url = f"{BASE_URL}/cli?device_code={device_code}&is_cli={is_cli}"
-        print(f"Please vist this link for authentication: {auth_url}")
-
+    async def poll_session(self, device_code: str):
+        """Polls the session for authentication status."""
         max_attempts = 60
         for attempt in range(max_attempts):
             try:
+                print(f"Attempt {attempt + 1}/{max_attempts}: Checking authentication status...")
                 response = await self.app_context.one_dev_client.get_session(
                     headers={
                         "Content-Type": "application/json",
@@ -72,8 +63,9 @@ class Authentication(BaseScreenHandler):
                 # Check if the auth token contains an error
                 if 'error' not in response:
                     self.app_context.auth_token = response['jwt_token']
+                    # Storing jwt token in user's machine using keyring
+                    self.store_auth_token(self.app_context.auth_token)
                     print("Authentication successful!")
-                    print(f"Your auth token is: {self.app_context.auth_token}")
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
                 else:
                     print("Authentication is in progress. Please wait...")
@@ -85,3 +77,49 @@ class Authentication(BaseScreenHandler):
 
         # If we reach here, it means authentication failed
         print("Authentication failed, please try again later.")
+
+    async def login(self, auth_token: str) -> bool:
+        """Attempts to authenticate the user using the provided auth token."""
+        if not auth_token:
+            print("Session not found in user's machine. Please login again!")
+            return False
+
+        try:
+            print("Verifying the auth token...")
+            response = await self.app_context.one_dev_client.verify_auth_token(
+                    headers={
+                            "Content-Type": "application/json",
+                            "Authorization": f"Bearer {auth_token}",
+                        }
+                )
+            # Check if the response contains a status of 'verified'
+            if response["status"] == "VERIFIED":
+                print("Authenticated successfully!")
+                return True
+            else:
+                print("Session is expired. Please login again!")
+                return False
+
+        except Exception as e:
+            print(f"An error occurred during authentication: {e}. Please login again!")
+            return False
+
+    async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
+        print("Welcome to DeputyDev CLI!")
+        print("Attempting to load your authentication token...")
+
+        # Extracting auth token from user's machine
+        auth_token = self.load_auth_token()
+        if await self.login(auth_token):
+            print("You are now logged in. Redirecting to the main interface...")
+            return self.app_context, ScreenType.DEFAULT
+
+        BASE_URL = 'http://localhost:3000'
+        device_code = str(uuid.uuid4())
+        is_cli = True
+
+        auth_url = f"{BASE_URL}/cli?device_code={device_code}&is_cli={is_cli}"
+        print(f"Please visit this link for authentication: {auth_url}")
+
+        # Polling session
+        return await self.poll_session(device_code)
