@@ -65,7 +65,6 @@ class FeatureFactory:
         cls,
         feature: CLIFeatures,
         process_executor: ProcessPoolExecutor,
-        local_user_details: LocalUserDetails,
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
@@ -80,7 +79,6 @@ class FeatureFactory:
     ) -> Union[FinalSuccessJob, FinalFailedJob]:
         handler = cls.feature_handler_map[feature](
             process_executor=process_executor,
-            local_user_details=local_user_details,
             query=query,
             one_dev_client=one_dev_client,
             local_repo=local_repo,
