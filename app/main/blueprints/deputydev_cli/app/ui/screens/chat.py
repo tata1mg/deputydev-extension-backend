@@ -108,10 +108,6 @@ class ChatScreen(BaseScreenHandler):
                     "Authorization": f"Bearer {self.app_context.auth_token}",
                     "X-Session-Id": self.app_context.session_id,
                 }
-                if self.app_context.local_user_details and self.app_context.local_user_details.email:
-                    headers["X-User-Email"] = self.app_context.local_user_details.email
-                if self.app_context.local_user_details and self.app_context.local_user_details.name:
-                    headers["X-User-Name"] = self.app_context.local_user_details.name
                 try:
                     await self.app_context.one_dev_client.record_feedback(
                         payload={
@@ -133,10 +129,6 @@ class ChatScreen(BaseScreenHandler):
                     "Authorization": f"Bearer {self.app_context.auth_token}",
                     "X-Session-Id": self.app_context.session_id,
                 }
-                if self.app_context.local_user_details and self.app_context.local_user_details.email:
-                    headers["X-User-Email"] = self.app_context.local_user_details.email
-                if self.app_context.local_user_details and self.app_context.local_user_details.name:
-                    headers["X-User-Name"] = self.app_context.local_user_details.name
                 try:
                     await self.app_context.one_dev_client.record_feedback(
                         payload={

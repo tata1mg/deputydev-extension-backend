@@ -8,6 +8,10 @@
     "SPAN_FRAMES_MIN_DURATION": "5ms",
     "TRANSACTION_SAMPLE_RATE": 1
   },
+  "SUPABASE": {
+    "SUPABASE_URL": "",
+    "SUPABASE_KEY": ""
+  },
   "DEBUG": false,
   "ACCESS_LOG": true,
   "ENABLE_WORKER": false,
