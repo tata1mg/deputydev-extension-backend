@@ -30,7 +30,6 @@ class BaseFeatureHandler(ABC):
     def __init__(
         self,
         process_executor: ProcessPoolExecutor,
-        local_user_details: LocalUserDetails,
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
@@ -45,7 +44,6 @@ class BaseFeatureHandler(ABC):
         usage_hash: Optional[str] = None,
     ):
         self.process_executor = process_executor
-        self.local_user_details = local_user_details
         self.query = query
         self.one_dev_client = one_dev_client
         self.local_repo = local_repo

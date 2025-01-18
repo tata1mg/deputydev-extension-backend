@@ -54,7 +54,6 @@ class AppContext(BaseModel):
     operation: Optional[CLIFeatures] = None
     pr_config: Optional[PRConfig] = None
     registered_repo_details: Optional[RegisteredRepo] = None
-    local_user_details: Optional[LocalUserDetails] = None
     process_executor: Optional[ProcessPoolExecutor] = None
     usage_hash: Optional[str] = None
     last_operation_job_id: Optional[int] = None
