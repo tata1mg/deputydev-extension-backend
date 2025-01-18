@@ -1,6 +1,5 @@
 
-import pdb
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Any
 import jwt
 from datetime import datetime, timezone
 from app.backend_common.services.supabase.client import supabase
@@ -24,7 +23,6 @@ class SupabaseAuth:
                 - 'user_response': UserResponse object if token is valid, None otherwise
         """
         try:
-            pdb.set_trace()
             # Decode the JWT token without verification to check expiration
             decoded_token = jwt.decode(access_token, options={"verify_signature": False})
 
@@ -40,7 +38,7 @@ class SupabaseAuth:
 
             # Verify token with Supabase
             user_response = supabase.auth.get_user(access_token)
-            # print(user_response)
+            print(type(user_response))
             if user_response.user:
                 return {
                     'valid': True,
