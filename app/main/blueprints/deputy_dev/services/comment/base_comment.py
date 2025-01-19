@@ -61,9 +61,7 @@ class BaseComment(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def process_chat_comment(
-        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
-    ):
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
         """process"""
         if add_note:
             # This is a temporary addition to convey the user of the deprecation of #scrit
