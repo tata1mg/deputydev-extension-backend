@@ -1,10 +1,13 @@
+import sys
 import time
 import uuid
+import webbrowser
 from typing import Any, Dict, Tuple
 
 import keyring
 from prompt_toolkit import PromptSession
 
+from app.main.blueprints.deputydev_cli.app.clients.constants import FRONTEND_URL
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
 )
@@ -61,6 +64,7 @@ class Authentication(BaseScreenHandler):
 
         # If we reach here, it means authentication failed
         print("Authentication failed, please try again later.")
+        sys.exit()  # Exit the program
 
     async def verify_current_session(self) -> bool:
         """Attempts to authenticate the user using the provided auth token."""
@@ -102,13 +106,14 @@ class Authentication(BaseScreenHandler):
             return self.app_context, ScreenType.DEFAULT
 
         # If the current session is not present or is not valid, initiate login
-        # TODO: Add this hard coded Frontend URL in constants
-        BASE_URL = "http://localhost:3000"
         device_code = str(uuid.uuid4())
         is_cli = True
 
-        auth_url = f"{BASE_URL}/cli?device_code={device_code}&is_cli={is_cli}"
+        auth_url = f"{FRONTEND_URL}/cli?device_code={device_code}&is_cli={is_cli}"
         print(f"Please visit this link for authentication: {auth_url}")
+
+        # Open the URL in the default web browser
+        webbrowser.open(auth_url)
 
         # Polling session
         return await self.poll_session(device_code)
