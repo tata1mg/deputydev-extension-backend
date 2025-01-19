@@ -36,33 +36,37 @@ class SupabaseAuth:
                     return {
                         "valid": False,
                         "message": "Token has expired",
+                        "user_response": None,
                     }
 
             # Verify token with Supabase
             user_response = supabase.auth.get_user(access_token)
-            print(type(user_response))
             if user_response.user:
-                return {"valid": True, "message": "Token is valid"}
+                return {"valid": True, "message": "Token is valid", "user_response": user_response.user.email}
             else:
                 return {
                     "valid": False,
                     "message": "Token is invalid",
+                    "user_response": None,
                 }
 
         except jwt.ExpiredSignatureError:
             return {
                 "valid": False,
                 "message": "Token has expired",
+                "user_response": None,
             }
         except jwt.InvalidTokenError:
             return {
                 "valid": False,
                 "message": "Invalid token format",
+                "user_response": None,
             }
         except Exception as e:
             return {
                 "valid": False,
                 "message": f"Token validation failed: {str(e)}",
+                "user_response": None,
             }
 
     @classmethod
