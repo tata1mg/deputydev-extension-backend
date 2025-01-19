@@ -19,7 +19,6 @@ from app.main.blueprints.deputydev_cli.app.managers.features.base_feature_handle
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FinalFailedJob,
     FinalSuccessJob,
-    LocalUserDetails,
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,
