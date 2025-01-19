@@ -62,10 +62,13 @@ class Authentication(BaseScreenHandler):
         # If we reach here, it means authentication failed
         print("Authentication failed, please try again later.")
 
-    async def login(self, auth_token: str) -> bool:
+    async def verify_current_session(self) -> bool:
         """Attempts to authenticate the user using the provided auth token."""
+
+        # Extracting auth token from user's machine
+        auth_token = self.load_auth_token()
+
         if not auth_token:
-            print("Session not found in user's machine. Please login again!")
             return False
 
         try:
@@ -90,16 +93,15 @@ class Authentication(BaseScreenHandler):
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
         print("Welcome to DeputyDev CLI!")
-        print("Attempting to load your authentication token...")
 
-        # Extracting auth token from user's machine
-        auth_token = self.load_auth_token()
-        is_valid = await self.login(auth_token)
-        if is_valid:
+        # Check if the current session is present and valid
+        is_current_session_present_and_valid = await self.verify_current_session()
+        if is_current_session_present_and_valid:
             self.app_context.auth_token = self.load_auth_token()
             print("You are now logged in. Redirecting to the main interface...")
             return self.app_context, ScreenType.DEFAULT
 
+        # If the current session is not present or is not valid, initiate login
         # TODO: Add this hard coded Frontend URL in constants
         BASE_URL = "http://localhost:3000"
         device_code = str(uuid.uuid4())
