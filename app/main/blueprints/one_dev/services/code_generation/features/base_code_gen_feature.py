@@ -46,9 +46,7 @@ class BaseCodeGenFeature(ABC, Generic[PayloadType]):
                 session_id=payload.session_id,
                 type=cls.feature.value,
                 team_id=payload.auth_data.team_id,
-                advocacy_id=payload.auth_data.advocacy_id,
-                user_email=payload.auth_data.user_email,
-                user_name=payload.auth_data.user_name,
+                user_id=payload.auth_data.user_id,
             )
         )
         asyncio.create_task(cls.run_feature(payload, job.id))

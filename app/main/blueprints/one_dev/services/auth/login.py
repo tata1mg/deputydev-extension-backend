@@ -1,15 +1,8 @@
-from typing import Any, Dict
-
-from sanic.log import logger
 from torpedo import CONFIG
-from tortoise.exceptions import DoesNotExist
+from torpedo.exceptions import BadRequestException
 
 from app.backend_common.services.supabase.auth import SupabaseAuth
-from app.common.exception.exception import TeamNotFound
 from app.common.services.authentication.jwt import JWTHandler
-from app.common.utils.config_manager import ConfigManager
-from app.main.blueprints.deputy_dev.models.dao.postgres.teams import Teams
-from torpedo.exceptions import BadRequestException
 
 
 class Login:

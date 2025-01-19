@@ -12,8 +12,6 @@ class JobDTO(BaseModel):
     final_output: Optional[Dict[str, Any]] = None
     meta_info: Optional[Dict[str, Any]] = None
     team_id: int
-    advocacy_id: int
-    user_email: Optional[str] = None
-    user_name: Optional[str] = None
+    user_id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

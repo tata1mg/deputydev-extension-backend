@@ -12,7 +12,6 @@ from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main im
     FeatureHandlingRedirections,
     FeatureHandlingResult,
     FeatureNextAction,
-    LocalUserDetails,
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,
