@@ -134,7 +134,7 @@ class PRReviewManager(BasePRReviewManager):
         ).get_code_review_comments()
         # We will only post summary for first PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
-            await pr_service.update_pr_description(pr_summary.get("response"))
+            await pr_service.update_pr_description(pr_summary)
 
         if _is_large_pr:
             await comment_service.create_pr_comment(

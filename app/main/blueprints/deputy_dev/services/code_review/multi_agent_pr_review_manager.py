@@ -3,6 +3,15 @@ from torpedo import CONFIG
 from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMManager
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.formatting import (
+    categorize_loc,
+    format_summary_loc_time_text,
+)
+from app.common.constants.constants import (
+    PR_SIZING_TEXT,
+    PR_SUMMARY_COMMIT_TEXT,
+    PR_SUMMARY_TEXT,
+)
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -88,12 +97,14 @@ class MultiAgentPRReviewManager:
 
     # blending engine section start
     async def filter_comments(self):
+        if not self.llm_comments:
+            return
         self.filtered_comments = await CommentBlendingEngine(self.llm_comments, self.context_service).blend_comments()
 
     # blending engine section end
 
     def populate_pr_summary(self):
-        self.pr_summary = self.llm_comments.get(AgentTypes.PR_SUMMARY.value) or ""
+        self.pr_summary = self.llm_comments.pop(AgentTypes.PR_SUMMARY.value) or ""
 
     async def __execute_pass(self):
         await self._build_prompts()
@@ -141,7 +152,8 @@ class MultiAgentPRReviewManager:
         if get_context_value("setting")["code_review_agent"]["enable"]:
             await self.execute_pass_2() if self._is_reflection_enabled() else None
             await self.filter_comments()
-        return self.return_final_response()
+        final_response = await self.return_final_response()
+        return final_response
 
     def populate_meta_info(self):
         for agent, prompt in self.current_prompts.items():
@@ -154,8 +166,28 @@ class MultiAgentPRReviewManager:
                 }
             )
 
-    def return_final_response(self):
-        return self.filtered_comments, self.pr_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
+    async def format_summary_with_metadata(self, summary: str) -> str:
+        """Format the summary with PR metadata including size, LOC, and commit info."""
+        # Get LOC count and categorize
+        loc = await self.pr_service.get_loc_changed_count()
+        category, time = categorize_loc(loc)
+        loc_text, time_text = format_summary_loc_time_text(loc, category, time)
+
+        # Format the complete summary with metadata
+        formatted_summary = (
+            f"\n\n---\n\n{PR_SUMMARY_TEXT}"
+            f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}"
+            f"\n\n---\n\n{summary}"
+            f"\n\n---\n\n{PR_SUMMARY_COMMIT_TEXT.format(commit_id=self.pr_service.pr_model().commit_id())}"
+        )
+
+        return formatted_summary
+
+    async def return_final_response(self):
+        formatted_summary = ""
+        if self.pr_summary and isinstance(self.pr_summary, dict) and self.pr_summary.get("response"):
+            formatted_summary = await self.format_summary_with_metadata(self.pr_summary["response"])
+        return self.filtered_comments, formatted_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
 
     def all_prompts_exceed_token_limit(self):
         all_exceeded = True

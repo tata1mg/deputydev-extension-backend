@@ -20,8 +20,6 @@ class PRWebhook:
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
-            if payload.get("issue") and payload.get("issue").get("pull_request"):
-                return cls.__parse_github_issue_comment_payload(payload)
             return cls.__parse_github_payload(payload)
         elif vcs_type == VCSTypes.gitlab.value:
             parsed_payload = await cls.__parse_gitlab_payload(payload)
@@ -59,6 +57,9 @@ class PRWebhook:
         #  only gets request for PR open and comment created on a PR with #review tag
         if github_payload.get("action") not in [GithubActions.OPENED.value, GithubActions.CREATED.value]:
             return
+        if github_payload.get("issue") and github_payload.get("issue").get("pull_request"):
+            return cls.__parse_github_issue_comment_payload(github_payload)
+
         pr_id = github_payload["pull_request"]["number"]
         repo_name = get_vcs_repo_name_slug(github_payload["pull_request"]["head"]["repo"]["full_name"])
         request_id = github_payload["request_id"]

@@ -155,17 +155,13 @@ class BitbucketComment(BaseComment):
         comment["scm_comment_id"] = result_json["id"]
         return result
 
-    async def process_chat_comment(
-        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
-    ):
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
         comment = await super().process_chat_comment(comment, chat_request, add_note)
         if chat_request.comment.parent:
             await self.create_comment_on_thread(comment, chat_request)
         elif chat_request.comment.line_number_from or chat_request.comment.line_number_to:
             comment_payload = self.comment_helper.format_chat_comment(comment, chat_request)
             await self.create_comment_on_line(comment_payload)
-        elif reply_to_root:
-            await self.create_comment_on_parent(comment, chat_request.comment.id)
         else:
             await self.create_pr_comment(comment, config.get("FEATURE_MODELS").get("PR_CHAT"))
 

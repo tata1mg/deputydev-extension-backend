@@ -112,9 +112,7 @@ class GithubComment(BaseComment):
             AppLogger.log_warn(f"Invalid data format in comments: {e}")
             return ""
 
-    async def process_chat_comment(
-        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
-    ):
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
         """
         Create a comment on a parent comment in pull request.
 
