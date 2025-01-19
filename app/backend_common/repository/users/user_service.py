@@ -2,9 +2,9 @@ from typing import List, Union
 
 from sanic.log import logger
 
-from app.main.blueprints.deputy_dev.models.dao.postgres.users import Users
 from app.backend_common.models.dto.user_dto import UserDTO
 from app.backend_common.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres.users import Users
 
 
 class UserService:
@@ -33,9 +33,7 @@ class UserService:
 
     @classmethod
     async def find_or_create(cls, name, email, org_name):
-        user_dto = await cls.db_get(
-            filters={"email": email}, fetch_one=True
-        )
+        user_dto = await cls.db_get(filters={"email": email}, fetch_one=True)
         if not user_dto:
             user_data = {
                 "name": name,
