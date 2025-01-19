@@ -88,9 +88,7 @@ class GitlabComment(BaseComment):
             logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
             return ""
 
-    async def process_chat_comment(
-        self, comment, chat_request: ChatRequest, add_note: bool = False, reply_to_root: bool = False
-    ):
+    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
         """
         Create a comment on a parent comment in pull request.
 

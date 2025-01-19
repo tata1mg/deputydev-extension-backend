@@ -44,11 +44,32 @@ class AgentFactory:
         AgentTypes.PR_SUMMARY.value: OpenAIPRSummaryAgent,
     }
 
-    def __init__(self, reflection_enabled: bool, context_service: ContextService):
+    def __init__(self, reflection_enabled: bool, context_service: ContextService, include_agents: list = None):
         self.context_service = context_service
         self.reflection_enabled = reflection_enabled
-        self.factories = deepcopy(self.FACTORIES)
+        self.include_agents = include_agents
+        self.factories = {}
+        self.initialize_factories()
         self.initialize_anthropic_custom_agents()
+
+    # Concept of include_agents and exclude_agents:
+    # If only include_agents is provided, self.factories will contain only the agents
+    # specified in include_agents, and prompts will only be built for those agents.
+    #
+    # If only exclude_agents is provided, self.factories will contain all the default agents.
+    # However, while building prompts for each agent, the agents specified in exclude_agents
+    # will be excluded from the prompt generation.
+    #
+    # If both include_agents and exclude_agents are provided, self.factories will first be built
+    # based on include_agents. Then, while building prompts, the agents specified in exclude_agents
+    # will be excluded from the agents in self.factories.
+
+    def initialize_factories(self):
+        """Initialize factories based on include_agents filter."""
+        if self.include_agents:
+            self.factories = {agent: self.FACTORIES[agent] for agent in self.include_agents if agent in self.FACTORIES}
+        else:
+            self.factories = deepcopy(self.FACTORIES)
 
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
         prompts = await self.build_code_review_agents_prompt(reflection_stage, previous_review_comments, exclude_agents)
@@ -97,7 +118,9 @@ class AgentFactory:
     def initialize_anthropic_custom_agents(self):
         for agent_name, agent_setting in SettingService.Helper.agents_settings().items():
             if agent_setting["is_custom_agent"] and agent_setting["enable"]:
-                agent_class = AnthropicCustomAgent.create_custom_agent(
-                    agent_name, self.context_service, self.reflection_enabled
-                )
-                self.factories[agent_name] = agent_class
+                # For cases where include_agents is passed then only include those custom agent if they are part of include_agents list
+                if not self.include_agents or (self.include_agents and agent_name in self.include_agents):
+                    agent_class = AnthropicCustomAgent.create_custom_agent(
+                        agent_name, self.context_service, self.reflection_enabled
+                    )
+                    self.factories[agent_name] = agent_class

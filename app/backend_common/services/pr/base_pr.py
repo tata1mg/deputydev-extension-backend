@@ -5,43 +5,8 @@ from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.utils.formatting import (
-    PRDiffSizingLabel,
-    format_summary_loc_time_text,
-)
-from app.common.constants.constants import PR_SIZING_TEXT, PR_SUMMARY_TEXT
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
-
-
-def categorize_loc(loc: int) -> tuple:
-    """
-    Categorizes the number of lines of code (LOC) into predefined size categories.
-
-    Args:
-        loc (int): The total number of lines of code.
-
-    Returns:
-        str: The size category based on the number of lines of code.
-            - "XS" for 0-9 lines
-            - "S" for 10-29 lines
-            - "M" for 30-99 lines
-            - "L" for 100-499 lines
-            - "XL" for 500-999 lines
-            - "XXL" for 1000+ lines
-    """
-    if loc < 10:
-        return PRDiffSizingLabel.XS.value, PRDiffSizingLabel.XS_TIME.value
-    elif loc < 30:
-        return PRDiffSizingLabel.S.value, PRDiffSizingLabel.S_TIME.value
-    elif loc < 100:
-        return PRDiffSizingLabel.M.value, PRDiffSizingLabel.M_TIME.value
-    elif loc < 500:
-        return PRDiffSizingLabel.L.value, PRDiffSizingLabel.L_TIME.value
-    elif loc < 1000:
-        return PRDiffSizingLabel.XL.value, PRDiffSizingLabel.XL_TIME.value
-    else:
-        return PRDiffSizingLabel.XXL.value, PRDiffSizingLabel.XXL_TIME.value
 
 
 class BasePR(ABC):
@@ -172,8 +137,7 @@ class BasePR(ABC):
     async def generate_pr_description(self, pr_summary: str) -> str:
         """
         Generates a pull request (PR) description by combining an existing description
-        (if available) with a provided summary and a calculated size category based
-        on lines of code (LOC) changed.
+        (if available) with a provided summary
 
         Args:
             pr_summary (str): A brief summary of the pull request to be included
@@ -183,16 +147,11 @@ class BasePR(ABC):
             dict: A string containing the updated PR description to be used in
                 the update request.
         """
-        loc = await self.get_loc_changed_count()
-        category, time = categorize_loc(loc)
-        loc_text, time_text = format_summary_loc_time_text(loc, category, time)
 
-        if self.pr_details.description:
-            description = f"{self.pr_details.description}\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
-        else:
-            description = f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}\n\n---\n\n{PR_SUMMARY_TEXT}{pr_summary}"
         # Prepare the data for the update request
-        return description
+        if self.pr_details.description:
+            return f"{self.pr_details.description}\n\n---\n\n{pr_summary}"
+        return pr_summary
 
     async def update_pr_description(self, pr_summary):
         try:
