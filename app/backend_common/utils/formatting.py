@@ -59,6 +59,36 @@ def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
     return str(loc), f"{time} to review"
 
 
+def categorize_loc(loc: int) -> tuple:
+    """
+    Categorizes the number of lines of code (LOC) into predefined size categories.
+
+    Args:
+        loc (int): The total number of lines of code.
+
+    Returns:
+        str: The size category based on the number of lines of code.
+            - "XS" for 0-9 lines
+            - "S" for 10-29 lines
+            - "M" for 30-99 lines
+            - "L" for 100-499 lines
+            - "XL" for 500-999 lines
+            - "XXL" for 1000+ lines
+    """
+    if loc < 10:
+        return PRDiffSizingLabel.XS.value, PRDiffSizingLabel.XS_TIME.value
+    elif loc < 30:
+        return PRDiffSizingLabel.S.value, PRDiffSizingLabel.S_TIME.value
+    elif loc < 100:
+        return PRDiffSizingLabel.M.value, PRDiffSizingLabel.M_TIME.value
+    elif loc < 500:
+        return PRDiffSizingLabel.L.value, PRDiffSizingLabel.L_TIME.value
+    elif loc < 1000:
+        return PRDiffSizingLabel.XL.value, PRDiffSizingLabel.XL_TIME.value
+    else:
+        return PRDiffSizingLabel.XXL.value, PRDiffSizingLabel.XXL_TIME.value
+
+
 def append_line_numbers(pr_diff: str) -> str:
     """Append line numbers to PR diff
     Args:
