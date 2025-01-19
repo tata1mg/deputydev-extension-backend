@@ -28,7 +28,6 @@ class UserTeams(Base):
 
     class Meta:
         table = "user_teams"
-        unique_together = (("user_id", "team_id"),)
 
     class Columns(Enum):
         id = ("id",)
