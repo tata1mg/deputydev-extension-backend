@@ -11,7 +11,6 @@ from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsync
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
-    LocalUserDetails,
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,

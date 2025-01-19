@@ -1,35 +1,19 @@
-import os
-from typing import Any, Dict, Tuple
-import uuid
-import requests
 import time
+import uuid
+from typing import Any, Dict, Tuple
+
 import keyring
-
-from git.config import GitConfigParser
 from prompt_toolkit import PromptSession
-from prompt_toolkit.validation import ValidationError
 
-from app.common.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
-    InvalidVersionException,
-)
-from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
-    LocalUserDetails,
-)
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
-)
-from app.main.blueprints.deputydev_cli.app.ui.screens.common.validators import (
-    AsyncValidator,
-    validate_existing_text_arg_or_get_input,
 )
 from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
-from app.main.blueprints.one_dev.routes.end_user.v1.auth import verify_auth_token
 
-DEPUTYDEV_AUTH_TOKEN = ConfigManager.configs["AUTH_TOKEN_ENV_VAR"]
+
 class Authentication(BaseScreenHandler):
     def __init__(self, app_context: AppContext) -> None:
         super().__init__(app_context)
@@ -61,8 +45,8 @@ class Authentication(BaseScreenHandler):
                 )
 
                 # Check if the auth token contains an error
-                if 'error' not in response:
-                    self.app_context.auth_token = response['jwt_token']
+                if "error" not in response:
+                    self.app_context.auth_token = response["jwt_token"]
                     # Storing jwt token in user's machine using keyring
                     self.store_auth_token(self.app_context.auth_token)
                     print("Authentication successful!")
@@ -87,11 +71,11 @@ class Authentication(BaseScreenHandler):
         try:
             print("Verifying the auth token...")
             response = await self.app_context.one_dev_client.verify_auth_token(
-                    headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {auth_token}",
-                        }
-                )
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {auth_token}",
+                }
+            )
             # Check if the response contains a status of 'verified'
             if response["status"] == "VERIFIED":
                 print("Authenticated successfully!")
@@ -110,11 +94,14 @@ class Authentication(BaseScreenHandler):
 
         # Extracting auth token from user's machine
         auth_token = self.load_auth_token()
-        if await self.login(auth_token):
+        is_valid = await self.login(auth_token)
+        if is_valid:
+            self.app_context.auth_token = self.load_auth_token()
             print("You are now logged in. Redirecting to the main interface...")
             return self.app_context, ScreenType.DEFAULT
 
-        BASE_URL = 'http://localhost:3000'
+        # TODO: Add this hard coded Frontend URL in constants
+        BASE_URL = "http://localhost:3000"
         device_code = str(uuid.uuid4())
         is_cli = True
 

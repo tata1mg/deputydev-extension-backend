@@ -1,8 +1,10 @@
-
-from typing import Dict, Any
-import jwt
 from datetime import datetime, timezone
+from typing import Any, Dict
+
+import jwt
+
 from app.backend_common.services.supabase.client import supabase
+
 
 class SupabaseAuth:
     def __init__(self):
@@ -27,43 +29,40 @@ class SupabaseAuth:
             decoded_token = jwt.decode(access_token, options={"verify_signature": False})
 
             # Check token expiration
-            exp_timestamp = decoded_token.get('exp')
+            exp_timestamp = decoded_token.get("exp")
             if exp_timestamp is not None:
                 current_time = int(datetime.now(timezone.utc).timestamp())
                 if current_time > exp_timestamp:
                     return {
-                        'valid': False,
-                        'message': "Token has expired",
+                        "valid": False,
+                        "message": "Token has expired",
                     }
 
             # Verify token with Supabase
             user_response = supabase.auth.get_user(access_token)
             print(type(user_response))
             if user_response.user:
-                return {
-                    'valid': True,
-                    'message': "Token is valid"
-                }
+                return {"valid": True, "message": "Token is valid"}
             else:
                 return {
-                    'valid': False,
-                    'message': "Token is invalid",
+                    "valid": False,
+                    "message": "Token is invalid",
                 }
 
         except jwt.ExpiredSignatureError:
             return {
-                'valid': False,
-                'message': "Token has expired",
+                "valid": False,
+                "message": "Token has expired",
             }
         except jwt.InvalidTokenError:
             return {
-                'valid': False,
-                'message': "Invalid token format",
+                "valid": False,
+                "message": "Invalid token format",
             }
         except Exception as e:
             return {
-                'valid': False,
-                'message': f"Token validation failed: {str(e)}",
+                "valid": False,
+                "message": f"Token validation failed: {str(e)}",
             }
 
     @classmethod
@@ -80,21 +79,13 @@ class SupabaseAuth:
                 - 'message': Status message explaining the validation result
                 - 'user_response': UserResponse object if token is valid, None otherwise
         """
-        if 'Authorization' not in headers:
-            return {
-                'valid': False,
-                'message': "Authorization header missing",
-                'user_response': None
-            }
+        if "Authorization" not in headers:
+            return {"valid": False, "message": "Authorization header missing", "user_response": None}
 
-        auth_header = headers['Authorization']
-        access_token = auth_header.split(' ')[1]
+        auth_header = headers["Authorization"]
+        access_token = auth_header.split(" ")[1]
         if not access_token:
-            return {
-                'valid': False,
-                'message': "Access token missing",
-                'user_response': None
-            }
+            return {"valid": False, "message": "Access token missing", "user_response": None}
 
         # Call the verify_auth_token method with the access token
         return await cls.verify_auth_token(access_token)
