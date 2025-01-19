@@ -2,7 +2,7 @@ from typing import List, Union
 
 from sanic.log import logger
 
-from app.backend_common.models.dao.postgres.users import Users
+from app.main.blueprints.deputy_dev.models.dao.postgres.users import Users
 from app.backend_common.models.dto.user_dto import UserDTO
 from app.backend_common.repository.db import DB
 
@@ -23,10 +23,26 @@ class UserService:
     @classmethod
     async def db_insert(cls, user_dto: UserDTO):
         try:
-            payload = user_dto.dict()
+            payload = user_dto.model_dump()
             del payload["id"]
             row = await DB.insert_row(Users, payload)
             return row
         except Exception as ex:
             logger.error("not able to insert user details to db {} exception {}".format(user_dto.dict(), ex))
             raise ex
+
+    @classmethod
+    async def find_or_create(cls, name, email, org_name):
+        user_dto = await cls.db_get(
+            filters={"email": email}, fetch_one=True
+        )
+        if not user_dto:
+            user_data = {
+                "name": name,
+                "email": email,
+                "org_name": org_name,
+            }
+            user_dto = await cls.db_insert(UserDTO(**user_data))
+        return {
+            "id": user_dto.id,
+        }
