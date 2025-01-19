@@ -17,6 +17,7 @@ async def verify_auth_token(_request: Request, **kwargs):
     response = await Login.verify_auth_token(headers)
     return send_response(response)
 
+
 @auth.route("/get-session", methods=["GET"])
 @validate_cli_version
 async def get_session(_request: Request, **kwargs):

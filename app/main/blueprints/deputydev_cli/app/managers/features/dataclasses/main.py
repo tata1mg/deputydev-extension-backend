@@ -67,8 +67,3 @@ class FinalFailedJob(BaseModel):
 class RegisteredRepo(BaseModel):
     repo_id: int
     repo_url: str
-
-
-class LocalUserDetails(BaseModel):
-    email: Optional[str] = None
-    name: Optional[str] = None

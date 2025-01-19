@@ -15,9 +15,7 @@ class Job(Base):
         "final_output",
         "meta_info",
         "team_id",
-        "advocacy_id",
-        "user_email",
-        "user_name",
+        "user_id",
         "created_at",
         "updated_at",
     }
@@ -29,9 +27,7 @@ class Job(Base):
     final_output = fields.JSONField(null=True)
     meta_info = fields.JSONField(null=True)
     team_id = fields.IntField(null=False)
-    advocacy_id = fields.IntField(null=False)
-    user_email = CITextField(max_length=100, null=True)
-    user_name = CITextField(max_length=100, null=True)
+    user_id = fields.IntField(null=False)
 
     class Meta:
         table = "job"
@@ -44,8 +40,6 @@ class Job(Base):
         final_output = ("final_output",)
         meta_info = ("meta_info",)
         team_id = ("team_id",)
-        advocacy_id = ("advocacy_id",)
-        user_email = ("user_email",)
-        user_name = ("user_name",)
+        user_id = ("user_id",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)

@@ -12,6 +12,7 @@ def authenticate(func):
     """
     Wrapper to authenticate the user using the JWT token.
     """
+
     @wraps(func)
     async def wrapper(_request: Request, **kwargs):
         # Check if the session ID is present in the headers
@@ -27,18 +28,14 @@ def authenticate(func):
         if not status["valid"]:
             raise BadRequestException("Auth token not verified")
 
-        #TODO: will change these values after implementing team fetch based on email of the user.
+        # TODO: will change these values after implementing team fetch based on email of the user.
         team_id = 1
-        email = "prathamverma910@gmail.com"
-        name = "Pratham Verma"
-        advocacy_id = 2
+        user_id = 1
 
         # prepare the auth data
         auth_data = AuthData(
             team_id=team_id,
-            email=email,
-            name=name,
-            advocacy_id=advocacy_id,
+            user_id=user_id,
         )
 
         return await func(_request, auth_data=auth_data, **kwargs)
