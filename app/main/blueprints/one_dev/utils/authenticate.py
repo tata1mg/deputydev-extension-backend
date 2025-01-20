@@ -31,8 +31,9 @@ def authenticate(func):
             raise BadRequestException("Auth token not verified")
 
         # Extract the email from the user response
-        email = token_data["user_response"]
+        email = token_data["user_email"]
 
+        # TODO: This needs to be refactored
         # Fetch the user ID based on the email
         user = await UserService.db_get(filters={"email": email}, fetch_one=True)
         user_id = user.id
