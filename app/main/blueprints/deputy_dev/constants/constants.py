@@ -44,7 +44,7 @@ class PrStatusTypes(Enum):
     FAILED = "FAILED"
     ALREADY_REVIEWED = "ALREADY_REVIEWED"  # This is not representing db state, used to post affirmation reply msg
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
-    SUMMARY_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
+    SUMMARY_DISABLED = "SUMMARY_DISABLED"  # This is not representing db state, used to post affirmation reply msg
 
 
 REJECTED_STATUS_TYPES = [

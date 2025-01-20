@@ -107,7 +107,7 @@ class BasePrModel:
         return pr_details
 
     @staticmethod
-    def formatted_description(description):
+    def user_description(description):
         if not description:
             return
         # Patterns to match start and end markers for the summary

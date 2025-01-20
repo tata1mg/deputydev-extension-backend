@@ -3,15 +3,7 @@ from torpedo import CONFIG
 from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMManager
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.utils.formatting import (
-    categorize_loc,
-    format_summary_loc_time_text,
-)
-from app.common.constants.constants import (
-    PR_SIZING_TEXT,
-    PR_SUMMARY_COMMIT_TEXT,
-    PR_SUMMARY_TEXT,
-)
+from app.backend_common.utils.formatting import format_summary_with_metadata
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -34,7 +26,14 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class MultiAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version=None):
+    def __init__(
+        self,
+        repo_service: BaseRepo,
+        pr_service: BasePR,
+        pr_diff_handler: PRDiffHandler,
+        prompt_version=None,
+        eligible_agents=None,
+    ):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.multi_agent_enabled = None
@@ -53,8 +52,11 @@ class MultiAgentPRReviewManager:
         self.pr_summary = None
         self.exclude_agent = set()
         self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
+        self.eligible_agents = eligible_agents
         self.agent_factory = AgentFactory(
-            reflection_enabled=self._is_reflection_enabled(), context_service=self.context_service
+            reflection_enabled=self._is_reflection_enabled(),
+            context_service=self.context_service,
+            eligible_agents=self.eligible_agents,
         )
         self._is_large_pr = False
         self.pr_diff_handler = pr_diff_handler
@@ -152,8 +154,7 @@ class MultiAgentPRReviewManager:
         if get_context_value("setting")["code_review_agent"]["enable"]:
             await self.execute_pass_2() if self._is_reflection_enabled() else None
             await self.filter_comments()
-        final_response = await self.return_final_response()
-        return final_response
+        return await self.return_final_response()
 
     def populate_meta_info(self):
         for agent, prompt in self.current_prompts.items():
@@ -166,27 +167,13 @@ class MultiAgentPRReviewManager:
                 }
             )
 
-    async def format_summary_with_metadata(self, summary: str) -> str:
-        """Format the summary with PR metadata including size, LOC, and commit info."""
-        # Get LOC count and categorize
-        loc = await self.pr_service.get_loc_changed_count()
-        category, time = categorize_loc(loc)
-        loc_text, time_text = format_summary_loc_time_text(loc, category, time)
-
-        # Format the complete summary with metadata
-        formatted_summary = (
-            f"\n\n---\n\n{PR_SUMMARY_TEXT}"
-            f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}"
-            f"\n\n---\n\n{summary}"
-            f"\n\n---\n\n{PR_SUMMARY_COMMIT_TEXT.format(commit_id=self.pr_service.pr_model().commit_id())}"
-        )
-
-        return formatted_summary
-
     async def return_final_response(self):
         formatted_summary = ""
         if self.pr_summary and isinstance(self.pr_summary, dict) and self.pr_summary.get("response"):
-            formatted_summary = await self.format_summary_with_metadata(self.pr_summary["response"])
+            loc = await self.pr_service.get_loc_changed_count()
+            formatted_summary = await format_summary_with_metadata(
+                summary=self.pr_summary["response"], loc=loc, commit_id=self.pr_service.pr_model().commit_id()
+            )
         return self.filtered_comments, formatted_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
 
     def all_prompts_exceed_token_limit(self):
