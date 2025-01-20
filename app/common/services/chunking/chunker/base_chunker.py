@@ -2,7 +2,7 @@ import asyncio
 import os
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
-from typing import List, Mapping, Optional, Tuple
+from typing import Dict, List, Mapping, Optional, Tuple
 
 from app.common.services.chunking.chunk import chunk_source
 from app.common.services.chunking.chunk_info import ChunkInfo
@@ -34,12 +34,12 @@ class FileChunkCreator:
         return chunks
 
     @staticmethod
-    async def create_chunks_from_files(
+    async def create_and_get_file_wise_chunks(
         file_paths_and_hashes: Mapping[str, Optional[str]],
         root_dir: str,
         use_new_chunking: bool = False,
         process_executor: Optional[ProcessPoolExecutor] = None,
-    ) -> List[ChunkInfo]:
+    ) -> Dict[str, List[ChunkInfo]]:
         """
         Converts the content of a list of files into chunks of code.
 
@@ -49,7 +49,8 @@ class FileChunkCreator:
         Returns:
             List[ChunkInfo]: A list of code chunks extracted from the files.
         """
-        chunks: List[ChunkInfo] = []
+
+        file_wise_chunks: Dict[str, List[ChunkInfo]] = {}
 
         loop = asyncio.get_event_loop()
         for file, file_hash in file_paths_and_hashes.items():
@@ -60,8 +61,10 @@ class FileChunkCreator:
                 chunks_from_file = await loop.run_in_executor(
                     process_executor, FileChunkCreator.create_chunks, file, root_dir, file_hash, use_new_chunking
                 )
-            chunks.extend(chunks_from_file)
-        return chunks
+            file_wise_chunks[file] = chunks_from_file
+
+        print(file_wise_chunks.keys())
+        return file_wise_chunks
 
 
 class BaseChunker(ABC):

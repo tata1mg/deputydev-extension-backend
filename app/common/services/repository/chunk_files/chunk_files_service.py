@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, List
 
 from sanic.log import logger
@@ -63,17 +64,20 @@ class ChunkFilesService:
     async def bulk_insert(self, chunks: List[ChunkFileDTO]) -> None:
         with self.sync_collection.batch.dynamic() as _batch:
             for chunk in chunks:
+                chunk_file_uuid = generate_uuid5(
+                    f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"
+                )
                 _batch.add_object(
                     properties=chunk.model_dump(mode="json", exclude={"id"}),
-                    uuid=generate_uuid5(f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"),
+                    uuid=chunk_file_uuid,
                 )
 
-    def cleanup_old_chunk_files(self, chunk_hashes_to_clean: List[str]) -> None:
-        batch_size = 500
-        for i in range(0, len(chunk_hashes_to_clean), batch_size):
-            chunk_hashes_batch = chunk_hashes_to_clean[i : i + batch_size]
-            self.sync_collection.data.delete_many(
-                Filter.any_of(
-                    [Filter.by_property("chunk_hash").equal(chunk_hash) for chunk_hash in chunk_hashes_batch]
-                ),
-            )
+    def cleanup_old_chunk_files(self, last_used_lt: datetime, exclusion_chunk_hashes: List[str]) -> None:
+        self.sync_collection.data.delete_many(
+            Filter.all_of(
+                [
+                    *[Filter.by_property("chunk_hash").not_equal(chunk_hash) for chunk_hash in exclusion_chunk_hashes],
+                    Filter.by_property("created_at").less_than(last_used_lt),
+                ]
+            ),
+        )

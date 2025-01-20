@@ -45,5 +45,12 @@ class ChunkFiles(Base):
             skip_vectorization=True,
             index_filterable=True,
         ),
+        Property(
+            name="total_chunks",
+            data_type=DataType.INT,
+            vectorize_property_name=False,
+            tokenization=None,
+            skip_vectorization=True,
+        ),
     ]
     collection_name = CHUNK_FILES_COLLECTION_NAME
