@@ -41,7 +41,6 @@ class FeatureRunner:
             and self.app_context.auth_token is not None
             and self.app_context.local_user_details is not None
             and self.app_context.process_executor is not None
-            and self.app_context.usage_hash is not None
         ):
             tasks = [
                 asyncio.create_task(
@@ -59,7 +58,6 @@ class FeatureRunner:
                         pr_config=self.app_context.pr_config,
                         session_id=self.app_context.session_id,
                         registered_repo_details=self.app_context.registered_repo_details,
-                        usage_hash=self.app_context.usage_hash,
                     )
                 )
             ]

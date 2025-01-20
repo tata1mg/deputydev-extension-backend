@@ -21,7 +21,11 @@ class AiohttpToRequestsAdapter:
 
     async def json(self) -> Dict[str, Any]:
         """Returns JSON response data"""
-        return await self._response.json()
+        try:
+            return await self._response.json()
+        except Exception as ex:
+            print(self._response)
+            raise ex
 
     @property
     def content(self) -> bytes:

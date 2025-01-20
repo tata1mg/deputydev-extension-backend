@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from sanic.log import logger
@@ -78,10 +79,12 @@ class ChunkService:
                     uuid=generate_uuid5(chunk.dto.chunk_hash),
                 )
 
-    def cleanup_old_chunks(self, chunk_hashes_to_clean: List[str]) -> None:
-        batch_size = 500
-        for i in range(0, len(chunk_hashes_to_clean), batch_size):
-            batch = chunk_hashes_to_clean[i : i + batch_size]
-            self.sync_collection.data.delete_many(
-                Filter.any_of([Filter.by_id().equal(generate_uuid5(chunk_hash)) for chunk_hash in batch])
+    def cleanup_old_chunks(self, last_used_lt: datetime, exclusion_chunk_hashes: List[str]) -> None:
+        self.sync_collection.data.delete_many(
+            Filter.all_of(
+                [
+                    *[Filter.by_id().not_equal(generate_uuid5(chunk_hash)) for chunk_hash in exclusion_chunk_hashes],
+                    Filter.by_property("created_at").less_than(last_used_lt),
+                ]
             )
+        )
