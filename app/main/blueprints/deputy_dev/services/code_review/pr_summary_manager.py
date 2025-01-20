@@ -10,14 +10,8 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
-    AgentFactory,
-)
 from app.main.blueprints.deputy_dev.services.code_review.base_review_manager import (
     BasePRReviewManager,
-)
-from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
-    ContextService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
     MultiAgentPRReviewManager,
@@ -61,13 +55,12 @@ class PRSummaryManager(BasePRReviewManager):
     async def _process_summary(cls, repo_service, pr_service, comment_service, chat_request):
         """Process PR summary generation and posting."""
         pr_diff_handler = PRDiffHandler(pr_service)
-        context_service = ContextService(repo_service, pr_service, pr_diff_handler)
 
         review_manager = MultiAgentPRReviewManager(
-            repo_service=repo_service, pr_service=pr_service, pr_diff_handler=pr_diff_handler
-        )
-        review_manager.agent_factory = AgentFactory(
-            reflection_enabled=False, context_service=context_service, include_agents=[AgentTypes.PR_SUMMARY.value]
+            repo_service=repo_service,
+            pr_service=pr_service,
+            pr_diff_handler=pr_diff_handler,
+            eligible_agents=[AgentTypes.PR_SUMMARY.value],
         )
 
         # Get summary using MultiAgentPRReviewManager
