@@ -5,6 +5,7 @@ from app.backend_common.repository.user_teams.user_team_service import UserTeamS
 from app.backend_common.repository.users.user_service import UserService
 from app.backend_common.services.supabase.session import SupabaseSession
 from app.main.blueprints.one_dev.services.auth.login import Login
+from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.pre_authenticate_handler import (
     validate_cli_version,
 )
@@ -27,28 +28,9 @@ async def get_session(_request: Request, **kwargs):
     response = await SupabaseSession.get_session_by_device_code(headers)
     return send_response(response)
 
-
-@auth.route("register-user", methods=["POST"])
+@auth.route("sign-up", methods=["POST"])
 @validate_cli_version
-async def register_user(_request: Request, **kwargs):
+async def sign_up(_request: Request, **kwargs):
     headers = _request.headers
-    response = await UserService.find_or_create(
-        headers.get("X-User-Name"),
-        headers.get("X-User-Email"),
-        headers.get("X-Organization"),
-    )
-    return send_response(response)
-
-
-@auth.route("register-user-team", methods=["POST"])
-@validate_cli_version
-async def register_user_team(_request: Request, **kwargs):
-    headers = _request.headers
-    response = await UserTeamService.find_or_create(
-        headers.get("X-Team-Id"),
-        headers.get("X-User-Id"),
-        headers.get("X-Role"),
-        headers.get("X-Is-Owner"),
-        headers.get("X-Is-Billable"),
-    )
+    response = await SignUp.signup(headers)
     return send_response(response)
