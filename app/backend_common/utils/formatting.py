@@ -1,6 +1,12 @@
 import re
 from enum import Enum
 
+from app.common.constants.constants import (
+    PR_SIZING_TEXT,
+    PR_SUMMARY_COMMIT_TEXT,
+    PR_SUMMARY_TEXT,
+)
+
 
 def format_code_blocks(comment: str) -> str:
     """
@@ -87,6 +93,22 @@ def categorize_loc(loc: int) -> tuple:
         return PRDiffSizingLabel.XL.value, PRDiffSizingLabel.XL_TIME.value
     else:
         return PRDiffSizingLabel.XXL.value, PRDiffSizingLabel.XXL_TIME.value
+
+
+async def format_summary_with_metadata(summary: str, loc: int, commit_id: str) -> str:
+    """Format the summary with PR metadata including size, LOC, and commit info."""
+    category, time = categorize_loc(loc)
+    loc_text, time_text = format_summary_loc_time_text(loc, category, time)
+
+    # Format the complete summary with metadata
+    formatted_summary = (
+        f"\n\n---\n\n{PR_SUMMARY_TEXT}"
+        f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}"
+        f"\n\n---\n\n{summary}"
+        f"\n\n---\n\n{PR_SUMMARY_COMMIT_TEXT.format(commit_id=commit_id)}"
+    )
+
+    return formatted_summary
 
 
 def append_line_numbers(pr_diff: str) -> str:
