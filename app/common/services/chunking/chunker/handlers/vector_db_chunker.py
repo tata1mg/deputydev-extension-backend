@@ -1,10 +1,11 @@
+import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, List, Optional, Tuple
 
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.document import Document, chunks_to_docs
-from app.common.services.chunking.vector_store.main import ChunkVectorScoreManager
+from app.common.services.chunking.vector_store.main import ChunkVectorStoreManager
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
@@ -17,7 +18,6 @@ class VectorDBChunker(BaseChunker):
         process_executor: ProcessPoolExecutor,
         weaviate_client: WeaviateSyncAndAsyncClients,
         embedding_manager: BaseEmbeddingManager,
-        usage_hash: str,
         chunkable_files_and_hashes: Optional[Dict[str, str]] = None,
         use_new_chunking: bool = True,
     ):
@@ -25,7 +25,6 @@ class VectorDBChunker(BaseChunker):
         self.use_new_chunking = use_new_chunking
         self.weaviate_client = weaviate_client
         self.embedding_manager = embedding_manager
-        self.usage_hash = usage_hash
         self.chunkable_files_and_hashes = chunkable_files_and_hashes
 
     async def add_chunk_embeddings(self, chunks: List[ChunkInfo]) -> None:
@@ -46,28 +45,30 @@ class VectorDBChunker(BaseChunker):
         for chunk, embedding in zip(chunks, embeddings):
             chunk.embedding = embedding
 
-    async def handle_chunking_batch(
+    async def get_file_wise_chunks_for_single_file_batch(
         self,
         files_to_chunk_batch: List[Tuple[str, str]],
-    ) -> List[ChunkInfo]:
+    ) -> Dict[str, List[ChunkInfo]]:
         """
         Handles a batch of files to be chunked
         """
-        batched_chunks: List[ChunkInfo] = await self.file_chunk_creator.create_chunks_from_files(
+        file_wise_chunks = await self.file_chunk_creator.create_and_get_file_wise_chunks(
             dict(files_to_chunk_batch),
             self.local_repo.repo_path,
             self.use_new_chunking,
             process_executor=self.process_executor,
         )
+
+        batched_chunks: List[ChunkInfo] = []
+        for chunks in file_wise_chunks.values():
+            batched_chunks.extend(chunks)
+
         if batched_chunks:
             await self.add_chunk_embeddings(batched_chunks)
-            await ChunkVectorScoreManager(
-                local_repo=self.local_repo, weaviate_client=self.weaviate_client
-            ).add_differential_chunks_to_store(batched_chunks, usage_hash=self.usage_hash)
-        return batched_chunks
+        return file_wise_chunks
 
-    def batchify_chunks_for_insertion(
-        self, files_to_chunk: Dict[str, str], max_batch_size_chunking: int = 1000
+    def batchify_files_for_insertion(
+        self, files_to_chunk: Dict[str, str], max_batch_size_chunking: int = 200
     ) -> List[List[Tuple[str, str]]]:
         files_to_chunk_items = list(files_to_chunk.items())
         batched_files_to_store: List[List[Tuple[str, str]]] = []
@@ -78,18 +79,19 @@ class VectorDBChunker(BaseChunker):
 
         return batched_files_to_store
 
-    async def batch_chunk_inserter(
+    async def create_and_store_chunks_for_file_batches(
         self,
         batched_files_to_store: List[List[Tuple[str, str]]],
-    ) -> List[ChunkInfo]:
-        all_chunks: List[ChunkInfo] = []
+    ) -> Dict[str, List[ChunkInfo]]:
+        all_file_wise_chunks: Dict[str, List[ChunkInfo]] = {}
         for batch_files in batched_files_to_store:
-            chunk_obj = await self.handle_chunking_batch(
+            chunk_obj = await self.get_file_wise_chunks_for_single_file_batch(
                 files_to_chunk_batch=batch_files,
             )
-            all_chunks.extend(chunk_obj)
+            print(chunk_obj)
+            all_file_wise_chunks.update(chunk_obj)
 
-        return all_chunks
+        return all_file_wise_chunks
 
     async def create_chunks_and_docs(self) -> Tuple[List[ChunkInfo], List[Document]]:
         """
@@ -104,22 +106,36 @@ class VectorDBChunker(BaseChunker):
         file_path_commit_hash_map = self.chunkable_files_and_hashes
         if not file_path_commit_hash_map:
             file_path_commit_hash_map = await self.local_repo.get_chunkable_files_and_commit_hashes()
-        vector_store_files_and_chunks = await ChunkVectorScoreManager(
+        file_wise_chunk_files_and_chunks = await ChunkVectorStoreManager(
             weaviate_client=self.weaviate_client, local_repo=self.local_repo
-        ).get_stored_chunk_files_with_chunk_content(file_path_commit_hash_map)
-        existing_files = {
-            vector_store_file_and_chunk[0].file_path for vector_store_file_and_chunk in vector_store_files_and_chunks
+        ).get_file_wise_stored_chunk_files_and_chunks(file_path_commit_hash_map)
+
+        # only those files are valid which have all chunks stored
+        valid_files_with_all_stored_chunks = {
+            file_path
+            for file_path, vector_store_file_and_chunk in file_wise_chunk_files_and_chunks.items()
+            if len(vector_store_file_and_chunk) == vector_store_file_and_chunk[0][0].total_chunks
         }
 
         files_to_chunk = {
-            file: file_hash for file, file_hash in file_path_commit_hash_map.items() if file not in existing_files
+            file: file_hash
+            for file, file_hash in file_path_commit_hash_map.items()
+            if file not in valid_files_with_all_stored_chunks
         }
-        batchified_chunks_for_insertion = self.batchify_chunks_for_insertion(
+        batchified_files_for_insertion = self.batchify_files_for_insertion(
             files_to_chunk=files_to_chunk,
         )
-        final_chunks: List[ChunkInfo] = await self.batch_chunk_inserter(batchified_chunks_for_insertion)
-        final_chunks.extend(
-            [
+
+        missing_file_wise_chunks: Dict[str, List[ChunkInfo]] = await self.create_and_store_chunks_for_file_batches(
+            batchified_files_for_insertion
+        )
+
+        await ChunkVectorStoreManager(
+            local_repo=self.local_repo, weaviate_client=self.weaviate_client
+        ).add_differential_chunks_to_store(missing_file_wise_chunks)
+
+        existing_file_wise_chunks = {
+            file_path: [
                 ChunkInfo(
                     content=vector_store_file[1].text,
                     source_details=ChunkSourceDetails(
@@ -129,8 +145,20 @@ class VectorDBChunker(BaseChunker):
                         end_line=vector_store_file[0].end_line,
                     ),
                 )
-                for vector_store_file in vector_store_files_and_chunks
+                for vector_store_file in file_wise_chunk_files_and_chunks[file_path]
             ]
+            for file_path in valid_files_with_all_stored_chunks
+        }
+
+        asyncio.create_task(
+            ChunkVectorStoreManager(
+                local_repo=self.local_repo, weaviate_client=self.weaviate_client
+            ).add_differential_chunks_to_store(existing_file_wise_chunks)
         )
+
+        all_file_wise_chunks = {**missing_file_wise_chunks, **existing_file_wise_chunks}
+        final_chunks: List[ChunkInfo] = []
+        for chunks in all_file_wise_chunks.values():
+            final_chunks.extend(chunks)
 
         return final_chunks, chunks_to_docs(final_chunks)
