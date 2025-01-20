@@ -20,10 +20,11 @@ class Repo(BaseModel):
     workspace: str
     pr_id: int
     repo_name: str
-    commit_id: str
+    commit_id: Optional[str] = None
     workspace_id: str
     repo_id: Optional[str] = None
     workspace_slug: str = None
+    vcs_type: str
 
 
 class Author(BaseModel):
