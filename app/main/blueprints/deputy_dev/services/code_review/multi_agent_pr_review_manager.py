@@ -3,6 +3,7 @@ from torpedo import CONFIG
 from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMManager
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.formatting import format_summary_with_metadata
 from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -25,7 +26,14 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class MultiAgentPRReviewManager:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version=None):
+    def __init__(
+        self,
+        repo_service: BaseRepo,
+        pr_service: BasePR,
+        pr_diff_handler: PRDiffHandler,
+        prompt_version=None,
+        eligible_agents=None,
+    ):
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.multi_agent_enabled = None
@@ -44,8 +52,11 @@ class MultiAgentPRReviewManager:
         self.pr_summary = None
         self.exclude_agent = set()
         self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
+        self.eligible_agents = eligible_agents
         self.agent_factory = AgentFactory(
-            reflection_enabled=self._is_reflection_enabled(), context_service=self.context_service
+            reflection_enabled=self._is_reflection_enabled(),
+            context_service=self.context_service,
+            eligible_agents=self.eligible_agents,
         )
         self._is_large_pr = False
         self.pr_diff_handler = pr_diff_handler
@@ -88,12 +99,14 @@ class MultiAgentPRReviewManager:
 
     # blending engine section start
     async def filter_comments(self):
+        if not self.llm_comments:
+            return
         self.filtered_comments = await CommentBlendingEngine(self.llm_comments, self.context_service).blend_comments()
 
     # blending engine section end
 
     def populate_pr_summary(self):
-        self.pr_summary = self.llm_comments.get(AgentTypes.PR_SUMMARY.value) or ""
+        self.pr_summary = self.llm_comments.pop(AgentTypes.PR_SUMMARY.value) or ""
 
     async def __execute_pass(self):
         await self._build_prompts()
@@ -141,7 +154,7 @@ class MultiAgentPRReviewManager:
         if get_context_value("setting")["code_review_agent"]["enable"]:
             await self.execute_pass_2() if self._is_reflection_enabled() else None
             await self.filter_comments()
-        return self.return_final_response()
+        return await self.return_final_response()
 
     def populate_meta_info(self):
         for agent, prompt in self.current_prompts.items():
@@ -154,8 +167,14 @@ class MultiAgentPRReviewManager:
                 }
             )
 
-    def return_final_response(self):
-        return self.filtered_comments, self.pr_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
+    async def return_final_response(self):
+        formatted_summary = ""
+        if self.pr_summary and isinstance(self.pr_summary, dict) and self.pr_summary.get("response"):
+            loc = await self.pr_service.get_loc_changed_count()
+            formatted_summary = await format_summary_with_metadata(
+                summary=self.pr_summary["response"], loc=loc, commit_id=self.pr_service.pr_model().commit_id()
+            )
+        return self.filtered_comments, formatted_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
 
     def all_prompts_exceed_token_limit(self):
         all_exceeded = True
