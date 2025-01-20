@@ -31,7 +31,8 @@ class AiohttpToRequestsAdapter:
     @property
     def text(self) -> str:
         """Returns decoded response content"""
-        return self._content.decode()
+        # errors="replace" It replaces any invalid byte with � and decoding process doesn’t fail completely when invalid bytes are encountered
+        return self._content.decode(errors="replace")
 
     @property
     def headers(self) -> Dict[str, str]:

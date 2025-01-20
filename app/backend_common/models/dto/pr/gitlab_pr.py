@@ -10,7 +10,7 @@ class GitlabPrModel(BasePrModel):
         return self.pr_detail["title"]
 
     def description(self):
-        return self.pr_detail["description"]
+        return self.formatted_description(self.pr_detail["description"])
 
     def scm_pr_id(self):
         return self.pr_detail["iid"]
