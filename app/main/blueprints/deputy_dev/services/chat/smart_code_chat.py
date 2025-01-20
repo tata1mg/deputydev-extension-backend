@@ -102,9 +102,8 @@ class SmartCodeChatManager:
             await CodeReviewTrigger.perform_review(payload, query_params)
             return
 
-            # Process regular chat requests
+        # Bot comments
         if comment_payload.author_info.name in BitbucketBots.list():
-            logger.info(f"Comment rejected as it's from a bot: {comment_payload}")
             return
 
         # Hanlde comments other than Summary, review or from any known bots
@@ -116,7 +115,6 @@ class SmartCodeChatManager:
 
         # handles comment that don't start with #feedback, #dd, #scrit or #deputydev
         if message_type == MessageTypes.UNKNOWN.value:
-            logger.info(f"Chat processing rejected due to unknown tag with payload : {chat_request}")
             return
 
         auth_handler = await get_vcs_auth_handler(chat_request.repo.workspace_id, vcs_type)
