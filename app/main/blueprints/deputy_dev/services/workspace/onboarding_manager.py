@@ -49,6 +49,7 @@ class OnboardingManager:
                 is_owner=True,
                 is_billable=True,
             )
+            return user.id
 
     @staticmethod
     def __generate_team_name(username: str) -> str:
