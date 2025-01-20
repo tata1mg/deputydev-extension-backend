@@ -10,7 +10,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
-from app.main.blueprints.deputy_dev.services.code_review.base_review_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.base_pr_review_manager import (
     BasePRReviewManager,
 )
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
