@@ -57,6 +57,9 @@ class PRWebhook:
         #  only gets request for PR open and comment created on a PR with #review tag
         if github_payload.get("action") not in [GithubActions.OPENED.value, GithubActions.CREATED.value]:
             return
+        if github_payload.get("issue") and github_payload.get("issue").get("pull_request"):
+            return cls.__parse_github_issue_comment_payload(github_payload)
+
         pr_id = github_payload["pull_request"]["number"]
         repo_name = get_vcs_repo_name_slug(github_payload["pull_request"]["head"]["repo"]["full_name"])
         request_id = github_payload["request_id"]
@@ -74,6 +77,31 @@ class PRWebhook:
             "workspace_slug": workspace_slug,
             "vcs_type": vcs_type,
             "prompt_version": prompt_version,
+        }
+
+    @classmethod
+    def __parse_github_issue_comment_payload(cls, payload):
+        """
+        Parse GitHub issue comment payload for PR conversation comments
+        Only handles comments created on PR conversation
+        """
+        # Check if it's a comment on PR and it's a created action
+        if not (payload.get("issue", {}).get("pull_request") and payload.get("action") == GithubActions.CREATED.value):
+            return None
+
+        # Extract PR number from pull_request URL
+        pr_url = payload["issue"]["pull_request"]["url"]
+        pr_id = pr_url.split("/")[-1]
+
+        return {
+            "pr_id": int(pr_id),
+            "repo_name": get_vcs_repo_name_slug(payload["repository"]["full_name"]),
+            "request_id": payload["request_id"],
+            "workspace": payload["organization"]["login"],
+            "workspace_id": str(payload.get("scm_workspace_id")),
+            "workspace_slug": payload["organization"]["login"],
+            "vcs_type": VCSTypes.github.value,
+            "prompt_version": payload.get("prompt_version", "v2"),
         }
 
     @classmethod

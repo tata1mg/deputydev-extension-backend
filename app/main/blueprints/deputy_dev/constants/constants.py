@@ -44,6 +44,7 @@ class PrStatusTypes(Enum):
     FAILED = "FAILED"
     ALREADY_REVIEWED = "ALREADY_REVIEWED"  # This is not representing db state, used to post affirmation reply msg
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
+    SUMMARY_DISABLED = "SUMMARY_DISABLED"  # This is not representing db state, used to post affirmation reply msg
 
 
 REJECTED_STATUS_TYPES = [
@@ -76,6 +77,7 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.REJECTED_INVALID_REQUEST.value: "There seems to be an issue with this pull request for commit {commit_id}. Please make sure the PR is set up correctly and try again.",
     PrStatusTypes.ALREADY_REVIEWED.value: "DeputyDev has already reviewed this PR on commit {commit_id}",
     PrStatusTypes.FEATURES_DISABLED.value: "Code review and PR summary features are currently disabled in your repository/organization settings. To enable these features, please update your settings.",
+    PrStatusTypes.SUMMARY_DISABLED.value: "PR summary is currently disabled in your repository/organization settings. To enable these features, please update your settings.",
 }
 
 
@@ -121,6 +123,13 @@ class ChatTypes(ExtendedEnum):
     DEPUTY_DEV = "deputydev"
     SCRIT = "scrit"
     DD = "dd"
+
+
+class CommentTypes(ExtendedEnum):
+    CHAT = "chat"
+    REVIEW = "review"
+    SUMMARY = "summary"
+    UNKNOWN = "unknown"
 
 
 class MessageTypes(Enum):
