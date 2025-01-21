@@ -69,9 +69,6 @@ class OneDevCLIChunker(VectorDBChunker):
             batched_chunks.extend(chunks)
         if batched_chunks:
             await self.add_chunk_embeddings(batched_chunks, len_checkpoints=len(files_to_chunk_batch))
-            await ChunkVectorStoreManager(
-                local_repo=self.local_repo, weaviate_client=self.weaviate_client
-            ).add_differential_chunks_to_store(file_wise_chunks)
         else:
             if self.file_progressbar_counter:
                 for _ in range(len(files_to_chunk_batch)):

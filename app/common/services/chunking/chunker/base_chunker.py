@@ -63,7 +63,6 @@ class FileChunkCreator:
                 )
             file_wise_chunks[file] = chunks_from_file
 
-        print(file_wise_chunks.keys())
         return file_wise_chunks
 
 
