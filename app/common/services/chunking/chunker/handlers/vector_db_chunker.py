@@ -95,6 +95,17 @@ class VectorDBChunker(BaseChunker):
 
         return all_file_wise_chunks
 
+    async def _update_chunk_and_chunk_files_timestamps(self, file_wise_chunks: Dict[str, List[ChunkInfo]]) -> None:
+        """
+        Updates the timestamp of the chunks and chunk files in the database.
+        """
+        max_batch_size = 1000
+        for i in range(0, len(file_wise_chunks), max_batch_size):
+            batch = list(file_wise_chunks.items())[i : i + max_batch_size]
+            await ChunkVectorStoreManager(
+                local_repo=self.local_repo, weaviate_client=self.weaviate_client
+            ).add_differential_chunks_to_store(dict(batch))
+
     async def create_chunks_and_docs(self) -> Tuple[List[ChunkInfo], List[Document]]:
         """
         Converts the content of a list of files into chunks of code.
@@ -149,11 +160,7 @@ class VectorDBChunker(BaseChunker):
             for file_path in valid_files_with_all_stored_chunks
         }
 
-        asyncio.create_task(
-            ChunkVectorStoreManager(
-                local_repo=self.local_repo, weaviate_client=self.weaviate_client
-            ).add_differential_chunks_to_store(existing_file_wise_chunks)
-        )
+        asyncio.create_task(self._update_chunk_and_chunk_files_timestamps(existing_file_wise_chunks))
 
         all_file_wise_chunks = {**missing_file_wise_chunks, **existing_file_wise_chunks}
         final_chunks: List[ChunkInfo] = []
