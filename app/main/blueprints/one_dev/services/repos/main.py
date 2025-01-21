@@ -6,8 +6,10 @@ from app.backend_common.services.repo.repo_factory import RepoFactory
 
 class ReposHandler:
     @classmethod
-    async def get_registered_repo_details(cls, repo_name: str, vcs_type: str, team_id: int):
-        workspaces = await WorkspaceService.db_get(filters=dict(team_id=team_id))
+    async def get_registered_repo_details(cls, repo_name: str, vcs_type: str, workspace_slug: str):
+        workspaces = await WorkspaceService.db_get(filters=dict(scm=vcs_type, slug=workspace_slug))
+        if not workspaces:
+            return dict(repo_id=None, repo_url=None)
         workspace_ids = [workspace.id for workspace in workspaces]
         repos = await RepoService.db_get(filters=dict(workspace_id__in=workspace_ids))
         for repo in repos:

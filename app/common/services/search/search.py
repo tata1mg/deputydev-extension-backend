@@ -20,7 +20,6 @@ async def perform_search(
     chunking_handler: Optional[BaseChunker] = None,
     query_vector: Optional[List[float]] = None,
     weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
-    usage_hash: Optional[str] = None,
 ) -> Tuple[List[ChunkInfo], int]:
 
     sorted_chunks: List[ChunkInfo] = []
@@ -41,14 +40,11 @@ async def perform_search(
             raise ValueError("Query vector is required for vector db based search")
         if not chunkable_files_with_hashes:
             raise ValueError("Chunkable files with hashes are required for vector db based search")
-        if not usage_hash:
-            raise ValueError("Usage hash is required for vector db based search")
         sorted_chunks, input_tokens = await VectorDBBasedSearch.perform_search(
             whitelisted_file_commits=chunkable_files_with_hashes,
             query=query,
             query_vector=query_vector,
             weaviate_client=weaviate_client,
-            usage_hash=usage_hash,
         )
 
     return sorted_chunks, input_tokens

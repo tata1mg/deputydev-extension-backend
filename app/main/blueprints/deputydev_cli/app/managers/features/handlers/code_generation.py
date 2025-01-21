@@ -38,7 +38,6 @@ class CodeGenerationHandler(BaseFeatureHandler):
         session_id: Optional[str] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
-        usage_hash: Optional[str] = None,
     ):
         super().__init__(
             process_executor=process_executor,
@@ -53,7 +52,6 @@ class CodeGenerationHandler(BaseFeatureHandler):
             session_id=session_id,
             apply_diff=apply_diff,
             registered_repo_details=registered_repo_details,
-            usage_hash=usage_hash,
         )
 
     async def validate_and_set_final_payload(self):
@@ -93,7 +91,6 @@ class CodeGenerationHandler(BaseFeatureHandler):
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
             search_type=search_type,
-            usage_hash=self.usage_hash,
         )
         final_payload["relevant_chunks"] = self.handle_relevant_chunks(search_type, relevant_chunks)
         self.final_payload = final_payload

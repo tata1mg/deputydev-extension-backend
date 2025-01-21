@@ -74,7 +74,6 @@ class FeatureFactory:
         pr_config: Optional[PRConfig] = None,
         session_id: Optional[str] = None,
         registered_repo_details: Optional[RegisteredRepo] = None,
-        usage_hash: Optional[str] = None,
     ) -> Union[FinalSuccessJob, FinalFailedJob]:
         handler = cls.feature_handler_map[feature](
             process_executor=process_executor,
@@ -88,7 +87,6 @@ class FeatureFactory:
             pr_config=pr_config,
             session_id=session_id,
             registered_repo_details=registered_repo_details,
-            usage_hash=usage_hash,
         )
         try:
             await handler.validate_and_set_final_payload()
