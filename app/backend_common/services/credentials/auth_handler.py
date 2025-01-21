@@ -5,6 +5,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
+from git.util import Actor
 from tortoise.exceptions import DoesNotExist
 
 from app.backend_common.models.dao.postgres.tokens import Tokens
@@ -254,5 +255,5 @@ class AuthHandler:
         expiry_with_tolerance_utc = expiry_with_tolerance.replace(tzinfo=timezone.utc)
         return now_utc >= expiry_with_tolerance_utc
 
-    def get_git_actor(self):
+    def get_git_actor(self) -> Actor:
         raise NotImplementedError()

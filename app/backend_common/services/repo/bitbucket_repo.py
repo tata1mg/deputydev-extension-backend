@@ -1,5 +1,7 @@
 from typing import Optional, Tuple
 
+from git.util import Actor
+
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -65,5 +67,5 @@ class BitbucketRepo(BaseRepo):
     async def create_issue_comment(self, issue_id: str, comment: str):
         await self.repo_client.create_issue_comment(issue_id, comment)
 
-    def get_repo_actor(self):
+    def get_repo_actor(self) -> Actor:
         return self.auth_handler.get_git_actor()
