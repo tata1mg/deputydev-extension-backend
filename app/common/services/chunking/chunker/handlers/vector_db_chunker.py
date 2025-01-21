@@ -65,6 +65,9 @@ class VectorDBChunker(BaseChunker):
 
         if batched_chunks:
             await self.add_chunk_embeddings(batched_chunks)
+            await ChunkVectorStoreManager(
+                local_repo=self.local_repo, weaviate_client=self.weaviate_client
+            ).add_differential_chunks_to_store(file_wise_chunks)
         return file_wise_chunks
 
     def batchify_files_for_insertion(
@@ -128,10 +131,6 @@ class VectorDBChunker(BaseChunker):
         missing_file_wise_chunks: Dict[str, List[ChunkInfo]] = await self.create_and_store_chunks_for_file_batches(
             batchified_files_for_insertion
         )
-
-        await ChunkVectorStoreManager(
-            local_repo=self.local_repo, weaviate_client=self.weaviate_client
-        ).add_differential_chunks_to_store(missing_file_wise_chunks)
 
         existing_file_wise_chunks = {
             file_path: [
