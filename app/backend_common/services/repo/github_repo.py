@@ -2,6 +2,7 @@ import base64
 from typing import Optional, Tuple
 
 import toml
+from git.util import Actor
 from torpedo import CONFIG
 
 from app.backend_common.service_clients.github.github_repo_client import (
@@ -75,3 +76,6 @@ class GithubRepo(BaseRepo):
 
     def get_remote_url_without_token(self):
         return f"git@github.com:{self.workspace_slug}/{self.repo_name}.git"
+
+    def get_repo_actor(self) -> Actor:
+        return self.auth_handler.get_git_actor()

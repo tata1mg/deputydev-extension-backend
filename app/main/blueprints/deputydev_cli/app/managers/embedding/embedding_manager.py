@@ -9,6 +9,7 @@ from prompt_toolkit.shortcuts.progress_bar import ProgressBarCounter
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.tiktoken.tiktoken import TikToken
 from app.common.utils.app_logger import AppLogger
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 
 
@@ -18,31 +19,29 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
         self.oen_dev_client = one_dev_client
 
     @classmethod
-    def create_optimized_batches(
-        cls, texts: List[str], max_tokens_per_text: int, max_tokens_per_batch: int, model: str
-    ) -> List[List[str]]:
+    def create_optimized_batches(cls, texts: List[str], target_tokens_per_batch: int, model: str) -> List[List[str]]:
         tiktoken_client = TikToken()
         batches: List[List[str]] = []
         current_batch = []
-        currrent_batch_token_count = 0
+        current_batch_token_count = 0
 
         for text in texts:
             text_token_count = tiktoken_client.count(text, model=model)
 
-            if text_token_count > max_tokens_per_text:  # Single text exceeds max tokens
+            if text_token_count > target_tokens_per_batch:  # Single text exceeds max tokens
                 batches.append([text])
                 AppLogger.log_warn(
-                    f"Text with token count {text_token_count} exceeds the max token limit of {max_tokens_per_text}."
+                    f"Text with token count {text_token_count} exceeds the max token limit of {target_tokens_per_batch}."
                 )
                 continue
 
-            if currrent_batch_token_count + text_token_count > max_tokens_per_batch:
+            if current_batch_token_count + text_token_count > target_tokens_per_batch:
                 batches.append(current_batch)
                 current_batch = [text]
-                currrent_batch_token_count = text_token_count
+                current_batch_token_count = text_token_count
             else:
                 current_batch.append(text)
-                currrent_batch_token_count += text_token_count
+                current_batch_token_count += text_token_count
 
         if current_batch:
             batches.append(current_batch)
@@ -136,11 +135,12 @@ class OneDevEmbeddingManager(BaseEmbeddingManager):
         tokens_used: int = 0
         exponential_backoff = 0.2
 
+        # we send 2048 tokens per batch to the API to avoid having spikes of long api response times in the range of 15-20s
         iterable_batches = self.create_optimized_batches(
-            texts, max_tokens_per_text=4096, max_tokens_per_batch=2048, model="text-embedding-3-small"
+            texts, target_tokens_per_batch=2048, model=ConfigManager.configs["EMBEDDING"]["MODEL"]
         )
 
-        max_parallel_tasks = 60
+        max_parallel_tasks = ConfigManager.configs["EMBEDDING"]["MAX_PARALLEL_TASKS"]
         parallel_batches: List[List[str]] = []
         last_checkpoint: float = 0
         step = (len(texts) / len_checkpoints) if len_checkpoints else None
