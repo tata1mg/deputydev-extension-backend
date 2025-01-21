@@ -8,6 +8,7 @@ from weaviate.util import generate_uuid5
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dto.chunk_file_dto import ChunkFileDTO
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.utils.app_logger import AppLogger
 
 
 class ChunkFilesService:
@@ -81,4 +82,4 @@ class ChunkFilesService:
                 ]
             ),
         )
-        print(result.successful, "////////", result.failed)
+        AppLogger.log_debug(f"chunk_files deleted. successful - {result.successful}, failed - {result.failed}")

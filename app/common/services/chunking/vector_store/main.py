@@ -12,6 +12,7 @@ from app.common.services.repository.chunk_files.chunk_files_service import (
     ChunkFilesService,
 )
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.utils.app_logger import AppLogger
 
 
 class ChunkVectorStoreManager:
@@ -38,13 +39,19 @@ class ChunkVectorStoreManager:
             chunk_hashes=list({chunk_file.chunk_hash for chunk_file in chunk_files_in_db}),
         )
 
-        stored_chunks_and_vectors_chunk_dict = {chunk_and_vector[0].chunk_hash: chunk_and_vector for chunk_and_vector in stored_chunks_and_vectors}
+        stored_chunks_and_vectors_chunk_dict = {
+            chunk_and_vector[0].chunk_hash: chunk_and_vector for chunk_and_vector in stored_chunks_and_vectors
+        }
 
         file_wise_stored_chunk_files_and_chunks: Dict[str, List[Tuple[ChunkFileDTO, ChunkDTO, List[float]]]] = {}
         for chunk_file in chunk_files_in_db:
             if chunk_file.chunk_hash in stored_chunks_and_vectors_chunk_dict:
                 file_wise_stored_chunk_files_and_chunks.setdefault(chunk_file.file_path, []).append(
-                    (chunk_file, stored_chunks_and_vectors_chunk_dict[chunk_file.chunk_hash][0], stored_chunks_and_vectors_chunk_dict[chunk_file.chunk_hash][1])
+                    (
+                        chunk_file,
+                        stored_chunks_and_vectors_chunk_dict[chunk_file.chunk_hash][0],
+                        stored_chunks_and_vectors_chunk_dict[chunk_file.chunk_hash][1],
+                    )
                 )
 
         return file_wise_stored_chunk_files_and_chunks
@@ -64,7 +71,6 @@ class ChunkVectorStoreManager:
         for chunks in file_wise_chunks.values():
             for chunk in chunks:
                 if chunk.embedding is None or not chunk.source_details.file_hash:
-                    print(chunk)
                     raise ValueError(f"Chunk {chunk.content_hash} does not have an embedding")
 
                 now_time = datetime.now().replace(tzinfo=timezone.utc)
@@ -100,4 +106,4 @@ class ChunkVectorStoreManager:
             ),
         )
         time_end = time.perf_counter()
-        print(f"Inserting {len(all_chunks_to_store)} chunks took {time_end - time_start} seconds")
+        AppLogger.log_debug(f"Inserting {len(all_chunks_to_store)} chunks took {time_end - time_start} seconds")

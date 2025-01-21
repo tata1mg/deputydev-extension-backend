@@ -6,6 +6,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit.shortcuts.progress_bar import formatters
 
+from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
 )
@@ -100,7 +101,7 @@ class InitializationScreen(BaseScreenHandler):
 
         except Exception as e:
             print_formatted_text("Initialization failed ...")
-            print(traceback.format_exc())
+            AppLogger.log_debug(traceback.format_exc())
             print_formatted_text(f"Error: {e}")
             return self.app_context, ScreenType.HOME
         return self.app_context, ScreenType.DEFAULT
