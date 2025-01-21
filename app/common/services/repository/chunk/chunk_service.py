@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 from sanic.log import logger
 from weaviate.classes.query import Filter
@@ -38,9 +38,9 @@ class ChunkService:
             logger.exception("Failed to get chunk files by commit hashes")
             raise ex
 
-    async def get_chunks_by_chunk_hashes(self, chunk_hashes: List[str]) -> List[ChunkDTO]:
-        BATCH_SIZE = 10000
-        all_chunks = []
+    async def get_chunks_by_chunk_hashes(self, chunk_hashes: List[str]) -> List[Tuple[ChunkDTO, List[float]]]:
+        BATCH_SIZE = 1000
+        all_chunks: List[Tuple[ChunkDTO, List[float]]] = []
         MAX_RESULTS_PER_QUERY = 10000
         try:
             # Process chunk hashes in batches
@@ -50,15 +50,15 @@ class ChunkService:
                     filters=Filter.any_of(
                         [Filter.by_id().equal(generate_uuid5(chunk_hash)) for chunk_hash in batch_hashes]
                     ),
+                    include_vector=True,
                     limit=MAX_RESULTS_PER_QUERY,
                 )
                 # Break if no more results
                 if batch_chunks.objects:
                     # Convert to DTOs efficiently using list comprehension
                     batch_dtos = [
-                        ChunkDTO(**chunk_obj.properties, id=str(chunk_obj.uuid)) for chunk_obj in batch_chunks.objects
+                        (ChunkDTO(**chunk_obj.properties, id=str(chunk_obj.uuid)), chunk_obj.vector["default"]) for chunk_obj in batch_chunks.objects
                     ]
-
                     all_chunks.extend(batch_dtos)
 
             return all_chunks
@@ -80,7 +80,7 @@ class ChunkService:
                 )
 
     def cleanup_old_chunks(self, last_used_lt: datetime, exclusion_chunk_hashes: List[str]) -> None:
-        self.sync_collection.data.delete_many(
+        result = self.sync_collection.data.delete_many(
             Filter.all_of(
                 [
                     *[Filter.by_id().not_equal(generate_uuid5(chunk_hash)) for chunk_hash in exclusion_chunk_hashes],
@@ -88,3 +88,4 @@ class ChunkService:
                 ]
             )
         )
+        print(result.successful, "////////", result.failed)

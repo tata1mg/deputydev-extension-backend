@@ -88,7 +88,6 @@ class VectorDBChunker(BaseChunker):
             chunk_obj = await self.get_file_wise_chunks_for_single_file_batch(
                 files_to_chunk_batch=batch_files,
             )
-            print(chunk_obj)
             all_file_wise_chunks.update(chunk_obj)
 
         return all_file_wise_chunks
@@ -144,6 +143,7 @@ class VectorDBChunker(BaseChunker):
                         start_line=vector_store_file[0].start_line,
                         end_line=vector_store_file[0].end_line,
                     ),
+                    embedding=vector_store_file[2],
                 )
                 for vector_store_file in file_wise_chunk_files_and_chunks[file_path]
             ]
