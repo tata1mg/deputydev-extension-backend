@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Tuple
 
+from git.util import Actor
+from torpedo import CONFIG
 from tortoise.exceptions import DoesNotExist
 from typing_extensions import override
 
@@ -221,3 +223,10 @@ class GithubAuthHandler(AuthHandler):
         installation_id = self._encryption_service.decrypt(installation_id)
 
         return access_token, expiry, installation_id
+
+    @override
+    def get_git_actor(self) -> Actor:
+        return Actor(
+            name=CONFIG.config["GIT_ACTORS"]["GITHUB"]["NAME"],
+            email=CONFIG.config["GIT_ACTORS"]["GITHUB"]["EMAIL"],
+        )
