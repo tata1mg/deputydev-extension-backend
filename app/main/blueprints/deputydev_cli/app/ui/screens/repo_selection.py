@@ -58,8 +58,8 @@ class RepoPathCompleter(Completer):
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_file_path[len(abs_text_path) + len(last_path_component) :],
-                        start_position=0,
+                        abs_current_file_path[len(abs_text_path) :],
+                        start_position=-len(last_path_component),
                     )
                     current_yields += 1
             # prevent os.walk from going into subdirectories
