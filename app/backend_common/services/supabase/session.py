@@ -3,6 +3,8 @@ from typing import Any, Dict
 from postgrest.exceptions import APIError
 from torpedo import CONFIG
 
+from app.backend_common.repository.users.user_service import UserService
+from app.backend_common.services.supabase.auth import SupabaseAuth
 from app.common.services.authentication.jwt import JWTHandler
 
 from .client import supabase
@@ -36,6 +38,19 @@ class SupabaseSession:
 
             if not data:
                 return {"error": {"message": "No session data found", "code": "NO_DATA", "status": 404}}
+
+            access_token = data["access_token"]
+            token_data = await SupabaseAuth.verify_auth_token(access_token)
+
+            # Extract email from token data
+            email = token_data["user_email"]
+
+            # Fetch the registered user ID based on the email
+            user = await UserService.db_get(filters={"email": email}, fetch_one=True)
+
+            # Add email and user_id to session data
+            data["email"] = email
+            data["user_id"] = user.id
 
             # Encode the session data into a JWT token
             jwt_token = JWTHandler(signing_key=JWT_SECRET, algorithm="HS256").create_token(payload=data)
