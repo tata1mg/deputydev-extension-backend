@@ -10,12 +10,17 @@ from weaviate.embedded import EmbeddedOptions
 from app.common.models.dao.weaviate.base import Base as WeaviateBaseDAO
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dao.weaviate.chunks import Chunks
+from app.common.models.dao.weaviate.constants.schema_version import SCHEMA_VERSION
+from app.common.models.dao.weaviate.weaviate_schema_details import WeaviateSchemaDetails
 from app.common.services.chunking.vector_store.cleanup import (
     ChunkVectorStoreCleaneupManager,
 )
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repo.local_repo.factory import LocalRepoFactory
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.services.repository.weaviate_schema_details.weaviate_schema_details_service import (
+    WeaviateSchemaDetailsService,
+)
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
@@ -133,7 +138,14 @@ class InitializationManager:
             sync_client=sync_client,
         )
 
-        if should_clean:
+        if not self.weaviate_client:
+            raise ValueError("Connect to vector store failed")
+
+        schema_version = WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).get_schema_version()
+
+        is_schema_invalid = schema_version is None or schema_version != SCHEMA_VERSION
+
+        if should_clean or is_schema_invalid:
             AppLogger.log_debug("Cleaning up the vector store")
             self.weaviate_client.sync_client.collections.delete_all()
 
@@ -141,11 +153,12 @@ class InitializationManager:
             *[
                 self.__check_and_initialize_collection(collection=Chunks),
                 self.__check_and_initialize_collection(collection=ChunkFiles),
+                self.__check_and_initialize_collection(collection=WeaviateSchemaDetails),
             ]
         )
 
-        if not self.weaviate_client:
-            raise ValueError("Connect to vector store failed")
+        if is_schema_invalid:
+            WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).set_schema_version(SCHEMA_VERSION)
 
         return self.weaviate_client
 
