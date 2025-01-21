@@ -109,7 +109,7 @@ class BasePrModel:
     @staticmethod
     def user_description(description):
         if not description:
-            return
+            return ""
         # Patterns to match start and end markers for the summary
         summary_start_pattern = r"DeputyDev generated PR summary:"
         summary_end_pattern = r"DeputyDev generated PR summary until (\[[a-f0-9]+\]\(https?://[^\)]+\)|[a-f0-9]+)"
