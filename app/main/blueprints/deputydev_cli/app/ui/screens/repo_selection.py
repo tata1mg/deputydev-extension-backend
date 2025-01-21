@@ -182,6 +182,7 @@ class RepoSelection(BaseScreenHandler):
                     payload={
                         "repo_name": self.app_context.local_repo.get_repo_name(),
                         "vcs_type": self.app_context.local_repo.get_vcs_type(),
+                        "workspace_slug": self.app_context.local_repo.get_origin_remote_url().split(":")[-1].split("/")[0],
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )
