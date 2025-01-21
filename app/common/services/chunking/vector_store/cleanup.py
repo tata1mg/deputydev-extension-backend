@@ -31,7 +31,7 @@ class ChunkVectorStoreCleaneupManager:
                 last_used_lt=last_used_lt,
                 exclusion_chunk_hashes=self.exclusion_chunk_hashes,
             )
-            print(f"Cleaning up took {time.perf_counter() - time_start} seconds")
+            AppLogger.log_debug(f"Cleaning up took {time.perf_counter() - time_start} seconds")
         except Exception as _ex:
             AppLogger.log_debug(message=str(_ex))
 
