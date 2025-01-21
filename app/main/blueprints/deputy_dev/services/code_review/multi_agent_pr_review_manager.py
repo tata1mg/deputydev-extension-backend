@@ -106,7 +106,7 @@ class MultiAgentPRReviewManager:
     # blending engine section end
 
     def populate_pr_summary(self):
-        self.pr_summary = self.llm_comments.pop(AgentTypes.PR_SUMMARY.value) or ""
+        self.pr_summary = self.llm_comments.pop(AgentTypes.PR_SUMMARY.value, "")
 
     async def __execute_pass(self):
         await self._build_prompts()
