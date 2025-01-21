@@ -73,7 +73,7 @@ class ChunkFilesService:
                 )
 
     def cleanup_old_chunk_files(self, last_used_lt: datetime, exclusion_chunk_hashes: List[str]) -> None:
-        self.sync_collection.data.delete_many(
+        result = self.sync_collection.data.delete_many(
             Filter.all_of(
                 [
                     *[Filter.by_property("chunk_hash").not_equal(chunk_hash) for chunk_hash in exclusion_chunk_hashes],
@@ -81,3 +81,4 @@ class ChunkFilesService:
                 ]
             ),
         )
+        print(result.successful, "////////", result.failed)

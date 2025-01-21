@@ -21,7 +21,7 @@ class ChunkVectorStoreManager:
 
     async def get_file_wise_stored_chunk_files_and_chunks(
         self, file_path_commit_hash_map: Dict[str, str]
-    ) -> Dict[str, List[Tuple[ChunkFileDTO, ChunkDTO]]]:
+    ) -> Dict[str, List[Tuple[ChunkFileDTO, ChunkDTO, List[float]]]]:
         """
         Get files to chunk and store based on the file path and commit hash map and files already present in the vector store.
         :param file_path_commit_hash_map: Dict[str, str]
@@ -34,17 +34,17 @@ class ChunkVectorStoreManager:
         if not chunk_files_in_db:
             return {}
 
-        stored_chunks = await ChunkService(weaviate_client=self.weaviate_client).get_chunks_by_chunk_hashes(
+        stored_chunks_and_vectors = await ChunkService(weaviate_client=self.weaviate_client).get_chunks_by_chunk_hashes(
             chunk_hashes=list({chunk_file.chunk_hash for chunk_file in chunk_files_in_db}),
         )
 
-        stored_chunks_chunk_dict = {chunk.chunk_hash: chunk for chunk in stored_chunks}
+        stored_chunks_and_vectors_chunk_dict = {chunk_and_vector[0].chunk_hash: chunk_and_vector for chunk_and_vector in stored_chunks_and_vectors}
 
-        file_wise_stored_chunk_files_and_chunks: Dict[str, List[Tuple[ChunkFileDTO, ChunkDTO]]] = {}
+        file_wise_stored_chunk_files_and_chunks: Dict[str, List[Tuple[ChunkFileDTO, ChunkDTO, List[float]]]] = {}
         for chunk_file in chunk_files_in_db:
-            if chunk_file.chunk_hash in stored_chunks_chunk_dict:
+            if chunk_file.chunk_hash in stored_chunks_and_vectors_chunk_dict:
                 file_wise_stored_chunk_files_and_chunks.setdefault(chunk_file.file_path, []).append(
-                    (chunk_file, stored_chunks_chunk_dict[chunk_file.chunk_hash])
+                    (chunk_file, stored_chunks_and_vectors_chunk_dict[chunk_file.chunk_hash][0], stored_chunks_and_vectors_chunk_dict[chunk_file.chunk_hash][1])
                 )
 
         return file_wise_stored_chunk_files_and_chunks
@@ -64,6 +64,7 @@ class ChunkVectorStoreManager:
         for chunks in file_wise_chunks.values():
             for chunk in chunks:
                 if chunk.embedding is None or not chunk.source_details.file_hash:
+                    print(chunk)
                     raise ValueError(f"Chunk {chunk.content_hash} does not have an embedding")
 
                 now_time = datetime.now().replace(tzinfo=timezone.utc)
