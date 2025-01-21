@@ -18,6 +18,5 @@ config = CONFIG.config
 @authenticate
 async def get_repos(_request: Request, auth_data: AuthData, **kwargs):
     payload = {key: var for key, var in _request.query_args}
-    print(payload)
-    response = await ReposHandler.get_registered_repo_details(team_id=auth_data.team_id, **payload)
+    response = await ReposHandler.get_registered_repo_details(**payload)
     return send_response(response)

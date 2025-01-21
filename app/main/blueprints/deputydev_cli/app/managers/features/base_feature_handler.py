@@ -40,7 +40,6 @@ class BaseFeatureHandler(ABC):
         session_id: Optional[str] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
-        usage_hash: Optional[str] = None,
     ):
         self.process_executor = process_executor
         self.query = query
@@ -54,7 +53,6 @@ class BaseFeatureHandler(ABC):
         self.session_id = session_id
         self.apply_diff = apply_diff
         self.registered_repo_details = registered_repo_details
-        self.usage_hash = usage_hash
 
         self.redirections: FeatureHandlingRedirections = FeatureHandlingRedirections(
             success_redirect=FeatureNextAction.ERROR_OUT_AND_END,

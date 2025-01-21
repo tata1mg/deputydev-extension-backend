@@ -7,6 +7,7 @@ from functools import cached_property
 from typing import Dict, List, Optional, Tuple
 
 import toml
+from git.util import Actor
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -218,3 +219,8 @@ class BaseRepo(ABC):
             workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
             repo = await Repos.get_or_none(workspace_id=workspace.id, scm_repo_id=scm_repo_id)
             return repo
+
+    def get_repo_actor(self) -> Actor:
+        raise NotImplementedError(
+            "This method should be implemented in the child class to return the actor of the repo"
+        )

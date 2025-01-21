@@ -58,8 +58,8 @@ class RepoPathCompleter(Completer):
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_file_path[len(abs_text_path) + len(last_path_component) :],
-                        start_position=0,
+                        abs_current_file_path[len(abs_text_path) :],
+                        start_position=-len(last_path_component),
                     )
                     current_yields += 1
             # prevent os.walk from going into subdirectories
@@ -182,6 +182,7 @@ class RepoSelection(BaseScreenHandler):
                     payload={
                         "repo_name": self.app_context.local_repo.get_repo_name(),
                         "vcs_type": self.app_context.local_repo.get_vcs_type(),
+                        "workspace_slug": self.app_context.local_repo.get_origin_remote_url().split(":")[-1].split("/")[0],
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )
