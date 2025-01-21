@@ -8,6 +8,7 @@ from weaviate.util import generate_uuid5
 from app.common.models.dao.weaviate.chunks import Chunks
 from app.common.models.dto.chunk_dto import ChunkDTO, ChunkDTOWithVector
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.utils.app_logger import AppLogger
 
 
 class ChunkService:
@@ -57,7 +58,8 @@ class ChunkService:
                 if batch_chunks.objects:
                     # Convert to DTOs efficiently using list comprehension
                     batch_dtos = [
-                        (ChunkDTO(**chunk_obj.properties, id=str(chunk_obj.uuid)), chunk_obj.vector["default"]) for chunk_obj in batch_chunks.objects
+                        (ChunkDTO(**chunk_obj.properties, id=str(chunk_obj.uuid)), chunk_obj.vector["default"])
+                        for chunk_obj in batch_chunks.objects
                     ]
                     all_chunks.extend(batch_dtos)
 
@@ -88,4 +90,4 @@ class ChunkService:
                 ]
             )
         )
-        print(result.successful, "////////", result.failed)
+        AppLogger.log_debug(f"chunks deleted. successful - {result.successful}, failed - {result.failed}")

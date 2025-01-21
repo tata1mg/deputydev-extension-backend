@@ -7,7 +7,6 @@ from app.common.services.chunking.chunk_info import ChunkInfo
 from app.common.services.chunking.chunker.handlers.vector_db_chunker import (
     VectorDBChunker,
 )
-from app.common.services.chunking.vector_store.main import ChunkVectorStoreManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.utils.app_logger import AppLogger
