@@ -7,6 +7,7 @@ from app.backend_common.repository.user_teams.user_team_service import UserTeamS
 from app.backend_common.repository.users.user_service import UserService
 from app.backend_common.services.supabase.auth import SupabaseAuth
 from app.common.services.authentication.jwt import JWTHandler
+from app.main.blueprints.one_dev.constants.constants import TATA_1MG, TRAYA
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
@@ -31,9 +32,10 @@ def authenticate(func):
             raise BadRequestException("Auth token not verified")
 
         # Extract the email from the user response
-        email = token_data["user_email"]
+        email = session_data.get("email")
+        if not email:
+            raise BadRequestException("Email not found in session data")
 
-        # TODO: This needs to be refactored
         # Fetch the user ID based on the email
         user = await UserService.db_get(filters={"email": email}, fetch_one=True)
         user_id = user.id
@@ -42,18 +44,30 @@ def authenticate(func):
         if not user_id:
             raise BadRequestException("User not found")
 
-        # Fetch the team ID based on the user ID
-        user_team = await UserTeamService.db_get(filters={"user_id": user_id}, fetch_one=True)
-        team_id = user_team.team_id
+        # Team id will be on the basis of email domain
+        domain = email.split("@")[1]
+        if domain == TATA_1MG["domain"]:
+            team_id = TATA_1MG["team_id"]
+        elif domain == TRAYA["domain"]:
+            team_id = TRAYA["team_id"]
+        else:
+            team_id = None
 
         # If the team ID is not found, raise an error
         if not team_id:
             raise BadRequestException("Team not found")
 
+        # Fetch the user team ID based on the user ID and team ID
+        user_team = await UserTeamService.db_get(filters={"user_id": user_id, "team_id": team_id}, fetch_one=True)
+        user_team_id = user_team.id
+
+        # If the user team ID is not found, raise an error
+        if not user_team_id:
+            raise BadRequestException("User team not found")
+
         # prepare the auth data
         auth_data = AuthData(
-            team_id=team_id,
-            user_id=user_id,
+            user_team_id=user_team_id,
         )
 
         return await func(_request, auth_data=auth_data, **kwargs)

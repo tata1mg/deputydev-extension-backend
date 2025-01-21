@@ -14,7 +14,10 @@ class SignUp:
         email = headers.get("X-User-Email")
         email_verification = cls.verify_email(email)
         if "error" in email_verification:
-            raise BadRequestException(email_verification["error"])
+            return {
+                "success": False,
+                "error": email_verification["error"]
+            }
         else:
             # good, continue signup and onboard user with his personal team
             try:
@@ -37,7 +40,7 @@ class SignUp:
             except SignUpError as e:
                 return {
                     "success": True,
-                    "message": str(e)
+                    "isUserExist": True
                 }
             except Exception as e:
                 raise BadRequestException(str(e))
