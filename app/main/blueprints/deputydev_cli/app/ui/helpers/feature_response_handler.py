@@ -72,7 +72,8 @@ class FeatureResponseHandler:
                 )
             # sync local repo with remote if current branch is the source branch of PR config
             if (
-                self.app_context.local_repo.get_active_branch() == self.app_context.pr_config.source_branch
+                self.app_context.pr_config.source_branch
+                and (self.app_context.local_repo.get_active_branch() == self.app_context.pr_config.source_branch)
                 and self.app_context.registered_repo_details
             ):
                 try:
