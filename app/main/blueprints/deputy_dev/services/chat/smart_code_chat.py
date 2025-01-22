@@ -14,6 +14,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
     BitbucketBots,
     ChatTypes,
+    CommentTypes,
     MessageTypes,
     MetaStatCollectionTypes,
 )
@@ -31,11 +32,11 @@ from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_pro
 from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger import (
     CodeReviewTrigger,
 )
+from app.main.blueprints.deputy_dev.services.code_review.pr_summary_manager import (
+    PRSummaryManager,
+)
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
-)
-from app.main.blueprints.deputy_dev.services.experiment.experiment_service import (
-    ExperimentService,
 )
 from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
     ChatPromptService,
@@ -48,24 +49,29 @@ from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_t
     StatsCollectionTrigger,
 )
 from app.main.blueprints.deputy_dev.services.webhook.chat_webhook import ChatWebhook
-from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
-    HumanCommentWebhook,
-)
 from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,
-    is_human_comment,
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
 )
-
-# from app.main.blueprints.one_dev.services.webhook_handlers.suggestion_code_generation_manager import (
-#     SuggestionCodeGenerationManager,
-# )
 
 config = CONFIG.config
 
 
 class SmartCodeChatManager:
+    @classmethod
+    def identify_request_type(cls, raw_comment: str) -> str:
+        """Identify the type of request based on the comment."""
+        if not raw_comment:
+            return CommentTypes.UNKNOWN.value
+
+        comment = raw_comment.strip().lower()
+        if comment.startswith(f"#{CommentTypes.SUMMARY.value}"):
+            return CommentTypes.SUMMARY.value
+        elif comment == f"#{CommentTypes.REVIEW.value}":
+            return CommentTypes.REVIEW.value
+        return CommentTypes.CHAT.value
+
     @classmethod
     async def chat(cls, payload: dict, query_params: dict):
         logger.info(f"Comment payload: {payload}")
@@ -76,34 +82,41 @@ class SmartCodeChatManager:
 
         raw_comment = ChatWebhook.get_raw_comment(payload)
 
-        if raw_comment and raw_comment.strip().lower() == "#review":
+        request_type = cls.identify_request_type(raw_comment)
+        await cls.handle_request(request_type, payload, query_params, vcs_type)
+
+    @classmethod
+    async def handle_request(cls, request_type: str, payload: dict, query_params: dict, vcs_type: str):
+        """Route the request to appropriate handler based on type."""
+        if request_type == CommentTypes.UNKNOWN.value:
+            return
+        comment_payload = await ChatWebhook.parse_payload(payload)
+        if not comment_payload or is_request_from_blocked_repo(comment_payload.repo.repo_name):
+            return
+
+        if request_type == CommentTypes.SUMMARY.value:
+            await PRSummaryManager.generate_and_post_summary(comment_payload)
+            return
+
+        if request_type == CommentTypes.REVIEW.value:
             await CodeReviewTrigger.perform_review(payload, query_params)
             return
 
-        comment_payload = await ChatWebhook.parse_payload(payload)
-        if not comment_payload:
-            return
-        logger.info(f"Comment payload: {comment_payload}")
-        if is_request_from_blocked_repo(comment_payload.repo.repo_name):
+        # Bot comments
+        if comment_payload.author_info.name in BitbucketBots.list():
             return
 
-        # if comment_payload.comment.raw.strip().startswith("#suggestion"):
-        #     asyncio.ensure_future(SuggestionCodeGenerationManager.process_suggestion(comment_payload, vcs_type))
-        #     return
-
-        if (
-            is_human_comment(comment_payload.author_info.name, comment_payload.comment.raw)
-            and ExperimentService.is_eligible_for_experiment()
-        ):
-            human_comment_payload = await HumanCommentWebhook.parse_payload(payload)
-            await cls.handle_human_comment(human_comment_payload, vcs_type)
-        elif comment_payload.author_info.name not in BitbucketBots.list():
-            await cls.handle_chat_request(comment_payload, vcs_type=vcs_type)
-        else:
-            logger.info(f"Comment rejected due to not falling in supported criteria {comment_payload}")
+        # Hanlde comments other than Summary, review or from any known bots
+        await cls.handle_chat_request(chat_request=comment_payload, vcs_type=vcs_type)
 
     @classmethod
     async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type):
+        message_type, feedback_type = CommentPreprocessor.get_message_type(chat_request.comment.raw)
+
+        # handles comment that don't start with #feedback, #dd, #scrit or #deputydev
+        if message_type == MessageTypes.UNKNOWN.value:
+            return
+
         auth_handler = await get_vcs_auth_handler(chat_request.repo.workspace_id, vcs_type)
 
         repo = await RepoFactory.repo(
@@ -137,6 +150,10 @@ class SmartCodeChatManager:
             repo_id=chat_request.repo.repo_id,
             auth_handler=auth_handler,
         )
+        if message_type == MessageTypes.FEEDBACK.value:
+            await CommentPreprocessor.save_feedback_info(feedback_type, chat_request, pr.pr_model())
+            return
+
         pr_diff_handler = PRDiffHandler(pr)
         # Set Team id in context vars
         workspace_dto = await WorkspaceService.find(scm_workspace_id=chat_request.repo.workspace_id, scm=vcs_type)
@@ -158,34 +175,29 @@ class SmartCodeChatManager:
         comment = chat_request.comment.raw.lower()
         # we are checking whether the comment starts with any of the tags or not
         add_note = comment.startswith(ChatTypes.SCRIT.value)
-        chat_type = await CommentPreprocessor.process_chat(chat_request, pr.pr_model())
-        if chat_type == MessageTypes.UNKNOWN.value:
-            logger.info(f"Chat processing rejected due to unknown tag with payload : {chat_request}")
-        elif chat_type == MessageTypes.CHAT.value:
-            comment = chat_request.comment.raw.lower()
 
-            logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
+        comment = chat_request.comment.raw.lower()
 
-            diff = await pr_diff_handler.get_effective_pr_diff("chat")
-            if diff == PR_NOT_FOUND:
-                await comment_service.create_comment_on_parent(
-                    "Unable to process the request", chat_request.comment.id, ""
-                )
-                return
-            if diff == LARGE_PR_DIFF:
-                await comment_service.create_comment_on_parent(
-                    "PR diff is larger than 20k lines, can not process request", chat_request.comment.id, ""
-                )
-                return
-            user_story_description = await JiraManager(issue_id=pr.pr_details.issue_id).get_description_text()
-            comment_thread = await comment_service.fetch_comment_thread(chat_request)
-            comment_context = {
-                "comment_thread": comment_thread,
-                "pr_diff": diff,
-                "user_story_description": user_story_description,
-            }
-            await cls.get_chat_comments(comment_context, chat_request, comment_service, add_note)
-            logger.info(f"Chat processing completed: {comment} , with payload : {chat_request}")
+        logger.info(f"Processing the comment: {comment} , with payload : {chat_request}")
+
+        diff = await pr_diff_handler.get_effective_pr_diff("chat")
+        if diff == PR_NOT_FOUND:
+            await comment_service.create_comment_on_parent("Unable to process the request", chat_request.comment.id, "")
+            return
+        if diff == LARGE_PR_DIFF:
+            await comment_service.create_comment_on_parent(
+                "PR diff is larger than 20k lines, can not process request", chat_request.comment.id, ""
+            )
+            return
+        user_story_description = await JiraManager(issue_id=pr.pr_details.issue_id).get_description_text()
+        comment_thread = await comment_service.fetch_comment_thread(chat_request)
+        comment_context = {
+            "comment_thread": comment_thread,
+            "pr_diff": diff,
+            "user_story_description": user_story_description,
+        }
+        await cls.get_chat_comments(comment_context, chat_request, comment_service, add_note)
+        logger.info(f"Chat processing completed: {comment} , with payload : {chat_request}")
 
     @classmethod
     async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service, add_note: bool = False):

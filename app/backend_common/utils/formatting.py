@@ -1,6 +1,12 @@
 import re
 from enum import Enum
 
+from app.common.constants.constants import (
+    PR_SIZING_TEXT,
+    PR_SUMMARY_COMMIT_TEXT,
+    PR_SUMMARY_TEXT,
+)
+
 
 def format_code_blocks(comment: str) -> str:
     """
@@ -57,6 +63,52 @@ def format_summary_loc_time_text(loc: int, category: str, time: str) -> tuple:
     if category == PRDiffSizingLabel.XXL.value:
         return "1000+", f"{time} to review, potentially spread across multiple sessions"
     return str(loc), f"{time} to review"
+
+
+def categorize_loc(loc: int) -> tuple:
+    """
+    Categorizes the number of lines of code (LOC) into predefined size categories.
+
+    Args:
+        loc (int): The total number of lines of code.
+
+    Returns:
+        str: The size category based on the number of lines of code.
+            - "XS" for 0-9 lines
+            - "S" for 10-29 lines
+            - "M" for 30-99 lines
+            - "L" for 100-499 lines
+            - "XL" for 500-999 lines
+            - "XXL" for 1000+ lines
+    """
+    if loc < 10:
+        return PRDiffSizingLabel.XS.value, PRDiffSizingLabel.XS_TIME.value
+    elif loc < 30:
+        return PRDiffSizingLabel.S.value, PRDiffSizingLabel.S_TIME.value
+    elif loc < 100:
+        return PRDiffSizingLabel.M.value, PRDiffSizingLabel.M_TIME.value
+    elif loc < 500:
+        return PRDiffSizingLabel.L.value, PRDiffSizingLabel.L_TIME.value
+    elif loc < 1000:
+        return PRDiffSizingLabel.XL.value, PRDiffSizingLabel.XL_TIME.value
+    else:
+        return PRDiffSizingLabel.XXL.value, PRDiffSizingLabel.XXL_TIME.value
+
+
+async def format_summary_with_metadata(summary: str, loc: int, commit_id: str) -> str:
+    """Format the summary with PR metadata including size, LOC, and commit info."""
+    category, time = categorize_loc(loc)
+    loc_text, time_text = format_summary_loc_time_text(loc, category, time)
+
+    # Format the complete summary with metadata
+    formatted_summary = (
+        f"\n\n---\n\n{PR_SUMMARY_TEXT}"
+        f"\n\n---\n\n{PR_SIZING_TEXT.format(category=category, loc=loc_text, time=time_text)}"
+        f"\n\n---\n\n{summary}"
+        f"\n\n---\n\n{PR_SUMMARY_COMMIT_TEXT.format(commit_id=commit_id)}"
+    )
+
+    return formatted_summary
 
 
 def append_line_numbers(pr_diff: str) -> str:
