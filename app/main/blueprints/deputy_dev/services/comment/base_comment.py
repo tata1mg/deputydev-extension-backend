@@ -56,7 +56,7 @@ class BaseComment(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def create_comment_on_parent(self, comment: str, parent_id, model: str):
+    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
         """creates comment on whole pr"""
         raise NotImplementedError()
 
