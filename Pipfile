@@ -26,6 +26,7 @@ pyjwt = "==2.9.0"
 prompt-toolkit = "==3.0.48"
 xxhash = "==3.5.0"
 weaviate-client = "==4.9.6"
+giturlparse = "==0.12.0"
 
 [dev-packages]
 flake8 = "==7.1.1"
