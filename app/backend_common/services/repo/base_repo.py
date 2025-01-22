@@ -136,15 +136,15 @@ class BaseRepo(ABC):
         # Get the return code
         return_code = process.returncode
         if return_code == 0:
-            AppLogger.info("Cloning completed")
+            AppLogger.log_info("Cloning completed")
         else:
             error_message = stderr.decode().strip()
             if return_code == 128 and "Invalid credentials" in error_message:
-                AppLogger.error(f"Git clone failed due to invalid credentials: {error_message}")
+                AppLogger.log_error(f"Git clone failed due to invalid credentials: {error_message}")
                 raise PermissionError(f"Invalid credentials: {error_message}")
 
             if return_code != 128:
-                AppLogger.error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
+                AppLogger.log_error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
                 # we are raising runtime error for other status code, so that it can be retried from the SQS after sometime
                 raise RuntimeError(f"Git clone failed: {error_message}")
             # we return False, if we were unable to clone repo
