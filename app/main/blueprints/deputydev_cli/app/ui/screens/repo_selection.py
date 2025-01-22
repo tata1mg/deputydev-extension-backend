@@ -184,7 +184,9 @@ class RepoSelection(BaseScreenHandler):
                         "vcs_type": self.app_context.local_repo.get_vcs_type(),
                         "workspace_slug": self.app_context.local_repo.get_origin_remote_url()
                         .split(":")[-1]
-                        .split("/")[0],
+                        .split("/")[0]
+                        if "https://" not in self.app_context.local_repo.get_origin_remote_url()
+                        else self.app_context.local_repo.get_origin_remote_url().split("/")[-2],
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )
