@@ -38,8 +38,8 @@ class ConfigFetcher:
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
             "HOST_AND_TIMEOUT": {
-                # "HOST": "https://api.deputydev.ai",
-                "HOST": "http://localhost:8084",
+                "HOST": "https://api.deputydev.ai",
+                # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "TIKTOKEN_EMBEDDING_TOKEN_MODEL": "text-embedding-3-small",
