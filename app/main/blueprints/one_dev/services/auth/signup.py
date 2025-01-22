@@ -1,12 +1,14 @@
-
-
 from torpedo.exceptions import BadRequestException
+
+from app.common.exception.exception import SignUpError
 from app.main.blueprints.deputy_dev.constants.onboarding import UserRoles
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_teams import UserTeams
 from app.main.blueprints.deputy_dev.models.request.onboarding import SignUpRequest
-from app.main.blueprints.deputy_dev.services.workspace.onboarding_manager import OnboardingManager
+from app.main.blueprints.deputy_dev.services.workspace.onboarding_manager import (
+    OnboardingManager,
+)
 from app.main.blueprints.one_dev.constants.constants import TATA_1MG, TRAYA
-from app.common.exception.exception import SignUpError
+
 
 class SignUp:
     @classmethod
@@ -14,18 +16,17 @@ class SignUp:
         email = headers.get("X-User-Email")
         email_verification = cls.verify_email(email)
         if "error" in email_verification:
-            return {
-                "success": False,
-                "error": email_verification["error"]
-            }
+            return {"success": False, "error": email_verification["error"]}
         else:
             # good, continue signup and onboard user with his personal team
             try:
-                user_id = await OnboardingManager.signup(payload=SignUpRequest(
-                    username=headers.get("X-User-Name"),
-                    email=email,
-                    org_name=email_verification["org_name"],
-                ))
+                user_id = await OnboardingManager.signup(
+                    payload=SignUpRequest(
+                        username=headers.get("X-User-Name"),
+                        email=email,
+                        org_name=email_verification["org_name"],
+                    )
+                )
 
                 await UserTeams.create(
                     user_id=user_id,
@@ -34,17 +35,12 @@ class SignUp:
                     is_owner=True,
                     is_billable=True,
                 )
-                return {
-                    "success": True
-                }
-            except SignUpError as e:
-                return {
-                    "success": True,
-                    "isUserExist": True
-                }
+                return {"success": True}
+            except SignUpError:
+                # user already exists
+                return {"success": True, "isUserExist": True}
             except Exception as e:
                 raise BadRequestException(str(e))
-
 
     @classmethod
     def verify_email(cls, email):
@@ -60,8 +56,4 @@ class SignUp:
                 "org_name": TRAYA["org_name"],
             }
         else:
-            return {
-                "team_id": None,
-                "org_name": None,
-                "error": "Invalid domain"
-            }
+            return {"team_id": None, "org_name": None, "error": "Invalid domain"}

@@ -33,12 +33,7 @@ class SupabaseAuth:
             if exp_timestamp is not None:
                 current_time = int(datetime.now(timezone.utc).timestamp())
                 if current_time > exp_timestamp:
-                    return {
-                        "valid": False,
-                        "message": "Token has expired",
-                        "user_email": None,
-                        "user_name" : None
-                    }
+                    return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
 
             # Verify token with Supabase
             user_response = supabase.auth.get_user(access_token)
@@ -47,36 +42,21 @@ class SupabaseAuth:
                     "valid": True,
                     "message": "Token is valid",
                     "user_email": user_response.user.email,
-                    "user_name" : user_response.user.user_metadata["full_name"]
+                    "user_name": user_response.user.user_metadata["full_name"],
                 }
             else:
-                return {
-                    "valid": False,
-                    "message": "Token is invalid",
-                    "user_email": None,
-                    "user_name" : None
-                }
+                return {"valid": False, "message": "Token is invalid", "user_email": None, "user_name": None}
 
         except jwt.ExpiredSignatureError:
-            return {
-                "valid": False,
-                "message": "Token has expired",
-                "user_email": None,
-                "user_name" : None
-            }
+            return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
         except jwt.InvalidTokenError:
-            return {
-                "valid": False,
-                "message": "Invalid token format",
-                "user_email": None,
-                "user_name" : None
-            }
+            return {"valid": False, "message": "Invalid token format", "user_email": None, "user_name": None}
         except Exception as e:
             return {
                 "valid": False,
                 "message": f"Token validation failed: {str(e)}",
                 "user_email": None,
-                "user_name" : None
+                "user_name": None,
             }
 
     @classmethod
