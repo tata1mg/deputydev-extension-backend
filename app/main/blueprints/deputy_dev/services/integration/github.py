@@ -37,7 +37,7 @@ class Github(Integration, SCM):
         if len(created_hooks) == 0:
             raise OnboardingError("No new hooks to create")
 
-        async with in_transaction():
+        async with in_transaction(connection_name="default"):
             workspace = Workspaces(
                 name=workspace_info["name"],
                 slug=workspace_info["slug"],
