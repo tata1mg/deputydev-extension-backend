@@ -10,7 +10,7 @@ class GitHubPrModel(BasePrModel):
         return self.pr_detail["title"]
 
     def description(self):
-        return self.pr_detail["body"] or ""
+        return self.user_description(self.pr_detail["body"]) or ""
 
     def scm_pr_id(self):
         return self.pr_detail["number"]

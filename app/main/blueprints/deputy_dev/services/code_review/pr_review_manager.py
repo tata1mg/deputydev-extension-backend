@@ -6,13 +6,10 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.backend_common.services.pr.base_pr import BasePR
-from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.context_var import identifier
-from app.common.constants.constants import VCSTypes
 from app.common.utils.app_logger import AppLogger
-from app.common.utils.context_vars import get_context_value, set_context_values
+from app.common.utils.context_vars import get_context_value
 from app.common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -20,6 +17,9 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
+from app.main.blueprints.deputy_dev.services.code_review.base_pr_review_manager import (
+    BasePRReviewManager,
+)
 from app.main.blueprints.deputy_dev.services.code_review.multi_agent_pr_review_manager import (
     MultiAgentPRReviewManager,
 )
@@ -36,17 +36,13 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
     AffirmationService,
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
-from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
-    CommentFactory,
-)
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
 
 
-class PRReviewManager:
+class PRReviewManager(BasePRReviewManager):
     """Manager for processing Pull Request reviews."""
 
     @classmethod
@@ -138,7 +134,7 @@ class PRReviewManager:
         ).get_code_review_comments()
         # We will only post summary for first PR review request
         if pr_summary and not get_context_value("has_reviewed_entry"):
-            await pr_service.update_pr_description(pr_summary.get("response"))
+            await pr_service.update_pr_description(pr_summary)
 
         if _is_large_pr:
             await comment_service.create_pr_comment(
@@ -150,51 +146,3 @@ class PRReviewManager:
             await comment_service.post_bots_comments(llm_response)
 
         return llm_response, tokens_data, meta_info_to_save, _is_large_pr
-
-    @classmethod
-    async def initialise_services(cls, data: dict):
-        cls.set_identifier(data.get("repo_name"))  # need to deprecate
-        set_context_values(scm_pr_id=data.get("pr_id"), repo_name=data.get("repo_name"))
-
-        vcs_type = data.get("vcs_type", VCSTypes.bitbucket.value)
-        repo_name, pr_id, workspace, scm_workspace_id, repo_id, workspace_slug = (
-            data.get("repo_name"),
-            data.get("pr_id"),
-            data.get("workspace"),
-            data.get("workspace_id"),
-            data.get("repo_id"),
-            data.get("workspace_slug"),
-        )
-        auth_handler = await get_vcs_auth_handler(scm_workspace_id, vcs_type)
-        repo_service = await RepoFactory.repo(
-            vcs_type=vcs_type,
-            repo_name=repo_name,
-            workspace=workspace,
-            workspace_id=scm_workspace_id,
-            workspace_slug=workspace_slug,
-            auth_handler=auth_handler,
-            repo_id=repo_id,
-        )
-        pr_service = await PRFactory.pr(
-            vcs_type=vcs_type,
-            repo_name=repo_name,
-            workspace=workspace,
-            workspace_id=scm_workspace_id,
-            workspace_slug=workspace_slug,
-            auth_handler=auth_handler,
-            pr_id=pr_id,
-            repo_service=repo_service,
-            fetch_pr_details=True,
-        )
-        comment_service = await CommentFactory.initialize(
-            vcs_type=vcs_type,
-            repo_name=repo_name,
-            pr_id=pr_id,
-            workspace=workspace,
-            workspace_slug=workspace_slug,
-            pr_details=pr_service.pr_details,
-            auth_handler=auth_handler,
-            repo_id=repo_id,
-        )
-
-        return repo_service, pr_service, comment_service
