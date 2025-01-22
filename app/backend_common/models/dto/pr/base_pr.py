@@ -1,3 +1,6 @@
+import re
+
+
 class BasePrModel:
     def __init__(self, scm: str, pr_detail: dict, meta_info: dict = None):
         if meta_info is None:
@@ -102,3 +105,36 @@ class BasePrModel:
             "destination_commit_id": self.destination_branch_commit(),
         }
         return pr_details
+
+    @staticmethod
+    def user_description(description):
+        if not description:
+            return ""
+        # Patterns to match start and end markers for the summary
+        summary_start_pattern = r"DeputyDev generated PR summary:"
+        summary_end_pattern = r"DeputyDev generated PR summary until (\[[a-f0-9]+\]\(https?://[^\)]+\)|[a-f0-9]+)"
+        fallback_start_pattern = (
+            r"\*\*Size \w+:\*\* This PR changes include \d+ lines and should take approximately [\d-]+ hours to review"
+        )
+
+        # Handle the current format with start and end markers
+        summary_start_match = re.search(summary_start_pattern, description)
+        summary_end_match = re.search(summary_end_pattern, description)
+        if summary_start_match and summary_end_match:
+            start_idx = summary_start_match.start()
+            end_idx = summary_end_match.end()
+
+            above_summary = description[:start_idx].replace("---", "").strip()
+            below_summary = description[end_idx:].replace("---", "").strip()
+
+            return f"{above_summary}\n\n{below_summary}".strip()
+
+        # Handle fallback format (only size details are present and commit id info is not present)
+        # We just add data added above the Deputydev generated summary in description
+        fallback_start_match = re.search(fallback_start_pattern, description)
+        if fallback_start_match:
+            start_idx = fallback_start_match.start()
+            above_summary = description[:start_idx].replace("---", "").strip()
+            return above_summary.strip()
+
+        return description
