@@ -37,9 +37,9 @@ class AgentServiceBase(ABC):
         self.agent_setting = SettingService.Helper.agent_setting_by_name(agent_name)
         self.agent_id = self.agent_setting.get("agent_id")
 
-    async def format_user_prompt(self, prompt: str, comments: str = None):
+    async def required_prompt_variables(self, comments: str = None) -> dict:
         relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
-        prompt_variables = {
+        return {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
             "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
@@ -54,6 +54,9 @@ class AgentServiceBase(ABC):
             "CUSTOM_PROMPT": self.agent_setting.get("custom_prompt") or "",
             "BUCKET": self.agent_setting.get("display_name"),
         }
+
+    async def format_user_prompt(self, prompt: str, comments: str = None):
+        prompt_variables = await self.required_prompt_variables(comments)
         template = Template(prompt)
         return template.safe_substitute(prompt_variables)
 
