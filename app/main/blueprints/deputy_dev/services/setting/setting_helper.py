@@ -146,7 +146,8 @@ class SettingHelper:
 
     @classmethod
     def summary_agent_setting(cls):
-        return cls.DD_LEVEL_SETTINGS["pr_summary"]
+        setting = get_context_value("setting")
+        return setting["pr_summary"]
 
     @classmethod
     def agents(cls, setting):

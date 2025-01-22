@@ -40,6 +40,11 @@ class GithubRepoClient(BaseSCMClient):
                 f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} err {ex}"
             )
 
+    async def create_issue_comment(self, payload: dict, issue_id: int):
+        """Create a comment on PR conversation/issue tab"""
+        url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/issues/{issue_id}/comments"
+        return await self.post(url=url, json=payload)
+
     async def update_pr(self, payload: dict, headers: dict = None):
         """
         Updates PR properties like description
@@ -101,7 +106,7 @@ class GithubRepoClient(BaseSCMClient):
         headers["Accept"] = "application/vnd.github.v3.diff"
 
         result = await self.get(path, headers=headers)
-        if result.status_code not in [200, 404]:
+        if result.status_code not in [200, 404, 406]:
             error_msg = f"Unable to retrieve diff for PR - {self.pr_id}: {result._content}"
             raise HTTPRequestException(status_code=result.status_code, error=error_msg)
         return result
