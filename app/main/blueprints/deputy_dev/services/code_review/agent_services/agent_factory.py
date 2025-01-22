@@ -44,11 +44,33 @@ class AgentFactory:
         AgentTypes.PR_SUMMARY.value: OpenAIPRSummaryAgent,
     }
 
-    def __init__(self, reflection_enabled: bool, context_service: ContextService):
+    def __init__(self, reflection_enabled: bool, context_service: ContextService, eligible_agents: list = None):
         self.context_service = context_service
         self.reflection_enabled = reflection_enabled
-        self.factories = deepcopy(self.FACTORIES)
+        self.eligible_agents = eligible_agents
+        self.factories = {}
+        self.initialize_factories()
         self.initialize_anthropic_custom_agents()
+
+    def initialize_factories(self):
+        """
+        Initialize factories based on eligible_agents filter.
+            Concept of eligible_agents and exclude_agents:
+            1) If only eligible_agents is provided, self.factories will contain only the agents
+            specified in eligible_agents, and prompts will only be built for those agents.
+
+            2) If only exclude_agents is provided, self.factories will contain all the default agents.
+            However, while building prompts for each agent, the agents specified in exclude_agents
+            will be excluded from the prompt generation.
+
+            3) If both eligible_agents and exclude_agents are provided, self.factories will first be built
+            based on eligible_agents. Then, while building prompts, the agents specified in exclude_agents
+            will be excluded from the agents in self.factories.
+        """
+        if self.eligible_agents:
+            self.factories = {agent: self.FACTORIES[agent] for agent in self.eligible_agents if agent in self.FACTORIES}
+        else:
+            self.factories = deepcopy(self.FACTORIES)
 
     async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
         prompts = await self.build_code_review_agents_prompt(reflection_stage, previous_review_comments, exclude_agents)
@@ -97,7 +119,9 @@ class AgentFactory:
     def initialize_anthropic_custom_agents(self):
         for agent_name, agent_setting in SettingService.Helper.agents_settings().items():
             if agent_setting["is_custom_agent"] and agent_setting["enable"]:
-                agent_class = AnthropicCustomAgent.create_custom_agent(
-                    agent_name, self.context_service, self.reflection_enabled
-                )
-                self.factories[agent_name] = agent_class
+                # For cases where eligible_agents is passed then only include those custom agent if they are part of eligible_agents list
+                if not self.eligible_agents or (self.eligible_agents and agent_name in self.eligible_agents):
+                    agent_class = AnthropicCustomAgent.create_custom_agent(
+                        agent_name, self.context_service, self.reflection_enabled
+                    )
+                    self.factories[agent_name] = agent_class

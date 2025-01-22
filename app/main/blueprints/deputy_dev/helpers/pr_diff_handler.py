@@ -1,6 +1,6 @@
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.utils.app_utils import get_token_count, safe_index
-from app.common.constants.constants import PR_NOT_FOUND
+from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
@@ -192,7 +192,7 @@ class PRDiffHandler:
         pr_diff = await self.get_effective_pr_diff(operation, agent_id)
 
         # Return the token count if the PR diff is found
-        if pr_diff and pr_diff != PR_NOT_FOUND:
+        if pr_diff and pr_diff != PR_NOT_FOUND and pr_diff != LARGE_PR_DIFF:
             return get_token_count(pr_diff)
         else:
             return 0
