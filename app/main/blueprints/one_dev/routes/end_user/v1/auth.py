@@ -1,8 +1,6 @@
 from sanic import Blueprint
 from torpedo import Request, send_response
 
-from app.backend_common.repository.user_teams.user_team_service import UserTeamService
-from app.backend_common.repository.users.user_service import UserService
 from app.backend_common.services.supabase.session import SupabaseSession
 from app.main.blueprints.one_dev.services.auth.login import Login
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
@@ -27,6 +25,7 @@ async def get_session(_request: Request, **kwargs):
     headers = _request.headers
     response = await SupabaseSession.get_session_by_device_code(headers)
     return send_response(response)
+
 
 @auth.route("sign-up", methods=["POST"])
 @validate_cli_version
