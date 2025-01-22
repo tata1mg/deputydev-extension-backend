@@ -29,7 +29,7 @@ class Jira(Integration):
         # update intergation with client id
         cloud_id = await self.get_cloud_id(tkn)
 
-        async with in_transaction():
+        async with in_transaction(connection_name="default"):
             # update integration with clound id
             await Integrations.filter(id=integration_row.id).update(client_account_id=cloud_id)
 
