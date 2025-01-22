@@ -5,6 +5,7 @@ from app.backend_common.utils.app_utils import (
     get_vcs_repo_name_slug,
 )
 from app.common.constants.constants import VCSTypes
+from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import GithubActions
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import remove_special_char
@@ -72,6 +73,7 @@ class ChatWebhook:
                 "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "workspace_slug": request_payload["repository"]["workspace"]["slug"],
                 "repo_id": request_payload["repository"]["uuid"],
+                "vcs_type": VCSTypes.bitbucket.value,
             },
             "author_info": {
                 "name": request_payload["actor"]["display_name"],
@@ -81,14 +83,24 @@ class ChatWebhook:
         }
         return ChatRequest(**final_payload)
 
-    @classmethod
-    def __parse_github_payload(cls, request_payload):
-        """
-        Generates servable payload from github payload
-        """
-        if not (request_payload.get("action") == GithubActions.CREATED.value and request_payload.get("comment")):
-            return None
+    @staticmethod
+    def _is_valid_github_action(payload):
+        """Check if the webhook action is valid for processing."""
+        return payload.get("action") == GithubActions.CREATED.value
 
+    @staticmethod
+    def _is_pr_review_comment(payload):
+        """Check if payload is a PR review comment."""
+        return payload.get("comment") and not payload.get("issue")
+
+    @staticmethod
+    def _is_pr_issue_comment(payload):
+        """Check if payload is a PR conversation comment."""
+        return payload.get("issue", {}).get("pull_request")
+
+    @staticmethod
+    def _parse_github_pr_review_comment(request_payload):
+        """Check if payload is a PR conversation comment."""
         final_payload = {
             "comment": {
                 "raw": request_payload["comment"]["body"],
@@ -116,6 +128,7 @@ class ChatWebhook:
                 "commit_id": request_payload["comment"]["commit_id"],
                 "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "workspace_slug": request_payload["organization"]["login"],
+                "vcs_type": VCSTypes.github.value,
             },
             "author_info": {
                 "name": request_payload["comment"]["user"]["login"],
@@ -124,6 +137,53 @@ class ChatWebhook:
             },
         }
         return ChatRequest(**final_payload)
+
+    @staticmethod
+    def _parse_github_pr_issue_comment(request_payload):
+        set_context_values(is_issue_comment=True)
+        pr_url = request_payload["issue"]["pull_request"]["url"]
+        pr_number = pr_url.split("/")[-1]
+        final_payload = {
+            "comment": {
+                "raw": request_payload["comment"]["body"],
+                "parent": None,  # Issue comments don't have parent concept
+                "path": None,
+                "line_number_from": None,
+                "line_number_to": None,
+                "id": str(request_payload["issue"]["number"]),
+                "parent_comment_id": None,
+                "context_lines": None,
+            },
+            "repo": {
+                "workspace": request_payload["repository"]["owner"]["login"],
+                "pr_id": pr_number,
+                "repo_name": get_vcs_repo_name_slug(request_payload["repository"]["full_name"]),
+                "repo_id": str(request_payload["repository"]["id"]),
+                "commit_id": None,
+                "workspace_id": str(request_payload.get("scm_workspace_id")),
+                "workspace_slug": request_payload["repository"]["owner"]["login"],
+                "vcs_type": VCSTypes.github.value,
+            },
+            "author_info": {
+                "name": request_payload["comment"]["user"]["login"],
+                "email": None,
+                "scm_author_id": str(request_payload["comment"]["user"]["id"]),
+            },
+        }
+        return ChatRequest(**final_payload)
+
+    @classmethod
+    def __parse_github_payload(cls, request_payload):
+        """
+        Generates servable payload from github payload
+        """
+        if not cls._is_valid_github_action(request_payload):
+            return None
+
+        if cls._is_pr_review_comment(request_payload):
+            return cls._parse_github_pr_review_comment(request_payload)
+        elif cls._is_pr_issue_comment(request_payload):
+            return cls._parse_github_pr_issue_comment(request_payload)
 
     @classmethod
     def __get_bitbucket_comment(cls, payload):
@@ -185,6 +245,7 @@ class ChatWebhook:
                 "workspace_id": str(request_payload.get("scm_workspace_id")),
                 "repo_id": str(request_payload["project"]["id"]),
                 "workspace_slug": workspace_slug,
+                "vcs_type": VCSTypes.gitlab.value,
             },
             "author_info": {
                 "name": request_payload["user"]["name"],
