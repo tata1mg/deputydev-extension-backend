@@ -1,17 +1,40 @@
 import asyncio
 import os
+import traceback
 from typing import Dict, List, Optional
 from uuid import uuid4
 
-import git
+from git.remote import Remote
+from git.repo import Repo
+from git.util import Actor
+from giturlparse import parse as parse_git_url  # type: ignore
 
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
+from app.common.utils.app_logger import AppLogger
 
 
 class GitRepo(BaseLocalRepo):
     def __init__(self, repo_path: str):
         super().__init__(repo_path)
-        self.repo = git.Repo(repo_path)
+        self.repo = Repo(repo_path)
+
+    def _find_existing_remote(self, remote_url: str) -> Optional[Remote]:
+        try:
+            parsed_remote_url_to_match: Dict[str, str] = parse_git_url(remote_url).data  # type: ignore
+            for remote in self.repo.remotes:
+                parsed_exitsting_remote_url: Dict[str, str] = parse_git_url(remote.url).data  # type: ignore
+                if (
+                    (
+                        parsed_remote_url_to_match["host"].split("@")[-1]
+                        == parsed_exitsting_remote_url["host"].split("@")[-1]
+                    )
+                    and (parsed_remote_url_to_match["owner"] == parsed_exitsting_remote_url["owner"])
+                    and (parsed_remote_url_to_match["repo"] == parsed_exitsting_remote_url["repo"])
+                ):
+                    return remote
+        except Exception:
+            AppLogger.log_debug(traceback.format_exc())
+        return None
 
     def get_origin_remote_url(self) -> str:
         for remote in self.repo.remotes:
@@ -127,11 +150,11 @@ class GitRepo(BaseLocalRepo):
     def stage_changes(self):
         self.repo.git.add(".")
 
-    def commit_changes(self, commit_message: str, actor: Optional[git.Actor] = None):  # type: ignore
+    def commit_changes(self, commit_message: str, actor: Optional[Actor] = None):  # type: ignore
         self.repo.index.commit(message=commit_message, author=actor)
 
     async def push_to_remote(self, branch_name: str, remote_repo_url: str):
-        selected_remote = next((remote for remote in self.repo.remotes if remote.url == remote_repo_url), None)
+        selected_remote = self._find_existing_remote(remote_url=remote_repo_url)
         if not selected_remote:
             selected_remote = self.repo.create_remote(name=uuid4().hex, url=remote_repo_url)
 
@@ -139,15 +162,16 @@ class GitRepo(BaseLocalRepo):
 
     async def sync_with_remote(self, branch_name: str, remote_repo_url: str):
         # get the remote
-        selected_remote = next((remote for remote in self.repo.remotes if remote.url == remote_repo_url), None)
+        selected_remote = self._find_existing_remote(remote_url=remote_repo_url)
         if not selected_remote:
             selected_remote = self.repo.create_remote(name=uuid4().hex, url=remote_repo_url)
         await asyncio.to_thread(self.repo.git.pull, selected_remote.name, branch_name)
 
     def is_branch_available_on_remote(self, branch_name: str, remote_repo_url: str) -> bool:
-        selected_remote = next((remote for remote in self.repo.remotes if remote.url == remote_repo_url), None)
+        selected_remote = self._find_existing_remote(remote_url=remote_repo_url)
         if not selected_remote:
             selected_remote = self.repo.create_remote(name=uuid4().hex, url=remote_repo_url)
+            selected_remote.fetch()
 
         remote_branches = [ref.name.split("/")[-1] for ref in selected_remote.refs]
         return branch_name in remote_branches
