@@ -6,7 +6,9 @@ PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
 PR_SIZING_TEXT = (
     "\n\n **Size {category}:** This PR changes include {loc} lines and should take approximately {time}\n\n"
 )
+PR_SUMMARY_COMMIT_TEXT = "DeputyDev generated PR summary until {commit_id}"
 PR_NOT_FOUND = "PR does not exist"
+LARGE_PR_DIFF = "PR diff is larger than 20k lines"
 LARGE_NO_OF_CHUNKS = 60  # this is x4 of  NO_OF_CHUNKS_FOR_LLM
 NO_OF_CHUNKS_FOR_LLM = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
 
