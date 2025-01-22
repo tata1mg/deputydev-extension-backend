@@ -15,6 +15,7 @@ from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.services.credentials import AuthHandler
 from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from app.common.utils.app_logger import AppLogger
 
 
 def parse_collection_name(name: str) -> str:
@@ -135,18 +136,19 @@ class BaseRepo(ABC):
         # Get the return code
         return_code = process.returncode
         if return_code == 0:
-            logger.info("Cloning completed")
+            AppLogger.info("Cloning completed")
         else:
             error_message = stderr.decode().strip()
             if return_code == 128 and "Invalid credentials" in error_message:
-                logger.error(f"Git clone failed due to invalid credentials: {error_message}")
+                AppLogger.error(f"Git clone failed due to invalid credentials: {error_message}")
                 raise PermissionError(f"Invalid credentials: {error_message}")
 
             if return_code != 128:
-                logger.error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
+                AppLogger.error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
                 # we are raising runtime error for other status code, so that it can be retried from the SQS after sometime
                 raise RuntimeError(f"Git clone failed: {error_message}")
             # we return False, if we were unable to clone repo
+            AppLogger.log_error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
             return None, False
 
         self.local_repo = GitRepo(repo_dir)
