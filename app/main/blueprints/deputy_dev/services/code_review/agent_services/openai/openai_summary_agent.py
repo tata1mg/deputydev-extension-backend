@@ -35,6 +35,9 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
     def get_with_reflection_user_prompt_pass1(self):
         return """
         What does the following PR do ?
+        Pull Request Title
+        {$PULL_REQUEST_TITLE}
+        
         Pull Request Diff:
         {$PR_DIFF_WITHOUT_LINE_NUMBER}
         """
@@ -77,3 +80,9 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         if pr_status in [PRStatus.MERGED.value, PRStatus.DECLINED.value]:
             return False
         return True
+
+    async def required_prompt_variables(self, comments: str = None):
+        return {
+            "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
+            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
+        }
