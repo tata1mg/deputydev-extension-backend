@@ -71,7 +71,7 @@ class GithubRepo(BaseRepo):
         prs = await self.repo_client.list_prs(source=source_branch, destination=destination_branch)
         if prs:
             pr = prs[0]  # get first pr
-            return True, pr["url"]
+            return True, pr["html_url"]
         return False, None
 
     def get_remote_url_without_token(self):
