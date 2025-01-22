@@ -141,7 +141,7 @@ class BitbucketComment(BaseComment):
         comment_payload = {"content": {"raw": comment}}
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
 
-    async def create_comment_on_parent(self, comment: str, parent_id, model):
+    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
         """creates comment on whole pr"""
         comment_payload = {"content": {"raw": comment}, "parent": {"id": parent_id}}
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
