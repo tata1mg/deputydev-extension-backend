@@ -151,4 +151,3 @@ class GitRepo(BaseLocalRepo):
 
         remote_branches = [ref.name.split("/")[-1] for ref in selected_remote.refs]
         return branch_name in remote_branches
-
