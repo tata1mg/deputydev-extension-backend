@@ -8,9 +8,8 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor
 from io import StringIO
 from types import FrameType
-from typing import Dict, List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
@@ -114,13 +113,6 @@ def init_args(parser: argparse.ArgumentParser):
         help="Clean the cache. Use this to clean up if its taking more storage on your system. This might slow down DeputyDev CLI's initialization process",
         action="store_true",
     )
-
-
-def validate_and_get_repo_id(repo: GitRepo, team_registered_repos: List[Dict[str, str]]) -> str:
-    for team_repo in team_registered_repos:
-        if team_repo["name"] == repo.get_repo_name() and team_repo["scm"] == repo.get_vcs_type():
-            return team_repo["id"]
-    raise ValueError(f"Repository {repo.get_repo_name()} not found in the team")
 
 
 async def run_new_feature_session(

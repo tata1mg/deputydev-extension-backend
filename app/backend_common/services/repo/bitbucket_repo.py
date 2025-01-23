@@ -35,14 +35,16 @@ class BitbucketRepo(BaseRepo):
         )
         self.token = ""
 
+    @staticmethod
+    def get_remote_host():
+        return "bitbucket.org"
+
     async def get_repo_url(self):
         self.token = await self.auth_handler.access_token()
-        return "https://x-token-auth:{token}@bitbucket.org/{workspace_slug}/{repo_name}.git".format(
-            token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
-        )
+        return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
 
     def get_remote_url_without_token(self):
-        return f"git@bitbucket.org:{self.workspace_slug}/{self.repo_name}.git"
+        return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
 
     async def is_pr_open_between_branches(
         self, source_branch: str, destination_branch: str
