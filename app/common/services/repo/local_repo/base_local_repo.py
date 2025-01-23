@@ -6,6 +6,7 @@ from sanic.log import logger
 from xxhash import xxh64
 
 from app.common.services.chunking.config.chunk_config import ChunkConfig
+from app.common.utils.app_logger import AppLogger
 
 
 class BaseLocalRepo(ABC):
@@ -87,22 +88,26 @@ class BaseLocalRepo(ABC):
             return xxh64(file_content).hexdigest()
 
     def _is_file_chunkable(self, file_path: str) -> bool:
-        abs_file_path = os.path.join(self.repo_path, file_path)
-        file_ext = os.path.splitext(abs_file_path)[1]
-        if file_ext.lower() in self.chunk_config.exclude_exts:
-            return False
-        if not os.path.isfile(abs_file_path):
-            return False
-        dir_name = os.path.dirname(abs_file_path)
-        if len(os.listdir(dir_name)) > self.chunk_config.max_single_dir_file_threshold:
+        try:
+            abs_file_path = os.path.join(self.repo_path, file_path)
+            file_ext = os.path.splitext(abs_file_path)[1]
+            if file_ext.lower() in self.chunk_config.exclude_exts:
+                return False
+            if not os.path.isfile(abs_file_path):
+                return False
+            if os.path.getsize(abs_file_path) > self.chunk_config.max_chunkable_file_size_bytes:
+                AppLogger.log_debug(f"File size is greater than the max_chunkable_file_size_bytes: {abs_file_path}")
+                return False
+            # check if the filepath startswith any of the exclude_dirs
+            if any(
+                abs_file_path.startswith(os.path.join(self.repo_path, exclude_dir))
+                for exclude_dir in self.chunk_config.exclude_dirs
+            ):
+                return False
             return True
-        # check if the filepath startswith any of the exclude_dirs
-        if any(
-            abs_file_path.startswith(os.path.join(self.repo_path, exclude_dir))
-            for exclude_dir in self.chunk_config.exclude_dirs
-        ):
+        except Exception as ex:
+            AppLogger.log_debug(f"Error while checking if file is chunkable: {ex} for file: {file_path}")
             return False
-        return True
 
     @abstractmethod
     async def get_chunkable_files_and_commit_hashes(self) -> Dict[str, str]:

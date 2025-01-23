@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from sanic.log import logger
 
@@ -9,7 +9,9 @@ from app.backend_common.repository.db import DB
 
 class WorkspaceService:
     @classmethod
-    async def db_get(cls, filters: dict, fetch_one=False) -> Union[List[WorkspaceDTO], WorkspaceDTO]:
+    async def db_get(
+        cls, filters: Dict[str, Any], fetch_one: bool = False
+    ) -> Optional[Union[List[WorkspaceDTO], WorkspaceDTO]]:
         try:
             workspaces = await DB.by_filters(model_name=Workspaces, where_clause=filters, fetch_one=False)
             if workspaces and fetch_one:
