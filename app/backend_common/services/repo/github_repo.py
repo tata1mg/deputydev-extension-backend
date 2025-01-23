@@ -45,11 +45,13 @@ class GithubRepo(BaseRepo):
     Manages Github Repo
     """
 
+    @staticmethod
+    def get_remote_host():
+        return "github.com"
+
     async def get_repo_url(self):
         self.token = await self.auth_handler.access_token()
-        return "https://x-token-auth:{token}@github.com/{workspace_slug}/{repo_name}.git".format(
-            token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
-        )
+        return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
 
     async def get_settings(self, branch_name):
         settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
@@ -75,7 +77,7 @@ class GithubRepo(BaseRepo):
         return False, None
 
     def get_remote_url_without_token(self):
-        return f"git@github.com:{self.workspace_slug}/{self.repo_name}.git"
+        return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
 
     def get_repo_actor(self) -> Actor:
         return self.auth_handler.get_git_actor()

@@ -10,6 +10,8 @@ class ChunkConfig:
     Configuration settings for chunking files.
     """
 
+    max_chunkable_file_size_bytes = 8 * 1024 * 1024  # 8MB
+
     exclude_dirs: list[str] = [
         # vcs / code editor folders
         ".git",
