@@ -1,14 +1,12 @@
 from typing import Any, Dict
-from postgrest.exceptions import APIError
 
+from postgrest.exceptions import APIError
 
 from app.backend_common.repository.users.user_service import UserService
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.common.services.authentication.jwt import JWTHandler
-
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from app.common.services.authentication.jwt import JWTHandler
 from app.common.utils.config_manager import ConfigManager
-
 
 
 class SupabaseSession:
@@ -61,7 +59,9 @@ class SupabaseSession:
             raise ValueError("No device code found")
 
         try:
-            response = cls.supabase.table("external_sessions").select("*").eq("device_code", device_code).single().execute()
+            response = (
+                cls.supabase.table("external_sessions").select("*").eq("device_code", device_code).single().execute()
+            )
             session_data = response.data if response else None
 
             if not session_data:
@@ -70,11 +70,13 @@ class SupabaseSession:
             updated_session_data = await cls.update_session_data(session_data)
 
             # Encode the session data into a JWT token
-            jwt_token = JWTHandler(signing_key=ConfigManager.config["JWT_SECRET_KEY"], algorithm="HS256").create_token(payload=updated_session_data)
+            jwt_token = JWTHandler(signing_key=ConfigManager.config["JWT_SECRET_KEY"], algorithm="HS256").create_token(
+                payload=updated_session_data
+            )
 
             return {"jwt_token": jwt_token, "status": "authenticated"}
 
         except APIError as e:
-            if e.code == 'PGRST116':
+            if e.code == "PGRST116":
                 return {"status": "pending"}
             raise  # Re-raise if it's a different error
