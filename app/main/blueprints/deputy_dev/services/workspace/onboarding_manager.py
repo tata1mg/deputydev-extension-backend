@@ -31,7 +31,7 @@ class OnboardingManager:
         else:
             raise SignUpError("User already exists")
 
-        async with in_transaction():
+        async with in_transaction(connection_name="default"):
             user = Users(
                 name=payload.username,
                 email=payload.email,
