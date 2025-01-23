@@ -1,14 +1,14 @@
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
+from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.db import DB
-from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.common.utils.app_logger import AppLogger
 
 
 class UserTeamService:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False) -> Union[UserTeamDTO, List[UserTeamDTO]]:
+    async def db_get(cls, filters: Dict[str, Any], fetch_one=False) -> Union[UserTeamDTO, List[UserTeamDTO]]:
         try:
             user_team_data = await DB.by_filters(model_name=UserTeams, where_clause=filters, fetch_one=fetch_one)
             if user_team_data and fetch_one:
@@ -29,5 +29,7 @@ class UserTeamService:
             row = await DB.insert_row(UserTeams, payload)
             return row
         except Exception as ex:
-            AppLogger.log_error("not able to insert user_team details to db {} exception {}".format(user_team_dto.dict(), ex))
+            AppLogger.log_error(
+                "not able to insert user_team details to db {} exception {}".format(user_team_dto.dict(), ex)
+            )
             raise ex
