@@ -38,6 +38,8 @@ class Authentication(BaseScreenHandler):
 
     async def poll_session(self, device_code: str):
         """Polls the session for authentication status."""
+
+        print_formatted_text("Authentication is in progress. Please wait...")
         max_attempts = 60
         try:
             for attempt in range(max_attempts):
@@ -55,8 +57,6 @@ class Authentication(BaseScreenHandler):
                     # Storing jwt token in user's machine using keyring
                     self.store_auth_token(self.app_context.auth_token)
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
-                elif response.get("status") == "pending":
-                    print_formatted_text("Authentication is in progress. Please wait...")
 
                 time.sleep(3)
 
@@ -77,7 +77,6 @@ class Authentication(BaseScreenHandler):
             return False
 
         try:
-            print_formatted_text("Verifying the auth token...")
             response = await self.app_context.one_dev_client.verify_auth_token(
                 headers={
                     "Content-Type": "application/json",
@@ -102,7 +101,6 @@ class Authentication(BaseScreenHandler):
         is_current_session_present_and_valid = await self.verify_current_session()
         if is_current_session_present_and_valid:
             self.app_context.auth_token = self.load_auth_token()
-            print("You are now logged in. Redirecting to the main interface...")
             return self.app_context, ScreenType.DEFAULT
 
         # If the current session is not present or is not valid, initiate login
