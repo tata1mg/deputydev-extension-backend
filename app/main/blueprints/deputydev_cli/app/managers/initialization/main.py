@@ -10,7 +10,7 @@ from weaviate.embedded import EmbeddedOptions
 from app.common.models.dao.weaviate.base import Base as WeaviateBaseDAO
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dao.weaviate.chunks import Chunks
-from app.common.services.chunking.vector_store.cleanup import (
+from app.common.services.chunking.vector_store.chunk_vector_store_cleanup_manager import (
     ChunkVectorStoreCleaneupManager,
 )
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo

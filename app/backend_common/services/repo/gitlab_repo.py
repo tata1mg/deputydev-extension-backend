@@ -26,8 +26,14 @@ class GitlabRepo(BaseRepo):
             auth_handler=auth_handler,
         )
         self.repo_client = GitlabRepoClient(pr_id=None, project_id=self.repo_id, auth_handler=auth_handler)
+        self.token = ""
+
+    @staticmethod
+    def get_remote_host():
+        return "gitlab.com"
 
     def get_repo_url(self):
-        return "https://x-token-auth:{token}@gitlab.com/{workspace_slug}/{repo_name}.git".format(
-            token=self.token, workspace_slug=self.workspace_slug, repo_name=self.repo_name
-        )
+        return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
+
+    def get_remote_url_without_token(self):
+        return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
