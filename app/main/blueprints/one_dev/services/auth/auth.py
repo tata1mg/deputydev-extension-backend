@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from app.main.blueprints.one_dev.services.auth.login import Login
 
+
 class Auth:
     @classmethod
     async def extract_and_verify_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:

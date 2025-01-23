@@ -16,5 +16,7 @@ class TeamService:
             elif team_data:
                 return [TeamDTO(**team) for team in team_data]
         except Exception as ex:
-            AppLogger.log_error("Error occurred while fetching team details from db for team: {}, ex: {}".format(filters, ex))
+            AppLogger.log_error(
+                "Error occurred while fetching team details from db for team: {}, ex: {}".format(filters, ex)
+            )
             raise ex

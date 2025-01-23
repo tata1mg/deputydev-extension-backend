@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Union
 
+from app.backend_common.models.dao.postgres.users import Users
 from app.backend_common.models.dto.user_dto import UserDTO
 from app.backend_common.repository.db import DB
 from app.common.utils.app_logger import AppLogger
-from app.backend_common.models.dao.postgres.users import Users
 
 
 class UserService:
@@ -16,7 +16,9 @@ class UserService:
             elif user_data:
                 return [UserDTO(**user) for user in user_data]
         except Exception as ex:
-            AppLogger.log_error("error occurred while fetching user details from db for user: {}, ex: {}".format(filters, ex))
+            AppLogger.log_error(
+                "error occurred while fetching user details from db for user: {}, ex: {}".format(filters, ex)
+            )
             raise ex
 
     @classmethod
