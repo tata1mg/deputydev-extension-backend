@@ -190,10 +190,11 @@ class RepoSelection(BaseScreenHandler):
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )
-                if repo_details.get("repo_id") and repo_details.get("repo_url"):
+                if repo_details.get("repo_url"):
                     self.app_context.registered_repo_details = RegisteredRepo(
-                        repo_id=repo_details["repo_id"],
                         repo_url=repo_details["repo_url"],
+                        workspace_id=repo_details["workspace_id"],
+                        repo_name=self.app_context.local_repo.get_repo_name(),
                     )
             except Exception:
                 pass
@@ -223,19 +224,6 @@ class RepoSelection(BaseScreenHandler):
                 )
             )
             print_formatted_text(FormattedText([("#4e9a06", "Repository type: Git")]))
-            # if self.app_context.registered_repo_details:
-            #     print_formatted_text(
-            #         FormattedText(
-            #             [
-            #                 (
-            #                     "#4e9a06",
-            #                     f"Repository is registered with ID: {self.app_context.registered_repo_details.repo_id}",
-            #                 )
-            #             ]
-            #         )
-            #     )
-            # else:
-            #     print_formatted_text(FormattedText([("#c4a000", "Repository is not registered")]))
         else:
             print_formatted_text(FormattedText([("#4e9a06", "Repository type: Non-VCS")]))
             print_formatted_text(

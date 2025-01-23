@@ -4,7 +4,8 @@ from pydantic import BaseModel
 
 
 class PRConfig(BaseModel):
-    repo_id: int
+    workspace_id: int
+    repo_name: str
     source_branch: str
     destination_branch: str
     pr_title_prefix: Optional[str] = None
