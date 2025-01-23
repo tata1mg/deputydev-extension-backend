@@ -18,7 +18,7 @@ class ChunkVectorStoreCleaneupManager:
     ):
         self.exclusion_chunk_hashes = exclusion_chunk_hashes
         self.weaviate_client = weaviate_client
-        self.last_used_at_timedelta = timedelta(days=30)
+        self.last_used_at_timedelta = timedelta(minutes=3)
 
     async def _cleanup_chunk_and_chunk_files_objects(self, last_used_lt: datetime) -> None:
         time_start = time.perf_counter()
