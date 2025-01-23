@@ -43,5 +43,6 @@ class ConfigFetcher:
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "TIKTOKEN_EMBEDDING_TOKEN_MODEL": "text-embedding-3-small",
-            "FRONTEND_URL": "http://localhost:3000",
+            # "FRONTEND_URL": "http://localhost:3000",
+            "FRONTEND_URL": "https://deputydev.ai",
         }
