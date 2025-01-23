@@ -5,9 +5,9 @@ from torpedo.exceptions import BadRequestException
 
 from app.backend_common.repository.user_teams.user_team_service import UserTeamService
 from app.backend_common.repository.users.user_service import UserService
-from app.backend_common.services.supabase.auth import SupabaseAuth
+from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.common.services.authentication.jwt import JWTHandler
-from app.main.blueprints.one_dev.constants.constants import TATA_1MG, TRAYA
+from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
@@ -44,14 +44,9 @@ def authenticate(func):
         if not user_id:
             raise BadRequestException("User not found")
 
-        # Team id will be on the basis of email domain
-        domain = email.split("@")[1]
-        if domain == TATA_1MG["domain"]:
-            team_id = TATA_1MG["team_id"]
-        elif domain == TRAYA["domain"]:
-            team_id = TRAYA["team_id"]
-        else:
-            team_id = None
+        # Get the team ID based on the email domain
+        verification_result = SignUp.verify_email(email)
+        team_id = verification_result.get("team_id")
 
         # If the team ID is not found, raise an error
         if not team_id:

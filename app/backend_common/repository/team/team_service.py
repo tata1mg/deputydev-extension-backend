@@ -5,6 +5,7 @@ from sanic.log import logger
 from app.backend_common.models.dao.postgres.teams import Teams
 from app.backend_common.models.dto.team_dto import TeamDTO
 from app.backend_common.repository.db import DB
+from app.common.utils.app_logger import AppLogger
 
 
 class TeamService:
@@ -17,5 +18,5 @@ class TeamService:
             elif team_data:
                 return [TeamDTO(**team) for team in team_data]
         except Exception as ex:
-            logger.error("error occurred while fetching team details from db for team: {}, ex: {}".format(filters, ex))
+            AppLogger.log_error("Error occurred while fetching team details from db for team: {}, ex: {}".format(filters, ex))
             raise ex
