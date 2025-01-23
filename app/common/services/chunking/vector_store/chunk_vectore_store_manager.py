@@ -1,5 +1,4 @@
 import asyncio
-import copy
 import time
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
@@ -76,7 +75,9 @@ class ChunkVectorStoreManager:
             ),
         )
         time_end = time.perf_counter()
-        AppLogger.log_debug(f"Inserting {len(all_chunks_to_store)} chunks took {time_end - time_start} seconds")
+        AppLogger.log_debug(
+            f"Inserting {len(all_chunks_to_store)} chunks and {len(all_chunk_files_to_store)} chunk_files took {time_end - time_start} seconds"
+        )
 
     async def _get_file_wise_stored_chunk_files_chunks_and_vectors(
         self,
@@ -165,9 +166,8 @@ class ChunkVectorStoreManager:
     async def _refresh_chunk_files_and_chunks(
         self,
         file_wise_chunks: Dict[str, List[ChunkInfo]],
-        vector_required: bool,
         chunk_refresh_config: Optional[RefreshConfig] = None,
-    ) -> None:
+    ) -> Optional[asyncio.Task[None]]:
         """
         Refresh the chunk files and chunks based on the refresh config.
         :param file_wise_chunks: Dict[str, List[ChunkInfo]]
@@ -178,17 +178,9 @@ class ChunkVectorStoreManager:
         if not chunk_refresh_config:
             return
 
-        data_to_refresh = file_wise_chunks
-
-        # if async refresh is enabled and vector is not required, then we send a copy of the data to refresh
-        # so that the original data can be used for further processing
-        # this is done to avoid the vector being deleted from the original data by the time refresh actually happens
-        if not chunk_refresh_config.async_refresh and not vector_required:
-            data_to_refresh = copy.deepcopy(file_wise_chunks)
-
         refresh_task = asyncio.create_task(
             self.add_differential_chunks_to_store(
-                data_to_refresh,
+                file_wise_chunks,
                 custom_create_timestamp=chunk_refresh_config.refresh_timestamp,
                 custom_update_timestamp=chunk_refresh_config.refresh_timestamp,
             )
@@ -198,6 +190,25 @@ class ChunkVectorStoreManager:
             return
 
         await refresh_task
+        return refresh_task
+
+    async def _remove_embeddings_after_refresh(
+        self,
+        refresh_task: Optional[asyncio.Task[None]],
+        file_wise_chunks: Dict[str, List[ChunkInfo]],
+    ) -> None:
+        """
+        Remove the embeddings from the chunks after the refresh.
+        :param refresh_task: Optional[asyncio.Task[None]]
+        :param file_wise_chunks: Dict[str, List[ChunkInfo]]
+        :return: None
+        """
+        # embeddings can be removed only after refresh task is done as it requires them
+        if refresh_task:
+            await refresh_task
+        for chunks in file_wise_chunks.values():
+            for chunk in chunks:
+                chunk.embedding = None
 
     async def get_valid_file_wise_stored_chunks(
         self,
@@ -238,13 +249,17 @@ class ChunkVectorStoreManager:
             )
 
             # start the refresh process if needed
-            await self._refresh_chunk_files_and_chunks(file_wise_chunk_info_objects, with_vector, chunk_refresh_config)
+            refresh_task = await self._refresh_chunk_files_and_chunks(
+                file_wise_chunk_info_objects, chunk_refresh_config
+            )
 
             # remove the embeddings if not required
             if not with_vector:
-                for chunks in file_wise_chunk_info_objects.values():
-                    for chunk in chunks:
-                        chunk.embedding = None
+                asyncio.create_task(
+                    self._remove_embeddings_after_refresh(
+                        refresh_task=refresh_task, file_wise_chunks=file_wise_chunk_info_objects
+                    )
+                )
 
             # update the final dict
             file_wise_chunks.update(file_wise_chunk_info_objects)

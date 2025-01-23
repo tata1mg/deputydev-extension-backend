@@ -82,12 +82,26 @@ class ChunkService:
                 )
 
     def cleanup_old_chunks(self, last_used_lt: datetime, exclusion_chunk_hashes: List[str]) -> None:
-        result = self.sync_collection.data.delete_many(
-            Filter.all_of(
-                [
-                    *[Filter.by_id().not_equal(generate_uuid5(chunk_hash)) for chunk_hash in exclusion_chunk_hashes],
-                    Filter.by_property("created_at").less_than(last_used_lt),
-                ]
+        batch_size = 1000
+        while True:
+            deletable_objects = self.sync_collection.query.fetch_objects(
+                limit=batch_size,
+                filters=Filter.all_of(
+                    [
+                        *[Filter.by_id().not_equal(generate_uuid5(chunk_hash)) for chunk_hash in exclusion_chunk_hashes],
+                        Filter.by_property("created_at").less_than(last_used_lt),
+                    ]
+                )
             )
-        )
-        AppLogger.log_debug(f"chunks deleted. successful - {result.successful}, failed - {result.failed}")
+
+            AppLogger.log_debug(f"{len(deletable_objects.objects)} chunks to be deleted in batch")
+
+            if len(deletable_objects.objects) <= 0:
+                break
+
+            result = self.sync_collection.data.delete_many(
+                Filter.any_of(
+                    [Filter.by_id().equal(obj.uuid) for obj in deletable_objects.objects],
+                )
+            )
+            AppLogger.log_debug(f"chunks deleted. successful - {result.successful}, failed - {result.failed}")
