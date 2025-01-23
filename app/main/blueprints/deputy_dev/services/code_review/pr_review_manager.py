@@ -9,7 +9,6 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
 from app.common.utils.app_logger import AppLogger
-from app.common.utils.context_vars import get_context_value
 from app.common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -133,7 +132,7 @@ class PRReviewManager(BasePRReviewManager):
             repo_service, pr_service, pr_diff_handler, prompt_version
         ).get_code_review_comments()
         # We will only post summary for first PR review request
-        if pr_summary and not get_context_value("has_reviewed_entry"):
+        if pr_summary:
             await pr_service.update_pr_description(pr_summary)
 
         if _is_large_pr:
