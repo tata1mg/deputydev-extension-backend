@@ -2,7 +2,7 @@ from sanic import Blueprint
 from torpedo import Request, send_response
 
 from app.backend_common.services.auth.supabase.session import SupabaseSession
-from app.main.blueprints.one_dev.services.auth.login import Login
+from app.main.blueprints.one_dev.services.auth.auth import Auth
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.pre_authenticate_handler import (
     validate_cli_version,
@@ -15,7 +15,7 @@ auth = Blueprint("auth", "/")
 @validate_cli_version
 async def verify_auth_token(_request: Request, **kwargs):
     headers = _request.headers
-    response = await Login.verify_auth_token(headers)
+    response = await Auth.extract_and_verify_token(headers)
     return send_response(response)
 
 

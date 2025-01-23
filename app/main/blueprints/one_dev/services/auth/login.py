@@ -8,15 +8,9 @@ from app.common.utils.config_manager import ConfigManager
 
 class Login:
     @classmethod
-    async def verify_auth_token(cls, headers: Dict[str, Any]) -> Dict[str, Any]:
+    async def verify_auth_token(cls, jwt_token: str) -> Dict[str, Any]:
         try:
-            authorization_header = headers.get("Authorization")
-            if not authorization_header:
-                raise Exception("Authorization header is missing")
-
-            # decode the JWT token and get the supabase access token
-            jwt = authorization_header.split(" ")[1]
-            session_data = JWTHandler(signing_key=ConfigManager.config["JWT_SECRET_KEY"]).verify_token(jwt)
+            session_data = JWTHandler(signing_key=ConfigManager.config["JWT_SECRET_KEY"]).verify_token(jwt_token)
             access_token = session_data.get("access_token")
             response = await SupabaseAuth.verify_auth_token(access_token)
             if not response["valid"]:
