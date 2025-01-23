@@ -6,18 +6,6 @@ from .base import Base
 
 
 class UserTeams(Base):
-    serializable_keys = {
-        "id",
-        "user_id",
-        "team_id",
-        "role",
-        "last_pr_authored_or_reviewed_at",
-        "is_owner",
-        "is_billable",
-        "created_at",
-        "updated_at",
-    }
-
     id = fields.IntField(primary_key=True)
     user_id = fields.IntField()
     team_id = fields.IntField()

@@ -4,7 +4,7 @@ from typing import Any, Dict
 from app.common.exception.exception import SignUpError
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputy_dev.constants.onboarding import UserRoles
-from app.main.blueprints.deputy_dev.models.dao.postgres.user_teams import UserTeams
+from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.main.blueprints.deputy_dev.models.request.onboarding import SignUpRequest
 from app.main.blueprints.deputy_dev.services.workspace.onboarding_manager import (
     OnboardingManager,
