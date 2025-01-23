@@ -6,6 +6,7 @@ from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     AgentTypes,
+    FeatureFlows,
     PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
@@ -27,6 +28,7 @@ class PRSummaryManager(BasePRReviewManager):
     @classmethod
     async def generate_and_post_summary(cls, chat_request: ChatRequest) -> None:
         """Generate PR summary and post it as a reply."""
+        set_context_values(feature_flow=FeatureFlows.INCREMENTAL_SUMMARY.value)
         service_data = cls.extract_service_initializing_metadata(chat_request)
         repo_service, pr_service, comment_service = await cls.initialise_services(service_data)
 

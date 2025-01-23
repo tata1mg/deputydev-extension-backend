@@ -13,6 +13,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
     ExperimentStatusTypes,
+    FeatureFlows,
     PRReviewExperimentSet,
     PrStatusTypes,
 )
@@ -127,11 +128,12 @@ class PRReviewPreProcessor:
         # Set commit review context
         pr_reviewable_on_commit = False
         last_reviewed_commit = None
-        has_reviewed_entry = False  # Signifies if PR has any reviewed completed existing entry in DB
+        feature_flow = FeatureFlows.INITIAL_CODE_REVIEW.value
 
         if reviewed_pr_dto:  # Got an entry with same destination branch
             review_full_pr = await self.should_do_full_review(reviewed_pr_dto.commit_id, self.pr_model.commit_id())
-            has_reviewed_entry = True
+            # Signifies if it's initial code review or incremental code review for the PR
+            feature_flow = FeatureFlows.INCREMENTAL_CODE_REVIEW.value
             if not review_full_pr:
                 pr_reviewable_on_commit = True
                 last_reviewed_commit = reviewed_pr_dto.commit_id
@@ -139,7 +141,7 @@ class PRReviewPreProcessor:
         set_context_values(
             pr_reviewable_on_commit=pr_reviewable_on_commit,
             last_reviewed_commit=last_reviewed_commit,
-            has_reviewed_entry=has_reviewed_entry,
+            feature_flow=feature_flow,
         )
         self.pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
         self.meta_info["tokens"] = self.pr_diff_token_count
