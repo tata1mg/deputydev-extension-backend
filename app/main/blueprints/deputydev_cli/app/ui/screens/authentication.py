@@ -91,8 +91,8 @@ class Authentication(BaseScreenHandler):
                 print_formatted_text("Session is expired. Please login again!")
                 return False
 
-        except InvalidVersionException as ex:
-            AppLogger.log_error(ex.message)
+        except InvalidVersionException:
+            print_formatted_text(f"An error occurred during authentication. Please login again!")
             return False
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
