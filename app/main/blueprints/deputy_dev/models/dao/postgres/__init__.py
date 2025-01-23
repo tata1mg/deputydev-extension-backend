@@ -6,13 +6,10 @@ __all__ = [
     "Repos",
     "Experiments",
     "Feedbacks",
-    "Teams",
     "SubscriptionPeriods",
     "SubscriptionPlans",
     "Integrations",
     "Subscriptions",
-    "Users",
-    "UserTeams",
     "AgentCommentMappings",
     "Configurations",
     "Tokens",
@@ -34,6 +31,3 @@ from .pull_requests import PullRequests
 from .subscription_periods import SubscriptionPeriods
 from .subscription_plans import SubscriptionPlans
 from .subscriptions import Subscriptions
-from .teams import Teams
-from .user_teams import UserTeams
-from .users import Users

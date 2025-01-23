@@ -1,6 +1,4 @@
-from typing import List, Union
-
-from sanic.log import logger
+from typing import Any, Dict, List, Union
 
 from app.backend_common.models.dao.postgres.teams import Teams
 from app.backend_common.models.dto.team_dto import TeamDTO
@@ -10,7 +8,7 @@ from app.common.utils.app_logger import AppLogger
 
 class TeamService:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False) -> Union[TeamDTO, List[TeamDTO]]:
+    async def db_get(cls, filters: Dict[str, Any], fetch_one=False) -> Union[TeamDTO, List[TeamDTO]]:
         try:
             team_data = await DB.by_filters(model_name=Teams, where_clause=filters, fetch_one=fetch_one)
             if team_data and fetch_one:

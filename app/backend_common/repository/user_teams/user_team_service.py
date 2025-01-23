@@ -1,10 +1,9 @@
 from typing import List, Union
 
-from sanic.log import logger
-
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.db import DB
-from app.main.blueprints.deputy_dev.models.dao.postgres.user_teams import UserTeams
+from app.backend_common.models.dao.postgres.user_teams import UserTeams
+from app.common.utils.app_logger import AppLogger
 
 
 class UserTeamService:
@@ -17,34 +16,18 @@ class UserTeamService:
             elif user_team_data:
                 return [UserTeamDTO(**user_team) for user_team in user_team_data]
         except Exception as ex:
-            logger.error(
+            AppLogger.log_error(
                 "error occurred while fetching user_team details from db for user_team: {}, ex: {}".format(filters, ex)
             )
             raise ex
 
     @classmethod
-    async def db_insert(cls, user_team_dto: UserTeamDTO):
+    async def db_insert(cls, user_team_dto: UserTeamDTO) -> UserTeamDTO:
         try:
             payload = user_team_dto.model_dump()
             del payload["id"]
             row = await DB.insert_row(UserTeams, payload)
             return row
         except Exception as ex:
-            logger.error("not able to insert user_team details to db {} exception {}".format(user_team_dto.dict(), ex))
+            AppLogger.log_error("not able to insert user_team details to db {} exception {}".format(user_team_dto.dict(), ex))
             raise ex
-
-    @classmethod
-    async def find_or_create(cls, team_id, user_id, role, is_owner, is_billable):
-        user_team_dto = await cls.db_get(filters={"team_id": team_id, "user_id": user_id}, fetch_one=True)
-        if not user_team_dto:
-            user_team_data = {
-                "team_id": team_id,
-                "user_id": user_id,
-                "role": role,
-                "is_owner": is_owner,
-                "is_billable": is_billable,
-            }
-            user_team_dto = await cls.db_insert(UserTeamDTO(**user_team_data))
-        return {
-            "id": user_team_dto.id,
-        }
