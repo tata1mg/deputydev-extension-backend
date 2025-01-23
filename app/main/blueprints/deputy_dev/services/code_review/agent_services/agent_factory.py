@@ -44,7 +44,12 @@ class AgentFactory:
         AgentTypes.PR_SUMMARY.value: OpenAIPRSummaryAgent,
     }
 
-    def __init__(self, reflection_enabled: bool, context_service: ContextService, eligible_agents: list = None):
+    def __init__(
+        self,
+        reflection_enabled: bool,
+        context_service: ContextService,
+        eligible_agents: list = None,
+    ):
         self.context_service = context_service
         self.reflection_enabled = reflection_enabled
         self.eligible_agents = eligible_agents
