@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 from app.backend_common.models.dto.user_dto import UserDTO
 from app.backend_common.repository.db import DB
 from app.common.utils.app_logger import AppLogger
-from app.main.blueprints.deputy_dev.models.dao.postgres.users import Users
+from app.backend_common.models.dao.postgres.users import Users
 
 
 class UserService:
