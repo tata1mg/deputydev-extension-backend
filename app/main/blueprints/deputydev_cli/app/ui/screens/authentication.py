@@ -38,8 +38,8 @@ class Authentication(BaseScreenHandler):
     async def poll_session(self, device_code: str):
         """Polls the session for authentication status."""
         max_attempts = 60
-        for attempt in range(max_attempts):
-            try:
+        try:
+            for attempt in range(max_attempts):
                 response = await self.app_context.one_dev_client.get_session(
                     headers={
                         "Content-Type": "application/json",
@@ -47,21 +47,20 @@ class Authentication(BaseScreenHandler):
                     }
                 )
 
-                # Check if the auth token contains an error
-                if "error" not in response:
+                if response.get("status") == "authenticated":
                     if not response.get("jwt_token") or response.get("jwt_token") is None:
                         raise Exception("No JWT token found in response")
                     self.app_context.auth_token = response["jwt_token"]
                     # Storing jwt token in user's machine using keyring
                     self.store_auth_token(self.app_context.auth_token)
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
-                else:
+                elif response.get("status") == "pending":
                     print_formatted_text("Authentication is in progress. Please wait...")
 
-            except Exception as e:
-                print_formatted_text(f"Polling error: {e}")
+                time.sleep(3)
 
-            time.sleep(3)
+        except Exception as e:
+                print_formatted_text(f"Polling error: {e}")
 
         # If we reach here, it means authentication failed
         print_formatted_text("Authentication failed, please try again later.")

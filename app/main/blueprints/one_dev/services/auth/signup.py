@@ -40,7 +40,7 @@ class SignUp:
                 # user already exists
                 return {"success": True, "is_user_exist": True}
             except Exception as e:
-                raise BadRequestException(str(e))
+                raise Exception(str(e))
 
     @classmethod
     def verify_email(cls, email: str) -> Dict[str, Any]:

@@ -21,7 +21,6 @@ class Teams(Base):
 
     class Meta:
         table = "teams"
-        unique = (("name",),)
 
     class Columns(Enum):
         id = ("id",)
