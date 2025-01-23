@@ -29,9 +29,9 @@ class SignUp:
                 await UserTeams.create(
                     user_id=user_id,
                     team_id=email_verification["team_id"],
-                    role=UserRoles.ADMIN.value,
-                    is_owner=True,
-                    is_billable=True,
+                    role=UserRoles.MEMBER.value,
+                    is_owner=False,
+                    is_billable=False,
                 )
                 return {"success": True}
             except SignUpError:
