@@ -163,7 +163,7 @@ class BitbucketComment(BaseComment):
             comment_payload = self.comment_helper.format_chat_comment(comment, chat_request)
             await self.create_comment_on_line(comment_payload)
         else:
-            await self.create_pr_comment(comment, config.get("FEATURE_MODELS").get("PR_CHAT"))
+            await self.create_comment_on_parent(comment, chat_request.comment.id)
 
     async def create_comment_on_thread(self, comment, chat_request: ChatRequest):
         """
