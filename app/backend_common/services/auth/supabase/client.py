@@ -1,8 +1,10 @@
 from supabase import Client, create_client
+
 from app.common.utils.config_manager import ConfigManager
 
+
 class SupabaseClient:
-    _instance : Client = None
+    _instance: Client = None
     supabase = ConfigManager.config["SUPABASE"]
 
     @classmethod

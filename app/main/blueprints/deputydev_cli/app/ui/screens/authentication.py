@@ -6,9 +6,10 @@ from typing import Any, Dict, Tuple, Union
 import keyring
 from prompt_toolkit import PromptSession, print_formatted_text
 
-from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import InvalidVersionException
+from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
+    InvalidVersionException,
+)
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
 )
@@ -60,7 +61,7 @@ class Authentication(BaseScreenHandler):
                 time.sleep(3)
 
         except Exception as e:
-                print_formatted_text(f"Polling error: {e}")
+            print_formatted_text(f"Polling error: {e}")
 
         # If we reach here, it means authentication failed
         print_formatted_text("Authentication failed, please try again later.")
@@ -91,7 +92,7 @@ class Authentication(BaseScreenHandler):
                 return False
 
         except InvalidVersionException:
-            print_formatted_text(f"An error occurred during authentication. Please login again!")
+            print_formatted_text("An error occurred during authentication. Please login again!")
             return False
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:

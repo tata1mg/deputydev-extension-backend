@@ -6,14 +6,9 @@ from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
 from app.backend_common.models.dao.postgres import Teams, Users, UserTeams
-from app.common.exception.exception import SignUpError, TeamNotFound
-from app.main.blueprints.deputy_dev.constants.onboarding import UserRoles
-from app.main.blueprints.deputy_dev.models.request import (
-    OnboardingRequest,
-    SignUpRequest,
-)
-
-from ..integration import Integration, get_integration
+from app.backend_common.models.request.onboarding import SignUpRequest
+from app.common.constants.onboarding import UserRoles
+from app.common.exception.exception import SignUpError
 
 
 class OnboardingManager:
@@ -54,16 +49,3 @@ class OnboardingManager:
     @staticmethod
     def __generate_team_name(username: str) -> str:
         return f"{username.lower()}-team-{uuid.uuid4().hex}"
-
-    # ---------------------------------- onboard --------------------------------- #
-
-    @classmethod
-    async def onboard(cls, payload: OnboardingRequest):
-        try:
-            _ = await Teams.get(id=payload.team_id)  # check if team exists
-        except DoesNotExist as exc:
-            raise TeamNotFound(f"Team with id {payload.team_id} not found") from exc
-
-        integration: Integration = get_integration(payload.integration_client)()
-        onboarding_info = await integration.integrate(payload=payload)
-        return onboarding_info
