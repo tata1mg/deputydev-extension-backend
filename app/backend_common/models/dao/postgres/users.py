@@ -7,15 +7,6 @@ from .base import Base
 
 
 class Users(Base):
-    serializable_keys = {
-        "id",
-        "email",
-        "name",
-        "org_name",
-        "created_at",
-        "updated_at",
-    }
-
     id = fields.IntField(primary_key=True)
     email = CITextField(max_length=1000)
     name = CITextField(max_length=1000)
