@@ -59,7 +59,7 @@ class Gitlab(Integration, SCM):
             group_id = workspace["id"]
             await self.create_webhooks(group_id)
 
-        async with in_transaction():
+        async with in_transaction(connection_name="default"):
             for workspace in filtered_workspaces:
                 await Workspaces.create(
                     name=workspace["name"],
