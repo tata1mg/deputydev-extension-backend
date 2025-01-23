@@ -1,18 +1,18 @@
 from torpedo.exceptions import BadRequestException
+from typing import Any, Dict
 
 from app.common.exception.exception import SignUpError
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputy_dev.constants.onboarding import UserRoles
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_teams import UserTeams
 from app.main.blueprints.deputy_dev.models.request.onboarding import SignUpRequest
 from app.main.blueprints.deputy_dev.services.workspace.onboarding_manager import (
     OnboardingManager,
 )
-from app.main.blueprints.one_dev.constants.constants import TATA_1MG, TRAYA
-
 
 class SignUp:
     @classmethod
-    async def signup(cls, headers):
+    async def signup(cls, headers: Dict[str, Any]) -> Dict[str, Any]:
         email = headers.get("X-User-Email")
         email_verification = cls.verify_email(email)
         if "error" in email_verification:
@@ -38,22 +38,22 @@ class SignUp:
                 return {"success": True}
             except SignUpError:
                 # user already exists
-                return {"success": True, "isUserExist": True}
+                return {"success": True, "is_user_exist": True}
             except Exception as e:
                 raise BadRequestException(str(e))
 
     @classmethod
-    def verify_email(cls, email):
+    def verify_email(cls, email: str) -> Dict[str, Any]:
         domain = email.split("@")[1]
-        if domain == TATA_1MG["domain"]:
+        if domain == ConfigManager.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
-                "team_id": TATA_1MG["team_id"],
-                "org_name": TATA_1MG["org_name"],
+                "team_id": ConfigManager.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                "org_name": ConfigManager.config["ORG_INFO"]["TATA_1MG"]["org_name"],
             }
-        elif domain == TRAYA["domain"]:
+        elif domain == ConfigManager.config["ORG_INFO"]["TRAYA"]["domain"]:
             return {
-                "team_id": TRAYA["team_id"],
-                "org_name": TRAYA["org_name"],
+                "team_id": ConfigManager.config["ORG_INFO"]["TRAYA"]["team_id"],
+                "org_name": ConfigManager.config["ORG_INFO"]["TRAYA"]["org_name"],
             }
         else:
             return {"team_id": None, "org_name": None, "error": "Invalid domain"}

@@ -9,8 +9,12 @@
     "TRANSACTION_SAMPLE_RATE": 1
   },
   "SUPABASE": {
-    "SUPABASE_URL": "",
-    "SUPABASE_KEY": ""
+    "URL": "",
+    "KEY": ""
+  },
+  "ORG_INFO": {
+    "TATA_1MG": {"domain": "1mg.com", "team_id": 1, "org_name": "TATA 1mg"},
+    "TRAYA": {"domain": "traya.com", "team_id": 3, "org_name": "Traya"}
   },
   "DEBUG": false,
   "ACCESS_LOG": true,
