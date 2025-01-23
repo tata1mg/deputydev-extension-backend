@@ -40,6 +40,18 @@ class RepoFactory:
         return _klass_obj
 
     @classmethod
+    async def get_repo_by_workspace_id_and_name(cls, workspace_id: int, repo_name: str):
+        workspace = await WorkspaceService.db_get(filters={"id": workspace_id}, fetch_one=True)
+        return await cls.repo(
+            vcs_type=workspace.scm,
+            workspace=workspace.name,
+            repo_name=repo_name,
+            workspace_id=workspace_id,
+            auth_handler=AuthHandlerFactory.create_vcs_auth_handler(workspace),
+            workspace_slug=workspace.slug,
+        )
+
+    @classmethod
     async def get_repo_by_id(cls, repo_id: int):
         repo = await RepoService.db_get(filters={"id": repo_id}, fetch_one=True)
         workspace = await WorkspaceService.db_get(filters={"id": repo.workspace_id}, fetch_one=True)
@@ -50,5 +62,9 @@ class RepoFactory:
             workspace_id=repo.workspace_id,
             auth_handler=AuthHandlerFactory.create_vcs_auth_handler(workspace),
             workspace_slug=workspace.slug,
-            repo_id=repo.id,
+            repo_id=repo.scm_repo_id,
         )
+
+    @classmethod
+    def get_vcs_host(cls, vcs_type: str) -> str:
+        return cls.FACTORIES[vcs_type].get_remote_host()

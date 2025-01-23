@@ -72,7 +72,8 @@ class CodeGenerationHandler(BaseFeatureHandler):
                 destination_branch=self.pr_config.destination_branch,
                 pr_title_prefix=self.pr_config.pr_title_prefix,
                 commit_message_prefix=self.pr_config.commit_message_prefix,
-                repo_id=self.registered_repo_details.repo_id,
+                workspace_id=self.registered_repo_details.workspace_id,
+                repo_name=self.registered_repo_details.repo_name,
                 parent_source_branch=self.local_repo.get_active_branch(),
             )
 

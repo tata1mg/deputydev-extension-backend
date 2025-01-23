@@ -36,7 +36,9 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
     ) -> Dict[str, Any]:
         if not payload.pr_config:
             raise ValueError("PR Config is required to apply the diff")
-        registered_repo = await RepoFactory.get_repo_by_id(payload.pr_config.repo_id)
+        registered_repo = await RepoFactory.get_repo_by_workspace_id_and_name(
+            payload.pr_config.workspace_id, payload.pr_config.repo_name
+        )
         _local_repo, is_cloned = await registered_repo.clone_branch(
             branch_name=payload.pr_config.parent_source_branch,
             repo_dir_prefix=payload.session_id,
