@@ -10,17 +10,12 @@ from weaviate.embedded import EmbeddedOptions
 from app.common.models.dao.weaviate.base import Base as WeaviateBaseDAO
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dao.weaviate.chunks import Chunks
-from app.common.models.dao.weaviate.constants.schema_version import SCHEMA_VERSION
-from app.common.models.dao.weaviate.weaviate_schema_details import WeaviateSchemaDetails
 from app.common.services.chunking.vector_store.cleanup import (
     ChunkVectorStoreCleaneupManager,
 )
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repo.local_repo.factory import LocalRepoFactory
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.common.services.repository.weaviate_schema_details.weaviate_schema_details_service import (
-    WeaviateSchemaDetailsService,
-)
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
@@ -30,6 +25,13 @@ from app.main.blueprints.deputydev_cli.app.managers.chunking.chunker.handlers.on
 from app.main.blueprints.deputydev_cli.app.managers.embedding.embedding_manager import (
     OneDevEmbeddingManager,
 )
+from app.main.blueprints.deputydev_cli.app.repository.weaaviate_schema_details.weaviate_schema_details_service import (
+    WeaviateSchemaDetailsService,
+)
+from app.main.blueprints.deputydev_cli.models.weaviate.weaviate_schema_details import (
+    WeaviateSchemaDetails,
+)
+from app.main.blueprints.deputydev_cli.versions import WEAVIATE_SCHEMA_VERSION
 
 
 class InitializationManager:
@@ -143,7 +145,7 @@ class InitializationManager:
 
         schema_version = WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).get_schema_version()
 
-        is_schema_invalid = schema_version is None or schema_version != SCHEMA_VERSION
+        is_schema_invalid = schema_version is None or schema_version != WEAVIATE_SCHEMA_VERSION
 
         if should_clean or is_schema_invalid:
             AppLogger.log_debug("Cleaning up the vector store")
@@ -158,7 +160,9 @@ class InitializationManager:
         )
 
         if is_schema_invalid:
-            WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).set_schema_version(SCHEMA_VERSION)
+            WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).set_schema_version(
+                WEAVIATE_SCHEMA_VERSION
+            )
 
         return self.weaviate_client
 
