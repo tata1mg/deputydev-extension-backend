@@ -59,6 +59,7 @@ class VectorDBChunker(BaseChunker):
             process_executor=self.process_executor,
         )
 
+        # WARNING: Do not change this to pass by value, it will increase memory usage
         batched_chunks: List[ChunkInfo] = []
         for chunks in file_wise_chunks.values():
             batched_chunks.extend(chunks)
