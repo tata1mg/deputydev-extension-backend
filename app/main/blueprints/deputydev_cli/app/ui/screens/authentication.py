@@ -1,13 +1,14 @@
-import sys
 import time
 import uuid
 import webbrowser
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
 
 import keyring
-from prompt_toolkit import PromptSession
+from prompt_toolkit import PromptSession, print_formatted_text
 
-from app.main.blueprints.deputydev_cli.app.clients.constants import FRONTEND_URL
+from app.common.utils.app_logger import AppLogger
+from app.common.utils.config_manager import ConfigManager
+from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import InvalidVersionException
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
 )
@@ -30,7 +31,7 @@ class Authentication(BaseScreenHandler):
         """Stores the auth_token securely using keyring."""
         keyring.set_password("my_application", "auth_token", token)
 
-    def load_auth_token(self) -> str:
+    def load_auth_token(self) -> Union[str, None]:
         """Loads the auth_token securely using keyring."""
         return keyring.get_password("my_application", "auth_token")
 
@@ -39,7 +40,6 @@ class Authentication(BaseScreenHandler):
         max_attempts = 60
         for attempt in range(max_attempts):
             try:
-                print(f"Attempt {attempt + 1}/{max_attempts}: Checking authentication status...")
                 response = await self.app_context.one_dev_client.get_session(
                     headers={
                         "Content-Type": "application/json",
@@ -49,22 +49,23 @@ class Authentication(BaseScreenHandler):
 
                 # Check if the auth token contains an error
                 if "error" not in response:
+                    if not response.get("jwt_token") or response.get("jwt_token") is None:
+                        raise Exception("No JWT token found in response")
                     self.app_context.auth_token = response["jwt_token"]
                     # Storing jwt token in user's machine using keyring
                     self.store_auth_token(self.app_context.auth_token)
-                    print("Authentication successful!")
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
                 else:
-                    print("Authentication is in progress. Please wait...")
+                    print_formatted_text("Authentication is in progress. Please wait...")
 
             except Exception as e:
-                print(f"Polling error: {e}")
+                print_formatted_text(f"Polling error: {e}")
 
             time.sleep(3)
 
         # If we reach here, it means authentication failed
-        print("Authentication failed, please try again later.")
-        sys.exit()  # Exit the program
+        print_formatted_text("Authentication failed, please try again later.")
+        return self.app_context, ScreenType.HOME
 
     async def verify_current_session(self) -> bool:
         """Attempts to authenticate the user using the provided auth token."""
@@ -76,7 +77,7 @@ class Authentication(BaseScreenHandler):
             return False
 
         try:
-            print("Verifying the auth token...")
+            print_formatted_text("Verifying the auth token...")
             response = await self.app_context.one_dev_client.verify_auth_token(
                 headers={
                     "Content-Type": "application/json",
@@ -85,18 +86,17 @@ class Authentication(BaseScreenHandler):
             )
             # Check if the response contains a status of 'verified'
             if response["status"] == "VERIFIED":
-                print("Authenticated successfully!")
                 return True
             else:
-                print("Session is expired. Please login again!")
+                print_formatted_text("Session is expired. Please login again!")
                 return False
 
-        except Exception as e:
-            print(f"An error occurred during authentication: {e}. Please login again!")
+        except InvalidVersionException as ex:
+            AppLogger.log_error(ex.message)
             return False
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
-        print("Welcome to DeputyDev CLI!")
+        print_formatted_text("Welcome to DeputyDev CLI!")
 
         # Check if the current session is present and valid
         is_current_session_present_and_valid = await self.verify_current_session()
@@ -107,10 +107,10 @@ class Authentication(BaseScreenHandler):
 
         # If the current session is not present or is not valid, initiate login
         device_code = str(uuid.uuid4())
-        is_cli = True
+        is_cli = "true"
 
-        auth_url = f"{FRONTEND_URL}/cli?device_code={device_code}&is_cli={is_cli}"
-        print(f"Please visit this link for authentication: {auth_url}")
+        auth_url = f"{ConfigManager.configs['FRONTEND_URL']}/cli?device_code={device_code}&is_cli={is_cli}"
+        print_formatted_text(f"Please visit this link for authentication: {auth_url}")
 
         # Open the URL in the default web browser
         webbrowser.open(auth_url)

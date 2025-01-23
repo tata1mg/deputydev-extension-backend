@@ -5,5 +5,3 @@ TIMEOUT = 100
 HOST = "https://api.deputydev.ai"
 # HOST = "http://localhost:8084"
 APP_VERSION = "1.0.0"
-# FRONTEND_URL = "http://localhost:3000"
-FRONTEND_URL = "https://deputydev.ai"

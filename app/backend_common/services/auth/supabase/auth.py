@@ -3,12 +3,11 @@ from typing import Any, Dict
 
 import jwt
 
-from app.backend_common.services.supabase.client import supabase
+from app.backend_common.services.auth.supabase.client import SupabaseClient
 
 
 class SupabaseAuth:
-    def __init__(self):
-        self.supabase = supabase
+    supabase = SupabaseClient.get_instance()
 
     @classmethod
     async def verify_auth_token(cls, access_token: str) -> Dict[str, Any]:
@@ -36,7 +35,7 @@ class SupabaseAuth:
                     return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
 
             # Verify token with Supabase
-            user_response = supabase.auth.get_user(access_token)
+            user_response = cls.supabase.auth.get_user(access_token)
             if user_response.user:
                 return {
                     "valid": True,
@@ -60,7 +59,7 @@ class SupabaseAuth:
             }
 
     @classmethod
-    async def extract_and_validate_token(cls, headers: Dict) -> Dict[str, Any]:
+    async def extract_and_validate_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:
         """
         Extract the access token from the headers, validate its format, and verify it.
 
