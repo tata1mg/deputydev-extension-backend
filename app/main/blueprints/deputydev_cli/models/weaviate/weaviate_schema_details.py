@@ -1,9 +1,8 @@
 from weaviate.classes.config import DataType, Property
 
 from app.common.models.dao.weaviate.base import Base
-from app.common.models.dao.weaviate.constants.collection_names import (
-    WEAVIATE_SCHEMA_DETAILS_COLLECTION_NAME,
-)
+
+from .constants.collection_names import WEAVIATE_SCHEMA_DETAILS_COLLECTION_NAME
 
 
 class WeaviateSchemaDetails(Base):

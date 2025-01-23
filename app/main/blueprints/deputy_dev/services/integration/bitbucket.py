@@ -54,7 +54,7 @@ class Bitbucket(Integration, SCM):
         for workspace in filtered_workspaces:
             await self.create_webhooks(workspace["slug"], workspace["id"])
 
-        async with in_transaction():
+        async with in_transaction(connection_name="default"):
             for workspace in filtered_workspaces:
                 await Workspaces.create(
                     name=workspace["name"],
