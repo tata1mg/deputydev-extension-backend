@@ -1,4 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from prompt_toolkit.shortcuts.progress_bar import ProgressBar, ProgressBarCounter
@@ -7,7 +8,6 @@ from app.common.services.chunking.chunk_info import ChunkInfo
 from app.common.services.chunking.chunker.handlers.vector_db_chunker import (
     VectorDBChunker,
 )
-from app.common.services.chunking.vector_store.main import ChunkVectorStoreManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.utils.app_logger import AppLogger
@@ -26,6 +26,8 @@ class OneDevCLIChunker(VectorDBChunker):
         chunkable_files_and_hashes: Dict[str, str],
         progress_bar: Optional[ProgressBar] = None,
         use_new_chunking: bool = True,
+        use_async_refresh: bool = True,
+        fetch_with_vector: bool = False,
     ):
         super().__init__(
             local_repo,
@@ -34,6 +36,8 @@ class OneDevCLIChunker(VectorDBChunker):
             embedding_manager,
             chunkable_files_and_hashes,
             use_new_chunking,
+            use_async_refresh,
+            fetch_with_vector,
         )
         self.embedding_manager = embedding_manager
         self.progress_bar = progress_bar
@@ -69,9 +73,6 @@ class OneDevCLIChunker(VectorDBChunker):
             batched_chunks.extend(chunks)
         if batched_chunks:
             await self.add_chunk_embeddings(batched_chunks, len_checkpoints=len(files_to_chunk_batch))
-            await ChunkVectorStoreManager(
-                local_repo=self.local_repo, weaviate_client=self.weaviate_client
-            ).add_differential_chunks_to_store(file_wise_chunks)
         else:
             if self.file_progressbar_counter:
                 for _ in range(len(files_to_chunk_batch)):
@@ -82,6 +83,7 @@ class OneDevCLIChunker(VectorDBChunker):
     async def create_and_store_chunks_for_file_batches(
         self,
         batched_files_to_store: List[List[Tuple[str, str]]],
+        custom_timestamp: Optional[datetime] = None,
     ) -> Dict[str, List[ChunkInfo]]:
         total_files = sum(len(batch_files) for batch_files in batched_files_to_store)
         if self.progress_bar and total_files:
@@ -92,7 +94,9 @@ class OneDevCLIChunker(VectorDBChunker):
             )
             AppLogger.log_debug(f"Processing {len(range(total_files))} batches")
 
-        chunks_to_return = await super().create_and_store_chunks_for_file_batches(batched_files_to_store)
+        chunks_to_return = await super().create_and_store_chunks_for_file_batches(
+            batched_files_to_store, custom_timestamp=custom_timestamp
+        )
         if self.file_progressbar_counter:
             self.file_progressbar_counter.done = True
         return chunks_to_return
