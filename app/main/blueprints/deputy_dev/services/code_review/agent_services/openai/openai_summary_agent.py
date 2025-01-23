@@ -3,7 +3,11 @@ from torpedo import CONFIG
 
 from app.common.constants.constants import PRStatus
 from app.common.utils.context_vars import get_context_value
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
+from app.main.blueprints.deputy_dev.constants.constants import (
+    AgentTypes,
+    FeatureFlows,
+    TokenTypes,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
 )
@@ -16,7 +20,11 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class OpenAIPRSummaryAgent(AgentServiceBase):
-    def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
+    def __init__(
+        self,
+        context_service: ContextService,
+        is_reflection_enabled: bool,
+    ):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.PR_SUMMARY.value)
         # TODO: for now not picking model from setting, This can be updated if required:
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
@@ -76,9 +84,19 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         }
 
     async def should_execute(self):
+        feature_flow = get_context_value("feature_flow")
         pr_status = self.context_service.get_pr_status()
-        if pr_status in [PRStatus.MERGED.value, PRStatus.DECLINED.value]:
+
+        if feature_flow == FeatureFlows.INCREMENTAL_SUMMARY.value:
+            return True
+
+        # Summary agent is disabled for closed PRs and Incremental review PRs
+        if feature_flow == FeatureFlows.INCREMENTAL_CODE_REVIEW.value or (
+            feature_flow == FeatureFlows.INITIAL_CODE_REVIEW.value
+            and pr_status in [PRStatus.MERGED.value, PRStatus.DECLINED.value]
+        ):
             return False
+
         return True
 
     async def required_prompt_variables(self, comments: str = None):

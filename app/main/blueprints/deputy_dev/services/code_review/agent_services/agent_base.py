@@ -23,12 +23,7 @@ from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 
 
 class AgentServiceBase(ABC):
-    def __init__(
-        self,
-        context_service: ContextService,
-        is_reflection_enabled: bool,
-        agent_name,
-    ):
+    def __init__(self, context_service: ContextService, is_reflection_enabled: bool, agent_name):
         self.context_service = context_service
         self.is_reflection_enabled = is_reflection_enabled
         self.agent_name = agent_name
