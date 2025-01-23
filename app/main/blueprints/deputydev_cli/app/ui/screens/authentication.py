@@ -107,9 +107,9 @@ class Authentication(BaseScreenHandler):
 
         # If the current session is not present or is not valid, initiate login
         device_code = str(uuid.uuid4())
-        is_cli = "true"
+        is_external_auth_request = "true"
 
-        auth_url = f"{ConfigManager.configs['FRONTEND_URL']}/cli?device_code={device_code}&is_cli={is_cli}"
+        auth_url = f"{ConfigManager.configs['FRONTEND_URL']}/external-auth?device_code={device_code}&is_external_auth_request={is_external_auth_request}"
         print_formatted_text(f"Please visit this link for authentication: {auth_url}")
 
         # Open the URL in the default web browser

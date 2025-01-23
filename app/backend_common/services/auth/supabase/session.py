@@ -45,7 +45,7 @@ class SupabaseSession:
     @classmethod
     async def get_session_by_device_code(cls, headers: Dict[str, str]) -> Dict[str, Any]:
         """
-        Query the cli_sessions table for a session matching the given device code.
+        Query the external_sessions table for a session matching the given device code.
 
         Args:
             headers (Dict[str, str]): The headers containing the device code.
@@ -59,7 +59,7 @@ class SupabaseSession:
         if not device_code:
             raise ValueError("No device code found")
 
-        response = cls.supabase.table("cli_sessions").select("*").eq("device_code", device_code).single().execute()
+        response = cls.supabase.table("external_sessions").select("*").eq("device_code", device_code).single().execute()
         session_data = response.data if response else None
 
         if not session_data:
