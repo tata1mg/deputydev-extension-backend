@@ -80,10 +80,13 @@ class ChunkFilesService:
                 limit=batch_size,
                 filters=Filter.all_of(
                     [
-                        *[Filter.by_property("chunk_hash").not_equal(chunk_hash) for chunk_hash in exclusion_chunk_hashes],
+                        *[
+                            Filter.by_property("chunk_hash").not_equal(chunk_hash)
+                            for chunk_hash in exclusion_chunk_hashes
+                        ],
                         Filter.by_property("created_at").less_than(last_used_lt),
                     ]
-                )
+                ),
             )
 
             AppLogger.log_debug(f"{len(deletable_objects.objects)} chunk_files to be deleted in batch")
