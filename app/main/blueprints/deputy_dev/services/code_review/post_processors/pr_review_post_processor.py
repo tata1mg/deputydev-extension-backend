@@ -262,10 +262,16 @@ class PRReviewPostProcessor:
 
     def pr_meta_info(self, pr_dto: PullRequestDTO, tokens_data, llm_comments: dict = None, extra_info: dict = None):
         llm_comments, extra_info = llm_comments or [], extra_info or {}
-        return {
-            "pr_review_tat_in_secs": int(
+        # Check if pr_review_start_time is present in extra_info otherwise fallback case
+        if extra_info.get("pr_review_start_time"):
+            pr_review_start_time = datetime.fromisoformat(extra_info["pr_review_start_time"])
+            pr_review_tat_in_secs = int((datetime.now(timezone.utc) - pr_review_start_time).total_seconds())
+        else:
+            pr_review_tat_in_secs = int(
                 (datetime.now(timezone.utc) - pr_dto.scm_creation_time.astimezone(timezone.utc)).total_seconds()
-            ),
+            )
+        return {
+            "pr_review_tat_in_secs": pr_review_tat_in_secs,
             "execution_time_in_secs": int((datetime.now() - extra_info["execution_start_time"]).total_seconds()),
             "tokens": self.format_token(tokens_data)["tokens"],
             "total_comments": len(llm_comments),
