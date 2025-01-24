@@ -1,9 +1,12 @@
+"""
+This module contains the NonVectorDBChunker class, which is used to chunk files on the fly for a local repository.
+"""
+
 from concurrent.futures import ProcessPoolExecutor
-from typing import List, Tuple
+from typing import List
 
 from app.common.services.chunking.chunk_info import ChunkInfo
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
-from app.common.services.chunking.document import Document, chunks_to_docs
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 
 
@@ -12,7 +15,7 @@ class NonVectorDBChunker(BaseChunker):
         super().__init__(local_repo, process_executor)
         self.use_new_chunking = use_new_chunking
 
-    async def create_chunks_and_docs(self) -> Tuple[List[ChunkInfo], List[Document]]:
+    async def create_chunks_and_docs(self) -> List[ChunkInfo]:
         file_list = await self.local_repo.get_chunkable_files()
         file_wise_chunks = await self.file_chunk_creator.create_and_get_file_wise_chunks(
             {file: None for file in file_list},
@@ -24,4 +27,4 @@ class NonVectorDBChunker(BaseChunker):
         for chunks in file_wise_chunks.values():
             all_chunks.extend(chunks)
 
-        return all_chunks, chunks_to_docs(all_chunks)
+        return all_chunks
