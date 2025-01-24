@@ -2,11 +2,10 @@ import asyncio
 import os
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Dict, List, Mapping, Optional
 
 from app.common.services.chunking.chunk import chunk_source
 from app.common.services.chunking.chunk_info import ChunkInfo
-from app.common.services.chunking.document import Document
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.utils.file_utils import read_file
 
@@ -73,5 +72,5 @@ class BaseChunker(ABC):
         self.file_chunk_creator = FileChunkCreator
 
     @abstractmethod
-    async def create_chunks_and_docs(self) -> Tuple[List[ChunkInfo], List[Document]]:
+    async def create_chunks_and_docs(self) -> List[ChunkInfo]:
         raise NotImplementedError("create_chunks method must be implemented in the child class")

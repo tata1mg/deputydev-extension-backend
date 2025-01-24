@@ -1,10 +1,15 @@
+"""
+This module contains the VectorDBChunker class, which is used to chunk files and store them in the vector store.
+The VectorDBChunker class is a subclass of the BaseChunker class and implements the create_chunks_and_docs method.
+This is used to chunk a given list of files and store them in the vector store.
+"""
+
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 from app.common.services.chunking.chunk_info import ChunkInfo
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
-from app.common.services.chunking.document import Document, chunks_to_docs
 from app.common.services.chunking.vector_store.chunk_vectore_store_manager import (
     ChunkVectorStoreManager,
 )
@@ -28,6 +33,21 @@ class VectorDBChunker(BaseChunker):
         use_async_refresh: bool = False,
         fetch_with_vector: bool = False,
     ):
+        """
+        Initializes the VectorDBChunker class.
+        Args:
+            local_repo (BaseLocalRepo): A object to interact with the local repository.
+            process_executor (ProcessPoolExecutor): A process executor, used for parallel processing of chunks.
+            weaviate_client (WeaviateSyncAndAsyncClients): The Weaviate client.
+            embedding_manager (BaseEmbeddingManager): The embedding manager.
+            chunkable_files_and_hashes (Optional[Dict[str, str]], optional): The chunkable files and hashes. Defaults to None.
+            use_new_chunking (bool, optional): Whether to use the new chunking strategy. Defaults to True.
+            use_async_refresh (bool, optional): Whether to wait for chunk timestamp refresh before moving on to next batch of files. Defaults to False.
+            fetch_with_vector (bool, optional): Whether to return ChunkInfo with embeddings. Defaults to False.
+
+        Returns:
+            None
+        """
         super().__init__(local_repo, process_executor)
         self.use_new_chunking = use_new_chunking
         self.weaviate_client = weaviate_client
@@ -132,11 +152,11 @@ class VectorDBChunker(BaseChunker):
 
         return all_file_wise_chunks
 
-    async def create_chunks_and_docs(self) -> Tuple[List[ChunkInfo], List[Document]]:
+    async def create_chunks_and_docs(self) -> List[ChunkInfo]:
         """
         Converts the content of a list of files into chunks of code.
         Returns:
-            Tuple[List[ChunkInfo], List[Document]]: A list of code chunks extracted from the files.
+            List[ChunkInfo]: A list of code chunks extracted from the files.
         """
         # determine chunking timestamp
         chunking_timestamp = datetime.now().replace(tzinfo=timezone.utc)
@@ -180,4 +200,4 @@ class VectorDBChunker(BaseChunker):
         for chunks in all_file_wise_chunks.values():
             final_chunks.extend(chunks)
 
-        return final_chunks, chunks_to_docs(final_chunks)
+        return final_chunks
