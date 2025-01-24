@@ -175,7 +175,7 @@ class InitializationManager:
         if not self.weaviate_client:
             raise ValueError("Connect to vector store")
 
-        all_chunks, _all_docs = await OneDevCLIChunker(
+        all_chunks = await OneDevCLIChunker(
             local_repo=self.local_repo,
             weaviate_client=self.weaviate_client,
             embedding_manager=self.embedding_manager,
