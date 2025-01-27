@@ -1,11 +1,11 @@
 from supabase import Client, create_client
 
-from app.common.utils.config_manager import ConfigManager
+from torpedo import CONFIG
 
 
 class SupabaseClient:
     _instance: Client = None
-    supabase = ConfigManager.config["SUPABASE"]
+    supabase = CONFIG.config["SUPABASE"]
 
     @classmethod
     def get_instance(cls):
