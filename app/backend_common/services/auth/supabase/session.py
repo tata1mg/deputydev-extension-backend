@@ -1,12 +1,12 @@
 from typing import Any, Dict
 
 from postgrest.exceptions import APIError
+from torpedo import CONFIG
 
 from app.backend_common.repository.users.user_service import UserService
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.common.services.authentication.jwt import JWTHandler
-from torpedo import CONFIG
 
 
 class SupabaseSession:
