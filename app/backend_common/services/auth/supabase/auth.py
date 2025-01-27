@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
 
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from app.common.services.authentication.jwt import JWTHandler
 
 
 class SupabaseAuth:
@@ -11,6 +11,7 @@ class SupabaseAuth:
 
     @classmethod
     async def verify_auth_token(cls, access_token: str) -> Dict[str, Any]:
+
         """
         Validate a Supabase access token and check if it's expired.
 
@@ -26,14 +27,9 @@ class SupabaseAuth:
         """
         try:
             # Decode the JWT token without verification to check expiration
-            decoded_token = jwt.decode(access_token, options={"verify_signature": False})
-
-            # Check token expiration
-            exp_timestamp = decoded_token.get("exp")
-            if exp_timestamp is not None:
-                current_time = int(datetime.now(timezone.utc).timestamp())
-                if current_time > exp_timestamp:
-                    return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
+            is_token_valid = JWTHandler.verify_token_without_signature_verification(access_token)
+            if not is_token_valid:
+                return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
 
             # Verify token with Supabase
             user_response = cls.supabase.auth.get_user(access_token)
