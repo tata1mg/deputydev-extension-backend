@@ -57,7 +57,6 @@ class Authentication(BaseScreenHandler):
                 AppLogger.log_debug(f"Error polling session: {e}")
                 time.sleep(1)  # Wait for 1 second on exception
 
-            print_formatted_text("pending...")
             time.sleep(3)  # Wait for 3 seconds before polling again
 
         # If we reach here, it means authentication failed
