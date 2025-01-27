@@ -6,7 +6,7 @@ from app.backend_common.repository.users.user_service import UserService
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.common.services.authentication.jwt import JWTHandler
-from app.common.utils.config_manager import ConfigManager
+from torpedo import CONFIG
 
 
 class SupabaseSession:
@@ -70,7 +70,7 @@ class SupabaseSession:
             updated_session_data = await cls.update_session_data(session_data)
 
             # Encode the session data into a JWT token
-            jwt_token = JWTHandler(signing_key=ConfigManager.config["JWT_SECRET_KEY"], algorithm="HS256").create_token(
+            jwt_token = JWTHandler(signing_key=CONFIG.config["JWT_SECRET_KEY"], algorithm="HS256").create_token(
                 payload=updated_session_data
             )
 
