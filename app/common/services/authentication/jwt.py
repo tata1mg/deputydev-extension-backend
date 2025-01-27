@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from datetime import datetime, timezone
 
 import jwt
 
@@ -53,3 +54,28 @@ class JWTHandler:
             raise jwt.ExpiredSignatureError("The token has expired.")
         except jwt.InvalidTokenError:
             raise jwt.InvalidTokenError("Invalid token.")
+
+    def verify_token_without_signature_verification(token: str) -> bool:
+        """Verifies the JWT token without signature verification and checks for expiration.
+
+        Args:
+            token (str): The JWT token to verify.
+
+        Returns:
+            bool: True if the token is valid and not expired, False otherwise.
+        """
+        try:
+            # Decode the JWT token without verifying the signature
+            decoded_token = jwt.decode(token, options={"verify_signature": False})
+
+            # Check token expiration
+            exp_timestamp = decoded_token.get("exp")
+            if exp_timestamp is not None:
+                current_time = int(datetime.now(timezone.utc).timestamp())
+                if current_time > exp_timestamp:
+                    return False
+
+            return True
+
+        except jwt.DecodeError:
+            return False
