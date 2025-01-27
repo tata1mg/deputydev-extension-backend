@@ -2,7 +2,7 @@ from typing import Optional
 
 from torpedo import CONFIG
 
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
@@ -108,7 +108,9 @@ class PRReviewPreProcessor:
             set_context_values(team_id=self.pr_dto.team_id)
 
     async def fetch_repo(self):
-        repo_dto = await RepoService.find_or_create_with_workspace_id(self.pr_model.scm_workspace_id(), self.pr_model)
+        repo_dto = await RepoRepository.find_or_create_with_workspace_id(
+            self.pr_model.scm_workspace_id(), self.pr_model
+        )
         return repo_dto
 
     async def process_pr_record(self, repo_dto) -> Optional[PullRequestDTO]:

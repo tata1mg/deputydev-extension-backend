@@ -2,7 +2,7 @@ from sanic.log import logger
 
 from app.backend_common.models.dto.pr.bitbucket_pr import BitbucketPrModel
 from app.backend_common.models.dto.pr.github_pr import GitHubPrModel
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.service_clients.github.github_repo_client import (
     GithubRepoClient,
@@ -29,7 +29,7 @@ class BackfillManager:
         for pr in pr_rows:
             scm_pr_id = pr["scm_pr_id"]
             repo_id = pr["repo_id"]
-            repo_dto = await RepoService.db_get({"id": repo_id}, fetch_one=True)
+            repo_dto = await RepoRepository.db_get({"id": repo_id}, fetch_one=True)
             experiment_dto = await ExperimentService.db_get({"pr_id": pr["id"]})
             if repo_dto and experiment_dto:
                 self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), scm_pr_id)
@@ -52,7 +52,7 @@ class BackfillManager:
         """
         exp_rows = await ExperimentService.get_data_in_range(query_params.get("start"), query_params.get("end"))
         for row in exp_rows:
-            repo_dto = await RepoService.db_get({"id": row.repo_id}, fetch_one=True)
+            repo_dto = await RepoRepository.db_get({"id": row.repo_id}, fetch_one=True)
             pr_dto = await PRService.db_get({"id": row.pr_id})
             if repo_dto and pr_dto:
                 # We will be fetching the PR details for every row in the table to backfill pr_state for each row
@@ -135,7 +135,7 @@ class BackfillManager:
 
         for row in pr_rows:
             try:
-                repo_dto = await RepoService.db_get({"id": row["repo_id"]})
+                repo_dto = await RepoRepository.db_get({"id": row["repo_id"]})
                 if repo_dto.team_id == 1 and repo_dto.scm == "bitbucket":
                     onemg_workspace_id = "{eac19072-5edc-44b0-a9fc-206356051d1e}"
                     auth_handler = await get_vcs_auth_handler(onemg_workspace_id, "bitbucket")
@@ -191,7 +191,7 @@ class BackfillManager:
         """
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         for row in pr_rows:
-            repo_dto = await RepoService.db_get({"id": row["repo_id"]}, fetch_one=True)
+            repo_dto = await RepoRepository.db_get({"id": row["repo_id"]}, fetch_one=True)
             self.bitbucket_client = BitbucketRepoClient("tata1mg", name_to_slug(repo_dto.name), row["scm_pr_id"])
             pr_detail = await self.bitbucket_client.get_pr_details()
             pr_approval_time = get_approval_time_from_participants_bitbucket(pr_detail.get("participants", []))

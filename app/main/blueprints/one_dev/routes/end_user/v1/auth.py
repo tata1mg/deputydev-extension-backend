@@ -23,7 +23,7 @@ async def verify_auth_token(_request: Request, **kwargs):
 @validate_cli_version
 async def get_session(_request: Request, **kwargs):
     headers = _request.headers
-    response = await SupabaseSession.get_session_by_device_code(headers)
+    response = await SupabaseSession.get_session_by_supabase_session_id(headers)
     return send_response(response)
 
 
