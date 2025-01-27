@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Union
 from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
+from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.utils.config_manager import ConfigManager
@@ -62,12 +63,16 @@ class DocsGenerationHandler(BaseFeatureHandler):
 
         final_payload: Dict[str, Any] = dict()
 
-        if self.pr_config:
+        if self.pr_config and self.registered_repo_details and isinstance(self.local_repo, GitRepo):
             final_payload["create_pr"] = True
             final_payload["pr_config"] = dict(
+                source_branch=self.pr_config.source_branch,
                 destination_branch=self.pr_config.destination_branch,
                 pr_title_prefix=self.pr_config.pr_title_prefix,
                 commit_message_prefix=self.pr_config.commit_message_prefix,
+                workspace_id=self.registered_repo_details.workspace_id,
+                repo_name=self.registered_repo_details.repo_name,
+                parent_source_branch=self.local_repo.get_active_branch(),
             )
 
         selected_text = self._get_selected_text(self.query).get_xml()
