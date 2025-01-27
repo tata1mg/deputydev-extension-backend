@@ -1,10 +1,10 @@
 from typing import Any, Dict
 
+from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.common.services.authentication.jwt import JWTHandler
-from torpedo import CONFIG
 
 
 class Login:
