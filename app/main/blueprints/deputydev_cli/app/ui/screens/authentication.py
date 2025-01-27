@@ -1,6 +1,5 @@
 import time
 import uuid
-import webbrowser
 from typing import Any, Dict, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
@@ -8,7 +7,7 @@ from prompt_toolkit.validation import ValidationError
 
 from app.common.constants.constants import AuthStatus
 from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
+from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
@@ -98,19 +97,13 @@ class Authentication(BaseScreenHandler):
         print_formatted_text("Welcome to DeputyDev CLI!")
 
         # Check if the current session is present and valid
-        is_current_session_present_and_valid = await self.verify_current_session()
-        if is_current_session_present_and_valid:
-            return self.app_context, ScreenType.DEFAULT
+        # is_current_session_present_and_valid = await self.verify_current_session()
+        # if is_current_session_present_and_valid:
+        #     return self.app_context, ScreenType.DEFAULT
 
         # If the current session is not present or is not valid, initiate login
         supabase_session_id = str(uuid.uuid4())
-        is_external_auth_request = "true"
-
-        auth_url = f"{ConfigManager.configs['DD_BROWSER_HOST']}/external-auth?supabase_session_id={supabase_session_id}&is_external_auth_request={is_external_auth_request}"
-        print_formatted_text(f"Please visit this link for authentication: {auth_url}")
-
-        # Open the URL in the default web browser
-        webbrowser.open(auth_url)
+        BrowserClient.initiate_cli_login(supabase_session_id)
 
         # Polling session
         return await self.poll_session(supabase_session_id)

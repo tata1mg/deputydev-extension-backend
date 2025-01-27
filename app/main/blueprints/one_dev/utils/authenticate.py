@@ -1,16 +1,17 @@
+import json
 from functools import wraps
 
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
-import json
 
 from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
 from app.backend_common.repository.users.user_repository import UserRepository
-from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.common.services.authentication.jwt import JWTHandler
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
