@@ -5,7 +5,7 @@ from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.services.workspace.onboarding_manager import OnboardingManager
 from app.common.constants.onboarding import UserRoles
 from app.common.exception.exception import SignUpError
-from app.common.utils.config_manager import ConfigManager
+from torpedo import CONFIG
 
 
 class SignUp:
@@ -43,15 +43,15 @@ class SignUp:
     @classmethod
     def verify_email(cls, email: str) -> Dict[str, Any]:
         domain = email.split("@")[1]
-        if domain == ConfigManager.config["ORG_INFO"]["TATA_1MG"]["domain"]:
+        if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
-                "team_id": ConfigManager.config["ORG_INFO"]["TATA_1MG"]["team_id"],
-                "org_name": ConfigManager.config["ORG_INFO"]["TATA_1MG"]["org_name"],
+                "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
             }
-        elif domain == ConfigManager.config["ORG_INFO"]["TRAYA"]["domain"]:
+        elif domain == CONFIG.config["ORG_INFO"]["TRAYA"]["domain"]:
             return {
-                "team_id": ConfigManager.config["ORG_INFO"]["TRAYA"]["team_id"],
-                "org_name": ConfigManager.config["ORG_INFO"]["TRAYA"]["org_name"],
+                "team_id": CONFIG.config["ORG_INFO"]["TRAYA"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["TRAYA"]["org_name"],
             }
         else:
             return {"team_id": None, "org_name": None, "error": "Invalid domain"}
