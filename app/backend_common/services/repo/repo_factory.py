@@ -1,4 +1,4 @@
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.repository.workspace.main import WorkspaceService
 from app.backend_common.services.credentials.factory import AuthHandlerFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -53,7 +53,7 @@ class RepoFactory:
 
     @classmethod
     async def get_repo_by_id(cls, repo_id: int):
-        repo = await RepoService.db_get(filters={"id": repo_id}, fetch_one=True)
+        repo = await RepoRepository.db_get(filters={"id": repo_id}, fetch_one=True)
         workspace = await WorkspaceService.db_get(filters={"id": repo.workspace_id}, fetch_one=True)
         return await cls.repo(
             vcs_type=repo.scm,

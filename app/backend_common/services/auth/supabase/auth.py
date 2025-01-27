@@ -19,9 +19,10 @@ class SupabaseAuth:
 
         Returns:
             Dict[str, Any]: A dictionary containing:
-                - 'valid': Boolean indicating if the token is valid
-                - 'message': Status message explaining the validation result
-                - 'user_response': UserResponse object if token is valid, None otherwise
+                - 'valid' (bool): Indicates if the token is valid.
+                - 'message' (str): Status message explaining the validation result.
+                - 'user_email' (Optional[str]): Email of the user if the token is valid, otherwise None.
+                - 'user_name' (Optional[str]): Name of the user if the token is valid, otherwise None.
         """
         try:
             # Decode the JWT token without verification to check expiration
@@ -68,17 +69,18 @@ class SupabaseAuth:
 
         Returns:
             Dict[str, Any]: A dictionary containing:
-                - 'valid': Boolean indicating if the token is valid
-                - 'message': Status message explaining the validation result
-                - 'user_response': UserResponse object if token is valid, None otherwise
+                - 'valid' (bool): Indicates if the token is valid.
+                - 'message' (str): Status message explaining the validation result.
+                - 'user_email' (Optional[str]): Email of the user if the token is valid, otherwise None.
+                - 'user_name' (Optional[str]): Name of the user if the token is valid, otherwise None.
         """
         if "Authorization" not in headers:
-            return {"valid": False, "message": "Authorization header missing", "user_response": None}
+            return {"valid": False, "message": "Authorization header missing", "user_email": None, "user_name": None}
 
         auth_header = headers["Authorization"]
         access_token = auth_header.split(" ")[1]
         if not access_token:
-            return {"valid": False, "message": "Access token missing", "user_response": None}
+            return {"valid": False, "message": "Access token missing", "user_email": None, "user_name": None}
 
         # Call the verify_auth_token method with the access token
         return await cls.verify_auth_token(access_token)

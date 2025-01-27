@@ -1,7 +1,7 @@
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
@@ -163,7 +163,7 @@ class SmartCodeChatManager:
             team_id = workspace_dto.team_id
 
         # This creates repo entry in db if not exist.
-        await RepoService.find_or_create_with_workspace_id(
+        await RepoRepository.find_or_create_with_workspace_id(
             scm_workspace_id=chat_request.repo.workspace_id, pr_model=pr.pr_model()
         )
         setting = await SettingService(repo, team_id).build()
