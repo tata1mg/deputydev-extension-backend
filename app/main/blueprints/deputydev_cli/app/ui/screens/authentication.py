@@ -4,6 +4,7 @@ import webbrowser
 from typing import Any, Dict, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
+from prompt_toolkit.validation import ValidationError
 
 from app.common.constants.constants import AuthStatus
 from app.common.utils.app_logger import AppLogger
@@ -87,8 +88,10 @@ class Authentication(BaseScreenHandler):
                 print_formatted_text("Session is expired. Please login again!")
                 return False
 
-        except InvalidVersionException:
-            print_formatted_text("An error occurred during authentication. Please login again!")
+        except InvalidVersionException as ex:
+            raise ValidationError(message=str(ex))
+        except Exception:
+            print_formatted_text("Authentication failed, please try again later.")
             return False
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
