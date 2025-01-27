@@ -3,9 +3,10 @@ from typing import Any, Dict
 from postgrest.exceptions import APIError
 from torpedo import CONFIG
 
-from app.backend_common.repository.users.user_service import UserService
+from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from app.common.constants.constants import AuthStatus
 from app.common.services.authentication.jwt import JWTHandler
 
 
@@ -33,7 +34,7 @@ class SupabaseSession:
         email = token_data["user_email"]
 
         # Fetch the registered user ID based on the email
-        user = await UserService.db_get(filters={"email": email}, fetch_one=True)
+        user = await UserRepository.db_get(filters={"email": email}, fetch_one=True)
 
         # Add email and user_id to session data
         data["email"] = email
@@ -42,25 +43,29 @@ class SupabaseSession:
         return data
 
     @classmethod
-    async def get_session_by_device_code(cls, headers: Dict[str, str]) -> Dict[str, Any]:
+    async def get_session_by_supabase_session_id(cls, headers: Dict[str, str]) -> Dict[str, Any]:
         """
-        Query the external_sessions table for a session matching the given device code.
+        Query the external_sessions table for a session matching the given supabase session ID.
 
         Args:
-            headers (Dict[str, str]): The headers containing the device code.
+            headers (Dict[str, str]): The headers containing the supabase session ID.
 
         Returns:
             Dict[str, Any]: A dictionary containing either:
                 - 'jwt_token' (str): JWT token containing session data if found.
                 - 'error' (str): Error message if an error occurred.
         """
-        device_code = headers.get("X-Device-Code")
-        if not device_code:
-            raise ValueError("No device code found")
+        supabase_session_id = headers.get("X-Supabase-Session-Id")
+        if not supabase_session_id:
+            raise ValueError("No supabase session ID found")
 
         try:
             response = (
-                cls.supabase.table("external_sessions").select("*").eq("device_code", device_code).single().execute()
+                cls.supabase.table("external_sessions")
+                .select("*")
+                .eq("supabase_session_id", supabase_session_id)
+                .single()
+                .execute()
             )
             session_data = response.data if response else None
 
@@ -74,9 +79,9 @@ class SupabaseSession:
                 payload=updated_session_data
             )
 
-            return {"jwt_token": jwt_token, "status": "authenticated"}
+            return {"jwt_token": jwt_token, "status": AuthStatus.AUTHENTICATED.value}
 
         except APIError as e:
             if e.code == "PGRST116":
-                return {"status": "pending"}
+                return {"status": AuthStatus.PENDING.value}
             raise  # Re-raise if it's a different error

@@ -6,7 +6,7 @@ from app.backend_common.repository.db import DB
 from app.common.utils.app_logger import AppLogger
 
 
-class UserTeamService:
+class UserTeamRepository:
     @classmethod
     async def db_get(cls, filters: Dict[str, Any], fetch_one=False) -> Union[UserTeamDTO, List[UserTeamDTO]]:
         try:

@@ -13,7 +13,7 @@ class SignUp:
     @classmethod
     async def signup(cls, headers: Dict[str, Any]) -> Dict[str, Any]:
         email = headers.get("X-User-Email")
-        email_verification = cls.verify_email(email)
+        email_verification = cls.get_team_info_from_email(email)
         if "error" in email_verification:
             return {"success": False, "error": email_verification["error"]}
         else:
@@ -42,7 +42,7 @@ class SignUp:
                 raise Exception(str(e))
 
     @classmethod
-    def verify_email(cls, email: str) -> Dict[str, Any]:
+    def get_team_info_from_email(cls, email: str) -> Dict[str, Any]:
         domain = email.split("@")[1]
         if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
