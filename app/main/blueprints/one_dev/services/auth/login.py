@@ -1,13 +1,14 @@
+import json
 from typing import Any, Dict
 
 from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo.exceptions import BadRequestException
-import json
 
-from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.common.constants.constants import AuthStatus
-from app.common.services.authentication.jwt import JWTHandler
 
 
 class Login:

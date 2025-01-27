@@ -1,14 +1,15 @@
+import json
 from typing import Any, Dict
 
 from postgrest.exceptions import APIError
-import json
 
 from app.backend_common.repository.users.user_repository import UserRepository
-from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.common.constants.constants import AuthStatus
-from app.common.services.authentication.jwt import JWTHandler
 
 
 class SupabaseSession:
