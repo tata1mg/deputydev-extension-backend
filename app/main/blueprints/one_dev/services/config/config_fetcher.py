@@ -42,6 +42,6 @@ class ConfigFetcher:
                 # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
-            # "FRONTEND_URL": "http://localhost:3000",
-            "FRONTEND_URL": "https://deputydev.ai",
+            # "DD_BROWSER_HOST": "http://localhost:3000",
+            "DD_BROWSER_HOST": "https://deputydev.ai",
         }

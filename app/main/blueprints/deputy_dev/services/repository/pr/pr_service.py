@@ -7,7 +7,7 @@ from app.backend_common.models.dao.postgres.repos import Repos
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.repository.db import DB
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
@@ -65,7 +65,9 @@ class PRService:
         pr_dto = None
         team_id, workspace_id = get_context_value("team_id"), get_context_value("workspace_id")
         if workspace_id:
-            repo_dto = await RepoService.find_or_create(workspace_id=workspace_id, team_id=team_id, pr_model=pr_model)
+            repo_dto = await RepoRepository.find_or_create(
+                workspace_id=workspace_id, team_id=team_id, pr_model=pr_model
+            )
 
         #  Pick Failed PR incase not reviewed for current commit_ids
         failed_pr_dto = await cls.find_failed_pr(pr_model, repo_dto)
