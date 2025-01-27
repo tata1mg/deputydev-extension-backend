@@ -48,7 +48,7 @@ WORKDIR /home/ubuntu/1mg/$SERVICE_NAME
 
 # Copy and install requirements
 COPY Pipfile Pipfile.lock /home/ubuntu/1mg/$SERVICE_NAME/
-RUN /root/.local/bin/pipenv sync --system
+RUN /root/.local/bin/pipenv sync --dev --system
 RUN pip install click==8.1.3
 
 # Copy code folder
