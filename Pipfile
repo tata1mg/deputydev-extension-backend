@@ -4,10 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-torpedo = { editable = true, ref = "3.6.1-rc2", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
 cache_wrapper = { editable = true, ref = "2.4.1", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git" }
 tortoise-wrapper = {ref = "0.6.2", git = "ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git"}
-commonutils = {ref = "DD-315-botocore-upgrade", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git"}
+commonutils = {ref = "DD-386-aiohttp-upgrade", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git"}
 tortoise-orm = "==0.21.3"
 langchain = "==0.0.344"
 psycopg2-binary = "==2.9.9"
@@ -33,6 +32,11 @@ supabase = "==2.11.0"
 flake8 = "==7.1.1"
 black = "==22.12.0"
 isort = "==5.13.2"
+
+# HACK: This is a temporary fix to resolve dependencies correctly for websockets. pytest-sanic requires websockets < 11.0 and supabase >= 11.0. However, 11.0 works fine for this project.
+# Please check this - https://github.com/pypa/pipenv/issues/1921#issuecomment-379131833
+torpedo = { editable = true, ref = "3.6.1-rc2", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
+
 
 [requires]
 python_version = "3.9"
