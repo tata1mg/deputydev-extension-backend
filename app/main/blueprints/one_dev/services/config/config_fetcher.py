@@ -46,3 +46,10 @@ class ConfigFetcher:
             "DD_BROWSER_HOST": "https://deputydev.ai",
             "APP_NAME": "CLI",
         }
+
+    @classmethod
+    def get_login_config(cls) -> Dict[str, Any]:
+        return {
+            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
+            "APP_NAME": ConfigManager.configs["APP_NAME"],
+        }
