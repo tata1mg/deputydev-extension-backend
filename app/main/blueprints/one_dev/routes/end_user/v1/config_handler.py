@@ -15,6 +15,7 @@ async def get_configs(_request: Request, **kwargs):
     response = ConfigFetcher.fetch_configs_for_cli()
     return send_response(response)
 
+
 @config.route("/get-login-config", methods=["GET"])
 @validate_cli_version
 async def get_login_config(_request: Request, **kwargs):

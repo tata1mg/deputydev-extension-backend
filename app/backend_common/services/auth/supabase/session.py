@@ -57,7 +57,7 @@ class SupabaseSession:
 
         Returns:
             Dict[str, Any]: A dictionary containing either:
-                - 'jwt_token' (str): JWT token containing session data if found.
+                - 'encrypted_session_data' (str): encrypted_session_data if found.
                 - 'error' (str): Error message if an error occurred.
         """
         supabase_session_id = headers.get("X-Supabase-Session-Id")
@@ -81,12 +81,12 @@ class SupabaseSession:
             # need to convert to string for encryption service
             updated_session_data_string = json.dumps(updated_session_data)
 
-            # Encode the session data into a JWT token
-            jwt_token = SessionEncryptionService.encrypt(updated_session_data_string)
+            # Encrypting session data using session encryption service
+            encrypted_session_data = SessionEncryptionService.encrypt(updated_session_data_string)
 
-            return {"jwt_token": jwt_token, "status": AuthStatus.AUTHENTICATED.value}
+            return {"encrypted_session_data": encrypted_session_data, "status": AuthStatus.AUTHENTICATED.value}
 
         except APIError as e:
             if e.code == "PGRST116":
                 return {"status": AuthStatus.PENDING.value}
-            raise  # Re-raise if it's a different error
+            raise APIError
