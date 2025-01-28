@@ -1,13 +1,15 @@
+import json
 from typing import Any, Dict
 
 from postgrest.exceptions import APIError
-from torpedo import CONFIG
 
 from app.backend_common.repository.users.user_repository import UserRepository
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.common.constants.constants import AuthStatus
-from app.common.services.authentication.jwt import JWTHandler
 
 
 class SupabaseSession:
@@ -29,6 +31,9 @@ class SupabaseSession:
         """
         access_token = data["access_token"]
         token_data = await SupabaseAuth.verify_auth_token(access_token)
+
+        if not token_data["valid"]:
+            raise ValueError("Invalid access token")
 
         # Extract email from token data
         email = token_data["user_email"]
@@ -73,11 +78,11 @@ class SupabaseSession:
                 raise ValueError("No session data found")
 
             updated_session_data = await cls.update_session_data(session_data)
+            # need to convert to string for encryption service
+            updated_session_data_string = json.dumps(updated_session_data)
 
             # Encode the session data into a JWT token
-            jwt_token = JWTHandler(signing_key=CONFIG.config["JWT_SECRET_KEY"], algorithm="HS256").create_token(
-                payload=updated_session_data
-            )
+            jwt_token = SessionEncryptionService.encrypt(updated_session_data_string)
 
             return {"jwt_token": jwt_token, "status": AuthStatus.AUTHENTICATED.value}
 

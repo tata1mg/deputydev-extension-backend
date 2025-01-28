@@ -16,3 +16,7 @@ class CLIFeatures(Enum):
     ITERATIVE_CHAT = "ITERATIVE_CHAT"
     GENERATE_AND_APPLY_DIFF = "GENERATE_AND_APPLY_DIFF"
     PLAN_CODE_GENERATION = "PLAN_CODE_GENERATION"
+
+
+class KeyringConstants(Enum):
+    AUTH_TOKEN = "auth_token"
