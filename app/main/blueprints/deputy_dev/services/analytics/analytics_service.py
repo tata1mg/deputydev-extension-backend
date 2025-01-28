@@ -15,11 +15,20 @@ from app.main.blueprints.deputy_dev.services.serializers.serializers_factory imp
 )
 
 
+
 class AnalyticsManager:
     """
     Manages analytics data processing and retrieval for dashboard visualizations.
+
     This class provides methods to handle analytics data requests, process raw data,
     and prepare it for visualization in various dashboard components.
+
+    Methods:
+        handle_analytics_data(query_params: dict) -> dict:
+            Fetches and processes analytics data based on query parameters.
+
+    Attributes:
+        None
     """
 
     @classmethod
@@ -42,7 +51,6 @@ class AnalyticsManager:
         Raises:
             BadRequestException: If analytics data request fails
         """
-        team_id = query_params.get("team_id")
         workspace_id = query_params.get("workspace_id")
         start_date = query_params.get("start_date")
         end_date = query_params.get("end_date")
