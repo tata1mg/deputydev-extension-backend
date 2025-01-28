@@ -18,7 +18,7 @@ from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 def authenticate(func):
     """
-    Wrapper to authenticate the user using the JWT token.
+    Wrapper to authenticate the user.
     """
 
     @wraps(func)
@@ -28,10 +28,10 @@ def authenticate(func):
         if not authorization_header:
             raise Exception("Authorization header is missing")
 
-        # decode the JWT token and get the supabase access token
-        jwt = authorization_header.split(" ")[1]
+        # decode encrypted session data and get the supabase access token
+        encrypted_session_data = authorization_header.split(" ")[1]
         # first decrypt the token using session encryption service
-        session_data_string = SessionEncryptionService.decrypt(jwt)
+        session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
         # convert back to json object
         session_data = json.loads(session_data_string)
         # extract supabase access token
