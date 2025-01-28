@@ -1,23 +1,32 @@
-from abc import ABC, abstractmethod
 from typing import Union
 
+import keyring
 
-class BaseKeyRing(ABC):
-    def __init__(self, app_name: str):
-        self.app_name = app_name
+from app.common.utils.config_manager import ConfigManager
 
-    @abstractmethod
-    def store_auth_token(self, token: str):
+
+class BaseKeyRing:
+    def __init__(self, app_name: str = None):
+        self.app_name = app_name if app_name else ConfigManager.configs["APP_NAME"]
+
+    @classmethod
+    def store_auth_token(cls, key: str, token: str):
         """Stores the auth_token securely using keyring.
 
-        This method must be implemented in a child class.
+        Args:
+            key (str): The key under which to store the token.
+            token (str): The authentication token to store.
         """
-        raise NotImplementedError("The store method must be implemented in the child class.")
+        keyring.set_password(cls().app_name, key, token)
 
-    @abstractmethod
-    def load_auth_token(self) -> Union[str, None]:
+    @classmethod
+    def load_auth_token(cls, key: str) -> Union[str, None]:
         """Loads the auth_token securely using keyring.
 
-        This method must be implemented in a child class.
+        Args:
+            key (str): The key under which the token is stored.
+
+        Returns:
+            Union[str, None]: The stored authentication token if found, otherwise None.
         """
-        raise NotImplementedError("The load method must be implemented in the child class.")
+        return keyring.get_password(cls().app_name, key)

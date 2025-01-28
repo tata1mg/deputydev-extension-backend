@@ -1,29 +1,22 @@
 from typing import Union
 
-import keyring
-
+from app.main.blueprints.deputydev_cli.app.constants.cli import KeyringConstants
 from app.main.blueprints.deputydev_cli.app.managers.keyring.base_keyring_manager import (
     BaseKeyRing,
 )
 
 
 class AuthTokenKeyRing(BaseKeyRing):
-    def __init__(self, app_name: str):
+    def __init__(self):
         """Initializes the AuthTokenKeyRing with the application name."""
-        super().__init__(app_name)
+        super().__init__()
 
-    def store_auth_token(self, token: str):
-        """Stores the auth_token securely using keyring.
+    @classmethod
+    def store_auth_token(cls, token: str):
+        """Stores the auth_token securely using keyring."""
+        super().store_auth_token(KeyringConstants.AUTH_TOKEN.value, token)
 
-        Args:
-            token (str): The authentication token to store.
-        """
-        keyring.set_password(self.app_name, "auth_token", token)
-
-    def load_auth_token(self) -> Union[str, None]:
-        """Loads the auth_token securely using keyring.
-
-        Returns:
-            Union[str, None]: The stored authentication token if found, otherwise None.
-        """
-        return keyring.get_password(self.app_name, "auth_token")
+    @classmethod
+    def load_auth_token(cls) -> Union[str, None]:
+        """Loads the auth_token securely using keyring."""
+        return super().load_auth_token(KeyringConstants.AUTH_TOKEN.value)

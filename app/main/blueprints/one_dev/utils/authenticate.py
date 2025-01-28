@@ -1,14 +1,17 @@
+import json
 from functools import wraps
 
-from torpedo import CONFIG, Request
+from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
 from app.backend_common.repository.users.user_repository import UserRepository
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.common.services.authentication.jwt import JWTHandler
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
@@ -27,7 +30,11 @@ def authenticate(func):
 
         # decode the JWT token and get the supabase access token
         jwt = authorization_header.split(" ")[1]
-        session_data = JWTHandler(signing_key=CONFIG.config["JWT_SECRET_KEY"]).verify_token(jwt)
+        # first decrypt the token using session encryption service
+        session_data_string = SessionEncryptionService.decrypt(jwt)
+        # convert back to json object
+        session_data = json.loads(session_data_string)
+        # extract supabase access token
         access_token = session_data.get("access_token")
         token_data = await SupabaseAuth.verify_auth_token(access_token)
         if not token_data["valid"]:
