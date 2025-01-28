@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
@@ -55,27 +54,21 @@ class JWTHandler:
         except jwt.InvalidTokenError:
             raise jwt.InvalidTokenError("Invalid token.")
 
-    def verify_token_without_signature_verification(token: str) -> bool:
+    def verify_token_without_signature_verification(token: str) -> Dict[str, Any]:
         """Verifies the JWT token without signature verification and checks for expiration.
 
         Args:
             token (str): The JWT token to verify.
 
         Returns:
-            bool: True if the token is valid and not expired, False otherwise.
+            dict: The decoded payload if the token is valid.
+
+        Raises:
+            jwt.DecodeError: If the token is invalid.
         """
         try:
             # Decode the JWT token without verifying the signature
-            decoded_token = jwt.decode(token, options={"verify_signature": False})
-
-            # Check token expiration
-            exp_timestamp = decoded_token.get("exp")
-            if exp_timestamp is not None:
-                current_time = int(datetime.now(timezone.utc).timestamp())
-                if current_time > exp_timestamp:
-                    return False
-
-            return True
-
-        except jwt.DecodeError:
-            return False
+            payload = jwt.decode(token, options={"verify_signature": False})
+            return payload
+        except jwt.InvalidTokenError:
+            raise jwt.InvalidTokenError("Invalid token.")
