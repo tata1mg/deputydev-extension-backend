@@ -47,9 +47,9 @@ class Authentication(BaseScreenHandler):
                 )
 
                 if response.get("status") == AuthStatus.AUTHENTICATED.value:
-                    if not response.get("jwt_token") or response.get("jwt_token") is None:
-                        raise Exception("No JWT token found in response")
-                    self.app_context.auth_token = response["jwt_token"]
+                    if not response.get("encrypted_session_data") or response.get("encrypted_session_data") is None:
+                        raise Exception("No encrypted session data found in response")
+                    self.app_context.auth_token = response["encrypted_session_data"]
                     # Storing jwt token in user's machine using keyring
                     AuthTokenKeyRing.store_auth_token(self.app_context.auth_token)
                     return self.app_context, ScreenType.DEFAULT  # Exit on success

@@ -10,7 +10,7 @@ class Auth:
         if not authorization_header:
             raise Exception("Authorization header is missing")
 
-        # decode the JWT token and get the supabase access token
-        jwt = authorization_header.split(" ")[1]
-        result = await Login.verify_auth_token(jwt)
+        # decode encrypted session data and get the supabase access token
+        encrypted_session_data = authorization_header.split(" ")[1]
+        result = await Login.verify_auth_token(encrypted_session_data)
         return result

@@ -1,6 +1,9 @@
 from typing import Union
+
 import keyring
+
 from app.common.utils.config_manager import ConfigManager
+
 
 class BaseKeyRing:
     app_name = ConfigManager.configs["APP_NAME"]
