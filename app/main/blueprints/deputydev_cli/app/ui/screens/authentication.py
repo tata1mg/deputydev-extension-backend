@@ -11,7 +11,7 @@ from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
-from app.main.blueprints.deputydev_cli.app.managers.keyring.keyring_manager import (
+from app.main.blueprints.deputydev_cli.app.managers.keyring.auth_token_keyring import (
     AuthTokenKeyRing,
 )
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
@@ -53,11 +53,10 @@ class Authentication(BaseScreenHandler):
                     # Storing jwt token in user's machine using keyring
                     AuthTokenKeyRing.store_auth_token(self.app_context.auth_token)
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
+                time.sleep(3)  # Wait for 3 seconds before polling again
             except Exception as e:
                 AppLogger.log_debug(f"Error polling session: {e}")
                 time.sleep(1)  # Wait for 1 second on exception
-
-            time.sleep(3)  # Wait for 3 seconds before polling again
 
         # If we reach here, it means authentication failed
         print_formatted_text("Authentication failed, please try again later.")
