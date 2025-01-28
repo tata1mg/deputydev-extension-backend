@@ -1,13 +1,13 @@
 import time
 import uuid
-import webbrowser
 from typing import Any, Dict, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
+from prompt_toolkit.validation import ValidationError
 
 from app.common.constants.constants import AuthStatus
 from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
+from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
@@ -51,7 +51,7 @@ class Authentication(BaseScreenHandler):
                         raise Exception("No JWT token found in response")
                     self.app_context.auth_token = response["jwt_token"]
                     # Storing jwt token in user's machine using keyring
-                    AuthTokenKeyRing("CLI").store_auth_token(self.app_context.auth_token)
+                    AuthTokenKeyRing.store_auth_token(self.app_context.auth_token)
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
             except Exception as e:
                 AppLogger.log_debug(f"Error polling session: {e}")
@@ -67,7 +67,7 @@ class Authentication(BaseScreenHandler):
         """Attempts to authenticate the user using the provided auth token."""
 
         # Extracting auth token from user's machine
-        auth_token = AuthTokenKeyRing("CLI").load_auth_token()
+        auth_token = AuthTokenKeyRing.load_auth_token()
 
         if not auth_token:
             return False
@@ -81,14 +81,16 @@ class Authentication(BaseScreenHandler):
             )
             # Check if the response contains a status of 'verified'
             if response["status"] == AuthStatus.VERIFIED.value:
-                self.app_context.auth_token = AuthTokenKeyRing("CLI").load_auth_token()
+                self.app_context.auth_token = AuthTokenKeyRing.load_auth_token()
                 return True
             else:
                 print_formatted_text("Session is expired. Please login again!")
                 return False
 
-        except InvalidVersionException:
-            print_formatted_text("An error occurred during authentication. Please login again!")
+        except InvalidVersionException as ex:
+            raise ValidationError(message=str(ex))
+        except Exception:
+            print_formatted_text("Authentication failed, please try again later.")
             return False
 
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
@@ -101,13 +103,7 @@ class Authentication(BaseScreenHandler):
 
         # If the current session is not present or is not valid, initiate login
         supabase_session_id = str(uuid.uuid4())
-        is_external_auth_request = "true"
-
-        auth_url = f"{ConfigManager.configs['DD_BROWSER_HOST']}/external-auth?supabase_session_id={supabase_session_id}&is_external_auth_request={is_external_auth_request}"
-        print_formatted_text(f"Please visit this link for authentication: {auth_url}")
-
-        # Open the URL in the default web browser
-        webbrowser.open(auth_url)
+        BrowserClient.initiate_cli_login(supabase_session_id)
 
         # Polling session
         return await self.poll_session(supabase_session_id)
