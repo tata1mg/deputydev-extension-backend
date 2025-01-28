@@ -44,4 +44,5 @@ class ConfigFetcher:
             },
             # "DD_BROWSER_HOST": "http://localhost:3000",
             "DD_BROWSER_HOST": "https://deputydev.ai",
+            "APP_NAME": "CLI",
         }
