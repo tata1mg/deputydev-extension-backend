@@ -51,7 +51,7 @@ class Authentication(BaseScreenHandler):
                         raise Exception("No JWT token found in response")
                     self.app_context.auth_token = response["jwt_token"]
                     # Storing jwt token in user's machine using keyring
-                    AuthTokenKeyRing("CLI").store_auth_token(self.app_context.auth_token)
+                    AuthTokenKeyRing.store_auth_token(self.app_context.auth_token)
                     return self.app_context, ScreenType.DEFAULT  # Exit on success
             except Exception as e:
                 AppLogger.log_debug(f"Error polling session: {e}")
@@ -67,7 +67,7 @@ class Authentication(BaseScreenHandler):
         """Attempts to authenticate the user using the provided auth token."""
 
         # Extracting auth token from user's machine
-        auth_token = AuthTokenKeyRing("CLI").load_auth_token()
+        auth_token = AuthTokenKeyRing.load_auth_token()
 
         if not auth_token:
             return False
@@ -81,7 +81,7 @@ class Authentication(BaseScreenHandler):
             )
             # Check if the response contains a status of 'verified'
             if response["status"] == AuthStatus.VERIFIED.value:
-                self.app_context.auth_token = AuthTokenKeyRing("CLI").load_auth_token()
+                self.app_context.auth_token = AuthTokenKeyRing.load_auth_token()
                 return True
             else:
                 print_formatted_text("Session is expired. Please login again!")
@@ -97,9 +97,9 @@ class Authentication(BaseScreenHandler):
         print_formatted_text("Welcome to DeputyDev CLI!")
 
         # Check if the current session is present and valid
-        # is_current_session_present_and_valid = await self.verify_current_session()
-        # if is_current_session_present_and_valid:
-        #     return self.app_context, ScreenType.DEFAULT
+        is_current_session_present_and_valid = await self.verify_current_session()
+        if is_current_session_present_and_valid:
+            return self.app_context, ScreenType.DEFAULT
 
         # If the current session is not present or is not valid, initiate login
         supabase_session_id = str(uuid.uuid4())
