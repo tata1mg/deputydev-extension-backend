@@ -32,6 +32,9 @@ class SupabaseSession:
         access_token = data["access_token"]
         token_data = await SupabaseAuth.verify_auth_token(access_token)
 
+        if not token_data["valid"]:
+            raise ValueError("Invalid access token")
+
         # Extract email from token data
         email = token_data["user_email"]
 
