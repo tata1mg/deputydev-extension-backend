@@ -13,10 +13,10 @@ from app.common.constants.constants import AuthStatus
 
 class Login:
     @classmethod
-    async def verify_auth_token(cls, jwt_token: str) -> Dict[str, Any]:
+    async def verify_auth_token(cls, encrypted_session_data: str) -> Dict[str, Any]:
         try:
-            # first decrypt the token using session encryption service
-            session_data_string = SessionEncryptionService.decrypt(jwt_token)
+            # first decrypt the encrypted session data using session encryption service
+            session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
             # convert back to json object
             session_data = json.loads(session_data_string)
             # extract supabase access token
