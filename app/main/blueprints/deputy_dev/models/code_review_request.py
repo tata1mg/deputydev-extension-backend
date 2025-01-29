@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -10,3 +12,4 @@ class CodeReviewRequest(BaseModel):
     vcs_type: str
     workspace_id: str
     workspace_slug: str
+    pr_review_start_time: Optional[str] = None
