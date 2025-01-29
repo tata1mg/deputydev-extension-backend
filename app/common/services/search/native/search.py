@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from app.common.constants.constants import LARGE_NO_OF_CHUNKS
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
+from app.common.services.chunking.document import chunks_to_docs
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.search.native.lexical_search import lexical_search
 from app.common.utils.config_manager import ConfigManager
@@ -33,7 +34,8 @@ class NativeSearch:
         Returns:
             Dict[int, float]: Search results containing scores for each document chunk.
         """
-        all_chunks, all_docs = await chunking_handler.create_chunks_and_docs()
+        all_chunks = await chunking_handler.create_chunks_and_docs()
+        all_docs = chunks_to_docs(all_chunks)
 
         # Perform lexical search
         content_to_lexical_score_list = await lexical_search(query, all_docs, process_executor)

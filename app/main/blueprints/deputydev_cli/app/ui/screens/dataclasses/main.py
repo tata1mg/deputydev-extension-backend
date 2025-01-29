@@ -56,7 +56,6 @@ class AppContext(BaseModel):
     registered_repo_details: Optional[RegisteredRepo] = None
     local_user_details: Optional[LocalUserDetails] = None
     process_executor: Optional[ProcessPoolExecutor] = None
-    usage_hash: Optional[str] = None
     last_operation_job_id: Optional[int] = None
 
     current_status: FlowStatus = FlowStatus.INITIALIZED
@@ -80,7 +79,6 @@ class AppContext(BaseModel):
         self.operation = None
         self.pr_config = None
         self.registered_repo_details = None
-        self.usage_hash = None
         self.last_operation_job_id = None
         self.current_status = FlowStatus.INITIALIZED
 

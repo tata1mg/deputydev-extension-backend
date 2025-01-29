@@ -16,6 +16,7 @@ class ConfigFetcher:
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],
                 "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
+                "MAX_PARALLEL_TASKS": 60,
             },
             "AUTH_TOKEN_ENV_VAR": "DEPUTYDEV_AUTH_TOKEN",
             "POLLING_INTERVAL": 5,

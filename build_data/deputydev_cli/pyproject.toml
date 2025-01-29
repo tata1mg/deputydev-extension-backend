@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deputydev_cli"
-version = "0.1.2"
+version = "1.0.0"
 description = "DeputyDev CLI is an AI-powered coding companion that streamlines software development with four core features: Code Generation to translate natural language into code, Documentation Generation for custom docstrings, Task Planning to structure development steps, and Test Generation for automated unit tests. This tool is designed to reduce development overhead and enhance coding productivity."
 authors = [{ name = "DeputyDev", email = "deputydev@1mg.com" }]
 requires-python = ">=3.9,<3.12"
@@ -30,6 +30,7 @@ dependencies = [
     "weaviate-client==4.9.6",
     "sanic==22.12.0",
     "gitpython==3.1.27",
+    "giturlparse==0.12.0",
 ]
 
 [project.urls]

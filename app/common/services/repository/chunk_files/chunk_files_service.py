@@ -1,13 +1,14 @@
-import asyncio
+from datetime import datetime
 from typing import Dict, List
 
 from sanic.log import logger
 from weaviate.classes.query import Filter
-from weaviate.collections.classes.data import DataObject
+from weaviate.util import generate_uuid5
 
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dto.chunk_file_dto import ChunkFileDTO
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.utils.app_logger import AppLogger
 
 
 class ChunkFilesService:
@@ -62,20 +63,40 @@ class ChunkFilesService:
             raise ex
 
     async def bulk_insert(self, chunks: List[ChunkFileDTO]) -> None:
-        batch_size = 200
-        for i in range(0, len(chunks), batch_size):
-            batch = chunks[i : i + batch_size]
-            await self.async_collection.data.insert_many(
-                [DataObject(properties=chunk.model_dump(mode="json", exclude={"id"})) for chunk in batch]
-            )
-            await asyncio.sleep(0.2)  # sleep has been added for controlled insertion
+        with self.sync_collection.batch.dynamic() as _batch:
+            for chunk in chunks:
+                chunk_file_uuid = generate_uuid5(
+                    f"{chunk.file_path}{chunk.file_hash}{chunk.start_line}{chunk.end_line}"
+                )
+                _batch.add_object(
+                    properties=chunk.model_dump(mode="json", exclude={"id"}),
+                    uuid=chunk_file_uuid,
+                )
 
-    def cleanup_old_chunk_files(self, chunk_hashes_to_clean: List[str]) -> None:
-        batch_size = 500
-        for i in range(0, len(chunk_hashes_to_clean), batch_size):
-            chunk_hashes_batch = chunk_hashes_to_clean[i : i + batch_size]
-            self.sync_collection.data.delete_many(
-                Filter.any_of(
-                    [Filter.by_property("chunk_hash").equal(chunk_hash) for chunk_hash in chunk_hashes_batch]
+    def cleanup_old_chunk_files(self, last_used_lt: datetime, exclusion_chunk_hashes: List[str]) -> None:
+        batch_size = 1000
+        while True:
+            deletable_objects = self.sync_collection.query.fetch_objects(
+                limit=batch_size,
+                filters=Filter.all_of(
+                    [
+                        *[
+                            Filter.by_property("chunk_hash").not_equal(chunk_hash)
+                            for chunk_hash in exclusion_chunk_hashes
+                        ],
+                        Filter.by_property("created_at").less_than(last_used_lt),
+                    ]
                 ),
             )
+
+            AppLogger.log_debug(f"{len(deletable_objects.objects)} chunk_files to be deleted in batch")
+
+            if len(deletable_objects.objects) <= 0:
+                break
+
+            result = self.sync_collection.data.delete_many(
+                Filter.any_of(
+                    [Filter.by_id().equal(obj.uuid) for obj in deletable_objects.objects],
+                )
+            )
+            AppLogger.log_debug(f"chunk_files deleted. successful - {result.successful}, failed - {result.failed}")

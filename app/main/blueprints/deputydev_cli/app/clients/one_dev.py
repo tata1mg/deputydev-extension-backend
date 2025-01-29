@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional
 
 from app.common.request_clients.http.base_http_client import BaseHTTPClient
 from app.main.blueprints.deputydev_cli.app.clients.constants import (
-    APP_VERSION,
     HOST,
     LIMIT,
     LIMIT_PER_HOST,
@@ -12,6 +11,7 @@ from app.main.blueprints.deputydev_cli.app.clients.constants import (
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
+from app.main.blueprints.deputydev_cli.versions import APP_VERSION
 
 
 class OneDevClient(BaseHTTPClient):
