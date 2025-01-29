@@ -159,7 +159,7 @@ class InitializationManager:
             ]
         )
 
-        if is_schema_invalid:
+        if should_clean or is_schema_invalid:
             WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).set_schema_version(
                 WEAVIATE_SCHEMA_VERSION
             )
