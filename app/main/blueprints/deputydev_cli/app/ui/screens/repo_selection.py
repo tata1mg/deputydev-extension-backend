@@ -58,8 +58,8 @@ class RepoPathCompleter(Completer):
                     if current_yields >= 7:
                         return
                     yield Completion(
-                        abs_current_file_path[len(abs_text_path) + len(last_path_component) :],
-                        start_position=0,
+                        abs_current_file_path[len(abs_text_path) :],
+                        start_position=-len(last_path_component),
                     )
                     current_yields += 1
             # prevent os.walk from going into subdirectories
@@ -182,13 +182,19 @@ class RepoSelection(BaseScreenHandler):
                     payload={
                         "repo_name": self.app_context.local_repo.get_repo_name(),
                         "vcs_type": self.app_context.local_repo.get_vcs_type(),
+                        "workspace_slug": self.app_context.local_repo.get_origin_remote_url()
+                        .split(":")[-1]
+                        .split("/")[0]
+                        if "https://" not in self.app_context.local_repo.get_origin_remote_url()
+                        else self.app_context.local_repo.get_origin_remote_url().split("/")[-2],
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )
-                if repo_details.get("repo_id") and repo_details.get("repo_url"):
+                if repo_details.get("repo_url") and repo_details.get("workspace_id"):
                     self.app_context.registered_repo_details = RegisteredRepo(
-                        repo_id=repo_details["repo_id"],
                         repo_url=repo_details["repo_url"],
+                        workspace_id=repo_details["workspace_id"],
+                        repo_name=self.app_context.local_repo.get_repo_name(),
                     )
             except Exception:
                 pass
@@ -218,19 +224,6 @@ class RepoSelection(BaseScreenHandler):
                 )
             )
             print_formatted_text(FormattedText([("#4e9a06", "Repository type: Git")]))
-            # if self.app_context.registered_repo_details:
-            #     print_formatted_text(
-            #         FormattedText(
-            #             [
-            #                 (
-            #                     "#4e9a06",
-            #                     f"Repository is registered with ID: {self.app_context.registered_repo_details.repo_id}",
-            #                 )
-            #             ]
-            #         )
-            #     )
-            # else:
-            #     print_formatted_text(FormattedText([("#c4a000", "Repository is not registered")]))
         else:
             print_formatted_text(FormattedText([("#4e9a06", "Repository type: Non-VCS")]))
             print_formatted_text(

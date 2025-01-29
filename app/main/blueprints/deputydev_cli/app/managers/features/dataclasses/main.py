@@ -65,7 +65,8 @@ class FinalFailedJob(BaseModel):
 
 
 class RegisteredRepo(BaseModel):
-    repo_id: int
+    workspace_id: int
+    repo_name: str
     repo_url: str
 
 

@@ -42,7 +42,6 @@ class ChunkingManger:
         query_vector: Optional[List[float]] = None,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
-        usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
     ):
         filtered_files = {file_path: chunkable_files_with_hashes[file_path] for file_path in focus_file_paths}
@@ -55,7 +54,6 @@ class ChunkingManger:
             chunkable_files_with_hashes=filtered_files,
             query_vector=query_vector,
             weaviate_client=weaviate_client,
-            usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
         return custom_context_code_chunks + sorted_chunks[:NO_OF_CHUNKS_FOR_LLM]
@@ -93,7 +91,6 @@ class ChunkingManger:
         query_vector: Optional[List[float]] = None,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
-        usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
     ) -> List[ChunkInfo]:
         user_defined_chunks = []
@@ -112,7 +109,6 @@ class ChunkingManger:
                 query_vector,
                 search_type=search_type,
                 weaviate_client=weaviate_client,
-                usage_hash=usage_hash,
                 chunking_handler=chunking_handler,
             )
         else:
@@ -129,7 +125,6 @@ class ChunkingManger:
         query_vector: Optional[List[float]] = None,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
-        usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
     ) -> Tuple[List[ChunkInfo], int]:
 
@@ -146,7 +141,6 @@ class ChunkingManger:
             embedding_manager=embedding_manager,
             process_executor=process_executor,
             weaviate_client=weaviate_client,
-            usage_hash=usage_hash,
         )
         return sorted_chunks, input_tokens
 
@@ -164,7 +158,6 @@ class ChunkingManger:
         only_focus_code_chunks: bool = False,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
-        usage_hash: Optional[str] = None,
         chunking_handler: Optional[BaseChunker] = None,
         reranker: Optional[BaseChunkReranker] = None,
     ) -> Tuple[list[ChunkInfo], int]:
@@ -180,7 +173,6 @@ class ChunkingManger:
             query_vector,
             search_type=search_type,
             weaviate_client=weaviate_client,
-            usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
         if only_focus_code_chunks and focus_chunks_details:
@@ -195,7 +187,6 @@ class ChunkingManger:
             query_vector,
             search_type=search_type,
             weaviate_client=weaviate_client,
-            usage_hash=usage_hash,
             chunking_handler=chunking_handler,
         )
         reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)

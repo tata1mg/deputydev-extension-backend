@@ -1,9 +1,7 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
-from datetime import datetime
 from typing import Dict, Optional, Type
 
-import xxhash
 from prompt_toolkit.shortcuts.progress_bar import ProgressBar
 from weaviate import WeaviateAsyncClient, WeaviateClient
 from weaviate.connect import ConnectionParams, ProtocolParams
@@ -12,8 +10,7 @@ from weaviate.embedded import EmbeddedOptions
 from app.common.models.dao.weaviate.base import Base as WeaviateBaseDAO
 from app.common.models.dao.weaviate.chunk_files import ChunkFiles
 from app.common.models.dao.weaviate.chunks import Chunks
-from app.common.models.dao.weaviate.chunks_usages import ChunkUsages
-from app.common.services.chunking.vector_store.cleanup import (
+from app.common.services.chunking.vector_store.chunk_vector_store_cleanup_manager import (
     ChunkVectorStoreCleaneupManager,
 )
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
@@ -22,12 +19,19 @@ from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsync
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
-from app.main.blueprints.deputydev_cli.app.managers.chunking.chunking_handler import (
+from app.main.blueprints.deputydev_cli.app.managers.chunking.chunker.handlers.one_dev_cli_chunker import (
     OneDevCLIChunker,
 )
 from app.main.blueprints.deputydev_cli.app.managers.embedding.embedding_manager import (
     OneDevEmbeddingManager,
 )
+from app.main.blueprints.deputydev_cli.app.repository.weaaviate_schema_details.weaviate_schema_details_service import (
+    WeaviateSchemaDetailsService,
+)
+from app.main.blueprints.deputydev_cli.models.weaviate.weaviate_schema_details import (
+    WeaviateSchemaDetails,
+)
+from app.main.blueprints.deputydev_cli.versions import WEAVIATE_SCHEMA_VERSION
 
 
 class InitializationManager:
@@ -136,7 +140,14 @@ class InitializationManager:
             sync_client=sync_client,
         )
 
-        if should_clean:
+        if not self.weaviate_client:
+            raise ValueError("Connect to vector store failed")
+
+        schema_version = WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).get_schema_version()
+
+        is_schema_invalid = schema_version is None or schema_version != WEAVIATE_SCHEMA_VERSION
+
+        if should_clean or is_schema_invalid:
             AppLogger.log_debug("Cleaning up the vector store")
             self.weaviate_client.sync_client.collections.delete_all()
 
@@ -144,39 +155,31 @@ class InitializationManager:
             *[
                 self.__check_and_initialize_collection(collection=Chunks),
                 self.__check_and_initialize_collection(collection=ChunkFiles),
-                self.__check_and_initialize_collection(collection=ChunkUsages),
+                self.__check_and_initialize_collection(collection=WeaviateSchemaDetails),
             ]
         )
 
-        if not self.weaviate_client:
-            raise ValueError("Connect to vector store failed")
+        if should_clean or is_schema_invalid:
+            WeaviateSchemaDetailsService(weaviate_client=self.weaviate_client).set_schema_version(
+                WEAVIATE_SCHEMA_VERSION
+            )
 
         return self.weaviate_client
 
     async def prefill_vector_store(
         self, chunkable_files_and_hashes: Dict[str, str], progressbar: Optional[ProgressBar] = None
-    ) -> str:
+    ) -> None:
         if not self.local_repo:
             raise ValueError("Local repo is not initialized")
 
         if not self.weaviate_client:
             raise ValueError("Connect to vector store")
 
-        usage_hash = xxhash.xxh64(
-            str(
-                {
-                    "repo_path": self.repo_path,
-                    "current_day_start_time": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
-                }
-            )
-        ).hexdigest()
-
-        all_chunks, _all_docs = await OneDevCLIChunker(
+        all_chunks = await OneDevCLIChunker(
             local_repo=self.local_repo,
             weaviate_client=self.weaviate_client,
             embedding_manager=self.embedding_manager,
             process_executor=self.process_executor,
-            usage_hash=usage_hash,
             progress_bar=progressbar,
             chunkable_files_and_hashes=chunkable_files_and_hashes,
         ).create_chunks_and_docs()
@@ -186,11 +189,8 @@ class InitializationManager:
             ChunkVectorStoreCleaneupManager(
                 exclusion_chunk_hashes=[chunk.content_hash for chunk in all_chunks],
                 weaviate_client=self.weaviate_client,
-                usage_hash=usage_hash,
             ).start_cleanup_for_chunk_and_hashes()
         )
-
-        return usage_hash
 
     async def cleanup(self):
         if self.chunk_cleanup_task:

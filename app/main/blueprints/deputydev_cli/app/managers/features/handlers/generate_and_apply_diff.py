@@ -37,7 +37,6 @@ class DiffGenerationHandler(BaseFeatureHandler):
         session_id: Optional[str] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
-        usage_hash: Optional[str] = None,
     ):
         super().__init__(
             process_executor=process_executor,
@@ -53,7 +52,6 @@ class DiffGenerationHandler(BaseFeatureHandler):
             session_id=session_id,
             apply_diff=apply_diff,
             registered_repo_details=registered_repo_details,
-            usage_hash=usage_hash,
         )
 
     async def validate_and_set_final_payload(self) -> None:
@@ -72,7 +70,8 @@ class DiffGenerationHandler(BaseFeatureHandler):
                 destination_branch=self.pr_config.destination_branch,
                 pr_title_prefix=self.pr_config.pr_title_prefix,
                 commit_message_prefix=self.pr_config.commit_message_prefix,
-                repo_id=self.registered_repo_details.repo_id,
+                workspace_id=self.registered_repo_details.workspace_id,
+                repo_name=self.registered_repo_details.repo_name,
                 parent_source_branch=self.local_repo.get_active_branch(),
             )
 

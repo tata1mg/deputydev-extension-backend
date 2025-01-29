@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from git import Actor
+from git.util import Actor
 from torpedo import CONFIG
 from typing_extensions import override
 
@@ -36,7 +36,7 @@ class BitbucketAuthHandler(AuthHandler):
         return access_token, expires_at, refresh_token
 
     @override
-    def get_git_actor(self):
+    def get_git_actor(self) -> Actor:
         return Actor(
             name=CONFIG.config["GIT_ACTORS"]["BITBUCKET"]["NAME"],
             email=CONFIG.config["GIT_ACTORS"]["BITBUCKET"]["EMAIL"],
