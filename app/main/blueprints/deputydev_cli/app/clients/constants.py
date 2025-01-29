@@ -4,4 +4,3 @@ TTL_DNS_CACHE = 10
 TIMEOUT = 100
 HOST = "https://api.deputydev.ai"
 # HOST = "http://localhost:8084"
-APP_VERSION = "1.0.0"
