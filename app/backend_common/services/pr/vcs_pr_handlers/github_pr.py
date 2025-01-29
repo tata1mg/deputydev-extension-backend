@@ -35,7 +35,10 @@ class GithubPR(BasePR):
             repo_service=repo_service,
         )
         self.repo_client = GithubRepoClient(
-            workspace_slug=workspace_slug, repo=repo_name, pr_id=int(pr_id), auth_handler=auth_handler
+            workspace_slug=workspace_slug,
+            repo=repo_name,
+            pr_id=int(pr_id) if pr_id else None,
+            auth_handler=auth_handler,
         )
         self.token = ""  # Assuming I will get token here
 
@@ -208,5 +211,5 @@ class GithubPR(BasePR):
             "body": description,
         }
         response = await self.repo_client.create_pr(payload)
-        set_context_values(pr_url=response.get("url"))
-        return response.get("url")
+        set_context_values(pr_url=response.get("html_url"))
+        return response.get("html_url")

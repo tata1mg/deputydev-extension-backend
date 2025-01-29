@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Union
 from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
+from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.utils.config_manager import ConfigManager
@@ -39,7 +40,6 @@ class DocsGenerationHandler(BaseFeatureHandler):
         session_id: Optional[str] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
-        usage_hash: Optional[str] = None,
     ):
         super().__init__(
             process_executor=process_executor,
@@ -55,7 +55,6 @@ class DocsGenerationHandler(BaseFeatureHandler):
             session_id=session_id,
             apply_diff=apply_diff,
             registered_repo_details=registered_repo_details,
-            usage_hash=usage_hash,
         )
 
     async def validate_and_set_final_payload(self):
@@ -64,12 +63,16 @@ class DocsGenerationHandler(BaseFeatureHandler):
 
         final_payload: Dict[str, Any] = dict()
 
-        if self.pr_config:
+        if self.pr_config and self.registered_repo_details and isinstance(self.local_repo, GitRepo):
             final_payload["create_pr"] = True
             final_payload["pr_config"] = dict(
+                source_branch=self.pr_config.source_branch,
                 destination_branch=self.pr_config.destination_branch,
                 pr_title_prefix=self.pr_config.pr_title_prefix,
                 commit_message_prefix=self.pr_config.commit_message_prefix,
+                workspace_id=self.registered_repo_details.workspace_id,
+                repo_name=self.registered_repo_details.repo_name,
+                parent_source_branch=self.local_repo.get_active_branch(),
             )
 
         selected_text = self._get_selected_text(self.query).get_xml()
@@ -91,7 +94,6 @@ class DocsGenerationHandler(BaseFeatureHandler):
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
             search_type=search_type,
-            usage_hash=self.usage_hash,
         )
 
         final_payload["relevant_chunks"] = self.handle_relevant_chunks(search_type, relevant_chunks)

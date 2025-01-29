@@ -298,7 +298,7 @@ class GithubRepoClient(BaseSCMClient):
         headers = headers or {}
         headers["Accept"] = "application/vnd.github+json"
         url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/pulls"
-        response = await self.post(url, json=payload, headers=headers, skip_auth_headers=True)
+        response = await self.post(url, json=payload, headers=headers)
         return await response.json()
 
     async def list_prs(self, state="open", source=None, destination=None):

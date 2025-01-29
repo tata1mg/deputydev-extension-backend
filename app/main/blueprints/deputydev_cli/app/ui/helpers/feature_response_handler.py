@@ -71,10 +71,11 @@ class FeatureResponseHandler:
                     FormattedText([("#729fcf", f"PR created successfully - {self.feature_response.pr_link}")])
                 )
             # sync local repo with remote if current branch is the source branch of PR config
-            if (
-                self.app_context.local_repo.get_active_branch() == self.app_context.pr_config.source_branch
-                and self.app_context.registered_repo_details
-            ):
+
+            if self.app_context.pr_config.source_branch and self.app_context.registered_repo_details:
+                current_branch = self.app_context.local_repo.get_active_branch()
+                if self.app_context.local_repo.get_active_branch() != self.app_context.pr_config.source_branch:
+                    self.app_context.local_repo.checkout_branch(self.app_context.pr_config.source_branch)
                 try:
                     await self.app_context.local_repo.sync_with_remote(
                         branch_name=self.app_context.pr_config.source_branch,
@@ -86,6 +87,9 @@ class FeatureResponseHandler:
                             [("#ff0000", f"Error syncing local repo with remote: {str(e)}. Please sync manually")]
                         )
                     )
+                finally:
+                    if self.app_context.local_repo.get_active_branch() != current_branch:
+                        self.app_context.local_repo.checkout_branch(current_branch)
 
     def _handle_failed_response(self):
         if not isinstance(self.feature_response, FinalFailedJob):
