@@ -1,12 +1,13 @@
 import time
 import uuid
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.validation import ValidationError
 
 from app.common.constants.constants import AuthStatus
 from app.common.utils.app_logger import AppLogger
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
@@ -92,17 +93,43 @@ class Authentication(BaseScreenHandler):
             print_formatted_text("Authentication failed, please try again later.")
             return False
 
+    async def update_configs(self, redirect_screen: ScreenType) -> ScreenType:
+        """
+        Fetches the essential configs and updates the ConfigManager with the fetched configs.
+        Args:
+            redirect_screen (ScreenType): The screen to redirect to after fetching the configs.
+        Returns:
+            ScreenType: The screen to redirect to after fetching the configs.
+        """
+        try:
+            ConfigManager.initialize(in_memory=True)
+            configs: Optional[Dict[str, str]] = await self.app_context.one_dev_client.get_configs(
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.app_context.auth_token}"}
+            )
+            if configs is None:
+                raise Exception("No configs fetched")
+            ConfigManager.set(configs)
+            return redirect_screen
+        except Exception:
+            print_formatted_text("Failed to fetch configs")
+            return ScreenType.HOME
+
     async def render(self, **kwargs: Dict[str, Any]) -> Tuple[AppContext, ScreenType]:
         print_formatted_text("Welcome to DeputyDev CLI!")
 
         # Check if the current session is present and valid
         is_current_session_present_and_valid = await self.verify_current_session()
+        redirect_screen: ScreenType
+
         if is_current_session_present_and_valid:
-            return self.app_context, ScreenType.DEFAULT
+            redirect_screen = await self.update_configs(ScreenType.DEFAULT)
+            return self.app_context, redirect_screen
 
         # If the current session is not present or is not valid, initiate login
         supabase_session_id = str(uuid.uuid4())
         BrowserClient.initiate_cli_login(supabase_session_id)
 
         # Polling session
-        return await self.poll_session(supabase_session_id)
+        app_context_to_return, redirect_screen = await self.poll_session(supabase_session_id)
+        redirect_screen = await self.update_configs(redirect_screen)
+        return app_context_to_return, redirect_screen
