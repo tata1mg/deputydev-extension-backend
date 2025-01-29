@@ -21,7 +21,7 @@ async def populate_config():
     # get the configs
     try:
         ConfigManager.initialize(in_memory=True)
-        configs: Optional[Dict[str, str]] = await one_dev_client.get_configs(
+        configs: Optional[Dict[str, str]] = await one_dev_client.get_essential_configs(
             headers={"Content-Type": "application/json"}
         )
         if configs is None:
