@@ -58,6 +58,7 @@ class PRReviewPreProcessor:
         self.completed_pr_count = 0
         self.loc_changed = 0
         self.pr_diff_handler = pr_diff_handler
+        self.is_reviewable_request = None
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
@@ -73,7 +74,7 @@ class PRReviewPreProcessor:
         await self.run_validations()
 
         experiment_set = await self.get_experiment_set()
-        return self.get_is_reviewable_request(experiment_set), self.pr_dto
+        self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
 
     @staticmethod
     def is_reviewable_based_on_settings(setting: dict) -> bool:

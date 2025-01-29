@@ -83,31 +83,34 @@ class PRReviewManager(BasePRReviewManager):
         repo_service, pr_service, comment_service = await cls.initialise_services(data)
         pr_diff_handler = PRDiffHandler(pr_service)
         affirmation_service = AffirmationService(data, comment_service)
-        pr_dto = None
+        pre_processor = None
 
         try:
             tokens_data, execution_start_time = None, datetime.now()
-            is_reviewable_request, pr_dto = await PRReviewPreProcessor(
+            pre_processor = PRReviewPreProcessor(
                 repo_service, pr_service, comment_service, affirmation_service, pr_diff_handler
-            ).pre_process_pr()
-            if not is_reviewable_request:
+            )
+            await pre_processor.pre_process_pr()
+
+            if not pre_processor.is_reviewable_request:
                 return
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
                 repo_service, comment_service, pr_service, data["prompt_version"], pr_diff_handler
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
+            meta_info_to_save["pr_review_start_time"] = data.get("pr_review_start_time")
             await PRReviewPostProcessor(pr_service, comment_service, affirmation_service).post_process_pr(
-                pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
+                pre_processor.pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
             )
 
         except Exception as ex:
             # if PR is inserted in db then only we will update status
-            if pr_dto:
+            if pre_processor and pre_processor.pr_dto:
                 await PRService.db_update(
                     payload={
                         "review_status": PrStatusTypes.FAILED.value,
                     },
-                    filters={"id": pr_dto.id},
+                    filters={"id": pre_processor.pr_dto.id},
                 )
             raise ex
         finally:
