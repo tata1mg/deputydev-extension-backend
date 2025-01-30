@@ -7,6 +7,7 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.utils.app_utils import safe_index
 from app.backend_common.utils.formatting import append_line_numbers
+from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunker.handlers.non_vector_db_chunker import (
     NonVectorDBChunker,
 )
@@ -14,7 +15,6 @@ from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.tiktoken import TikToken
-from app.common.utils.config_manager import ConfigManager
 from app.common.utils.context_vars import get_context_value
 from app.common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
@@ -106,7 +106,7 @@ class ContextService:
 
                 for agent_id in relevant_chunks_mapping:
                     # Skip agents that already have the required number of chunks
-                    if len(relevant_chunks_mapping[agent_id]) >= ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]:
+                    if len(relevant_chunks_mapping[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
                         continue
 
                     # Get inclusion/exclusion rules for the agent
@@ -127,10 +127,7 @@ class ContextService:
                             code_snippet_list.append(snippet)
 
                         # Decrement the counter when the agent reaches the chunk limit
-                        if (
-                            len(relevant_chunks_mapping[agent_id])
-                            == ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
-                        ):
+                        if len(relevant_chunks_mapping[agent_id]) == NO_OF_CHUNKS_FOR_LLM:
                             remaining_agents -= 1
 
                             # Exit early if all agents are fulfilled
