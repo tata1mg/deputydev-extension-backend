@@ -150,6 +150,11 @@ class OneDevClient(BaseHTTPClient):
         result = await self.get(url=self._host + path, headers=headers)
         return (await result.json()).get("data")
 
+    async def get_essential_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        path = "/end_user/v1/get-essential-configs"
+        result = await self.get(url=self._host + path, headers=headers)
+        return (await result.json()).get("data")
+
     async def get_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
         path = "/end_user/v1/get-configs"
         result = await self.get(url=self._host + path, headers=headers)
