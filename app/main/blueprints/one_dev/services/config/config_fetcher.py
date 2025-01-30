@@ -16,6 +16,8 @@ class ConfigFetcher:
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "APP_NAME": "CLI",
+            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
+            # "DD_BROWSER_HOST": "http://localhost:3000",
         }
 
     @classmethod
@@ -48,13 +50,4 @@ class ConfigFetcher:
             "USE_NEW_CHUNKING": True,
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
-            # "DD_BROWSER_HOST": "http://localhost:3000",
-            "DD_BROWSER_HOST": "https://deputydev.ai",
-        }
-
-    @classmethod
-    def get_login_config(cls) -> Dict[str, Any]:
-        return {
-            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
-            "APP_NAME": ConfigManager.configs["APP_NAME"],
         }

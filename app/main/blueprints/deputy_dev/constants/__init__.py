@@ -4,7 +4,6 @@ __all__ = [
     "BATCH_SIZE",
     "MAX_PR_DIFF_TOKEN_LIMIT",
     "EMBEDDING_MODEL",
-    "EMBEDDING_TOKEN_LIMIT",
     "SCRIT_DEPRECATION_NOTIFICATION",
     "SCRIT_TAG",
     "PRReviewExperimentSet",
@@ -24,7 +23,6 @@ __all__ = [
 from .....backend_common.services.openai.openai_service import EMBEDDING_MODEL
 from .....backend_common.utils.formatting import PRDiffSizingLabel
 from .....common.constants.constants import LLMModelNames
-from .....common.services.tiktoken.tiktoken import EMBEDDING_TOKEN_LIMIT
 from .ab_analysis_constants import AbAnalysisDates, AbAnalysisPhases, AbAnalysisQueries
 from .constants import (
     BATCH_SIZE,

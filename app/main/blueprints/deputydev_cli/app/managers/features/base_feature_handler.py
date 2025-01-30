@@ -3,13 +3,13 @@ from abc import ABC
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Optional, Union
 
-from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.services.search.dataclasses.main import SearchTypes
+from app.common.utils.config_manager import ConfigManager
 from app.common.utils.file_utils import read_file
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
@@ -98,4 +98,4 @@ class BaseFeatureHandler(ABC):
         if search_type == SearchTypes.VECTOR_DB_BASED:
             return render_snippet_array(chunks)
         else:
-            return render_snippet_array(chunks[:NO_OF_CHUNKS_FOR_LLM])
+            return render_snippet_array(chunks[: ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]])
