@@ -40,7 +40,7 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.repo_selection import (
     RepoSelection,
 )
 
-from app.main.blueprints.deputydev_cli.app.ui import app_context as authenticated_app_context
+from app.main.blueprints.deputydev_cli.app.ui import auth_token
 
 # log_stream = StringIO()
 # # Configure the root logger
@@ -171,10 +171,7 @@ async def main(process_executor: ProcessPoolExecutor):
             level=logging.DEBUG,
         )
 
-    authenticated_app_context.args = args
-    authenticated_app_context.one_dev_client = one_dev_client
-    authenticated_app_context.process_executor = process_executor
-    async with authenticated_app_context as app_context:
+    async with AppContext(args=args, one_dev_client=one_dev_client, auth_token=auth_token, process_executor=process_executor) as app_context:
         try:
             redirect_screen: Optional[ScreenType] = None
             app_context, next_action, screen_redirect = await run_new_feature_session(app_context)

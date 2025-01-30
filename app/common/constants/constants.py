@@ -137,10 +137,3 @@ class LLMModelNames(ExtendedEnum):
     GPT_4_PREVIEW = "gpt-4-1106-preview"
     GPT_4_O = "gpt-4o"
     GPT_TEXT_EMBEDDING_3_SMALL = "text-embedding-3-small"
-
-
-class AuthStatus(Enum):
-    VERIFIED = "VERIFIED"
-    NOT_VERIFIED = "NOT_VERIFIED"
-    AUTHENTICATED = "AUTHENTICATED"
-    PENDING = "PENDING"
