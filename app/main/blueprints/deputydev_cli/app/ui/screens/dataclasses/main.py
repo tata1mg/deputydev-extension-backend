@@ -40,7 +40,7 @@ class QueryType(Enum):
 
 
 class AppContext(BaseModel):
-    args: argparse.Namespace
+    args: Optional[argparse.Namespace] = None
     one_dev_client: OneDevClient
     auth_token: Optional[str] = None
     session_id: Optional[str] = None
