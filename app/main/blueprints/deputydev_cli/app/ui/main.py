@@ -20,9 +20,6 @@ from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main im
 from app.main.blueprints.deputydev_cli.app.ui.helpers.feature_runner import (
     FeatureRunner,
 )
-from app.main.blueprints.deputydev_cli.app.ui.screens.authentication import (
-    Authentication,
-)
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
 )
@@ -42,6 +39,8 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.repo_initialization import
 from app.main.blueprints.deputydev_cli.app.ui.screens.repo_selection import (
     RepoSelection,
 )
+
+from app.main.blueprints.deputydev_cli.app.ui import app_context as authenticated_app_context
 
 # log_stream = StringIO()
 # # Configure the root logger
@@ -101,10 +100,6 @@ def init_args(parser: argparse.ArgumentParser):
     pr_group.add_argument("--pr-title-prefix", help="Prefix for PR title")
     pr_group.add_argument("--commit-message-prefix", help="Prefix for commit message")
 
-    # Authentication options
-    auth_group = parser.add_argument_group("Authentication Options")
-    auth_group.add_argument("--deputydev-auth-token", help="Authentication token")
-
     # config options
     config_group = parser.add_argument_group("Config Options")
     config_group.add_argument("--debug", help="Run in debug mode", action="store_true")
@@ -119,7 +114,6 @@ async def run_new_feature_session(
     app_context: AppContext,
 ) -> Tuple[AppContext, Optional[FeatureNextAction], Optional[ScreenType]]:
     new_session_screens: List[Type[BaseScreenHandler]] = [
-        Authentication,
         RepoSelection,
         InitializationScreen,
         QuerySelection,
@@ -177,7 +171,10 @@ async def main(process_executor: ProcessPoolExecutor):
             level=logging.DEBUG,
         )
 
-    async with AppContext(args=args, one_dev_client=one_dev_client, process_executor=process_executor) as app_context:
+    authenticated_app_context.args = args
+    authenticated_app_context.one_dev_client = one_dev_client
+    authenticated_app_context.process_executor = process_executor
+    async with authenticated_app_context as app_context:
         try:
             redirect_screen: Optional[ScreenType] = None
             app_context, next_action, screen_redirect = await run_new_feature_session(app_context)

@@ -122,7 +122,7 @@ class Authentication(BaseScreenHandler):
         redirect_screen: ScreenType
 
         if is_current_session_present_and_valid:
-            redirect_screen = await self.update_configs(ScreenType.DEFAULT)
+            redirect_screen = ScreenType.DEFAULT
             return self.app_context, redirect_screen
 
         # If the current session is not present or is not valid, initiate login
@@ -131,5 +131,4 @@ class Authentication(BaseScreenHandler):
 
         # Polling session
         app_context_to_return, redirect_screen = await self.poll_session(supabase_session_id)
-        redirect_screen = await self.update_configs(redirect_screen)
         return app_context_to_return, redirect_screen
