@@ -44,7 +44,11 @@ class ChunkingManger:
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
         chunking_handler: Optional[BaseChunker] = None,
     ):
-        filtered_files = {file_path: chunkable_files_with_hashes[file_path] for file_path in focus_file_paths}
+        filtered_files = {
+            file_path: chunkable_files_with_hashes[file_path]
+            for file_path in focus_file_paths
+            if file_path in chunkable_files_with_hashes
+        }
 
         sorted_chunks, _ = await perform_search(
             query=cls.build_focus_query(user_query, custom_context_code_chunks),
