@@ -2,17 +2,17 @@ import asyncio
 import sys
 from typing import Dict, Optional
 
+from prompt_toolkit import PromptSession
+
 from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
 
-from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import AppContext, ScreenType
-
-
 one_dev_client = OneDevClient()
-app_context = AppContext(one_dev_client=one_dev_client)
+
+auth_token: Optional[str] = None
 
 
 async def close_session_and_exit():
@@ -42,10 +42,10 @@ async def populate_essential_config():
 async def populate_full_config():
     # get the configs
     global one_dev_client
-    global app_context
+    global auth_token
     try:
         configs: Optional[Dict[str, str]] = await one_dev_client.get_configs(
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {app_context.auth_token}"}
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {auth_token}"}
         )
         if configs is None:
             raise Exception("No configs fetched")
@@ -59,17 +59,16 @@ async def initialize_cli_ui():
     await populate_essential_config()
 
     # authenticate the user
-    global app_context
+    global auth_token
     global one_dev_client
-    from app.main.blueprints.deputydev_cli.app.ui.screens.authentication import (
-        Authentication,
-    )
-    updated_app_context, redirect_screen = await Authentication(app_context).render()
 
-    if redirect_screen == ScreenType.EXIT or redirect_screen == ScreenType.HOME:
+    try:
+        from app.main.blueprints.deputydev_cli.app.managers.authentication.authentication_manager import AuthenticationManager
+        prompt_session : PromptSession[str] = PromptSession()
+        authentication_manager = AuthenticationManager(one_dev_client, prompt_session)
+        auth_token = await authentication_manager.authenticate_and_get_auth_token()
+    except Exception:
         await close_session_and_exit()
-
-    app_context = updated_app_context
 
     # update the configs
     await populate_full_config()
