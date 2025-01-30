@@ -49,7 +49,7 @@ class ConfigFetcher:
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
             # "DD_BROWSER_HOST": "http://localhost:3000",
-            "DD_BROWSER_HOST": "https://stag.deputydev.ai",
+            "DD_BROWSER_HOST": "https://deputydev.ai",
         }
 
     @classmethod
