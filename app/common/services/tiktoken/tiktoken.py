@@ -1,4 +1,5 @@
 from typing import Optional
+
 import tiktoken
 
 from app.common.constants.constants import LLMModelNames
