@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import traceback
 from typing import Dict, Optional
 
 from app.common.utils.config_manager import ConfigManager
@@ -32,6 +33,7 @@ async def populate_config():
         await close_session_and_exit(one_dev_client)
     except Exception:
         print("Failed to fetch configs")
+        print(traceback.format_exc())
         await close_session_and_exit(one_dev_client)
 
     await one_dev_client.close_session()

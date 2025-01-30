@@ -1,4 +1,4 @@
-from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
@@ -21,7 +21,7 @@ class ChunkingHelper:
 
             for agent_id, agent_info in agents.items():
                 # Skip if the agent already has the required number of chunks
-                if len(relevant_chunks[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
+                if len(relevant_chunks[agent_id]) >= ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]:
                     continue
 
                 inclusions, exclusions = SettingService.Helper.get_agent_inclusion_exclusions(agent_id)
@@ -31,7 +31,7 @@ class ChunkingHelper:
                     relevant_chunks[agent_id].append(snippet)
 
                     # Decrement the counter when the agent reaches the chunk limit
-                    if len(relevant_chunks[agent_id]) == NO_OF_CHUNKS_FOR_LLM:
+                    if len(relevant_chunks[agent_id]) == ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]:
                         remaining_agents -= 1
 
                         # Exit the loop early if all agents are fulfilled

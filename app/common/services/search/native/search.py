@@ -6,15 +6,12 @@ from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.document import chunks_to_docs
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.search.native.lexical_search import lexical_search
-from app.common.utils.config_manager import ConfigManager
 
 from ...chunking.chunk_info import ChunkInfo
 from .vector_search import compute_vector_search_scores
 
 
 class NativeSearch:
-    NO_OF_CHUNKS: int = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
-
     @classmethod
     async def perform_search(
         cls,
