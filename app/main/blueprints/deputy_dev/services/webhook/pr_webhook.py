@@ -37,6 +37,7 @@ class PRWebhook:
         workspace_slug = bitbucket_payload["repository"]["workspace"]["slug"]
         prompt_version = bitbucket_payload.get("prompt_version", "v2")
         scm_workspace_id = str(bitbucket_payload.get("scm_workspace_id"))
+        pr_review_start_time = bitbucket_payload.get("pr_review_start_time")
         vcs_type = VCSTypes.bitbucket.value
         return {
             "pr_id": pr_id,
@@ -47,6 +48,7 @@ class PRWebhook:
             "workspace_slug": workspace_slug,
             "vcs_type": vcs_type,
             "prompt_version": prompt_version,
+            "pr_review_start_time": pr_review_start_time,
         }
 
     @classmethod
@@ -67,6 +69,7 @@ class PRWebhook:
         workspace_slug = github_payload["organization"]["login"]
         prompt_version = github_payload.get("prompt_version", "v2")
         scm_workspace_id = str(github_payload.get("scm_workspace_id"))
+        pr_review_start_time = github_payload.get("pr_review_start_time")
         vcs_type = VCSTypes.github.value
         return {
             "pr_id": pr_id,
@@ -77,6 +80,7 @@ class PRWebhook:
             "workspace_slug": workspace_slug,
             "vcs_type": vcs_type,
             "prompt_version": prompt_version,
+            "pr_review_start_time": pr_review_start_time,
         }
 
     @classmethod
@@ -92,6 +96,7 @@ class PRWebhook:
         # Extract PR number from pull_request URL
         pr_url = payload["issue"]["pull_request"]["url"]
         pr_id = pr_url.split("/")[-1]
+        pr_review_start_time = payload.get("pr_review_start_time")
 
         return {
             "pr_id": int(pr_id),
@@ -102,6 +107,7 @@ class PRWebhook:
             "workspace_slug": payload["organization"]["login"],
             "vcs_type": VCSTypes.github.value,
             "prompt_version": payload.get("prompt_version", "v2"),
+            "pr_review_start_time": pr_review_start_time,
         }
 
     @classmethod
@@ -122,6 +128,7 @@ class PRWebhook:
         repo_id = gitlab_payload["project"]["id"]
         prompt_version = gitlab_payload.get("prompt_version", "v2")
         scm_workspace_id = str(gitlab_payload.get("scm_workspace_id"))
+        pr_review_start_time = gitlab_payload.get("pr_review_start_time")
         vcs_type = VCSTypes.gitlab.value
 
         return {
@@ -134,4 +141,5 @@ class PRWebhook:
             "workspace_slug": workspace_slug,
             "vcs_type": vcs_type,
             "prompt_version": prompt_version,
+            "pr_review_start_time": pr_review_start_time,
         }
