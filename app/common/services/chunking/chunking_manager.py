@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Tuple
 
 from sanic.log import logger
 
-from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.reranker.base_chunk_reranker import BaseChunkReranker
@@ -16,6 +15,7 @@ from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.services.search.search import perform_search
+from app.common.utils.config_manager import ConfigManager
 from app.common.utils.file_utils import read_file
 
 
@@ -60,7 +60,7 @@ class ChunkingManger:
             weaviate_client=weaviate_client,
             chunking_handler=chunking_handler,
         )
-        return custom_context_code_chunks + sorted_chunks[:NO_OF_CHUNKS_FOR_LLM]
+        return custom_context_code_chunks + sorted_chunks[: ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]]
 
     @classmethod
     async def get_relevant_context_from_focus_snippets(
