@@ -190,7 +190,7 @@ class RepoSelection(BaseScreenHandler):
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )
-                if repo_details.get("repo_url"):
+                if repo_details.get("repo_url") and repo_details.get("workspace_id"):
                     self.app_context.registered_repo_details = RegisteredRepo(
                         repo_url=repo_details["repo_url"],
                         workspace_id=repo_details["workspace_id"],
