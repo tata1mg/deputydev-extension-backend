@@ -54,5 +54,10 @@ class SignUp:
                 "team_id": CONFIG.config["ORG_INFO"]["TRAYA"]["team_id"],
                 "org_name": CONFIG.config["ORG_INFO"]["TRAYA"]["org_name"],
             }
+        elif domain == CONFIG.config["ORG_INFO"]["5CNETWORK"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["5CNETWORK"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["5CNETWORK"]["org_name"],
+            }
         else:
             return {"team_id": None, "org_name": None, "error": "Invalid domain"}
