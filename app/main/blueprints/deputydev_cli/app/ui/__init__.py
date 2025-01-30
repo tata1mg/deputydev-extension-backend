@@ -63,8 +63,11 @@ async def initialize_cli_ui():
     global one_dev_client
 
     try:
-        from app.main.blueprints.deputydev_cli.app.managers.authentication.authentication_manager import AuthenticationManager
-        prompt_session : PromptSession[str] = PromptSession()
+        from app.main.blueprints.deputydev_cli.app.managers.authentication.authentication_manager import (
+            AuthenticationManager,
+        )
+
+        prompt_session: PromptSession[str] = PromptSession()
         authentication_manager = AuthenticationManager(one_dev_client, prompt_session)
         auth_token = await authentication_manager.authenticate_and_get_auth_token()
     except Exception:

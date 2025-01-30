@@ -17,6 +17,7 @@ from app.main.blueprints.deputydev_cli.app.constants.cli import CLIOperations
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FeatureNextAction,
 )
+from app.main.blueprints.deputydev_cli.app.ui import auth_token
 from app.main.blueprints.deputydev_cli.app.ui.helpers.feature_runner import (
     FeatureRunner,
 )
@@ -39,8 +40,6 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.repo_initialization import
 from app.main.blueprints.deputydev_cli.app.ui.screens.repo_selection import (
     RepoSelection,
 )
-
-from app.main.blueprints.deputydev_cli.app.ui import auth_token
 
 # log_stream = StringIO()
 # # Configure the root logger
@@ -171,7 +170,9 @@ async def main(process_executor: ProcessPoolExecutor):
             level=logging.DEBUG,
         )
 
-    async with AppContext(args=args, one_dev_client=one_dev_client, auth_token=auth_token, process_executor=process_executor) as app_context:
+    async with AppContext(
+        args=args, one_dev_client=one_dev_client, auth_token=auth_token, process_executor=process_executor
+    ) as app_context:
         try:
             redirect_screen: Optional[ScreenType] = None
             app_context, next_action, screen_redirect = await run_new_feature_session(app_context)
