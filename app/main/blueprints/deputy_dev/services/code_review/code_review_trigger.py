@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import ValidationError
@@ -82,6 +83,8 @@ class CodeReviewTrigger:
         Returns:
             PR review acknowledgments
         """
+        pr_review_start_time = datetime.now(timezone.utc)
+        payload["pr_review_start_time"] = pr_review_start_time.isoformat()
         code_review_request = await cls.__preprocess_review_payload(payload, query_params)
         if not code_review_request:
             return
