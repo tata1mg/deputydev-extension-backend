@@ -3,6 +3,7 @@ from functools import wraps
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
+from app.common.constants.error_codes import APIErrorCodes
 from app.main.blueprints.one_dev.constants.constants import DEPRECATED_CLI_VERSIONS
 
 
@@ -25,7 +26,7 @@ def validate_cli_version(func):
         cli_version = _request.headers.get("x-cli-app-version")
         is_valid, message = validate_version(cli_version)
         if not is_valid:
-            raise BadRequestException(error=message, meta={"error_code": 101})
+            raise BadRequestException(error=message, meta={"error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value})
         return await func(_request, **kwargs)
 
     return wrapper
