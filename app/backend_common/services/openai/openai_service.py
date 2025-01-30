@@ -13,8 +13,8 @@ from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.app_utils import hash_sha256
 from app.common.constants.error_messages import ErrorMessages
 from app.common.services.tiktoken import TikToken
+from app.common.services.tiktoken.tiktoken import EMBEDDING_TOKEN_LIMIT
 from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
 from app.common.utils.context_vars import get_context_value
 
 openai_key = CONFIG.config.get("OPENAI_KEY")
@@ -76,16 +76,14 @@ class OpenAIManager(BaseClient):
             AppLogger.log_error(f"Timeout error occurred while embedding: {e}")
         except Exception as e:
             AppLogger.log_warn(e)
-            if any(
-                self.tiktoken_client.count(text) > ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"] for text in batch
-            ):
+            if any(self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT for text in batch):
                 new_batch = []
                 for text in batch:
-                    if self.tiktoken_client.count(text) > ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"]:
+                    if self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT:
                         AppLogger.log_warn(
                             ErrorMessages.TOKEN_COUNT_EXCEED_WARNING.value.format(
                                 count=self.tiktoken_client.count(text),
-                                token_limit=ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
+                                token_limit=EMBEDDING_TOKEN_LIMIT,
                             )
                         )
                     new_batch.append(self.tiktoken_client.truncate_string(text))
