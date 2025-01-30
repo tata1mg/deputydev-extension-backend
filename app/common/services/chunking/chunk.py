@@ -19,8 +19,6 @@ from app.common.utils.config_manager import ConfigManager
 from ..tiktoken import TikToken
 from .chunk_info import ChunkInfo, ChunkSourceDetails
 
-CHARACTER_SIZE = ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
-
 
 def get_parser(language: str) -> Parser:
     """
@@ -446,7 +444,7 @@ def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[Ne
 def chunk_code_with_metadata(
     tree,
     source_code: bytes,
-    MAX_CHARS=CHARACTER_SIZE,
+    max_chars: Optional[int] = None,
     coalesce=100,
 ) -> list[NeoSpan]:
     """
@@ -455,7 +453,7 @@ def chunk_code_with_metadata(
     Args:
         tree: The AST tree.
         source_code (bytes): The source code bytes.
-        MAX_CHARS (int): Maximum characters per chunk.
+        max_chars Optional(int): Maximum characters per chunk.
         coalesce (int): Coalesce size.
 
     Returns:
@@ -464,9 +462,10 @@ def chunk_code_with_metadata(
     # Create initial chunks with metadata
     all_classes: List[str] = []
     all_functions: List[str] = []
+    max_char_size = max_chars if max_chars is not None else ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
     chunks = chunk_node_with_meta_data(
         tree.root_node,
-        max_chars=MAX_CHARS,
+        max_chars=max_char_size,
         source_code=source_code,
         all_functions=all_functions,
         all_classes=all_classes,
@@ -483,7 +482,7 @@ def chunk_code_with_metadata(
 def chunk_code(
     tree,
     source_code: bytes,
-    MAX_CHARS=CHARACTER_SIZE,
+    max_chars: Optional[int] = None,
     coalesce=100,
 ) -> List[Span]:
     """
@@ -499,17 +498,19 @@ def chunk_code(
         list[Span]: List of chunks.
     """
 
+    max_char_size = max_chars if max_chars is not None else ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
+
     # 1. Recursively form chunks
     def chunk_node(node: Node) -> list[Span]:
         chunks: list[Span] = []
         current_chunk: Span = Span(node.start_byte, node.start_byte)
         node_children = node.children
         for child in node_children:
-            if child.end_byte - child.start_byte > MAX_CHARS:
+            if child.end_byte - child.start_byte > max_char_size:
                 chunks.append(current_chunk)
                 current_chunk = Span(child.end_byte, child.end_byte)
                 chunks.extend(chunk_node(child))
-            elif child.end_byte - child.start_byte + len(current_chunk) > MAX_CHARS:
+            elif child.end_byte - child.start_byte + len(current_chunk) > max_char_size:
                 chunks.append(current_chunk)
                 current_chunk = Span(child.start_byte, child.end_byte)
             else:
@@ -606,7 +607,7 @@ def chunk_source(
     content: str,
     path: str,
     file_hash: Optional[str] = None,
-    MAX_CHARS=CHARACTER_SIZE,
+    max_chars: Optional[int] = None,
     coalesce=80,
     nl_desc=False,
     use_new_chunking=False,
@@ -617,13 +618,14 @@ def chunk_source(
     Args:
         content (str): The content to be chunked.
         path (str): The file path of the content.
-        MAX_CHARS (int, optional): Maximum characters per chunk. Defaults to 1200.
+        max_chars (int, optional): Maximum characters per chunk. Defaults to 1200.
         coalesce (int, optional): Coalesce parameter for chunking. Defaults to 80.
         use_new_chunking (bool): Use new chunking strategy
 
     Returns:
         List[ChunkInfo]: A list of ChunkInfo objects representing the chunks of content.
     """
+    max_char_size = max_chars if max_chars is not None else ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
     ext = path.split(".")[-1]
     if ext in ALL_EXTENSIONS:
         language = ALL_EXTENSIONS[ext]
@@ -653,10 +655,10 @@ def chunk_source(
         is_eligible_for_new_chunking = use_new_chunking and supported_new_chunk_language(language)
         if is_eligible_for_new_chunking:
             all_current_file_chunks = chunk_code_with_metadata(
-                tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce
+                tree, content.encode("utf-8"), max_chars=max_char_size, coalesce=coalesce
             )
         else:
-            all_current_file_chunks = chunk_code(tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS)
+            all_current_file_chunks = chunk_code(tree, content.encode("utf-8"), max_chars=max_char_size)
         already_visited_chunk: Set[str] = set()
         file_contents = content.splitlines()
         for chunk in all_current_file_chunks:
