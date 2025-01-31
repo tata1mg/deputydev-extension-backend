@@ -1,6 +1,6 @@
 import re
 
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -33,7 +33,7 @@ class PRSummaryManager(BasePRReviewManager):
         repo_service, pr_service, comment_service = await cls.initialise_services(service_data)
 
         # This creates repo entry in db if not exist.
-        repo_dto = await RepoService.find_or_create_with_workspace_id(
+        repo_dto = await RepoRepository.find_or_create_with_workspace_id(
             scm_workspace_id=chat_request.repo.workspace_id, pr_model=pr_service.pr_model()
         )
         set_context_values(team_id=repo_dto.team_id)

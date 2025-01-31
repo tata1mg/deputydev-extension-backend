@@ -16,7 +16,6 @@ from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main im
     FeatureHandlingRedirections,
     FeatureHandlingResult,
     FeatureNextAction,
-    LocalUserDetails,
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,
@@ -30,7 +29,6 @@ class BaseFeatureHandler(ABC):
     def __init__(
         self,
         process_executor: ProcessPoolExecutor,
-        local_user_details: LocalUserDetails,
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
@@ -44,7 +42,6 @@ class BaseFeatureHandler(ABC):
         registered_repo_details: Optional[RegisteredRepo] = None,
     ):
         self.process_executor = process_executor
-        self.local_user_details = local_user_details
         self.query = query
         self.one_dev_client = one_dev_client
         self.local_repo = local_repo
