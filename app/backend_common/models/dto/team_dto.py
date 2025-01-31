@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 
 class TeamDTO(BaseModel):
-    id: int
+    id: Optional[int] = None
     name: str
-    created_at: datetime
-    updated_at: datetime
     llm_model: Optional[str]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

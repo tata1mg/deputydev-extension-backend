@@ -12,7 +12,6 @@ from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main im
     FeatureHandlingRedirections,
     FeatureHandlingResult,
     FeatureNextAction,
-    LocalUserDetails,
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,
@@ -24,7 +23,6 @@ class IterativeChatHandler(BaseFeatureHandler):
     def __init__(
         self,
         process_executor: ProcessPoolExecutor,
-        local_user_details: LocalUserDetails,
         query: Union[PlainTextQuery, TextSelectionQuery],
         one_dev_client: OneDevClient,
         local_repo: BaseLocalRepo,
@@ -39,7 +37,6 @@ class IterativeChatHandler(BaseFeatureHandler):
     ):
         super().__init__(
             process_executor=process_executor,
-            local_user_details=local_user_details,
             query=query,
             one_dev_client=one_dev_client,
             local_repo=local_repo,
@@ -79,10 +76,6 @@ class IterativeChatHandler(BaseFeatureHandler):
             **self.final_headers,
             "Authorization": f"Bearer {self.auth_token}",
         }
-        if self.local_user_details.email:
-            headers["X-User-Email"] = self.local_user_details.email
-        if self.local_user_details.name:
-            headers["X-User-Name"] = self.local_user_details.name
         api_response = await self.one_dev_client.iterative_chat(
             payload=self.final_payload,
             headers=headers,
