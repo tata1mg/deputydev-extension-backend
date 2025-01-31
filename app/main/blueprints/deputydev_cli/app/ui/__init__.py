@@ -1,6 +1,5 @@
 import asyncio
 import sys
-import traceback
 from typing import Dict, Optional
 
 from prompt_toolkit import PromptSession
@@ -36,8 +35,10 @@ async def populate_essential_config():
         ConfigManager.set(configs)
     except InvalidVersionException:
         print("This CLI client is not supported anymore")
+        await close_session_and_exit()
     except Exception:
         print("Failed to fetch configs")
+        await close_session_and_exit()
 
 
 async def populate_full_config():
@@ -53,6 +54,7 @@ async def populate_full_config():
         ConfigManager.set(configs)
     except Exception:
         print("Failed to fetch configs")
+        await close_session_and_exit()
 
 
 async def initialize_cli_ui():
@@ -72,7 +74,6 @@ async def initialize_cli_ui():
         authentication_manager = AuthenticationManager(one_dev_client, prompt_session)
         auth_token = await authentication_manager.authenticate_and_get_auth_token()
     except Exception:
-        print(traceback.format_exc())   
         print("Failed to authenticate user")
         await close_session_and_exit()
 
