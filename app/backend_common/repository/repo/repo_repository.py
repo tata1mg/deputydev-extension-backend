@@ -9,7 +9,7 @@ from app.backend_common.repository.db import DB
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 
 
-class RepoService:
+class RepoRepository:
     @classmethod
     async def db_get(cls, filters, fetch_one=False) -> Union[RepoDTO, List[RepoDTO]]:
         try:
@@ -46,7 +46,7 @@ class RepoService:
                 "name": pr_model.scm_repo_name(),
                 "workspace_id": workspace_id,
             }
-            repo_dto = await RepoService.db_insert(RepoDTO(**repo_data))
+            repo_dto = await RepoRepository.db_insert(RepoDTO(**repo_data))
         return repo_dto
 
     @classmethod

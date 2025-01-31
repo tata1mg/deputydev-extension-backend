@@ -1,7 +1,7 @@
 from enum import Enum
 
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.main.blueprints.deputy_dev.constants.constants import (
     ChatTypes,
@@ -48,7 +48,7 @@ class CommentPreprocessor(Enum):
             scm_workspace_id=pr_model.scm_workspace_id(),
         )
         if workspace_dto:
-            repo_dto = await RepoService.db_get(
+            repo_dto = await RepoRepository.db_get(
                 filters=dict(scm_repo_id=pr_model.scm_repo_id(), workspace_id=workspace_dto.id), fetch_one=True
             )
             if repo_dto:

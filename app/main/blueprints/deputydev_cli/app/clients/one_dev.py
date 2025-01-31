@@ -116,9 +116,43 @@ class OneDevClient(BaseHTTPClient):
         result = await self.post(url=self._host + path, json=payload, headers=headers)
         return (await result.json()).get("data")
 
-    async def verify_auth_token(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    async def verify_auth_token(self, headers: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Verify the authentication token for the user.
+
+        Args:
+            headers (Dict[str, str]): The headers containing the authentication token.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the verification result if successful, otherwise None.
+
+        Raises:
+            Exception: Raises an exception if the request fails or the response is not valid.
+        """
         path = "/end_user/v1/verify-auth-token"
-        result = await self.post(url=self._host + path, json=payload, headers=headers)
+        result = await self.post(url=self._host + path, headers=headers)
+        return (await result.json()).get("data")
+
+    async def get_session(self, headers: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Retrieve the session information for the user.
+
+        Args:
+            headers (Dict[str, str]): The headers containing authentication information.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the session data if successful, otherwise None.
+
+        Raises:
+            Exception: Raises an exception if the request fails or the response is not valid.
+        """
+        path = "/end_user/v1/get-session"
+        result = await self.get(url=self._host + path, headers=headers)
+        return (await result.json()).get("data")
+
+    async def get_essential_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        path = "/end_user/v1/get-essential-configs"
+        result = await self.get(url=self._host + path, headers=headers)
         return (await result.json()).get("data")
 
     async def get_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:

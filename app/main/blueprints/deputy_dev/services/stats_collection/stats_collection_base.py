@@ -2,7 +2,7 @@ from abc import ABC
 
 from sanic.log import logger
 
-from app.backend_common.repository.repo.repo_service import RepoService
+from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import convert_to_datetime
 from app.common.exception import RetryException
@@ -64,7 +64,7 @@ class StatsCollectionBase(ABC):
                 f"workspace not registered"
             )
         set_context_values(team_id=self.workspace_dto.team_id)
-        self.repo_dto = await RepoService.db_get(
+        self.repo_dto = await RepoRepository.db_get(
             filters=dict(scm_repo_id=payload["scm_repo_id"], workspace_id=self.workspace_dto.id), fetch_one=True
         )
         if not self.repo_dto:
