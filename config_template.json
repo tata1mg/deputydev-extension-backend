@@ -8,6 +8,17 @@
     "SPAN_FRAMES_MIN_DURATION": "5ms",
     "TRANSACTION_SAMPLE_RATE": 1
   },
+  "DD_BROWSER_HOST": "https://deputydev.ai",
+  "APP_NAME": "CLI",
+  "SUPABASE": {
+    "URL": "",
+    "KEY": ""
+  },
+  "SESSION_ENCRYPTION_PASSWORD": "",
+  "ORG_INFO": {
+    "TATA_1MG": {"domain": "1mg.com", "team_id": 1, "org_name": "TATA 1mg"},
+    "TRAYA": {"domain": "traya.com", "team_id": 3, "org_name": "Traya"}
+  },
   "DEBUG": false,
   "ACCESS_LOG": true,
   "ENABLE_WORKER": false,

@@ -68,8 +68,3 @@ class RegisteredRepo(BaseModel):
     workspace_id: int
     repo_name: str
     repo_url: str
-
-
-class LocalUserDetails(BaseModel):
-    email: Optional[str] = None
-    name: Optional[str] = None

@@ -11,7 +11,6 @@ from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsync
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
-    LocalUserDetails,
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,
@@ -54,7 +53,6 @@ class AppContext(BaseModel):
     operation: Optional[CLIFeatures] = None
     pr_config: Optional[PRConfig] = None
     registered_repo_details: Optional[RegisteredRepo] = None
-    local_user_details: Optional[LocalUserDetails] = None
     process_executor: Optional[ProcessPoolExecutor] = None
     last_operation_job_id: Optional[int] = None
 
