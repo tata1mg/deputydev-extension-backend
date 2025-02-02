@@ -1,6 +1,6 @@
 import copy
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple, Union
 
@@ -93,12 +93,14 @@ class NeoSpan:
 
     start: Tuple[int, int] = (0, 0)
     end: Tuple[int, int] = (0, 0)
-    metadata: ChunkMetadata = ChunkMetadata(
-        hierarchy=[],
-        dechunk=False,
-        import_only_chunk=False,
-        all_functions=[],
-        all_classes=[],
+    metadata: ChunkMetadata = field(
+        default_factory=lambda: ChunkMetadata(
+            hierarchy=[],
+            dechunk=False,
+            import_only_chunk=False,
+            all_functions=[],
+            all_classes=[],
+        )
     )
     # Example value for metadata
 
@@ -193,12 +195,14 @@ class Span:
 
     start: int = 0
     end: int = 0
-    metadata: ChunkMetadata = ChunkMetadata(
-        hierarchy=[],
-        dechunk=False,
-        import_only_chunk=False,
-        all_functions=[],
-        all_classes=[],
+    metadata: ChunkMetadata = field(
+        default_factory=lambda: ChunkMetadata(
+            hierarchy=[],
+            dechunk=False,
+            import_only_chunk=False,
+            all_functions=[],
+            all_classes=[],
+        )
     )
 
     def extract(self, s: bytes) -> str:
