@@ -159,3 +159,8 @@ class OneDevClient(BaseHTTPClient):
         path = "/end_user/v1/get-configs"
         result = await self.get(url=self._host + path, headers=headers)
         return (await result.json()).get("data")
+
+    async def fetch_relevant_chat_history(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+        path = "/end_user/v1/relevant-chat-history"
+        result = await self.post(url=self._host + path, json=payload, headers=headers)
+        return (await result.json()).get("data")

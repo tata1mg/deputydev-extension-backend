@@ -1,6 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional, Union
 
+from app.common.constants.constants import IS_LLM_RERANKING_ENABLED, MAX_RELEVANT_CHUNKS
 from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
@@ -80,7 +81,7 @@ class DocsGenerationHandler(BaseFeatureHandler):
 
         query_vector = await self.embedding_manager.embed_text_array(texts=[query], store_embeddings=False)
         search_type = SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE
-        relevant_chunks, _ = await ChunkingManger.get_relevant_chunks(
+        relevant_chunks, _, focus_chunks = await ChunkingManger.get_relevant_chunks(
             query=query,
             local_repo=self.local_repo,
             embedding_manager=self.embedding_manager,
@@ -91,9 +92,16 @@ class DocsGenerationHandler(BaseFeatureHandler):
             chunkable_files_with_hashes=self.chunkable_files_with_hashes,
             query_vector=query_vector[0][0],
             search_type=search_type,
+            max_chunks_to_return=MAX_RELEVANT_CHUNKS,
         )
 
-        final_payload["relevant_chunks"] = self.handle_relevant_chunks(search_type, relevant_chunks)
+        final_payload.update(
+            {
+                "relevant_chunks": self.handle_relevant_chunks(search_type, relevant_chunks),
+                "focus_chunks": self.handle_relevant_chunks(search_type, focus_chunks),
+                "is_llm_reranking_enabled": IS_LLM_RERANKING_ENABLED,
+            }
+        )
 
         self.final_payload = final_payload
 

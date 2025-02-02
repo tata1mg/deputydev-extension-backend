@@ -26,21 +26,28 @@ class IterativeChatHandler(BaseCodeGenIterativeHandler[IterativeChatInput]):
     feature = CodeGenIterativeHandlers.CHAT
 
     @classmethod
+    async def _get_previous_responses(cls, payload: IterativeChatInput) -> List[Dict[str, str]]:
+        previous_responses: List[Dict[str, str]] = []
+        if payload.relevant_chat_history:
+            for chat in payload.relevant_chat_history:
+                previous_responses.append({"role": "user", "content": chat["query"]})
+                previous_responses.append({"role": "assistant", "content": chat["response"]})
+
+        return previous_responses
+
+    @classmethod
     async def _feature_task(cls, payload: IterativeChatInput, job_id: int, llm_meta: List[LLMMeta]) -> Dict[str, Any]:
-
-        previous_responses = await cls._get_previous_responses(payload)
-
         prompt = PromptFeatureFactory.get_prompt(
             prompt_feature=PromptFeatures.ITERATIVE_CODE_CHAT,
             model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-            init_params={"query": payload.query},
+            init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
         )
 
         await JobService.db_update(
             filters={"id": job_id},
             update_data={"status": "PROMPT_GENERATED"},
         )
-
+        previous_responses = await cls._get_previous_responses(payload)
         llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=previous_responses)
         llm_meta.append(llm_response.llm_meta)
         await JobService.db_update(
@@ -59,6 +66,8 @@ class IterativeChatHandler(BaseCodeGenIterativeHandler[IterativeChatInput]):
                 llm_prompt=llm_response.raw_prompt,
                 llm_response=llm_response.raw_llm_response,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
+                response_summary=llm_response.parsed_llm_data["summary"],
+                user_query=payload.query,
             )
         )
 

@@ -1,15 +1,12 @@
 import os
 from abc import ABC
 from concurrent.futures import ProcessPoolExecutor
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
-from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.common.services.search.dataclasses.main import SearchTypes
 from app.common.utils.file_utils import read_file
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
@@ -94,8 +91,6 @@ class BaseFeatureHandler(ABC):
         raise NotImplementedError(self.NOT_IMPLEMENTED_MSG)
 
     @classmethod
-    def handle_relevant_chunks(cls, search_type, chunks):
-        if search_type == SearchTypes.VECTOR_DB_BASED:
-            return render_snippet_array(chunks)
-        else:
-            return render_snippet_array(chunks[:NO_OF_CHUNKS_FOR_LLM])
+    def handle_relevant_chunks(cls, search_type, chunks: List[ChunkInfo]):
+        dumped_chunks = [chunk.model_dump(mode="json") for chunk in chunks]
+        return dumped_chunks

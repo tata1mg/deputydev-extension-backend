@@ -2,7 +2,12 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, TypeVar
 
+from app.backend_common.services.chunking.reranker.handler.llm_based import (
+    LLMBasedChunkReranker,
+)
 from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
+from app.common.services.chunking.chunk_info import ChunkInfo
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.services.code_generation.features.dataclass.main import (
     BaseCodeGenFeaturePayload,
@@ -50,3 +55,34 @@ class BaseCodeGenFeature(ABC, Generic[PayloadType]):
         )
         asyncio.create_task(cls.run_feature(payload, job.id))
         return {"job_id": job.id, "session_id": payload.session_id}
+
+    @classmethod
+    async def rerank(
+        cls, query: str, relevant_chunks: List[ChunkInfo], focus_chunks: List[ChunkInfo], is_llm_reranking_enabled
+    ) -> List[ChunkInfo]:
+        filter_and_ranked_chunks = None
+        if is_llm_reranking_enabled:
+            filter_and_ranked_chunks = await LLMBasedChunkReranker().rerank(
+                query=query, related_codebase_chunks=relevant_chunks, focus_chunks=focus_chunks
+            )
+            return cls.get_chunks_from_denotation(relevant_chunks + focus_chunks, filter_and_ranked_chunks)
+        elif not is_llm_reranking_enabled or not filter_and_ranked_chunks:
+            filter_and_ranked_chunks = cls.get_default_chunks(focus_chunks, relevant_chunks)
+        return filter_and_ranked_chunks
+
+    @classmethod
+    def get_default_chunks(
+        cls, focus_chunks: List[ChunkInfo], related_codebase_chunks: List[ChunkInfo]
+    ) -> List[ChunkInfo]:
+        max_default_chunks_to_return = ConfigManager.config["CHUNKING"]["DEFAULT_MAX_CHUNKS_CODE_GENERATION"]
+        chunks = focus_chunks + related_codebase_chunks
+        chunks.sort(key=lambda chunk: chunk.score, reverse=True)
+        return chunks[:max_default_chunks_to_return]
+
+    @classmethod
+    def get_chunks_from_denotation(cls, chunks: List[ChunkInfo], denotations: List[str]) -> List[ChunkInfo]:
+        result = []
+        for chunk in chunks:
+            if chunk.denotation in denotations:
+                result.append(chunk)
+        return result

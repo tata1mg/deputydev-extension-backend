@@ -1,7 +1,8 @@
 import copy
 import re
 from dataclasses import dataclass
-from typing import List, Optional, Set, Tuple, Union
+from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import tree_sitter_javascript
 from sanic.log import logger
@@ -155,11 +156,29 @@ class NeoSpan:
             all_classes=list(set(self.metadata.all_classes + other_meta_data.all_classes)),
         )
 
+    def get_chunk_first_char(self, source_code: bytes):
+        stripped_contents = self.extract_lines(source_code.decode("utf-8")).strip()
+        first_char = stripped_contents[0] if stripped_contents else ""
+        return first_char
+
     def __len__(self) -> int:
         """
         Computes the length of lines in the NeoSpan
         """
         return self.end[0] - self.start[0] + 1
+
+    def non_whitespace_len(self, source_code: bytes) -> int:
+        """
+        Calculates the length of a string excluding whitespace characters.
+
+        Args:
+            s (str): The input string.
+
+        Returns:
+            int: The length of the string excluding whitespace characters.
+        """
+        code = self.extract_lines(source_code.decode("utf-8"))
+        return len(re.sub(r"\s", "", code))
 
 
 @dataclass
@@ -236,32 +255,180 @@ class Span:
         return self.end - self.start + 1
 
 
-def is_node_breakable(node: Node) -> bool:
-    return node.type in ("function_definition", "class_definition", "decorated_definition")
+def is_function_node(node: Node, grammar: Dict[str, str]):
+    """
+    Checks if a given node is function by visiting to depth
+    Args:
+        node (Ast node):
+        grammar (Dict[str, str]): grammar for the language
+
+    Returns:
+
+    """
+    if node.type in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
+        is_function_node = False
+        for child in node.children:
+            is_function_node = is_function_node or (
+                child.type in grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
+            )
+
+        return is_function_node
+    return node.type in grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
 
 
-def extract_name(node) -> Optional[str]:
+def is_class_node(node: Node, grammar: Dict[str, str]):
+    """
+    Checks if a given node is class by visiting to depth
+    Args:
+        node (Ast node):
+        grammar (Dict[str, str]): grammar for the language
+
+    Returns:
+
+    """
+    if node.type in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
+        is_class_node = False
+        for child in node.children:
+            is_class_node = is_class_node or (child.type in grammar[LanguageIdentifiers.CLASS_DEFINITION.value])
+        return is_class_node
+
+    return node.type in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
+
+
+def is_node_breakable(node: Node, grammar: Dict[str, str]) -> bool:
+    if node.type in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
+        breakable = False
+        for child in node.children:
+            breakable = breakable or (
+                child.type
+                in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
+                + grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
+                + grammar[LanguageIdentifiers.NAMESPACE.value]
+            )
+        return breakable
+    return node.type in (
+        grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
+        + grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
+        + grammar[LanguageIdentifiers.NAMESPACE.value]
+    )
+
+
+def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
     """
     Recursively extract the name from a node, handling different possible structures
     """
     # Direct identifier check
-    if node.type == "identifier":
+    if (
+        node.type
+        in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value] + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+    ):
         return node.text.decode("utf-8")
 
     # Search in direct children for an identifier
     for child in node.children:
-        if child.type == "identifier":
+        if (
+            child.type
+            in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value]
+            + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+        ):
             return child.text.decode("utf-8")
 
     # Recursive search for nested definitions
     for child in node.children:
         # Check for nested class or function definitions
-        if child.type in ["class_definition", "function_definition"]:
-            name = extract_name(child)
+        if (
+            child.type
+            in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
+            + grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
+        ):
+            name = extract_name(child, grammar)
             if name:
                 return name
 
     return None
+
+
+class LanguageIdentifiers(Enum):
+    FUNCTION_DEFINITION = "function_definition"
+    CLASS_DEFINITION = "class_definition"
+    FUNCTION_IDENTIFIER = "function_identifier"
+    CLASS_IDENTIFIER = "class_identifier"
+    DECORATOR = "decorator"
+    FUNCTION_CLASS_WRAPPER = "function_class_wrapper"
+    NAMESPACE = "namespace"
+    DECORATED_DEFINITION = "decorated_definition"
+
+
+js_family_identifiers = {
+    LanguageIdentifiers.FUNCTION_DEFINITION.value: [
+        "method_definition",
+        "function_declaration",
+        "generator_function_declaration",
+    ],
+    LanguageIdentifiers.CLASS_DEFINITION.value: ["class_declaration", "abstract_class_declaration"],
+    LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["property_identifier", "identifier"],
+    LanguageIdentifiers.CLASS_IDENTIFIER.value: ["type_identifier"],
+    LanguageIdentifiers.DECORATOR.value: "NA",
+    LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: ["expression_statement"],
+    LanguageIdentifiers.NAMESPACE.value: ["namespace", "internal_module"],
+    LanguageIdentifiers.DECORATED_DEFINITION.value: [],
+}
+
+java_family_identifiers = {
+    LanguageIdentifiers.FUNCTION_DEFINITION.value: [
+        "method_declaration",
+        "function_declaration",
+        "constructor_declaration",
+        "lambda_expression",
+        "annotation_type_declaration",
+    ],
+    LanguageIdentifiers.CLASS_DEFINITION.value: [
+        "class_declaration",
+        "abstract_class_declaration",
+        "interface_declaration",
+        "enum_declaration",
+    ],
+    LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["identifier"],
+    LanguageIdentifiers.CLASS_IDENTIFIER.value: ["identifier"],
+    LanguageIdentifiers.DECORATOR.value: "NA",
+    LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
+    LanguageIdentifiers.NAMESPACE.value: ["NA"],
+}
+
+chunk_language_identifiers = {
+    "python": {
+        LanguageIdentifiers.FUNCTION_DEFINITION.value: ["function_definition"],
+        LanguageIdentifiers.DECORATED_DEFINITION.value: ["decorated_definition"],
+        LanguageIdentifiers.CLASS_DEFINITION.value: ["class_definition"],
+        LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["identifier"],
+        LanguageIdentifiers.CLASS_IDENTIFIER.value: ["identifier"],
+        LanguageIdentifiers.DECORATOR.value: "decorator",
+        LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: ["decorated_definition"],
+        LanguageIdentifiers.NAMESPACE.value: ["NA"],
+    },
+    "javascript": js_family_identifiers,
+    "tsx": js_family_identifiers,
+    "typescript": js_family_identifiers,
+    "java": java_family_identifiers,
+}
+
+
+def is_valid_chunk(chunk):
+    """
+    chunk: Neospan chunk
+    Function to check if chunk is valid and cab be added in chunks list.
+    We are initializing the chunk initially with same start and end
+    position so removing them to avoid duplicacy.
+    """
+    if chunk and not chunk.start == chunk.end:
+        return True
+    return False
+
+
+def get_current_chunk_length(chunk: NeoSpan, source_code: bytes):
+    if not chunk:
+        return 0
+    return len(chunk.extract_lines(source_code.decode("utf-8")))
 
 
 def chunk_node_with_meta_data(
@@ -270,6 +437,7 @@ def chunk_node_with_meta_data(
     source_code: bytes,
     all_classes: List[str],
     all_functions: List[str],
+    language: str,
     hierarchy: Optional[List[ChunkMetadataHierachyObject]] = None,
     pending_decorators: Optional[List[NeoSpan]] = None,
 ) -> list[NeoSpan]:
@@ -284,14 +452,15 @@ def chunk_node_with_meta_data(
         pending_decorators = []
 
     chunks: list[NeoSpan] = []
-    current_chunk: Optional[NeoSpan] = None
     node_children = node.children
-
+    grammar = chunk_language_identifiers[language]
     # Handle decorators for class or function definitions
+
     def create_chunk_with_decorators(start_point, end_point, decorators=None, current_node=None):
         if decorators:
             # Start from the first decorator
             actual_start = decorators[0].start
+            decorators.clear()
         else:
             actual_start = start_point
 
@@ -300,55 +469,46 @@ def chunk_node_with_meta_data(
             end_point,
             metadata=ChunkMetadata(
                 hierarchy=copy.deepcopy(hierarchy),
-                dechunk=not is_node_breakable(current_node),
-                import_only_chunk=not hierarchy and not is_node_breakable(current_node),
+                dechunk=not is_node_breakable(current_node, grammar),
+                import_only_chunk=not hierarchy and not is_node_breakable(current_node, grammar),
                 all_functions=[],
                 all_classes=[],
             ),
         )
 
     # Determine if the current node is a class or function
-    if node.type == "class_definition":
-        class_name_node = next((child for child in node.children if child.type == "identifier"), None)
-        class_name = class_name_node.text.decode("utf-8") if class_name_node else "UnknownClass"
-        hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.CLASS, value=class_name))
-        all_classes.append(class_name)
+    if node.type not in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
+        if is_class_node(node, grammar):
+            class_name = extract_name(node, grammar)
+            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.CLASS, value=class_name))
+            all_classes.append(class_name)
 
-        # If this is a class definition and we have pending decorators, create a chunk including them
-        if pending_decorators:
-            current_chunk = create_chunk_with_decorators(node.start_point, node.end_point, pending_decorators, node)
-            pending_decorators.clear()
+        elif is_function_node(node, grammar):
+            func_name = extract_name(node, grammar)
+            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.FUNCTION, value=func_name))
+            all_functions.append(func_name)
 
-    elif node.type == "function_definition":
-        func_name_node = next((child for child in node.children if child.type == "identifier"), None)
-        func_name = func_name_node.text.decode("utf-8") if func_name_node else "UnknownFunction"
-        hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.FUNCTION, value=func_name))
-        all_functions.append(func_name)
-
-        # If this is a function definition and we have pending decorators, create a chunk including them
-        if pending_decorators:
-            current_chunk = create_chunk_with_decorators(node.start_point, node.end_point, pending_decorators, node)
-            pending_decorators.clear()
+    current_chunk = create_chunk_with_decorators(node.start_point, node.start_point, pending_decorators, node)
 
     for child in node_children:
-        if child.type in ["class_definition"]:
-            class_name = extract_name(child)
+        if is_class_node(child, grammar):
+            class_name = extract_name(child, grammar)
             if class_name:
                 all_classes.append(class_name)
 
-        if child.type in ["function_definition", "decorated_definition"]:
-            func_name = extract_name(child)
+        elif is_function_node(child, grammar):
+            func_name = extract_name(child, grammar)
             if func_name:
                 all_functions.append(func_name)
 
-        if child.type == "decorator":
+        if child.type == grammar[LanguageIdentifiers.DECORATOR.value]:
             # Store the decorator for the next class or function definition
             pending_decorators.append(NeoSpan(child.start_point, child.end_point))
             continue
 
         elif child.end_byte - child.start_byte > max_chars:
-            # Finalize the current chunk
-            if current_chunk:
+            # Finalize the current chunk, avoid initiaziable chunk.
+            if is_valid_chunk(current_chunk):
                 chunks.append(current_chunk)
             current_chunk = None
             # Recursively process large nodes
@@ -359,19 +519,22 @@ def chunk_node_with_meta_data(
                     source_code,
                     all_classes,
                     all_functions,
+                    language,
                     hierarchy,
                     pending_decorators,
                 )
             )
 
         elif (
-            child.end_byte - child.start_byte + (len(current_chunk) if current_chunk else 0) > max_chars
-        ) or is_node_breakable(child):
+            child.end_byte - child.start_byte + get_current_chunk_length(current_chunk, source_code) > max_chars
+        ) or is_node_breakable(child, grammar):
             # Split the current chunk if it exceeds the maximum size
-            if current_chunk:
+            if is_valid_chunk(current_chunk):
                 chunks.append(current_chunk)
 
-            current_chunk = create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+            current_chunk = create_chunk_with_decorators(
+                child.start_point, child.end_point, current_node=child, decorators=pending_decorators
+            )
 
         else:
             # Append the current child to the chunk
@@ -381,11 +544,19 @@ def chunk_node_with_meta_data(
                 current_chunk = create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
 
     # Finalize the last chunk
-    if current_chunk:
+    if is_valid_chunk(current_chunk):
         chunks.append(current_chunk)
-    if is_node_breakable(node) and hierarchy and len(hierarchy) > 0:
+
+    # pop the last hirarchey
+    if is_node_breakable(node, grammar) and hierarchy and len(hierarchy) > 0:
         hierarchy.pop()
     return chunks
+
+
+def get_chunk_first_char(current_chunk: NeoSpan, source_code: bytes):
+    stripped_contents = current_chunk.extract_lines(source_code.decode("utf-8")).strip()
+    first_char = stripped_contents[0] if stripped_contents else ""
+    return first_char
 
 
 def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[NeoSpan]:
@@ -407,47 +578,36 @@ def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[Ne
         return chunks
 
     new_chunks = []
-    current_chunk = chunks[0]
+
+    previous_chunk = chunks[0]
 
     for idx, chunk in enumerate(chunks[1:]):
-        # Do not combine if the chunk's metadata[0]["dechunk"] is False
-        if chunk.metadata.dechunk is False:
-            if current_chunk and len(current_chunk) > 0:
-                new_chunks.append(current_chunk)
-            current_chunk = chunk
-            continue
+        # check dechunk condition
+        if chunk.start[0] == previous_chunk.start[0]:
+            previous_chunk += chunk
 
-        # Combine the current chunk
-        if current_chunk:
-            current_chunk += chunk
-        else:
-            current_chunk = chunk
+        elif chunk.metadata.dechunk is False:
+            if previous_chunk and len(previous_chunk) > 0:
+                new_chunks.append(previous_chunk)
+            previous_chunk = chunk
 
-        # Extract and process the combined content
-        stripped_contents = current_chunk.extract_lines(source_code.decode("utf-8")).strip()
-        first_char = stripped_contents[0] if stripped_contents else ""
-
-        # Handle closing brackets and parentheses
-        if first_char in [")", "}", "]"] and new_chunks:
-            new_chunks[-1] += chunk
-            current_chunk = None
         # Split based on size or newline condition
-        elif non_whitespace_len(current_chunk.extract_lines(source_code.decode("utf-8"))) > coalesce:
-            new_chunks.append(current_chunk)
-            current_chunk = None
+        elif chunk.non_whitespace_len(source_code) > coalesce:
+            new_chunks.append(previous_chunk)
+            previous_chunk = chunk
+
+        else:
+            previous_chunk += chunk
 
     # Append any remaining chunk
-    if current_chunk and len(current_chunk) > 0:
-        new_chunks.append(current_chunk)
+    if previous_chunk and len(previous_chunk) > 0:
+        new_chunks.append(previous_chunk)
 
     return new_chunks
 
 
 def chunk_code_with_metadata(
-    tree,
-    source_code: bytes,
-    MAX_CHARS=CHARACTER_SIZE,
-    coalesce=100,
+    tree, source_code: bytes, language: str, MAX_CHARS=CHARACTER_SIZE, coalesce=100
 ) -> list[NeoSpan]:
     """
     Chunk the AST tree based on maximum characters and coalesce size.
@@ -470,6 +630,7 @@ def chunk_code_with_metadata(
         source_code=source_code,
         all_functions=all_functions,
         all_classes=all_classes,
+        language=language,
     )
     for chunk in chunks:
         if chunk.metadata.import_only_chunk:
@@ -599,7 +760,7 @@ def chunk_content(content: str, line_count: int = 30, overlap: int = 15) -> List
 
 
 def supported_new_chunk_language(language):
-    return language in ["python"]
+    return language in ["python", "javascript", "typescript", "tsx", "java"]
 
 
 def chunk_source(
@@ -653,7 +814,7 @@ def chunk_source(
         is_eligible_for_new_chunking = use_new_chunking and supported_new_chunk_language(language)
         if is_eligible_for_new_chunking:
             all_current_file_chunks = chunk_code_with_metadata(
-                tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce
+                tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS, coalesce=coalesce, language=language
             )
         else:
             all_current_file_chunks = chunk_code(tree, content.encode("utf-8"), MAX_CHARS=MAX_CHARS)
@@ -686,6 +847,7 @@ def chunk_source(
             if new_chunk_info.denotation not in already_visited_chunk:
                 final_chunks.append(new_chunk_info)
                 already_visited_chunk.add(new_chunk_info.denotation)
+
         return final_chunks
     except Exception:
         logger.exception(f"Error chunking file: {path}")
