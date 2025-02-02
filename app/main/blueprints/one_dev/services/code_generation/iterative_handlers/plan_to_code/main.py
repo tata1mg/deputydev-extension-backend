@@ -61,6 +61,8 @@ class PlanCodeGenerationHandler(BaseCodeGenIterativeHandler[PlanCodeGenerationIn
                 llm_prompt=llm_response.raw_prompt,
                 llm_response=llm_response.raw_llm_response,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
+                response_summary=llm_response.parsed_llm_data["summary"],
+                user_query="plan to code",
             )
         )
 
