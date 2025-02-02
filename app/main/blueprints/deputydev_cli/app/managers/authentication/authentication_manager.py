@@ -12,8 +12,8 @@ from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
-from app.main.blueprints.deputydev_cli.app.managers.keyring.auth_token_keyring import (
-    AuthTokenKeyRing,
+from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.cli_auth_token_storage_manager import (
+    CLIAuthTokenStorageManager,
 )
 
 
@@ -40,7 +40,7 @@ class AuthenticationManager:
                     if not response.get("encrypted_session_data") or response.get("encrypted_session_data") is None:
                         raise Exception("No encrypted session data found in response")
                     # Storing jwt token in user's machine using keyring
-                    AuthTokenKeyRing.store_auth_token(response["encrypted_session_data"])
+                    CLIAuthTokenStorageManager.store_auth_token(response["encrypted_session_data"])
                     return response["encrypted_session_data"]  # Exit on success
                 time.sleep(3)  # Wait for 3 seconds before polling again
             except Exception as e:
@@ -55,7 +55,7 @@ class AuthenticationManager:
         """Attempts to authenticate the user using the provided auth token."""
 
         # Extracting auth token from user's machine
-        auth_token = AuthTokenKeyRing.load_auth_token()
+        auth_token = CLIAuthTokenStorageManager.load_auth_token()
 
         if not auth_token:
             return None
@@ -69,7 +69,7 @@ class AuthenticationManager:
             )
             # Check if the response contains a status of 'verified'
             if response["status"] == AuthStatus.VERIFIED.value:
-                return AuthTokenKeyRing.load_auth_token()
+                return CLIAuthTokenStorageManager.load_auth_token()
             else:
                 return None
 

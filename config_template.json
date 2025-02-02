@@ -9,7 +9,6 @@
     "TRANSACTION_SAMPLE_RATE": 1
   },
   "DD_BROWSER_HOST": "https://deputydev.ai",
-  "APP_NAME": "CLI",
   "SUPABASE": {
     "URL": "",
     "KEY": ""

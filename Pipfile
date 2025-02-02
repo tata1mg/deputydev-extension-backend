@@ -28,7 +28,6 @@ weaviate-client = "==4.9.6"
 giturlparse = "==0.12.0"
 supabase = "==2.11.0"
 torpedo = { editable = true, ref = "3.6.1-rc2-bumped-websockets", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
-keyring = "==25.6.0"
 
 [dev-packages]
 flake8 = "==7.1.1"
