@@ -28,6 +28,7 @@ class ChunkInfo(BaseModel):
     embedding: Optional[List[float]] = None
     source_details: ChunkSourceDetails
     metadata: Optional[ChunkMetadata] = None
+    search_score: Optional[float] = 0  # vector search score
 
     def get_chunk_content(self, add_ellipsis: bool = False, add_lines: bool = True):
         """
@@ -62,20 +63,22 @@ class ChunkInfo(BaseModel):
             chunk_final_meta_data += (
                 f"\n Below classes may use the imports in this snippet: \n {self.metadata.all_classes}"
             )
+
         if add_class_function_info and self.metadata.all_functions:
             chunk_final_meta_data += (
-                f"\n Below functions may use the imports in this snippet: \n {self.metadata.all_functions}\n"
+                f"\n Below functions may use the imports in this snippet: \n {self.metadata.all_functions}"
             )
 
+        chunk_final_meta_data += f"\n File path: {self.source_details.file_path}"
         hierarchy_data: List[str] = []
         hierarchy_seperator = "\t"
 
         for idx, hierarchy in enumerate(self.metadata.hierarchy):
             indent = hierarchy_seperator * idx
-            hierarchy_data.append(f"{indent}{hierarchy.type}  {hierarchy.value}")
+            hierarchy_data.append(f"{indent}{hierarchy.type.value}  {hierarchy.value}")
             hierarchy_data.append(f"{indent}{hierarchy_seperator}...")  # Add ellipsis at current indent level
         if hierarchy_data:
-            chunk_final_meta_data += "Snippet hierarchy represented in pseudo code format: \n"
+            chunk_final_meta_data += "\n Snippet hierarchy represented in pseudo code format: \n"
             chunk_final_meta_data += "\n".join(hierarchy_data)
             chunk_final_meta_data += "\n"
         return chunk_final_meta_data

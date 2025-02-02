@@ -5,10 +5,16 @@ from app.common.services.prompt.base_feature_prompt_factory import (
 from app.common.services.prompt.feature_prompts.chunk_re_ranking.claude_3_point_5_sonnet import (
     Claude3Point5ChunkReRankingPrompt,
 )
+from app.common.services.prompt.feature_prompts.chunk_re_ranking.open_ai_o1_mini import (
+    OpenAIO1MiniPrompt,
+)
 
 
 class ChunkReRankingPromptFactory(BaseFeaturePromptFactory):
-    chunk_re_ranking_prompts = {LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5ChunkReRankingPrompt}
+    chunk_re_ranking_prompts = {
+        LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5ChunkReRankingPrompt,
+        LLModels.GPT_O1_MINI: OpenAIO1MiniPrompt,
+    }
 
     @classmethod
     def get_prompt(cls, model_name: LLModels):

@@ -8,6 +8,9 @@ from app.backend_common.services.llm.providers.dataclass.main import (
     LLMMeta,
     LLMUsage,
 )
+from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
+    OpenAIReasoningLLM,
+)
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.constants.constants import LLModels
 from app.common.exception import RetryException
@@ -20,6 +23,8 @@ class LLMHandler:
     model_to_provider_class_map = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
         LLModels.GPT_4O: OpenaiLLM,
+        LLModels.GPT_40_MINI: OpenaiLLM,
+        LLModels.GPT_O1_MINI: OpenAIReasoningLLM,
     }
 
     def __init__(self, prompt: BasePrompt):

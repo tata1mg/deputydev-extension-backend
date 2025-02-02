@@ -1,16 +1,13 @@
+import copy
 import os
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, List, Optional, Tuple
 
 from sanic.log import logger
 
-from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
 from app.common.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.reranker.base_chunk_reranker import BaseChunkReranker
-from app.common.services.chunking.reranker.handlers.heuristic_based import (
-    HeuristicBasedChunkReranker,
-)
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
@@ -39,6 +36,7 @@ class ChunkingManger:
         chunkable_files_with_hashes: Dict[str, str],
         embedding_manager: BaseEmbeddingManager,
         process_executor: ProcessPoolExecutor,
+        max_chunks_to_return: int,
         query_vector: Optional[List[float]] = None,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
@@ -59,8 +57,9 @@ class ChunkingManger:
             query_vector=query_vector,
             weaviate_client=weaviate_client,
             chunking_handler=chunking_handler,
+            max_chunks_to_return=max_chunks_to_return,
         )
-        return custom_context_code_chunks + sorted_chunks[:NO_OF_CHUNKS_FOR_LLM]
+        return custom_context_code_chunks + sorted_chunks
 
     @classmethod
     async def get_relevant_context_from_focus_snippets(
@@ -92,6 +91,7 @@ class ChunkingManger:
         chunkable_files_with_hashes: Dict[str, str],
         embedding_manager: BaseEmbeddingManager,
         process_executor: ProcessPoolExecutor,
+        max_chunks_to_return: int,
         query_vector: Optional[List[float]] = None,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
@@ -110,6 +110,7 @@ class ChunkingManger:
                 chunkable_files_with_hashes,
                 embedding_manager,
                 process_executor,
+                max_chunks_to_return,
                 query_vector,
                 search_type=search_type,
                 weaviate_client=weaviate_client,
@@ -126,6 +127,7 @@ class ChunkingManger:
         chunkable_files_with_hashes: Dict[str, str],
         embedding_manager: BaseEmbeddingManager,
         process_executor: ProcessPoolExecutor,
+        max_chunks_to_return: int,
         query_vector: Optional[List[float]] = None,
         search_type: SearchTypes = SearchTypes.VECTOR_DB_BASED,
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
@@ -145,6 +147,7 @@ class ChunkingManger:
             embedding_manager=embedding_manager,
             process_executor=process_executor,
             weaviate_client=weaviate_client,
+            max_chunks_to_return=max_chunks_to_return,
         )
         return sorted_chunks, input_tokens
 
@@ -156,6 +159,7 @@ class ChunkingManger:
         local_repo: BaseLocalRepo,
         embedding_manager: BaseEmbeddingManager,
         process_executor: ProcessPoolExecutor,
+        max_chunks_to_return: int,
         focus_files: List[str] = [],
         focus_chunks: List[str] = [],
         query_vector: Optional[List[float]] = None,
@@ -164,7 +168,7 @@ class ChunkingManger:
         weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
         chunking_handler: Optional[BaseChunker] = None,
         reranker: Optional[BaseChunkReranker] = None,
-    ) -> Tuple[list[ChunkInfo], int]:
+    ) -> Tuple[list[ChunkInfo], int, list[ChunkInfo]]:
         # Get all chunks from the repository
         focus_chunks_details = await cls.get_focus_chunk(
             query,
@@ -174,27 +178,34 @@ class ChunkingManger:
             chunkable_files_with_hashes,
             embedding_manager,
             process_executor,
+            max_chunks_to_return,
             query_vector,
             search_type=search_type,
             weaviate_client=weaviate_client,
             chunking_handler=chunking_handler,
         )
         if only_focus_code_chunks and focus_chunks_details:
-            return focus_chunks_details, 0
+            return focus_chunks_details, 0, ""
+        if focus_files:
+            # remove focus file to get chunks which are not related to focus chunks
+            chunkable_files_with_hashes = copy.deepcopy(chunkable_files_with_hashes)
+            for file_path in focus_files:
+                del chunkable_files_with_hashes[file_path]
 
-        related_chunk, input_tokens = await cls.get_related_chunk_from_codebase_repo(
+        relevant_chunks, input_tokens = await cls.get_related_chunk_from_codebase_repo(
             query,
             focus_chunks_details,
             chunkable_files_with_hashes,
             embedding_manager,
             process_executor,
-            query_vector,
+            max_chunks_to_return,
+            query_vector=query_vector,
             search_type=search_type,
             weaviate_client=weaviate_client,
             chunking_handler=chunking_handler,
         )
-        reranked_chunks = await cls.rerank_related_chunks(query, related_chunk, reranker, focus_chunks_details)
-        return reranked_chunks, input_tokens
+        reranked_chunks = await cls.rerank_related_chunks(query, relevant_chunks, reranker, focus_chunks_details)
+        return reranked_chunks, input_tokens, focus_chunks_details
 
     @classmethod
     def exclude_focused_chunks(cls, related_chunk, focus_chunks_details):
@@ -204,8 +215,8 @@ class ChunkingManger:
         return related_chunk
 
     @classmethod
-    async def rerank_related_chunks(cls, query, related_chunk, reranker, focus_chunks_details):
-        related_chunk = cls.exclude_focused_chunks(related_chunk, focus_chunks_details)
-        reranker_to_use = reranker or HeuristicBasedChunkReranker()
-        reranked_chunks = await reranker_to_use.rerank(focus_chunks_details, related_chunk, query)
-        return reranked_chunks
+    async def rerank_related_chunks(cls, query, related_chunks, reranker, focus_chunks_details):
+        related_chunks = cls.exclude_focused_chunks(related_chunks, focus_chunks_details)
+        if reranker:
+            related_chunks = await reranker.rerank(focus_chunks_details, related_chunks, query)
+        return related_chunks

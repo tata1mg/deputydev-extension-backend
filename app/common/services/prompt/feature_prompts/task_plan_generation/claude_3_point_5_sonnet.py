@@ -42,8 +42,12 @@ class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPrompt):
             <response>
             Your response here
             </response>
-            <is_task_done>true</is_task_done>
 
+            <summary>
+            Please return a short summary of response. Please include function, classes and files names which are part of response specifically.
+            </summary>
+
+            <is_task_done>true</is_task_done>
             Please put your entire response within the <response> tag.
             Set the <is_task_done> tag to true if the response contains the generated task plan.
             """
@@ -54,12 +58,14 @@ class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPrompt):
     def get_parsed_result(cls, llm_response: str) -> dict:
         final_query_resp = None
         is_task_done = None
-
+        summary = None
         if "<response>" in llm_response:
             final_query_resp = llm_response.split("<response>")[1].split("</response>")[0].strip()
         if "<is_task_done>true</is_task_done>" in llm_response:
             is_task_done = True
+        if "<summary>" in llm_response:
+            summary = llm_response.split("<summary>")[1].split("</summary>")[0].strip()
 
         if final_query_resp and is_task_done is not None:
-            return {"response": final_query_resp, "is_task_done": is_task_done}
+            return {"response": final_query_resp, "is_task_done": is_task_done, "summary": summary}
         raise ValueError("Invalid LLM response format. Response not found.")

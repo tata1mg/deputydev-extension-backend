@@ -7,7 +7,7 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.utils.app_utils import safe_index
 from app.backend_common.utils.formatting import append_line_numbers
-from app.common.constants.constants import NO_OF_CHUNKS_FOR_LLM
+from app.common.constants.constants import MAX_RELEVANT_CHUNKS
 from app.common.services.chunking.chunker.handlers.non_vector_db_chunker import (
     NonVectorDBChunker,
 )
@@ -61,7 +61,7 @@ class ContextService:
             process_executor=process_executor,
             use_new_chunking=use_new_chunking,
         )
-        relevant_chunk, self.embedding_input_tokens = await ChunkingManger.get_relevant_chunks(
+        relevant_chunk, self.embedding_input_tokens, _ = await ChunkingManger.get_relevant_chunks(
             query=await self.pr_diff_handler.get_effective_pr_diff(),
             local_repo=local_repo,
             embedding_manager=OpenAIEmbeddingManager(),
@@ -69,6 +69,7 @@ class ContextService:
             search_type=SearchTypes.NATIVE,
             process_executor=process_executor,
             chunking_handler=chunker,
+            max_chunks_to_return=CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"],
         )
         return relevant_chunk
 
@@ -106,7 +107,7 @@ class ContextService:
 
                 for agent_id in relevant_chunks_mapping:
                     # Skip agents that already have the required number of chunks
-                    if len(relevant_chunks_mapping[agent_id]) >= NO_OF_CHUNKS_FOR_LLM:
+                    if len(relevant_chunks_mapping[agent_id]) >= MAX_RELEVANT_CHUNKS:
                         continue
 
                     # Get inclusion/exclusion rules for the agent
@@ -127,7 +128,7 @@ class ContextService:
                             code_snippet_list.append(snippet)
 
                         # Decrement the counter when the agent reaches the chunk limit
-                        if len(relevant_chunks_mapping[agent_id]) == NO_OF_CHUNKS_FOR_LLM:
+                        if len(relevant_chunks_mapping[agent_id]) == MAX_RELEVANT_CHUNKS:
                             remaining_agents -= 1
 
                             # Exit early if all agents are fulfilled

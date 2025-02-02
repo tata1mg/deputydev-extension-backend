@@ -15,3 +15,5 @@ class SessionChatDTO(BaseModel):
     llm_model: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    response_summary: str
+    user_query: str

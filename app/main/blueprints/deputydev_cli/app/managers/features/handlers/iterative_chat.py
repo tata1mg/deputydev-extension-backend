@@ -1,9 +1,13 @@
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
+from app.common.constants.constants import MAX_ITERATIVE_CHUNKS
+from app.common.services.chunking.chunking_manager import ChunkingManger
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from app.common.services.search.dataclasses.main import SearchTypes
+from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
 from app.main.blueprints.deputydev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
@@ -76,8 +80,48 @@ class IterativeChatHandler(BaseFeatureHandler):
             **self.final_headers,
             "Authorization": f"Bearer {self.auth_token}",
         }
-        api_response = await self.one_dev_client.iterative_chat(
+
+        chat_history_response = await self.one_dev_client.fetch_relevant_chat_history(
+            payload={"query": self.query.text},
+            headers=headers,
+        )
+
+        query_vector = await self.embedding_manager.embed_text_array(texts=[self.query.text], store_embeddings=False)
+        search_type = SearchTypes.VECTOR_DB_BASED if ConfigManager.configs["USE_VECTOR_DB"] else SearchTypes.NATIVE
+
+        relevant_chunks, _, focus_chunks = await ChunkingManger.get_relevant_chunks(
+            query=self.build_query(chat_history_response.get("chats", [])),
+            local_repo=self.local_repo,
+            embedding_manager=self.embedding_manager,
+            process_executor=self.process_executor,
+            focus_files=self.query.focus_files,
+            focus_chunks=[
+                f"{chunk.file_path}:{chunk.start_line}-{chunk.end_line}" for chunk in self.query.focus_snippets
+            ],
+            weaviate_client=self.weaviate_client,
+            chunkable_files_with_hashes=self.chunkable_files_with_hashes,
+            query_vector=query_vector[0][0],
+            search_type=search_type,
+            max_chunks_to_return=MAX_ITERATIVE_CHUNKS,
+        )
+        self.final_payload.update(
+            {
+                "relevant_chunks": self.handle_relevant_chunks(search_type, relevant_chunks),
+                "focus_chunks": self.handle_relevant_chunks(search_type, focus_chunks),
+                "is_llm_reranking_enabled": False,
+                "relevant_chat_history": chat_history_response.get("chats", []),
+            }
+        )
+
+        chat_history_response = await self.one_dev_client.iterative_chat(
             payload=self.final_payload,
             headers=headers,
         )
-        return FeatureHandlingResult(**api_response, redirections=self.redirections)
+
+        return FeatureHandlingResult(**chat_history_response, redirections=self.redirections)
+
+    def build_query(self, previous_chats: List[dict]):
+        query = self.query.text
+        for chat in previous_chats:
+            query += f"{chat['query']} \n  {chat['response']}"
+        return query

@@ -14,6 +14,8 @@ class SessionChats(Base):
         "llm_prompt",
         "llm_response",
         "llm_model",
+        "user_query",
+        "response_summary",
         "created_at",
         "updated_at",
     }
@@ -24,6 +26,8 @@ class SessionChats(Base):
     llm_prompt = CITextField(max_length=1000000)
     llm_response = CITextField(max_length=1000000)
     llm_model = CITextField(max_length=100)
+    response_summary = CITextField(max_length=1000000)
+    user_query = CITextField(max_length=1000000)
 
     class Meta:
         table = "session_chats"
@@ -36,5 +40,7 @@ class SessionChats(Base):
         llm_prompt = ("llm_prompt",)
         llm_response = ("llm_response",)
         llm_model = ("llm_model",)
+        response_summary = ("response_summary",)
+        user_query = ("user_query",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
