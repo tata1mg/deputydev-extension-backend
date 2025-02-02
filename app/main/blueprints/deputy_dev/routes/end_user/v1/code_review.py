@@ -5,6 +5,8 @@ from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
 
 from app.backend_common.utils.wrapper import exception_logger
+from app.common.services.chunking.chunker.base_chunker import FileChunkCreator
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,
 )
@@ -99,3 +101,17 @@ async def update_pr_data(_request: Request, **kwargs):
     else:
         app.add_task(BackfillManager().backfill_comments_count_in_experiments_table(query_params))
     return send_response("Success")
+
+
+@smart_code.route("/test_chunking", methods=["POST"])
+async def test_chunking(_request: Request, **kwargs):
+    payload = _request.custom_json()
+    headers = _request.headers
+    request_id = headers.get("X-REQUEST-ID", "No request_id found")
+    payload["request_id"] = request_id
+    logger.info("Whitelisted request: {}".format(payload))
+    root_dir = payload["repo_dir"]
+    path = payload["path"]
+    chunks = FileChunkCreator.create_chunks(path, root_dir, use_new_chunking=True)
+    rendered_chunks = render_snippet_array(chunks)
+    return send_response(f"Processing Started with Request ID : {dict({'result':rendered_chunks})}")

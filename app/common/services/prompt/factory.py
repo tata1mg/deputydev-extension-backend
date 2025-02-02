@@ -1,10 +1,13 @@
-from typing import Dict, Type
+from typing import Any, Dict, Type
 
 from app.common.constants.constants import LLModels, PromptFeatures
 from app.common.services.prompt.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
 from app.common.services.prompt.base_prompt import BasePrompt
+from app.common.services.prompt.feature_prompts.chat_filter.factory import (
+    ChatRankingPromptFactory,
+)
 from app.common.services.prompt.feature_prompts.chunk_description_generation.factory import (
     ChunkDescriptionGenerationPromptFactory,
 )
@@ -49,11 +52,12 @@ class PromptFeatureFactory:
         PromptFeatures.ITERATIVE_CODE_CHAT: IterativeCodeChatPromptFactory,
         PromptFeatures.DIFF_CREATION: DiffCreationPromptFactory,
         PromptFeatures.PLAN_CODE_GENERATION: PlanCodeGenerationPromptFactory,
+        PromptFeatures.CHAT_RERANKING: ChatRankingPromptFactory,
     }
 
     @classmethod
     def get_prompt(
-        cls, prompt_feature: PromptFeatures, model_name: LLModels, init_params: Dict[str, str]
+        cls, prompt_feature: PromptFeatures, model_name: LLModels, init_params: Dict[str, Any]
     ) -> BasePrompt:
         feature_prompt_factory = cls.feature_prompt_factory_map.get(prompt_feature)
         if not feature_prompt_factory:

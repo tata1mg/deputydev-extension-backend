@@ -1,20 +1,16 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Tuple
 
-from app.common.constants.constants import LARGE_NO_OF_CHUNKS
 from app.common.services.chunking.chunker.base_chunker import BaseChunker
 from app.common.services.chunking.document import chunks_to_docs
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from app.common.services.search.native.lexical_search import lexical_search
-from app.common.utils.config_manager import ConfigManager
 
 from ...chunking.chunk_info import ChunkInfo
 from .vector_search import compute_vector_search_scores
 
 
 class NativeSearch:
-    NO_OF_CHUNKS: int = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
-
     @classmethod
     async def perform_search(
         cls,
@@ -22,6 +18,7 @@ class NativeSearch:
         embedding_manager: BaseEmbeddingManager,
         chunking_handler: BaseChunker,
         process_executor: ProcessPoolExecutor,
+        max_chunks_to_return: int,
     ) -> Tuple[List[ChunkInfo], int]:
         """
         Perform a search operation on documents and document chunks.
@@ -62,6 +59,6 @@ class NativeSearch:
             all_chunks,
             key=lambda chunk: content_to_lexical_score_list[chunk.denotation],
             reverse=True,
-        )[:LARGE_NO_OF_CHUNKS]
+        )[0:max_chunks_to_return]
 
         return ranked_snippets_list, input_tokens

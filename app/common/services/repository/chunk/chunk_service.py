@@ -2,11 +2,15 @@ from datetime import datetime
 from typing import List, Tuple
 
 from sanic.log import logger
-from weaviate.classes.query import Filter
+from weaviate.classes.query import Filter, MetadataQuery
 from weaviate.util import generate_uuid5
 
 from app.common.models.dao.weaviate.chunks import Chunks
-from app.common.models.dto.chunk_dto import ChunkDTO, ChunkDTOWithVector
+from app.common.models.dto.chunk_dto import (
+    ChunkDTO,
+    ChunkDTOWithScore,
+    ChunkDTOWithVector,
+)
 from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
 from app.common.utils.app_logger import AppLogger
 
@@ -19,7 +23,7 @@ class ChunkService:
 
     async def perform_filtered_vector_hybrid_search(
         self, chunk_hashes: List[str], query: str, query_vector: List[float], limit: int = 20, alpha: float = 0.7
-    ) -> List[ChunkDTO]:
+    ) -> List[ChunkDTOWithScore]:
         try:
             all_chunks = await self.async_collection.query.hybrid(
                 filters=Filter.by_property("chunk_hash").contains_any(chunk_hashes),
@@ -27,11 +31,15 @@ class ChunkService:
                 limit=limit,
                 vector=query_vector,
                 alpha=alpha,
+                return_metadata=MetadataQuery(score=True),
             )
             return [
-                ChunkDTO(
-                    **chunk_file_obj.properties,
-                    id=str(chunk_file_obj.uuid),
+                ChunkDTOWithScore(
+                    score=chunk_file_obj.metadata.score,
+                    chunk=ChunkDTO(
+                        **chunk_file_obj.properties,
+                        id=str(chunk_file_obj.uuid),
+                    ),
                 )
                 for chunk_file_obj in all_chunks.objects
             ]
