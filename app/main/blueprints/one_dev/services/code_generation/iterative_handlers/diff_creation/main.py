@@ -97,6 +97,8 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                 llm_prompt=llm_response.raw_prompt,
                 llm_response=llm_response.raw_llm_response,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
+                response_summary="",
+                user_query="generate diff",
             )
         )
 
