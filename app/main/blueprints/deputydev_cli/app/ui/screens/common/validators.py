@@ -54,7 +54,7 @@ class AsyncValidator(Validator):
 
 class TextValidator(AsyncValidator):
     async def validation_core(self, input_text: str) -> None:
-        if not input_text:
+        if not input_text or not input_text.strip():
             raise ValidationError(message="Input cannot be empty", cursor_position=len(input_text))
 
 
