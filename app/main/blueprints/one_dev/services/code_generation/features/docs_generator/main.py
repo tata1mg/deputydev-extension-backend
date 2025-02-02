@@ -3,6 +3,7 @@ from typing import List
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
 from app.common.constants.constants import LLModels, PromptFeatures
+from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.features.base_code_gen_feature import (
@@ -33,10 +34,15 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
 
     @classmethod
     async def _feature_task(cls, payload: CodeDocsGenerationInput, job_id: int, llm_meta: List[LLMMeta]):
+        relevant_chunks = await cls.rerank(
+            payload.query, payload.relevant_chunks, payload.focus_chunks, payload.is_llm_reranking_enabled
+        )
+        relevant_chunks = render_snippet_array(relevant_chunks)
         init_params = {
             "query": payload.query,
-            "relevant_chunks": payload.relevant_chunks,
+            "relevant_chunks": relevant_chunks,
         }
+
         if payload.custom_instructions:
             init_params["custom_instructions"] = payload.custom_instructions
         prompt = PromptFeatureFactory.get_prompt(
@@ -68,6 +74,8 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
                 llm_prompt=llm_response.raw_prompt,
                 llm_response=llm_response.raw_llm_response,
                 llm_model=llm_response.llm_meta.llm_model.value,
+                response_summary=llm_response.parsed_llm_data["summary"],
+                user_query=payload.query,
             )
         )
 

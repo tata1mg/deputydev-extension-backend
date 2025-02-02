@@ -17,6 +17,7 @@ async def perform_search(
     search_type: SearchTypes,
     embedding_manager: BaseEmbeddingManager,
     process_executor: ProcessPoolExecutor,
+    max_chunks_to_return: int,
     chunking_handler: Optional[BaseChunker] = None,
     query_vector: Optional[List[float]] = None,
     weaviate_client: Optional[WeaviateSyncAndAsyncClients] = None,
@@ -32,6 +33,7 @@ async def perform_search(
             embedding_manager=embedding_manager,
             process_executor=process_executor,
             chunking_handler=chunking_handler,
+            max_chunks_to_return=max_chunks_to_return,
         )
     elif search_type == SearchTypes.VECTOR_DB_BASED:
         if not weaviate_client:
@@ -45,6 +47,7 @@ async def perform_search(
             query=query,
             query_vector=query_vector,
             weaviate_client=weaviate_client,
+            max_chunks_to_return=max_chunks_to_return,
         )
 
     return sorted_chunks, input_tokens

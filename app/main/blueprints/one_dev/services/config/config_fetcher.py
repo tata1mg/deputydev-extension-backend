@@ -23,7 +23,8 @@ class ConfigFetcher:
         return {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
-                "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"],
+                "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
+                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
             },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],

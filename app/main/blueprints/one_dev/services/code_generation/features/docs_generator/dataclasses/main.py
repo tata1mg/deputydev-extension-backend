@@ -1,5 +1,6 @@
 from typing import Optional
 
+from app.common.services.chunking.chunk_info import ChunkInfo
 from app.main.blueprints.one_dev.services.code_generation.dataclasses.main import (
     PRConfig,
 )
@@ -11,7 +12,9 @@ from app.main.blueprints.one_dev.services.code_generation.features.dataclass.mai
 class CodeDocsGenerationInput(BaseCodeGenFeaturePayload):
     query: str
     custom_instructions: Optional[str] = None
-    relevant_chunks: str
     create_pr: Optional[bool] = None
     pr_config: Optional[PRConfig] = None
     apply_diff: Optional[bool] = None
+    relevant_chunks: list[ChunkInfo]
+    focus_chunks: Optional[list[ChunkInfo]]
+    is_llm_reranking_enabled: Optional[bool] = False

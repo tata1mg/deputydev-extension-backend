@@ -49,6 +49,12 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pla
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.plan_to_code.main import (
     PlanCodeGenerationHandler,
 )
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+    ChatHistoryHandler,
+)
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
+    PreviousChatPayload,
+)
 from app.main.blueprints.one_dev.services.embedding.dataclasses.main import (
     OneDevEmbeddingPayload,
 )
@@ -193,4 +199,16 @@ async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
 async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
     payload = _request.custom_json()
     response = await FeedbackService.record_feedback(payload=CodeGenerationFeedbackInput(**payload))
+    return send_response(response)
+
+
+@code_gen.route("/relevant-chat-history", methods=["POST"])
+@validate_cli_version
+@ensure_session_id
+@authenticate
+async def fetch_relevant_chat_history(_request: Request, auth_data: AuthData, **kwargs):
+    payload = _request.custom_json()
+    response = await ChatHistoryHandler(
+        PreviousChatPayload(query=payload["query"], session_id=_request.headers.get("X-Session-Id"))
+    ).get_relevant_previous_chats()
     return send_response(response)

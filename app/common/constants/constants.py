@@ -9,8 +9,9 @@ PR_SIZING_TEXT = (
 PR_SUMMARY_COMMIT_TEXT = "DeputyDev generated PR summary until {commit_id}"
 PR_NOT_FOUND = "PR does not exist"
 LARGE_PR_DIFF = "PR diff is larger than 20k lines"
-LARGE_NO_OF_CHUNKS = 60  # this is x4 of  NO_OF_CHUNKS_FOR_LLM
-NO_OF_CHUNKS_FOR_LLM = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
+MAX_RELEVANT_CHUNKS = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
+IS_LLM_RERANKING_ENABLED = ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"]
+MAX_ITERATIVE_CHUNKS = 20
 
 CUSTOM_PROMPT_CHAR_LIMIT = 4000
 
@@ -62,11 +63,14 @@ class PromptFeatures(Enum):
     ITERATIVE_CODE_CHAT = "ITERATIVE_CODE_CHAT"
     DIFF_CREATION = "DIFF_CREATION"
     PLAN_CODE_GENERATION = "PLAN_CODE_GENERATION"
+    CHAT_RERANKING = "CHAT_RERANKING"
 
 
 class LLModels(Enum):
     GPT_4O = "GPT_4O"
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
+    GPT_40_MINI = "GPT_40_MINI"
+    GPT_O1_MINI = "GPT_O1_MINI"
 
 
 class Connections(Enum):
@@ -89,6 +93,7 @@ TYPESCRIPT_EXTENSIONS = {
     "mts": "typescript",
     "cts": "typescript",
 }
+RUBY_EXTENSIONS = {"rb": "ruby"}
 
 
 # We collect all the language dictionaries and create a single dict, making it easier to segregate as different extensions
@@ -99,6 +104,7 @@ ALL_EXTENSIONS = {
     **JAVA_EXTENSIONS,
     **TSX_EXTENSIONS,
     **EXTENSION_TO_LANGUAGE,
+    **RUBY_EXTENSIONS,
 }
 
 

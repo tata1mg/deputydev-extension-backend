@@ -42,12 +42,15 @@ class OpenaiLLM(BaseLLMProvider):
         )
         return response
 
-    def build_llm_message(self, prompt: Dict[str, str]) -> List[Dict[str, str]]:
+    def build_llm_message(
+        self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []
+    ) -> List[Dict[str, str]]:
         """
         Formats the conversation for OpenAI's GPT model.
 
         Args:
             prompt (Dict[str, str]): A prompt object.
+            previous_responses (List[Dict[str, str]] ): previous messages to pass to LLM
 
         Returns:
             List[Dict[str, str]]: A formatted list of message dictionaries.
