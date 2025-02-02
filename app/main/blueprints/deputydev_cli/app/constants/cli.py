@@ -18,5 +18,5 @@ class CLIFeatures(Enum):
     PLAN_CODE_GENERATION = "PLAN_CODE_GENERATION"
 
 
-class KeyringConstants(Enum):
-    AUTH_TOKEN = "auth_token"
+class AuthTokenConstants(Enum):
+    CLI_AUTH_TOKEN = "cli_auth_token"
