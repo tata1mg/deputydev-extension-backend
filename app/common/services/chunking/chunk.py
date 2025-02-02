@@ -3,7 +3,6 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional, Set, Tuple, Union
 
-
 import tree_sitter_javascript
 from sanic.log import logger
 from tree_sitter import Language, Node, Parser
