@@ -1,6 +1,7 @@
 import json
 from functools import wraps
 
+from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
@@ -12,6 +13,7 @@ from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
+from app.common.constants.auth import AuthStatus
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
@@ -30,15 +32,34 @@ def authenticate(func):
 
         # decode encrypted session data and get the supabase access token
         encrypted_session_data = authorization_header.split(" ")[1]
-        # first decrypt the token using session encryption service
-        session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
-        # convert back to json object
-        session_data = json.loads(session_data_string)
-        # extract supabase access token
-        access_token = session_data.get("access_token")
-        token_data = await SupabaseAuth.verify_auth_token(access_token)
-        if not token_data["valid"]:
-            raise BadRequestException("Auth token not verified")
+        try:
+            # first decrypt the token using session encryption service
+            session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
+            # convert back to json object
+            session_data = json.loads(session_data_string)
+            # extract supabase access token
+            access_token = session_data.get("access_token")
+            token_data = await SupabaseAuth.verify_auth_token(access_token)
+            if not token_data["valid"]:
+                return {"status": AuthStatus.NOT_VERIFIED.value}
+        except ExpiredSignatureError:
+            # refresh the current session
+            refresh_session_data = await SupabaseAuth.refresh_session(session_data.get("refresh_token"))
+            # update the session data with the refreshed access and refresh tokens
+            session_data["access_token"] = refresh_session_data["access_token"]
+            session_data["refresh_token"] = refresh_session_data["refresh_token"]
+            # return the refreshed session data
+            encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
+        except InvalidTokenError:
+            return {
+                "status": AuthStatus.NOT_VERIFIED.value,
+                "error_message": "Invalid token format.",
+            }
+        except Exception as _ex:
+            return {
+                "status": AuthStatus.NOT_VERIFIED.value,
+                "error_message": str(_ex),
+            }
 
         # Extract the email from the user response
         email = session_data.get("email")
@@ -74,6 +95,8 @@ def authenticate(func):
             user_team_id=user_team_id,
         )
 
+        # add the session data to the kwargs
+        kwargs["headers"] = {"new_session_data": encrypted_session_data}
         return await func(_request, auth_data=auth_data, **kwargs)
 
     return wrapper
