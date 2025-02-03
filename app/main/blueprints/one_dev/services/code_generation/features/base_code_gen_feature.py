@@ -76,7 +76,7 @@ class BaseCodeGenFeature(ABC, Generic[PayloadType]):
     ) -> List[ChunkInfo]:
         max_default_chunks_to_return = ConfigManager.config["CHUNKING"]["DEFAULT_MAX_CHUNKS_CODE_GENERATION"]
         chunks = focus_chunks + related_codebase_chunks
-        chunks.sort(key=lambda chunk: chunk.score, reverse=True)
+        chunks.sort(key=lambda chunk: chunk.search_score, reverse=True)
         return chunks[:max_default_chunks_to_return]
 
     @classmethod
