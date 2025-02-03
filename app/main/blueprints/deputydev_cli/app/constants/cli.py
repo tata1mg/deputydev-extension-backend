@@ -20,3 +20,7 @@ class CLIFeatures(Enum):
 
 class AuthTokenConstants(Enum):
     CLI_AUTH_TOKEN = "cli_auth_token"
+
+
+class LocalDirectories(Enum):
+    LOCAL_ROOT_DIRECTORY = ".deputydev"
