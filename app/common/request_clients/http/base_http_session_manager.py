@@ -1,7 +1,9 @@
 import asyncio
+import ssl
 from typing import Optional
 
 import aiohttp
+import certifi
 
 from app.common.utils.config_manager import ConfigManager
 from app.common.utils.singleton import Singleton
@@ -35,10 +37,12 @@ class SessionManager(metaclass=Singleton):
             self._session = None
 
         if self._session is None or self._session.closed:
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
             connector = aiohttp.TCPConnector(
                 limit=self.limit,
                 limit_per_host=self.limit_per_host,
                 ttl_dns_cache=self.ttl_dns_cache,
+                ssl=ssl_context,
             )
             timeout = aiohttp.ClientTimeout(total=60)
             self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
