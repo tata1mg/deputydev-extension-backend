@@ -11,7 +11,9 @@ from app.main.blueprints.deputydev_cli.app.clients.constants import (
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
-from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.base_auth_token_storage_manager import AuthTokenStorageBase
+from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.base_auth_token_storage_manager import (
+    AuthTokenStorageBase,
+)
 from app.main.blueprints.deputydev_cli.versions import APP_VERSION
 
 
