@@ -70,6 +70,9 @@ class AuthenticationManager:
             # Check if the response contains a status of 'verified'
             if response["status"] == AuthStatus.VERIFIED.value:
                 return CLIAuthTokenStorageManager.load_auth_token()
+            elif response["status"] == AuthStatus.EXPIRED.value:
+                CLIAuthTokenStorageManager.store_auth_token(response["session_data"])
+                return CLIAuthTokenStorageManager.load_auth_token()
             else:
                 return None
 
