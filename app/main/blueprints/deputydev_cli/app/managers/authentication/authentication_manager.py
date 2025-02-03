@@ -1,3 +1,4 @@
+import pdb
 import time
 import uuid
 from typing import Optional
@@ -71,6 +72,8 @@ class AuthenticationManager:
             if response["status"] == AuthStatus.VERIFIED.value:
                 return CLIAuthTokenStorageManager.load_auth_token()
             elif response["status"] == AuthStatus.EXPIRED.value:
+                if not response.get("session_data") or response.get("session_data") is None:
+                    raise Exception("No session data found in response")
                 CLIAuthTokenStorageManager.store_auth_token(response["session_data"])
                 return CLIAuthTokenStorageManager.load_auth_token()
             else:
