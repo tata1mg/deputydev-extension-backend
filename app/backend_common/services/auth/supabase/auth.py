@@ -26,8 +26,10 @@ class SupabaseAuth:
         if exp_timestamp is not None:
             current_time = int(datetime.now(timezone.utc).timestamp())
             if current_time > exp_timestamp:
+                return True
+            else:
                 return False
-        return True
+        raise jwt.InvalidTokenError("Invalid token.")
 
     @classmethod
     async def verify_auth_token(cls, access_token: str) -> Dict[str, Any]:
@@ -49,9 +51,9 @@ class SupabaseAuth:
             # Decode the JWT token without verification to check expiration
             decoded_token = JWTHandler.verify_token_without_signature_verification(access_token)
             # Verifying expiry of the token before supabase network call
-            is_token_valid = cls.is_token_expired(decoded_token)
-            if not is_token_valid:
-                return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
+            is_token_expired = cls.is_token_expired(decoded_token)
+            if is_token_expired:
+                raise jwt.ExpiredSignatureError
 
             # Verify token with Supabase
             user_response = cls.supabase.auth.get_user(access_token)
@@ -66,16 +68,11 @@ class SupabaseAuth:
                 return {"valid": False, "message": "Token is invalid", "user_email": None, "user_name": None}
 
         except jwt.ExpiredSignatureError:
-            return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
+            raise jwt.ExpiredSignatureError("The token has expired.")
         except jwt.InvalidTokenError:
-            return {"valid": False, "message": "Invalid token format", "user_email": None, "user_name": None}
+            raise jwt.InvalidTokenError("Invalid token.")
         except Exception as e:
-            return {
-                "valid": False,
-                "message": f"Token validation failed: {str(e)}",
-                "user_email": None,
-                "user_name": None,
-            }
+            raise Exception(f"Token validation failed: {str(e)}")
 
     @classmethod
     async def extract_and_validate_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -102,3 +99,20 @@ class SupabaseAuth:
 
         # Call the verify_auth_token method with the access token
         return await cls.verify_auth_token(access_token)
+
+    @classmethod
+    async def refresh_session(cls, refresh_token: str) -> Dict[str, Any]:
+        try:
+            # Call the Supabase auth refresh method with the provided refresh token
+            response = cls.supabase.auth.refresh_session(refresh_token)
+
+            if response.session:
+                return {
+                    "access_token": response.session.access_token,
+                    "refresh_token": response.session.refresh_token,
+                }
+            else:
+                raise Exception("Failed to refresh tokens: Response does not contain tokens.")
+        except Exception as e:
+            # Handle exceptions (e.g., log the error)
+            raise Exception(f"Error refreshing session: {str(e)}")
