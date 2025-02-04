@@ -143,7 +143,7 @@ class NeoSpan:
             seen: Set[Tuple[str, str]] = set()
             deduped: List[ChunkMetadataHierachyObject] = []
             for _item in hierarchy_list:
-                item_tuple = (_item.type.value, _item.value)  # Sort items to ensure consistent comparison
+                item_tuple = (_item.type, _item.value)  # Sort items to ensure consistent comparison
                 if item_tuple not in seen:
                     seen.add(item_tuple)
                     deduped.append(_item)
@@ -299,6 +299,19 @@ def is_class_node(node: Node, grammar: Dict[str, str]):
     return node.type in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
 
 
+def is_namespace_node(node: Node, grammar: Dict[str, str]):
+    """
+    Checks if a given node is namespace by visiting to depth
+    Args:
+        node (Ast node):
+        grammar (Dict[str, str]): grammar for the language
+
+    Returns:
+
+    """
+    return node.type in grammar[LanguageIdentifiers.NAMESPACE.value]
+
+
 def is_node_breakable(node: Node, grammar: Dict[str, str]) -> bool:
     if node.type in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
         breakable = False
@@ -324,7 +337,9 @@ def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
     # Direct identifier check
     if (
         node.type
-        in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value] + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+        in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value]
+        + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+        + grammar[LanguageIdentifiers.NAMESPACE_IDENTIFIER.value]
     ):
         return node.text.decode("utf-8")
 
@@ -334,6 +349,7 @@ def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
             child.type
             in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value]
             + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+            + grammar[LanguageIdentifiers.NAMESPACE_IDENTIFIER.value]
         ):
             return child.text.decode("utf-8")
 
@@ -344,6 +360,7 @@ def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
             child.type
             in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
             + grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
+            + grammar[LanguageIdentifiers.NAMESPACE_IDENTIFIER.value]
         ):
             name = extract_name(child, grammar)
             if name:
@@ -361,6 +378,7 @@ class LanguageIdentifiers(Enum):
     FUNCTION_CLASS_WRAPPER = "function_class_wrapper"
     NAMESPACE = "namespace"
     DECORATED_DEFINITION = "decorated_definition"
+    NAMESPACE_IDENTIFIER = "namespace_identifier"
 
 
 js_family_identifiers = {
@@ -375,6 +393,7 @@ js_family_identifiers = {
     LanguageIdentifiers.DECORATOR.value: "NA",
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: ["expression_statement"],
     LanguageIdentifiers.NAMESPACE.value: ["namespace", "internal_module"],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: ["identifier"],
     LanguageIdentifiers.DECORATED_DEFINITION.value: [],
 }
 
@@ -397,15 +416,17 @@ java_family_identifiers = {
     LanguageIdentifiers.DECORATOR.value: "NA",
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
     LanguageIdentifiers.NAMESPACE.value: ["NA"],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: [],
 }
 ruby_family_identifiers = {
     LanguageIdentifiers.FUNCTION_DEFINITION.value: ["method", "singleton_method", "class_method"],
-    LanguageIdentifiers.CLASS_DEFINITION.value: ["class", "module", "singleton_class"],
+    LanguageIdentifiers.CLASS_DEFINITION.value: ["class", "singleton_class"],
     LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["identifier", "constant"],
     LanguageIdentifiers.CLASS_IDENTIFIER.value: ["constant"],
     LanguageIdentifiers.DECORATOR.value: "NA",
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
     LanguageIdentifiers.NAMESPACE.value: ["module"],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: ["constant"],
 }
 
 kotlin_family_identifiers = {
@@ -421,6 +442,7 @@ kotlin_family_identifiers = {
     LanguageIdentifiers.DECORATOR.value: "NA",
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
     LanguageIdentifiers.NAMESPACE.value: [],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: [],
 }
 
 chunk_language_identifiers = {
@@ -433,6 +455,7 @@ chunk_language_identifiers = {
         LanguageIdentifiers.DECORATOR.value: "decorator",
         LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: ["decorated_definition"],
         LanguageIdentifiers.NAMESPACE.value: ["NA"],
+        LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: [],
     },
     "javascript": js_family_identifiers,
     "tsx": js_family_identifiers,
@@ -510,13 +533,17 @@ def chunk_node_with_meta_data(
     if node.type not in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
         if is_class_node(node, grammar):
             class_name = extract_name(node, grammar)
-            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.CLASS, value=class_name))
+            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.CLASS.value, value=class_name))
             all_classes.append(class_name)
 
         elif is_function_node(node, grammar):
             func_name = extract_name(node, grammar)
-            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.FUNCTION, value=func_name))
+            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.FUNCTION.value, value=func_name))
             all_functions.append(func_name)
+        elif is_namespace_node(node, grammar):
+            namespace_name = extract_name(node, grammar)
+            # namespace type will not be fixed to class or functon so using node actual type
+            hierarchy.append(ChunkMetadataHierachyObject(type=node.type, value=namespace_name))
 
     current_chunk = create_chunk_with_decorators(node.start_point, node.start_point, pending_decorators, node)
 
