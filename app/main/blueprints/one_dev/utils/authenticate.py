@@ -44,12 +44,9 @@ def authenticate(func):
                 return {"status": AuthStatus.NOT_VERIFIED.value}
         except ExpiredSignatureError:
             # refresh the current session
-            refresh_session_data = await SupabaseAuth.refresh_session(session_data.get("refresh_token"))
-            # update the session data with the refreshed access and refresh tokens
-            session_data["access_token"] = refresh_session_data["access_token"]
-            session_data["refresh_token"] = refresh_session_data["refresh_token"]
-            # return the refreshed session data
-            encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
+            refresh_session_data = await SupabaseAuth.refresh_session(session_data)
+            # add the session data to the kwargs
+            kwargs["headers"] = {"new_session_data": refresh_session_data}
         except InvalidTokenError:
             return {
                 "status": AuthStatus.NOT_VERIFIED.value,
@@ -95,8 +92,6 @@ def authenticate(func):
             user_team_id=user_team_id,
         )
 
-        # add the session data to the kwargs
-        kwargs["headers"] = {"new_session_data": encrypted_session_data}
         return await func(_request, auth_data=auth_data, **kwargs)
 
     return wrapper

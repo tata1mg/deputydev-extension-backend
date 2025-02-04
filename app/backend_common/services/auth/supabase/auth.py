@@ -1,8 +1,12 @@
+import json
 from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
 
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.common.services.authentication.jwt import JWTHandler
 
@@ -98,18 +102,38 @@ class SupabaseAuth:
         return await cls.verify_auth_token(access_token)
 
     @classmethod
-    async def refresh_session(cls, refresh_token: str) -> Dict[str, Any]:
+    async def refresh_session(cls, session_data: Dict[str, Any]) -> str:
+        """
+        Refreshes the user session by obtaining new access and refresh tokens.
+
+        This method calls the Supabase authentication service to refresh the session
+        using the provided refresh token. It updates the session data with the new
+        tokens and encrypts the session data before returning it.
+
+        Args:
+            session_data (Dict[str, Any]): A dictionary containing the session data,
+                including the refresh token.
+
+        Returns:
+            str: The encrypted session data containing the new access and refresh tokens.
+
+        Raises:
+            Exception: If the refresh operation fails or if there is an error during
+                the process.
+        """
         try:
             # Call the Supabase auth refresh method with the provided refresh token
-            response = cls.supabase.auth.refresh_session(refresh_token)
+            response = cls.supabase.auth.refresh_session(session_data.get("refresh_token"))
 
-            if response.session:
-                return {
-                    "access_token": response.session.access_token,
-                    "refresh_token": response.session.refresh_token,
-                }
-            else:
-                raise Exception("Failed to refresh tokens: Response does not contain tokens.")
+            if not response.session:
+                raise Exception("Failed to refresh tokens.")
+
+            # update the session data with the refreshed access and refresh tokens
+            session_data["access_token"] = response.session.access_token
+            session_data["refresh_token"] = response.session.refresh_token
+            # return the refreshed session data
+            encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
+            return encrypted_session_data
         except Exception as e:
             # Handle exceptions (e.g., log the error)
             raise Exception(f"Error refreshing session: {str(e)}")
