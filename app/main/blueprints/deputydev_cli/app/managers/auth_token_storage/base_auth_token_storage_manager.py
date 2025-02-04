@@ -3,8 +3,8 @@ import os
 from typing import Union
 
 from app.main.blueprints.deputydev_cli.app.constants.cli import (
-    AuthTokenFiles,
     LocalDirectories,
+    LocalFiles,
 )
 
 
@@ -24,7 +24,7 @@ class AuthTokenStorageBase:
     """
 
     token_dir = os.path.join(os.path.expanduser("~"), LocalDirectories.LOCAL_ROOT_DIRECTORY.value)
-    token_file = os.path.join(token_dir, AuthTokenFiles.CLI_AUTH_TOKEN_FILE.value)
+    token_file = os.path.join(token_dir, LocalFiles.CLI_AUTH_TOKEN_FILE.value)
 
     @classmethod
     def ensure_token_directory(cls):
