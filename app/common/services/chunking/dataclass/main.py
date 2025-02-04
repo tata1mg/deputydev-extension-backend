@@ -10,7 +10,7 @@ class ChunkNodeType(Enum):
 
 
 class ChunkMetadataHierachyObject(BaseModel):
-    type: ChunkNodeType
+    type: str
     value: str
 
 
