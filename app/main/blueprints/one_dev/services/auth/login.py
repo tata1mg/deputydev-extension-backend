@@ -2,7 +2,6 @@ import json
 from typing import Any, Dict
 
 from jwt import ExpiredSignatureError, InvalidTokenError
-from torpedo.exceptions import BadRequestException
 
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
@@ -23,14 +22,14 @@ class Login:
             access_token = session_data.get("access_token")
             response = await SupabaseAuth.verify_auth_token(access_token)
             if not response["valid"]:
-                raise BadRequestException("Auth token not verified")
-            return {
-                "status": AuthStatus.VERIFIED.value,
-            }
+                return {"status": AuthStatus.NOT_VERIFIED.value}
+            return {"status": AuthStatus.VERIFIED.value}
         except ExpiredSignatureError:
+            # refresh the current session
+            refresh_session_data = await SupabaseAuth.refresh_session(session_data)
             return {
-                "status": AuthStatus.NOT_VERIFIED.value,
-                "error_message": "Token has expired.",
+                "status": AuthStatus.EXPIRED.value,
+                "encrypted_session_data": refresh_session_data,
             }
         except InvalidTokenError:
             return {
