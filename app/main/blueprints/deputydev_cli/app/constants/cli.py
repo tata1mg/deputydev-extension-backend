@@ -26,5 +26,5 @@ class LocalDirectories(Enum):
     LOCAL_ROOT_DIRECTORY = ".deputydev"
 
 
-class AuthTokenFiles(Enum):
+class LocalFiles(Enum):
     CLI_AUTH_TOKEN_FILE = "605b8520-0d06-4b8a-92b0-7ebfec7a9e6d.json"
