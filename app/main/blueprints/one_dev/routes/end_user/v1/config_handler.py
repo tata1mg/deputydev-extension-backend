@@ -22,4 +22,4 @@ async def get_essential_configs(_request: Request, **kwargs):
 @authenticate
 async def get_configs(_request: Request, **kwargs):
     response = ConfigFetcher.fetch_configs_for_cli()
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
