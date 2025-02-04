@@ -35,7 +35,7 @@ class Login:
             encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
             return {
                 "status": AuthStatus.EXPIRED.value,
-                "session_data": encrypted_session_data,
+                "encrypted_session_data": encrypted_session_data,
             }
         except InvalidTokenError:
             return {
