@@ -25,10 +25,7 @@ class SupabaseAuth:
         exp_timestamp = decoded_token.get("exp")
         if exp_timestamp is not None:
             current_time = int(datetime.now(timezone.utc).timestamp())
-            if current_time > exp_timestamp:
-                return True
-            else:
-                return False
+            return current_time > exp_timestamp
         raise jwt.InvalidTokenError("Invalid token.")
 
     @classmethod
