@@ -19,4 +19,4 @@ config = CONFIG.config
 async def get_repos(_request: Request, auth_data: AuthData, **kwargs):
     payload = {key: var for key, var in _request.query_args}
     response = await ReposHandler.get_registered_repo_details(**payload)
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
