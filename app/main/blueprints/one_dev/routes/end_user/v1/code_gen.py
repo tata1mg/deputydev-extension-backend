@@ -85,7 +85,7 @@ async def generate_code(_request: Request, auth_data: AuthData, **kwargs):
     response = await CodeGenerationHandler.start_feature(
         payload=CodeGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/generate-docs", methods=["POST"])
@@ -98,7 +98,7 @@ async def generate_docs(_request: Request, auth_data: AuthData, **kwargs):
     response = await DocsGenerationHandler.start_feature(
         payload=CodeDocsGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/generate-test-cases", methods=["POST"])
@@ -111,7 +111,7 @@ async def generate_test_case(_request: Request, auth_data: AuthData, **kwargs):
     response = await TestCaseGenerationHandler.start_feature(
         payload=TestCaseGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/generate-code-plan", methods=["POST"])
@@ -124,7 +124,7 @@ async def generate_code_plan(_request: Request, auth_data: AuthData, **kwargs):
     response = await CodePlanHandler.start_feature(
         payload=CodePlanGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/generate-diff", methods=["POST"])
@@ -137,7 +137,7 @@ async def generate_code_diff(_request: Request, auth_data: AuthData, **kwargs):
     response = await DiffCreationHandler.start_feature(
         payload=DiffCreationInput(session_id=_request.headers.get("X-Session-Id"), **payload, auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/iterative-chat", methods=["POST"])
@@ -149,7 +149,7 @@ async def iterative_chat(_request: Request, auth_data: AuthData, **kwargs):
     response = await IterativeChatHandler.start_feature(
         payload=IterativeChatInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/plan-code-generation", methods=["POST"])
@@ -160,7 +160,7 @@ async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
     response = await PlanCodeGenerationHandler.start_feature(
         payload=PlanCodeGenerationInput(session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/get-job-status", methods=["GET"])
@@ -178,7 +178,7 @@ async def get_job_status(_request: Request, auth_data: AuthData, **kwargs):
         "status": job.status,
         "response": job.final_output,
     }
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/create-embedding", methods=["POST"])
@@ -189,7 +189,7 @@ async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
     response = await OneDevEmbeddingManager.create_embeddings(
         payload=OneDevEmbeddingPayload(**payload, auth_data=auth_data)
     )
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/record-feedback", methods=["POST"])
@@ -199,7 +199,7 @@ async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
 async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
     payload = _request.custom_json()
     response = await FeedbackService.record_feedback(payload=CodeGenerationFeedbackInput(**payload))
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @code_gen.route("/relevant-chat-history", methods=["POST"])
@@ -211,4 +211,4 @@ async def fetch_relevant_chat_history(_request: Request, auth_data: AuthData, **
     response = await ChatHistoryHandler(
         PreviousChatPayload(query=payload["query"], session_id=_request.headers.get("X-Session-Id"))
     ).get_relevant_previous_chats()
-    return send_response(response, headers=kwargs.get("headers"))
+    return send_response(response, headers=kwargs.get("response_headers"))
