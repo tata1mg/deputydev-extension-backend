@@ -2,7 +2,10 @@ import json
 import os
 from typing import Union
 
-from app.main.blueprints.deputydev_cli.app.constants.cli import LocalDirectories
+from app.main.blueprints.deputydev_cli.app.constants.cli import (
+    AuthTokenFiles,
+    LocalDirectories,
+)
 
 
 class AuthTokenStorageBase:
@@ -21,7 +24,7 @@ class AuthTokenStorageBase:
     """
 
     token_dir = os.path.join(os.path.expanduser("~"), LocalDirectories.LOCAL_ROOT_DIRECTORY.value)
-    token_file = os.path.join(token_dir, "auth_token.json")
+    token_file = os.path.join(token_dir, AuthTokenFiles.CLI_AUTH_TOKEN_FILE.value)
 
     @classmethod
     def ensure_token_directory(cls):
