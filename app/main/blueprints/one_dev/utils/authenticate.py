@@ -46,7 +46,7 @@ def authenticate(func):
             # refresh the current session
             refresh_session_data = await SupabaseAuth.refresh_session(session_data)
             # add the session data to the kwargs
-            kwargs["headers"] = {"new_session_data": refresh_session_data}
+            kwargs["response_headers"] = {"new_session_data": refresh_session_data}
         except InvalidTokenError:
             return {
                 "status": AuthStatus.NOT_VERIFIED.value,
