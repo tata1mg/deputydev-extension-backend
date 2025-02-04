@@ -71,9 +71,9 @@ class AuthenticationManager:
             if response["status"] == AuthStatus.VERIFIED.value:
                 return CLIAuthTokenStorageManager.load_auth_token()
             elif response["status"] == AuthStatus.EXPIRED.value:
-                if not response.get("session_data") or response.get("session_data") is None:
-                    raise Exception("No session data found in response")
-                CLIAuthTokenStorageManager.store_auth_token(response["session_data"])
+                if not response.get("encrypted_session_data") or response.get("encrypted_session_data") is None:
+                    raise Exception("No encrypted session data found in response")
+                CLIAuthTokenStorageManager.store_auth_token(response["encrypted_session_data"])
                 return CLIAuthTokenStorageManager.load_auth_token()
             else:
                 return None
