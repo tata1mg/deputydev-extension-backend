@@ -398,6 +398,30 @@ java_family_identifiers = {
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
     LanguageIdentifiers.NAMESPACE.value: ["NA"],
 }
+ruby_family_identifiers = {
+    LanguageIdentifiers.FUNCTION_DEFINITION.value: ["method", "singleton_method", "class_method"],
+    LanguageIdentifiers.CLASS_DEFINITION.value: ["class", "module", "singleton_class"],
+    LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["identifier", "constant"],
+    LanguageIdentifiers.CLASS_IDENTIFIER.value: ["constant"],
+    LanguageIdentifiers.DECORATOR.value: "NA",
+    LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
+    LanguageIdentifiers.NAMESPACE.value: ["module"],
+}
+
+kotlin_family_identifiers = {
+    LanguageIdentifiers.FUNCTION_DEFINITION.value: [
+        "function_declaration",
+        "lambda_expression",
+        "anonymous_function",
+        "constructor_declaration",
+    ],
+    LanguageIdentifiers.CLASS_DEFINITION.value: ["class_declaration", "object_declaration", "interface_declaration"],
+    LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["simple_identifier"],
+    LanguageIdentifiers.CLASS_IDENTIFIER.value: ["type_identifier"],
+    LanguageIdentifiers.DECORATOR.value: "NA",
+    LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
+    LanguageIdentifiers.NAMESPACE.value: [],
+}
 
 chunk_language_identifiers = {
     "python": {
@@ -414,6 +438,8 @@ chunk_language_identifiers = {
     "tsx": js_family_identifiers,
     "typescript": js_family_identifiers,
     "java": java_family_identifiers,
+    "ruby": ruby_family_identifiers,
+    "kotlin": kotlin_family_identifiers,
 }
 
 
@@ -764,7 +790,7 @@ def chunk_content(content: str, line_count: int = 30, overlap: int = 15) -> List
 
 
 def supported_new_chunk_language(language):
-    return language in ["python", "javascript", "typescript", "tsx", "java"]
+    return language in ["python", "javascript", "typescript", "tsx", "java", "ruby", "kotlin"]
 
 
 def chunk_source(
