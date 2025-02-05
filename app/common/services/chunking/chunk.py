@@ -156,6 +156,7 @@ class NeoSpan:
             import_only_chunk=self.metadata.import_only_chunk or other_meta_data.import_only_chunk,
             all_functions=list(set(self.metadata.all_functions + other_meta_data.all_functions)),
             all_classes=list(set(self.metadata.all_classes + other_meta_data.all_classes)),
+            byte_size=self.metadata.byte_size + other_meta_data.byte_size,
         )
 
     def get_chunk_first_char(self, source_code: bytes):
@@ -509,7 +510,7 @@ def chunk_node_with_meta_data(
     grammar = chunk_language_identifiers[language]
     # Handle decorators for class or function definitions
 
-    def create_chunk_with_decorators(start_point, end_point, decorators=None, current_node=None):
+    def create_chunk_with_decorators(start_point, end_point, byte_size, decorators=None, current_node=None):
         if decorators:
             # Start from the first decorator
             actual_start = decorators[0].start
@@ -526,6 +527,7 @@ def chunk_node_with_meta_data(
                 import_only_chunk=not hierarchy and not is_node_breakable(current_node, grammar),
                 all_functions=[],
                 all_classes=[],
+                byte_size=byte_size,
             ),
         )
 
@@ -545,7 +547,13 @@ def chunk_node_with_meta_data(
             # namespace type will not be fixed to class or functon so using node actual type
             hierarchy.append(ChunkMetadataHierachyObject(type=node.type, value=namespace_name))
 
-    current_chunk = create_chunk_with_decorators(node.start_point, node.start_point, pending_decorators, node)
+    current_chunk = create_chunk_with_decorators(
+        start_point=node.start_point,
+        end_point=node.start_point,
+        byte_size=0,
+        decorators=pending_decorators,
+        current_node=node,
+    )
 
     for child in node_children:
         if is_class_node(child, grammar):
@@ -590,15 +598,23 @@ def chunk_node_with_meta_data(
                 chunks.append(current_chunk)
 
             current_chunk = create_chunk_with_decorators(
-                child.start_point, child.end_point, current_node=child, decorators=pending_decorators
+                child.start_point,
+                child.end_point,
+                byte_size=child.end_byte - child.start_byte,
+                current_node=child,
+                decorators=pending_decorators,
             )
 
         else:
             # Append the current child to the chunk
             if current_chunk:
-                current_chunk += create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+                current_chunk += create_chunk_with_decorators(
+                    child.start_point, child.end_point, byte_size=child.end_byte - child.start_byte, current_node=child
+                )
             else:
-                current_chunk = create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+                current_chunk = create_chunk_with_decorators(
+                    child.start_point, child.end_point, byte_size=child.end_byte - child.start_byte, current_node=child
+                )
 
     # Finalize the last chunk
     if is_valid_chunk(current_chunk):
@@ -616,7 +632,7 @@ def get_chunk_first_char(current_chunk: NeoSpan, source_code: bytes):
     return first_char
 
 
-def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[NeoSpan]:
+def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes, max_chars: int) -> list[NeoSpan]:
     """
     Combine chunks intelligently, ensuring chunks with `dechunk` set to `False` are not merged
     with previous chunks, and chunks are split if their combined size exceeds `coalesce`.
@@ -639,11 +655,13 @@ def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[Ne
     previous_chunk = chunks[0]
 
     for idx, chunk in enumerate(chunks[1:]):
-        # check dechunk condition
+        # check dechunk condition: case when both chunks have same start line
         if chunk.start[0] == previous_chunk.start[0]:
             previous_chunk += chunk
 
-        elif chunk.metadata.dechunk is False:
+        elif (
+            chunk.metadata.dechunk is False or previous_chunk.metadata.byte_size + chunk.metadata.byte_size > max_chars
+        ):
             if previous_chunk and len(previous_chunk) > 0:
                 new_chunks.append(previous_chunk)
             previous_chunk = chunk
@@ -694,7 +712,7 @@ def chunk_code_with_metadata(
             chunk.metadata.all_classes = list(set(all_classes))
             chunk.metadata.all_functions = list(set(all_functions))
 
-    new_chunks = dechunk(chunks, coalesce=coalesce, source_code=source_code)
+    new_chunks = dechunk(chunks, coalesce=coalesce, source_code=source_code, max_chars=MAX_CHARS)
     return new_chunks
 
 
