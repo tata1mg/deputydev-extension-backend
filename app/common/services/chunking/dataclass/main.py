@@ -20,3 +20,4 @@ class ChunkMetadata(BaseModel):
     import_only_chunk: bool
     all_functions: List[str]
     all_classes: List[str]
+    byte_size: int
