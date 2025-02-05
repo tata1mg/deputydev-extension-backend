@@ -23,6 +23,7 @@ from .chunk_info import ChunkInfo, ChunkSourceDetails
 CHARACTER_SIZE = ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
 
 
+# TODO This file is deprecated
 def get_parser(language: str) -> Parser:
     """
     Returns a parser for the specified language.
