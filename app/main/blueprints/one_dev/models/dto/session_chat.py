@@ -13,6 +13,7 @@ class SessionChatDTO(BaseModel):
     llm_prompt: str
     llm_response: str
     llm_model: str
+    code_lines_count: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     response_summary: str
