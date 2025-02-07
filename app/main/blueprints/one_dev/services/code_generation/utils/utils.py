@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Tuple, List
+from typing import Dict, List, Tuple
 
 
 def get_response_code_lines(response: str):
@@ -22,7 +22,7 @@ def get_chunks_by_file_total_lines(chunks_by_file: Dict[str, List[Tuple[int, int
     total_lines = 0
 
     for chunks in chunks_by_file.values():
-        for _, _, content in chunks: # chunk = (1,22, "\n def a(): \n pass")
+        for _, _, content in chunks:  # chunk = (1,22, "\n def a(): \n pass")
             cleaned_content = content.lstrip("\n")  # Remove initial new line
             total_lines += cleaned_content.count("\n")
 
