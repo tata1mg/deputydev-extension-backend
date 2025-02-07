@@ -25,6 +25,7 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import get_chunks_by_file_total_lines
 
 
 class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
@@ -81,6 +82,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
         )
         llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=previous_responses)
         llm_meta.append(llm_response.llm_meta)
+        code_lines = get_chunks_by_file_total_lines(llm_response.parsed_llm_data["chunks_by_file"])
         await JobService.db_update(
             filters={"id": job_id},
             update_data={
@@ -88,6 +90,8 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                 "meta_info": {
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
+                "llm_model": llm_response.llm_meta.llm_model.value,
+                "loc": code_lines,
             },
         )
         await SessionChatService.db_create(

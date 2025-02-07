@@ -27,6 +27,7 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import get_response_code_lines
 
 
 class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
@@ -50,6 +51,7 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
         )
 
         llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=[])
+        code_lines = get_response_code_lines(llm_response.parsed_llm_data["response"])
         llm_meta.append(llm_response.llm_meta)
         await JobService.db_update(
             filters={"id": job_id},
@@ -58,6 +60,8 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
                 "meta_info": {
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
+                "llm_model": llm_response.llm_meta.llm_model.value,
+                "loc": code_lines,
             },
         )
 
