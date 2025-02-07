@@ -15,7 +15,7 @@ class Job(Base):
         "final_output",
         "meta_info",
         "llm_model",
-        "loc",
+        "code_lines_count",
         "user_team_id",
         "created_at",
         "updated_at",
@@ -28,8 +28,8 @@ class Job(Base):
     final_output = fields.JSONField(null=True)
     meta_info = fields.JSONField(null=True)
     user_team_id = fields.IntField(null=False)
-    llm_model = CITextField(max_length=200, null=True)
-    loc = fields.BigIntField(null=True)
+    llm_model = fields.TextField(null=True)
+    code_lines_count = fields.BigIntField(null=True)
 
     class Meta:
         table = "job"

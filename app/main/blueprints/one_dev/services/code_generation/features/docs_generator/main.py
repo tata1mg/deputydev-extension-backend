@@ -21,6 +21,9 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dif
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.diff_creation.main import (
     DiffCreationHandler,
 )
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
+    get_response_code_lines,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
@@ -57,6 +60,7 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
         )
 
         llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=[])
+        code_lines = get_response_code_lines(llm_response.parsed_llm_data["response"])
         llm_meta.append(llm_response.llm_meta)
         await JobService.db_update(
             filters={"id": job_id},
@@ -65,6 +69,8 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
                 "meta_info": {
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
+                "llm_model": llm_response.llm_meta.llm_model.value,
+                "code_lines_count": code_lines,
             },
         )
         await SessionChatService.db_create(
