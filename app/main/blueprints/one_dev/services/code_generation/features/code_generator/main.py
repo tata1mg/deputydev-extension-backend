@@ -62,8 +62,6 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
                 "meta_info": {
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
-                "llm_model": llm_response.llm_meta.llm_model.value,
-                "code_lines_count": code_lines,
             },
         )
 
@@ -76,6 +74,7 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
                 llm_model=llm_response.llm_meta.llm_model.value,
                 response_summary=llm_response.parsed_llm_data["summary"],
                 user_query=payload.query,
+                code_lines_count=code_lines,
             )
         )
 

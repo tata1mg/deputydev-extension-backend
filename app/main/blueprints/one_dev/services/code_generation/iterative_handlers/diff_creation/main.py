@@ -92,8 +92,6 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                 "meta_info": {
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
-                "llm_model": llm_response.llm_meta.llm_model.value,
-                "code_lines_count": code_lines,
             },
         )
         await SessionChatService.db_create(
@@ -105,6 +103,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
                 response_summary="",
                 user_query="generate diff",
+                code_lines_count=code_lines,
             )
         )
 
