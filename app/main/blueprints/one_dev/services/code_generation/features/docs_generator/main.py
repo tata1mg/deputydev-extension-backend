@@ -70,7 +70,7 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
         await SessionChatService.db_create(
             SessionChatDTO(
                 session_id=payload.session_id,
-                prompt_type=PromptFeatures.DIFF_CREATION,
+                prompt_type=PromptFeatures.DOCS_GENERATION,
                 llm_prompt=llm_response.raw_prompt,
                 llm_response=llm_response.raw_llm_response,
                 llm_model=llm_response.llm_meta.llm_model.value,
