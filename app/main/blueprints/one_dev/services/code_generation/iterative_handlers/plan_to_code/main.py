@@ -14,7 +14,9 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dat
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.plan_to_code.dataclasses.main import (
     PlanCodeGenerationInput,
 )
-from app.main.blueprints.one_dev.services.code_generation.utils.utils import get_response_code_lines
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
+    get_response_code_lines,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
@@ -55,7 +57,7 @@ class PlanCodeGenerationHandler(BaseCodeGenIterativeHandler[PlanCodeGenerationIn
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
                 "llm_model": llm_response.llm_meta.llm_model.value,
-                "loc": code_lines,
+                "code_lines_count": code_lines,
             },
         )
         await SessionChatService.db_create(

@@ -19,13 +19,15 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dat
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.diff_creation.dataclasses.main import (
     DiffCreationInput,
 )
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
+    get_chunks_by_file_total_lines,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
-from app.main.blueprints.one_dev.services.code_generation.utils.utils import get_chunks_by_file_total_lines
 
 
 class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
@@ -91,7 +93,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
                 "llm_model": llm_response.llm_meta.llm_model.value,
-                "loc": code_lines,
+                "code_lines_count": code_lines,
             },
         )
         await SessionChatService.db_create(

@@ -21,13 +21,15 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dif
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.diff_creation.main import (
     DiffCreationHandler,
 )
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
+    get_response_code_lines,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
-from app.main.blueprints.one_dev.services.code_generation.utils.utils import get_response_code_lines
 
 
 class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
@@ -61,7 +63,7 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
                 "llm_model": llm_response.llm_meta.llm_model.value,
-                "loc": code_lines,
+                "code_lines_count": code_lines,
             },
         )
 
