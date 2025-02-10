@@ -16,6 +16,7 @@ class SessionChats(Base):
         "llm_model",
         "user_query",
         "response_summary",
+        "code_lines_count",
         "created_at",
         "updated_at",
     }
@@ -28,6 +29,7 @@ class SessionChats(Base):
     llm_model = CITextField(max_length=100)
     response_summary = CITextField(max_length=1000000)
     user_query = CITextField(max_length=1000000)
+    code_lines_count = fields.BigIntField(null=True)
 
     class Meta:
         table = "session_chats"
