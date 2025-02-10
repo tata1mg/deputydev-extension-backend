@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
+from app.backend_common.services.llm.dataclasses.main import ConversationRole, ConversationTurn, UserAndSystemMessages
 from app.common.constants.constants import LLMProviders
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
@@ -14,14 +15,19 @@ class Anthropic(BaseLLMProvider):
         self.anthropic_client = None
         self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
-    def build_llm_message(self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []) -> str:
-        user_message = {"role": "user", "content": prompt["user_message"]}
-        messages = (previous_responses or []) + [user_message]
+    def build_llm_message(self, prompt: UserAndSystemMessages, previous_responses: List[ConversationTurn] = [], tools: , ) -> str:
+
+        # create conversation array
+        messages = previous_responses
+        user_message = ConversationTurn(role=ConversationRole.USER, content=prompt.user_message)
+        messages.append(user_message)
+
+        # create body
         body = json.dumps(
             {
                 "anthropic_version": self.model_settings["VERSION"],
                 "max_tokens": self.model_settings["MAX_TOKENS"],
-                "system": prompt["system_message"],
+                "system": prompt.system_message,
                 "messages": messages,
             }
         )
