@@ -3,7 +3,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
-from app.backend_common.services.llm.dataclasses.main import ConversationRole, ConversationTools, ConversationTurn, PromptCacheConfig, UserAndSystemMessages
+from app.backend_common.services.llm.dataclasses.main import (
+    ConversationRole,
+    ConversationTools,
+    ConversationTurn,
+    PromptCacheConfig,
+    UserAndSystemMessages,
+)
 from app.common.constants.constants import LLMProviders
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
@@ -15,7 +21,13 @@ class Anthropic(BaseLLMProvider):
         self.anthropic_client = None
         self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
-    def build_llm_message(self, prompt: UserAndSystemMessages, previous_responses: List[ConversationTurn] = [], tools: Optional[ConversationTools] = None, cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False)) -> str:
+    def build_llm_message(
+        self,
+        prompt: UserAndSystemMessages,
+        previous_responses: List[ConversationTurn] = [],
+        tools: Optional[ConversationTools] = None,
+        cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+    ) -> str:
 
         # create conversation array
         messages = previous_responses
