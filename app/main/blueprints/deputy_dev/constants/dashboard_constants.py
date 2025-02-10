@@ -121,7 +121,7 @@ class AnalyticsDataQueries(Enum):
 
 class DashboardQueries(Enum):
     teams_query = """
-        SELECT
+        SELECT DISTINCT
             t.id,
             u.org_name as name
         FROM
@@ -130,6 +130,8 @@ class DashboardQueries(Enum):
             user_teams ut on t.id = ut.team_id
         JOIN
             users u on u.id = ut.user_id
+        WHERE
+            t.id in (1,3,4)
         ORDER BY
             t.id
     """
