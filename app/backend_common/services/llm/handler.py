@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.providers.anthropic_llm import Anthropic
-from app.backend_common.services.llm.providers.dataclass.main import (
+from app.backend_common.services.llm.dataclasses.main import (
     LLMCallResponse,
     LLMMeta,
     LLMUsage,
