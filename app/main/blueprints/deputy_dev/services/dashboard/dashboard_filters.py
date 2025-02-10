@@ -6,7 +6,6 @@ from app.backend_common.repository.db import DB
 from app.common.constants.constants import Connections
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import (
     DashboardQueries,
-    StatusTypes,
     TileTypes,
 )
 
@@ -127,7 +126,6 @@ class DashboardFiltersManager:
             start_date=start_date,
             end_date=end_date,
             repo_ids=repo_ids,
-            bucket_status=StatusTypes.BUCKET_STATUS.value,
             limit=limit,
             offset=offset,
         )
