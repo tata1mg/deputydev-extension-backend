@@ -65,7 +65,7 @@ console = Blueprint("console", "/console")
 async def get_analytics_data(_request: Request, **kwargs):
     query_params = _request.request_params()
     response = await AnalyticsManager.handle_analytics_data(query_params=query_params)
-    return send_response(response)
+    return send_response(response, headers = {'Access-Control-Allow-Origin': '*'})
 
 
 @console.route("/teams", methods=["GET"])
@@ -117,7 +117,7 @@ async def get_analytics_data(_request: Request, **kwargs):
 async def get_teams(_request: Request, **kwargs):
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_teams(query_params)
-    return send_response(response)
+    return send_response(response, headers = {'Access-Control-Allow-Origin': '*'})
 
 
 @console.route("/workspaces", methods=["GET"])
@@ -169,7 +169,7 @@ async def get_teams(_request: Request, **kwargs):
 async def get_workspaces(_request: Request, **kwargs):
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_workspaces(query_params)
-    return send_response(response)
+    return send_response(response, headers = {'Access-Control-Allow-Origin': '*'})
 
 
 @console.route("/repos", methods=["GET"])
@@ -221,7 +221,7 @@ async def get_workspaces(_request: Request, **kwargs):
 async def get_repos(_request: Request, **kwargs):
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_repos(query_params)
-    return send_response(response)
+    return send_response(response, headers = {'Access-Control-Allow-Origin': '*'})
 
 
 @console.route("/pull_requests", methods=["GET"])
@@ -273,7 +273,7 @@ async def get_repos(_request: Request, **kwargs):
 async def get_prs(_request: Request, **kwargs):
     query_params = _request.request_params()
     response = await AnalyticsManager.handle_prs_data(query_params)
-    return send_response(response)
+    return send_response(response, headers = {'Access-Control-Allow-Origin': '*'})
 
 
 @console.route("/tiles_data", methods=["GET"])
@@ -332,4 +332,4 @@ async def get_prs(_request: Request, **kwargs):
 async def get_tiles(_request: Request, **kwargs):
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_tiles(query_params)
-    return send_response(response)
+    return send_response(response, headers = {'Access-Control-Allow-Origin': '*'})
