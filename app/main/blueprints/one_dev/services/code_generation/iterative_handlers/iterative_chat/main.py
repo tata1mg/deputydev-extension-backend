@@ -57,7 +57,6 @@ class IterativeChatHandler(BaseCodeGenIterativeHandler[IterativeChatInput]):
                 "meta_info": {
                     "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
                 },
-                "llm_model": llm_response.llm_meta.llm_model.value,
             },
         )
         await SessionChatService.db_create(
