@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
 from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
+from app.backend_common.services.llm.dataclasses.main import LLMMeta
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.common.constants.constants import LLModels, PromptFeatures
 from app.common.services.prompt.factory import PromptFeatureFactory
