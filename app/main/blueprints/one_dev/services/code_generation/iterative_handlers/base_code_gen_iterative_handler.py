@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, TypeVar
 
-from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
+from app.backend_common.services.llm.dataclasses.main import LLMMeta
 from app.common.constants.constants import PromptFeatures
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
