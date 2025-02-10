@@ -21,24 +21,23 @@ class TileTypes(Enum):
 class AnalyticsDataQueries(Enum):
     comment_bucket_types_query = """
         SELECT
-            b.name AS bucket_type,
+            a.agent_name AS bucket_type,
             count(*) AS count
         FROM
-            comment_bucket_mapping cbm
+            agent_comment_mappings acm
         JOIN
-            buckets b ON cbm.bucket_id = b.id
+            agents a ON acm.agent_id = a.id
         JOIN
-            pr_comments prc ON cbm.pr_comment_id = prc.id
+            pr_comments prc ON acm.pr_comment_id = prc.id
         JOIN
             pull_requests pr ON prc.pr_id = pr.id
         WHERE
             prc.created_at >= '{start_date}'
             AND prc.created_at <= '{end_date}'
-            AND b.status = '{bucket_status}'
             AND prc.repo_id in ({repo_ids})
             AND pr.iteration = 1
         GROUP BY
-            b.name
+            a.agent_name
         ORDER BY
             count DESC
     """
