@@ -43,3 +43,9 @@ class ConversationTools(BaseModel):
     name: str
     description: str
     input_schema: Dict[str, Any]
+
+
+class PromptCacheConfig(BaseModel):
+    conversation: bool
+    tools: bool
+    system_message: bool
