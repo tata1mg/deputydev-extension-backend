@@ -1,6 +1,5 @@
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import (
     AnalyticsDataQueries,
-    StatusTypes,
 )
 
 from .base_analytics import BaseAnalytics
