@@ -37,7 +37,6 @@ class CommentBucketTypes(BaseAnalytics):
             start_date=self.start_date,
             end_date=self.end_date,
             repo_ids=self.repo_ids,
-            bucket_status=StatusTypes.BUCKET_STATUS.value,
         )
 
         return base_query
