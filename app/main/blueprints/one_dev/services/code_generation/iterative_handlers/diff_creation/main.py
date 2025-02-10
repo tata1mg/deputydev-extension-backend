@@ -19,6 +19,9 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dat
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.diff_creation.dataclasses.main import (
     DiffCreationInput,
 )
+from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
+    get_chunks_by_file_total_lines,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
@@ -81,6 +84,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
         )
         llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=previous_responses)
         llm_meta.append(llm_response.llm_meta)
+        code_lines = get_chunks_by_file_total_lines(llm_response.parsed_llm_data["chunks_by_file"])
         await JobService.db_update(
             filters={"id": job_id},
             update_data={
@@ -99,6 +103,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
                 response_summary="",
                 user_query="generate diff",
+                code_lines_count=code_lines,
             )
         )
 
