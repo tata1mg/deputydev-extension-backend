@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from enum import Enum
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
@@ -21,3 +22,24 @@ class LLMCallResponse(BaseModel):
     parsed_llm_data: Dict[str, Any]
     raw_prompt: str
     llm_meta: LLMMeta
+
+
+class UserAndSystemMessages(BaseModel):
+    user_message: str
+    system_message: Optional[str] = None
+
+
+class ConversationRole(Enum):
+    USER = "user"
+    SYSTEM = "assistant"
+
+
+class ConversationTurn(BaseModel):
+    role: ConversationRole
+    content: str
+
+
+class ConversationTools(BaseModel):
+    name: str
+    description: str
+    input_schema: Dict[str, Any]
