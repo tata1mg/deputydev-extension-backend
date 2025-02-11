@@ -1,5 +1,5 @@
 from app.common.constants.constants import LLModels
-from app.common.services.prompt.base_prompt import BasePrompt
+from app.backend_common.services.llm.base_prompt import BasePrompt
 
 
 class BaseGPT4OPrompt(BasePrompt):
