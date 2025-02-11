@@ -2,7 +2,7 @@ from app.common.constants.constants import LLModels
 from app.common.services.prompt.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
-from app.common.services.prompt.base_prompt import BasePrompt
+from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.common.services.prompt.feature_prompts.iterative_code_chat.claude_3_point_5_sonnet import (
     Claude3Point5IterativeCodeChatPrompt,
 )
