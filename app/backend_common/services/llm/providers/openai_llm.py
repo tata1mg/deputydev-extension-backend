@@ -1,7 +1,13 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
+from app.backend_common.services.llm.dataclasses.main import (
+    ConversationTools,
+    ConversationTurn,
+    PromptCacheConfig,
+    UserAndSystemMessages,
+)
 from app.common.constants.constants import LLMProviders
 
 
@@ -43,8 +49,12 @@ class OpenaiLLM(BaseLLMProvider):
         return response
 
     def build_llm_message(
-        self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []
-    ) -> List[Dict[str, str]]:
+        self,
+        prompt: UserAndSystemMessages,
+        previous_responses: List[ConversationTurn] = [],
+        tools: Optional[ConversationTools] = None,
+        cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+    ) -> str:
         """
         Formats the conversation for OpenAI's GPT model.
 
