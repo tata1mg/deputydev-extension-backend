@@ -1,6 +1,5 @@
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import (
     AnalyticsDataQueries,
-    StatusTypes,
 )
 
 from .base_analytics import BaseAnalytics
@@ -37,7 +36,6 @@ class CommentBucketTypes(BaseAnalytics):
             start_date=self.start_date,
             end_date=self.end_date,
             repo_ids=self.repo_ids,
-            bucket_status=StatusTypes.BUCKET_STATUS.value,
         )
 
         return base_query
