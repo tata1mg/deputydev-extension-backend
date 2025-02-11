@@ -31,7 +31,7 @@ class UserAndSystemMessages(BaseModel):
 
 class ConversationRole(Enum):
     USER = "user"
-    SYSTEM = "assistant"
+    ASSISTANT = "assistant"
 
 
 class ConversationTurn(BaseModel):
