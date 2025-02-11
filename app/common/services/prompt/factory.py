@@ -4,7 +4,7 @@ from app.common.constants.constants import LLModels, PromptFeatures
 from app.common.services.prompt.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
-from app.common.services.prompt.base_prompt import BasePrompt
+from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.common.services.prompt.feature_prompts.chat_filter.factory import (
     ChatRankingPromptFactory,
 )
