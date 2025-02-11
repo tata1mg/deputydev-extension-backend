@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.providers.anthropic_llm import Anthropic
@@ -18,7 +18,7 @@ from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.constants.constants import LLModels
 from app.common.exception import RetryException
-from app.common.services.prompt.base_prompt import BasePrompt
+from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 
@@ -41,7 +41,7 @@ class LLMHandler:
         self.tools = tools
         self.cache_config = cache_config
 
-    async def get_llm_response_data(self, previous_responses: List[Dict[str, str]]) -> LLMCallResponse:
+    async def get_llm_response_data(self, previous_responses: List[ConversationTurn] = []) -> LLMCallResponse:
         detected_llm = self.prompt_handler.model_name
 
         if detected_llm not in self.model_to_provider_class_map:
