@@ -33,7 +33,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
         response = None
         for attempt in range(max_retries + 1):
             try:
-                response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=[])
+                response = await LLMHandler(prompt_handler=prompt).get_llm_response_data(previous_responses=[])
                 if response:
                     break
             except Exception as e:

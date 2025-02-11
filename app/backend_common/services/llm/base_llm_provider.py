@@ -3,10 +3,16 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from torpedo import CONFIG, Task
 
+from app.backend_common.services.llm.dataclasses.main import (
+    ConversationTools,
+    ConversationTurn,
+    PromptCacheConfig,
+    UserAndSystemMessages,
+)
 from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
@@ -41,7 +47,13 @@ class BaseLLMProvider(ABC):
         return tasks
 
     @abstractmethod
-    def build_llm_message(self, prompt: Dict[str, str], previous_responses: List[Dict[str, str]] = []) -> str:
+    def build_llm_message(
+        self,
+        prompt: UserAndSystemMessages,
+        previous_responses: List[ConversationTurn] = [],
+        tools: Optional[ConversationTools] = None,
+        cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+    ) -> str:
         """
         Formats the conversation as required by the specific LLM.
         Args:

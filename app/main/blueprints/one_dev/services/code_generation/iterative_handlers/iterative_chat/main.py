@@ -48,7 +48,9 @@ class IterativeChatHandler(BaseCodeGenIterativeHandler[IterativeChatInput]):
             update_data={"status": "PROMPT_GENERATED"},
         )
         previous_responses = await cls._get_previous_responses(payload)
-        llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=previous_responses)
+        llm_response = await LLMHandler(prompt_handler=prompt).get_llm_response_data(
+            previous_responses=previous_responses
+        )
         llm_meta.append(llm_response.llm_meta)
         await JobService.db_update(
             filters={"id": job_id},
