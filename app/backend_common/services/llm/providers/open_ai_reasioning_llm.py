@@ -10,7 +10,7 @@ from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 
 
 class OpenAIReasoningLLM(OpenaiLLM):
-    def build_llm_message(
+    def build_llm_payload(
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],

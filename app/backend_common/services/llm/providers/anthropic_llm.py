@@ -21,7 +21,7 @@ class Anthropic(BaseLLMProvider):
         self.anthropic_client = None
         self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
-    def build_llm_message(
+    def build_llm_payload(
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
