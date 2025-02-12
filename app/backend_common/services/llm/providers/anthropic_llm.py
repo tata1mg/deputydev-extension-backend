@@ -27,7 +27,7 @@ class Anthropic(BaseLLMProvider):
         previous_responses: List[ConversationTurn] = [],
         tools: Optional[ConversationTools] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-    ) -> str:
+    ) -> Dict[str, Any]:
 
         # create conversation array
         messages = previous_responses
@@ -35,18 +35,16 @@ class Anthropic(BaseLLMProvider):
         messages.append(user_message)
 
         # create body
-        body = json.dumps(
-            {
-                "anthropic_version": self.model_settings["VERSION"],
-                "max_tokens": self.model_settings["MAX_TOKENS"],
-                "system": prompt.system_message,
-                "messages": messages,
-            }
-        )
-        return body
+        llm_payload = {
+            "anthropic_version": self.model_settings["VERSION"],
+            "max_tokens": self.model_settings["MAX_TOKENS"],
+            "system": prompt.system_message,
+            "messages": messages,
+        }
+        return llm_payload
 
     async def call_service_client(
-        self, messages: List[Dict[str, str]], model: LLModels, response_type: Optional[str] = None
+        self, llm_payload: Dict[str, Any], model: LLModels, response_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Calls the OpenAI service client.
@@ -60,7 +58,7 @@ class Anthropic(BaseLLMProvider):
         anthropic_client = await self.get_service_client()
         AppLogger.log_debug(messages)
         model_config = self._get_model_config(model)
-        response = await anthropic_client.get_llm_response(formatted_conversation=messages, model=model_config["NAME"])
+        response = await anthropic_client.get_llm_response(llm_payload=messages, model=model_config["NAME"])
         return response
 
     async def get_service_client(self):
