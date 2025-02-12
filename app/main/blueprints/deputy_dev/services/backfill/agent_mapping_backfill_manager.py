@@ -60,7 +60,11 @@ class AgentMappingBackfillManager:
                     if comment_id in pr_comments_by_comment_id:
                         comment_body = pr_comments_by_comment_id[comment_id].body
                         for name in display_names:
-                            if f"**{name.upper()}**" in comment_body.upper():
+                            name_with_underscore = name.replace(" ", "_")
+                            if (
+                                f"**{name.upper()}**" in comment_body.upper()
+                                or f"**{name_with_underscore.upper()}**" in comment_body.upper()
+                            ):
                                 agent_comment_mappings.append(
                                     AgentCommentMappings(
                                         pr_comment_id=comment_obj.id,
