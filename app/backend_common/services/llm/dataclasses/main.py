@@ -9,6 +9,8 @@ from app.common.constants.constants import LLModels
 class LLMUsage(BaseModel):
     input: int
     output: int
+    cache_read: Optional[int] = None
+    cache_write: Optional[int] = None
 
 
 class LLMMeta(BaseModel):
