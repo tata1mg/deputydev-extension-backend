@@ -10,7 +10,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     PromptCacheConfig,
     UserAndSystemMessages,
 )
-from app.common.constants.constants import LLMProviders
+from app.common.constants.constants import LLMProviders, LLModels
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 
@@ -45,7 +45,9 @@ class Anthropic(BaseLLMProvider):
         )
         return body
 
-    async def call_service_client(self, messages: List[Dict[str, str]], model, response_type) -> Dict[str, Any]:
+    async def call_service_client(
+        self, messages: List[Dict[str, str]], model: LLModels, response_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Calls the OpenAI service client.
 
@@ -57,7 +59,8 @@ class Anthropic(BaseLLMProvider):
         """
         anthropic_client = await self.get_service_client()
         AppLogger.log_debug(messages)
-        response = await anthropic_client.get_llm_response(messages, model)
+        model_config = self._get_model_config(model)
+        response = await anthropic_client.get_llm_response(formatted_conversation=messages, model=model_config["NAME"])
         return response
 
     async def get_service_client(self):
