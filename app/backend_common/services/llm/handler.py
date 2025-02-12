@@ -48,19 +48,18 @@ class LLMHandler:
             raise ValueError(f"LLM model {detected_llm} not supported")
 
         client = self.model_to_provider_class_map[detected_llm]()
-        model_config = ConfigManager.configs["LLM_MODELS"].get(detected_llm.value)
         prompt = self.prompt_handler.get_prompt()
 
         parsed_response, input_tokens, output_tokens = await self.get_llm_response(
             client=client,
             prompt=prompt,
-            model=model_config.get("NAME"),
+            model=detected_llm,
             structure_type="text",
             previous_responses=previous_responses,
         )
 
         return LLMCallResponse(
-            raw_prompt=prompt["user_message"],
+            raw_prompt=prompt.user_message,
             raw_llm_response=parsed_response,
             parsed_llm_data=self.prompt_handler.get_parsed_result(parsed_response),
             llm_meta=LLMMeta(
@@ -74,7 +73,7 @@ class LLMHandler:
         self,
         client: BaseLLMProvider,
         prompt: UserAndSystemMessages,
-        model: str,
+        model: LLModels,
         structure_type: str,
         previous_responses: List[ConversationTurn] = [],
         max_retry: int = 2,
