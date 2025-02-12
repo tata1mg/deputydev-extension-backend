@@ -48,7 +48,7 @@ class OpenaiLLM(BaseLLMProvider):
         )
         return response
 
-    def build_llm_message(
+    def build_llm_payload(
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
