@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Dict, Any
 
 from torpedo import CONFIG
 
@@ -170,7 +170,7 @@ class PRReviewPostProcessor:
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
     @classmethod
-    async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[dict]):
+    async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[Dict[Any, Any]]):
         comments_to_save = []
         agent_mappings_to_save = []
 
@@ -245,7 +245,7 @@ class PRReviewPostProcessor:
         return llm_comments
 
     @staticmethod
-    async def fetch_agents(agent_filter):
+    async def fetch_agents(agent_filter: Dict[str, Any]) -> Dict[str, Any]:
         agents = await DB.get_by_filters(
             Agents,
             filters=agent_filter,
@@ -254,7 +254,7 @@ class PRReviewPostProcessor:
         return agents_by_id
 
     @staticmethod
-    async def upsert_agents(repo_id, saved_agents, current_agents):
+    async def upsert_agents(repo_id: str, saved_agents: Dict[str, Any], current_agents: Dict[str, dict]):
         new_agents = []
         is_new_agent_created = False
         for agent_id, agent_data in current_agents.items():
