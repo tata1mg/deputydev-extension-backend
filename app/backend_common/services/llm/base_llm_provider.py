@@ -53,7 +53,7 @@ class BaseLLMProvider(ABC):
         previous_responses: List[ConversationTurn] = [],
         tools: Optional[ConversationTools] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.
         Args:

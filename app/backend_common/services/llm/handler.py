@@ -80,13 +80,13 @@ class LLMHandler:
         for i in range(0, max_retry):
             try:
                 print(f"Calling service client {i}")
-                messages = client.build_llm_payload(
+                llm_payload = client.build_llm_payload(
                     prompt=prompt,
                     previous_responses=previous_responses,
                     tools=self.tools,
                     cache_config=self.cache_config,
                 )
-                llm_response = await client.call_service_client(messages, model, structure_type)
+                llm_response = await client.call_service_client(llm_payload, model, structure_type)
                 print("LLM response", llm_response)
                 return await client.parse_response(llm_response)
             except Exception as e:

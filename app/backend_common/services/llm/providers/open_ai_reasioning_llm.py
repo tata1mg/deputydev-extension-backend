@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTools,
@@ -16,7 +16,7 @@ class OpenAIReasoningLLM(OpenaiLLM):
         previous_responses: List[ConversationTurn] = [],
         tools: Optional[ConversationTools] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Formats the conversation for OpenAI's GPT model.
 
