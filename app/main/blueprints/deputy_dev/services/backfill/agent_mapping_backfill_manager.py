@@ -13,8 +13,10 @@ import re
 
 
 BucketMapping = {
-    "Security": ["SECURITY", "{SECURITY}", "SECURITY_ERROR", "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT"],
+    "Security": ["Security","SECURITY", "{SECURITY}", "SECURITY_ERROR", "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT"],
     "Code Maintainabiltiy": [
+        "CODE MAINTAINABILTIY",
+        "CODE_MAINTAINABILTIY",
         "MAINTAINABILITY",
         "CODE_QUALITY",
         "CODE_ROBUSTNESS",
@@ -55,6 +57,8 @@ BucketMapping = {
         "{IMPROVEMENT}",
     ],
     "Business Rule": [
+        "BUSINESS RULE",
+        "BUSINESS_RULE",
         "USER_STORY",
         "FEATURE",
         "ACCESSIBILITY",
@@ -66,6 +70,7 @@ BucketMapping = {
         "USER_EXPERIENCE",
     ],
     "Error": [
+        "Error",
         "RUNTIME_ERROR",
         "SEMANTIC",
         "ERROR",
@@ -92,6 +97,8 @@ BucketMapping = {
         "{SEMANTIC}",
     ],
     "Performance Optimization": [
+        'PERFORMANCE OPTIMIZATION',
+        'PERFORMANCE_OPTIMIZATION',
         "PERFORMANCE",
         "DATABASE_PERFORMANCE",
         "ALGORITHM_EFFICIENCY",
