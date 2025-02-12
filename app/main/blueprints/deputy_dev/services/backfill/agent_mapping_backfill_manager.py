@@ -1,6 +1,7 @@
 from app.backend_common.models.dao.postgres import Repos
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
+from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests, PRComments, AgentCommentMappings
 from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import AgentCommentMappingService
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler, get_workspace
@@ -69,6 +70,7 @@ class AgentMappingBackfillManager:
                                 )
                 if agent_comment_mappings:
                     await AgentCommentMappingService.bulk_insert(agent_comment_mappings)
+                AppLogger.log_info(f"Processing done for pr_id: {pull_request.id} repo_id: {pull_request.repo_id}")
 
     @classmethod
     async def backfill_agents(cls, repo_id):
