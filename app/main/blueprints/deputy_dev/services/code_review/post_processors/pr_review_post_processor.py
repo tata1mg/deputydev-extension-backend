@@ -254,7 +254,7 @@ class PRReviewPostProcessor:
         return agents_by_id
 
     @staticmethod
-    async def upsert_agents(repo_id: str, saved_agents: Dict[str, Any], current_agents: Dict[str, dict]):
+    async def upsert_agents(repo_id: int, saved_agents: Dict[str, Any], current_agents: Dict[str, dict]):
         new_agents = []
         is_new_agent_created = False
         for agent_id, agent_data in current_agents.items():
