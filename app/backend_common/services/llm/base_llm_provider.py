@@ -17,7 +17,7 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.common.constants.constants import LLMProviders
+from app.common.constants.constants import LLMProviders, LLModels
 from app.common.exception import RetryException
 from app.common.exception.exception import ParseException
 from app.common.utils.app_logger import AppLogger
@@ -73,6 +73,9 @@ class BaseLLMProvider(ABC):
             tuple: Parsed response, input tokens, and output tokens.
         """
         raise NotImplementedError("Must implement parse_response in subclass")
+
+    def _get_model_config(self, model: LLModels) -> Dict[str, Any]:
+        return CONFIG.config.get("LLM_MODELS").get(model)
 
     async def call_service_client(self, messages: List[Dict[str, str]], model, response_type):
         """
