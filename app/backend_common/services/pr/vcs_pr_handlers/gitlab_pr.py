@@ -99,10 +99,6 @@ class GitlabPR(BasePR):
         payload = {"description": description}
         return await self.repo_client.update_pr_details(payload)
 
-    async def get_pr_comments(self):
-        comments = await self.repo_client.get_pr_comments()
-        return comments
-
     async def get_pr_diff(self):
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.
@@ -219,3 +215,6 @@ class GitlabPR(BasePR):
             )
 
         return formatted_commits
+
+    def get_pr_comments(self):
+        pass
