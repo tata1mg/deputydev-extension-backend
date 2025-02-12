@@ -229,6 +229,14 @@ class SettingHelper:
         return cls.agents_settings().get(agent_name, {})
 
     @classmethod
+    def agents_setting_by_agent_uuid(cls):
+        agent_settings = cls.agents_settings()
+        agents_by_agent_uuid = {}
+        for agent_name, agent_data in agent_settings.items():
+            agents_by_agent_uuid[agent_data["agent_id"]] = {**agent_data, "agent_name": agent_name}
+        return agents_by_agent_uuid
+
+    @classmethod
     def remove_repo_specific_setting(cls, setting):
         if setting:
             for key in cls.REPO_SPECIFIC_KEYS:
