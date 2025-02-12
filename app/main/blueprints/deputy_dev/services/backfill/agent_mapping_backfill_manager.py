@@ -9,6 +9,124 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import Sett
 from app.backend_common.repository.db import DB
 from typing import Dict, Any
 from app.main.blueprints.deputy_dev.models.dao.postgres import Agents
+import re
+
+
+BucketMapping = {
+    "Security": ["SECURITY", "{SECURITY}", "SECURITY_ERROR", "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT"],
+    "Code Maintainabiltiy": [
+        "MAINTAINABILITY",
+        "CODE_QUALITY",
+        "CODE_ROBUSTNESS",
+        "READABILITY",
+        "REUSABILITY",
+        "ARCHITECTURE",
+        "EDGE_CASE",
+        "SYNTAX",
+        "IMPROVEMENT",
+        "EDGE_CASES",
+        "TESTING",
+        "CLEANUP",
+        "ENHANCEMENT",
+        "STYLE",
+        "DEPENDENCIES",
+        "VALID_IMPLEMENTATION",
+        "REFACTOR",
+        "BEST_PRACTICE",
+        "VALID",
+        "BEST_PRACTICES",
+        "CODE ROBUSTNESS",
+        "CONFIGURATION",
+        "DEPENDENCY",
+        "CORRECT_IMPLEMENTATION",
+        "NAMING_CONVENTIONS",
+        "UNUSED_CODE",
+        "TEST_QUALITY",
+        "CONFIG",
+        "CORRECT",
+        "TYPE_SAFETY",
+        "CODE_STYLE",
+        "IMPACT",
+        "DEPENDENCY_UPDATE",
+        "MAINTENANCE",
+        "UNUSED_VARIABLE",
+        "CLEAN_CODE",
+        "UNNECESSARY",
+        "{IMPROVEMENT}",
+    ],
+    "Business Rule": [
+        "USER_STORY",
+        "FEATURE",
+        "ACCESSIBILITY",
+        "BUSINESS_LOGIC",
+        "LAYOUT",
+        "VISUAL",
+        "UI",
+        "LOCALIZATION",
+        "USER_EXPERIENCE",
+    ],
+    "Error": [
+        "RUNTIME_ERROR",
+        "SEMANTIC",
+        "ERROR",
+        "RUNTIME",
+        "SEMANTIC_ERROR",
+        "LOGICAL_ERROR",
+        "LOGICAL",
+        "{ERROR}",
+        "SYNTAX_ERROR",
+        "LOGIC",
+        "LOGIC_ERROR",
+        "ERROR_HANDLING",
+        "API_CHANGE",
+        "RUNTIMEERROR",
+        "{RUNTIME_ERROR}",
+        "RUNTIME_ERRORS",
+        "SEMANTIC ERROR",
+        "SEMANTICERROR",
+        "CONFIGURATION_ERROR",
+        "RUNTIME ERROR",
+        "SEMANTIC_ERRORS",
+        "BREAKING_CHANGE",
+        "COMPATIBILITY",
+        "{SEMANTIC}",
+    ],
+    "Performance Optimization": [
+        "PERFORMANCE",
+        "DATABASE_PERFORMANCE",
+        "ALGORITHM_EFFICIENCY",
+        "OPTIMIZATION",
+        "RESOURCE_MANAGEMENT",
+        "ALGORITHMIC_EFFICIENCY",
+        "PERFORMANCE_ERROR",
+    ],
+    "Documentation": [
+        "DOCSTRING",
+        "DOCUMENTATION",
+        "LOGGING",
+        "INFO",
+        "REMOVED",
+        "INFORMATIONAL",
+        "RESOLVED",
+        "WARNING",
+        "CODE COMMUNICATION",
+        "{INFO}",
+        "TODO",
+        "COMMENT",
+        "CONFIGURATION_UPDATE",
+        "NO_ERROR",
+        "{NO_ISSUE}",
+        "GENERAL",
+    ],
+}
+
+
+def extract_agents(text):
+    # Regular expression pattern to match text between '**' and '**'
+    pattern = r"\*\*(.*?)\*\*"
+    # Find all non-overlapping matches of the pattern in the string
+    matches = re.findall(pattern, text)
+    return matches
 
 
 class AgentMappingBackfillManager:
@@ -25,6 +143,7 @@ class AgentMappingBackfillManager:
             if pull_request.repo_id not in pull_requests_by_repo_ids:
                 pull_requests_by_repo_ids[pull_request.repo_id] = []
             pull_requests_by_repo_ids[pull_request.repo_id].append(pull_request)
+        not_matched_comment_ids = []
         for repo_id, pull_requests in pull_requests_by_repo_ids.items():
             repo = await Repos.get(id=repo_id)
             repo_service = await RepoFactory.repo(
@@ -59,22 +178,29 @@ class AgentMappingBackfillManager:
                 for comment_id, comment_obj in saved_comments_by_comment_id.items():
                     if comment_id in pr_comments_by_comment_id:
                         comment_body = pr_comments_by_comment_id[comment_id].body
-                        for name in display_names:
-                            name_with_underscore = name.replace(" ", "_")
-                            if (
-                                f"**{name.upper()}**" in comment_body.upper()
-                                or f"**{name_with_underscore.upper()}**" in comment_body.upper()
-                            ):
-                                agent_comment_mappings.append(
-                                    AgentCommentMappings(
-                                        pr_comment_id=comment_obj.id,
-                                        agent_id=agent_id_by_display_names[name]["id"],
-                                        weight=agent_id_by_display_names[name]["weight"],
+                        comment_agents = extract_agents(comment_body)
+                        for agent_name in comment_agents:
+                            is_matched = False
+                            for display_name, possible_names in BucketMapping.items():
+                                if agent_name in possible_names:
+                                    is_matched = True
+                                    agent_comment_mappings.append(
+                                        AgentCommentMappings(
+                                            pr_comment_id=comment_obj.id,
+                                            agent_id=agent_id_by_display_names[display_name]["id"],
+                                            weight=agent_id_by_display_names[display_name]["weight"],
+                                        )
                                     )
-                                )
+                            if not is_matched:
+                                not_matched_comment_ids.append([pull_request.id, comment_id, agent_name])
+
                 if agent_comment_mappings:
                     await AgentCommentMappingService.bulk_insert(agent_comment_mappings)
                 AppLogger.log_info(f"Processing done for pr_id: {pull_request.id} repo_id: {pull_request.repo_id}")
+        if not_matched_comment_ids:
+            AppLogger.log_info(
+                f"Backfilling done Not matched comments['pr_id', 'comment_id', 'display_name']: {not_matched_comment_ids}"
+            )
 
     @classmethod
     async def backfill_agents(cls, repo_id):
