@@ -91,7 +91,7 @@ class CommentBlendingEngine:
                 )
                 if prompt.get("exceeds_tokens"):  # Case when we exceed tokens of gpt
                     return
-                conversation_messages = self.llm_service.build_llm_message(prompt)
+                conversation_messages = self.llm_service.build_llm_payload(prompt)
                 response = await self.llm_service.call_service_client(
                     messages=conversation_messages,
                     model=LLMModelNames.GPT_4_O.value,
@@ -243,7 +243,7 @@ class CommentBlendingEngine:
                 )
                 if prompt.get("exceeds_tokens"):  # Case when we exceed tokens of gpt
                     return
-                conversation_messages = self.llm_service.build_llm_message(prompt)
+                conversation_messages = self.llm_service.build_llm_payload(prompt)
                 response = await self.llm_service.call_service_client(
                     messages=conversation_messages,
                     model=LLMModelNames.GPT_4_O.value,

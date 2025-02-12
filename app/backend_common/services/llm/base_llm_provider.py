@@ -35,7 +35,7 @@ class BaseLLMProvider(ABC):
         tasks = [
             Task(
                 self.get_llm_response(
-                    self.build_llm_message(prompt),
+                    self.build_llm_payload(prompt),
                     prompt.get("model"),
                     prompt.get("structure_type"),
                     prompt.get("parse", False),  # default value for parse if false
@@ -47,7 +47,7 @@ class BaseLLMProvider(ABC):
         return tasks
 
     @abstractmethod
-    def build_llm_message(
+    def build_llm_payload(
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
