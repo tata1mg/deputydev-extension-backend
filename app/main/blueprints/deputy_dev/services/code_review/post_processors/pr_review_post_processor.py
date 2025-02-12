@@ -175,7 +175,6 @@ class PRReviewPostProcessor:
         agent_mappings_to_save = []
 
         for comment in llm_comments:
-            comment["scm_comment_id"] = "dummy_comment_id"
             comment_info = {
                 "iteration": 1,
                 "llm_confidence_score": comment["confidence_score"],
