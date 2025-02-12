@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from typing import Dict, Any
 import toml
 
 from app.common.utils.context_vars import get_context_value
@@ -229,7 +229,7 @@ class SettingHelper:
         return cls.agents_settings().get(agent_name, {})
 
     @classmethod
-    def agents_setting_by_agent_uuid(cls):
+    def agents_setting_by_agent_uuid(cls) -> Dict[str, Any]:
         agent_settings = cls.agents_settings()
         agents_by_agent_uuid = {}
         for agent_name, agent_data in agent_settings.items():
