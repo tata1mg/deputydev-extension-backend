@@ -41,7 +41,6 @@ class BedrockServiceClient:
     async def get_llm_stream_response(
         self, llm_payload: Dict[str, Any], model: str
     ) -> InvokeModelWithResponseStreamResponseTypeDef:
-        bedrock_client = self._get_bedrock_client()
-        async with bedrock_client as client:
-            response = await client.invoke_model_with_response_stream(modelId=model, body=json.dumps(llm_payload))
-            return response
+        bedrock_client = await self._get_bedrock_client().__aenter__()
+        response = await bedrock_client.invoke_model_with_response_stream(modelId=model, body=json.dumps(llm_payload))
+        return response
