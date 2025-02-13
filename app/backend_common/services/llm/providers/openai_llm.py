@@ -17,7 +17,7 @@ class OpenaiLLM(BaseLLMProvider):
 
     """LLM manager for handling interactions with OpenAI's GPT models."""
 
-    async def parse_response(self, response: Dict) -> Tuple[str, int, int]:
+    async def parse_non_streaming_response(self, response: Dict) -> Tuple[str, int, int]:
         """
         Parses the response from OpenAI's GPT model.
 
