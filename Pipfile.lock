@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "bf7b106186ed25cdad36a6c47473ba587321f014c1306adb14974eecf370fcfc"
+            "sha256": "05248871c00c2c50f4ab2246d3c309fccc3b8bdc19d576331ec911b3451c9fd1"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -905,11 +905,11 @@
         },
         "googleapis-common-protos": {
             "hashes": [
-                "sha256:c3e7b33d15fdca5374cc0a7346dd92ffa847425cc4ea941d970f13680052ec8c",
-                "sha256:d7abcd75fabb2e0ec9f74466401f6c119a0b498e27370e9be4c94cb7e382b8ed"
+                "sha256:21398025365f138be356d5923e9168737d94d46a72aefee4a6110a1f23463c86",
+                "sha256:579de760800d13616f51cf8be00c876f00a9f146d3e6510e19d1f4111758b741"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==1.66.0"
+            "version": "==1.67.0"
         },
         "gotrue": {
             "hashes": [
@@ -3134,12 +3134,21 @@
             "index": "pypi",
             "version": "==1.10.2"
         },
+        "types-aiobotocore-bedrock-runtime": {
+            "hashes": [
+                "sha256:87ccdb5f5fbe714887a7f0b8a98f250116429c3d0bdf7234570463acb62d8d26",
+                "sha256:926268552b488d0358a779defb42e69ee7dd169d0bf66b94477adb24d8c17ba9"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==2.11.2"
+        },
         "typing-extensions": {
             "hashes": [
                 "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
                 "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
-            "markers": "python_version < '3.10'",
+            "markers": "python_version >= '3.8'",
             "version": "==4.12.2"
         },
         "typing-inspect": {
@@ -3189,7 +3198,7 @@
                 "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e",
                 "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'",
+            "markers": "python_version < '3.10'",
             "version": "==1.26.20"
         },
         "uvloop": {
@@ -3849,21 +3858,12 @@
             "markers": "python_version >= '3.8'",
             "version": "==2.2.1"
         },
-        "types-aiobotocore-bedrock-runtime": {
-            "hashes": [
-                "sha256:87ccdb5f5fbe714887a7f0b8a98f250116429c3d0bdf7234570463acb62d8d26",
-                "sha256:926268552b488d0358a779defb42e69ee7dd169d0bf66b94477adb24d8c17ba9"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==2.11.2"
-        },
         "typing-extensions": {
             "hashes": [
                 "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
                 "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
-            "markers": "python_version < '3.10'",
+            "markers": "python_version >= '3.8'",
             "version": "==4.12.2"
         }
     }
