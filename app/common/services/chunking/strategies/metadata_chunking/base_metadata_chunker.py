@@ -10,15 +10,15 @@ from app.common.services.chunking.dataclass.main import (
     NeoSpan,
 )
 from app.common.services.chunking.utils.chunk_utils import get_current_chunk_length
-from app.common.services.chunking.utils.grammar_utils import (
-    LanguageIdentifiers,
-    chunk_language_identifiers,
-)
+from app.common.services.chunking.utils.grammar_utils import LanguageIdentifiers
 
 from ..base_chunker import BaseChunker
 
 
 class BaseMetadataChunker(BaseChunker):
+
+    language_identifiers = {}
+
     def chunk_code(self, tree, content: bytes, max_chars, coalesce, language) -> List[NeoSpan]:
         """Main implementation for new chunking"""
         all_classes: List[str] = []
@@ -178,7 +178,7 @@ class BaseMetadataChunker(BaseChunker):
 
         chunks: list[NeoSpan] = []
         node_children = node.children
-        grammar = chunk_language_identifiers[language]
+        grammar = self.language_identifiers
 
         # Handle decorators for class or function definitions
 

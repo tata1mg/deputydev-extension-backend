@@ -97,9 +97,9 @@ def chunk_source(
         tree = parser.parse(content.encode("utf-8"))
         is_eligible_for_new_chunking = use_new_chunking and supported_new_chunk_language(language)
         strategy_chunker = ChunkingStrategyFactory.create_strategy(
-            path=path, is_eligible_for_new_chunking=is_eligible_for_new_chunking
+            language=language, is_eligible_for_new_chunking=is_eligible_for_new_chunking
         )
-        all_current_file_chunks = strategy_chunker().chunk_code(
+        all_current_file_chunks = strategy_chunker.chunk_code(
             tree=tree, content=content.encode("utf-8"), max_chars=MAX_CHARS, coalesce=coalesce, language=language
         )
 
