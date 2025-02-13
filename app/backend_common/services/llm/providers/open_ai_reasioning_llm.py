@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTools,
+    ConversationTool,
     ConversationTurn,
     PromptCacheConfig,
     UserAndSystemMessages,
@@ -14,7 +14,7 @@ class OpenAIReasoningLLM(OpenaiLLM):
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
-        tools: Optional[ConversationTools] = None,
+        tools: Optional[ConversationTool] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
         """

@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTools,
+    ConversationTool,
     ConversationTurn,
     LLMCallResponse,
     LLMMeta,
@@ -35,7 +35,7 @@ class LLMHandler:
     def __init__(
         self,
         prompt_handler: BasePrompt,
-        tools: Optional[ConversationTools] = None,
+        tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         stream: bool = False,
     ):

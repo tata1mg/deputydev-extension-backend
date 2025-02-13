@@ -4,6 +4,8 @@ from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.code_searcher import CODE_SEARCHER
+from app.main.blueprints.one_dev.services.query_solver.tools.diff_applicator import DIFF_APPLICATOR
 
 
 class QuerySolver:
@@ -14,5 +16,7 @@ class QuerySolver:
             init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
         )
 
-        llm_response = await LLMHandler(prompt_handler=prompt, stream=True).get_llm_response_data(previous_responses=[])
+        llm_response = await LLMHandler(
+            prompt_handler=prompt, tools=[DIFF_APPLICATOR, CODE_SEARCHER], stream=True
+        ).get_llm_response_data(previous_responses=[])
         return llm_response
