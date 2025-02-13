@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from torpedo import CONFIG, Task
 
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTools,
+    ConversationTool,
     ConversationTurn,
     NonStreamingResponse,
     PromptCacheConfig,
@@ -53,7 +53,7 @@ class BaseLLMProvider(ABC):
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
-        tools: Optional[ConversationTools] = None,
+        tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
         """
