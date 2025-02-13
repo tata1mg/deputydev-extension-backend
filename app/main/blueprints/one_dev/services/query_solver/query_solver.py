@@ -16,7 +16,11 @@ class QuerySolver:
             init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
         )
 
+        tools_to_use = [CODE_SEARCHER]
+        if payload.write_mode:
+            tools_to_use.append(DIFF_APPLICATOR)
+
         llm_response = await LLMHandler(
-            prompt_handler=prompt, tools=[DIFF_APPLICATOR, CODE_SEARCHER], stream=True
+            prompt_handler=prompt, tools=tools_to_use, stream=True
         ).get_llm_response_data(previous_responses=[])
         return llm_response
