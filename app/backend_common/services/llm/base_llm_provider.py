@@ -3,7 +3,7 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
+from typing import Any, Dict, List, Optional, Union
 
 from torpedo import CONFIG, Task
 
@@ -19,7 +19,7 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.common.constants.constants import LLMProviders, LLModels
+from app.common.constants.constants import LLModels, LLMProviders
 from app.common.exception import RetryException
 from app.common.exception.exception import ParseException
 from app.common.utils.app_logger import AppLogger
@@ -66,7 +66,7 @@ class BaseLLMProvider(ABC):
         raise NotImplementedError("Must implement format_conversation in subclass")
 
     def _get_model_config(self, model: LLModels) -> Dict[str, Any]:
-        return CONFIG.config.get("LLM_MODELS").get(model)
+        return CONFIG.config.get("LLM_MODELS").get(model.value)
 
     async def call_service_client(
         self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None

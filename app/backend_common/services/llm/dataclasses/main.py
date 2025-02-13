@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.common.constants.constants import LLModels
 
@@ -65,6 +65,8 @@ class StreamingResponse(BaseModel):
     content: AsyncIterator[StreamingContentBlock]
     usage: LLMUsage
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 class NonStreamingResponse(BaseModel):
     content: str
@@ -77,3 +79,5 @@ class LLMCallResponse(BaseModel):
     parsed_llm_data: Optional[Dict[str, Any]]
     raw_prompt: str
     llm_meta: LLMMeta
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)

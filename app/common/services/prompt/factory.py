@@ -1,10 +1,10 @@
 from typing import Any, Dict, Type
 
+from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.common.constants.constants import LLModels, PromptFeatures
 from app.common.services.prompt.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
-from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.common.services.prompt.feature_prompts.chat_filter.factory import (
     ChatRankingPromptFactory,
 )
@@ -16,6 +16,9 @@ from app.common.services.prompt.feature_prompts.chunk_re_ranking.factory import 
 )
 from app.common.services.prompt.feature_prompts.code_generation.factory import (
     CodeGenerationPromptFactory,
+)
+from app.common.services.prompt.feature_prompts.code_query_solver.factory import (
+    CodeQuerySolverPromptFactory,
 )
 from app.common.services.prompt.feature_prompts.diff_creation.factory import (
     DiffCreationPromptFactory,
@@ -53,6 +56,7 @@ class PromptFeatureFactory:
         PromptFeatures.DIFF_CREATION: DiffCreationPromptFactory,
         PromptFeatures.PLAN_CODE_GENERATION: PlanCodeGenerationPromptFactory,
         PromptFeatures.CHAT_RERANKING: ChatRankingPromptFactory,
+        PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
     }
 
     @classmethod

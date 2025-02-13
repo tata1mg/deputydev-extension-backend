@@ -1,6 +1,11 @@
 import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
+from types_aiobotocore_bedrock_runtime.type_defs import (
+    InvokeModelResponseTypeDef,
+    InvokeModelWithResponseStreamResponseTypeDef,
+)
+
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
@@ -11,16 +16,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingContentBlock,
+    StreamingContentBlockType,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.common.constants.constants import LLMProviders, LLModels
+from app.common.constants.constants import LLModels, LLMProviders
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
-from types_aiobotocore_bedrock_runtime.type_defs import (
-    InvokeModelResponseTypeDef,
-    InvokeModelWithResponseStreamResponseTypeDef,
-)
 
 
 class Anthropic(BaseLLMProvider):
@@ -47,7 +49,7 @@ class Anthropic(BaseLLMProvider):
             "anthropic_version": self.model_settings["VERSION"],
             "max_tokens": self.model_settings["MAX_TOKENS"],
             "system": prompt.system_message,
-            "messages": messages,
+            "messages": [message.model_dump(mode="json") for message in messages],
         }
         return llm_payload
 
@@ -72,18 +74,22 @@ class Anthropic(BaseLLMProvider):
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
 
         async def stream_content() -> AsyncIterator[StreamingContentBlock]:
-            for event in response["body"]:
+            async for event in response["body"]:
                 chunk = json.loads(event["chunk"]["bytes"])
+
+                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+                print(chunk)
+                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
 
                 # yield content block delta
                 if chunk["type"] == "content_block_delta":
                     text = chunk["delta"].get("text", "")
-                    yield StreamingContentBlock(type=chunk["type"], content=text)
+                    yield StreamingContentBlock(type=StreamingContentBlockType.TEXT_DELTA, content=text)
 
                 # update usage on message start and delta
                 if chunk["type"] == "message_start":
-                    usage.input += chunk["usage"].get("input_tokens", 0)
-                    usage.output += chunk["usage"].get("output_tokens", 0)
+                    usage.input += chunk["message"]["usage"].get("input_tokens", 0)
+                    usage.output += chunk["message"]["usage"].get("output_tokens", 0)
 
                 if chunk["type"] == "message_delta":
                     usage.input += chunk["usage"].get("input_tokens", 0)

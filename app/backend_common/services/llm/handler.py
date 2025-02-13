@@ -1,8 +1,9 @@
 import asyncio
+import traceback
 from typing import List, Optional, Union
 
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
-from app.backend_common.services.llm.providers.anthropic_llm import Anthropic
+from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTools,
     ConversationTurn,
@@ -13,13 +14,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.services.llm.providers.anthropic_llm import Anthropic
 from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
     OpenAIReasoningLLM,
 )
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.constants.constants import LLModels
 from app.common.exception import RetryException
-from app.backend_common.services.llm.base_prompt import BasePrompt
 from app.common.utils.app_logger import AppLogger
 
 
@@ -80,7 +81,6 @@ class LLMHandler:
         previous_responses: List[ConversationTurn] = [],
         max_retry: int = 2,
     ) -> Union[StreamingResponse, NonStreamingResponse]:
-        last_exception: Exception
         for i in range(0, max_retry):
             try:
                 llm_payload = client.build_llm_payload(
@@ -92,7 +92,8 @@ class LLMHandler:
                 llm_response = await client.call_service_client(llm_payload, model, self.stream)
                 return llm_response
             except Exception as e:
+                AppLogger.log_debug(traceback.format_exc())
+                print(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry}  Error while fetching data from LLM: {e}")
-                last_exception = e
                 await asyncio.sleep(2)
-        raise RetryException(f"Failed to get response from LLM after {max_retry} retries", last_exception)
+        raise RetryException(f"Failed to get response from LLM after {max_retry} retries")
