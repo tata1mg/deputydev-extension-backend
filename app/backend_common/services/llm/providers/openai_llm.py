@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTools,
+    ConversationTool,
     ConversationTurn,
     PromptCacheConfig,
     UserAndSystemMessages,
@@ -52,7 +52,7 @@ class OpenaiLLM(BaseLLMProvider):
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
-        tools: Optional[ConversationTools] = None,
+        tools: Optional[ConversationTool] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
         """
