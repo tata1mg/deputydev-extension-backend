@@ -34,7 +34,7 @@ class ConversationTurn(BaseModel):
     content: str
 
 
-class ConversationTools(BaseModel):
+class ConversationTool(BaseModel):
     name: str
     description: str
     input_schema: Dict[str, Any]

@@ -10,7 +10,7 @@ from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceCli
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationRole,
-    ConversationTools,
+    ConversationTool,
     ConversationTurn,
     LLMUsage,
     NonStreamingResponse,
@@ -35,7 +35,7 @@ class Anthropic(BaseLLMProvider):
         self,
         prompt: UserAndSystemMessages,
         previous_responses: List[ConversationTurn] = [],
-        tools: Optional[ConversationTools] = None,
+        tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
 
@@ -44,12 +44,16 @@ class Anthropic(BaseLLMProvider):
         user_message = ConversationTurn(role=ConversationRole.USER, content=prompt.user_message)
         messages.append(user_message)
 
+        # create tools sorted by name
+        tools = sorted(tools, key=lambda x: x.name) if tools else []
+
         # create body
         llm_payload = {
             "anthropic_version": self.model_settings["VERSION"],
             "max_tokens": self.model_settings["MAX_TOKENS"],
             "system": prompt.system_message,
             "messages": [message.model_dump(mode="json") for message in messages],
+            "tools": [tool.model_dump(mode="json") for tool in tools],
         }
         return llm_payload
 
