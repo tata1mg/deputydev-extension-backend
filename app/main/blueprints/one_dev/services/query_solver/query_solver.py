@@ -1,13 +1,15 @@
 from app.backend_common.services.llm.handler import LLMHandler
 from app.common.constants.constants import LLModels, PromptFeatures
 from app.common.services.prompt.factory import PromptFeatureFactory
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    QuerySolverInput,
+)
 
 
 class QuerySolver:
     async def solve_query(self, payload: QuerySolverInput):
         prompt = PromptFeatureFactory.get_prompt(
-            prompt_feature=PromptFeatures.CODE_GENERATION,
+            prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
             model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
             init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
         )
