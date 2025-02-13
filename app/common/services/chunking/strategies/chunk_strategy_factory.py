@@ -3,18 +3,42 @@ from app.common.services.chunking.strategies.legacy_chunker import LegacyChunker
 from app.common.services.chunking.strategies.metadata_chunking.base_metadata_chunker import (
     BaseMetadataChunker,
 )
+from app.common.services.chunking.strategies.metadata_chunking.java_metadata_chunker import (
+    JavaMetadataChunker,
+)
+from app.common.services.chunking.strategies.metadata_chunking.javascript_metadata_chunker import (
+    JavascriptMetadataChunker,
+)
+from app.common.services.chunking.strategies.metadata_chunking.kotlin_metadata_chunker import (
+    KotlinMetadataChunker,
+)
+from app.common.services.chunking.strategies.metadata_chunking.python_metadata_chunker import (
+    PythonMetadataChunker,
+)
+from app.common.services.chunking.strategies.metadata_chunking.ruby_metadata_chunker import (
+    RubyMetadataChunker,
+)
+from app.common.services.chunking.strategies.metadata_chunking.typescript_metadata_chunker import (
+    TypescriptMetadataChunker,
+)
 
 
 class ChunkingStrategyFactory:
     # We can keep a map of extension is to specific meta data chunking class that overrides base meta_data chunking methods
-    _language_specific_chunkers = {}
+    _language_specific_chunkers = {
+        "python": PythonMetadataChunker,
+        "javascript": JavascriptMetadataChunker,
+        "tsx": TypescriptMetadataChunker,
+        "typescript": TypescriptMetadataChunker,
+        "java": JavaMetadataChunker,
+        "ruby": RubyMetadataChunker,
+        "kotlin": KotlinMetadataChunker,
+    }
 
     @classmethod
-    def create_strategy(cls, path: str, is_eligible_for_new_chunking: bool) -> BaseChunker:
+    def create_strategy(cls, language: str, is_eligible_for_new_chunking: bool) -> BaseChunker:
         """Creates appropriate chunking strategy"""
-        if not is_eligible_for_new_chunking:
-            return LegacyChunker
+        if not is_eligible_for_new_chunking or language not in cls._language_specific_chunkers:
+            return LegacyChunker()
 
-        ext = path.split(".")[-1].lower()
-        # return BaseMetadataChunker
-        return cls._language_specific_chunkers.get(ext, BaseMetadataChunker)
+        return cls._language_specific_chunkers.get(language, BaseMetadataChunker)()
