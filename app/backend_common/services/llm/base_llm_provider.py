@@ -3,14 +3,16 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
 
 from torpedo import CONFIG, Task
 
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTools,
     ConversationTurn,
+    NonStreamingResponse,
     PromptCacheConfig,
+    StreamingResponse,
     UserAndSystemMessages,
 )
 from app.backend_common.utils.formatting import (
@@ -63,29 +65,21 @@ class BaseLLMProvider(ABC):
         """
         raise NotImplementedError("Must implement format_conversation in subclass")
 
-    @abstractmethod
-    async def parse_response(self, response: Dict[str, Any]) -> Tuple[str, int, int]:
-        """
-        Parses the LLM response.
-        Args:
-            response : The raw response from the LLM.
-        Returns:
-            tuple: Parsed response, input tokens, and output tokens.
-        """
-        raise NotImplementedError("Must implement parse_response in subclass")
-
     def _get_model_config(self, model: LLModels) -> Dict[str, Any]:
         return CONFIG.config.get("LLM_MODELS").get(model)
 
-    async def call_service_client(self, messages: List[Dict[str, str]], model, response_type):
+    async def call_service_client(
+        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None
+    ) -> Union[NonStreamingResponse, StreamingResponse]:
         """
-        Calls the OpenAI service client.
-
+        Calls the LLM service client.
         Args:
-            messages (List[Dict[str, str]]): Formatted conversation messages.
-
+            llm_payload (Dict[str, Any]): The formatted conversation to send to the LLM.
+            model (LLModels): The LLM model to use.
+            stream (bool): If True, stream the response.
+            response_type (str): The type of response expected ("text", "json").
         Returns:
-            str: The response from the GPT model.
+            Any: The raw response from the LLM.
         """
         raise NotImplementedError()
 
@@ -175,7 +169,7 @@ class BaseLLMProvider(ABC):
         Returns:
             Dict[str, Any]: Parsed response with input and output tokens.
         """
-        response, input_tokens, output_tokens = await self.parse_response(llm_response)
+        response, input_tokens, output_tokens = await self.parse_non_streaming_response(llm_response)
         final_response = {
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,

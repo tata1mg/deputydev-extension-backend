@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -7,12 +7,20 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationRole,
     ConversationTools,
     ConversationTurn,
+    LLMUsage,
+    NonStreamingResponse,
     PromptCacheConfig,
+    StreamingContentBlock,
+    StreamingResponse,
     UserAndSystemMessages,
 )
 from app.common.constants.constants import LLMProviders, LLModels
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
+from types_aiobotocore_bedrock_runtime.type_defs import (
+    InvokeModelResponseTypeDef,
+    InvokeModelWithResponseStreamResponseTypeDef,
+)
 
 
 class Anthropic(BaseLLMProvider):
@@ -43,43 +51,57 @@ class Anthropic(BaseLLMProvider):
         }
         return llm_payload
 
-    async def call_service_client(
-        self, llm_payload: Dict[str, Any], model: LLModels, response_type: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Calls the OpenAI service client.
-
-        Args:
-            messages (List[Dict[str, str]]): Formatted conversation messages.
-
-        Returns:
-            str: The response from the GPT model.
-        """
-        anthropic_client = await self.get_service_client()
-        AppLogger.log_debug(messages)
-        model_config = self._get_model_config(model)
-        response = await anthropic_client.get_llm_response(llm_payload=messages, model=model_config["NAME"])
-        return response
-
-    async def get_service_client(self):
+    async def _get_service_client(self):
         if not self.anthropic_client:
             self.anthropic_client = BedrockServiceClient()
         return self.anthropic_client
 
-    async def parse_response(self, response: Dict[str, Any]) -> Tuple[str, int, int]:
-        """
-        Parses the response from OpenAI's GPT model.
+    async def _parse_non_streaming_response(self, response: InvokeModelResponseTypeDef) -> NonStreamingResponse:
+        body: bytes = await response["body"].read()  # type: ignore
+        llm_response = json.loads(body.decode("utf-8"))  # type: ignore
 
-        Args:
-            response (Dict): The raw response from the GPT model.
-
-        Returns:
-            str: Parsed text response and outpur tokens.
-        """
-        body = await response["body"].read()
-        llm_response = json.loads(body.decode("utf-8"))
-        return (
-            llm_response["content"][0]["text"],
-            llm_response["usage"]["input_tokens"],
-            llm_response["usage"]["output_tokens"],
+        return NonStreamingResponse(
+            content=llm_response["content"][0]["text"],
+            tools=[],
+            usage=LLMUsage(input=llm_response["usage"]["input_tokens"], output=llm_response["usage"]["output_tokens"]),
         )
+
+    async def _parse_streaming_response(
+        self, response: InvokeModelWithResponseStreamResponseTypeDef
+    ) -> StreamingResponse:
+        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
+
+        async def stream_content() -> AsyncIterator[StreamingContentBlock]:
+            for event in response["body"]:
+                chunk = json.loads(event["chunk"]["bytes"])
+
+                # yield content block delta
+                if chunk["type"] == "content_block_delta":
+                    text = chunk["delta"].get("text", "")
+                    yield StreamingContentBlock(type=chunk["type"], content=text)
+
+                # update usage on message start and delta
+                if chunk["type"] == "message_start":
+                    usage.input += chunk["usage"].get("input_tokens", 0)
+                    usage.output += chunk["usage"].get("output_tokens", 0)
+
+                if chunk["type"] == "message_delta":
+                    usage.input += chunk["usage"].get("input_tokens", 0)
+                    usage.output += chunk["usage"].get("output_tokens", 0)
+
+        return StreamingResponse(content=stream_content(), usage=usage)
+
+    async def call_service_client(
+        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None
+    ) -> Union[NonStreamingResponse, StreamingResponse]:
+        anthropic_client = await self._get_service_client()
+        AppLogger.log_debug(json.dumps(llm_payload))
+        model_config = self._get_model_config(model)
+        if stream is False:
+            response = await anthropic_client.get_llm_response(llm_payload=llm_payload, model=model_config["NAME"])
+            return await self._parse_non_streaming_response(response)
+        else:
+            response = await anthropic_client.get_llm_stream_response(
+                llm_payload=llm_payload, model=model_config["NAME"]
+            )
+            return await self._parse_streaming_response(response)

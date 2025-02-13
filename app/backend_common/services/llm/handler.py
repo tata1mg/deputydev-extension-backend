@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional, Tuple
+from typing import List, Optional, Union
 
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.providers.anthropic_llm import Anthropic
@@ -8,8 +8,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationTurn,
     LLMCallResponse,
     LLMMeta,
-    LLMUsage,
+    NonStreamingResponse,
     PromptCacheConfig,
+    StreamingResponse,
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
@@ -35,10 +36,12 @@ class LLMHandler:
         prompt_handler: BasePrompt,
         tools: Optional[ConversationTools] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        stream: bool = False,
     ):
         self.prompt_handler = prompt_handler
         self.tools = tools
         self.cache_config = cache_config
+        self.stream = stream
 
     async def get_llm_response_data(self, previous_responses: List[ConversationTurn] = []) -> LLMCallResponse:
         detected_llm = self.prompt_handler.model_name
@@ -49,22 +52,23 @@ class LLMHandler:
         client = self.model_to_provider_class_map[detected_llm]()
         prompt = self.prompt_handler.get_prompt()
 
-        parsed_response, input_tokens, output_tokens = await self.get_llm_response(
+        llm_response = await self.get_llm_response(
             client=client,
             prompt=prompt,
             model=detected_llm,
-            structure_type="text",
             previous_responses=previous_responses,
         )
 
         return LLMCallResponse(
             raw_prompt=prompt.user_message,
-            raw_llm_response=parsed_response,
-            parsed_llm_data=self.prompt_handler.get_parsed_result(parsed_response),
+            raw_llm_response=llm_response.content,
+            parsed_llm_data=self.prompt_handler.get_parsed_result(llm_response.content)
+            if isinstance(llm_response, NonStreamingResponse)
+            else None,
             llm_meta=LLMMeta(
                 llm_model=detected_llm,
                 prompt_type=self.prompt_handler.prompt_type,
-                token_usage=LLMUsage(input=input_tokens, output=output_tokens),
+                token_usage=llm_response.usage,
             ),
         )
 
@@ -73,27 +77,22 @@ class LLMHandler:
         client: BaseLLMProvider,
         prompt: UserAndSystemMessages,
         model: LLModels,
-        structure_type: str,
         previous_responses: List[ConversationTurn] = [],
         max_retry: int = 2,
-    ) -> Tuple[str, int, int]:
+    ) -> Union[StreamingResponse, NonStreamingResponse]:
+        last_exception: Exception
         for i in range(0, max_retry):
             try:
-                print(f"Calling service client {i}")
                 llm_payload = client.build_llm_payload(
                     prompt=prompt,
                     previous_responses=previous_responses,
                     tools=self.tools,
                     cache_config=self.cache_config,
                 )
-                llm_response = await client.call_service_client(llm_payload, model, structure_type)
-                print("LLM response", llm_response)
-                return await client.parse_response(llm_response)
+                llm_response = await client.call_service_client(llm_payload, model, self.stream)
+                return llm_response
             except Exception as e:
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry}  Error while fetching data from LLM: {e}")
                 last_exception = e
                 await asyncio.sleep(2)
-            if i + 1 == max_retry:
-                raise RetryException(f"Retried due to llm client call failed {last_exception}")
-
-        return "", 0, 0
+        raise RetryException(f"Failed to get response from LLM after {max_retry} retries", last_exception)
