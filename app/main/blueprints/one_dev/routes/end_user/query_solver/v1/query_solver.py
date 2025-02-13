@@ -10,7 +10,7 @@ query_solver = Blueprint("query_solver", "/")
 
 
 @query_solver.route("/solve-user-query")
-async def solve_user_query(_request: Request, **kwargs: Any) -> stream:
+async def solve_user_query(_request: Request, **kwargs: Any):
     response = await _request.respond()
     data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json))
 
