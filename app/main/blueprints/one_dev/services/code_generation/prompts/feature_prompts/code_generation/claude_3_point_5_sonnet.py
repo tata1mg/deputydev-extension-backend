@@ -1,18 +1,15 @@
-from typing import Any, Dict
-
-from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.backend_common.services.llm.prompts.llm_base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
 
 
-class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
-    prompt_type = "CODE_QUERY_SOLVER"
+class Claude3Point5CodeGenerationPrompt(BaseClaude3Point5SonnetPrompt):
+    prompt_type = "CODE_GENERATION"
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: dict):
         self.params = params
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self):
         system_message = """You are Claude, an AI assistant created by Anthropic to be helpful, harmless, and honest. As an expert programmer, your task is to assist users with coding-related questions. Analyze the provided code context carefully and use it to inform your responses. If the context is insufficient, draw upon your general programming knowledge to provide accurate and helpful advice.
 
             Guidelines:
@@ -43,7 +40,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             Please put your entire response within the <response> tag and set the <is_task_done> tag to true if the response contains generated code.
         """
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
+        return {"system_message": system_message, "user_message": user_message}
 
     @classmethod
     def get_parsed_result(cls, llm_response: str) -> dict:
