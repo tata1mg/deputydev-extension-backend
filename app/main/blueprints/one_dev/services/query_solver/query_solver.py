@@ -1,8 +1,13 @@
+from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.common.constants.constants import LLModels, PromptFeatures
-from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
+    PromptFeatures,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.factory import (
+    PromptFeatureFactory,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
