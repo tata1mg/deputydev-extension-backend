@@ -2,7 +2,7 @@ from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
-from app.common.services.prompt.feature_prompts.code_query_solver.claude_3_point_5_sonnet import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_3_point_5_sonnet import (
     Claude3Point5CodeQuerySolverPrompt,
 )
 

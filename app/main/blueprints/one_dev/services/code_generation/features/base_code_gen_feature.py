@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, TypeVar
 
-from app.backend_common.services.chunking.reranker.handler.llm_based import (
+from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
     LLMBasedChunkReranker,
 )
 from app.backend_common.services.llm.dataclasses.main import LLMMeta
