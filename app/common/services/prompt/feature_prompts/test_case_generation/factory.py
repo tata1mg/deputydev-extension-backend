@@ -1,5 +1,5 @@
-from app.common.constants.constants import LLModels
-from app.common.services.prompt.base_feature_prompt_factory import (
+from app.backend_common.services.llm.dataclasses.main import LLModels
+from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
 from app.common.services.prompt.feature_prompts.test_case_generation.claude_3_point_5_sonnet import (

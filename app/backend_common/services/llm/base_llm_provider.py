@@ -10,6 +10,7 @@ from torpedo import CONFIG, Task
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     ConversationTurn,
+    LLModels,
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingResponse,
@@ -19,7 +20,7 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.common.constants.constants import LLModels, LLMProviders
+from app.common.constants.constants import LLMProviders
 from app.common.exception import RetryException
 from app.common.exception.exception import ParseException
 from app.common.utils.app_logger import AppLogger

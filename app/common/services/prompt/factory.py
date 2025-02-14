@@ -1,10 +1,11 @@
 from typing import Any, Dict, Type
 
-from app.backend_common.services.llm.base_prompt import BasePrompt
-from app.common.constants.constants import LLModels, PromptFeatures
-from app.common.services.prompt.base_feature_prompt_factory import (
+from app.backend_common.services.llm.dataclasses.main import LLModels
+from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from app.common.constants.constants import PromptFeatures
 from app.common.services.prompt.feature_prompts.chat_filter.factory import (
     ChatRankingPromptFactory,
 )

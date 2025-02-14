@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
-from app.common.constants.constants import LLModels
+from app.backend_common.services.llm.dataclasses.main import (
+    LLModels,
+    UserAndSystemMessages,
+)
 
 
 class BasePrompt(ABC):
