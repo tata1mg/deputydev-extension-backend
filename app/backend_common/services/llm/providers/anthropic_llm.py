@@ -12,6 +12,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationRole,
     ConversationTool,
     ConversationTurn,
+    LLModels,
     LLMUsage,
     NonStreamingResponse,
     PromptCacheConfig,
@@ -20,7 +21,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.common.constants.constants import LLModels, LLMProviders
+from app.common.constants.constants import LLMProviders
 from app.common.utils.app_logger import AppLogger
 from app.common.utils.config_manager import ConfigManager
 
