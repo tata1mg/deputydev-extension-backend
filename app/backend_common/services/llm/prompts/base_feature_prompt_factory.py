@@ -1,5 +1,5 @@
-from app.backend_common.services.llm.base_prompt import BasePrompt
-from app.common.constants.constants import LLModels
+from app.backend_common.services.llm.dataclasses.main import LLModels
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 
 class BaseFeaturePromptFactory:
