@@ -1,6 +1,7 @@
-from torpedo import CONFIG
+from torpedo import CONFIG, Task
 
-from app.backend_common.services.llm.multi_agents_manager import MultiAgentsLLMManager
+from app.backend_common.services.llm.dataclasses.main import LLMCallResponse
+from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.utils.formatting import format_summary_with_metadata
@@ -17,12 +18,18 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_fa
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import BaseCodeReviewPrompt
+from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import CodeReviewPromptFactory
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from typing import Dict, List
+
+from app.backend_common.utils.app_utils import get_task_response
+
 
 
 class MultiAgentPRReviewManager:
@@ -86,13 +93,60 @@ class MultiAgentPRReviewManager:
 
     # section prompt end
 
+    @classmethod
+    async def get_llm_response(cls, prompt_list: List[Dict[str, str]]):
+        """
+        Retrieves LLM responses based on the configured LLM type.
+
+        Args:
+            prompt_list (List[Dict[str, str]]): List of prompt objects.
+
+        Returns:
+            Dict[str, str]: A dictionary mapping prompt keys to LLM responses.
+        """
+
+        prompt_objs: List[BaseCodeReviewPrompt] = []
+
+        for prompt in prompt_list:
+            if "model" not in prompt:
+                raise ValueError("Model not found in prompt")
+
+            prompt_model = prompt["model"]
+            prompt_structure_type = prompt.get("structure_type", "default")
+            parse = prompt.get("parse", False)
+            user_message = prompt["user_message"]
+            system_message = prompt.get("system_message")
+            prompt_key = prompt["key"]
+
+            prompt_obj = CodeReviewPromptFactory.get_prompt_obj(
+                model=prompt_model,
+                prompt_return_type=prompt_structure_type,
+                should_parse=parse,
+                user_message=user_message,
+                system_message=system_message,
+            )
+            prompt_objs.append(prompt_obj)
+
+            tasks: List[Task] = []
+            for prompt_obj in prompt_objs:
+                tasks.append(
+                    Task(LLMHandler(prompt_handler=prompt_obj).get_llm_response_data(previous_responses=[]), result_key=prompt_key)
+                )
+
+            responses = await get_task_response(tasks)
+            return {
+                response_key: response_data.parsed_llm_data.get("data")
+                for response_key, response_data in responses.items()
+                if isinstance(response_data, LLMCallResponse)
+            }
+
     # llm handler start
     async def _make_llm_calls(self):
         contexts = []
         for agent in self.current_prompts:
             if agent not in self.exclude_agent:
                 contexts.append(self.current_prompts[agent])
-        self.llm_comments = await MultiAgentsLLMManager.get_llm_response(contexts)
+        self.llm_comments = await self.get_llm_response(contexts)
         return self.llm_comments
 
     # llm handler end
