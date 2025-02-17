@@ -1,8 +1,12 @@
+import json
 from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
 
+from app.backend_common.services.auth.session_encryption_service import (
+    SessionEncryptionService,
+)
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.common.services.authentication.jwt import JWTHandler
 
@@ -25,9 +29,8 @@ class SupabaseAuth:
         exp_timestamp = decoded_token.get("exp")
         if exp_timestamp is not None:
             current_time = int(datetime.now(timezone.utc).timestamp())
-            if current_time > exp_timestamp:
-                return False
-        return True
+            return current_time > exp_timestamp
+        raise jwt.InvalidTokenError("Invalid token.")
 
     @classmethod
     async def verify_auth_token(cls, access_token: str) -> Dict[str, Any]:
@@ -49,9 +52,9 @@ class SupabaseAuth:
             # Decode the JWT token without verification to check expiration
             decoded_token = JWTHandler.verify_token_without_signature_verification(access_token)
             # Verifying expiry of the token before supabase network call
-            is_token_valid = cls.is_token_expired(decoded_token)
-            if not is_token_valid:
-                return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
+            is_token_expired = cls.is_token_expired(decoded_token)
+            if is_token_expired:
+                raise jwt.ExpiredSignatureError
 
             # Verify token with Supabase
             user_response = cls.supabase.auth.get_user(access_token)
@@ -66,16 +69,11 @@ class SupabaseAuth:
                 return {"valid": False, "message": "Token is invalid", "user_email": None, "user_name": None}
 
         except jwt.ExpiredSignatureError:
-            return {"valid": False, "message": "Token has expired", "user_email": None, "user_name": None}
+            raise jwt.ExpiredSignatureError("The token has expired.")
         except jwt.InvalidTokenError:
-            return {"valid": False, "message": "Invalid token format", "user_email": None, "user_name": None}
+            raise jwt.InvalidTokenError("Invalid token.")
         except Exception as e:
-            return {
-                "valid": False,
-                "message": f"Token validation failed: {str(e)}",
-                "user_email": None,
-                "user_name": None,
-            }
+            raise Exception(f"Token validation failed: {str(e)}")
 
     @classmethod
     async def extract_and_validate_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -102,3 +100,40 @@ class SupabaseAuth:
 
         # Call the verify_auth_token method with the access token
         return await cls.verify_auth_token(access_token)
+
+    @classmethod
+    async def refresh_session(cls, session_data: Dict[str, Any]) -> str:
+        """
+        Refreshes the user session by obtaining new access and refresh tokens.
+
+        This method calls the Supabase authentication service to refresh the session
+        using the provided refresh token. It updates the session data with the new
+        tokens and encrypts the session data before returning it.
+
+        Args:
+            session_data (Dict[str, Any]): A dictionary containing the session data,
+                including the refresh token.
+
+        Returns:
+            str: The encrypted session data containing the new access and refresh tokens.
+
+        Raises:
+            Exception: If the refresh operation fails or if there is an error during
+                the process.
+        """
+        try:
+            # Call the Supabase auth refresh method with the provided refresh token
+            response = cls.supabase.auth.refresh_session(session_data.get("refresh_token"))
+
+            if not response.session:
+                raise Exception("Failed to refresh tokens.")
+
+            # update the session data with the refreshed access and refresh tokens
+            session_data["access_token"] = response.session.access_token
+            session_data["refresh_token"] = response.session.refresh_token
+            # return the refreshed session data
+            encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
+            return encrypted_session_data
+        except Exception as e:
+            # Handle exceptions (e.g., log the error)
+            raise Exception(f"Error refreshing session: {str(e)}")
