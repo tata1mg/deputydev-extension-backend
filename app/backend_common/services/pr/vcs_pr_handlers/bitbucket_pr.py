@@ -1,5 +1,5 @@
 import re
-
+from typing import List
 from app.backend_common.models.dto.pr.bitbucket_pr import BitbucketPrModel
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.services.credentials import AuthHandler
@@ -8,6 +8,7 @@ from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.bitbucket_repo import BitbucketRepo
 from app.common.constants.constants import PR_NOT_FOUND, VCSTypes
 from app.common.utils.context_vars import get_context_value, set_context_values
+from app.backend_common.models.dto.comment_dto import CommentDTO
 
 ATLASSIAN_ISSUE_URL_PREFIX = "https://1mgtech.atlassian.net/browse/"
 ISSUE_ID_REGEX = r"[A-Z]+-\d+"
@@ -99,10 +100,6 @@ class BitbucketPR(BasePR):
         """
         payload = {"description": description}
         await self.repo_client.update_pr_details(payload)
-
-    async def get_pr_comments(self):
-        comments = await self.repo_client.get_pr_comments()
-        return comments
 
     async def get_pr_diff(self):
         """
@@ -227,3 +224,11 @@ class BitbucketPR(BasePR):
             )
 
         return formatted_commits
+
+    async def get_pr_comments(self) -> List[CommentDTO]:
+        pr_comments = await self.repo_client.get_pr_comments()
+        formatted_pr_comments = []
+        for pr_comment in pr_comments:
+            comment = CommentDTO(scm_comment_id=str(pr_comment["id"]), body=pr_comment["content"]["raw"])
+            formatted_pr_comments.append(comment)
+        return formatted_pr_comments

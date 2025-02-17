@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Dict, Any
 
 from torpedo import CONFIG
 
@@ -169,8 +169,8 @@ class PRReviewPostProcessor:
                 weight_counts_data[weight] = weight_counts_data.get(weight, 0) + 1
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
-    @staticmethod
-    async def save_llm_comments(pr_dto: PullRequestDTO, llm_comments: List[dict]):
+    @classmethod
+    async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[Dict[Any, Any]]):
         comments_to_save = []
         agent_mappings_to_save = []
 
@@ -213,11 +213,7 @@ class PRReviewPostProcessor:
             for bucket in comment.get("buckets") or []:
                 agent_ids.append(bucket["agent_id"])
         agent_filter = {"repo_id": pr_dto.repo_id, "agent_id__in": agent_ids}
-        agents = await DB.get_by_filters(
-            Agents,
-            filters=agent_filter,
-        )
-        agents_by_id = {str(agent.agent_id): agent for agent in agents}
+        saved_agents_by_id = await cls.fetch_agents(agent_filter)
         comments_by_ids = {}
         inserted_comments_dict = {comment.scm_comment_id: comment for comment in inserted_comments}
         for valid_comment in valid_llm_comments:
@@ -225,26 +221,55 @@ class PRReviewPostProcessor:
             if scm_comment_id in inserted_comments_dict:
                 inserted_comment = inserted_comments_dict[scm_comment_id]
                 comments_by_ids[inserted_comment.id] = valid_comment
-        agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
-        agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
+        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        is_new_agents_created = await cls.upsert_agents(pr_dto.repo_id, saved_agents_by_id, current_agents_by_id)
+        if is_new_agents_created:
+            saved_agents_by_id = await cls.fetch_agents(agent_filter)
         agent_comment_pairs = []
         for comment_id, comment_data in comments_by_ids.items():
             # fetch all agents based on "agent_id" and "repo_id"
             # save in agent_comment_mapping table
             for bucket in comment_data["buckets"]:
                 agent_id = bucket["agent_id"]
-                if agent_id in agents_by_id:
-                    agent = agents_by_id[agent_id]
+                if agent_id in saved_agents_by_id:
+                    agent = saved_agents_by_id[agent_id]
                     agent_comment_pairs.append((comment_id, agent.id))
                     agent_mappings_to_save.append(
                         AgentCommentMappings(
-                            pr_comment_id=comment_id, agent_id=agent.id, weight=agents_by_agent_id[agent_id]["weight"]
+                            pr_comment_id=comment_id, agent_id=agent.id, weight=current_agents_by_id[agent_id]["weight"]
                         )
                     )
         if len(agent_comment_pairs) != len(set(agent_comment_pairs)):
             AppLogger.log_info(f"Duplicate Agents received: {agent_comment_pairs}")
         await AgentCommentMappingService.bulk_insert(agent_mappings_to_save)
         return llm_comments
+
+    @staticmethod
+    async def fetch_agents(agent_filter: Dict[str, Any]) -> Dict[str, Any]:
+        agents = await DB.get_by_filters(
+            Agents,
+            filters=agent_filter,
+        )
+        agents_by_id = {str(agent.agent_id): agent for agent in agents}
+        return agents_by_id
+
+    @staticmethod
+    async def upsert_agents(repo_id: int, saved_agents: Dict[str, Any], current_agents: Dict[str, dict]):
+        new_agents = []
+        is_new_agent_created = False
+        for agent_id, agent_data in current_agents.items():
+            if agent_id not in saved_agents:
+                is_new_agent_created = True
+                new_agents.append(
+                    Agents(
+                        agent_id=agent_id,
+                        repo_id=repo_id,
+                        display_name=agent_data["display_name"],
+                        agent_name=agent_data["agent_name"],
+                    )
+                )
+        await SettingService.upsert_agents(new_agents)
+        return is_new_agent_created
 
     async def update_pr(self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None):
         pr_score = self.get_pr_score(llm_comments)
