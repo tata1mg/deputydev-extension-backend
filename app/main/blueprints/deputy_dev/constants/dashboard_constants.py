@@ -21,24 +21,23 @@ class TileTypes(Enum):
 class AnalyticsDataQueries(Enum):
     comment_bucket_types_query = """
         SELECT
-            b.name AS bucket_type,
+            a.agent_name AS bucket_type,
             count(*) AS count
         FROM
-            comment_bucket_mapping cbm
+            agent_comment_mappings acm
         JOIN
-            buckets b ON cbm.bucket_id = b.id
+            agents a ON acm.agent_id = a.id
         JOIN
-            pr_comments prc ON cbm.pr_comment_id = prc.id
+            pr_comments prc ON acm.pr_comment_id = prc.id
         JOIN
             pull_requests pr ON prc.pr_id = pr.id
         WHERE
             prc.created_at >= '{start_date}'
             AND prc.created_at <= '{end_date}'
-            AND b.status = '{bucket_status}'
             AND prc.repo_id in ({repo_ids})
             AND pr.iteration = 1
         GROUP BY
-            b.name
+            a.agent_name
         ORDER BY
             count DESC
     """
@@ -121,7 +120,7 @@ class AnalyticsDataQueries(Enum):
 
 class DashboardQueries(Enum):
     teams_query = """
-        SELECT
+        SELECT DISTINCT
             t.id,
             u.org_name as name
         FROM
@@ -130,6 +129,8 @@ class DashboardQueries(Enum):
             user_teams ut on t.id = ut.team_id
         JOIN
             users u on u.id = ut.user_id
+        WHERE
+            t.id in (1,3,4)
         ORDER BY
             t.id
     """
@@ -168,11 +169,11 @@ class DashboardQueries(Enum):
             prc.scm_comment_id,
             pr.title as pr_title
         FROM
-            comment_bucket_mapping cbm
+            agent_comment_mappings acm
         JOIN
-            buckets b ON cbm.bucket_id = b.id
+            agents a ON acm.agent_id = a.id
         JOIN
-            pr_comments prc ON cbm.pr_comment_id = prc.id
+            pr_comments prc ON acm.pr_comment_id = prc.id
         JOIN
             repos r on r.id = prc.repo_id
         JOIN
@@ -182,8 +183,7 @@ class DashboardQueries(Enum):
         WHERE
             prc.created_at >= '{start_date}'
             AND prc.created_at <= '{end_date}'
-            AND b.status = '{bucket_status}'
-            AND b.name = '{bucket_type_condition}'
+            AND a.agent_name = '{bucket_type_condition}'
             AND pr.repo_id in ({repo_ids})
             AND pr.iteration = 1
         ORDER by

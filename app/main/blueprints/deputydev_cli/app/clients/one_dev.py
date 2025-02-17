@@ -11,6 +11,9 @@ from app.main.blueprints.deputydev_cli.app.clients.constants import (
 from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
     InvalidVersionException,
 )
+from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.cli_auth_token_storage_manager import (
+    CLIAuthTokenStorageManager,
+)
 from app.main.blueprints.deputydev_cli.versions import APP_VERSION
 
 
@@ -55,6 +58,10 @@ class OneDevClient(BaseHTTPClient):
             data=data,
             json=json,
         )
+        # Update the auth token in the storage if expired
+        if response.headers.get("new_session_data") is not None:
+            CLIAuthTokenStorageManager.store_auth_token(response.headers.get("new_session_data"))
+
         parsed_response = await response.json()
         if parsed_response["status_code"] == 400:
             if parsed_response.get("meta") and parsed_response["meta"]["error_code"] == 101:
