@@ -1,4 +1,5 @@
 from typing import Optional
+
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 

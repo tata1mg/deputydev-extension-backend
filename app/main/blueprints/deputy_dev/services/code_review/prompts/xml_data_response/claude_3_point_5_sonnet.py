@@ -1,19 +1,21 @@
 import re
-from typing import Any, Dict
-from app.backend_common.services.llm.prompts.llm_base_prompts.claude_3_point_5_sonnet import BaseClaude3Point5SonnetPrompt
 import xml.etree.ElementTree as ET
+from typing import Any, Dict
 
-
+from app.backend_common.services.llm.prompts.llm_base_prompts.claude_3_point_5_sonnet import (
+    BaseClaude3Point5SonnetPrompt,
+)
 from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
 from app.common.exception.exception import ParseException
-from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import BaseCodeReviewPrompt
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (
+    BaseCodeReviewPrompt,
+)
 
 
 class Claude3Point5XMLDataResponsePrompt(BaseCodeReviewPrompt, BaseClaude3Point5SonnetPrompt):
-
     def get_parsed_result(self, llm_response: str) -> Dict[str, Any]:
         review_content = None
         # Parse the XML string
@@ -44,4 +46,3 @@ class Claude3Point5XMLDataResponsePrompt(BaseCodeReviewPrompt, BaseClaude3Point5
             raise ParseException(
                 f"XML parsing error while decoding PR review comments data:  {llm_response}, exception: {exception}"
             )
-

@@ -20,7 +20,6 @@ class BaseLLMProvider(ABC):
     def __init__(self, llm_type):
         self.llm_type = llm_type
 
-
     @abstractmethod
     def build_llm_payload(
         self,
