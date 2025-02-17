@@ -1,6 +1,10 @@
 from typing import Type
+
 from app.backend_common.services.llm.dataclasses.main import LLModels
-from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import BaseCodeReviewPrompt
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (
+    BaseCodeReviewPrompt,
+)
+
 from .claude_3_point_5_sonnet import Claude3Point5JsonDataResponsePrompt
 from .gpt_4o import GPT4OJsonDataResponsePrompt
 
@@ -8,7 +12,7 @@ from .gpt_4o import GPT4OJsonDataResponsePrompt
 class CodeReviewJsonDataPromptFactory:
     prompts = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5JsonDataResponsePrompt,
-        LLModels.GPT_4O : GPT4OJsonDataResponsePrompt
+        LLModels.GPT_4O: GPT4OJsonDataResponsePrompt,
     }
 
     @classmethod
@@ -17,5 +21,3 @@ class CodeReviewJsonDataPromptFactory:
         if not prompt_class:
             raise ValueError(f"Prompt not found for model {model}")
         return prompt_class
-
-        
