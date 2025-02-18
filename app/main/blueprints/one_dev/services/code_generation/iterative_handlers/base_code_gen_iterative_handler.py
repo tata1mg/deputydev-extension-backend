@@ -9,7 +9,9 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dat
     BaseCodeGenIterativeHandlerPayload,
     CodeGenIterativeHandlers,
 )
-from app.main.blueprints.one_dev.services.code_generation.prompts.dataclasses.main import PromptFeatures
+from app.main.blueprints.one_dev.services.code_generation.prompts.dataclasses.main import (
+    PromptFeatures,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
