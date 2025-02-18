@@ -1,6 +1,6 @@
 from enum import Enum
 
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.utils.config_manager import ConfigManager
 
 PR_SUMMARY_TEXT = "\n\n **DeputyDev generated PR summary:** \n\n"
 PR_SIZING_TEXT = (
@@ -36,12 +36,6 @@ SETTING_ERROR_MESSAGE = {
 class TimeFormat(Enum):
     SECONDS = "SECONDS"
     MINUTES = "MINUTES"
-
-
-class ExtendedEnum(Enum):
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
 
 
 class VCSFailureMessages(Enum):
@@ -95,7 +89,6 @@ TYPESCRIPT_EXTENSIONS = {
 }
 RUBY_EXTENSIONS = {"rb": "ruby"}
 
-
 # We collect all the language dictionaries and create a single dict, making it easier to segregate as different extensions
 # can be served from the same programming language
 ALL_EXTENSIONS = {
@@ -137,11 +130,3 @@ class PRStatus(Enum):
     MERGED = "MERGED"
     DECLINED = "DECLINED"
     APPROVED = "approved"
-
-
-class LLMModelNames(ExtendedEnum):
-    GPT_3_5_TURBO = "gpt-3.5-turbo"
-    GPT_4 = "gpt-4"
-    GPT_4_PREVIEW = "gpt-4-1106-preview"
-    GPT_4_O = "gpt-4o"
-    GPT_TEXT_EMBEDDING_3_SMALL = "text-embedding-3-small"

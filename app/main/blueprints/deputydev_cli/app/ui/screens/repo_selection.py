@@ -13,13 +13,13 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repo.local_repo.factory import LocalRepoFactory
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
+from deputydev_core.services.repo.local_repo.local_repo_factory import LocalRepoFactory
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     RegisteredRepo,
 )
-from app.main.blueprints.deputydev_cli.app.managers.initialization.main import (
+from deputydev_core.services.initialization.initialization_service import (
     InitializationManager,
 )
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (

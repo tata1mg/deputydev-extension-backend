@@ -1,10 +1,10 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Optional, Union
 
-from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
+from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
+from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
+from deputydev_core.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
 from app.main.blueprints.deputydev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
 )

@@ -19,10 +19,10 @@ from app.backend_common.utils.app_utils import (
     get_token_count,
 )
 from app.backend_common.utils.formatting import append_line_numbers, format_code_blocks
-from app.common.services.chunking.chunking_manager import ChunkingManger
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
-from app.common.services.search.dataclasses.main import SearchTypes
-from app.common.services.tiktoken import TikToken
+from deputydev_core.services.chunking.chunking_manager import ChunkingManger
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
+from deputydev_core.services.search.dataclasses.main import SearchTypes
+from deputydev_core.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes

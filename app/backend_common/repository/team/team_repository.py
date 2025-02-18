@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 from app.backend_common.models.dao.postgres.teams import Teams
 from app.backend_common.models.dto.team_dto import TeamDTO
 from app.backend_common.repository.db import DB
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class TeamRepository:

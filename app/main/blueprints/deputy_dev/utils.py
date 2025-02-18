@@ -13,7 +13,7 @@ from app.backend_common.repository.db import DB
 from app.backend_common.services.credentials import AuthHandler, AuthHandlerFactory
 from app.common.constants.constants import VCSTypes
 from app.common.services.authentication.jwt import JWTHandler
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,

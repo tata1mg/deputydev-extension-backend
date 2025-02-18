@@ -5,8 +5,8 @@ from typing import Optional
 import aiohttp
 import certifi
 
-from app.common.utils.config_manager import ConfigManager
-from app.common.utils.singleton import Singleton
+from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.singleton import Singleton
 
 
 class SessionManager(metaclass=Singleton):

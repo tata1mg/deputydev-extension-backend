@@ -6,10 +6,10 @@ from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.validation import ValidationError
 
 from app.common.constants.auth import AuthStatus
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
-from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
+from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
+from deputydev_core.utils.exceptions import (
     InvalidVersionException,
 )
 from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.cli_auth_token_storage_manager import (

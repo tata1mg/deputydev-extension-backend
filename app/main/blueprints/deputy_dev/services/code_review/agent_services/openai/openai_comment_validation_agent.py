@@ -4,7 +4,7 @@ from string import Template
 
 from torpedo import CONFIG
 
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
