@@ -1,8 +1,8 @@
 from typing import Optional
 
-from json_data_response.factory import CodeReviewJsonDataPromptFactory
-from plain_text_response.factory import CodeReviewPlainTextPromptFactory
-from xml_data_response.factory import CodeReviewXMLDataPromptFactory
+from .json_data_response.factory import CodeReviewJsonDataPromptFactory
+from .plain_text_response.factory import CodeReviewPlainTextPromptFactory
+from .xml_data_response.factory import CodeReviewXMLDataPromptFactory
 
 from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (

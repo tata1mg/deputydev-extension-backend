@@ -1,7 +1,7 @@
-from dataclasses.main import PromptFeatures
+from .dataclasses.main import PromptFeatures
 from typing import Any, Dict, Type
 
-from feature_prompts.chunk_re_ranking.factory import ChunkReRankingPromptFactory
+from .feature_prompts.chunk_re_ranking.factory import ChunkReRankingPromptFactory
 
 from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
