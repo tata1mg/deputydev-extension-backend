@@ -1,13 +1,13 @@
 from typing import List
 
-from ....prompts.dataclasses.main import PromptFeatures
-from ....prompts.factory import PromptFeatureFactory
-
 from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
     PreviousChats,
 )
+
+from ....prompts.dataclasses.main import PromptFeatures
+from ....prompts.factory import PromptFeatureFactory
 
 
 class LLMBasedChatFiltration:

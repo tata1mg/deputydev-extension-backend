@@ -1,8 +1,5 @@
 from typing import Any, Dict, List
 
-from ...prompts.dataclasses.main import PromptFeatures
-from ...prompts.factory import PromptFeatureFactory
-
 from app.backend_common.services.llm.dataclasses.main import LLMMeta, LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
@@ -25,6 +22,9 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
+
+from ...prompts.dataclasses.main import PromptFeatures
+from ...prompts.factory import PromptFeatureFactory
 
 
 class TestCaseGenerationHandler(BaseCodeGenFeature[TestCaseGenerationInput]):

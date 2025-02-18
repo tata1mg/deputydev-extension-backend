@@ -1,8 +1,5 @@
 from typing import Any, Dict, List, Tuple
 
-from ...prompts.dataclasses.main import PromptFeatures
-from ...prompts.factory import PromptFeatureFactory
-
 from app.backend_common.services.llm.dataclasses.main import LLMMeta, LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.repo.repo_factory import RepoFactory
@@ -29,6 +26,9 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
+
+from ...prompts.dataclasses.main import PromptFeatures
+from ...prompts.factory import PromptFeatureFactory
 
 
 class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
