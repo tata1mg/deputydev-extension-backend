@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
-from prompts.dataclasses.main import PromptFeatures
-from prompts.factory import PromptFeatureFactory
+from ...prompts.dataclasses.main import PromptFeatures
+from ...prompts.factory import PromptFeatureFactory
 
 from app.backend_common.services.llm.dataclasses.main import LLMMeta, LLModels
 from app.backend_common.services.llm.handler import LLMHandler

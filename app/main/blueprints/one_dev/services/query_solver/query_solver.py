@@ -1,4 +1,4 @@
-from prompts.factory import PromptFeatureFactory
+from .prompts.factory import PromptFeatureFactory
 
 from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.handler import LLMHandler

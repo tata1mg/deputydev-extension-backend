@@ -1,6 +1,5 @@
 from typing import List
 
-from app.common.constants.constants import PromptFeatures
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
     PreviousChatPayload,
@@ -9,6 +8,7 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.reranking.main import (
     LLMBasedChatFiltration,
 )
+from app.main.blueprints.one_dev.services.code_generation.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )

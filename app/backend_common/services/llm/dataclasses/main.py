@@ -59,6 +59,7 @@ class StreamingContentBlockType(Enum):
 class ToolUseRequest(BaseModel):
     tool_name: str
     tool_input: Dict[str, Any]
+    tool_use_id: str
 
 
 class StreamingContentBlock(BaseModel):
