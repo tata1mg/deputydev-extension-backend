@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from sanic import Blueprint
@@ -18,7 +19,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json))
 
     async for data_block in data.raw_llm_response:
-        await response.send("data: " + str(data_block.model_dump(mode="json")) + "\r\n\r\n")
+        await response.send("data: " + json.dumps(data_block.model_dump(mode="json")) + "\r\n\r\n")
         # await response.send("data: " + "GAGAGAGGA" + "\r\n\r\n")
 
     await response.eof()
