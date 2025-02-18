@@ -3,7 +3,7 @@ from typing import Union
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
 
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FinalFailedJob,

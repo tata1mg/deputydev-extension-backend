@@ -8,7 +8,7 @@ from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.repository.db import DB
 from app.backend_common.repository.repo.repo_repository import RepoRepository
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests

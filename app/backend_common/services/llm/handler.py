@@ -15,8 +15,8 @@ from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.constants.constants import LLModels
 from app.common.exception import RetryException
 from app.common.services.prompt.base_prompt import BasePrompt
-from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class LLMHandler:

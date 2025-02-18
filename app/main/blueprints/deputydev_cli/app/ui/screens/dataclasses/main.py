@@ -5,10 +5,10 @@ from typing import Dict, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
-from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
+from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
+from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
+from deputydev_core.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     PlainTextQuery,
@@ -16,7 +16,7 @@ from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main im
     RegisteredRepo,
     TextSelectionQuery,
 )
-from app.main.blueprints.deputydev_cli.app.managers.initialization.main import (
+from deputydev_core.services.initialization.initialization_service import (
     InitializationManager,
 )
 from app.main.blueprints.deputydev_cli.app.ui.dataclasses.main import FlowStatus

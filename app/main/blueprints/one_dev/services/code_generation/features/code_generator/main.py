@@ -3,7 +3,7 @@ from typing import List
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
 from app.common.constants.constants import LLModels, PromptFeatures
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.features.base_code_gen_feature import (
