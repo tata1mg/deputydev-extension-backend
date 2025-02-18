@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, TypeVar
 
 from app.backend_common.services.llm.dataclasses.main import LLMMeta
-from app.common.constants.constants import PromptFeatures
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dataclass.main import (
     BaseCodeGenIterativeHandlerPayload,
     CodeGenIterativeHandlers,
 )
+from app.main.blueprints.one_dev.services.code_generation.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )

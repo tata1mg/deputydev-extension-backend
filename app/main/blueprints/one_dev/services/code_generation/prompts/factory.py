@@ -1,18 +1,18 @@
-from dataclasses.main import PromptFeatures
+from .dataclasses.main import PromptFeatures
 from typing import Any, Dict, Type
 
-from feature_prompts.chat_filter.factory import ChatRankingPromptFactory
-from feature_prompts.chunk_description_generation.factory import (
+from .feature_prompts.chat_filter.factory import ChatRankingPromptFactory
+from .feature_prompts.chunk_description_generation.factory import (
     ChunkDescriptionGenerationPromptFactory,
 )
-from feature_prompts.code_generation.factory import CodeGenerationPromptFactory
-from feature_prompts.diff_creation.factory import DiffCreationPromptFactory
-from feature_prompts.docs_generation.factory import DocsGenerationPromptFactory
-from feature_prompts.iterative_code_chat.factory import IterativeCodeChatPromptFactory
-from feature_prompts.plan_to_code.factory import PlanCodeGenerationPromptFactory
-from feature_prompts.task_plan_generation.factory import TaskPlanGenerationPromptFactory
-from feature_prompts.test_case_generation.factory import TestCaseGenerationPromptFactory
-from feature_prompts.test_plan_generation.factory import TestPlanGenerationPromptFactory
+from .feature_prompts.code_generation.factory import CodeGenerationPromptFactory
+from .feature_prompts.diff_creation.factory import DiffCreationPromptFactory
+from .feature_prompts.docs_generation.factory import DocsGenerationPromptFactory
+from .feature_prompts.iterative_code_chat.factory import IterativeCodeChatPromptFactory
+from .feature_prompts.plan_to_code.factory import PlanCodeGenerationPromptFactory
+from .feature_prompts.task_plan_generation.factory import TaskPlanGenerationPromptFactory
+from .feature_prompts.test_case_generation.factory import TestCaseGenerationPromptFactory
+from .feature_prompts.test_plan_generation.factory import TestPlanGenerationPromptFactory
 
 from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
