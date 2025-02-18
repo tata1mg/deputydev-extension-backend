@@ -1,5 +1,3 @@
-from .prompts.factory import PromptFeatureFactory
-
 from app.backend_common.services.llm.dataclasses.main import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -17,6 +15,8 @@ from app.main.blueprints.one_dev.services.query_solver.tools.code_searcher impor
 from app.main.blueprints.one_dev.services.query_solver.tools.diff_applicator import (
     DIFF_APPLICATOR,
 )
+
+from .prompts.factory import PromptFeatureFactory
 
 
 class QuerySolver:
