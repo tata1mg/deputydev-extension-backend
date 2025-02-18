@@ -6,7 +6,7 @@ import time
 import jwt
 from torpedo import CONFIG
 
-from app.common.request_clients.http.base_http_session_manager import SessionManager
+from deputydev_core.clients.http.base_http_session_manager import SessionManager
 
 
 class GithubOAuthClient:

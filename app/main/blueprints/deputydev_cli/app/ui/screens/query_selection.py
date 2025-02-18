@@ -8,7 +8,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.constants.cli import (
     CLIFeatures,
     CLIOperations,

@@ -1,7 +1,7 @@
 from app.backend_common.models.dao.postgres import Repos
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests, PRComments, AgentCommentMappings
 from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import AgentCommentMappingService
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler, get_workspace
@@ -13,7 +13,13 @@ import re
 
 
 BucketMapping = {
-    "Security": ["Security","SECURITY", "{SECURITY}", "SECURITY_ERROR", "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT"],
+    "Security": [
+        "Security",
+        "SECURITY",
+        "{SECURITY}",
+        "SECURITY_ERROR",
+        "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT",
+    ],
     "Code Maintainabiltiy": [
         "CODE MAINTAINABILTIY",
         "CODE_MAINTAINABILTIY",
@@ -97,8 +103,8 @@ BucketMapping = {
         "{SEMANTIC}",
     ],
     "Performance Optimization": [
-        'PERFORMANCE OPTIMIZATION',
-        'PERFORMANCE_OPTIMIZATION',
+        "PERFORMANCE OPTIMIZATION",
+        "PERFORMANCE_OPTIMIZATION",
         "PERFORMANCE",
         "DATABASE_PERFORMANCE",
         "ALGORITHM_EFFICIENCY",

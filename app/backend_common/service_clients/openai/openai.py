@@ -4,7 +4,7 @@ import httpx
 from openai import AsyncOpenAI
 from torpedo import CONFIG
 
-from app.common.utils.singleton import Singleton
+from deputydev_core.utils.singleton import Singleton
 
 config = CONFIG.config
 

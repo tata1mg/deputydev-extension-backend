@@ -16,8 +16,8 @@ from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.service_clients.base_scm_client import BaseSCMClient
 from app.backend_common.services.credentials import AuthHandler
 from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
+from deputydev_core.utils.app_logger import AppLogger
 
 
 def parse_collection_name(name: str) -> str:

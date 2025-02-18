@@ -7,9 +7,9 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
-from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.tiktoken.tiktoken import TikToken
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
+from deputydev_core.services.tiktoken.tiktoken import TikToken
+from deputydev_core.utils.app_logger import AppLogger
 
 config = CONFIG.config
 

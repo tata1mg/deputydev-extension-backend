@@ -7,7 +7,7 @@ import mmh3
 from sanic.log import logger
 from torpedo import CONFIG, Task, TaskExecutor
 
-from app.common.services.tiktoken import TikToken
+from deputydev_core.services.tiktoken import TikToken
 
 
 def service_client_wrapper(service_name):

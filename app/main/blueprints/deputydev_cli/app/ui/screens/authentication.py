@@ -2,7 +2,7 @@ from typing import Any, Dict, Tuple
 
 from prompt_toolkit import PromptSession
 
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.managers.authentication.authentication_manager import (
     AuthenticationManager,
 )

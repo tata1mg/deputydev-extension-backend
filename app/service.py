@@ -2,7 +2,7 @@ from redis_wrapper import RegisterRedis
 from sanic import Blueprint
 from torpedo import CONFIG, Host
 
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.utils.config_manager import ConfigManager
 
 ConfigManager.initialize()
 

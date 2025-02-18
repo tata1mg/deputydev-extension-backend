@@ -14,7 +14,7 @@ from app.backend_common.utils.formatting import (
 from app.common.constants.constants import LLMProviders
 from app.common.exception import RetryException
 from app.common.exception.exception import ParseException
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class BaseLLMProvider(ABC):
