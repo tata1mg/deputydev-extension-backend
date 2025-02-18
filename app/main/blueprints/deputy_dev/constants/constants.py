@@ -2,8 +2,8 @@ from enum import Enum
 from typing import List
 
 from torpedo.common_utils import CONFIG
-
-from app.common.constants.constants import ExtendedEnum, SettingErrorType
+from deputydev_core.utils.constants import ExtendedEnum
+from app.common.constants.constants import SettingErrorType
 
 MAX_PR_DIFF_TOKEN_LIMIT = CONFIG.config["MAX_PR_DIFF_TOKEN_LIMIT"]
 PR_SIZE_TOO_BIG_MESSAGE = (

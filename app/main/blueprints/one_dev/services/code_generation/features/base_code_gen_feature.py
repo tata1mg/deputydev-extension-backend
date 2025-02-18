@@ -6,8 +6,8 @@ from app.backend_common.services.chunking.reranker.handler.llm_based import (
     LLMBasedChunkReranker,
 )
 from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
-from app.common.services.chunking.chunk_info import ChunkInfo
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.services.code_generation.features.dataclass.main import (
     BaseCodeGenFeaturePayload,

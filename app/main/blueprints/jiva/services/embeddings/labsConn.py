@@ -2,7 +2,7 @@ from langchain.vectorstores.pgvector import PGVector
 from torpedo import CONFIG
 
 from app.backend_common.services.openai.openaiembedding import OpenAIEmbeddingsCustom
-from app.common.utils.singleton import Singleton
+from deputydev_core.utils.singleton import Singleton
 
 config = CONFIG.config
 

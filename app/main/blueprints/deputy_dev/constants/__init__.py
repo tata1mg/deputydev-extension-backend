@@ -21,10 +21,10 @@ __all__ = [
     "AbAnalysisDates",
     "AbAnalysisPhases",
 ]
-from .....backend_common.services.openai.openai_service import EMBEDDING_MODEL
+
 from .....backend_common.utils.formatting import PRDiffSizingLabel
-from .....common.constants.constants import LLMModelNames
-from .....common.services.tiktoken.tiktoken import EMBEDDING_TOKEN_LIMIT
+from deputydev_core.utils.constants import LLMModelNames
+from app.backend_common.services.openai.openai_service import EMBEDDING_TOKEN_LIMIT, EMBEDDING_MODEL
 from .ab_analysis_constants import AbAnalysisDates, AbAnalysisPhases, AbAnalysisQueries
 from .constants import (
     BATCH_SIZE,

@@ -5,7 +5,7 @@ from torpedo import CONFIG
 
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.base_pr import BasePR
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,

@@ -17,7 +17,6 @@ from app.common.constants.constants import (
 )
 
 
-
 class GithubRepo(BaseRepo):
     def __init__(
         self,

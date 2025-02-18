@@ -5,7 +5,7 @@ from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.utils.app_logger import AppLogger
+from deputydev_core.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 
 
