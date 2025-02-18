@@ -25,22 +25,16 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             """
 
         user_message = f"""
-            User Query: {self.params.get("query")}
-
-            Relevant Code Context from the repository:
+            Here are some chunks of code from a repository:
             {self.params.get("relevant_chunks")}
 
-            Please provide a helpful and accurate response to my query, taking into account the given code context.
+            The user has given a query for the same repo as follows:
+            User Query: {self.params.get("query")}
 
-            Please provide the response in the following format:
-            <response>
-            Your response here
-            </response>
-            <is_task_done>true</is_task_done>
-            <summary>
-            Please return a short summary of response. Please include function, classes and files names which are part of response specifically.
-            </summary>
-            Please put your entire response within the <response> tag and set the <is_task_done> tag to true if the response contains generated code.
+            Please think through the query and generate a plan to implement the same. Return the plan in <thinking> tag.
+
+            Now, think of what code snippets can be prepared from the given context and what all extra context you need. 
+            Also, please use the tools provided to ask the user for any additional information required.
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
