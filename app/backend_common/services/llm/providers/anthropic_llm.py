@@ -19,6 +19,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingContentBlock,
     StreamingContentBlockType,
     StreamingResponse,
+    ToolUseRequest,
     UserAndSystemMessages,
 )
 from app.common.constants.constants import LLMProviders
@@ -56,6 +57,7 @@ class Anthropic(BaseLLMProvider):
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
+        print(llm_payload)
         return llm_payload
 
     async def _get_service_client(self):
@@ -79,6 +81,9 @@ class Anthropic(BaseLLMProvider):
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
 
         async def stream_content() -> AsyncIterator[StreamingContentBlock]:
+            current_tool_input = ""
+            current_tool_use_id = ""
+            current_tool = ""
             async for event in response["body"]:
                 chunk = json.loads(event["chunk"]["bytes"])
 
@@ -88,8 +93,12 @@ class Anthropic(BaseLLMProvider):
 
                 # yield content block delta
                 if chunk["type"] == "content_block_delta":
-                    text = chunk["delta"].get("text", "")
-                    yield StreamingContentBlock(type=StreamingContentBlockType.TEXT_DELTA, content=text)
+                    if chunk["delta"].get("type") == "text_delta":
+                        text = chunk["delta"].get("text", "")
+                        yield StreamingContentBlock(type=StreamingContentBlockType.TEXT_DELTA, content=text)
+
+                    if chunk["delta"].get("type") == "input_json_delta":
+                        current_tool_input += chunk["delta"].get("partial_json", {})
 
                 # update usage on message start and delta
                 if chunk["type"] == "message_start":
@@ -99,6 +108,24 @@ class Anthropic(BaseLLMProvider):
                 if chunk["type"] == "message_delta":
                     usage.input += chunk["usage"].get("input_tokens", 0)
                     usage.output += chunk["usage"].get("output_tokens", 0)
+
+                if chunk["type"] == "content_block_start":
+                    if chunk["content_block"]["type"] == "tool_use":
+                        current_tool = chunk["content_block"]["name"]
+                        current_tool_use_id = chunk["content_block"]["id"]
+
+                if chunk["type"] == "content_block_stop":
+                    if current_tool_input:
+                        yield StreamingContentBlock(
+                            type=StreamingContentBlockType.TOOL_USE_REQUEST, content=ToolUseRequest(
+                                tool_input=json.loads(current_tool_input),
+                                tool_name=current_tool,
+                                tool_use_id=current_tool_use_id
+                            )
+                        )
+                        current_tool_input = ""
+                        current_tool_use_id = ""
+                        current_tool = ""
 
         return StreamingResponse(content=stream_content(), usage=usage)
 
