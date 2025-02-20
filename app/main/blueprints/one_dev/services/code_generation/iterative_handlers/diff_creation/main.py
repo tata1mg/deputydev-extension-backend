@@ -83,7 +83,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
             model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
             init_params={},
         )
-        llm_response = await LLMHandler(prompt_handler=prompt).get_llm_response_data(
+        llm_response = await LLMHandler(prompt_handler=prompt).get_parsed_llm_response_data(
             previous_responses=previous_responses
         )
         llm_meta.append(llm_response.llm_meta)

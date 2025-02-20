@@ -10,6 +10,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingResponse,
+    UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
 
@@ -42,7 +43,7 @@ class BaseLLMProvider(ABC):
 
     async def call_service_client(
         self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None
-    ) -> Union[NonStreamingResponse, StreamingResponse]:
+    ) -> UnparsedLLMCallResponse:
         """
         Calls the LLM service client.
         Args:
