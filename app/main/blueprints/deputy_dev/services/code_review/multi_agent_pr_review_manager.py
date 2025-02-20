@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from torpedo import CONFIG, Task
 
-from app.backend_common.services.llm.dataclasses.main import LLMCallResponse
+from app.backend_common.services.llm.dataclasses.main import ParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -134,7 +134,7 @@ class MultiAgentPRReviewManager:
             for prompt_obj in prompt_objs:
                 tasks.append(
                     Task(
-                        LLMHandler(prompt_handler=prompt_obj).get_llm_response_data(previous_responses=[]),
+                        LLMHandler(prompt_handler=prompt_obj).get_parsed_llm_response_data(previous_responses=[]),
                         result_key=prompt_key,
                     )
                 )
@@ -143,7 +143,7 @@ class MultiAgentPRReviewManager:
             return {
                 response_key: response_data.parsed_llm_data.get("data")
                 for response_key, response_data in responses.items()
-                if isinstance(response_data, LLMCallResponse)
+                if isinstance(response_data, ParsedLLMCallResponse)
             }
 
     # llm handler start

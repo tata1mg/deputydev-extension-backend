@@ -49,7 +49,7 @@ class CodePlanHandler(BaseCodeGenFeature[CodePlanGenerationInput]):
             update_data={"status": "PROMPT_GENERATED"},
         )
 
-        llm_response = await LLMHandler(prompt_handler=prompt).get_llm_response_data(previous_responses=[])
+        llm_response = await LLMHandler(prompt_handler=prompt).get_parsed_llm_response_data(previous_responses=[])
         code_lines = get_response_code_lines(llm_response.parsed_llm_data["response"])
         llm_meta.append(llm_response.llm_meta)
         await JobService.db_update(
