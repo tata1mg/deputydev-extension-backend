@@ -104,7 +104,7 @@ class LLMHandler:
             return NonStreamingParsedLLMCallResponse(
                 type=llm_response.type,
                 content=llm_response.content,
-                parsed_content=[parsed_content],
+                parsed_content=parsed_content,
                 usage=llm_response.usage,
                 model_used=detected_llm,
                 prompt_vars={},

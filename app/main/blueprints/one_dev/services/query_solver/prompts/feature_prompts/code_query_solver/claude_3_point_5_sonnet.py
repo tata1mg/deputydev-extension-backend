@@ -1,6 +1,12 @@
-from typing import Any, Dict
+from typing import Any, AsyncIterator, Coroutine, Dict, List, Optional
 
-from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
+from app.backend_common.services.llm.dataclasses.main import (
+    ContentBlockCategory,
+    NonStreamingResponse,
+    NonStreamingTextBlock,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.prompts.llm_base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
@@ -32,24 +38,44 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
             Please think through the query and generate a plan to implement the same. Return the plan in <thinking> tag.
 
-            Now, think of what code snippets can be prepared from the given context and what all extra context you need. 
+            Now, think of what code snippets can be prepared from the given context and what all extra context you need.
             Also, please use the tools provided to ask the user for any additional information required.
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
-    def get_parsed_result(cls, llm_response: str) -> dict:
-        final_query_resp = None
-        is_task_done = None
-        summary = None
-        if "<response>" in llm_response:
-            final_query_resp = llm_response.split("<response>")[1].split("</response>")[0].strip()
-        if "<is_task_done>true</is_task_done>" in llm_response:
+    def _parse_text_block(cls, text_block: NonStreamingTextBlock) -> Dict[str, Any]:
+        final_query_resp: Optional[str] = None
+        is_task_done: Optional[bool] = None
+        summary: Optional[str] = None
+        text_block_text = text_block.content.text.strip()
+        if "<response>" in text_block_text:
+            final_query_resp = text_block_text.split("<response>")[1].split("</response>")[0].strip()
+        if "<is_task_done>true</is_task_done>" in text_block_text:
             is_task_done = True
-        if "<summary>" in llm_response:
-            summary = llm_response.split("<summary>")[1].split("</summary>")[0].strip()
+        if "<summary>" in text_block_text:
+            summary = text_block_text.split("<summary>")[1].split("</summary>")[0].strip()
 
         if final_query_resp and is_task_done is not None:
             return {"response": final_query_resp, "is_task_done": is_task_done, "summary": summary}
         raise ValueError("Invalid LLM response format. Response not found.")
+
+    @classmethod
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+
+        final_content: List[Dict[str, Any]] = []
+
+        for content_block in llm_response.content:
+            if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                final_content.append({"tool_use_request": content_block.content.model_dump(mode="json")})
+            elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
+                final_content.append(cls._parse_text_block(content_block))
+
+        return final_content
+
+    @classmethod
+    def get_parsed_streaming_events(
+        cls, llm_response: StreamingResponse
+    ) -> Coroutine[Any, Any, AsyncIterator[Dict[str, Any]]]:
+        pass
