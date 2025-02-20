@@ -18,10 +18,9 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             Guidelines:
             1. Provide clear, concise, and accurate responses.
             2. If you need more information, ask clarifying questions.
-            3. Explain your reasoning and provide code examples when appropriate.
-            4. If you're unsure about something, express your uncertainty.
-            5. Suggest best practices and potential improvements when relevant.
-            6. Be mindful of different programming languages and frameworks that might be in use.
+            3. If you're unsure about something, express your uncertainty.
+            4. Suggest best practices and potential improvements when relevant.
+            5. Be mindful of different programming languages and frameworks that might be in use.
             """
 
         user_message = f"""
