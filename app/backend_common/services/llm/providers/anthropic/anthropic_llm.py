@@ -10,6 +10,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    ContentBlockCategory,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -17,7 +18,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     LLModels,
     LLMUsage,
     NonStreamingContentBlock,
-    ContentBlockCategory,
     NonStreamingResponse,
     NonStreamingTextBlock,
     NonStreamingTextBlockContent,

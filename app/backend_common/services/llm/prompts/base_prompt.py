@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict
+from typing import Any, AsyncIterator, Dict, List
 
 from app.backend_common.services.llm.dataclasses.main import (
     LLModels,
@@ -17,9 +17,12 @@ class BasePrompt(ABC):
     def get_prompt(self) -> UserAndSystemMessages:
         raise NotImplementedError("This method must be implemented in the child class")
 
+    @classmethod
     @abstractmethod
-    def get_parsed_result(self, llm_response: NonStreamingResponse) -> Dict[str, Any]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
         raise NotImplementedError("This method must be implemented in the child class")
 
-    async def get_parsed_streaming_events(self, llm_response: StreamingResponse) -> AsyncIterator[Any]:
-        return llm_response.content
+    @classmethod
+    @abstractmethod
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Dict[str, Any]]:
+        raise NotImplementedError("This method must be implemented in the child class")
