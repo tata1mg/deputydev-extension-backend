@@ -6,6 +6,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     ConversationTurn,
     PromptCacheConfig,
+    UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
 from app.common.constants.constants import LLMProviders
@@ -33,7 +34,9 @@ class OpenaiLLM(BaseLLMProvider):
             response.usage.completion_tokens,
         )
 
-    async def call_service_client(self, messages: List[Dict[str, str]], model: str, response_type: str) -> Any:
+    async def call_service_client(
+        self, messages: List[Dict[str, str]], model: str, response_type: str
+    ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenAI service client.
 

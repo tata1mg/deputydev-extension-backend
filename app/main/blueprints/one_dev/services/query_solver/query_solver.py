@@ -31,7 +31,7 @@ class QuerySolver:
         if payload.write_mode:
             tools_to_use.append(DIFF_APPLICATOR)
 
-        llm_response = await LLMHandler(prompt_handler=prompt, tools=tools_to_use, stream=True).get_llm_response_data(
-            previous_responses=[]
-        )
+        llm_response = await LLMHandler(
+            prompt_handler=prompt, tools=tools_to_use, stream=True
+        ).get_parsed_llm_response_data(previous_responses=[])
         return llm_response
