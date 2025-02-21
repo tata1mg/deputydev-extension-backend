@@ -18,8 +18,8 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     response.content_type = "text/event-stream"
     data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json))
 
-    async for data_block in data.raw_llm_response:
-        await response.send("data: " + json.dumps(data_block.model_dump(mode="json")) + "\r\n\r\n")
+    async for data_block in data.parsed_content:
+        await response.send("data: " + json.dumps(data_block) + "\r\n\r\n")
         # await response.send("data: " + "GAGAGAGGA" + "\r\n\r\n")
 
     await response.eof()
