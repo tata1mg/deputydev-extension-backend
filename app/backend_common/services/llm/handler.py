@@ -72,7 +72,7 @@ class LLMHandler:
 
     async def get_parsed_llm_response_data(
         self, previous_responses: List[ConversationTurn] = []
-    ) -> ParsedLLMCallResponse[Dict[str, Any], Dict[str, Any]]:
+    ) -> ParsedLLMCallResponse:
         detected_llm = self.prompt_handler.model_name
 
         if detected_llm not in self.model_to_provider_class_map:
