@@ -2,7 +2,7 @@ import json
 import re
 from typing import Any, Dict
 
-from app.backend_common.services.llm.prompts.llm_base_prompts.claude_3_point_5_sonnet import (
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (

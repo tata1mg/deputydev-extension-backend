@@ -7,7 +7,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.prompts.llm_base_prompts.claude_3_point_5_sonnet import (
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
 
