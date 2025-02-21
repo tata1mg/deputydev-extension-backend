@@ -3,11 +3,10 @@ from typing import Any, AsyncIterator, List, Optional
 
 from app.backend_common.services.llm.dataclasses.main import (
     LLModels,
+    StreamingEvent,
     TextBlockDelta,
     TextBlockDeltaContent,
     TextBlockEnd,
-    TextBlockEvents,
-    TextBlockStart,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
@@ -19,8 +18,8 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
     model_name = LLModels.CLAUDE_3_POINT_5_SONNET
 
     @classmethod
-    async def parse_text_events_with_xml(
-        cls, events: AsyncIterator[TextBlockEvents], parsers: List[BaseAnthropicTextDeltaParser]
+    async def parse_streaming_events(
+        cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseAnthropicTextDeltaParser]
     ) -> AsyncIterator[Any]:
         xml_tags = {parser.xml_tag: parser for parser in parsers}
 
@@ -35,8 +34,8 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
 
         async for event in events:
             # start and end events are always yielded, because they don't contain any text
-            if isinstance(event, TextBlockStart) or isinstance(event, TextBlockEnd):
-                yield event
+            if not isinstance(event, TextBlockDelta):
+                yield event.model_dump(mode="json")
                 continue
 
             text_buffer += event.content.text
@@ -95,7 +94,6 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
             if tag_content_start_index and tag_content_start_index > 0 and ongoing_tag_parser:
                 yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer[:tag_content_start_index]))
                 yield TextBlockEnd()
-                yield ongoing_tag_parser.get_start_event()
                 text_buffer = text_buffer[tag_content_start_index:]
                 tag_content_start_index = 0
                 tag_content_end_index = (
