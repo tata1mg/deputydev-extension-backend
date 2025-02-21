@@ -24,8 +24,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingToolUseRequest,
     NonStreamingToolUseRequestContent,
     PromptCacheConfig,
-    StreamingContentBlock,
-    StreamingContentBlockType,
+    StreamingEvent,
+    StreamingEventType,
     StreamingResponse,
     TextBlockDelta,
     TextBlockDeltaContent,
@@ -123,7 +123,7 @@ class Anthropic(BaseLLMProvider):
 
     def _get_parsed_stream_event(
         self, event: Dict[str, Any], current_running_block_type: Optional[ContentBlockCategory] = None
-    ) -> Tuple[Optional[StreamingContentBlock], Optional[ContentBlockCategory], Optional[LLMUsage]]:
+    ) -> Tuple[Optional[StreamingEvent], Optional[ContentBlockCategory], Optional[LLMUsage]]:
         """
         Parses the streaming event and returns the corresponding content block and usage.
 
@@ -151,7 +151,7 @@ class Anthropic(BaseLLMProvider):
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "tool_use":
             return (
                 ToolUseRequestStart(
-                    type=StreamingContentBlockType.TOOL_USE_REQUEST_START,
+                    type=StreamingEventType.TOOL_USE_REQUEST_START,
                     content=ToolUseRequestStartContent(
                         tool_name=event["content_block"]["name"],
                         tool_use_id=event["content_block"]["id"],
@@ -164,7 +164,7 @@ class Anthropic(BaseLLMProvider):
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "input_json_delta":
             return (
                 ToolUseRequestDelta(
-                    type=StreamingContentBlockType.TOOL_USE_REQUEST_DELTA,
+                    type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
                     content=ToolUseRequestDeltaContent(
                         input_params_json_delta=event["delta"]["partial_json"],
                     ),
@@ -179,7 +179,7 @@ class Anthropic(BaseLLMProvider):
         ):
             return (
                 ToolUseRequestEnd(
-                    type=StreamingContentBlockType.TOOL_USE_REQUEST_END,
+                    type=StreamingEventType.TOOL_USE_REQUEST_END,
                 ),
                 ContentBlockCategory.TOOL_USE_REQUEST,
                 None,
@@ -189,7 +189,7 @@ class Anthropic(BaseLLMProvider):
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "text":
             return (
                 TextBlockStart(
-                    type=StreamingContentBlockType.TEXT_BLOCK_START,
+                    type=StreamingEventType.TEXT_BLOCK_START,
                 ),
                 ContentBlockCategory.TEXT_BLOCK,
                 None,
@@ -198,7 +198,7 @@ class Anthropic(BaseLLMProvider):
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "text_delta":
             return (
                 TextBlockDelta(
-                    type=StreamingContentBlockType.TEXT_BLOCK_DELTA,
+                    type=StreamingEventType.TEXT_BLOCK_DELTA,
                     content=TextBlockDeltaContent(
                         text=event["delta"]["text"],
                     ),
@@ -210,7 +210,7 @@ class Anthropic(BaseLLMProvider):
         if event["type"] == "content_block_stop" and current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
             return (
                 TextBlockEnd(
-                    type=StreamingContentBlockType.TEXT_BLOCK_END,
+                    type=StreamingEventType.TEXT_BLOCK_END,
                 ),
                 ContentBlockCategory.TEXT_BLOCK,
                 None,
@@ -224,7 +224,7 @@ class Anthropic(BaseLLMProvider):
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
 
-        async def stream_content() -> AsyncIterator[StreamingContentBlock]:
+        async def stream_content() -> AsyncIterator[StreamingEvent]:
             nonlocal usage
             nonlocal streaming_completed
             current_running_block_type: Optional[ContentBlockCategory] = None

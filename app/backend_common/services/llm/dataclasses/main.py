@@ -88,7 +88,7 @@ class ContentBlockCategory(Enum):
 
 
 # ALL CONTENT BLOCK TYPES
-class StreamingContentBlockType(Enum):
+class StreamingEventType(Enum):
     TEXT_BLOCK_START = "TEXT_START"
     TEXT_BLOCK_DELTA = "TEXT_DELTA"
     TEXT_BLOCK_END = "TEXT_BLOCK_END"
@@ -122,41 +122,43 @@ class TextBlockDeltaContent(BaseModel):
 
 # TEXT BLOCKS
 class TextBlockStart(BaseModel):
-    type: Literal[StreamingContentBlockType.TEXT_BLOCK_START]
+    type: Literal[StreamingEventType.TEXT_BLOCK_START] = StreamingEventType.TEXT_BLOCK_START
 
 
 class TextBlockDelta(BaseModel):
-    type: Literal[StreamingContentBlockType.TEXT_BLOCK_DELTA]
+    type: Literal[StreamingEventType.TEXT_BLOCK_DELTA] = StreamingEventType.TEXT_BLOCK_DELTA
     content: TextBlockDeltaContent
 
 
 class TextBlockEnd(BaseModel):
-    type: Literal[StreamingContentBlockType.TEXT_BLOCK_END]
+    type: Literal[StreamingEventType.TEXT_BLOCK_END] = StreamingEventType.TEXT_BLOCK_END
 
 
 # TOOL USE REQUEST BLOCKS
 class ToolUseRequestStart(BaseModel):
-    type: Literal[StreamingContentBlockType.TOOL_USE_REQUEST_START]
+    type: Literal[StreamingEventType.TOOL_USE_REQUEST_START] = StreamingEventType.TOOL_USE_REQUEST_START
     content: ToolUseRequestStartContent
 
 
 class ToolUseRequestDelta(BaseModel):
-    type: Literal[StreamingContentBlockType.TOOL_USE_REQUEST_DELTA]
+    type: Literal[StreamingEventType.TOOL_USE_REQUEST_DELTA] = StreamingEventType.TOOL_USE_REQUEST_DELTA
     content: ToolUseRequestDeltaContent
 
 
 class ToolUseRequestEnd(BaseModel):
-    type: Literal[StreamingContentBlockType.TOOL_USE_REQUEST_END]
+    type: Literal[StreamingEventType.TOOL_USE_REQUEST_END] = StreamingEventType.TOOL_USE_REQUEST_END
 
 
-StreamingContentBlock = Annotated[
+TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd], Field(discriminator="type")]
+ToolUseRequestEvents = Annotated[
+    Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd], Field(discriminator="type")
+]
+
+
+StreamingEvent = Annotated[
     Union[
-        TextBlockStart,
-        TextBlockDelta,
-        TextBlockEnd,
-        ToolUseRequestStart,
-        ToolUseRequestDelta,
-        ToolUseRequestEnd,
+        TextBlockEvents,
+        ToolUseRequestEvents,
     ],
     Field(discriminator="type"),
 ]
@@ -164,7 +166,7 @@ StreamingContentBlock = Annotated[
 
 class StreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.STREAMING]
-    content: AsyncIterator[StreamingContentBlock]
+    content: AsyncIterator[StreamingEvent]
     usage: Task[LLMUsage]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
