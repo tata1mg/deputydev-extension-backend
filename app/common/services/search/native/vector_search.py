@@ -4,8 +4,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from app.common.services.chunking.chunk import chunk_pr_diff
 from app.common.services.chunking.chunk_info import ChunkInfo
+from app.common.services.chunking.source_chunker import chunk_pr_diff
 from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
 
 

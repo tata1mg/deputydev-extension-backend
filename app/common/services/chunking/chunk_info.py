@@ -75,7 +75,7 @@ class ChunkInfo(BaseModel):
 
         for idx, hierarchy in enumerate(self.metadata.hierarchy):
             indent = hierarchy_seperator * idx
-            hierarchy_data.append(f"{indent}{hierarchy.type.value}  {hierarchy.value}")
+            hierarchy_data.append(f"{indent}{hierarchy.type}  {hierarchy.value}")
             hierarchy_data.append(f"{indent}{hierarchy_seperator}...")  # Add ellipsis at current indent level
         if hierarchy_data:
             chunk_final_meta_data += "\n Snippet hierarchy represented in pseudo code format: \n"
