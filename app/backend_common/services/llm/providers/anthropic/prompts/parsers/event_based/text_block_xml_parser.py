@@ -1,10 +1,10 @@
 import re
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, List, Literal, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 from app.backend_common.services.llm.dataclasses.main import (
     StreamingEventType,
-    TextBlockEvents,
+    TextBlockDelta,
 )
 
 
@@ -53,6 +53,19 @@ class BaseAnthropicTextDeltaParser(ABC):
             else supported_event_types
         )
 
+        self.text_buffer = ""
+
     @abstractmethod
-    async def parse(self, events: AsyncIterator[TextBlockEvents]) -> AsyncIterator[Any]:
+    async def parse_text_delta(self, event: TextBlockDelta) -> Optional[Any]:
         raise NotImplementedError("This method must be implemented in the child class")
+
+    @abstractmethod
+    async def get_start_event(self) -> Any:
+        raise NotImplementedError("This method must be implemented in the child class")
+
+    @abstractmethod
+    async def get_end_event(self) -> Any:
+        raise NotImplementedError("This method must be implemented in the child class")
+
+    async def cleanup(self) -> None:
+        self.text_buffer = ""

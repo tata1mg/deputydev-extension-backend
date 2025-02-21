@@ -90,10 +90,12 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                         else text_buffer.index(ends_with_end_tag.group(0)) + len(ends_with_end_tag.group(0))
                     )
 
+            ongoing_tag_parser = xml_tags[current_ongoing_tag] if current_ongoing_tag is not None else None
             # if there's a start index, we can yield the text before the start index
-            if tag_content_start_index and tag_content_start_index > 0:
+            if tag_content_start_index and tag_content_start_index > 0 and ongoing_tag_parser:
                 yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer[:tag_content_start_index]))
                 yield TextBlockEnd()
+                yield ongoing_tag_parser.get_start_event()
                 text_buffer = text_buffer[tag_content_start_index:]
                 tag_content_start_index = 0
                 tag_content_end_index = (
@@ -101,8 +103,19 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                 )
 
             # if there's no start index and no ongoing tag, we yield the text
-            if tag_content_start_index is None and current_ongoing_tag is None:
+            if tag_content_start_index is None and ongoing_tag_parser is None:
                 yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
                 text_buffer = ""
 
             # if there's no start index and a tag is ongoing, we send the stream event to the parser
+            if tag_content_start_index == 0 and tag_content_end_index is not None and ongoing_tag_parser is not None:
+                tag_content = text_buffer[:tag_content_end_index]
+                custom_event = await ongoing_tag_parser.parse_text_delta(
+                    TextBlockDelta(content=TextBlockDeltaContent(text=tag_content))
+                )
+                if custom_event is not None:
+                    yield custom_event
+                text_buffer = text_buffer[tag_content_end_index:]
+                tag_content_start_index = None
+                tag_content_end_index = None
+                current_ongoing_tag = None
