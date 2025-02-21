@@ -92,8 +92,8 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
             ongoing_tag_parser = xml_tags[current_ongoing_tag] if current_ongoing_tag is not None else None
             # if there's a start index, we can yield the text before the start index
             if tag_content_start_index and tag_content_start_index > 0 and ongoing_tag_parser:
-                yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer[:tag_content_start_index]))
-                yield TextBlockEnd()
+                yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer[:tag_content_start_index])).model_dump(mode="json")
+                yield TextBlockEnd().model_dump(mode="json")
                 text_buffer = text_buffer[tag_content_start_index:]
                 tag_content_start_index = 0
                 tag_content_end_index = (
@@ -102,7 +102,7 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
 
             # if there's no start index and no ongoing tag, we yield the text and clear the buffer
             if tag_content_start_index is None and ongoing_tag_parser is None:
-                yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
+                yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer)).model_dump(mode="json")
                 text_buffer = ""
 
             # if there's no start index and a tag is ongoing, we yield the text after the end index
