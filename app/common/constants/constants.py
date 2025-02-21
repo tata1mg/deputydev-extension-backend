@@ -94,6 +94,7 @@ TYPESCRIPT_EXTENSIONS = {
     "cts": "typescript",
 }
 RUBY_EXTENSIONS = {"rb": "ruby"}
+KOTLIN_EXTENSIONS = {"kt": "kotlin"}
 
 
 # We collect all the language dictionaries and create a single dict, making it easier to segregate as different extensions
@@ -105,6 +106,7 @@ ALL_EXTENSIONS = {
     **TSX_EXTENSIONS,
     **EXTENSION_TO_LANGUAGE,
     **RUBY_EXTENSIONS,
+    **KOTLIN_EXTENSIONS,
 }
 
 
