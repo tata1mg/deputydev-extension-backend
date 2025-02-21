@@ -63,6 +63,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             self.event_buffer.append(CodeBlockDelta(
                 content=CodeBlockDeltaContent(code_delta=self.text_buffer)
             ).model_dump(mode="json"))
+            self.text_buffer = ""
 
         values_to_return = self.event_buffer
         self.event_buffer = []
