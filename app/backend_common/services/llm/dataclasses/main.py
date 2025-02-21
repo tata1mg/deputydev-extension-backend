@@ -213,8 +213,6 @@ UnparsedLLMCallResponse = Annotated[
 ]
 
 
-ParsedStreamingContentBlock = TypeVar("ParsedStreamingContentBlock")
-
 
 class ParsedLLMCallResponseCommon(BaseModel):
     prompt_vars: Dict[str, Any]
@@ -223,22 +221,19 @@ class ParsedLLMCallResponseCommon(BaseModel):
 
 
 class StreamingParsedLLMCallResponse(
-    ParsedLLMCallResponseCommon, StreamingResponse, Generic[ParsedStreamingContentBlock]
+    ParsedLLMCallResponseCommon, StreamingResponse
 ):
-    parsed_content: AsyncIterator[ParsedStreamingContentBlock]
+    parsed_content: AsyncIterator[Any]
 
 
-ParsedContentBlock = TypeVar("ParsedContentBlock")
-
-
-class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse, Generic[ParsedContentBlock]):
-    parsed_content: List[ParsedContentBlock]
+class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse):
+    parsed_content: List[Any]
 
 
 ParsedLLMCallResponse = Annotated[
     Union[
-        StreamingParsedLLMCallResponse[ParsedStreamingContentBlock],
-        NonStreamingParsedLLMCallResponse[ParsedContentBlock],
+        StreamingParsedLLMCallResponse,
+        NonStreamingParsedLLMCallResponse,
     ],
     Field(discriminator="type"),
 ]
