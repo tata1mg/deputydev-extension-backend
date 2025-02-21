@@ -102,12 +102,12 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     tag_content_end_index - tag_content_start_index if tag_content_end_index is not None else None
                 )
 
-            # if there's no start index and no ongoing tag, we yield the text
+            # if there's no start index and no ongoing tag, we yield the text and clear the buffer
             if tag_content_start_index is None and ongoing_tag_parser is None:
                 yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
                 text_buffer = ""
 
-            # if there's no start index and a tag is ongoing, we send the stream event to the parser
+            # if there's no start index and a tag is ongoing, we yield the text after the end index
             if tag_content_start_index == 0 and tag_content_end_index is not None and ongoing_tag_parser is not None:
                 tag_content = text_buffer[:tag_content_end_index]
                 custom_event = await ongoing_tag_parser.parse_text_delta(
@@ -119,3 +119,15 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                 tag_content_start_index = None
                 tag_content_end_index = None
                 current_ongoing_tag = None
+
+            # if there's no start index and an ongoing tag, but no end index, we keep parsing using the parser and yielding the results
+            if tag_content_start_index == 0 and tag_content_end_index is None and ongoing_tag_parser is not None:
+                tag_content = text_buffer
+                custom_event = await ongoing_tag_parser.parse_text_delta(
+                    TextBlockDelta(content=TextBlockDeltaContent(text=tag_content))
+                )
+                if custom_event is not None:
+                    yield custom_event
+                text_buffer = ""
+                tag_content_start_index = None
+                tag_content_end_index = None
