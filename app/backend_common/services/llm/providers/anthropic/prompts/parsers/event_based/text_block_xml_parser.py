@@ -55,17 +55,10 @@ class BaseAnthropicTextDeltaParser(ABC):
 
         self.text_buffer = ""
         self.event_buffer: List[Any] = []
+        self.start_event_completed = False
 
     @abstractmethod
-    async def parse_text_delta(self, event: TextBlockDelta) -> Optional[Any]:
-        raise NotImplementedError("This method must be implemented in the child class")
-
-    @abstractmethod
-    async def get_start_event(self) -> Any:
-        raise NotImplementedError("This method must be implemented in the child class")
-
-    @abstractmethod
-    async def get_end_event(self) -> Any:
+    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> Optional[Any]:
         raise NotImplementedError("This method must be implemented in the child class")
 
     async def cleanup(self) -> None:
