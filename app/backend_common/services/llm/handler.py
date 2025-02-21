@@ -16,7 +16,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.backend_common.services.llm.providers.anthropic.anthropic_llm import Anthropic
+from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
     OpenAIReasoningLLM,
 )
