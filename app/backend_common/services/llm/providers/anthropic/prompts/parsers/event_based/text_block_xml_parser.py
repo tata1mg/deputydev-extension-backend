@@ -54,6 +54,7 @@ class BaseAnthropicTextDeltaParser(ABC):
         )
 
         self.text_buffer = ""
+        self.event_buffer: List[Any] = []
 
     @abstractmethod
     async def parse_text_delta(self, event: TextBlockDelta) -> Optional[Any]:

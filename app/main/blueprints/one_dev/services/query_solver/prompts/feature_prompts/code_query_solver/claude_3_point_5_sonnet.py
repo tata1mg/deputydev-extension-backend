@@ -1,16 +1,72 @@
-from typing import Any, AsyncIterator, Coroutine, Dict, List, Optional
+import re
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from app.backend_common.services.llm.dataclasses.main import (
     ContentBlockCategory,
     NonStreamingResponse,
     NonStreamingTextBlock,
+    StreamingEventType,
     StreamingResponse,
+    TextBlockDelta,
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
+from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import BaseAnthropicTextDeltaParser
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import CodeBlockDelta, CodeBlockDeltaContent, CodeBlockStart, CodeBlockStartContent, ThinkingBlockDelta, ThinkingBlockDeltaContent, ThinkingBlockStart
 
+
+class ThinkingParser(BaseAnthropicTextDeltaParser):
+    def __init__(self):
+        super().__init__(xml_tag="thinking", supported_event_types=[StreamingEventType.TEXT_BLOCK_DELTA])
+        self.start_event_completed = False
+
+    async def parse_text_delta(self, event: TextBlockDelta) -> Optional[List[Dict[str, Any]]]:
+        if not self.start_event_completed:
+            self.event_buffer.append(ThinkingBlockStart())
+            self.start_event_completed = True
+
+        if event.content.text:
+            self.event_buffer.append(ThinkingBlockDelta(
+                content=ThinkingBlockDeltaContent(thinking_delta=event.content.text)
+            ).model_dump(mode="json"))
+
+        values_to_return = self.event_buffer
+        self.event_buffer = []
+        return values_to_return
+
+class CodeBlockParser(BaseAnthropicTextDeltaParser):
+    def __init__(self):
+        super().__init__(xml_tag="code_block", supported_event_types=[StreamingEventType.TEXT_BLOCK_DELTA])
+        self.start_event_completed = False
+
+    async def parse_text_delta(self, event: TextBlockDelta) -> Optional[List[Dict[str, Any]]]:
+
+        self.text_buffer += event.content.text
+
+        programming_language_block = re.search(r"<programming_language>(.*?)</programming_language>", self.text_buffer)
+        file_path_block = re.search(r"<file_path>(.*?)</file_path>", self.text_buffer)
+        if programming_language_block and file_path_block:
+            self.event_buffer.append(CodeBlockStart(
+                content=CodeBlockStartContent(
+                    language=programming_language_block.group(1),
+                    filepath=file_path_block.group(1),
+                    is_diff=False
+                )
+            ).model_dump(mode="json")
+            )
+            self.text_buffer = self.text_buffer.replace(programming_language_block.group(0), "").replace(file_path_block.group(0), "")
+            self.start_event_completed = True
+
+        if self.start_event_completed and self.text_buffer:
+            self.event_buffer.append(CodeBlockDelta(
+                content=CodeBlockDeltaContent(code_delta=self.text_buffer)
+            ).model_dump(mode="json"))
+
+        values_to_return = self.event_buffer
+        self.event_buffer = []
+        return values_to_return
 
 class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "CODE_QUERY_SOLVER"
@@ -75,7 +131,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return final_content
 
     @classmethod
-    def get_parsed_streaming_events(
+    async def get_parsed_streaming_events(
         cls, llm_response: StreamingResponse
-    ) -> Coroutine[Any, Any, AsyncIterator[Dict[str, Any]]]:
-        pass
+    ) ->  AsyncIterator[Dict[str, Any]]:
+        

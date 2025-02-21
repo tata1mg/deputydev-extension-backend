@@ -26,7 +26,6 @@ class StreamingContentBlockType(Enum):
 # CODE_BLOCK CONTENTS
 class CodeBlockStartContent(BaseModel):
     language: str
-    code_block_id: str
     filepath: str
     is_diff: bool
 
@@ -41,31 +40,31 @@ class ThinkingBlockDeltaContent(BaseModel):
 
 
 class ThinkingBlockStart(BaseModel):
-    type: Literal[StreamingContentBlockType.THINKING_BLOCK_START]
+    type: Literal[StreamingContentBlockType.THINKING_BLOCK_START] = StreamingContentBlockType.THINKING_BLOCK_START
 
 
 class ThinkingBlockDelta(BaseModel):
-    type: Literal[StreamingContentBlockType.THINKING_BLOCK_DELTA]
+    type: Literal[StreamingContentBlockType.THINKING_BLOCK_DELTA] = StreamingContentBlockType.THINKING_BLOCK_DELTA
     content: ThinkingBlockDeltaContent
 
 
 class ThinkingBlockEnd(BaseModel):
-    type: Literal[StreamingContentBlockType.THINKING_BLOCK_END]
+    type: Literal[StreamingContentBlockType.THINKING_BLOCK_END] = StreamingContentBlockType.THINKING_BLOCK_END
 
 
 # CODE BLOCKS
 class CodeBlockStart(BaseModel):
-    type: Literal[StreamingContentBlockType.CODE_BLOCK_START]
+    type: Literal[StreamingContentBlockType.CODE_BLOCK_START] = StreamingContentBlockType.CODE_BLOCK_START
     content: CodeBlockStartContent
 
 
 class CodeBlockDelta(BaseModel):
-    type: Literal[StreamingContentBlockType.CODE_BLOCK_DELTA]
+    type: Literal[StreamingContentBlockType.CODE_BLOCK_DELTA] = StreamingContentBlockType.CODE_BLOCK_DELTA
     content: CodeBlockDeltaContent
 
 
 class CodeBlockEnd(BaseModel):
-    type: Literal[StreamingContentBlockType.CODE_BLOCK_END]
+    type: Literal[StreamingContentBlockType.CODE_BLOCK_END] = StreamingContentBlockType.CODE_BLOCK_END
 
 
 StreamingContentBlock = Annotated[
