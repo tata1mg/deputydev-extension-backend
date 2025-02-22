@@ -29,6 +29,13 @@ from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_b
 class BaseClaude3Point5SonnetPrompt(BasePrompt):
     model_name = LLModels.CLAUDE_3_POINT_5_SONNET
 
+    """
+    This is a helper method to parse streaming text block events via xml tags. It accumulates text until it finds a full xml tag, then parses it via parsers implemented by the user.
+    This is a non-blocking method, and it yields the events as soon as they are parsed and ready to be yielded. The method is designed to be used in an async generator function.
+
+    WARNING: Although this is documented and comments are present wherever necessary, this is a complex method and should be used with caution. It is not recommended to modify this method unless you are sure about the changes you are making.
+    SUGGESTION FROM AUTHOR: At time of writing, God and I knew how this method works. Now, probably when you are reading this, only God would know how this method works.
+    """
     @classmethod
     async def parse_streaming_text_block_events(
         cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseAnthropicTextDeltaParser]
