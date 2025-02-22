@@ -1,11 +1,12 @@
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional
 
+from pydantic import BaseModel
+
 from app.backend_common.services.llm.dataclasses.main import (
     ContentBlockCategory,
     NonStreamingResponse,
     NonStreamingTextBlock,
-    StreamingEventType,
     StreamingResponse,
     TextBlockDelta,
     UserAndSystemMessages,
@@ -31,22 +32,20 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 
 class ThinkingParser(BaseAnthropicTextDeltaParser):
     def __init__(self):
-        super().__init__(xml_tag="thinking", supported_event_types=[StreamingEventType.TEXT_BLOCK_DELTA])
+        super().__init__(xml_tag="thinking")
 
-    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> Optional[List[Dict[str, Any]]]:
+    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
         if not self.start_event_completed:
             self.event_buffer.append(ThinkingBlockStart())
             self.start_event_completed = True
 
         if event.content.text:
             self.event_buffer.append(
-                ThinkingBlockDelta(content=ThinkingBlockDeltaContent(thinking_delta=event.content.text)).model_dump(
-                    mode="json"
-                )
+                ThinkingBlockDelta(content=ThinkingBlockDeltaContent(thinking_delta=event.content.text))
             )
 
         if last_event:
-            self.event_buffer.append(ThinkingBlockEnd().model_dump(mode="json"))
+            self.event_buffer.append(ThinkingBlockEnd())
 
         values_to_return = self.event_buffer
         self.event_buffer = []
@@ -55,9 +54,9 @@ class ThinkingParser(BaseAnthropicTextDeltaParser):
 
 class CodeBlockParser(BaseAnthropicTextDeltaParser):
     def __init__(self):
-        super().__init__(xml_tag="code_block", supported_event_types=[StreamingEventType.TEXT_BLOCK_DELTA])
+        super().__init__(xml_tag="code_block")
 
-    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> Optional[List[Dict[str, Any]]]:
+    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
 
         self.text_buffer += event.content.text
 
@@ -69,7 +68,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     content=CodeBlockStartContent(
                         language=programming_language_block.group(1), filepath=file_path_block.group(1), is_diff=False
                     )
-                ).model_dump(mode="json")
+                )
             )
             self.text_buffer = self.text_buffer.replace(programming_language_block.group(0), "").replace(
                 file_path_block.group(0), ""
@@ -77,13 +76,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             self.start_event_completed = True
 
         if self.start_event_completed and self.text_buffer:
-            self.event_buffer.append(
-                CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)).model_dump(mode="json")
-            )
+            self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
             self.text_buffer = ""
 
         if last_event:
-            self.event_buffer.append(CodeBlockEnd().model_dump(mode="json"))
+            self.event_buffer.append(CodeBlockEnd())
 
         values_to_return = self.event_buffer
         self.event_buffer = []
@@ -153,5 +150,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return final_content
 
     @classmethod
-    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Dict[str, Any]]:
-        return cls.parse_streaming_events(events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser()])
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
+        return cls.parse_streaming_text_block_events(
+            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser()]
+        )
