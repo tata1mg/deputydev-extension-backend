@@ -36,6 +36,7 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
     WARNING: Although this is documented and comments are present wherever necessary, this is a complex method and should be used with caution. It is not recommended to modify this method unless you are sure about the changes you are making.
     SUGGESTION FROM AUTHOR: At time of writing, God and I knew how this method works. Now, probably when you are reading this, only God would know how this method works.
     """
+
     @classmethod
     async def parse_streaming_text_block_events(
         cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseAnthropicTextDeltaParser]
