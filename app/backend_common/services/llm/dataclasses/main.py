@@ -1,17 +1,6 @@
 from asyncio import Task
 from enum import Enum
-from typing import (
-    Annotated,
-    Any,
-    AsyncIterator,
-    Dict,
-    Generic,
-    List,
-    Literal,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -213,16 +202,13 @@ UnparsedLLMCallResponse = Annotated[
 ]
 
 
-
 class ParsedLLMCallResponseCommon(BaseModel):
     prompt_vars: Dict[str, Any]
     prompt_id: str
     model_used: LLModels
 
 
-class StreamingParsedLLMCallResponse(
-    ParsedLLMCallResponseCommon, StreamingResponse
-):
+class StreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, StreamingResponse):
     parsed_content: AsyncIterator[Any]
 
 
