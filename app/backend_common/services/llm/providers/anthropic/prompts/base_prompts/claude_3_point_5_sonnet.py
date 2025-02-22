@@ -11,6 +11,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     TextBlockDeltaContent,
     TextBlockEnd,
     TextBlockEvents,
+    TextBlockStart,
     ToolUseRequestDelta,
     ToolUseRequestEnd,
     ToolUseRequestStart,
@@ -78,11 +79,6 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
 
             need_next_event = False
             while len(text_buffer) > 0 and not need_next_event:
-                print("******************************************************************************")
-                print("text_buffer", text_buffer)
-                print("xml_wrapped_text_position", xml_wrapped_text_position)
-                print(on_hold_events)
-                print("************************************************************************************")
                 need_next_event = False
                 all_parsers_checked_for_start_tag = False
                 while (
@@ -221,6 +217,14 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     # but we need to handle a case such that incrementally, the end tag gets completed, then we need to parse and reset the xml_wrapped_text_position
 
                     if xml_wrapped_text_position.end is not None and xml_wrapped_text_position.end.end_pos is not None:
+                        # we clear the buffer upto end pos and then insert a text block start event in on hold events if not already present
+                        if xml_wrapped_text_position.end.end_pos > 0:
+                            text_buffer = text_buffer[xml_wrapped_text_position.end.end_pos :]
+                            if len(on_hold_events) == 0:
+                                on_hold_events.append(TextBlockStart())
+                            else:
+                                if on_hold_events[-1].type != StreamingEventType.TEXT_BLOCK_START:
+                                    on_hold_events.append(TextBlockStart())
                         xml_wrapped_text_position = None
                         # we clear the parser buffer too
                         await ongoing_tag_parser.cleanup()
