@@ -114,6 +114,15 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             Please think through the query and generate a plan to implement the same. Return the plan in <thinking> tag.
 
             Now, think of what code snippets can be prepared from the given context and what all extra context you need.
+            If you can provide some code snippets, make sure to return them in the <code_block> tag.
+            Write the code_block in the following format:
+            <code_block>
+            <programming_language>python</programming_language>
+            <file_path>app/main.py</file_path>
+            def some_function():
+                return "Hello, World!"
+            </code_block>
+
             Also, please use the tools provided to ask the user for any additional information required.
         """
 
