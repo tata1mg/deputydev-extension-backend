@@ -1,19 +1,33 @@
+import re
+from typing import Any, Dict
+
 from app.backend_common.models.dao.postgres import Repos
+from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.common.utils.app_logger import AppLogger
-from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests, PRComments, AgentCommentMappings
-from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import AgentCommentMappingService
+from app.main.blueprints.deputy_dev.models.dao.postgres import (
+    AgentCommentMappings,
+    Agents,
+    PRComments,
+    PullRequests,
+)
+from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import (
+    AgentCommentMappingService,
+)
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler, get_workspace
-from app.main.blueprints.deputy_dev.services.setting.setting_service import SettingService
-from app.backend_common.repository.db import DB
-from typing import Dict, Any
-from app.main.blueprints.deputy_dev.models.dao.postgres import Agents
-import re
-
 
 BucketMapping = {
-    "Security": ["Security","SECURITY", "{SECURITY}", "SECURITY_ERROR", "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT"],
+    "Security": [
+        "Security",
+        "SECURITY",
+        "{SECURITY}",
+        "SECURITY_ERROR",
+        "SECURITY_-_ALWAYS_THIS_VALUE_SINCE_ITS_A_SECURITY_AGENT",
+    ],
     "Code Maintainabiltiy": [
         "CODE MAINTAINABILTIY",
         "CODE_MAINTAINABILTIY",
@@ -97,8 +111,8 @@ BucketMapping = {
         "{SEMANTIC}",
     ],
     "Performance Optimization": [
-        'PERFORMANCE OPTIMIZATION',
-        'PERFORMANCE_OPTIMIZATION',
+        "PERFORMANCE OPTIMIZATION",
+        "PERFORMANCE_OPTIMIZATION",
         "PERFORMANCE",
         "DATABASE_PERFORMANCE",
         "ALGORITHM_EFFICIENCY",
@@ -161,10 +175,9 @@ class AgentMappingBackfillManager:
                 workspace_id=scm_workspace_id,
                 auth_handler=auth_handler,
             )
-            settings = await SettingService(repo_service=repo_service, team_id=workspace.team_id).build()
+            await SettingService(repo_service=repo_service, team_id=workspace.team_id).build()
             repo_agents_by_id = await cls.backfill_agents(repo_id)
             agent_id_by_display_names = cls.agent_id_by_display_names(repo_agents_by_id)
-            display_names = list(agent_id_by_display_names.keys())
             for pull_request in pull_requests:
                 agent_comment_mappings = []
                 pr_service = await PRFactory.pr(
