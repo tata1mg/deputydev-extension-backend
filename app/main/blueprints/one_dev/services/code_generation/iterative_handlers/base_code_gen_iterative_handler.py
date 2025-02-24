@@ -37,6 +37,7 @@ class BaseCodeGenIterativeHandler(ABC, Generic[PayloadType]):
                         PromptFeatures.TEST_PLAN_GENERATION,
                         PromptFeatures.TEST_GENERATION,
                         PromptFeatures.ITERATIVE_CODE_CHAT,
+                        PromptFeatures.PLAN_CODE_GENERATION,
                     ]
                 ],
             }

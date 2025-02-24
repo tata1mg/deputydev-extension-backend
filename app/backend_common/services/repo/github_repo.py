@@ -1,5 +1,5 @@
 import base64
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 
 import toml
 from git.util import Actor
@@ -15,7 +15,6 @@ from app.common.constants.constants import (
     SettingErrorType,
     VCSTypes,
 )
-
 
 
 class GithubRepo(BaseRepo):
