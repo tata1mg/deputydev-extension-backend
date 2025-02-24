@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
 import toml
 
 from app.common.utils.context_vars import get_context_value
