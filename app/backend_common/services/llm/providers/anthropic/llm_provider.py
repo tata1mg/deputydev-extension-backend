@@ -7,6 +7,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelWithResponseStreamResponseTypeDef,
 )
 
+from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
@@ -15,8 +16,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     ConversationTurn,
     LLMCallResponseTypes,
-    LLModels,
-    LLMUsage,
     NonStreamingContentBlock,
     NonStreamingResponse,
     NonStreamingTextBlock,

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Dict, List
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
-    LLModels,
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
