@@ -75,9 +75,9 @@ class LLMUsage(BaseModel):
 
 
 class MessageThreadData(BaseModel):
-    session_id: str
+    session_id: int
     actor: MessageThreadActor
-    query_id: List[int] = []
+    query_id: int
     message_type: MessageType
     previous_context_message_ids: List[int] = []
     message_data: List[MessageData]

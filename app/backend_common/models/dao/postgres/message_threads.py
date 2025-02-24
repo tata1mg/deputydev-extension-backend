@@ -21,9 +21,9 @@ class MessageThread(Base):
     }
 
     id = fields.IntField(primary_key=True)
-    session_id = fields.TextField()
+    session_id = fields.IntField()
     actor = fields.TextField()
-    query_id = fields.TextField()
+    query_id = fields.IntField()
     type = fields.TextField()
     previous_query_ids = fields.JSONField()
     data = fields.JSONField()
