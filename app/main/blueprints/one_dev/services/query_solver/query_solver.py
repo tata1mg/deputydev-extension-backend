@@ -1,4 +1,7 @@
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    ToolUseResponseMessageData,
+)
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
@@ -21,17 +24,29 @@ from .prompts.factory import PromptFeatureFactory
 
 class QuerySolver:
     async def solve_query(self, payload: QuerySolverInput):
-        prompt = PromptFeatureFactory.get_prompt(
-            prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
-            model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-            init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
-        )
 
         tools_to_use = [CODE_SEARCHER, ASK_USER_INPUT]
         if payload.write_mode:
             tools_to_use.append(DIFF_APPLICATOR)
 
-        llm_response = await LLMHandler(
-            prompt_handler=prompt, tools=tools_to_use, stream=True
-        ).get_parsed_llm_response_data(previous_responses=[])
-        return llm_response
+        if payload.query:
+            prompt = PromptFeatureFactory.get_prompt(
+                prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
+                model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
+                init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+            )
+            llm_response = await LLMHandler(
+                prompt_handler=prompt, tools=tools_to_use, stream=True
+            ).get_parsed_llm_response_data(previous_responses=[])
+            return llm_response
+
+        elif payload.tool_use_response:
+            llm_response = await LLMHandler(tools=tools_to_use, stream=True).continue_response_with_tool_use(
+                session_id=payload.session_id,
+                tool_use_response=ToolUseResponseMessageData(
+                    tool_name=payload.tool_use_response.tool_name,
+                    tool_use_id=payload.tool_use_response.tool_use_id,
+                    response=payload.tool_use_response.response,
+                ),
+            )
+            return llm_response
