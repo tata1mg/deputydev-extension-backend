@@ -10,9 +10,10 @@ from io import StringIO
 from types import FrameType
 from typing import List, Optional, Tuple, Type
 
-from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
+from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIOperations
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FeatureNextAction,

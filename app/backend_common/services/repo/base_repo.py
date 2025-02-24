@@ -7,6 +7,8 @@ from functools import cached_property
 from typing import Dict, List, Optional, Tuple
 
 import toml
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
+from deputydev_core.utils.app_logger import AppLogger
 from git.util import Actor
 from sanic.log import logger
 from torpedo import CONFIG
@@ -15,8 +17,6 @@ from app.backend_common.models.dao.postgres.repos import Repos
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.services.credentials import AuthHandler
 from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
-from app.common.utils.app_logger import AppLogger
 
 
 def parse_collection_name(name: str) -> str:
