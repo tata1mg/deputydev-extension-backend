@@ -45,7 +45,7 @@ class LLMHandler:
 
     def __init__(
         self,
-        prompt_handler: BasePrompt,
+        prompt_handler: Optional[BasePrompt] = None,
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         stream: bool = False,
