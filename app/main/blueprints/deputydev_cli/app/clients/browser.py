@@ -1,8 +1,7 @@
 import webbrowser
 
+from deputydev_core.utils.config_manager import ConfigManager
 from prompt_toolkit import print_formatted_text
-
-from app.common.utils.config_manager import ConfigManager
 
 
 class BrowserClient:
