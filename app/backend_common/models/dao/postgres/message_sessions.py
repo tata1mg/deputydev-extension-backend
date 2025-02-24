@@ -20,7 +20,7 @@ class MessageSessions(Base):
 
     class Meta:
         table = "message_sessions"
-        indexes = (("session_id",),)
+        indexes = (("user_team_id",),)
 
     class Columns(Enum):
         id = ("id",)
