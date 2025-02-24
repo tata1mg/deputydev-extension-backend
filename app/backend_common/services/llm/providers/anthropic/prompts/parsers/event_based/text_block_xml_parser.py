@@ -37,3 +37,5 @@ class BaseAnthropicTextDeltaParser(ABC):
 
     async def cleanup(self) -> None:
         self.text_buffer = ""
+        self.event_buffer = []
+        self.start_event_completed = False
