@@ -22,12 +22,12 @@ class Claude3Point5CodeGenerationPrompt(BaseClaude3Point5SonnetPrompt):
             """
 
         user_message = f"""
-            User Query: {self.params.get("query")}
-
             Relevant Code Context from the repository:
             {self.params.get("relevant_chunks")}
 
-            Please provide a helpful and accurate response to my query, taking into account the given code context.
+            User Query: {self.params.get("query")}
+
+            Please provide working code which would solve the above mentioned user query.
 
             Please provide the response in the following format:
             <response>
