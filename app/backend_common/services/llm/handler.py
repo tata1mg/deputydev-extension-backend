@@ -2,9 +2,19 @@ import asyncio
 import traceback
 from typing import List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    MessageDataTypes,
+    MessageThreadActor,
+    MessageType,
+    ToolUseResponseMessageData,
+)
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    ConversationRole,
     ConversationTool,
     ConversationTurn,
     LLMCallResponseTypes,
@@ -48,8 +58,9 @@ class LLMHandler:
     async def get_llm_response(
         self,
         client: BaseLLMProvider,
-        prompt: UserAndSystemMessages,
         model: LLModels,
+        prompt: Optional[UserAndSystemMessages] = None,
+        tool_use_response: Optional[ToolUseResponseMessageData] = None,
         previous_responses: List[ConversationTurn] = [],
         max_retry: int = 2,
     ) -> UnparsedLLMCallResponse:
@@ -57,6 +68,7 @@ class LLMHandler:
             try:
                 llm_payload = client.build_llm_payload(
                     prompt=prompt,
+                    tool_use_response=tool_use_response,
                     previous_responses=previous_responses,
                     tools=self.tools,
                     cache_config=self.cache_config,
@@ -86,6 +98,92 @@ class LLMHandler:
             prompt=prompt,
             model=detected_llm,
             previous_responses=previous_responses,
+        )
+
+        if llm_response.type == LLMCallResponseTypes.STREAMING:
+            parsed_stream = await self.prompt_handler.get_parsed_streaming_events(llm_response)
+            return StreamingParsedLLMCallResponse(
+                type=llm_response.type,
+                content=llm_response.content,
+                parsed_content=parsed_stream,
+                usage=llm_response.usage,
+                model_used=detected_llm,
+                prompt_vars={},
+                prompt_id=self.prompt_handler.prompt_type,
+            )
+        else:
+            parsed_content = self.prompt_handler.get_parsed_result(llm_response)
+            return NonStreamingParsedLLMCallResponse(
+                type=llm_response.type,
+                content=llm_response.content,
+                parsed_content=parsed_content,
+                usage=llm_response.usage,
+                model_used=detected_llm,
+                prompt_vars={},
+                prompt_id=self.prompt_handler.prompt_type,
+            )
+
+    async def continue_response_with_tool_use(
+        self,
+        tool_use_response: ToolUseResponseMessageData,
+        session_id: str,
+    ) -> ParsedLLMCallResponse:
+
+        session_messages = await MessageThreadsRepository.get_message_threads_for_session(session_id=session_id)
+        filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
+
+        detected_llm: Optional[LLModels] = None
+        tool_use_request_message_id = None
+        for message in filtered_messages:
+            for data in message.message_data:
+                if data.type == MessageDataTypes.TOOL_USE_REQUEST and data.tool_use_id == tool_use_response.tool_use_id:
+                    tool_use_request_message_id = message.id
+                    detected_llm = message.llm_model
+                    break
+
+        if not tool_use_request_message_id or not detected_llm:
+            raise ValueError(
+                f"Tool use request message not found for tool use response id {tool_use_response.tool_use_id}"
+            )
+
+        previous_messages: List[ConversationTurn] = []
+        for message in session_messages:
+            if message.id <= tool_use_request_message_id:
+                for data in message.message_data:
+                    if data.type == MessageDataTypes.TEXT:
+                        previous_messages.append(
+                            ConversationTurn(
+                                role=ConversationRole.USER
+                                if message.actor == MessageThreadActor.USER
+                                else ConversationRole.ASSISTANT,
+                                content=data.text,
+                            )
+                        )
+                    elif data.type == MessageDataTypes.TOOL_USE_REQUEST:
+                        previous_messages.append(
+                            ConversationTurn(
+                                role=ConversationRole.USER
+                                if message.actor == MessageThreadActor.USER
+                                else ConversationRole.ASSISTANT,
+                                content=data.tool_name,
+                            )
+                        )
+                    elif data.type == MessageDataTypes.TOOL_USE_RESPONSE:
+                        previous_messages.append(
+                            ConversationTurn(
+                                role=ConversationRole.USER
+                                if message.actor == MessageThreadActor.USER
+                                else ConversationRole.ASSISTANT,
+                                content=str(data.response),
+                            )
+                        )
+
+        client = self.model_to_provider_class_map[detected_llm]()
+        llm_response = await self.get_llm_response(
+            client=client,
+            tool_use_response=tool_use_response,
+            model=detected_llm,
+            previous_responses=previous_messages,
         )
 
         if llm_response.type == LLMCallResponseTypes.STREAMING:
