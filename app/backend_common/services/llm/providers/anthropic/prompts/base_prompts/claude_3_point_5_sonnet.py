@@ -221,6 +221,10 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     if xml_wrapped_text_position.end is not None:
                         xml_wrapped_text_position.end.start_pos = 0
 
+                    if xml_wrapped_text_position.end is not None and xml_wrapped_text_position.end.end_pos is None:
+                        # we need more text to complete the end tag
+                        need_next_event = True
+
                     # now, in next iteration, we can either try to complete the end tag or find a new start tag
                     # but we need to handle a case such that incrementally, the end tag gets completed, then we need to parse and reset the xml_wrapped_text_position
 
