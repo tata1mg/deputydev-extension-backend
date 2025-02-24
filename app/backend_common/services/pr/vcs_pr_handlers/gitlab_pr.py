@@ -1,6 +1,9 @@
+from typing import List
+
 from sanic.log import logger
 from torpedo.exceptions import BadRequestException
 
+from app.backend_common.models.dto.comment_dto import CommentDTO
 from app.backend_common.models.dto.pr.gitlab_pr import GitlabPrModel
 from app.backend_common.service_clients.gitlab.gitlab_repo_client import (
     GitlabRepoClient,
@@ -98,10 +101,6 @@ class GitlabPR(BasePR):
         """
         payload = {"description": description}
         return await self.repo_client.update_pr_details(payload)
-
-    async def get_pr_comments(self):
-        comments = await self.repo_client.get_pr_comments()
-        return comments
 
     async def get_pr_diff(self):
         """
@@ -219,3 +218,6 @@ class GitlabPR(BasePR):
             )
 
         return formatted_commits
+
+    async def get_pr_comments(self) -> List[CommentDTO]:
+        pass

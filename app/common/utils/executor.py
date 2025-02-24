@@ -1,6 +1,6 @@
 import concurrent.futures
 
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.utils.config_manager import ConfigManager
 
 max_workers = ConfigManager.configs.get("EXECUTOR_MAX_WORKERS", 1)
 

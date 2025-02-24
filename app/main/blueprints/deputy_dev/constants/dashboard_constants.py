@@ -169,11 +169,11 @@ class DashboardQueries(Enum):
             prc.scm_comment_id,
             pr.title as pr_title
         FROM
-            comment_bucket_mapping cbm
+            agent_comment_mappings acm
         JOIN
-            buckets b ON cbm.bucket_id = b.id
+            agents a ON acm.agent_id = a.id
         JOIN
-            pr_comments prc ON cbm.pr_comment_id = prc.id
+            pr_comments prc ON acm.pr_comment_id = prc.id
         JOIN
             repos r on r.id = prc.repo_id
         JOIN
@@ -183,8 +183,7 @@ class DashboardQueries(Enum):
         WHERE
             prc.created_at >= '{start_date}'
             AND prc.created_at <= '{end_date}'
-            AND b.status = '{bucket_status}'
-            AND b.name = '{bucket_type_condition}'
+            AND a.agent_name = '{bucket_type_condition}'
             AND pr.repo_id in ({repo_ids})
             AND pr.iteration = 1
         ORDER by

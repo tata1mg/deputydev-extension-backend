@@ -2,6 +2,8 @@ import asyncio
 import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
     InvokeModelWithResponseStreamResponseTypeDef,
@@ -47,8 +49,6 @@ from app.backend_common.services.llm.providers.anthropic.dataclasses.main import
     AnthropicResponseTypes,
 )
 from app.common.constants.constants import LLMProviders
-from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
 
 
 class Anthropic(BaseLLMProvider):

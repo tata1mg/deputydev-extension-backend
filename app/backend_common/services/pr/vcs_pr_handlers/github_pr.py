@@ -1,5 +1,9 @@
+from typing import List
+
+from deputydev_core.utils.app_logger import AppLogger
 from torpedo.exceptions import BadRequestException
 
+from app.backend_common.models.dto.comment_dto import CommentDTO
 from app.backend_common.models.dto.pr.github_pr import GitHubPrModel
 from app.backend_common.service_clients.github.github_repo_client import (
     GithubRepoClient,
@@ -9,7 +13,6 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.github_repo import GithubRepo
 from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
-from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value, set_context_values
 
 
@@ -213,3 +216,11 @@ class GithubPR(BasePR):
         response = await self.repo_client.create_pr(payload)
         set_context_values(pr_url=response.get("html_url"))
         return response.get("html_url")
+
+    async def get_pr_comments(self) -> List[CommentDTO]:
+        pr_comments = await self.repo_client.get_pr_comments()
+        formatted_pr_comments = []
+        for pr_comment in pr_comments:
+            comment = CommentDTO(scm_comment_id=str(pr_comment["id"]), body=pr_comment["body"])
+            formatted_pr_comments.append(comment)
+        return formatted_pr_comments
