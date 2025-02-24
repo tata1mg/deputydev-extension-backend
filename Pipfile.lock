@@ -2500,11 +2500,11 @@
         },
         "realtime": {
             "hashes": [
-                "sha256:0015219bb398edfdd5e993bc77a42424ed6d6890b7234a0114fe0de4d21e4f8b",
-                "sha256:4ffc61a9c0f8dbda7e6a48496254a018d5b2d90569f56d1d89c9618f56616c3b"
+                "sha256:4071b095d7f750fcd68ec322e05045fce067b5cd5309a7ca809fcc87e50f56a1",
+                "sha256:6c241681d0517a3bc5e0132842bffd8b592286131b01a68b41cf7e0be94828fc"
             ],
             "markers": "python_version >= '3.9' and python_version < '4.0'",
-            "version": "==2.4.0"
+            "version": "==2.3.0"
         },
         "redis": {
             "hashes": [
