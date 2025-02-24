@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,

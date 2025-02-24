@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
-from app.backend_common.services.llm.dataclasses.main import LLMMeta, LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.dataclasses.main import LLMMeta
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.common.utils.app_logger import AppLogger
