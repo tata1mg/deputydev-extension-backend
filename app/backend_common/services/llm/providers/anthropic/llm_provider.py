@@ -7,7 +7,11 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelWithResponseStreamResponseTypeDef,
 )
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    LLMUsage,
+    ToolUseResponseMessageData,
+)
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
@@ -55,7 +59,8 @@ class Anthropic(BaseLLMProvider):
 
     def build_llm_payload(
         self,
-        prompt: UserAndSystemMessages,
+        prompt: Optional[UserAndSystemMessages] = None,
+        tool_use_response: Optional[ToolUseResponseMessageData] = None,
         previous_responses: List[ConversationTurn] = [],
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
@@ -63,8 +68,23 @@ class Anthropic(BaseLLMProvider):
 
         # create conversation array
         messages = previous_responses
-        user_message = ConversationTurn(role=ConversationRole.USER, content=prompt.user_message)
-        messages.append(user_message)
+
+        # add system and user messages to conversation
+        if prompt:
+            user_message = ConversationTurn(role=ConversationRole.USER, content=prompt.user_message)
+            messages.append(user_message)
+
+        # add tool result to conversation
+        if tool_use_response:
+            tool_message = ConversationTurn(
+                role=ConversationRole.USER,
+                content={
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_response.tool_use_id,
+                    "content": tool_use_response.response,
+                },
+            )
+            messages.append(tool_message)
 
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []
@@ -73,7 +93,7 @@ class Anthropic(BaseLLMProvider):
         llm_payload = {
             "anthropic_version": self.model_settings["VERSION"],
             "max_tokens": self.model_settings["MAX_TOKENS"],
-            "system": prompt.system_message,
+            "system": prompt.system_message if prompt else None,
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
