@@ -2,12 +2,13 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, TypeVar
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
     LLMBasedChunkReranker,
 )
 from app.backend_common.services.llm.dataclasses.main import LLMMeta
-from app.common.services.chunking.chunk_info import ChunkInfo
-from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.services.code_generation.features.dataclass.main import (
     BaseCodeGenFeaturePayload,

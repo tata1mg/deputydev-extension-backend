@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from enum import Enum
 
+from deputydev_core.clients.http.base_http_session_manager import SessionManager
 from torpedo import CONFIG
-
-from app.common.request_clients.http.base_http_session_manager import SessionManager
 
 
 class GrantType(str, Enum):

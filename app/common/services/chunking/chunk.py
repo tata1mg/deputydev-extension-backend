@@ -23,6 +23,7 @@ from .chunk_info import ChunkInfo, ChunkSourceDetails
 CHARACTER_SIZE = ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"]
 
 
+# TODO This file is deprecated
 def get_parser(language: str) -> Parser:
     """
     Returns a parser for the specified language.
@@ -143,7 +144,7 @@ class NeoSpan:
             seen: Set[Tuple[str, str]] = set()
             deduped: List[ChunkMetadataHierachyObject] = []
             for _item in hierarchy_list:
-                item_tuple = (_item.type.value, _item.value)  # Sort items to ensure consistent comparison
+                item_tuple = (_item.type, _item.value)  # Sort items to ensure consistent comparison
                 if item_tuple not in seen:
                     seen.add(item_tuple)
                     deduped.append(_item)
@@ -156,6 +157,7 @@ class NeoSpan:
             import_only_chunk=self.metadata.import_only_chunk or other_meta_data.import_only_chunk,
             all_functions=list(set(self.metadata.all_functions + other_meta_data.all_functions)),
             all_classes=list(set(self.metadata.all_classes + other_meta_data.all_classes)),
+            byte_size=self.metadata.byte_size + other_meta_data.byte_size,
         )
 
     def get_chunk_first_char(self, source_code: bytes):
@@ -299,6 +301,19 @@ def is_class_node(node: Node, grammar: Dict[str, str]):
     return node.type in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
 
 
+def is_namespace_node(node: Node, grammar: Dict[str, str]):
+    """
+    Checks if a given node is namespace by visiting to depth
+    Args:
+        node (Ast node):
+        grammar (Dict[str, str]): grammar for the language
+
+    Returns:
+
+    """
+    return node.type in grammar[LanguageIdentifiers.NAMESPACE.value]
+
+
 def is_node_breakable(node: Node, grammar: Dict[str, str]) -> bool:
     if node.type in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
         breakable = False
@@ -324,7 +339,9 @@ def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
     # Direct identifier check
     if (
         node.type
-        in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value] + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+        in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value]
+        + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+        + grammar[LanguageIdentifiers.NAMESPACE_IDENTIFIER.value]
     ):
         return node.text.decode("utf-8")
 
@@ -334,6 +351,7 @@ def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
             child.type
             in grammar[LanguageIdentifiers.FUNCTION_IDENTIFIER.value]
             + grammar[LanguageIdentifiers.CLASS_IDENTIFIER.value]
+            + grammar[LanguageIdentifiers.NAMESPACE_IDENTIFIER.value]
         ):
             return child.text.decode("utf-8")
 
@@ -344,6 +362,7 @@ def extract_name(node: Node, grammar: Dict[str, str]) -> Optional[str]:
             child.type
             in grammar[LanguageIdentifiers.CLASS_DEFINITION.value]
             + grammar[LanguageIdentifiers.FUNCTION_DEFINITION.value]
+            + grammar[LanguageIdentifiers.NAMESPACE_IDENTIFIER.value]
         ):
             name = extract_name(child, grammar)
             if name:
@@ -361,6 +380,7 @@ class LanguageIdentifiers(Enum):
     FUNCTION_CLASS_WRAPPER = "function_class_wrapper"
     NAMESPACE = "namespace"
     DECORATED_DEFINITION = "decorated_definition"
+    NAMESPACE_IDENTIFIER = "namespace_identifier"
 
 
 js_family_identifiers = {
@@ -375,6 +395,7 @@ js_family_identifiers = {
     LanguageIdentifiers.DECORATOR.value: "NA",
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: ["expression_statement"],
     LanguageIdentifiers.NAMESPACE.value: ["namespace", "internal_module"],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: ["identifier"],
     LanguageIdentifiers.DECORATED_DEFINITION.value: [],
 }
 
@@ -397,6 +418,33 @@ java_family_identifiers = {
     LanguageIdentifiers.DECORATOR.value: "NA",
     LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
     LanguageIdentifiers.NAMESPACE.value: ["NA"],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: [],
+}
+ruby_family_identifiers = {
+    LanguageIdentifiers.FUNCTION_DEFINITION.value: ["method", "singleton_method", "class_method"],
+    LanguageIdentifiers.CLASS_DEFINITION.value: ["class", "singleton_class"],
+    LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["identifier", "constant"],
+    LanguageIdentifiers.CLASS_IDENTIFIER.value: ["constant"],
+    LanguageIdentifiers.DECORATOR.value: "NA",
+    LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
+    LanguageIdentifiers.NAMESPACE.value: ["module"],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: ["constant"],
+}
+
+kotlin_family_identifiers = {
+    LanguageIdentifiers.FUNCTION_DEFINITION.value: [
+        "function_declaration",
+        "lambda_expression",
+        "anonymous_function",
+        "constructor_declaration",
+    ],
+    LanguageIdentifiers.CLASS_DEFINITION.value: ["class_declaration", "object_declaration", "interface_declaration"],
+    LanguageIdentifiers.FUNCTION_IDENTIFIER.value: ["simple_identifier"],
+    LanguageIdentifiers.CLASS_IDENTIFIER.value: ["type_identifier"],
+    LanguageIdentifiers.DECORATOR.value: "NA",
+    LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: [],
+    LanguageIdentifiers.NAMESPACE.value: [],
+    LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: [],
 }
 
 chunk_language_identifiers = {
@@ -409,11 +457,14 @@ chunk_language_identifiers = {
         LanguageIdentifiers.DECORATOR.value: "decorator",
         LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value: ["decorated_definition"],
         LanguageIdentifiers.NAMESPACE.value: ["NA"],
+        LanguageIdentifiers.NAMESPACE_IDENTIFIER.value: [],
     },
     "javascript": js_family_identifiers,
     "tsx": js_family_identifiers,
     "typescript": js_family_identifiers,
     "java": java_family_identifiers,
+    "ruby": ruby_family_identifiers,
+    "kotlin": kotlin_family_identifiers,
 }
 
 
@@ -460,7 +511,7 @@ def chunk_node_with_meta_data(
     grammar = chunk_language_identifiers[language]
     # Handle decorators for class or function definitions
 
-    def create_chunk_with_decorators(start_point, end_point, decorators=None, current_node=None):
+    def create_chunk_with_decorators(start_point, end_point, byte_size, decorators=None, current_node=None):
         if decorators:
             # Start from the first decorator
             actual_start = decorators[0].start
@@ -477,6 +528,7 @@ def chunk_node_with_meta_data(
                 import_only_chunk=not hierarchy and not is_node_breakable(current_node, grammar),
                 all_functions=[],
                 all_classes=[],
+                byte_size=byte_size,
             ),
         )
 
@@ -484,15 +536,25 @@ def chunk_node_with_meta_data(
     if node.type not in grammar[LanguageIdentifiers.FUNCTION_CLASS_WRAPPER.value]:
         if is_class_node(node, grammar):
             class_name = extract_name(node, grammar)
-            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.CLASS, value=class_name))
+            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.CLASS.value, value=class_name))
             all_classes.append(class_name)
 
         elif is_function_node(node, grammar):
             func_name = extract_name(node, grammar)
-            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.FUNCTION, value=func_name))
+            hierarchy.append(ChunkMetadataHierachyObject(type=ChunkNodeType.FUNCTION.value, value=func_name))
             all_functions.append(func_name)
+        elif is_namespace_node(node, grammar):
+            namespace_name = extract_name(node, grammar)
+            # namespace type will not be fixed to class or functon so using node actual type
+            hierarchy.append(ChunkMetadataHierachyObject(type=node.type, value=namespace_name))
 
-    current_chunk = create_chunk_with_decorators(node.start_point, node.start_point, pending_decorators, node)
+    current_chunk = create_chunk_with_decorators(
+        start_point=node.start_point,
+        end_point=node.start_point,
+        byte_size=0,
+        decorators=pending_decorators,
+        current_node=node,
+    )
 
     for child in node_children:
         if is_class_node(child, grammar):
@@ -537,15 +599,23 @@ def chunk_node_with_meta_data(
                 chunks.append(current_chunk)
 
             current_chunk = create_chunk_with_decorators(
-                child.start_point, child.end_point, current_node=child, decorators=pending_decorators
+                child.start_point,
+                child.end_point,
+                byte_size=child.end_byte - child.start_byte,
+                current_node=child,
+                decorators=pending_decorators,
             )
 
         else:
             # Append the current child to the chunk
             if current_chunk:
-                current_chunk += create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+                current_chunk += create_chunk_with_decorators(
+                    child.start_point, child.end_point, byte_size=child.end_byte - child.start_byte, current_node=child
+                )
             else:
-                current_chunk = create_chunk_with_decorators(child.start_point, child.end_point, current_node=child)
+                current_chunk = create_chunk_with_decorators(
+                    child.start_point, child.end_point, byte_size=child.end_byte - child.start_byte, current_node=child
+                )
 
     # Finalize the last chunk
     if is_valid_chunk(current_chunk):
@@ -563,7 +633,7 @@ def get_chunk_first_char(current_chunk: NeoSpan, source_code: bytes):
     return first_char
 
 
-def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[NeoSpan]:
+def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes, max_chars: int) -> list[NeoSpan]:
     """
     Combine chunks intelligently, ensuring chunks with `dechunk` set to `False` are not merged
     with previous chunks, and chunks are split if their combined size exceeds `coalesce`.
@@ -586,11 +656,13 @@ def dechunk(chunks: List[NeoSpan], coalesce: int, source_code: bytes) -> list[Ne
     previous_chunk = chunks[0]
 
     for idx, chunk in enumerate(chunks[1:]):
-        # check dechunk condition
+        # check dechunk condition: case when both chunks have same start line
         if chunk.start[0] == previous_chunk.start[0]:
             previous_chunk += chunk
 
-        elif chunk.metadata.dechunk is False:
+        elif (
+            chunk.metadata.dechunk is False or previous_chunk.metadata.byte_size + chunk.metadata.byte_size > max_chars
+        ):
             if previous_chunk and len(previous_chunk) > 0:
                 new_chunks.append(previous_chunk)
             previous_chunk = chunk
@@ -641,7 +713,7 @@ def chunk_code_with_metadata(
             chunk.metadata.all_classes = list(set(all_classes))
             chunk.metadata.all_functions = list(set(all_functions))
 
-    new_chunks = dechunk(chunks, coalesce=coalesce, source_code=source_code)
+    new_chunks = dechunk(chunks, coalesce=coalesce, source_code=source_code, max_chars=MAX_CHARS)
     return new_chunks
 
 
@@ -764,7 +836,7 @@ def chunk_content(content: str, line_count: int = 30, overlap: int = 15) -> List
 
 
 def supported_new_chunk_language(language):
-    return language in ["python", "javascript", "typescript", "tsx", "java"]
+    return language in ["python", "javascript", "typescript", "tsx", "java", "ruby", "kotlin"]
 
 
 def chunk_source(

@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from deputydev_core.services.tiktoken import TikToken
 from torpedo import CONFIG, Task
 
 from app.backend_common.services.llm.dataclasses.main import ParsedLLMCallResponse
@@ -8,7 +9,6 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.utils.app_utils import get_task_response
 from app.backend_common.utils.formatting import format_summary_with_metadata
-from app.common.services.tiktoken import TikToken
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,

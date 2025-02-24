@@ -12,10 +12,11 @@ class MessageThread(Base):
         "actor",
         "query_id",
         "type",
-        "previous_query_ids",
+        "previous_context_message_ids",
         "data",
         "usage",
         "llm_model",
+        "summary",
         "created_at",
         "updated_at",
     }
@@ -25,9 +26,10 @@ class MessageThread(Base):
     actor = fields.TextField()
     query_id = fields.IntField()
     type = fields.TextField()
-    previous_query_ids = fields.JSONField()
+    previous_context_message_ids = fields.JSONField()
     data = fields.JSONField()
     usage = fields.JSONField()
+    summary = fields.TextField()
     llm_model = fields.TextField()
 
     class Meta:
@@ -40,9 +42,10 @@ class MessageThread(Base):
         actor = ("actor",)
         query_id = ("query_id",)
         type = ("type",)
-        previous_query_ids = ("previous_query_ids",)
+        previous_context_message_ids = ("previous_query_ids",)
         data = ("data",)
         usage = ("usage",)
+        summary = ("summary",)
         llm_model = ("llm_model",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
