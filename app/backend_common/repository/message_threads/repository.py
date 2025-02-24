@@ -3,7 +3,10 @@ from typing import List, Optional
 from sanic.log import logger
 
 from app.backend_common.models.dao.postgres.message_threads import MessageThread
-from app.backend_common.models.dto.message_thread_dto import MessageThreadData, MessageThreadDTO
+from app.backend_common.models.dto.message_thread_dto import (
+    MessageThreadData,
+    MessageThreadDTO,
+)
 from app.backend_common.repository.db import DB
 
 
