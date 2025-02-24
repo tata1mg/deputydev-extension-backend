@@ -3,7 +3,10 @@ from typing import Any, Dict, List, Optional
 
 from torpedo import CONFIG
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    ToolUseResponseMessageData,
+)
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     ConversationTurn,
@@ -22,7 +25,8 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     def build_llm_payload(
         self,
-        prompt: UserAndSystemMessages,
+        prompt: Optional[UserAndSystemMessages] = None,
+        tool_use_response: Optional[ToolUseResponseMessageData] = None,
         previous_responses: List[ConversationTurn] = [],
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
