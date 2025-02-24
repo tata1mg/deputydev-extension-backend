@@ -3,10 +3,10 @@ from typing import Any, Dict, List, Optional
 
 from torpedo import CONFIG
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     ConversationTurn,
-    LLModels,
     PromptCacheConfig,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,

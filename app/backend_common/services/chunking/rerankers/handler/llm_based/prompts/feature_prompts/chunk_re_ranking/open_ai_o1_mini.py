@@ -1,6 +1,6 @@
 import re
 
-from app.backend_common.services.llm.dataclasses.main import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )

@@ -3,8 +3,8 @@ from typing import AsyncIterator, List, Optional, Union
 
 from pydantic import BaseModel
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
-    LLModels,
     StreamingEvent,
     StreamingEventType,
     TextBlockDelta,
