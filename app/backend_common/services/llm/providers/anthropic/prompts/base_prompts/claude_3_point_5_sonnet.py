@@ -205,6 +205,8 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                         if xml_wrapped_text_position.end is not None
                         else len(text_buffer)
                     )
+                    if xml_wrapped_text_position.end is not None:
+                        print(f"{text_buffer[yieldable_text_start:yieldable_text_end]}    -------    {xml_wrapped_text_position.tag_name}")
                     events_to_yield = await ongoing_tag_parser.parse_text_delta(
                         TextBlockDelta(
                             content=TextBlockDeltaContent(text=text_buffer[yieldable_text_start:yieldable_text_end])
