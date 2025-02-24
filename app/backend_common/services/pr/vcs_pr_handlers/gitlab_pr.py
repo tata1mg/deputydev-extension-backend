@@ -1,6 +1,8 @@
+from typing import List
+
 from sanic.log import logger
 from torpedo.exceptions import BadRequestException
-from typing import List
+
 from app.backend_common.models.dto.comment_dto import CommentDTO
 from app.backend_common.models.dto.pr.gitlab_pr import GitlabPrModel
 from app.backend_common.service_clients.gitlab.gitlab_repo_client import (
