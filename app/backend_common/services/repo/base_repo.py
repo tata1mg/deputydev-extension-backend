@@ -13,7 +13,6 @@ from torpedo import CONFIG
 
 from app.backend_common.models.dao.postgres.repos import Repos
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
-from app.backend_common.service_clients.base_scm_client import BaseSCMClient
 from app.backend_common.services.credentials import AuthHandler
 from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType
 from app.common.services.repo.local_repo.managers.git_repo import GitRepo
