@@ -2,12 +2,13 @@ import asyncio
 import time
 from typing import List
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.services.reranker.base_chunk_reranker import BaseChunkReranker
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.common.services.chunking.chunk_info import ChunkInfo
-from app.common.services.chunking.reranker.base_chunk_reranker import BaseChunkReranker
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
-from app.common.utils.app_logger import AppLogger
 
 from .prompts.dataclasses.main import PromptFeatures
 from .prompts.factory import PromptFeatureFactory

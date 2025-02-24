@@ -1,6 +1,7 @@
 from typing import Optional
 
-from app.common.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+
 from app.main.blueprints.one_dev.services.code_generation.dataclasses.main import (
     PRConfig,
 )

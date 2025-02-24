@@ -2,9 +2,10 @@ import asyncio
 import json
 from typing import List
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.constants import LLMModelNames
+
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
-from app.common.constants.constants import LLMModelNames
-from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.openai_comment_summarization_agent import (
     OpenAICommentSummarizationAgent,

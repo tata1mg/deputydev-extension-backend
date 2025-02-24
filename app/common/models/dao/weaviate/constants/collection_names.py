@@ -1,2 +1,0 @@
-CHUNKS_COLLECTION_NAME = "chunks"
-CHUNK_FILES_COLLECTION_NAME = "chunk_files"

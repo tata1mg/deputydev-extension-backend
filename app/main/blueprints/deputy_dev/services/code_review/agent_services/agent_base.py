@@ -2,11 +2,11 @@ import time
 from abc import ABC, abstractmethod
 from string import Template
 
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.app_logger import AppLogger
 from torpedo import CONFIG
 
-from app.common.services.chunking.utils.snippet_renderer import render_snippet_array
-from app.common.services.tiktoken import TikToken
-from app.common.utils.app_logger import AppLogger
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,

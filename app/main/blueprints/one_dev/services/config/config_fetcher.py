@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from app.common.utils.config_manager import ConfigManager
+from deputydev_core.utils.config_manager import ConfigManager
 
 ConfigManager.configs
 

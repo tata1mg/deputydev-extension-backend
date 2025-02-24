@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, List, Mapping, Optional
 
-from app.common.services.chunking.chunk import chunk_source
 from app.common.services.chunking.chunk_info import ChunkInfo
+from app.common.services.chunking.source_chunker import chunk_source
 from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
 from app.common.utils.file_utils import read_file
 
