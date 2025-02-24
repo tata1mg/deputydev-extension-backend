@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List
+from typing import AsyncIterator, List
+
+from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
@@ -19,10 +21,10 @@ class BasePrompt(ABC):
 
     @classmethod
     @abstractmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[BaseModel]:
         raise NotImplementedError("This method must be implemented in the child class")
 
     @classmethod
     @abstractmethod
-    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Dict[str, Any]]:
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         raise NotImplementedError("This method must be implemented in the child class")
