@@ -28,7 +28,8 @@ RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/relea
 # Authorize SSH Host
 RUN mkdir -p /root/.ssh && \
     chmod 0700 /root/.ssh && \
-    ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+    ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Add the keys and set permissions
 RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \

@@ -2,13 +2,13 @@ import os
 import pathlib
 from typing import Any, Dict, List, Tuple
 
+from deputydev_core.utils.config_manager import ConfigManager
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
-from app.common.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.constants.cli import (
     CLIFeatures,
     CLIOperations,
