@@ -2,12 +2,12 @@ import asyncio
 import traceback
 from typing import List, Optional
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     ConversationTurn,
     LLMCallResponseTypes,
-    LLModels,
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,

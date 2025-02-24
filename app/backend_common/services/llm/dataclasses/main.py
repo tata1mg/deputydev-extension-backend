@@ -4,38 +4,12 @@ from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional,
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
+
 
 class LLMCallResponseTypes(Enum):
     NON_STREAMING = "NON_STREAMING"
     STREAMING = "STREAMING"
-
-
-class LLModels(Enum):
-    GPT_4O = "GPT_4O"
-    CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
-    GPT_40_MINI = "GPT_40_MINI"
-    GPT_O1_MINI = "GPT_O1_MINI"
-
-
-class LLMUsage(BaseModel):
-    input: int
-    output: int
-    cache_read: Optional[int] = None
-    cache_write: Optional[int] = None
-
-    def __add__(self, other: "LLMUsage") -> "LLMUsage":
-        return LLMUsage(
-            input=self.input + other.input,
-            output=self.output + other.output,
-            cache_read=(self.cache_read or 0) + (other.cache_read or 0)
-            if self.cache_read is not None or other.cache_read is not None
-            else None,
-            cache_write=(self.cache_write or 0) + (other.cache_write or 0)
-            if self.cache_write is not None or other.cache_write is not None
-            else None,
-        )
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class LLMMeta(BaseModel):
