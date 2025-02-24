@@ -1,12 +1,12 @@
 import traceback
 from typing import Any, Dict, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit.shortcuts.progress_bar import formatters
 
-from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
 )

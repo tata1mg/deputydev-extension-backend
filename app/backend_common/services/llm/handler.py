@@ -2,6 +2,8 @@ import asyncio
 import traceback
 from typing import List, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageDataTypes,
@@ -32,7 +34,6 @@ from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
 )
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.exception import RetryException
-from app.common.utils.app_logger import AppLogger
 
 
 class LLMHandler:
