@@ -81,6 +81,7 @@ class MessageThreadData(BaseModel):
     message_type: MessageType
     previous_context_message_ids: List[int] = []
     message_data: List[MessageData]
+    prompt_type: str
     llm_model: LLModels
     usage: LLMUsage
     summary: Optional[str] = None
