@@ -24,18 +24,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     LLMCallResponseTypes,
     NonStreamingContentBlock,
     NonStreamingResponse,
-    NonStreamingTextBlock,
     NonStreamingTextBlockContent,
-    NonStreamingToolUseRequest,
     NonStreamingToolUseRequestContent,
     PromptCacheConfig,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
+    TextBlockData,
     TextBlockDelta,
     TextBlockDeltaContent,
     TextBlockEnd,
     TextBlockStart,
+    ToolUseRequestData,
     ToolUseRequestDelta,
     ToolUseRequestDeltaContent,
     ToolUseRequestEnd,
@@ -117,14 +117,14 @@ class Anthropic(BaseLLMProvider):
         for content_block in content_array:
             if content_block["type"] == AnthropicResponseTypes.TEXT:
                 non_streaming_content_blocks.append(
-                    NonStreamingTextBlock(
+                    TextBlockData(
                         type=ContentBlockCategory.TEXT_BLOCK,
                         content=NonStreamingTextBlockContent(text=content_block["text"]),
                     )
                 )
             elif content_block["type"] == AnthropicResponseTypes.TOOL_USE:
                 non_streaming_content_blocks.append(
-                    NonStreamingToolUseRequest(
+                    ToolUseRequestData(
                         type=ContentBlockCategory.TOOL_USE_REQUEST,
                         content=NonStreamingToolUseRequestContent(
                             tool_input=content_block["input"],

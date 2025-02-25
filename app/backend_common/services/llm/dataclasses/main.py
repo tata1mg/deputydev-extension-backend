@@ -4,7 +4,11 @@ from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional,
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    LLMUsage,
+    ResponseData,
+)
 
 
 class LLMCallResponseTypes(Enum):
@@ -43,11 +47,6 @@ class PromptCacheConfig(BaseModel):
     conversation: bool
     tools: bool
     system_message: bool
-
-
-class ContentBlockCategory(Enum):
-    TEXT_BLOCK = "TEXT_BLOCK"
-    TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
 
 
 # ALL CONTENT BLOCK TYPES
@@ -135,38 +134,9 @@ class StreamingResponse(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class NonStreamingTextBlockContent(BaseModel):
-    text: str
-
-
-class NonStreamingToolUseRequestContent(BaseModel):
-    tool_input: Dict[str, Any]
-    tool_name: str
-    tool_use_id: str
-
-
-class NonStreamingTextBlock(BaseModel):
-    type: Literal[ContentBlockCategory.TEXT_BLOCK]
-    content: NonStreamingTextBlockContent
-
-
-class NonStreamingToolUseRequest(BaseModel):
-    type: Literal[ContentBlockCategory.TOOL_USE_REQUEST]
-    content: NonStreamingToolUseRequestContent
-
-
-NonStreamingContentBlock = Annotated[
-    Union[
-        NonStreamingTextBlock,
-        NonStreamingToolUseRequest,
-    ],
-    Field(discriminator="type"),
-]
-
-
 class NonStreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.NON_STREAMING]
-    content: List[NonStreamingContentBlock]
+    content: List[ResponseData]
     usage: LLMUsage
 
 
