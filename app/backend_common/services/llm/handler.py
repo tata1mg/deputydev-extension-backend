@@ -83,6 +83,30 @@ class LLMHandler:
                 await asyncio.sleep(2)
         raise RetryException(f"Failed to get response from LLM after {max_retry} retries")
 
+    async def parse_llm_response_data(self, llm_response: UnparsedLLMCallResponse) -> ParsedLLMCallResponse:
+        if llm_response.type == LLMCallResponseTypes.STREAMING:
+            parsed_stream = await self.prompt_handler.get_parsed_streaming_events(llm_response)
+            return StreamingParsedLLMCallResponse(
+                type=llm_response.type,
+                content=llm_response.content,
+                parsed_content=parsed_stream,
+                usage=llm_response.usage,
+                model_used=detected_llm,
+                prompt_vars={},
+                prompt_id=self.prompt_handler.prompt_type,
+            )
+        else:
+            parsed_content = self.prompt_handler.get_parsed_result(llm_response)
+            return NonStreamingParsedLLMCallResponse(
+                type=llm_response.type,
+                content=llm_response.content,
+                parsed_content=parsed_content,
+                usage=llm_response.usage,
+                model_used=detected_llm,
+                prompt_vars={},
+                prompt_id=self.prompt_handler.prompt_type,
+            )
+
     async def get_parsed_llm_response_data(
         self, previous_responses: List[ConversationTurn] = []
     ) -> ParsedLLMCallResponse:
