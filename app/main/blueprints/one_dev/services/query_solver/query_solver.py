@@ -1,6 +1,6 @@
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
-    ToolUseResponseMessageData,
+    ToolUseResponseData,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -43,7 +43,7 @@ class QuerySolver:
         elif payload.tool_use_response:
             llm_response = await LLMHandler(tools=tools_to_use, stream=True).submit_tool_use_response(
                 session_id=payload.session_id,
-                tool_use_response=ToolUseResponseMessageData(
+                tool_use_response=ToolUseResponseData(
                     tool_name=payload.tool_use_response.tool_name,
                     tool_use_id=payload.tool_use_response.tool_use_id,
                     response=payload.tool_use_response.response,
