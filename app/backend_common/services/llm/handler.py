@@ -1,44 +1,42 @@
 import asyncio
 import json
 import traceback
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 
 from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
     LLModels,
-    MessageDataTypes,
     MessageThreadActor,
     MessageThreadData,
     MessageThreadDTO,
     MessageType,
-    ToolUseResponseMessageData,
+    TextBlockContent,
+    ToolUseRequestContent,
+    ToolUseResponseData,
+    TextBlockData,
+    ToolUseRequestData,
+    ResponseData,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ContentBlockCategory,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
     LLMCallResponseTypes,
-    NonStreamingContentBlock,
     NonStreamingParsedLLMCallResponse,
     NonStreamingResponse,
-    NonStreamingTextBlock,
-    NonStreamingTextBlockContent,
-    NonStreamingToolUseRequest,
-    NonStreamingToolUseRequestContent,
     ParsedLLMCallResponse,
     PromptCacheConfig,
     StreamingEventType,
     StreamingParsedLLMCallResponse,
     StreamingResponse,
     UnparsedLLMCallResponse,
-    UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
@@ -68,35 +66,35 @@ class LLMHandler:
     async def get_non_streaming_response_from_streaming_response(
         self, llm_response: StreamingResponse
     ) -> NonStreamingResponse:
-        non_streaming_content_blocks: List[NonStreamingContentBlock] = []
+        non_streaming_content_blocks: List[ResponseData] = []
 
-        current_content_block: Optional[NonStreamingContentBlock] = None
+        current_content_block: Optional[ResponseData] = None
         text_buffer: str = ""
 
         async for event in llm_response.content:
             if event.type == StreamingEventType.TEXT_BLOCK_START:
-                current_content_block = NonStreamingTextBlock(
-                    type=ContentBlockCategory.TEXT_BLOCK, content=NonStreamingTextBlockContent(text="")
+                current_content_block = TextBlockData(
+                    type=ContentBlockCategory.TEXT_BLOCK, content=TextBlockContent(text="")
                 )
             elif event.type == StreamingEventType.TEXT_BLOCK_DELTA:
-                if current_content_block and isinstance(current_content_block, NonStreamingTextBlock):
+                if current_content_block and isinstance(current_content_block, TextBlockData):
                     current_content_block.content.text += event.content.text
             elif event.type == StreamingEventType.TEXT_BLOCK_END:
-                if current_content_block and isinstance(current_content_block, NonStreamingTextBlock):
+                if current_content_block and isinstance(current_content_block, TextBlockData):
                     non_streaming_content_blocks.append(current_content_block)
                     current_content_block = None
             elif event.type == StreamingEventType.TOOL_USE_REQUEST_START:
-                current_content_block = NonStreamingToolUseRequest(
+                current_content_block = ToolUseRequestData(
                     type=ContentBlockCategory.TOOL_USE_REQUEST,
-                    content=NonStreamingToolUseRequestContent(
+                    content=ToolUseRequestContent(
                         tool_name=event.content.tool_name, tool_input={}, tool_use_id=event.content.tool_use_id
                     ),
                 )
             elif event.type == StreamingEventType.TOOL_USE_REQUEST_DELTA:
-                if current_content_block and isinstance(current_content_block, NonStreamingToolUseRequest):
+                if current_content_block and isinstance(current_content_block, ToolUseRequestData):
                     text_buffer += event.content.input_params_json_delta
             elif event.type == StreamingEventType.TOOL_USE_REQUEST_END:
-                if current_content_block and isinstance(current_content_block, NonStreamingToolUseRequest):
+                if current_content_block and isinstance(current_content_block, ToolUseRequestData):
                     current_content_block.content.tool_input = json.loads(text_buffer)
                     non_streaming_content_blocks.append(current_content_block)
                     current_content_block = None
@@ -118,7 +116,7 @@ class LLMHandler:
             response_to_use = llm_response
 
         response_to_use.content.sort(key=lambda x: x.type.value)
-        data_to_store: List[NonStreamingContentBlock] = response_to_use.content
+        data_to_store: Sequence[ResponseData] = response_to_use.content
         data_hash = xxhash.xxh64(json.dumps([data.model_dump(mode="json") for data in data_to_store])).hexdigest()
         message_thread = MessageThreadData(
             session_id=session_id,
@@ -137,18 +135,17 @@ class LLMHandler:
     async def get_llm_response(
         self,
         client: BaseLLMProvider,
-        model: LLModels,
         session_id: int,
         prompt_handler: BasePrompt,
-        prompt: Optional[UserAndSystemMessages] = None,
         tools: Optional[List[ConversationTool]] = None,
-        tool_use_response: Optional[ToolUseResponseMessageData] = None,
+        tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         max_retry: int = 2,
         stream: bool = False,
     ) -> UnparsedLLMCallResponse:
         for i in range(0, max_retry):
             try:
+                prompt = prompt_handler.get_prompt()
                 llm_payload = client.build_llm_payload(
                     prompt=prompt,
                     tool_use_response=tool_use_response,
@@ -156,7 +153,7 @@ class LLMHandler:
                     tools=tools,
                     cache_config=self.cache_config,
                 )
-                llm_response = await client.call_service_client(llm_payload, model, stream=stream)
+                llm_response = await client.call_service_client(llm_payload, prompt_handler.model_name, stream=stream)
                 # start task for storing LLM message in DB
                 asyncio.create_task(self.store_llm_response_in_db(llm_response, session_id, prompt_handler))
                 return llm_response
@@ -194,7 +191,7 @@ class LLMHandler:
             )
 
     async def fetch_message_threads_from_conversation_turns(
-        self, conversation_turns: List[ConversationTurn], session_id: int
+        self, conversation_turns: List[ConversationTurn], session_id: int, prompt_handler: BasePrompt
     ) -> List[MessageThreadDTO]:
         """
         Fetch message threads from conversation turns
@@ -228,9 +225,8 @@ class LLMHandler:
                     conversation_chain=[],
                     data_hash=hash,
                     message_data=[],
-                    prompt_type="",
-                    llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-                    summary=None,
+                    prompt_type=prompt_handler.prompt_type,
+                    llm_model=prompt_handler.model_name,
                 )
                 message_threads_to_insert.append(message_thread)
 
@@ -269,7 +265,10 @@ class LLMHandler:
         return db_message_threads
 
     async def get_conversation_chain_messages(
-        self, session_id: int, previous_responses: Union[List[int], List[ConversationTurn]] = []
+        self,
+        session_id: int,
+        prompt_handler: BasePrompt,
+        previous_responses: Union[List[int], List[ConversationTurn]] = [],
     ) -> List[MessageThreadDTO]:
         """
         Get conversation chain messages
@@ -288,7 +287,7 @@ class LLMHandler:
         # determine the type of previous_responses
         if isinstance(previous_responses[0], ConversationTurn):
             return await self.fetch_message_threads_from_conversation_turns(
-                conversation_turns=previous_responses, session_id=session_id
+                conversation_turns=previous_responses, session_id=session_id, prompt_handler=prompt_handler
             )
         return await self.get_message_threads_from_message_thread_ids(message_thread_ids=previous_responses)
 
@@ -318,67 +317,23 @@ class LLMHandler:
             raise ValueError(f"LLM model {detected_llm} not supported")
 
         client = self.model_to_provider_class_map[detected_llm]()
-        prompt = prompt_handler.get_prompt()
-
         llm_response = await self.get_llm_response(
             client=client,
-            prompt=prompt,
+            prompt_handler=prompt_handler,
+            session_id=session_id,
             tools=tools,
-            model=detected_llm,
             previous_responses=await self.get_conversation_chain_messages(
-                session_id=session_id, previous_responses=previous_responses
+                session_id=session_id, previous_responses=previous_responses, prompt_handler=prompt_handler
             ),
             stream=stream,
         )
 
         return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=prompt_handler)
 
-    async def generate_previous_messages(self, session_messages: List[MessageThreadDTO]) -> List[ConversationTurn]:
-        """
-        Generate previous messages from session messages
-
-        Parameters:
-            :param session_messages: List of session messages
-
-        Returns:
-            :return: List of conversation turns
-        """
-        previous_messages: List[ConversationTurn] = []
-        for message in session_messages:
-            for data in message.message_data:
-                if data.type == MessageDataTypes.TEXT:
-                    previous_messages.append(
-                        ConversationTurn(
-                            role=ConversationRole.USER
-                            if message.actor == MessageThreadActor.USER
-                            else ConversationRole.ASSISTANT,
-                            content=data.text,
-                        )
-                    )
-                elif data.type == MessageDataTypes.TOOL_USE_REQUEST:
-                    previous_messages.append(
-                        ConversationTurn(
-                            role=ConversationRole.USER
-                            if message.actor == MessageThreadActor.USER
-                            else ConversationRole.ASSISTANT,
-                            content=data.tool_name,
-                        )
-                    )
-                elif data.type == MessageDataTypes.TOOL_USE_RESPONSE:
-                    previous_messages.append(
-                        ConversationTurn(
-                            role=ConversationRole.USER
-                            if message.actor == MessageThreadActor.USER
-                            else ConversationRole.ASSISTANT,
-                            content=str(data.response),
-                        )
-                    )
-        return previous_messages
-
     async def submit_tool_use_response(
         self,
-        session_id: str,
-        tool_use_response: ToolUseResponseMessageData,
+        session_id: int,
+        tool_use_response: ToolUseResponseData,
         tools: Optional[List[ConversationTool]] = None,
         stream: bool = False,
     ) -> ParsedLLMCallResponse:
@@ -404,7 +359,10 @@ class LLMHandler:
         detected_prompt_handler: Optional[BasePrompt] = None
         for message in filtered_messages:
             for data in message.message_data:
-                if data.type == MessageDataTypes.TOOL_USE_REQUEST and data.tool_use_id == tool_use_response.tool_use_id:
+                if (
+                    data.type == ContentBlockCategory.TOOL_USE_REQUEST
+                    and data.content.tool_use_id == tool_use_response.content.tool_use_id
+                ):
                     tool_use_request_message_id = message.id
                     detected_llm = message.llm_model
                     detected_prompt_handler = self.prompt_handler_map.get(message.prompt_type)
@@ -412,7 +370,7 @@ class LLMHandler:
 
         if not tool_use_request_message_id or not detected_llm:
             raise ValueError(
-                f"Tool use request message not found for tool use response id {tool_use_response.tool_use_id}"
+                f"Tool use request message not found for tool use response id {tool_use_response.content.tool_use_id}"
             )
 
         if not detected_prompt_handler:
@@ -420,10 +378,11 @@ class LLMHandler:
 
         client = self.model_to_provider_class_map[detected_llm]()
         llm_response = await self.get_llm_response(
+            session_id=session_id,
+            prompt_handler=detected_prompt_handler,
             client=client,
             tool_use_response=tool_use_response,
             tools=tools,
-            model=detected_llm,
             previous_responses=[message for message in session_messages if message.id <= tool_use_request_message_id],
             stream=stream,
         )
