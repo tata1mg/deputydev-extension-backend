@@ -12,8 +12,9 @@ class MessageThread(Base):
         "actor",
         "query_id",
         "type",
-        "previous_context_message_ids",
+        "conversation_chain",
         "data",
+        "data_hash",
         "usage",
         "prompt_type",
         "llm_model",
@@ -26,8 +27,9 @@ class MessageThread(Base):
     actor = fields.TextField()
     query_id = fields.IntField()
     type = fields.TextField()
-    previous_context_message_ids = fields.JSONField()
+    conversation_chain = fields.JSONField(null=True)
     data = fields.JSONField()
+    data_hash = fields.TextField()
     usage = fields.JSONField()
     llm_model = fields.TextField()
     prompt_type = fields.TextField()
@@ -42,8 +44,9 @@ class MessageThread(Base):
         actor = ("actor",)
         query_id = ("query_id",)
         type = ("type",)
-        previous_context_message_ids = ("previous_query_ids",)
+        conversation_chain = ("conversation_chain",)
         data = ("data",)
+        data_hash = ("data_hash",)
         usage = ("usage",)
         prompt_type = ("prompt_type",)
         llm_model = ("llm_model",)

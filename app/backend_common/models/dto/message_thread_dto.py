@@ -79,12 +79,12 @@ class MessageThreadData(BaseModel):
     actor: MessageThreadActor
     query_id: Optional[int] = None
     message_type: MessageType
-    previous_context_message_ids: List[int] = []
+    conversation_chain: List[int] = []
+    data_hash: str
     message_data: List[MessageData]
     prompt_type: str
     llm_model: LLModels
-    usage: LLMUsage
-    summary: Optional[str] = None
+    usage: Optional[LLMUsage] = None
 
 
 class MessageThreadDTO(MessageThreadData):
