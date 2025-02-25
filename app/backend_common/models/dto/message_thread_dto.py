@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Sequence, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,34 +16,46 @@ class MessageType(Enum):
     TOOL_RESPONSE = "TOOL_RESPONSE"
 
 
-class MessageDataTypes(Enum):
-    TEXT = "TEXT"
+class ContentBlockCategory(Enum):
+    TEXT_BLOCK = "TEXT_BLOCK"
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
 
 
-class UserQueryMessageData(BaseModel):
-    type: Literal[MessageDataTypes.TEXT] = MessageDataTypes.TEXT
+class TextBlockContent(BaseModel):
     text: str
 
 
-class ToolUseRequestMessageData(BaseModel):
-    type: Literal[MessageDataTypes.TOOL_USE_REQUEST] = MessageDataTypes.TOOL_USE_REQUEST
+class ToolUseRequestContent(BaseModel):
+    tool_input: Dict[str, Any]
     tool_name: str
     tool_use_id: str
-    input_params_json: Dict[str, Any]
 
 
-class ToolUseResponseMessageData(BaseModel):
-    type: Literal[MessageDataTypes.TOOL_USE_RESPONSE] = MessageDataTypes.TOOL_USE_RESPONSE
+class ToolUseResponseContent(BaseModel):
     tool_name: str
     tool_use_id: str
     response: Dict[str, Any]
 
 
-MessageData = Annotated[
-    Union[UserQueryMessageData, ToolUseRequestMessageData, ToolUseResponseMessageData], Field(discriminator="type")
-]
+class TextBlockData(BaseModel):
+    type: Literal[ContentBlockCategory.TEXT_BLOCK] = ContentBlockCategory.TEXT_BLOCK
+    content: TextBlockContent
+
+
+class ToolUseRequestData(BaseModel):
+    type: Literal[ContentBlockCategory.TOOL_USE_REQUEST] = ContentBlockCategory.TOOL_USE_REQUEST
+    content: ToolUseRequestContent
+
+
+class ToolUseResponseData(BaseModel):
+    type: Literal[ContentBlockCategory.TOOL_USE_RESPONSE] = ContentBlockCategory.TOOL_USE_RESPONSE
+    content: ToolUseResponseContent
+
+
+ResponseData = Annotated[Union[TextBlockData, ToolUseRequestData], Field(discriminator="type")]
+
+MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discriminator="type")]
 
 
 class LLModels(Enum):
@@ -81,7 +93,7 @@ class MessageThreadData(BaseModel):
     message_type: MessageType
     conversation_chain: List[int] = []
     data_hash: str
-    message_data: List[MessageData]
+    message_data: Sequence[MessageData]
     prompt_type: str
     llm_model: LLModels
     usage: Optional[LLMUsage] = None
