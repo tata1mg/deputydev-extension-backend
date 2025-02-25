@@ -14,7 +14,7 @@ class Claude3Point5DiffCreationPrompt(BaseClaude3Point5SonnetPrompt):
     def get_prompt(self):
         system_message = """
                 You are a senior developer who has a huge amount of experience in applying code diff. You will be given some blocks of code or documentation in the previous conversation
-                and you would be asked to get diffs that could be applied to the original code chunks given in the conversation chain in the first chat.
+                and you would be asked to get diffs that could be applied to the original codebase and is expected to run without syntactical errors.
             """
 
         user_message = """
