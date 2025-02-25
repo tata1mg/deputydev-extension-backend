@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from app.backend_common.services.llm.dataclasses.main import (
     ContentBlockCategory,
     NonStreamingResponse,
-    NonStreamingTextBlock,
     StreamingResponse,
+    TextBlockData,
     TextBlockDelta,
     UserAndSystemMessages,
 )
@@ -129,7 +129,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
-    def _parse_text_block(cls, text_block: NonStreamingTextBlock) -> Dict[str, Any]:
+    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
         final_query_resp: Optional[str] = None
         is_task_done: Optional[bool] = None
         summary: Optional[str] = None
