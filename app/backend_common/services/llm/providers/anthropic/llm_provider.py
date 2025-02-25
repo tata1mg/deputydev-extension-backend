@@ -10,32 +10,35 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 )
 
 from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
     LLModels,
     LLMUsage,
-    ToolUseResponseMessageData,
+    MessageThreadActor,
+    MessageThreadDTO,
+    ResponseData,
+    TextBlockContent,
+    ToolUseRequestContent,
+    ToolUseResponseContent,
+    ToolUseResponseData,
+    ToolUseRequestData,
+    TextBlockData,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ContentBlockCategory,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
     LLMCallResponseTypes,
-    NonStreamingContentBlock,
     NonStreamingResponse,
-    NonStreamingTextBlockContent,
-    NonStreamingToolUseRequestContent,
     PromptCacheConfig,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
-    TextBlockData,
     TextBlockDelta,
     TextBlockDeltaContent,
     TextBlockEnd,
     TextBlockStart,
-    ToolUseRequestData,
     ToolUseRequestDelta,
     ToolUseRequestDeltaContent,
     ToolUseRequestEnd,
@@ -57,17 +60,59 @@ class Anthropic(BaseLLMProvider):
         self.anthropic_client = None
         self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
+    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[ConversationTurn]:
+        """
+        Formats the conversation as required by the specific LLM.
+        Args:
+            previous_responses (List[MessageThreadDTO]): The previous conversation turns.
+        Returns:
+            List[ConversationTurn]: The formatted conversation turns.
+        """
+        conversation_turns: List[ConversationTurn] = []
+        for message in previous_responses:
+            role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
+            content: List[Dict[str, Any]] = []
+            for message_data in message.message_data:
+                content_data = message_data.content
+                if isinstance(content_data, TextBlockContent):
+                    content.append(
+                        {
+                            "type": "text",
+                            "text": content_data.text,
+                        }
+                    )
+                elif isinstance(content_data, ToolUseResponseContent):
+                    content.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_data.tool_use_id,
+                            "content": content_data.response,
+                        }
+                    )
+                else:
+                    content.append(
+                        {
+                            "type": "tool_use",
+                            "name": content_data.tool_name,
+                            "id": content_data.tool_use_id,
+                            "input": content_data.tool_input,
+                        }
+                    )
+            conversation_turns.append(ConversationTurn(role=role, content=content))
+
+        return conversation_turns
+
     def build_llm_payload(
         self,
         prompt: Optional[UserAndSystemMessages] = None,
-        tool_use_response: Optional[ToolUseResponseMessageData] = None,
-        previous_responses: List[ConversationTurn] = [],
+        tool_use_response: Optional[ToolUseResponseData] = None,
+        previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
 
         # create conversation array
-        messages = previous_responses
+        messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
 
         # add system and user messages to conversation
         if prompt:
@@ -78,11 +123,13 @@ class Anthropic(BaseLLMProvider):
         if tool_use_response:
             tool_message = ConversationTurn(
                 role=ConversationRole.USER,
-                content={
-                    "type": "tool_result",
-                    "tool_use_id": tool_use_response.tool_use_id,
-                    "content": tool_use_response.response,
-                },
+                content=[
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_response.content.tool_use_id,
+                        "content": tool_use_response.content.response,
+                    }
+                ],
             )
             messages.append(tool_message)
 
@@ -113,20 +160,20 @@ class Anthropic(BaseLLMProvider):
 
         content_array: List[AnthropicNonStreamingContentResponse] = llm_response["content"]
 
-        non_streaming_content_blocks: List[NonStreamingContentBlock] = []
+        non_streaming_content_blocks: List[ResponseData] = []
         for content_block in content_array:
             if content_block["type"] == AnthropicResponseTypes.TEXT:
                 non_streaming_content_blocks.append(
                     TextBlockData(
                         type=ContentBlockCategory.TEXT_BLOCK,
-                        content=NonStreamingTextBlockContent(text=content_block["text"]),
+                        content=TextBlockContent(text=content_block["text"]),
                     )
                 )
             elif content_block["type"] == AnthropicResponseTypes.TOOL_USE:
                 non_streaming_content_blocks.append(
                     ToolUseRequestData(
                         type=ContentBlockCategory.TOOL_USE_REQUEST,
-                        content=NonStreamingToolUseRequestContent(
+                        content=ToolUseRequestContent(
                             tool_input=content_block["input"],
                             tool_name=content_block["name"],
                             tool_use_id=content_block["id"],

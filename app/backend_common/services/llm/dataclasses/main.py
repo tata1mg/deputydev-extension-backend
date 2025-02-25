@@ -34,7 +34,7 @@ class ConversationRole(Enum):
 
 class ConversationTurn(BaseModel):
     role: ConversationRole
-    content: Union[str, Dict[str, Any]]
+    content: Union[str, List[Dict[str, Any]]]
 
 
 class ConversationTool(BaseModel):
