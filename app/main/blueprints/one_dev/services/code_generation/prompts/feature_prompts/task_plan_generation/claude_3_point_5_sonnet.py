@@ -14,8 +14,17 @@ class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPrompt):
             You are a task planning assistant designed to analyze code and generate structured,
             actionable plans based on the provided context. Your role is to help break down the user's task into
             clear steps while considering best practices, potential challenges, and ways to optimize the process.
+        """
 
-            Guidelines:
+        user_message = f"""
+            Relevant Code Context from the existing code in the repository:
+            {self.params.get("relevant_chunks")}
+
+            User Query: {self.params.get("query")}
+
+            Your task is to generate an implementation plan to solve the user's query based on the provided code context.
+
+            Guidelines to follow:
             1. Carefully analyze the provided code and context.
             2. Clearly explain the reasoning behind each step in the plan.
             3. Ensure the steps are actionable, logical, and well-structured.
@@ -28,13 +37,8 @@ class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPrompt):
             10. Do not try to go beyond the scope of the requested change.
             11. Point out the locations of the changes which are required.
             12. Do not try to re-implement the existing code.
-        """
 
-        user_message = f"""
-            User Query: {self.params.get("query")}
-
-            Relevant Code Context from the existing code in the repository:
-            {self.params.get("relevant_chunks")}
+            <important> try giving minimal or no code, it should seem like plain english text with important keywords like function names, class names, file names etc. </important>
 
             Please provide a helpful and accurate response to my query, taking into account the given code context.
 
