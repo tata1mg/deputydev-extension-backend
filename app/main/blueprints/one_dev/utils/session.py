@@ -1,8 +1,13 @@
 # wrapper to get session ID from headers or add one if not present
 from functools import wraps
-from uuid import uuid4
 
 from torpedo import Request
+
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
 def ensure_session_id(func):
@@ -11,14 +16,26 @@ def ensure_session_id(func):
     """
 
     @wraps(func)
-    async def wrapper(_request: Request, **kwargs):
+    async def wrapper(_request: Request, auth_data: AuthData, **kwargs):
         # Check if the session ID is present in the headers
         session_id = _request.headers.get("X-Session-ID")
         if not session_id:
-            # Add a session ID to the headers
-            session_id = uuid4().hex
+            # get the client and client version from the headers
+            client = _request.headers.get("X-Client")
+            client_version = _request.headers.get("X-Client-Version")
+
+            # Generate a new session entry
+            message_session = await MessageSessionsRepository.create_message_session(
+                MessageSessionData(
+                    user_team_id=auth_data.user_team_id,
+                    client=client,
+                    client_version=client_version,
+                )
+            )
+            session_id = message_session.id
+            # Add the session ID to the request headers
             _request.headers["X-Session-ID"] = session_id
         # Proceed to the wrapped function
-        return await func(_request, **kwargs)
+        return await func(_request, auth_data, session_id, **kwargs)
 
     return wrapper
