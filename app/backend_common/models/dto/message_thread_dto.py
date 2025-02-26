@@ -91,6 +91,7 @@ class MessageThreadData(BaseModel):
     actor: MessageThreadActor
     query_id: Optional[int] = None
     message_type: MessageType
+    query_vars: Optional[Dict[str, Any]] = None
     conversation_chain: List[int] = []
     data_hash: str
     message_data: Sequence[MessageData]

@@ -38,6 +38,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingParsedLLMCallResponse,
     StreamingResponse,
     UnparsedLLMCallResponse,
+    UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
@@ -115,7 +116,12 @@ class LLMHandler(Generic[PromptFeatures]):
         )
 
     async def store_llm_response_in_db(
-        self, llm_response: UnparsedLLMCallResponse, session_id: int, prompt_handler: BasePrompt, query_id: int
+        self,
+        llm_response: UnparsedLLMCallResponse,
+        session_id: int,
+        prompt_type: str,
+        llm_model: LLModels,
+        query_id: int,
     ) -> None:
         print("storing task started ********************************************************")
         response_to_use: NonStreamingResponse
@@ -136,8 +142,8 @@ class LLMHandler(Generic[PromptFeatures]):
             conversation_chain=[],
             message_data=data_to_store,
             data_hash=data_hash,
-            llm_model=prompt_handler.model_name,
-            prompt_type=prompt_handler.prompt_type,
+            llm_model=llm_model,
+            prompt_type=prompt_type,
             usage=response_to_use.usage,
         )
         print("response data *********************************************************")
@@ -146,7 +152,13 @@ class LLMHandler(Generic[PromptFeatures]):
         print("HHBDKJDHODIE")
 
     async def store_llm_query_in_db(
-        self, session_id: int, previous_responses: List[MessageThreadDTO], prompt_handler: BasePrompt
+        self,
+        session_id: int,
+        previous_responses: List[MessageThreadDTO],
+        prompt_type: str,
+        llm_model: LLModels,
+        prompt_rendered_messages: UserAndSystemMessages,
+        prompt_vars: Dict[str, Any],
     ) -> MessageThreadDTO:
         """
         Store LLM query in DB
@@ -159,7 +171,6 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Message thread
         """
-        prompt_rendered_messages = prompt_handler.get_prompt()
         data_hash = xxhash.xxh64(prompt_rendered_messages.user_message).hexdigest()
         message_thread = MessageThreadData(
             session_id=session_id,
@@ -174,8 +185,9 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
             ],
             data_hash=data_hash,
-            prompt_type=prompt_handler.prompt_type,
-            llm_model=prompt_handler.model_name,
+            prompt_type=prompt_type,
+            llm_model=llm_model,
+            query_vars=prompt_vars,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
@@ -183,8 +195,11 @@ class LLMHandler(Generic[PromptFeatures]):
         self,
         client: BaseLLMProvider,
         session_id: int,
-        prompt_handler: BasePrompt,
+        prompt_type: str,
+        llm_model: LLModels,
+        query_id: int,
         tools: Optional[List[ConversationTool]] = None,
+        user_and_system_messages: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         max_retry: int = 2,
@@ -192,25 +207,20 @@ class LLMHandler(Generic[PromptFeatures]):
     ) -> UnparsedLLMCallResponse:
         for i in range(0, max_retry):
             try:
-                prompt = prompt_handler.get_prompt()
-                print("prompt generated ********************************************************")
-                prompt_thread = await self.store_llm_query_in_db(
-                    session_id=session_id,
-                    previous_responses=previous_responses,
-                    prompt_handler=prompt_handler,
-                )
                 llm_payload = client.build_llm_payload(
-                    prompt=prompt,
+                    prompt=user_and_system_messages,
                     tool_use_response=tool_use_response,
                     previous_responses=previous_responses,
                     tools=tools,
                     cache_config=self.cache_config,
                 )
-                llm_response = await client.call_service_client(llm_payload, prompt_handler.model_name, stream=stream)
+                llm_response = await client.call_service_client(llm_payload, llm_model, stream=stream)
                 # start task for storing LLM message in DB
                 print("storing task started ********************************************************")
                 asyncio.create_task(
-                    self.store_llm_response_in_db(llm_response, session_id, prompt_handler, query_id=prompt_thread.id)
+                    self.store_llm_response_in_db(
+                        llm_response, session_id, prompt_type=prompt_type, llm_model=llm_model, query_id=query_id
+                    )
                 )
                 print("storing task started ********************************************************")
                 return llm_response
@@ -378,18 +388,63 @@ class LLMHandler(Generic[PromptFeatures]):
             raise ValueError(f"LLM model {llm_model} not supported")
 
         client = self.model_to_provider_class_map[llm_model]()
+        user_and_system_messages = prompt_handler.get_prompt()
+
+        conversation_chain_messages = await self.get_conversation_chain_messages(
+            session_id=session_id, previous_responses=previous_responses, prompt_handler=prompt_handler
+        )
+
+        prompt_thread = await self.store_llm_query_in_db(
+            session_id=session_id,
+            previous_responses=conversation_chain_messages,
+            prompt_type=prompt_handler.prompt_type,
+            llm_model=prompt_handler.model_name,
+            prompt_rendered_messages=user_and_system_messages,
+            prompt_vars=prompt_vars,
+        )
+
         llm_response = await self.get_llm_response(
+            user_and_system_messages=user_and_system_messages,
             client=client,
-            prompt_handler=prompt_handler,
+            prompt_type=prompt_handler.prompt_type,
+            llm_model=prompt_handler.model_name,
             session_id=session_id,
             tools=tools,
             previous_responses=await self.get_conversation_chain_messages(
                 session_id=session_id, previous_responses=previous_responses, prompt_handler=prompt_handler
             ),
             stream=stream,
+            query_id=prompt_thread.id,
         )
 
         return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=prompt_handler)
+
+    async def store_tool_use_ressponse_in_db(
+        self,
+        session_id: int,
+        tool_use_response: ToolUseResponseData,
+        prompt_type: str,
+        llm_model: LLModels,
+        previous_responses: List[MessageThreadDTO],
+        query_id: int,
+    ) -> MessageThreadDTO:
+        """
+        Store tool use response in DB
+        """
+        message_data = [tool_use_response]
+        data_hash = xxhash.xxh64(json.dumps([item.model_dump(mode="json") for item in message_data])).hexdigest()
+        message_thread = MessageThreadData(
+            session_id=session_id,
+            actor=MessageThreadActor.USER,
+            query_id=query_id,
+            message_type=MessageType.TOOL_RESPONSE,
+            conversation_chain=[message.id for message in previous_responses],
+            message_data=message_data,
+            data_hash=data_hash,
+            prompt_type=prompt_type,
+            llm_model=llm_model,
+        )
+        return await MessageThreadsRepository.create_message_thread(message_thread)
 
     async def submit_tool_use_response(
         self,
@@ -418,6 +473,7 @@ class LLMHandler(Generic[PromptFeatures]):
         detected_llm: Optional[LLModels] = None
         tool_use_request_message_id = None
         detected_prompt_handler: Optional[BasePrompt] = None
+        main_query_id: int = 0
         for message in filtered_messages:
             for data in message.message_data:
                 if (
@@ -425,6 +481,13 @@ class LLMHandler(Generic[PromptFeatures]):
                     and data.content.tool_use_id == tool_use_response.content.tool_use_id
                 ):
                     tool_use_request_message_id = message.id
+                    if message.message_type == MessageType.QUERY:
+                        main_query_id = message.id
+                    elif message.query_id:
+                        main_query_id = message.query_id
+                    else:
+                        raise ValueError("Main query id not found")
+
                     detected_llm = message.llm_model
                     detected_prompt_handler = self.prompt_handler_map.get_prompt(
                         model_name=detected_llm, feature=self.prompt_features(message.prompt_type)
@@ -439,15 +502,30 @@ class LLMHandler(Generic[PromptFeatures]):
         if not detected_prompt_handler:
             raise ValueError("Prompt handler not found for prompt type")
 
+        conversation_chain_messages = [
+            message for message in session_messages if message.id <= tool_use_request_message_id
+        ]
+        await self.store_tool_use_ressponse_in_db(
+            session_id=session_id,
+            previous_responses=conversation_chain_messages,
+            prompt_type=detected_prompt_handler.prompt_type,
+            llm_model=detected_llm,
+            tool_use_response=tool_use_response,
+            query_id=main_query_id,
+        )
+
         client = self.model_to_provider_class_map[detected_llm]()
+
         llm_response = await self.get_llm_response(
             session_id=session_id,
-            prompt_handler=detected_prompt_handler,
             client=client,
             tool_use_response=tool_use_response,
             tools=tools,
-            previous_responses=[message for message in session_messages if message.id <= tool_use_request_message_id],
+            previous_responses=conversation_chain_messages,
             stream=stream,
+            prompt_type=detected_prompt_handler.prompt_type,
+            llm_model=detected_llm,
+            query_id=main_query_id,
         )
 
         return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=detected_prompt_handler)
