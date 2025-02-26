@@ -17,11 +17,11 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadDTO,
     ResponseData,
     TextBlockContent,
+    TextBlockData,
     ToolUseRequestContent,
+    ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ToolUseRequestData,
-    TextBlockData,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -289,10 +289,12 @@ class Anthropic(BaseLLMProvider):
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
+        accumulated_events: List[StreamingEvent] = []
 
         async def stream_content() -> AsyncIterator[StreamingEvent]:
             nonlocal usage
             nonlocal streaming_completed
+            nonlocal accumulated_events
             current_running_block_type: Optional[ContentBlockCategory] = None
             async for event in response["body"]:
                 chunk = json.loads(event["chunk"]["bytes"])
@@ -311,6 +313,7 @@ class Anthropic(BaseLLMProvider):
                         usage += event_usage
                     if event_block:
                         current_running_block_type = event_block_category
+                        accumulated_events.append(event_block)
                         yield event_block
                 except Exception:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
@@ -323,9 +326,16 @@ class Anthropic(BaseLLMProvider):
             while not streaming_completed:
                 await asyncio.sleep(0.1)
             return usage
+        
+        async def get_accumulated_events() -> List[StreamingEvent]:
+            nonlocal accumulated_events
+            nonlocal streaming_completed
+            while not streaming_completed:
+                await asyncio.sleep(0.1)
+            return accumulated_events
 
         return StreamingResponse(
-            content=stream_content(), usage=asyncio.create_task(get_usage()), type=LLMCallResponseTypes.STREAMING
+            content=stream_content(), usage=asyncio.create_task(get_usage()), type=LLMCallResponseTypes.STREAMING, accumulated_events=asyncio.create_task(get_accumulated_events())
         )
 
     async def call_service_client(
