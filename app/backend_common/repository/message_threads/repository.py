@@ -1,3 +1,4 @@
+import json
 import traceback
 from typing import Dict, List, Optional, Union
 
@@ -36,19 +37,34 @@ class MessageThreadsRepository:
             return []
 
     @classmethod
-    async def create_message_thread(cls, message_thread_data: MessageThreadData) -> Optional[MessageThreadDTO]:
+    async def create_message_thread(cls, message_thread_data: MessageThreadData) -> MessageThreadDTO:
         try:
             message_thread = await DB.create(MessageThread, message_thread_data.model_dump(mode="json"))
-
-            return MessageThreadDTO(**message_thread)
+            return MessageThreadDTO.model_validate_json(
+                json_data=json.dumps(
+                    dict(
+                        id=message_thread.id,
+                        session_id=message_thread.session_id,
+                        message_data=message_thread.message_data,
+                        data_hash=message_thread.data_hash,
+                        created_at=message_thread.created_at.isoformat(),
+                        updated_at=message_thread.updated_at.isoformat(),
+                        actor=message_thread.actor,
+                        query_id=message_thread.query_id,
+                        message_type=message_thread.message_type,
+                        conversation_chain=message_thread.conversation_chain,
+                        usage=message_thread.usage,
+                        llm_model=message_thread.llm_model,
+                        prompt_type=message_thread.prompt_type,
+                    )
+                )
+            )
 
         except Exception as ex:
-            print(ex)
-            traceback.format_exc()
             logger.error(
                 f"error occurred while creating message_thread in db for message_thread_data : {message_thread_data}, ex: {ex}"
             )
-            return None
+            raise ex
 
     @classmethod
     async def bulk_insert_message_threads(cls, message_thread_datas: List[MessageThreadData]) -> List[MessageThreadDTO]:

@@ -115,7 +115,7 @@ class LLMHandler(Generic[PromptFeatures]):
         )
 
     async def store_llm_response_in_db(
-        self, llm_response: UnparsedLLMCallResponse, session_id: int, prompt_handler: BasePrompt
+        self, llm_response: UnparsedLLMCallResponse, session_id: int, prompt_handler: BasePrompt, query_id: int
     ) -> None:
         print("storing task started ********************************************************")
         response_to_use: NonStreamingResponse
@@ -131,7 +131,7 @@ class LLMHandler(Generic[PromptFeatures]):
         message_thread = MessageThreadData(
             session_id=session_id,
             actor=MessageThreadActor.ASSISTANT,
-            query_id=None,
+            query_id=query_id,
             message_type=MessageType.RESPONSE,
             conversation_chain=[],
             message_data=data_to_store,
@@ -144,6 +144,40 @@ class LLMHandler(Generic[PromptFeatures]):
         print(message_thread)
         await MessageThreadsRepository.create_message_thread(message_thread)
         print("HHBDKJDHODIE")
+
+    async def store_llm_query_in_db(
+        self, session_id: int, previous_responses: List[MessageThreadDTO], prompt_handler: BasePrompt
+    ) -> MessageThreadDTO:
+        """
+        Store LLM query in DB
+
+        Parameters:
+            :param prompt: User and system messages
+            :param session_id: Session id
+            :param previous_responses: List of previous conversation messages
+
+        Returns:
+            :return: Message thread
+        """
+        prompt_rendered_messages = prompt_handler.get_prompt()
+        data_hash = xxhash.xxh64(prompt_rendered_messages.user_message).hexdigest()
+        message_thread = MessageThreadData(
+            session_id=session_id,
+            actor=MessageThreadActor.USER,
+            query_id=None,
+            message_type=MessageType.QUERY,
+            conversation_chain=[message.id for message in previous_responses],
+            message_data=[
+                TextBlockData(
+                    type=ContentBlockCategory.TEXT_BLOCK,
+                    content=TextBlockContent(text=prompt_rendered_messages.user_message),
+                )
+            ],
+            data_hash=data_hash,
+            prompt_type=prompt_handler.prompt_type,
+            llm_model=prompt_handler.model_name,
+        )
+        return await MessageThreadsRepository.create_message_thread(message_thread)
 
     async def get_llm_response(
         self,
@@ -159,6 +193,12 @@ class LLMHandler(Generic[PromptFeatures]):
         for i in range(0, max_retry):
             try:
                 prompt = prompt_handler.get_prompt()
+                print("prompt generated ********************************************************")
+                prompt_thread = await self.store_llm_query_in_db(
+                    session_id=session_id,
+                    previous_responses=previous_responses,
+                    prompt_handler=prompt_handler,
+                )
                 llm_payload = client.build_llm_payload(
                     prompt=prompt,
                     tool_use_response=tool_use_response,
@@ -169,7 +209,9 @@ class LLMHandler(Generic[PromptFeatures]):
                 llm_response = await client.call_service_client(llm_payload, prompt_handler.model_name, stream=stream)
                 # start task for storing LLM message in DB
                 print("storing task started ********************************************************")
-                asyncio.create_task(self.store_llm_response_in_db(llm_response, session_id, prompt_handler))
+                asyncio.create_task(
+                    self.store_llm_response_in_db(llm_response, session_id, prompt_handler, query_id=prompt_thread.id)
+                )
                 print("storing task started ********************************************************")
                 return llm_response
             except Exception as e:
