@@ -85,9 +85,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
             model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
             init_params={},
         )
-        llm_response = await LLMHandler(prompt_handler=prompt).get_parsed_llm_response_data(
-            previous_responses=previous_responses
-        )
+        llm_response = await LLMHandler(prompt_handler=prompt).start_llm_query(previous_responses=previous_responses)
         llm_meta.append(llm_response.llm_meta)
         code_lines = get_chunks_by_file_total_lines(llm_response.parsed_llm_data["chunks_by_file"])
         await JobService.db_update(
