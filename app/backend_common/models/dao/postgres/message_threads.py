@@ -12,11 +12,12 @@ class MessageThread(Base):
         "actor",
         "query_id",
         "type",
-        "previous_context_message_ids",
+        "conversation_chain",
         "data",
+        "data_hash",
         "usage",
+        "prompt_type",
         "llm_model",
-        "summary",
         "created_at",
         "updated_at",
     }
@@ -24,13 +25,14 @@ class MessageThread(Base):
     id = fields.IntField(primary_key=True)
     session_id = fields.IntField()
     actor = fields.TextField()
-    query_id = fields.IntField()
-    type = fields.TextField()
-    previous_context_message_ids = fields.JSONField()
-    data = fields.JSONField()
-    usage = fields.JSONField()
-    summary = fields.TextField()
+    query_id = fields.IntField(null=True)
+    message_type = fields.TextField()
+    conversation_chain = fields.JSONField(null=True)
+    message_data = fields.JSONField()
+    data_hash = fields.TextField()
+    usage = fields.JSONField(null=True)
     llm_model = fields.TextField()
+    prompt_type = fields.TextField()
 
     class Meta:
         table = "message_threads"
@@ -42,10 +44,11 @@ class MessageThread(Base):
         actor = ("actor",)
         query_id = ("query_id",)
         type = ("type",)
-        previous_context_message_ids = ("previous_query_ids",)
+        conversation_chain = ("conversation_chain",)
         data = ("data",)
+        data_hash = ("data_hash",)
         usage = ("usage",)
-        summary = ("summary",)
+        prompt_type = ("prompt_type",)
         llm_model = ("llm_model",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)

@@ -25,7 +25,7 @@ class LLMBasedChatFiltration:
                 "chats": chats,
             },
         )
-        response = await LLMHandler(prompt_handler=prompt).get_parsed_llm_response_data(previous_responses=[])
+        response = await LLMHandler(prompt_handler=prompt).start_llm_query(previous_responses=[])
         if response:
             filtered_chat_ids = response.parsed_llm_data["chat_ids"]
         else:
