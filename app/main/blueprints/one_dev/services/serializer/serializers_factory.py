@@ -6,6 +6,11 @@ from app.main.blueprints.one_dev.services.serializer.past_chats import PastChats
 from app.main.blueprints.one_dev.services.serializer.past_sessions import PastSessionsSerializer
 
 class SerializersFactory:
+    """
+    A factory class for creating serializer instances based on the provided type.
+
+    This class maps serializer types to their corresponding serializer classes.
+    """
 
     FACTORIES = {
         SerializerTypes.PAST_SESSIONS.value: PastSessionsSerializer,
@@ -14,6 +19,19 @@ class SerializersFactory:
 
     @classmethod
     def get_serializer_service(cls, raw_data: List[Dict[str, Any]], type: str) -> BaseSerializer:
+        """
+        Retrieves the appropriate serializer service based on the specified type.
+
+        Args:
+            raw_data (List[Dict[str, Any]]): The raw data to be serialized.
+            type (str): The type of serializer to retrieve.
+
+        Returns:
+            BaseSerializer: An instance of the requested serializer.
+
+        Raises:
+            ValueError: If the specified type does not match any registered serializer.
+        """
 
         if type not in cls.FACTORIES:
             raise ValueError("Incorrect serializer requested")
