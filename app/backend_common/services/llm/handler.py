@@ -176,6 +176,7 @@ class LLMHandler(Generic[PromptFeatures]):
             data_hash=data_hash,
             prompt_type=prompt_handler.prompt_type,
             llm_model=prompt_handler.model_name,
+            query_vars=prompt_handler.params,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
