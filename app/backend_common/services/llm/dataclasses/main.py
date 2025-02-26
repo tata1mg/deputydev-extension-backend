@@ -130,6 +130,7 @@ class StreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.STREAMING]
     content: AsyncIterator[StreamingEvent]
     usage: Task[LLMUsage]
+    accumulated_events: Task[List[StreamingEvent]]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
