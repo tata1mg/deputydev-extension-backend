@@ -192,7 +192,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
-                accumulated_events=llm_response.accumulated_events
+                accumulated_events=llm_response.accumulated_events,
             )
         else:
             parsed_content = prompt_handler.get_parsed_result(llm_response)
