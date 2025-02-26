@@ -1,5 +1,3 @@
-from enum import Enum
-
 from tortoise import fields
 
 from .base import Base
@@ -11,13 +9,13 @@ class MessageThread(Base):
         "session_id",
         "actor",
         "query_id",
-        "type",
+        "message_type",
         "conversation_chain",
-        "data",
+        "message_data",
         "data_hash",
         "usage",
-        "prompt_type",
         "llm_model",
+        "prompt_type",
         "created_at",
         "updated_at",
     }
@@ -37,18 +35,3 @@ class MessageThread(Base):
     class Meta:
         table = "message_threads"
         indexes = (("session_id",),)
-
-    class Columns(Enum):
-        id = ("id",)
-        session_id = ("session_id",)
-        actor = ("actor",)
-        query_id = ("query_id",)
-        type = ("type",)
-        conversation_chain = ("conversation_chain",)
-        data = ("data",)
-        data_hash = ("data_hash",)
-        usage = ("usage",)
-        prompt_type = ("prompt_type",)
-        llm_model = ("llm_model",)
-        created_at = ("created_at",)
-        updated_at = ("updated_at",)
