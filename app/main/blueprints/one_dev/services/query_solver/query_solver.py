@@ -16,9 +16,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input impo
 from app.main.blueprints.one_dev.services.query_solver.tools.code_searcher import (
     CODE_SEARCHER,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.diff_applicator import (
-    DIFF_APPLICATOR,
-)
 
 from .prompts.factory import PromptFeatureFactory
 
@@ -27,8 +24,6 @@ class QuerySolver:
     async def solve_query(self, payload: QuerySolverInput):
 
         tools_to_use = [CODE_SEARCHER, ASK_USER_INPUT]
-        if payload.write_mode:
-            tools_to_use.append(DIFF_APPLICATOR)
 
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
