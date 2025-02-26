@@ -1,0 +1,18 @@
+from sanic import Blueprint
+
+from app.backend_common.services.chunking.reranker.handler.llm_based import LLMBasedChunkReranker
+from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from torpedo import Request, send_response
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+
+rerank = Blueprint("rerank", "/")
+
+
+@rerank.route("/llm_based", methods=["POST"])
+@authenticate
+async def reranker(_request: Request, auth_data: AuthData, **kwargs):
+    payload = _request.custom_json()
+    response = await LLMBasedChunkReranker().rerank(
+        query=payload["query"], related_codebase_chunks=payload["relevant_chunks"], focus_chunks=payload["focus_chunks"]
+    )
+    return send_response(response)
