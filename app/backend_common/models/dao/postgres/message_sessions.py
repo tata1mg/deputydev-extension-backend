@@ -1,5 +1,3 @@
-from enum import Enum
-
 from tortoise import fields
 
 from .base import Base
@@ -9,6 +7,8 @@ class MessageSession(Base):
     serializable_keys = {
         "id",
         "summary",
+        "client",
+        "client_version",
         "user_team_id",
         "created_at",
         "updated_at",
