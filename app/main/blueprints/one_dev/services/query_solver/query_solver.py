@@ -1,7 +1,16 @@
+import asyncio
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
+    MessageCallChainCategory,
     ToolUseResponseContent,
     ToolUseResponseData,
+)
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -21,6 +30,27 @@ from .prompts.factory import PromptFeatureFactory
 
 
 class QuerySolver:
+    async def _generate_session_summary(self, session_id: int, query: str, llm_handler: LLMHandler[PromptFeatures]):
+        current_session = await MessageSessionsRepository.get_by_id(session_id)
+        if current_session and current_session.summary:
+            return
+        llm_response = await llm_handler.start_llm_query(
+            prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
+            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            prompt_vars={"query": query},
+            previous_responses=[],
+            tools=[],
+            stream=False,
+            session_id=session_id,
+            call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
+        )
+
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("Expected NonStreamingParsedLLMCallResponse")
+
+        generated_summary = llm_response.parsed_content[0].get("summary")
+        await MessageSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
+
     async def solve_query(self, payload: QuerySolverInput):
 
         tools_to_use = [CODE_SEARCHER, ASK_USER_INPUT]
@@ -28,6 +58,11 @@ class QuerySolver:
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
         if payload.query:
+            asyncio.create_task(
+                self._generate_session_summary(
+                    session_id=payload.session_id, query=payload.query, llm_handler=llm_handler
+                )
+            )
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
