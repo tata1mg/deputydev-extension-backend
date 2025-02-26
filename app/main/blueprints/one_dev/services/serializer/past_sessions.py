@@ -45,12 +45,15 @@ class PastSessionsSerializer(BaseSerializer):
         Returns:
             str: A string representing the age in minutes, hours, or days.
         """
-        age_in_minutes = (current_time - created_at).total_seconds() / 60
-        if age_in_minutes < 60:
+        age_in_seconds = (current_time - created_at).total_seconds()
+        if age_in_seconds < 60:
+            return f"{int(age_in_seconds)}s"
+        elif age_in_seconds < 3600:
+            age_in_minutes = age_in_seconds / 60
             return f"{int(age_in_minutes)}m"
-        elif age_in_minutes < 1440:
-            age_in_hours = age_in_minutes / 60
+        elif age_in_seconds < 86400:
+            age_in_hours = age_in_seconds / 3600
             return f"{int(age_in_hours)}h"
         else:
-            age_in_days = age_in_minutes / 1440
+            age_in_days = age_in_seconds / 86400
             return f"{int(age_in_days)}d"

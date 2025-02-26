@@ -150,9 +150,28 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
-        result =  cls.parsing(response_block[0].content.text)
-        print(result)
-        return result
+        final_content = []
+        for block in response_block:
+            if block.type == "TOOL_USE_RESPONSE":
+                final_content.append({
+                    "type": "TOOL_USE_RESPONSE_BLOCK",
+                    "content": {
+                        "result_json": block.content.response,
+                        "tool_use_id": block.content.tool_use_id
+                    }
+                })
+            elif block.type == "TEXT_BLOCK":
+                final_content.extend(cls.parsing(block.content.text))
+            elif block.type == "TOOL_USE_REQUEST":
+                final_content.append({
+                    "type": "TOOL_USE_REQUEST_BLOCK",
+                    "content": {
+                        "tool_name": block.content.tool_name,
+                        "tool_use_id": block.content.tool_use_id,
+                        "tool_input_json": block.content.tool_input
+                    }
+                })
+        return final_content
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:

@@ -10,13 +10,32 @@ class PastChatsSerializer(BaseSerializer):
 
         formatted_data = []
         for item in raw_data:
+            message_type = item.message_type
             response_block = item.message_data
             llm_model = item.llm_model
             prompt_feature = item.prompt_type
-            parser_class = PromptFeatureFactory.get_prompt(llm_model, PromptFeatures(prompt_feature))
-            parsed_blocks = parser_class.get_parsed_response_blocks(response_block)
-            for block in parsed_blocks:
-                block["actor"] = item.actor.value
-                formatted_data.append(block)
+            actor = item.actor.value
+
+            if message_type.value == "QUERY":
+                formatted_data.append({
+                    "type": "QUERY",
+                    "content": {
+                        "text": item.query_vars["query"]
+                    },
+                    "actor": actor
+                })
+            else:
+                parser_class = PromptFeatureFactory.get_prompt(llm_model, PromptFeatures(prompt_feature))
+                parsed_blocks = parser_class.get_parsed_response_blocks(response_block)
+                for block in parsed_blocks:
+                    if block["type"] == "TOOL_USE_RESPONSE_BLOCK":
+                        for request_block in formatted_data:
+                            if request_block["type"] == "TOOL_USE_REQUEST_BLOCK" and request_block["content"]["tool_use_id"] == block["content"]["tool_use_id"]:
+                                # Update the request block with data from the response block
+                                request_block["content"]["result_json"] = block["content"]["result_json"]
+                                break
+                        continue
+                    block["actor"] = actor
+                    formatted_data.append(block)
 
         return formatted_data
