@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    MessageData,
     TextBlockData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
@@ -148,15 +149,34 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         raise ValueError("Invalid LLM response format. Response not found.")
 
     @classmethod
+    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
+        return [
+            {"type": "THINKING_BLOCK", "content": {"text": ""}},
+            {"type": "TEXT_BLOCK", "content": {"text": ""}},
+            {
+                "type": "TOOL_USE_REQUEST",
+                "content": {
+                "tool_name": "xyz",
+                "tool_use_id": "sdckjsndc",
+                "input_params_json": "{}",
+                "result_json": "{}"
+                }
+            },
+            {"type": "CODE_BLOCK", "content": {"programming_language": "", "file_path": "", "code": ""}},
+        ]
+
+    @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
 
         final_content: List[Dict[str, Any]] = []
 
-        for content_block in llm_response.content:
-            if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
-                final_content.append({"tool_use_request": content_block.content.model_dump(mode="json")})
-            elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
-                final_content.append(cls._parse_text_block(content_block))
+        final_content = cls.get_parsed_response_blocks(llm_response.content)
+
+        # for content_block in llm_response.content:
+        #     if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+        #         final_content.append({"tool_use_request": content_block.content.model_dump(mode="json")})
+        #     elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
+        #         final_content.append(cls._parse_text_block(content_block))
 
         return final_content
 
