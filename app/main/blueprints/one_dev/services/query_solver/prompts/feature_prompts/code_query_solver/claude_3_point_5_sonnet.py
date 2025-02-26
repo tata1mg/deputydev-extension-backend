@@ -150,20 +150,9 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
-        return [
-            {"type": "THINKING_BLOCK", "content": {"text": ""}},
-            {"type": "TEXT_BLOCK", "content": {"text": ""}},
-            {
-                "type": "TOOL_USE_REQUEST",
-                "content": {
-                "tool_name": "xyz",
-                "tool_use_id": "sdckjsndc",
-                "input_params_json": "{}",
-                "result_json": "{}"
-                }
-            },
-            {"type": "CODE_BLOCK", "content": {"programming_language": "", "file_path": "", "code": ""}},
-        ]
+        result =  cls.parsing(response_block[0].content.text)
+        print(result)
+        return result
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
@@ -185,3 +174,75 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return cls.parse_streaming_text_block_events(
             events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser()]
         )
+
+    @classmethod
+    def parsing(cls, input_string: str) -> List[Dict[str, Any]]:
+        result = []
+
+        # Define the patterns
+        thinking_pattern = r'<thinking>(.*?)</thinking>'
+        code_block_pattern = r'<code_block>(.*?)</code_block>'
+
+        # Find all occurrences of either pattern
+        matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
+        matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
+
+        # Combine matches and sort by start position
+        matches = list(matches_thinking) + list(matches_code_block)
+        matches.sort(key=lambda match: match.start())
+
+        last_end = 0
+        for match in matches:
+            start_index = match.start()
+            end_index = match.end()
+
+            if start_index > last_end:
+                text_before = input_string[last_end:start_index]
+                if text_before.strip():  # Only append if not empty
+                    result.append({"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}})
+
+            if match.re.pattern == code_block_pattern:
+                code_block_string = match.group(1).strip()
+                code_block_info = cls.extract_code_block_info(code_block_string)
+                result.append({"type": "CODE_BLOCK", "content": code_block_info})
+            elif match.re.pattern == thinking_pattern:
+                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+
+            last_end = end_index
+
+        # Append any remaining text
+        if last_end < len(input_string):
+            remaining_text = input_string[last_end:]
+            if remaining_text.strip():  # Only append if not empty
+                result.append({"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}})
+
+        return result
+
+    @classmethod
+    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, str]:
+        if not code_block_string:
+            return {}
+
+        # Define the patterns
+        language_pattern = r'<programming_language>(.*?)</programming_language>'
+        file_path_pattern = r'<file_path>(.*?)</file_path>'
+
+        # Extract language and file path
+        language_match = re.search(language_pattern, code_block_string)
+        file_path_match = re.search(file_path_pattern, code_block_string)
+
+        language = language_match.group(1) if language_match else ""
+        file_path = file_path_match.group(1) if file_path_match else ""
+
+        # Extract code
+        code_start_index = file_path_match.end() if file_path_match else 0
+        code = code_block_string[code_start_index:].strip()
+
+        # Remove any remaining tags from the code
+        code = re.sub(r'<.*?>', '', code)
+
+        return {
+            "language": language,
+            "file_path": file_path,
+            "code": code
+        }
