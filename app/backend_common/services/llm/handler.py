@@ -10,6 +10,7 @@ from deputydev_core.utils.app_logger import AppLogger
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     LLModels,
+    MessageCallChainCategory,
     MessageThreadActor,
     MessageThreadData,
     MessageThreadDTO,
@@ -122,6 +123,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_type: str,
         llm_model: LLModels,
         query_id: int,
+        call_chain_category: MessageCallChainCategory,
     ) -> None:
         print("storing task started ********************************************************")
         response_to_use: NonStreamingResponse
@@ -145,6 +147,7 @@ class LLMHandler(Generic[PromptFeatures]):
             llm_model=llm_model,
             prompt_type=prompt_type,
             usage=response_to_use.usage,
+            call_chain_category=call_chain_category,
         )
         print("response data *********************************************************")
         print(message_thread)
@@ -159,6 +162,7 @@ class LLMHandler(Generic[PromptFeatures]):
         llm_model: LLModels,
         prompt_rendered_messages: UserAndSystemMessages,
         prompt_vars: Dict[str, Any],
+        call_chain_category: MessageCallChainCategory,
     ) -> MessageThreadDTO:
         """
         Store LLM query in DB
@@ -188,6 +192,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_type=prompt_type,
             llm_model=llm_model,
             query_vars=prompt_vars,
+            call_chain_category=call_chain_category,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
@@ -198,6 +203,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_type: str,
         llm_model: LLModels,
         query_id: int,
+        call_chain_category: MessageCallChainCategory,
         tools: Optional[List[ConversationTool]] = None,
         user_and_system_messages: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
@@ -219,7 +225,12 @@ class LLMHandler(Generic[PromptFeatures]):
                 print("storing task started ********************************************************")
                 asyncio.create_task(
                     self.store_llm_response_in_db(
-                        llm_response, session_id, prompt_type=prompt_type, llm_model=llm_model, query_id=query_id
+                        llm_response,
+                        session_id,
+                        prompt_type=prompt_type,
+                        llm_model=llm_model,
+                        query_id=query_id,
+                        call_chain_category=call_chain_category,
                     )
                 )
                 print("storing task started ********************************************************")
@@ -232,7 +243,7 @@ class LLMHandler(Generic[PromptFeatures]):
         raise RetryException(f"Failed to get response from LLM after {max_retry} retries")
 
     async def parse_llm_response_data(
-        self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt
+        self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt, query_id: int
     ) -> ParsedLLMCallResponse:
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             parsed_stream = await prompt_handler.get_parsed_streaming_events(llm_response)
@@ -245,6 +256,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
                 accumulated_events=llm_response.accumulated_events,
+                query_id=query_id,
             )
         else:
             parsed_content = prompt_handler.get_parsed_result(llm_response)
@@ -256,10 +268,15 @@ class LLMHandler(Generic[PromptFeatures]):
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
+                query_id=query_id,
             )
 
     async def fetch_message_threads_from_conversation_turns(
-        self, conversation_turns: List[ConversationTurn], session_id: int, prompt_handler: BasePrompt
+        self,
+        conversation_turns: List[ConversationTurn],
+        session_id: int,
+        prompt_handler: BasePrompt,
+        call_chain_category: MessageCallChainCategory,
     ) -> List[MessageThreadDTO]:
         """
         Fetch message threads from conversation turns
@@ -275,7 +292,9 @@ class LLMHandler(Generic[PromptFeatures]):
             if turn.content:
                 hashes_to_fetch.append(xxhash.xxh64(str(turn.content)).hexdigest())
 
-        db_message_threads = await MessageThreadsRepository.get_message_threads_for_session(session_id=session_id)
+        db_message_threads = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id=session_id, call_chain_category=call_chain_category
+        )
         db_message_threads_hash_map: Dict[str, MessageThreadDTO] = {
             message.data_hash: message for message in db_message_threads
         }
@@ -295,6 +314,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     message_data=[],
                     prompt_type=prompt_handler.prompt_type,
                     llm_model=prompt_handler.model_name,
+                    call_chain_category=call_chain_category,
                 )
                 message_threads_to_insert.append(message_thread)
 
@@ -335,6 +355,7 @@ class LLMHandler(Generic[PromptFeatures]):
     async def get_conversation_chain_messages(
         self,
         session_id: int,
+        call_chain_category: MessageCallChainCategory,
         prompt_handler: BasePrompt,
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
     ) -> List[MessageThreadDTO]:
@@ -355,7 +376,10 @@ class LLMHandler(Generic[PromptFeatures]):
         # determine the type of previous_responses
         if isinstance(previous_responses[0], ConversationTurn):
             return await self.fetch_message_threads_from_conversation_turns(
-                conversation_turns=previous_responses, session_id=session_id, prompt_handler=prompt_handler
+                conversation_turns=previous_responses,
+                session_id=session_id,
+                prompt_handler=prompt_handler,
+                call_chain_category=call_chain_category,
             )
         return await self.get_message_threads_from_message_thread_ids(message_thread_ids=previous_responses)
 
@@ -368,6 +392,7 @@ class LLMHandler(Generic[PromptFeatures]):
         tools: Optional[List[ConversationTool]] = None,
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
+        call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -391,7 +416,10 @@ class LLMHandler(Generic[PromptFeatures]):
         user_and_system_messages = prompt_handler.get_prompt()
 
         conversation_chain_messages = await self.get_conversation_chain_messages(
-            session_id=session_id, previous_responses=previous_responses, prompt_handler=prompt_handler
+            session_id=session_id,
+            previous_responses=previous_responses,
+            prompt_handler=prompt_handler,
+            call_chain_category=call_chain_category,
         )
 
         prompt_thread = await self.store_llm_query_in_db(
@@ -401,6 +429,7 @@ class LLMHandler(Generic[PromptFeatures]):
             llm_model=prompt_handler.model_name,
             prompt_rendered_messages=user_and_system_messages,
             prompt_vars=prompt_vars,
+            call_chain_category=call_chain_category,
         )
 
         llm_response = await self.get_llm_response(
@@ -410,14 +439,15 @@ class LLMHandler(Generic[PromptFeatures]):
             llm_model=prompt_handler.model_name,
             session_id=session_id,
             tools=tools,
-            previous_responses=await self.get_conversation_chain_messages(
-                session_id=session_id, previous_responses=previous_responses, prompt_handler=prompt_handler
-            ),
+            previous_responses=conversation_chain_messages,
             stream=stream,
             query_id=prompt_thread.id,
+            call_chain_category=call_chain_category,
         )
 
-        return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=prompt_handler)
+        return await self.parse_llm_response_data(
+            llm_response=llm_response, prompt_handler=prompt_handler, query_id=prompt_thread.id
+        )
 
     async def store_tool_use_ressponse_in_db(
         self,
@@ -427,6 +457,7 @@ class LLMHandler(Generic[PromptFeatures]):
         llm_model: LLModels,
         previous_responses: List[MessageThreadDTO],
         query_id: int,
+        call_chain_category: MessageCallChainCategory,
     ) -> MessageThreadDTO:
         """
         Store tool use response in DB
@@ -443,6 +474,7 @@ class LLMHandler(Generic[PromptFeatures]):
             data_hash=data_hash,
             prompt_type=prompt_type,
             llm_model=llm_model,
+            call_chain_category=call_chain_category,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
@@ -452,6 +484,7 @@ class LLMHandler(Generic[PromptFeatures]):
         tool_use_response: ToolUseResponseData,
         tools: Optional[List[ConversationTool]] = None,
         stream: bool = False,
+        call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -467,7 +500,9 @@ class LLMHandler(Generic[PromptFeatures]):
             ParsedLLMCallResponse: Parsed LLM response
         """
 
-        session_messages = await MessageThreadsRepository.get_message_threads_for_session(session_id=session_id)
+        session_messages = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id=session_id, call_chain_category=call_chain_category
+        )
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
 
         detected_llm: Optional[LLModels] = None
@@ -512,6 +547,7 @@ class LLMHandler(Generic[PromptFeatures]):
             llm_model=detected_llm,
             tool_use_response=tool_use_response,
             query_id=main_query_id,
+            call_chain_category=call_chain_category,
         )
 
         client = self.model_to_provider_class_map[detected_llm]()
@@ -526,6 +562,9 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_type=detected_prompt_handler.prompt_type,
             llm_model=detected_llm,
             query_id=main_query_id,
+            call_chain_category=call_chain_category,
         )
 
-        return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=detected_prompt_handler)
+        return await self.parse_llm_response_data(
+            llm_response=llm_response, prompt_handler=detected_prompt_handler, query_id=main_query_id
+        )
