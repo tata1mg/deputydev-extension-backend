@@ -8,19 +8,24 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
+from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 query_solver = Blueprint("query_solver", "/")
 
 
 @query_solver.route("/solve-user-query")
-async def solve_user_query(_request: Request, **kwargs: Any):
+@authenticate
+@ensure_session_id
+async def solve_user_query(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
     response = await _request.respond()
     response.content_type = "text/event-stream"
-    data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json))
+    data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json, session_id=session_id))
 
     await response.send(
         "data: "
-        + json.dumps({"type": "RESPONSE_METADATA", "content": {"query_id": 110, "session_id": 213}})
+        + json.dumps({"type": "RESPONSE_METADATA", "content": {"query_id": data.query_id, "session_id": session_id}})
         + "\r\n\r\n"
     )
 

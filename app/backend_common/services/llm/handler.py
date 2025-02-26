@@ -232,7 +232,7 @@ class LLMHandler(Generic[PromptFeatures]):
         raise RetryException(f"Failed to get response from LLM after {max_retry} retries")
 
     async def parse_llm_response_data(
-        self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt
+        self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt, query_id: int
     ) -> ParsedLLMCallResponse:
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             parsed_stream = await prompt_handler.get_parsed_streaming_events(llm_response)
@@ -245,6 +245,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
                 accumulated_events=llm_response.accumulated_events,
+                query_id=query_id,
             )
         else:
             parsed_content = prompt_handler.get_parsed_result(llm_response)
@@ -256,6 +257,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
+                query_id=query_id,
             )
 
     async def fetch_message_threads_from_conversation_turns(
@@ -417,7 +419,9 @@ class LLMHandler(Generic[PromptFeatures]):
             query_id=prompt_thread.id,
         )
 
-        return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=prompt_handler)
+        return await self.parse_llm_response_data(
+            llm_response=llm_response, prompt_handler=prompt_handler, query_id=prompt_thread.id
+        )
 
     async def store_tool_use_ressponse_in_db(
         self,
