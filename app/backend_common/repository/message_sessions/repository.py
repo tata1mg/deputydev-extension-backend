@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Optional, List
 
 from sanic.log import logger
 
@@ -66,7 +66,7 @@ class MessageSessionsRepository:
             raise ex
 
     @classmethod
-    async def get_message_sessions(cls, user_team_id: str) -> List[MessageSessionDTO]:
+    async def get_message_sessions_by_user_team_id(cls, user_team_id: str) -> List[MessageSessionDTO]:
         try:
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
