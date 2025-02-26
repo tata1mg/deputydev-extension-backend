@@ -16,7 +16,7 @@ class MessageType(Enum):
     TOOL_RESPONSE = "TOOL_RESPONSE"
 
 
-class ContentBlockCategory(Enum):
+class ContentBlockCategory(str, Enum):
     TEXT_BLOCK = "TEXT_BLOCK"
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
