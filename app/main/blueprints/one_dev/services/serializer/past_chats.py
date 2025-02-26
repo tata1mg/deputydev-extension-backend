@@ -18,7 +18,7 @@ class PastChatsSerializer(BaseSerializer):
 
             if message_type.value == "QUERY":
                 formatted_data.append({
-                    "type": "QUERY",
+                    "type": "QUERY_BLOCK",
                     "content": {
                         "text": item.query_vars["query"]
                     },
