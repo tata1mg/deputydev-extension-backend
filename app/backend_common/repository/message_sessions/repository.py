@@ -20,7 +20,7 @@ class MessageSessionsRepository:
         try:
             message_session = await DB.by_filters(
                 model_name=MessageSession,
-                where_clause={"session_id": session_id},
+                where_clause={"id": session_id},
                 fetch_one=True,
             )
             if not message_session:
@@ -55,4 +55,12 @@ class MessageSessionsRepository:
             logger.error(
                 f"error occurred while creating message_thread in db for message_thread_data : {message_session_data}, ex: {ex}"
             )
+            raise ex
+
+    @classmethod
+    async def update_session_summary(cls, session_id: int, summary: str) -> None:
+        try:
+            await DB.update_by_filters(None, MessageSession, {"summary": summary}, {"id": session_id})
+        except Exception as ex:
+            logger.error(f"error occurred while updating message_session in DB, ex: {ex}")
             raise ex

@@ -1,21 +1,22 @@
-import json
+# import json
 from functools import wraps
 
-from jwt import ExpiredSignatureError, InvalidTokenError
+# from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import Request
-from torpedo.exceptions import BadRequestException
 
-from app.backend_common.repository.user_teams.user_team_repository import (
-    UserTeamRepository,
-)
-from app.backend_common.repository.users.user_repository import UserRepository
-from app.backend_common.services.auth.session_encryption_service import (
-    SessionEncryptionService,
-)
-from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.common.constants.auth import AuthStatus
-from app.main.blueprints.one_dev.services.auth.signup import SignUp
+# from app.backend_common.repository.user_teams.user_team_repository import (
+#     UserTeamRepository,
+# )
+# from app.backend_common.repository.users.user_repository import UserRepository
+# from app.backend_common.services.auth.session_encryption_service import (
+#     SessionEncryptionService,
+# )
+# from app.backend_common.services.auth.supabase.auth import SupabaseAuth
+# from app.common.constants.auth import AuthStatus
+# from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+
+# from torpedo.exceptions import BadRequestException
 
 
 def authenticate(func):
