@@ -1,11 +1,11 @@
 import json
-import traceback
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from sanic.log import logger
 
 from app.backend_common.models.dao.postgres.message_threads import MessageThread
 from app.backend_common.models.dto.message_thread_dto import (
+    MessageCallChainCategory,
     MessageThreadData,
     MessageThreadDTO,
 )
@@ -15,10 +15,13 @@ from app.backend_common.repository.db import DB
 class MessageThreadsRepository:
     @classmethod
     async def get_message_threads_for_session(
-        cls, session_id: int, content_hashes: List[str] = []
+        cls, session_id: int, call_chain_category: MessageCallChainCategory, content_hashes: List[str] = []
     ) -> List[MessageThreadDTO]:
         try:
-            filters: Dict[str, Union[List[str], int]] = {"session_id": session_id}
+            filters: Dict[str, Union[List[str], int, str]] = {
+                "session_id": session_id,
+                "call_chain_category": call_chain_category.value,
+            }
             if content_hashes:
                 filters["data_hash__in"] = content_hashes
             message_threads = await DB.by_filters(
@@ -56,6 +59,7 @@ class MessageThreadsRepository:
                         usage=message_thread.usage,
                         llm_model=message_thread.llm_model,
                         prompt_type=message_thread.prompt_type,
+                        call_chain_category=message_thread.call_chain_category,
                     )
                 )
             )

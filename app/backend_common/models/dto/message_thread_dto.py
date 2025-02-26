@@ -86,6 +86,11 @@ class LLMUsage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
+class MessageCallChainCategory(Enum):
+    CLIENT_CHAIN = "CLIENT_CHAIN"
+    SYSTEM_CHAIN = "SYSTEM_CHAIN"
+
+
 class MessageThreadData(BaseModel):
     session_id: int
     actor: MessageThreadActor
@@ -98,6 +103,7 @@ class MessageThreadData(BaseModel):
     prompt_type: str
     llm_model: LLModels
     usage: Optional[LLMUsage] = None
+    call_chain_category: MessageCallChainCategory
 
 
 class MessageThreadDTO(MessageThreadData):

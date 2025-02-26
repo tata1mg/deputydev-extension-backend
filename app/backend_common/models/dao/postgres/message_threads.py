@@ -33,6 +33,7 @@ class MessageThread(Base):
     query_vars = fields.JSONField(null=True)
     llm_model = fields.TextField()
     prompt_type = fields.TextField()
+    call_chain_category = fields.TextField()
 
     class Meta:
         table = "message_threads"
