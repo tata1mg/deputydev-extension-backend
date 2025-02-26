@@ -1,6 +1,7 @@
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
-    ToolUseResponseMessageData,
+    ToolUseResponseContent,
+    ToolUseResponseData,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -29,24 +30,31 @@ class QuerySolver:
         if payload.write_mode:
             tools_to_use.append(DIFF_APPLICATOR)
 
+        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+
         if payload.query:
-            prompt = PromptFeatureFactory.get_prompt(
+            llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
-                model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-                init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+                previous_responses=[],
+                tools=tools_to_use,
+                stream=True,
+                session_id=payload.session_id,
             )
-            llm_response = await LLMHandler(
-                prompt_handler=prompt, tools=tools_to_use, stream=True
-            ).get_parsed_llm_response_data(previous_responses=[])
             return llm_response
 
         elif payload.tool_use_response:
-            llm_response = await LLMHandler(tools=tools_to_use, stream=True).continue_response_with_tool_use(
+            llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
-                tool_use_response=ToolUseResponseMessageData(
-                    tool_name=payload.tool_use_response.tool_name,
-                    tool_use_id=payload.tool_use_response.tool_use_id,
-                    response=payload.tool_use_response.response,
+                tool_use_response=ToolUseResponseData(
+                    content=ToolUseResponseContent(
+                        tool_name=payload.tool_use_response.tool_name,
+                        tool_use_id=payload.tool_use_response.tool_use_id,
+                        response=payload.tool_use_response.response,
+                    )
                 ),
+                tools=tools_to_use,
+                stream=True,
             )
             return llm_response

@@ -13,5 +13,5 @@ class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     relevant_chunks: List[str] = []
     write_mode: bool = False
-    session_id: str
+    session_id: int
     tool_use_response: Optional[ToolUseResponseInput] = None

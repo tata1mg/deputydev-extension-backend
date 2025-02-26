@@ -134,7 +134,7 @@ class MultiAgentPRReviewManager:
             for prompt_obj in prompt_objs:
                 tasks.append(
                     Task(
-                        LLMHandler(prompt_handler=prompt_obj).get_parsed_llm_response_data(previous_responses=[]),
+                        LLMHandler(prompt_handler=prompt_obj).start_llm_query(previous_responses=[]),
                         result_key=prompt_key,
                     )
                 )
