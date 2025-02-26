@@ -48,7 +48,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
-    AnthropicNonStreamingContentResponse,
     AnthropicResponseTypes,
 )
 from app.common.constants.constants import LLMProviders
@@ -158,18 +157,21 @@ class Anthropic(BaseLLMProvider):
 
         # validate content array once we have the response
 
-        content_array: List[AnthropicNonStreamingContentResponse] = llm_response["content"]
+        content_array: List[Dict[str, Any]] = llm_response["content"]
 
         non_streaming_content_blocks: List[ResponseData] = []
         for content_block in content_array:
-            if content_block["type"] == AnthropicResponseTypes.TEXT:
+            print("#######################")
+            print(content_block)
+            print("#######################")
+            if content_block["type"] == AnthropicResponseTypes.TEXT.value:
                 non_streaming_content_blocks.append(
                     TextBlockData(
                         type=ContentBlockCategory.TEXT_BLOCK,
                         content=TextBlockContent(text=content_block["text"]),
                     )
                 )
-            elif content_block["type"] == AnthropicResponseTypes.TOOL_USE:
+            elif content_block["type"] == AnthropicResponseTypes.TOOL_USE.value:
                 non_streaming_content_blocks.append(
                     ToolUseRequestData(
                         type=ContentBlockCategory.TOOL_USE_REQUEST,
@@ -181,6 +183,9 @@ class Anthropic(BaseLLMProvider):
                     )
                 )
 
+        print("#######################")
+        print(non_streaming_content_blocks)
+        print("#######################")
         return NonStreamingResponse(
             content=non_streaming_content_blocks,
             usage=LLMUsage(input=llm_response["usage"]["input_tokens"], output=llm_response["usage"]["output_tokens"]),

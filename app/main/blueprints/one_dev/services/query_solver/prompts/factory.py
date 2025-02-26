@@ -14,11 +14,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
     CodeQuerySolverPromptFactory,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.session_summary_generator.factory import (
+    SessionSummaryGeneratorPromptFactory,
+)
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
     feature_prompt_factory_map: Dict[PromptFeatures, Type[BaseFeaturePromptFactory]] = {
         PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
+        PromptFeatures.SESSION_SUMMARY_GENERATOR: SessionSummaryGeneratorPromptFactory,
     }
 
     @classmethod

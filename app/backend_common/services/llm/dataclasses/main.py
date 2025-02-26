@@ -155,10 +155,12 @@ class ParsedLLMCallResponseCommon(BaseModel):
 
 class StreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, StreamingResponse):
     parsed_content: AsyncIterator[Any]
+    query_id: int
 
 
 class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse):
     parsed_content: List[Any]
+    query_id: int
 
 
 ParsedLLMCallResponse = Annotated[
