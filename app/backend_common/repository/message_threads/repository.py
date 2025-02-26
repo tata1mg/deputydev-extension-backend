@@ -1,3 +1,4 @@
+import traceback
 from typing import Dict, List, Optional, Union
 
 from sanic.log import logger
@@ -38,9 +39,12 @@ class MessageThreadsRepository:
     async def create_message_thread(cls, message_thread_data: MessageThreadData) -> Optional[MessageThreadDTO]:
         try:
             message_thread = await DB.create(MessageThread, message_thread_data.model_dump(mode="json"))
+
             return MessageThreadDTO(**message_thread)
 
         except Exception as ex:
+            print(ex)
+            traceback.format_exc()
             logger.error(
                 f"error occurred while creating message_thread in db for message_thread_data : {message_thread_data}, ex: {ex}"
             )
