@@ -326,7 +326,7 @@ class Anthropic(BaseLLMProvider):
             while not streaming_completed:
                 await asyncio.sleep(0.1)
             return usage
-        
+
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
             nonlocal streaming_completed
@@ -335,7 +335,10 @@ class Anthropic(BaseLLMProvider):
             return accumulated_events
 
         return StreamingResponse(
-            content=stream_content(), usage=asyncio.create_task(get_usage()), type=LLMCallResponseTypes.STREAMING, accumulated_events=asyncio.create_task(get_accumulated_events())
+            content=stream_content(),
+            usage=asyncio.create_task(get_usage()),
+            type=LLMCallResponseTypes.STREAMING,
+            accumulated_events=asyncio.create_task(get_accumulated_events()),
         )
 
     async def call_service_client(
