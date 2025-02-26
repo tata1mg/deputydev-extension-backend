@@ -532,4 +532,6 @@ class LLMHandler(Generic[PromptFeatures]):
             query_id=main_query_id,
         )
 
-        return await self.parse_llm_response_data(llm_response=llm_response, prompt_handler=detected_prompt_handler)
+        return await self.parse_llm_response_data(
+            llm_response=llm_response, prompt_handler=detected_prompt_handler, query_id=main_query_id
+        )
