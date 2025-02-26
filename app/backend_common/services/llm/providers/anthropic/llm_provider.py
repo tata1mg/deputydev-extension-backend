@@ -86,7 +86,7 @@ class Anthropic(BaseLLMProvider):
                         {
                             "type": "tool_result",
                             "tool_use_id": content_data.tool_use_id,
-                            "content": content_data.response,
+                            "content": json.dumps(content_data.response),
                         }
                     )
                 else:
@@ -127,7 +127,7 @@ class Anthropic(BaseLLMProvider):
                     {
                         "type": "tool_result",
                         "tool_use_id": tool_use_response.content.tool_use_id,
-                        "content": tool_use_response.content.response,
+                        "content": json.dumps(tool_use_response.content.response),
                     }
                 ],
             )
@@ -140,7 +140,7 @@ class Anthropic(BaseLLMProvider):
         llm_payload = {
             "anthropic_version": self.model_settings["VERSION"],
             "max_tokens": self.model_settings["MAX_TOKENS"],
-            "system": prompt.system_message if prompt else None,
+            "system": prompt.system_message if prompt else "",
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
