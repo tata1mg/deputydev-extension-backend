@@ -1,4 +1,5 @@
 
+from torpedo.common_utils import logger
 from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
 from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
@@ -52,8 +53,7 @@ class PastWorkflows():
             Exception: For any other errors encountered during the process.
         """
         try:
-            # raw_data = await MessageThreadsRepository.get_message_threads_for_session()
-            raw_data = []
+            raw_data = await MessageThreadsRepository.get_message_threads_for_session(session_id=1)
             serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_CHATS.value)
             processed_data = serializer_service.get_processed_data()
             return processed_data
