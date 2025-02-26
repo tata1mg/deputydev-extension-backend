@@ -53,3 +53,6 @@ class QuerySolver:
                 stream=True,
             )
             return llm_response
+
+        else:
+            raise ValueError("Invalid input")

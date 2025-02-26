@@ -1,5 +1,5 @@
-__all__ = ["Repos", "Tokens", "Workspaces", "Users", "UserTeams", "Teams", "MessageThread", "MessageSessions"]
-from .message_sessions import MessageSessions
+__all__ = ["Repos", "Tokens", "Workspaces", "Users", "UserTeams", "Teams", "MessageThread", "MessageSession"]
+from .message_sessions import MessageSession
 from .message_threads import MessageThread
 from .repos import Repos
 from .teams import Teams
