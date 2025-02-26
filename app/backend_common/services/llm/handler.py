@@ -1,7 +1,8 @@
 import asyncio
 import json
 import traceback
-from typing import Dict, List, Optional, Sequence, Union
+from enum import Enum
+from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar, Union
 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
@@ -13,12 +14,12 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadData,
     MessageThreadDTO,
     MessageType,
-    TextBlockContent,
-    ToolUseRequestContent,
-    ToolUseResponseData,
-    TextBlockData,
-    ToolUseRequestData,
     ResponseData,
+    TextBlockContent,
+    TextBlockData,
+    ToolUseRequestContent,
+    ToolUseRequestData,
+    ToolUseResponseData,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
@@ -39,6 +40,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
+    BasePromptFeatureFactory,
+)
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
     OpenAIReasoningLLM,
@@ -46,8 +50,10 @@ from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.exception import RetryException
 
+PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
-class LLMHandler:
+
+class LLMHandler(Generic[PromptFeatures]):
     model_to_provider_class_map = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
         LLModels.GPT_4O: OpenaiLLM,
@@ -57,10 +63,12 @@ class LLMHandler:
 
     def __init__(
         self,
-        prompt_handler_map: Dict[str, BasePrompt],
+        prompt_factory: Type[BasePromptFeatureFactory[PromptFeatures]],
+        prompt_features: Type[PromptFeatures],
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ):
-        self.prompt_handler_map = prompt_handler_map
+        self.prompt_handler_map = prompt_factory
+        self.prompt_features = prompt_features
         self.cache_config = cache_config
 
     async def get_non_streaming_response_from_streaming_response(
@@ -71,7 +79,7 @@ class LLMHandler:
         current_content_block: Optional[ResponseData] = None
         text_buffer: str = ""
 
-        async for event in llm_response.content:
+        for event in await llm_response.accumulated_events:
             if event.type == StreamingEventType.TEXT_BLOCK_START:
                 current_content_block = TextBlockData(
                     type=ContentBlockCategory.TEXT_BLOCK, content=TextBlockContent(text="")
@@ -109,12 +117,14 @@ class LLMHandler:
     async def store_llm_response_in_db(
         self, llm_response: UnparsedLLMCallResponse, session_id: int, prompt_handler: BasePrompt
     ) -> None:
+        print("storing task started ********************************************************")
         response_to_use: NonStreamingResponse
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             response_to_use = await self.get_non_streaming_response_from_streaming_response(llm_response)
         else:
             response_to_use = llm_response
 
+        print("response to use generated *********************************************************")
         response_to_use.content.sort(key=lambda x: x.type.value)
         data_to_store: Sequence[ResponseData] = response_to_use.content
         data_hash = xxhash.xxh64(json.dumps([data.model_dump(mode="json") for data in data_to_store])).hexdigest()
@@ -130,7 +140,10 @@ class LLMHandler:
             prompt_type=prompt_handler.prompt_type,
             usage=response_to_use.usage,
         )
+        print("response data *********************************************************")
+        print(message_thread)
         await MessageThreadsRepository.create_message_thread(message_thread)
+        print("HHBDKJDHODIE")
 
     async def get_llm_response(
         self,
@@ -155,7 +168,9 @@ class LLMHandler:
                 )
                 llm_response = await client.call_service_client(llm_payload, prompt_handler.model_name, stream=stream)
                 # start task for storing LLM message in DB
+                print("storing task started ********************************************************")
                 asyncio.create_task(self.store_llm_response_in_db(llm_response, session_id, prompt_handler))
+                print("storing task started ********************************************************")
                 return llm_response
             except Exception as e:
                 AppLogger.log_debug(traceback.format_exc())
@@ -177,6 +192,7 @@ class LLMHandler:
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
+                accumulated_events=llm_response.accumulated_events
             )
         else:
             parsed_content = prompt_handler.get_parsed_result(llm_response)
@@ -294,7 +310,9 @@ class LLMHandler:
     async def start_llm_query(
         self,
         session_id: int,
-        prompt_handler: BasePrompt,
+        prompt_feature: PromptFeatures,
+        llm_model: LLModels,
+        prompt_vars: Dict[str, Any],
         tools: Optional[List[ConversationTool]] = None,
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
@@ -311,12 +329,13 @@ class LLMHandler:
         Returns:
             :return: Parsed LLM response
         """
-        detected_llm = prompt_handler.model_name
 
-        if detected_llm not in self.model_to_provider_class_map:
-            raise ValueError(f"LLM model {detected_llm} not supported")
+        prompt_handler = self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
 
-        client = self.model_to_provider_class_map[detected_llm]()
+        if llm_model not in self.model_to_provider_class_map:
+            raise ValueError(f"LLM model {llm_model} not supported")
+
+        client = self.model_to_provider_class_map[llm_model]()
         llm_response = await self.get_llm_response(
             client=client,
             prompt_handler=prompt_handler,
@@ -365,7 +384,9 @@ class LLMHandler:
                 ):
                     tool_use_request_message_id = message.id
                     detected_llm = message.llm_model
-                    detected_prompt_handler = self.prompt_handler_map.get(message.prompt_type)
+                    detected_prompt_handler = self.prompt_handler_map.get_prompt(
+                        model_name=detected_llm, feature=self.prompt_features(message.prompt_type)
+                    )({})
                     break
 
         if not tool_use_request_message_id or not detected_llm:
