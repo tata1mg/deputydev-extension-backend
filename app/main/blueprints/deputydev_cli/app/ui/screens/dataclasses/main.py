@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
 from deputydev_core.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     PlainTextQuery,
@@ -41,7 +41,7 @@ class QueryType(Enum):
 
 class AppContext(BaseModel):
     args: argparse.Namespace
-    one_dev_client: OneDevClient
+    one_dev_client: OneDevCliClient
     auth_token: Optional[str] = None
     session_id: Optional[str] = None
     local_repo: Optional[BaseLocalRepo] = None
