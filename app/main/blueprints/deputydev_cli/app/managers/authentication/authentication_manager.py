@@ -8,7 +8,7 @@ from prompt_toolkit.validation import ValidationError
 from app.common.constants.auth import AuthStatus
 from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
-from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient
 from deputydev_core.utils.exceptions import (
     InvalidVersionException,
 )
@@ -18,7 +18,7 @@ from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.cli_auth_
 
 
 class AuthenticationManager:
-    def __init__(self, one_dev_client: OneDevClient, prompt_session: PromptSession[str]) -> None:
+    def __init__(self, one_dev_client: OneDevCliClient, prompt_session: PromptSession[str]) -> None:
         self.session = prompt_session
         self.one_dev_client = one_dev_client
 
