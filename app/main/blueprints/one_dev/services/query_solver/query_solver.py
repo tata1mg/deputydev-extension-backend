@@ -57,6 +57,7 @@ class QuerySolver:
         all_previous_responses = await MessageThreadsRepository.get_message_threads_for_session(
             session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
         )
+
         return [response.id for response in all_previous_responses]
 
     async def solve_query(self, payload: QuerySolverInput):
