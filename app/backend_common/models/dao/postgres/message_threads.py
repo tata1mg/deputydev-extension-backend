@@ -17,6 +17,7 @@ class MessageThread(Base):
         "llm_model",
         "query_vars",
         "prompt_type",
+        "call_chain_category",
         "created_at",
         "updated_at",
     }
