@@ -77,7 +77,8 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             )
             self.text_buffer = self.text_buffer.replace(programming_language_block.group(0), "").replace(
                 file_path_block.group(0), ""
-            )
+            ).replace(is_diff_block.group(0), "")
+            self.text_buffer = self.text_buffer.strip()
             self.start_event_completed = True
 
         if self.start_event_completed and self.text_buffer:
