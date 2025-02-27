@@ -381,7 +381,9 @@ class LLMHandler(Generic[PromptFeatures]):
                 prompt_handler=prompt_handler,
                 call_chain_category=call_chain_category,
             )
-        return await self.get_message_threads_from_message_thread_ids(message_thread_ids=previous_responses)
+        data = await self.get_message_threads_from_message_thread_ids(message_thread_ids=previous_responses)
+        data.sort(key=lambda x: x.id)
+        return data
 
     async def start_llm_query(
         self,
