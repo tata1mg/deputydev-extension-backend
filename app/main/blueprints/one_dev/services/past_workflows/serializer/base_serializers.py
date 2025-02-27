@@ -1,22 +1,24 @@
 from abc import ABC
 from typing import Any, Dict, List
 
+from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
+
 class BaseSerializer(ABC):
    """
    A base class for serializing raw data.
 
    Attributes:
       raw_data (List[Dict[str, Any]]): The raw data to be processed.
-      type (str): The type of data being serialized.
+      type (SerializerTypes): The type of data being serialized.
    """
 
-   def __init__(self, raw_data: List[Dict[str, Any]], type: str):
+   def __init__(self, raw_data: List[Dict[str, Any]], type: SerializerTypes):
       """
       Initializes the BaseSerializer with raw data and type.
 
       Args:
          raw_data (List[Dict[str, Any]]): The raw data to be serialized.
-         type (str): The type of data being serialized.
+         type (SerializerTypes): The type of data being serialized.
       """
 
       self.raw_data = raw_data
@@ -32,13 +34,13 @@ class BaseSerializer(ABC):
 
       return self.process_raw_data(self.raw_data, self.type)
 
-   def process_raw_data(self, raw_data: List[Dict[str, Any]], type: str) -> List[Dict[str, Any]]:
+   def process_raw_data(self, raw_data: List[Dict[str, Any]], type: SerializerTypes) -> List[Dict[str, Any]]:
       """
       Abstract method to process raw data. Must be implemented by subclasses.
 
       Args:
          raw_data (List[Dict[str, Any]]): The raw data to be processed.
-         type (str): The type of data being serialized.
+         type (SerializerTypes): The type of data being serialized.
 
       Raises:
          NotImplementedError: If not implemented by subclasses.

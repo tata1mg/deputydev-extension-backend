@@ -1,9 +1,9 @@
 from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
-from app.main.blueprints.one_dev.services.serializer.base_serializers import BaseSerializer
+from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import BaseSerializer
 from typing import Any, Dict, List
 
-from app.main.blueprints.one_dev.services.serializer.past_chats import PastChatsSerializer
-from app.main.blueprints.one_dev.services.serializer.past_sessions import PastSessionsSerializer
+from app.main.blueprints.one_dev.services.past_workflows.serializer.past_chats import PastChatsSerializer
+from app.main.blueprints.one_dev.services.past_workflows.serializer.past_sessions import PastSessionsSerializer
 
 class SerializersFactory:
     """
@@ -13,18 +13,18 @@ class SerializersFactory:
     """
 
     FACTORIES = {
-        SerializerTypes.PAST_SESSIONS.value: PastSessionsSerializer,
-        SerializerTypes.PAST_CHATS.value: PastChatsSerializer
+        SerializerTypes.PAST_SESSIONS: PastSessionsSerializer,
+        SerializerTypes.PAST_CHATS: PastChatsSerializer
     }
 
     @classmethod
-    def get_serializer_service(cls, raw_data: List[Dict[str, Any]], type: str) -> BaseSerializer:
+    def get_serializer_service(cls, raw_data: List[Dict[str, Any]], type: SerializerTypes) -> BaseSerializer:
         """
         Retrieves the appropriate serializer service based on the specified type.
 
         Args:
             raw_data (List[Dict[str, Any]]): The raw data to be serialized.
-            type (str): The type of serializer to retrieve.
+            type (SerializerTypes): The type of serializer to retrieve.
 
         Returns:
             BaseSerializer: An instance of the requested serializer.

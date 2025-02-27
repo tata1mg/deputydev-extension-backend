@@ -1,10 +1,9 @@
 
-from torpedo.common_utils import logger
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
 from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
 from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
-from app.main.blueprints.one_dev.services.serializer.serializers_factory import SerializersFactory
+from app.main.blueprints.one_dev.services.past_workflows.serializer.serializers_factory import SerializersFactory
 from typing import List, Dict, Any
 
 class PastWorkflows():
@@ -30,7 +29,7 @@ class PastWorkflows():
         """
         try:
             raw_data = await MessageSessionsRepository.get_message_sessions_by_user_team_id(user_team_id)
-            serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS.value)
+            serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("past_sessions"))
             processed_data = serializer_service.get_processed_data()
             return processed_data
         except ValueError as ve:
@@ -55,7 +54,7 @@ class PastWorkflows():
         """
         try:
             raw_data = await MessageThreadsRepository.get_message_threads_for_session(session_id=1, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN"))
-            serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_CHATS.value)
+            serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("past_chats"))
             processed_data = serializer_service.get_processed_data()
             return processed_data
         except ValueError as ve:
