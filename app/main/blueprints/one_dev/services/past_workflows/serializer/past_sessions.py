@@ -2,7 +2,8 @@ from typing import Any, Dict, List
 from datetime import datetime
 
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
-from app.main.blueprints.one_dev.services.serializer.base_serializers import BaseSerializer
+from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
+from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import BaseSerializer
 
 class PastSessionsSerializer(BaseSerializer):
     """
@@ -11,13 +12,13 @@ class PastSessionsSerializer(BaseSerializer):
     Inherits from BaseSerializer and implements the method to format raw message session data.
     """
 
-    def process_raw_data(self, raw_data: List[MessageSessionData], type: str) -> List[Dict[str, Any]]:
+    def process_raw_data(self, raw_data: List[MessageSessionData], type: SerializerTypes) -> List[Dict[str, Any]]:
         """
         Processes raw message session data and formats it for output.
 
         Args:
             raw_data (List[MessageSessionData]): The raw message session data to be processed.
-            type (str): The type of data being serialized.
+            type (SerializerTypes): The type of data being serialized.
 
         Returns:
             List[Dict[str, Any]]: A list of formatted message session data.

@@ -1,12 +1,13 @@
 from typing import Any, Dict, List
 
 from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO
+from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.services.query_solver.prompts.factory import PromptFeatureFactory
-from app.main.blueprints.one_dev.services.serializer.base_serializers import BaseSerializer
+from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import BaseSerializer
 
 class PastChatsSerializer(BaseSerializer):
-    def process_raw_data(self, raw_data: List[MessageThreadDTO], type: str) -> List[Dict[str, Any]]:
+    def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
 
         formatted_data = []
         for item in raw_data:
