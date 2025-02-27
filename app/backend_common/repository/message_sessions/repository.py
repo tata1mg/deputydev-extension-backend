@@ -72,6 +72,8 @@ class MessageSessionsRepository:
                 model_name=MessageSession,
                 where_clause={"user_team_id": user_team_id},
                 fetch_one=False,
+                # limit=limit,
+                # offset=offset,
             )
             if not message_sessions:
                 return []
