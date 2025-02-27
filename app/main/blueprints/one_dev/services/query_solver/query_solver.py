@@ -1,4 +1,5 @@
 import asyncio
+from typing import List
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -9,6 +10,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
+from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
@@ -51,6 +53,12 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await MessageSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
+    async def get_previous_messages(self, session_id: int) -> List[int]:
+        all_previous_responses = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
+        )
+        return [response.id for response in all_previous_responses]
+
     async def solve_query(self, payload: QuerySolverInput):
 
         tools_to_use = [CODE_SEARCHER, ASK_USER_INPUT]
@@ -67,7 +75,7 @@ class QuerySolver:
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
                 prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
-                previous_responses=[],
+                previous_responses=await self.get_previous_messages(payload.session_id),
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
