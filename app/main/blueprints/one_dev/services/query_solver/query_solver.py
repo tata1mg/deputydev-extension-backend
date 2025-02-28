@@ -24,6 +24,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import FOCUSED_SNIPPETS_SEARCHER
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
@@ -62,7 +63,7 @@ class QuerySolver:
 
     async def solve_query(self, payload: QuerySolverInput):
 
-        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT]
+        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER]
 
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
