@@ -2,10 +2,14 @@ import json
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import Request
+from torpedo import Request, send_response
 
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    InlineEditInput,
     QuerySolverInput,
+)
+from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
+    InlineEditGenerator,
 )
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
@@ -34,3 +38,13 @@ async def solve_user_query(_request: Request, auth_data: AuthData, session_id: i
         # await response.send("data: " + "GAGAGAGGA" + "\r\n\r\n")
 
     await response.eof()
+
+
+@query_solver.route("/generate_inline_edit")
+@authenticate
+@ensure_session_id
+async def generate_inline_edit(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
+    data = await InlineEditGenerator().get_inline_edit_diff_suggestion(
+        payload=InlineEditInput(**_request.json, session_id=session_id)
+    )
+    return send_response(data)

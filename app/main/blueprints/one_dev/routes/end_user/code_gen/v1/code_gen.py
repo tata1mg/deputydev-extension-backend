@@ -65,10 +65,10 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
     JobService,
 )
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 code_gen = Blueprint("code_gen", "/")
