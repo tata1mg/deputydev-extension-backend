@@ -5,7 +5,7 @@ from torpedo.exceptions import BadRequestException
 
 from app.common.constants.error_codes import APIErrorCodes
 from app.main.blueprints.one_dev.constants.constants import MIN_SUPPORTED_CLI_VERSION, MIN_SUPPORTED_VSCODE_EXT_VERSION
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData, Clients
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 
@@ -58,6 +58,8 @@ def validate_client_version(func: Any):
                 meta={"error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value, "upgrade_version": upgrade_version},
             )
 
-        return await func(_request, **kwargs)
+        return await func(
+            _request, client_data=ClientData(client=validated_client, client_version=client_version), **kwargs
+        )
 
     return wrapper
