@@ -40,7 +40,7 @@ class PastWorkflows():
             raise Exception(f"Failed to fetch past sessions: {str(e)}")
 
     @classmethod
-    async def get_past_chats(cls) -> List[Dict[str, Any]]:
+    async def get_past_chats(cls, session_id: int) -> List[Dict[str, Any]]:
         """
         Fetch past chats.
 
@@ -53,7 +53,7 @@ class PastWorkflows():
             Exception: For any other errors encountered during the process.
         """
         try:
-            raw_data = await MessageThreadsRepository.get_message_threads_for_session(session_id=1, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN"))
+            raw_data = await MessageThreadsRepository.get_message_threads_for_session(session_id, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN"))
             serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("past_chats"))
             processed_data = serializer_service.get_processed_data()
             return processed_data
