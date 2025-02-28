@@ -1,8 +1,10 @@
+from datetime import datetime
 import json
 from typing import Optional, List
 
 from sanic.log import logger
 
+from app.backend_common.constants.past_workflows import SessionStatus
 from app.backend_common.models.dao.postgres.message_sessions import MessageSession
 from app.backend_common.models.dto.message_sessions_dto import (
     MessageSessionData,
@@ -70,10 +72,11 @@ class MessageSessionsRepository:
         try:
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
-                where_clause={"user_team_id": user_team_id},
+                where_clause={"user_team_id": user_team_id, "status": SessionStatus.ACTIVE.value},
                 fetch_one=False,
                 # limit=limit,
                 # offset=offset,
+                order_by=["-created_at"],
             )
             if not message_sessions:
                 return []
@@ -84,3 +87,11 @@ class MessageSessionsRepository:
                 f"error occurred while fetching message_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
             return []
+
+    @classmethod
+    async def soft_delete_message_session_by_id(cls, session_id: int):
+        try:
+            await DB.update_by_filters(None, MessageSession, {"status": SessionStatus.DELETED.value, "deleted_at": datetime.now()}, {"id": session_id})
+        except Exception as ex:
+            logger.error(f"error occurred while soft deleting message_session in DB, ex: {ex}")
+            raise ex
