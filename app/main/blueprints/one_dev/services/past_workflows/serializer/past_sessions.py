@@ -25,7 +25,7 @@ class PastSessionsSerializer(BaseSerializer):
         """
         formatted_data = []
         current_time = datetime.now()
-        for item in raw_data[::-1]:
+        for item in raw_data:
             formatted_data.append(
                 {
                     "id": item.id,
