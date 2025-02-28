@@ -1,7 +1,7 @@
 from app.backend_common.services.llm.dataclasses.main import ConversationTool
 
-CODE_SEARCHER = ConversationTool(
-    name="code_searcher",
+RELATED_CODE_SEARCHER = ConversationTool(
+    name="related_code_searcher",
     description="""
         Searches the codebase for relevant code snippets based on the given query.
         This tool does a vector + lexical hybrid search on the chunks on the entire codebase and then returns the ones which are relevant to the query.
