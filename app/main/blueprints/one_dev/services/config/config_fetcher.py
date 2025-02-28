@@ -20,7 +20,7 @@ class ConfigFetcher:
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
         },
-        Clients.VACODE_EXT: {
+        Clients.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
                 "HOST": "https://api.deputydev.ai",
@@ -62,7 +62,7 @@ class ConfigFetcher:
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
         },
-        Clients.VACODE_EXT: {
+        Clients.VSCODE_EXT: {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
                 "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
