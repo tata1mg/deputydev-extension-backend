@@ -15,3 +15,10 @@ class QuerySolverInput(BaseModel):
     write_mode: bool = False
     session_id: int
     tool_use_response: Optional[ToolUseResponseInput] = None
+
+
+class InlineEditInput(BaseModel):
+    session_id: int
+    query: str
+    relevant_chunks: List[str]
+    code_selection: str

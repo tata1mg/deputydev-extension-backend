@@ -3,10 +3,10 @@ from torpedo import CONFIG, Request, send_response
 
 from app.main.blueprints.one_dev.services.repos.main import ReposHandler
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 repos = Blueprint("repos", "/")
 

@@ -10,7 +10,9 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
@@ -24,7 +26,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import FOCUSED_SNIPPETS_SEARCHER
+from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
+    FOCUSED_SNIPPETS_SEARCHER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
