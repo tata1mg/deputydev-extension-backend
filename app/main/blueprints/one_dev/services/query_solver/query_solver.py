@@ -10,7 +10,9 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )

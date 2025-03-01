@@ -1,9 +1,14 @@
-from typing import Any, Dict, List
 from datetime import datetime
+from typing import Any, Dict, List
 
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
-from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import SerializerTypes
-from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import BaseSerializer
+from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
+    SerializerTypes,
+)
+from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import (
+    BaseSerializer,
+)
+
 
 class PastSessionsSerializer(BaseSerializer):
     """

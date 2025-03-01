@@ -1,6 +1,6 @@
-from datetime import datetime
 import json
-from typing import Optional, List
+from datetime import datetime
+from typing import List, Optional
 
 from sanic.log import logger
 
@@ -68,7 +68,9 @@ class MessageSessionsRepository:
             raise ex
 
     @classmethod
-    async def get_message_sessions_by_user_team_id(cls, user_team_id: int, limit: int, offset: int) -> List[MessageSessionDTO]:
+    async def get_message_sessions_by_user_team_id(
+        cls, user_team_id: int, limit: int, offset: int
+    ) -> List[MessageSessionDTO]:
         try:
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
@@ -101,7 +103,12 @@ class MessageSessionsRepository:
                 raise ValueError("Session not found or you don't have permission to delete it")
 
             # Soft delete the session
-            await DB.update_by_filters(None, MessageSession, {"status": SessionStatus.DELETED.value, "deleted_at": datetime.now()}, {"id": session_id})
+            await DB.update_by_filters(
+                None,
+                MessageSession,
+                {"status": SessionStatus.DELETED.value, "deleted_at": datetime.now()},
+                {"id": session_id},
+            )
         except (ValueError, Exception) as ex:
             logger.error(f"error occurred while soft deleting message_session in DB, ex: {ex}")
             raise ex

@@ -1,12 +1,11 @@
 import re
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List
 
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     MessageData,
-    TextBlockData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -76,9 +75,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     )
                 )
             )
-            self.text_buffer = self.text_buffer.replace(programming_language_block.group(0), "").replace(
-                file_path_block.group(0), ""
-            ).replace(is_diff_block.group(0), "")
+            self.text_buffer = (
+                self.text_buffer.replace(programming_language_block.group(0), "")
+                .replace(file_path_block.group(0), "")
+                .replace(is_diff_block.group(0), "")
+            )
             self.text_buffer = self.text_buffer.strip()
             self.start_event_completed = True
 
@@ -182,30 +183,30 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             system_message=system_message,
         )
 
-
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
         final_content = []
         for block in response_block:
             if block.type == "TOOL_USE_RESPONSE":
-                final_content.append({
-                    "type": "TOOL_USE_RESPONSE_BLOCK",
-                    "content": {
-                        "result_json": block.content.response,
-                        "tool_use_id": block.content.tool_use_id
+                final_content.append(
+                    {
+                        "type": "TOOL_USE_RESPONSE_BLOCK",
+                        "content": {"result_json": block.content.response, "tool_use_id": block.content.tool_use_id},
                     }
-                })
+                )
             elif block.type == ContentBlockCategory("TEXT_BLOCK"):
                 final_content.extend(cls.parsing(block.content.text))
             elif block.type == ContentBlockCategory("TOOL_USE_REQUEST"):
-                final_content.append({
-                    "type": "TOOL_USE_REQUEST_BLOCK",
-                    "content": {
-                        "tool_name": block.content.tool_name,
-                        "tool_use_id": block.content.tool_use_id,
-                        "tool_input_json": block.content.tool_input
+                final_content.append(
+                    {
+                        "type": "TOOL_USE_REQUEST_BLOCK",
+                        "content": {
+                            "tool_name": block.content.tool_name,
+                            "tool_use_id": block.content.tool_use_id,
+                            "tool_input_json": block.content.tool_input,
+                        },
                     }
-                })
+                )
         return final_content
 
     @classmethod
@@ -228,8 +229,8 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
-        thinking_pattern = r'<thinking>(.*?)</thinking>'
-        code_block_pattern = r'<code_block>(.*?)</code_block>'
+        thinking_pattern = r"<thinking>(.*?)</thinking>"
+        code_block_pattern = r"<code_block>(.*?)</code_block>"
 
         # Find all occurrences of either pattern
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
@@ -270,8 +271,8 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     def extract_code_block_info(cls, code_block_string: str) -> Dict[str, str]:
 
         # Define the patterns
-        language_pattern = r'<programming_language>(.*?)</programming_language>'
-        file_path_pattern = r'<file_path>(.*?)</file_path>'
+        language_pattern = r"<programming_language>(.*?)</programming_language>"
+        file_path_pattern = r"<file_path>(.*?)</file_path>"
 
         # Extract language and file path
         language_match = re.search(language_pattern, code_block_string)
@@ -285,10 +286,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         code = code_block_string[code_start_index:].strip()
 
         # Remove any remaining tags from the code
-        code = re.sub(r'<.*?>', '', code)
+        code = re.sub(r"<.*?>", "", code)
 
-        return {
-            "language": language,
-            "file_path": file_path,
-            "code": code
-        }
+        return {"language": language, "file_path": file_path, "code": code}
