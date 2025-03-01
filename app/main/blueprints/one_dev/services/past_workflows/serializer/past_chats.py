@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO
-from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
+from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO, MessageType
+from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import SerializerTypes
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.services.query_solver.prompts.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import BaseSerializer
@@ -9,7 +9,7 @@ from app.main.blueprints.one_dev.services.past_workflows.serializer.base_seriali
 class PastChatsSerializer(BaseSerializer):
     def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
 
-        formatted_data = []
+        formatted_data: List[Dict[str, Any]] = []
         for item in raw_data:
             message_type = item.message_type
             response_block = item.message_data
@@ -17,7 +17,7 @@ class PastChatsSerializer(BaseSerializer):
             prompt_feature = item.prompt_type
             actor = item.actor.value
 
-            if message_type.value == "QUERY":
+            if message_type == MessageType("QUERY"):
                 formatted_data.append({
                     "type": "TEXT_BLOCK",
                     "content": {
