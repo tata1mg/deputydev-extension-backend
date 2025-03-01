@@ -1,7 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from app.main.blueprints.one_dev.constants.serializers_constants import SerializerTypes
+from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import SerializerTypes
 
 class BaseSerializer(ABC):
    """
@@ -34,6 +34,7 @@ class BaseSerializer(ABC):
 
       return self.process_raw_data(self.raw_data, self.type)
 
+   @abstractmethod
    def process_raw_data(self, raw_data: List[Dict[str, Any]], type: SerializerTypes) -> List[Dict[str, Any]]:
       """
       Abstract method to process raw data. Must be implemented by subclasses.

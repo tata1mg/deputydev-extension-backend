@@ -68,14 +68,14 @@ class MessageSessionsRepository:
             raise ex
 
     @classmethod
-    async def get_message_sessions_by_user_team_id(cls, user_team_id: str) -> List[MessageSessionDTO]:
+    async def get_message_sessions_by_user_team_id(cls, user_team_id: int, limit: int, offset: int) -> List[MessageSessionDTO]:
         try:
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
                 where_clause={"user_team_id": user_team_id, "status": SessionStatus.ACTIVE.value},
                 fetch_one=False,
-                # limit=limit,
-                # offset=offset,
+                limit=limit,
+                offset=offset,
                 order_by=["-created_at"],
             )
             if not message_sessions:
