@@ -21,5 +21,6 @@ async def get_sessions(_request: Request, **kwargs):
 @history.route("/delete_session", methods=["PUT"])
 async def delete_session(_request: Request, **kwargs):
     payload = _request.custom_json()
-    response = await MessageSessionsRepository.soft_delete_message_session_by_id(payload.get("sessionId"))
+    user_team_id = 1 #TODO: need to change later
+    response = await MessageSessionsRepository.soft_delete_message_session_by_id(payload.get("sessionId"), user_team_id)
     return send_response(response)
