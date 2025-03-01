@@ -89,9 +89,19 @@ class MessageSessionsRepository:
             return []
 
     @classmethod
-    async def soft_delete_message_session_by_id(cls, session_id: int):
+    async def soft_delete_message_session_by_id(cls, session_id: int, user_team_id: int):
         try:
+            # First check if the session belongs to the user
+            message_session = await DB.by_filters(
+                model_name=MessageSession,
+                where_clause={"id": session_id, "user_team_id": user_team_id},
+                fetch_one=True,
+            )
+            if not message_session:
+                raise ValueError("Session not found or you don't have permission to delete it")
+
+            # Soft delete the session
             await DB.update_by_filters(None, MessageSession, {"status": SessionStatus.DELETED.value, "deleted_at": datetime.now()}, {"id": session_id})
-        except Exception as ex:
+        except (ValueError, Exception) as ex:
             logger.error(f"error occurred while soft deleting message_session in DB, ex: {ex}")
             raise ex
