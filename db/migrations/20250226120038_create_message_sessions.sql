@@ -5,8 +5,10 @@ CREATE TABLE IF NOT EXISTS message_sessions (
     client_version TEXT,
     summary TEXT,
     user_team_id INT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL,
 );
 
 -- migrate:down

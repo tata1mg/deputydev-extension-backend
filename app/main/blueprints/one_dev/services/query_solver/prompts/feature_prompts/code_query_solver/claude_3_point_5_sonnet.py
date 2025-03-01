@@ -182,22 +182,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             system_message=system_message,
         )
 
-    @classmethod
-    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
-        final_query_resp: Optional[str] = None
-        is_task_done: Optional[bool] = None
-        summary: Optional[str] = None
-        text_block_text = text_block.content.text.strip()
-        if "<response>" in text_block_text:
-            final_query_resp = text_block_text.split("<response>")[1].split("</response>")[0].strip()
-        if "<is_task_done>true</is_task_done>" in text_block_text:
-            is_task_done = True
-        if "<summary>" in text_block_text:
-            summary = text_block_text.split("<summary>")[1].split("</summary>")[0].strip()
-
-        if final_query_resp and is_task_done is not None:
-            return {"response": final_query_resp, "is_task_done": is_task_done, "summary": summary}
-        raise ValueError("Invalid LLM response format. Response not found.")
 
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
@@ -211,9 +195,9 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                         "tool_use_id": block.content.tool_use_id
                     }
                 })
-            elif block.type == "TEXT_BLOCK":
+            elif block.type == ContentBlockCategory("TEXT_BLOCK"):
                 final_content.extend(cls.parsing(block.content.text))
-            elif block.type == "TOOL_USE_REQUEST":
+            elif block.type == ContentBlockCategory("TOOL_USE_REQUEST"):
                 final_content.append({
                     "type": "TOOL_USE_REQUEST_BLOCK",
                     "content": {
@@ -231,12 +215,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
         final_content = cls.get_parsed_response_blocks(llm_response.content)
 
-        # for content_block in llm_response.content:
-        #     if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
-        #         final_content.append({"tool_use_request": content_block.content.model_dump(mode="json")})
-        #     elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
-        #         final_content.append(cls._parse_text_block(content_block))
-
         return final_content
 
     @classmethod
@@ -247,7 +225,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def parsing(cls, input_string: str) -> List[Dict[str, Any]]:
-        result = []
+        result: List[Dict[str, Any]] = []
 
         # Define the patterns
         thinking_pattern = r'<thinking>(.*?)</thinking>'
@@ -290,8 +268,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def extract_code_block_info(cls, code_block_string: str) -> Dict[str, str]:
-        if not code_block_string:
-            return {}
 
         # Define the patterns
         language_pattern = r'<programming_language>(.*?)</programming_language>'
