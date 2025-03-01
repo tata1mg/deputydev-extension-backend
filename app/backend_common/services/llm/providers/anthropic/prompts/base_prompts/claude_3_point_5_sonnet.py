@@ -1,5 +1,5 @@
 import re
-from typing import AsyncIterator, List, Optional, Union, Dict, Any
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -36,6 +36,7 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
     WARNING: Although this is documented and comments are present wherever necessary, this is a complex method and should be used with caution. It is not recommended to modify this method unless you are sure about the changes you are making.
     SUGGESTION FROM AUTHOR: At time of writing, God and I knew how this method works. Now, probably when you are reading this, only God would know how this method works.
     """
+
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
         raise NotImplementedError("This method must be implemented in the child class")
