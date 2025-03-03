@@ -1,5 +1,5 @@
 import re
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, AsyncIterator, Dict, List, Tuple
 
 from pydantic import BaseModel
 
@@ -184,30 +184,25 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         )
 
     @classmethod
-    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
+    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         final_content = []
+        tool_use_map: Dict[str, Any] = {}
         for block in response_block:
-            if block.type == "TOOL_USE_RESPONSE":
-                final_content.append(
-                    {
-                        "type": "TOOL_USE_RESPONSE_BLOCK",
-                        "content": {"result_json": block.content.response, "tool_use_id": block.content.tool_use_id},
-                    }
-                )
-            elif block.type == ContentBlockCategory("TEXT_BLOCK"):
+            if block.type == ContentBlockCategory("TEXT_BLOCK"):
                 final_content.extend(cls.parsing(block.content.text))
             elif block.type == ContentBlockCategory("TOOL_USE_REQUEST"):
-                final_content.append(
-                    {
-                        "type": "TOOL_USE_REQUEST_BLOCK",
-                        "content": {
-                            "tool_name": block.content.tool_name,
-                            "tool_use_id": block.content.tool_use_id,
-                            "tool_input_json": block.content.tool_input,
+                tool_use_request_block = {
+                    "type": "TOOL_USE_REQUEST_BLOCK",
+                    "content": {
+                        "tool_name": block.content.tool_name,
+                        "tool_use_id": block.content.tool_use_id,
+                        "tool_input_json": block.content.tool_input,
                         },
                     }
-                )
-        return final_content
+                final_content.append(tool_use_request_block)
+                tool_use_map[block.content.tool_use_id] = tool_use_request_block
+
+        return final_content, tool_use_map
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
