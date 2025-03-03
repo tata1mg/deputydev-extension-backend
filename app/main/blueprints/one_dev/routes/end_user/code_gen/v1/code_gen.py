@@ -165,12 +165,13 @@ async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/get-job-status", methods=["GET"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def get_job_status(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def get_job_status(_request: Request, auth_data: AuthData, session_id: int, **kwargs):
     payload = {key: var for key, var in _request.query_args}
+    print(payload)
     job = await JobService.db_get(
-        filters={"id": int(payload.get("job_id")), "session_id": _request.headers.get("X-Session-Id")}, fetch_one=True
+        filters={"id": int(payload.get("job_id"))}, fetch_one=True
     )
     if not job:
         return send_response({"status": "JOB_NOT_FOUND"})
