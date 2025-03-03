@@ -1,10 +1,9 @@
 from typing import List
 
 import httpx
+from deputydev_core.utils.singleton import Singleton
 from openai import AsyncOpenAI
 from torpedo import CONFIG
-
-from deputydev_core.utils.singleton import Singleton
 
 config = CONFIG.config
 

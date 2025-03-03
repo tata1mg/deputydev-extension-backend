@@ -1,8 +1,7 @@
 import google.generativeai as genai
+from deputydev_core.utils.singleton import Singleton
 from openai.types.chat import ChatCompletionMessage
 from torpedo import CONFIG
-
-from deputydev_core.utils.singleton import Singleton
 
 config = CONFIG.config
 

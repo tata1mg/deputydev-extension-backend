@@ -1,8 +1,9 @@
 from functools import wraps
 
+from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
-from deputydev_core.utils.constants.error_codes import APIErrorCodes
+
 from app.main.blueprints.one_dev.constants.constants import DEPRECATED_CLI_VERSIONS
 
 

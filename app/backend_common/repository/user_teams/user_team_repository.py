@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Union
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.db import DB
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class UserTeamRepository:

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import uuid
 
+from deputydev_core.exception.exception import SignUpError, TeamNotFound
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
 from app.backend_common.models.dao.postgres import Teams, Users, UserTeams
-from deputydev_core.exception.exception import SignUpError, TeamNotFound
 from app.main.blueprints.deputy_dev.constants.onboarding import UserRoles
 from app.main.blueprints.deputy_dev.models.request import (
     OnboardingRequest,

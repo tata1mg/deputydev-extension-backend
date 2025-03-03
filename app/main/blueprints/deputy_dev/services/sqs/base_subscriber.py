@@ -3,13 +3,13 @@ import asyncio
 import botocore.exceptions
 import ujson as json
 from commonutils import BaseSQSWrapper
-from sanic.log import logger
-
-from app.backend_common.utils.app_utils import log_combined_exception
-from app.backend_common.constants.error_messages import ErrorMessages
-from app.backend_common.constants.success_messages import SuccessMessages
 from deputydev_core.exception import RetryException
 from deputydev_core.exception.exception import RateLimitError
+from sanic.log import logger
+
+from app.backend_common.constants.error_messages import ErrorMessages
+from app.backend_common.constants.success_messages import SuccessMessages
+from app.backend_common.utils.app_utils import log_combined_exception
 from app.main.blueprints.deputy_dev.constants.sqs import SQS
 from app.main.blueprints.deputy_dev.services.sqs.sqs_model import Response
 
