@@ -1,3 +1,4 @@
+from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.repository.workspace.main import WorkspaceService
 from app.backend_common.services.credentials.factory import AuthHandlerFactory
@@ -5,7 +6,6 @@ from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.repo.bitbucket_repo import BitbucketRepo
 from app.backend_common.services.repo.github_repo import GithubRepo
 from app.backend_common.services.repo.gitlab_repo import GitlabRepo
-from app.backend_common.constants.constants import VCSTypes
 
 
 class RepoFactory:

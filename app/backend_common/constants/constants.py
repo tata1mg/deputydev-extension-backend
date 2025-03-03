@@ -1,5 +1,6 @@
-from deputydev_core.utils.config_manager import ConfigManager
 from enum import Enum
+
+from deputydev_core.utils.config_manager import ConfigManager
 
 PR_NOT_FOUND = "PR does not exist"
 LARGE_PR_DIFF = "PR diff is larger than 20k lines"
