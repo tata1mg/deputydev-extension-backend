@@ -40,11 +40,11 @@ async def solve_user_query(_request: Request, auth_data: AuthData, session_id: i
     await response.eof()
 
 
-@query_solver.route("/generate_inline_edit")
+@query_solver.route("/generate-inline-edit", methods=["POST"])
 @authenticate
 @ensure_session_id
 async def generate_inline_edit(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
     data = await InlineEditGenerator().create_and_start_job(
-        payload=InlineEditInput(**_request.json, session_id=session_id)
+        payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     )
     return send_response({"job_id": data})
