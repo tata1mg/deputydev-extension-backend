@@ -4,7 +4,7 @@ from sanic.log import logger
 
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.utils.context_vars import set_context_values
+from deputydev_core.utils.context_vars import set_context_values
 
 
 class CodeApplicationHandler:

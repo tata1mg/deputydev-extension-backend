@@ -3,7 +3,7 @@ import re
 from sanic.log import logger
 
 from app.backend_common.services.repo.repo_factory import RepoFactory
-from app.common.utils.context_vars import get_context_value
+from deputydev_core.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import Feature
 from app.main.blueprints.deputy_dev.services.code_generation.code_generation_handler import (
     CodeGenerationHandler,

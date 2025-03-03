@@ -1,7 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional, Union
 
-from app.common.constants.constants import IS_LLM_RERANKING_ENABLED, MAX_RELEVANT_CHUNKS
+from app.backend_common.constants.constants import IS_LLM_RERANKING_ENABLED, MAX_RELEVANT_CHUNKS
 from deputydev_core.services.chunking.chunking_manager import ChunkingManger
 from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo

@@ -1,6 +1,6 @@
 from typing import Union
 
-from app.common.constants.constants import (
+from app.backend_common.constants.constants import (
     CUSTOM_PROMPT_CHAR_LIMIT,
     SETTING_ERROR_MESSAGE,
     SettingErrorType,

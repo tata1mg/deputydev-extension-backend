@@ -6,8 +6,8 @@ from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.bitbucket_repo import BitbucketRepo
-from app.common.constants.constants import PR_NOT_FOUND, VCSTypes
-from app.common.utils.context_vars import get_context_value, set_context_values
+from app.backend_common.constants.constants import PR_NOT_FOUND, VCSTypes
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from app.backend_common.models.dto.comment_dto import CommentDTO
 
 ATLASSIAN_ISSUE_URL_PREFIX = "https://1mgtech.atlassian.net/browse/"

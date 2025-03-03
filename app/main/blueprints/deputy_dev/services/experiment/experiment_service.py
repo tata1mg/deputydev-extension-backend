@@ -3,7 +3,7 @@ from torpedo import CONFIG
 from tortoise.expressions import F
 
 from app.backend_common.repository.db import DB
-from app.common.utils.context_vars import get_context_value
+from deputydev_core.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.caches.ab_experiment import ABExperimentCache
 from app.main.blueprints.deputy_dev.constants.constants import ExperimentStatusTypes
 from app.main.blueprints.deputy_dev.models.dao.postgres import Experiments

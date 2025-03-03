@@ -6,7 +6,7 @@ from sanic_ext import validate
 from torpedo import Request
 
 from app.backend_common.utils.wrapper import http_v4_wrapper
-from app.common.utils.headers import Headers
+from app.backend_common.utils.headers import Headers
 from app.main.blueprints.jiva.models.chat import ChatModel
 from app.main.blueprints.jiva.services.bots.jiva import JivaManager
 

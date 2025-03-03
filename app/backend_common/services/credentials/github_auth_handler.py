@@ -10,8 +10,8 @@ from typing_extensions import override
 
 from app.backend_common.models.dao.postgres.tokens import Tokens
 from app.backend_common.service_clients.oauth import GithubOAuthClient
-from app.common.constants.constants import TokenType
-from app.common.exception.exception import CredentialsError
+from app.backend_common.constants.constants import TokenType
+from deputydev_core.exception.exception import CredentialsError
 
 from .auth_handler import _TOKEN_STORE, AuthHandler
 

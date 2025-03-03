@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 from .....backend_common.utils.formatting import PRDiffSizingLabel
-from deputydev_core.utils.constants import LLMModelNames
+from deputydev_core.utils.constants.constants import LLMModelNames
 from app.backend_common.services.openai.openai_service import EMBEDDING_TOKEN_LIMIT, EMBEDDING_MODEL
 from .ab_analysis_constants import AbAnalysisDates, AbAnalysisPhases, AbAnalysisQueries
 from .constants import (

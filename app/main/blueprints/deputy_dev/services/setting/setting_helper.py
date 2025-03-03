@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, Any
 import toml
 
-from app.common.utils.context_vars import get_context_value
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class SettingHelper:

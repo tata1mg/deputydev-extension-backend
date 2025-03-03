@@ -1,6 +1,6 @@
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.utils.app_utils import get_vcs_repo_name_slug
-from app.common.constants.constants import VCSTypes
+from app.backend_common.constants.constants import VCSTypes
 
 
 class BitbucketPrModel(BasePrModel):
