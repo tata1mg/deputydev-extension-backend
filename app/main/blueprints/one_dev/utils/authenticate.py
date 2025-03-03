@@ -13,7 +13,7 @@ from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.common.constants.auth import AuthStatus
+from deputydev_core.utils.constants.auth import AuthStatus
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 

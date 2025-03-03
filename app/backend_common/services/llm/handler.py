@@ -12,8 +12,8 @@ from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
     OpenAIReasoningLLM,
 )
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
-from app.common.constants.constants import LLModels
-from app.common.exception import RetryException
+from app.backend_common.constants.constants import LLModels
+from deputydev_core.exception import RetryException
 from app.common.services.prompt.base_prompt import BasePrompt
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager

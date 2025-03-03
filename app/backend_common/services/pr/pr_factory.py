@@ -3,7 +3,7 @@ from app.backend_common.services.pr.vcs_pr_handlers.bitbucket_pr import Bitbucke
 from app.backend_common.services.pr.vcs_pr_handlers.github_pr import GithubPR
 from app.backend_common.services.pr.vcs_pr_handlers.gitlab_pr import GitlabPR
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.constants.constants import VCSTypes
+from app.backend_common.constants.constants import VCSTypes
 
 
 class PRFactory:

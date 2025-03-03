@@ -3,7 +3,8 @@ import time
 from typing import List
 
 from app.backend_common.services.llm.handler import LLMHandler
-from app.common.constants.constants import LLModels, PromptFeatures
+from app.backend_common.constants.constants import LLModels
+from app.common.constants.constants import PromptFeatures
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.reranker.base_chunk_reranker import BaseChunkReranker
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array

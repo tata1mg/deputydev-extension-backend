@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.common.constants.feedbacks import UpvoteDownvoteFeedbacks
+from deputydev_core.utils.constants.feedbacks import UpvoteDownvoteFeedbacks
 
 
 class JobFeedbackDTO(BaseModel):

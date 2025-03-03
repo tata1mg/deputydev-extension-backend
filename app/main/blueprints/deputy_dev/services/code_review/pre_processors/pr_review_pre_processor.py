@@ -7,8 +7,8 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import get_token_count
-from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
-from app.common.utils.context_vars import set_context_values
+from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
+from deputydev_core.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,

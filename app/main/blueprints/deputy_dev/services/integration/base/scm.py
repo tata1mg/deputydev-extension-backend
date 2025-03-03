@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from torpedo import CONFIG
 
-from app.common.services.authentication.jwt import JWTHandler
+from deputydev_core.services.authentication.jwt import JWTHandler
 
 from .......backend_common.services.credentials import AuthHandler
 

@@ -1,7 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, List, Optional, Union
 
-from app.common.constants.constants import MAX_ITERATIVE_CHUNKS
+from app.backend_common.constants.constants import MAX_ITERATIVE_CHUNKS
 from deputydev_core.services.chunking.chunking_manager import ChunkingManger
 from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
 from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager

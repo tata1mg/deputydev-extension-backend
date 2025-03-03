@@ -11,9 +11,9 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.common.constants.constants import LLMProviders
-from app.common.exception import RetryException
-from app.common.exception.exception import ParseException
+from app.backend_common.constants.constants import LLMProviders
+from deputydev_core.exception import RetryException
+from deputydev_core.exception.exception import ParseException
 from deputydev_core.utils.app_logger import AppLogger
 
 

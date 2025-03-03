@@ -23,8 +23,8 @@ from deputydev_core.services.chunking.chunking_manager import ChunkingManger
 from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from deputydev_core.services.search.dataclasses.main import SearchTypes
 from deputydev_core.services.tiktoken import TikToken
-from app.common.utils.context_vars import get_context_value
-from app.common.utils.executor import process_executor
+from deputydev_core.utils.context_vars import get_context_value
+from app.backend_common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.constants.prompts.v1.system_prompts import (
     SCRIT_SUMMARY_PROMPT,

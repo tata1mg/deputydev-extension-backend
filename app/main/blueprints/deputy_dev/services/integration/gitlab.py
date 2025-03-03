@@ -8,7 +8,7 @@ from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.service_clients.gitlab.gitlab_group_client import (
     GitlabGroupClient,
 )
-from app.common.exception.exception import OnboardingError
+from deputydev_core.exception.exception import OnboardingError
 from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations
 from app.main.blueprints.deputy_dev.models.request import OnboardingRequest
 
