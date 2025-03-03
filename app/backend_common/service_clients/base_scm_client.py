@@ -3,11 +3,11 @@ from __future__ import annotations
 import typing as t
 
 from app.backend_common.services.credentials import AuthHandler
-from app.common.exception import RefreshTokenFailed
-from app.common.exception.exception import RateLimitError
+from deputydev_core.exception import RefreshTokenFailed
+from deputydev_core.exception.exception import RateLimitError
 from deputydev_core.clients.http.base_http_client import BaseHTTPClient
 from deputydev_core.utils.app_logger import AppLogger
-from app.common.utils.context_vars import get_context_value
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class BaseSCMClient(BaseHTTPClient):

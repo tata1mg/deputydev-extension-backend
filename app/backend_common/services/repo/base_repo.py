@@ -15,7 +15,7 @@ from app.backend_common.models.dao.postgres.repos import Repos
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.service_clients.base_scm_client import BaseSCMClient
 from app.backend_common.services.credentials import AuthHandler
-from app.common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType
+from app.backend_common.constants.constants import SETTING_ERROR_MESSAGE, SettingErrorType
 from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from deputydev_core.utils.app_logger import AppLogger
 

@@ -1,4 +1,4 @@
-from app.common.constants.constants import LLModels
+from app.backend_common.constants.constants import LLModels
 from app.common.services.prompt.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
 )

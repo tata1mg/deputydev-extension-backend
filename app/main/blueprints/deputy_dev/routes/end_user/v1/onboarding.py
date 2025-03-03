@@ -2,7 +2,7 @@ from sanic import Blueprint, Request, response
 from sanic_ext import validate
 from torpedo import get_error_body_response
 
-from app.common.exception.exception import OnboardingError
+from deputydev_core.exception.exception import OnboardingError
 from app.main.blueprints.deputy_dev.models.request import (
     OnboardingRequest,
     SignUpRequest,

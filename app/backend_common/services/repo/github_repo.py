@@ -10,7 +10,7 @@ from app.backend_common.service_clients.github.github_repo_client import (
 )
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.constants.constants import (
+from app.backend_common.constants.constants import (
     SETTING_ERROR_MESSAGE,
     SettingErrorType,
     VCSTypes,

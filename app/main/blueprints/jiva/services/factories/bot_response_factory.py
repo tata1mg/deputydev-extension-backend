@@ -1,4 +1,4 @@
-from app.common.utils.headers import Headers
+from app.backend_common.utils.headers import Headers
 from app.main.blueprints.jiva.models.chat import ChatModel
 from app.main.blueprints.jiva.services.google.gemini_response import GeminiAiResponse
 from app.main.blueprints.jiva.services.google.gemini_vision_response import (

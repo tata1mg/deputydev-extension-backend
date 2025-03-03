@@ -5,7 +5,7 @@ from typing import Optional
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.validation import ValidationError
 
-from app.common.constants.auth import AuthStatus
+from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient

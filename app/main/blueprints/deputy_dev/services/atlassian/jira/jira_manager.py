@@ -3,7 +3,7 @@ from typing import Optional
 from app.backend_common.service_clients.jira.issue import Issue
 from app.main.blueprints.deputy_dev.utils import get_auth_handler
 
-from .......common.utils.context_vars import get_context_value
+from deputydev_core.utils.context_vars import get_context_value
 from .jira_helper import JiraHelper
 
 

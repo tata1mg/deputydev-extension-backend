@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from app.common.constants.constants import LLModels
+from app.backend_common.constants.constants import LLModels
 
 
 class BasePrompt(ABC):

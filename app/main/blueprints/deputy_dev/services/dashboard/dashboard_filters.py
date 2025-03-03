@@ -3,7 +3,7 @@ from torpedo import Task, TaskExecutor
 from torpedo.exceptions import BadRequestException, TaskExecutorException
 
 from app.backend_common.repository.db import DB
-from app.common.constants.constants import Connections
+from app.backend_common.constants.constants import Connections
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import (
     DashboardQueries,
     TileTypes,
