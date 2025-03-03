@@ -1,6 +1,6 @@
 # THINKING BLOCKS
 from enum import Enum
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -32,6 +32,9 @@ class CodeBlockStartContent(BaseModel):
 
 class CodeBlockDeltaContent(BaseModel):
     code_delta: str
+
+class CodeBlockEndContent(BaseModel):
+    diff: Optional[str] = None
 
 
 # THINKING_BLOCK CONTENTS
@@ -65,6 +68,7 @@ class CodeBlockDelta(BaseModel):
 
 class CodeBlockEnd(BaseModel):
     type: Literal[StreamingContentBlockType.CODE_BLOCK_END] = StreamingContentBlockType.CODE_BLOCK_END
+    content: CodeBlockEndContent
 
 
 StreamingContentBlock = Annotated[
