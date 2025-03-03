@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
-from app.common.constants.constants import LLMProviders
+from app.backend_common.constants.constants import LLMProviders
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 

@@ -6,7 +6,7 @@ from app.backend_common.constants.onboarding import UserRoles
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.services.workspace.onboarding_manager import OnboardingManager
-from app.common.exception.exception import SignUpError
+from deputydev_core.exception.exception import SignUpError
 
 
 class SignUp:

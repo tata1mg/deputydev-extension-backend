@@ -7,7 +7,7 @@ from torpedo.exceptions import HTTPRequestException
 from app.backend_common.services.credentials import AuthHandler
 from deputydev_core.utils.app_logger import AppLogger
 
-from ....common.constants.constants import VCSFailureMessages
+from app.backend_common.constants.constants import VCSFailureMessages
 from ..base_scm_client import BaseSCMClient
 
 

@@ -1,7 +1,7 @@
 from abc import ABC
 
 from app.backend_common.repository.db import DB
-from app.common.constants.constants import Connections
+from app.backend_common.constants.constants import Connections
 
 
 class BaseAnalytics(ABC):

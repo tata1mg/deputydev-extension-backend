@@ -6,7 +6,7 @@ from torpedo import CONFIG
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
-from app.common.utils.context_vars import get_context_value
+from deputydev_core.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
     MultiAgentReflectionIteration,

@@ -9,7 +9,7 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
 from deputydev_core.utils.app_logger import AppLogger
-from app.common.utils.log_time import log_time
+from deputydev_core.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
     PrStatusTypes,

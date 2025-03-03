@@ -8,7 +8,7 @@ from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.client import SupabaseClient
-from app.common.services.authentication.jwt import JWTHandler
+from deputydev_core.services.authentication.jwt import JWTHandler
 
 
 class SupabaseAuth:

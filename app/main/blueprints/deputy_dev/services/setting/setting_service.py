@@ -5,7 +5,7 @@ import toml
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.utils.context_vars import (
+from deputydev_core.utils.context_vars import (
     context_var,
     get_context_value,
     set_context_values,

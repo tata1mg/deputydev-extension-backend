@@ -5,8 +5,7 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyPressEvent
 from prompt_toolkit.patch_stdout import patch_stdout
-
-from app.common.constants.feedbacks import UpvoteDownvoteFeedbacks
+from deputydev_core.utils.constants.feedbacks import UpvoteDownvoteFeedbacks
 from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
