@@ -184,7 +184,9 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         )
 
     @classmethod
-    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    def get_parsed_response_blocks(
+        cls, response_block: List[MessageData]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         final_content = []
         tool_use_map: Dict[str, Any] = {}
         for block in response_block:
@@ -197,8 +199,8 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                         "tool_name": block.content.tool_name,
                         "tool_use_id": block.content.tool_use_id,
                         "tool_input_json": block.content.tool_input,
-                        },
-                    }
+                    },
+                }
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
 
