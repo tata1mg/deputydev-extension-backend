@@ -36,6 +36,8 @@ class CodeBlockDeltaContent(BaseModel):
 
 class CodeBlockEndContent(BaseModel):
     diff: Optional[str] = None
+    added_lines: Optional[int] = None
+    removed_lines: Optional[int] = None
 
 
 # THINKING_BLOCK CONTENTS
