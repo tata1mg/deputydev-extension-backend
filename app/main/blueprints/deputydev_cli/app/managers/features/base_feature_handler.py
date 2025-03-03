@@ -2,12 +2,22 @@ import os
 from abc import ABC
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, List, Optional, Union
+
 from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
-from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
-from deputydev_core.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from deputydev_core.services.embedding.base_embedding_manager import (
+    BaseEmbeddingManager,
+)
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repository.dataclasses.main import (
+    WeaviateSyncAndAsyncClients,
+)
 from deputydev_core.utils.file_utils import read_file
-from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient
+
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FeatureHandlingRedirections,
     FeatureHandlingResult,

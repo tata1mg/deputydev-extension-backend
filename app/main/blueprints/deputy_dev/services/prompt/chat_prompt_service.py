@@ -1,6 +1,7 @@
 # flake8: noqa
-from app.backend_common.utils.formatting import append_line_numbers
 from deputydev_core.utils.context_vars import get_context_value
+
+from app.backend_common.utils.formatting import append_line_numbers
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
 )

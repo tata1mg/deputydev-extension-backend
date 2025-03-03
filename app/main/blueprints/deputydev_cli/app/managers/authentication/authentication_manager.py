@@ -2,15 +2,15 @@ import time
 import uuid
 from typing import Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.constants.auth import AuthStatus
+from deputydev_core.utils.exceptions import InvalidVersionException
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.validation import ValidationError
 
-from deputydev_core.utils.constants.auth import AuthStatus
-from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
-from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient
-from deputydev_core.utils.exceptions import (
-    InvalidVersionException,
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
 )
 from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.cli_auth_token_storage_manager import (
     CLIAuthTokenStorageManager,

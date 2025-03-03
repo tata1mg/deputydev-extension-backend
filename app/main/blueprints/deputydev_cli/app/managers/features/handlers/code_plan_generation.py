@@ -1,14 +1,26 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional, Union
 
-from app.backend_common.constants.constants import IS_LLM_RERANKING_ENABLED, MAX_RELEVANT_CHUNKS
 from deputydev_core.services.chunking.chunking_manager import ChunkingManger
-from deputydev_core.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
-from deputydev_core.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
+from deputydev_core.services.embedding.base_embedding_manager import (
+    BaseEmbeddingManager,
+)
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repository.dataclasses.main import (
+    WeaviateSyncAndAsyncClients,
+)
 from deputydev_core.services.search.dataclasses.main import SearchTypes
 from deputydev_core.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient
+
+from app.backend_common.constants.constants import (
+    IS_LLM_RERANKING_ENABLED,
+    MAX_RELEVANT_CHUNKS,
+)
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
 from app.main.blueprints.deputydev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
 )

@@ -4,10 +4,10 @@ from io import BytesIO
 import ujson
 from PIL import Image
 
+from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.service_clients.gemini.gemini_vision import (
     GeminiVisionServiceClient,
 )
-from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.utils.headers import Headers
 from app.main.blueprints.jiva.models.chat import ChatModel, ChatTypeMsg
 from app.main.blueprints.jiva.services.bots.utils import generate_prompt
