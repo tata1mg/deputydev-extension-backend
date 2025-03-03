@@ -125,8 +125,8 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
-        if "<code_blocks>" in text_block.content.text:
-            code_blocks = text_block.content.text.split("<code_blocks>")[1].split("</code_blocks>")[0].strip()
+        if "<code_snippets>" in text_block.content.text:
+            code_blocks = text_block.content.text.split("<code_snippets>")[1].split("</code_snippets>")[0].strip()
             all_code_blocks = code_blocks.split("<code_block>")
             code_snippets: List[Dict[str, Any]] = []
 
@@ -136,7 +136,7 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
                 programming_language = code_block.split("<programming_language>")[1].split("</programming_language>")[0]
                 file_path = code_block.split("<file_path>")[1].split("</file_path>")[0]
                 is_diff = code_block.split("<is_diff>")[1].split("</is_diff>")[0]
-                code = code_block.split("</is_diff>")[1].strip()
+                code = code_block.split("</is_diff>")[1].replace("</code_block>", "").strip()
 
                 code_snippets.append(
                     {
