@@ -36,21 +36,14 @@ class PastWorkflows:
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
-        try:
-            limit = headers["X-Limit"]
-            offset = headers["X-Offset"]
-            raw_data = await MessageSessionsRepository.get_message_sessions_by_user_team_id(
-                user_team_id, int(limit), int(offset)
-            )
-            serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_SESSIONS"))
-            processed_data = serializer_service.get_processed_data()
-            return processed_data
-        except ValueError as ve:
-            raise ValueError(f"Failed to fetch past sessions: {str(ve)}")
-        except NotImplementedError as nie:
-            raise NotImplementedError(f"Failed to fetch past sessions: {str(nie)}")
-        except Exception as e:
-            raise Exception(f"Failed to fetch past sessions: {str(e)}")
+        limit = headers["X-Limit"]
+        offset = headers["X-Offset"]
+        raw_data = await MessageSessionsRepository.get_message_sessions_by_user_team_id(
+            user_team_id, int(limit), int(offset)
+        )
+        serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_SESSIONS"))
+        processed_data = serializer_service.get_processed_data()
+        return processed_data
 
     @classmethod
     async def get_past_chats(cls, session_id: int) -> List[Dict[str, Any]]:
@@ -65,16 +58,9 @@ class PastWorkflows:
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
-        try:
-            raw_data = await MessageThreadsRepository.get_message_threads_for_session(
-                session_id, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN")
-            )
-            serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
-            processed_data = serializer_service.get_processed_data()
-            return processed_data
-        except ValueError as ve:
-            raise ValueError(f"Failed to fetch past chats: {str(ve)}")
-        except NotImplementedError as nie:
-            raise NotImplementedError(f"Failed to fetch past chats: {str(nie)}")
-        except Exception as e:
-            raise Exception(f"Failed to fetch past chats: {str(e)}")
+        raw_data = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN")
+        )
+        serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
+        processed_data = serializer_service.get_processed_data()
+        return processed_data
