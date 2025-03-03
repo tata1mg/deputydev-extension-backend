@@ -44,7 +44,7 @@ async def solve_user_query(_request: Request, auth_data: AuthData, session_id: i
 @authenticate
 @ensure_session_id
 async def generate_inline_edit(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
-    data = await InlineEditGenerator().get_inline_edit_diff_suggestion(
+    data = await InlineEditGenerator().create_and_start_job(
         payload=InlineEditInput(**_request.json, session_id=session_id)
     )
-    return send_response(data)
+    return send_response({"job_id": data})

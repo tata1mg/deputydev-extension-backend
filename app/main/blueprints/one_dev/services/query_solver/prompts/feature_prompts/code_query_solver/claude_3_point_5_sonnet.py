@@ -117,7 +117,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     content=CodeBlockStartContent(
                         language=programming_language_block.group(1),
                         filepath=file_path_block.group(1),
-                        is_diff=self.is_diff, # type: ignore
+                        is_diff=self.is_diff,  # type: ignore
                     )
                 )
             )
@@ -139,9 +139,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
 
         if last_event:
             if self.diff_buffer:
-                self.event_buffer.append(
-                    CodeBlockEnd(content=CodeBlockEndContent(diff=self.diff_buffer))
-                )
+                self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent(diff=self.diff_buffer)))
                 self.diff_buffer = ""
             self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
 
