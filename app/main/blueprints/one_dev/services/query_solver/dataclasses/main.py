@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+
 
 class ToolUseResponseInput(BaseModel):
     tool_name: str
@@ -22,3 +24,4 @@ class InlineEditInput(BaseModel):
     query: str
     relevant_chunks: List[str]
     code_selection: str
+    auth_data: AuthData

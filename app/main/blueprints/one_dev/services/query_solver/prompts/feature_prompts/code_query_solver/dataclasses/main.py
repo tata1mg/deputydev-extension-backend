@@ -33,6 +33,7 @@ class CodeBlockStartContent(BaseModel):
 class CodeBlockDeltaContent(BaseModel):
     code_delta: str
 
+
 class CodeBlockEndContent(BaseModel):
     diff: Optional[str] = None
 
