@@ -1,8 +1,8 @@
 from typing import Any, Dict, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
 from prompt_toolkit import PromptSession
 
-from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.deputydev_cli.app.managers.authentication.authentication_manager import (
     AuthenticationManager,
 )

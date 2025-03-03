@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from deputydev_core.exception.exception import OnboardingError
 from sanic.log import logger
 from tortoise.transactions import in_transaction
 
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.service_clients.github.github_client import GithubClient
 from app.backend_common.service_clients.oauth import GithubOAuthClient
-from deputydev_core.exception.exception import OnboardingError
 from app.main.blueprints.deputy_dev.models.request import OnboardingRequest
 
 from ......backend_common.services.credentials import GithubAuthHandler

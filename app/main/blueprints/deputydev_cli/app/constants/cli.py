@@ -1,4 +1,5 @@
 from enum import Enum
+
 from deputydev_core.utils.config_manager import ConfigManager
 
 MAX_RELEVANT_CHUNKS = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]

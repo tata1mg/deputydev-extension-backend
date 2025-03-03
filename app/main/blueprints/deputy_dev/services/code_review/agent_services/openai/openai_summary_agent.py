@@ -1,8 +1,8 @@
 # flake8: noqa
+from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import PRStatus
-from deputydev_core.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     AgentTypes,
     FeatureFlows,

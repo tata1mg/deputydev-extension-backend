@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from torpedo import CONFIG
-
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
+from torpedo import CONFIG
 
 
 class AtlassianOAuthClient:

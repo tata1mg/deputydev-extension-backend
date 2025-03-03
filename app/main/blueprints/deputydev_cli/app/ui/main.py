@@ -12,7 +12,10 @@ from typing import List, Optional, Tuple, Type
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import OneDevCliClient
+
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIOperations
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FeatureNextAction,

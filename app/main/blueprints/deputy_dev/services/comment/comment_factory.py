@@ -1,5 +1,5 @@
-from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.constants.constants import VCSTypes
+from app.backend_common.services.credentials import AuthHandler
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.bitbucket_comment import (
     BitbucketComment,
