@@ -18,8 +18,8 @@ class Claude3Point5DiffCreationPrompt(BaseClaude3Point5SonnetPrompt):
             """
 
         user_message = """
-            For the code or documentation you just wrote, please provide the diff, pr title and commit description that needs to be applied.
-            1. Go through each chunk in the initial query, and provide a diff for all the modifications that need to be made on them. The diff chunk should contain the line numbers from original chunk, and the content should be the data those lines should be replaced with.
+            For all the code you wrote in the conversation with the user, please provide the diff, pr title and commit description that needs to be applied.
+            1. Go through each chunk in the initial query and all subsequent queries, and provide a diff for all the final modifications that need to be made on them. The diff chunk should contain the line numbers from original chunk, and the content should be the data those lines should be replaced with.
             2. If a new file needs to be created, provide the diff for the new file as a new chunk of code, with the file path.
             3. Do not use any human understandable lines or comments to signify the diff like "remove existing code", "add new code", etc.
             4. Provide the complete diff without missing any lines.

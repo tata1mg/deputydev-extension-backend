@@ -23,6 +23,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     CodeBlockDelta,
     CodeBlockDeltaContent,
     CodeBlockEnd,
+    CodeBlockEndContent,
     CodeBlockStart,
     CodeBlockStartContent,
     ThinkingBlockDelta,
@@ -57,21 +58,66 @@ class ThinkingParser(BaseAnthropicTextDeltaParser):
 class CodeBlockParser(BaseAnthropicTextDeltaParser):
     def __init__(self):
         super().__init__(xml_tag="code_block")
+        self.diff_buffer = ""
+        self.udiff_line_start: Optional[str] = None
+        self.is_diff: Optional[bool] = None
+        self.temp_buffer = ""
+
+    async def _get_udiff_line_start(self, line_data: str) -> Optional[str]:
+        if line_data.startswith("  "):
+            return " "
+        if line_data.startswith("+ "):
+            return "+"
+        if line_data.startswith("- "):
+            return "-"
+        if line_data.startswith("@@"):
+            return "@@"
+        if line_data.startswith("---"):
+            return "---"
+        if line_data.startswith("+++"):
+            return "+++"
+        return None
 
     async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
+        if self.is_diff is None:
+            self.text_buffer += event.content.text
+        elif self.is_diff:
+            if self.udiff_line_start:
+                # if we have just started a new diff block
+                if self.temp_buffer:
+                    self.diff_buffer += self.temp_buffer
+                    self.text_buffer += self.temp_buffer.replace(f"{self.udiff_line_start} ", "")
+                    self.temp_buffer = ""
+                if self.udiff_line_start in [" ", "+"]:
+                    self.text_buffer += event.content.text
+                    self.diff_buffer += event.content.text
+                else:
+                    self.diff_buffer += event.content.text
 
-        self.text_buffer += event.content.text
+                # end current udiff line if we have reached the end of the line
+                if "\n" in self.text_buffer or self.text_buffer.endswith("\\"):
+                    self.udiff_line_start = None
+                    slash_index = -1 if self.text_buffer.endswith("\\") else self.text_buffer.find("\n")
+                    pre_line_part = self.text_buffer[:slash_index]
+                    self.temp_buffer = self.text_buffer[slash_index:]
+                    self.text_buffer = pre_line_part
+            else:
+                self.temp_buffer += event.content.text
+                self.udiff_line_start = await self._get_udiff_line_start(self.temp_buffer)
+        else:
+            self.text_buffer += event.content.text
 
         programming_language_block = re.search(r"<programming_language>(.*?)</programming_language>", self.text_buffer)
         file_path_block = re.search(r"<file_path>(.*?)</file_path>", self.text_buffer)
         is_diff_block = re.search(r"<is_diff>(.*?)</is_diff>", self.text_buffer)
         if programming_language_block and file_path_block and is_diff_block:
+            self.is_diff = is_diff_block.group(1) == "true"
             self.event_buffer.append(
                 CodeBlockStart(
                     content=CodeBlockStartContent(
                         language=programming_language_block.group(1),
                         filepath=file_path_block.group(1),
-                        is_diff=is_diff_block.group(1) == "true",
+                        is_diff=self.is_diff, # type: ignore
                     )
                 )
             )
@@ -82,13 +128,22 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             )
             self.text_buffer = self.text_buffer.strip()
             self.start_event_completed = True
+            if self.is_diff:
+                self.udiff_line_start = await self._get_udiff_line_start(self.text_buffer)
+                if not self.udiff_line_start:
+                    return []
 
         if self.start_event_completed and self.text_buffer:
             self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
             self.text_buffer = ""
 
         if last_event:
-            self.event_buffer.append(CodeBlockEnd())
+            if self.diff_buffer:
+                self.event_buffer.append(
+                    CodeBlockEnd(content=CodeBlockEndContent(diff=self.diff_buffer))
+                )
+                self.diff_buffer = ""
+            self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
 
         values_to_return = self.event_buffer
         self.event_buffer = []
