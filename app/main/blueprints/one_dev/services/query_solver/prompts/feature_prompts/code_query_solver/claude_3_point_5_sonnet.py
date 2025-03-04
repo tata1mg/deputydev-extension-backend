@@ -137,10 +137,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
             self.text_buffer = ""
 
-
         if last_event:
             if self.diff_buffer:
-                self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent(diff=self.diff_buffer, added_lines=10, removed_lines=20)))
+                self.event_buffer.append(
+                    CodeBlockEnd(content=CodeBlockEndContent(diff=self.diff_buffer, added_lines=10, removed_lines=20))
+                )
                 self.diff_buffer = ""
             self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
 
