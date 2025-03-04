@@ -170,9 +170,7 @@ async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
 async def get_job_status(_request: Request, auth_data: AuthData, session_id: int, **kwargs):
     payload = {key: var for key, var in _request.query_args}
     print(payload)
-    job = await JobService.db_get(
-        filters={"id": int(payload.get("job_id"))}, fetch_one=True
-    )
+    job = await JobService.db_get(filters={"id": int(payload.get("job_id"))}, fetch_one=True)
     if not job:
         return send_response({"status": "JOB_NOT_FOUND"})
     response = {
