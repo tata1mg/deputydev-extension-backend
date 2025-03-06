@@ -1,4 +1,3 @@
-import copy
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
@@ -63,16 +62,17 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         self.udiff_line_start: Optional[str] = None
         self.is_diff: Optional[bool] = None
         self.diff_line_buffer = ""
+        self.added_lines = 0
+        self.removed_lines = 0
 
     def find_newline_instances(self, input_string: str) -> List[Tuple[int, int]]:
         # Regular expression to match either \n or \r\n
-        pattern = r'\r?\n'
-        
+        pattern = r"\r?\n"
+
         # Find all matches
         matches = [(m.start(), m.end()) for m in re.finditer(pattern, input_string)]
-        
-        return matches
 
+        return matches
 
     async def _get_udiff_line_start(self, line_data: str) -> Optional[str]:
         print("line_data", line_data[:2])
@@ -114,12 +114,26 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     self.diff_line_buffer = self.diff_line_buffer[end:]
                     newline_instances = self.find_newline_instances(self.diff_line_buffer)
                     if self.udiff_line_start in [" ", "+"]:
-                        self.text_buffer += pre_line_part.replace(f"{self.udiff_line_start}", "", 1) + "\n" # replace only the first instance of the udiff line start
-                    self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip('\n\r'))
-            self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip('\n\r'))
+                        self.text_buffer += (
+                            pre_line_part.replace(f"{self.udiff_line_start}", "", 1) + "\n"
+                        )  # replace only the first instance of the udiff line start
+                        if self.udiff_line_start == "+":
+                            self.added_lines += 1
+                    if self.udiff_line_start == "@@":
+                        # skip till the last @@ in the line and add the line to the text buffer
+                        last_index = pre_line_part.rfind("@@")
+                        addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
+                        self.text_buffer += addable_part + "\n" if addable_part else ""
+                    if self.udiff_line_start == "-":
+                        self.removed_lines += 1
+                    self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
+            self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
             print("udiff_line_start", self.udiff_line_start)
         else:
             self.text_buffer += event.content.text
+
+        if last_event and self.diff_line_buffer and self.udiff_line_start in [" ", "+"]:
+            self.text_buffer += self.diff_line_buffer
 
         programming_language_block = re.search(r"<programming_language>(.*?)</programming_language>", self.text_buffer)
         file_path_block = re.search(r"<file_path>(.*?)</file_path>", self.text_buffer)
@@ -135,17 +149,21 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     )
                 )
             )
-            self.text_buffer = (
-                self.text_buffer.replace(programming_language_block.group(0), "")
-                .replace(file_path_block.group(0), "")
-                .replace(is_diff_block.group(0), "")
-            )
-            self.text_buffer = self.text_buffer.strip()
+
+            if not self.is_diff:
+                self.text_buffer = (
+                    self.text_buffer.replace(programming_language_block.group(0), "")
+                    .replace(file_path_block.group(0), "")
+                    .replace(is_diff_block.group(0), "")
+                )
+            else:
+                self.diff_line_buffer = (
+                    self.text_buffer.replace(programming_language_block.group(0), "")
+                    .replace(file_path_block.group(0), "")
+                    .replace(is_diff_block.group(0), "")
+                )
+                self.text_buffer = ""
             self.start_event_completed = True
-            if self.is_diff:
-                self.udiff_line_start = await self._get_udiff_line_start(self.text_buffer)
-                if not self.udiff_line_start:
-                    return []
 
         if self.start_event_completed and self.text_buffer:
             self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
@@ -154,7 +172,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         if last_event:
             if self.diff_buffer:
                 self.event_buffer.append(
-                    CodeBlockEnd(content=CodeBlockEndContent(diff=self.diff_buffer, added_lines=10, removed_lines=20))
+                    CodeBlockEnd(
+                        content=CodeBlockEndContent(
+                            diff=self.diff_buffer, added_lines=self.added_lines, removed_lines=self.removed_lines
+                        )
+                    )
                 )
                 self.diff_buffer = ""
             self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
