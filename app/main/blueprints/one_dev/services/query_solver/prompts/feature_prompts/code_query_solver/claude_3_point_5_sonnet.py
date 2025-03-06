@@ -179,7 +179,8 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     )
                 )
                 self.diff_buffer = ""
-            self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
+            else:
+                self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
 
         values_to_return = self.event_buffer
         self.event_buffer = []
