@@ -337,5 +337,5 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
-            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser()]
+            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser(), SummaryParser()]
         )
