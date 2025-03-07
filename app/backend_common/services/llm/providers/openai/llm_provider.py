@@ -1,0 +1,78 @@
+from typing import Any, Dict, List, Optional, Tuple
+
+from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
+from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
+from app.backend_common.services.llm.dataclasses.main import (
+    ConversationTool,
+    ConversationTurn,
+    PromptCacheConfig,
+    UnparsedLLMCallResponse,
+    UserAndSystemMessages,
+)
+from app.common.constants.constants import LLMProviders
+from deputydev_core. import ConfigManager
+
+
+class OpenAI(BaseLLMProvider):
+    def __init__(self):
+        super().__init__(LLMProviders.OPENAI.value)
+        self.anthropic_client = None
+        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
+
+    """LLM manager for handling interactions with OpenAI's GPT models."""
+
+    async def parse_non_streaming_response(self, response: Dict) -> Tuple[str, int, int]:
+        """
+        Parses the response from OpenAI's GPT model.
+
+        Args:
+            response (Dict): The raw response from the GPT model.
+
+        Returns:
+            str: Parsed text response and outpur tokens.
+        """
+        return (
+            response.choices[0].message.content,
+            response.usage.prompt_tokens,
+            response.usage.completion_tokens,
+        )
+
+    async def call_service_client(
+        self, messages: List[Dict[str, str]], model: str, response_type: str
+    ) -> UnparsedLLMCallResponse:
+        """
+        Calls the OpenAI service client.
+
+        Args:
+            messages (List[Dict[str, str]]): Formatted conversation messages.
+
+        Returns:
+            str: The response from the GPT model.
+        """
+        response = await OpenAIServiceClient().get_llm_response(
+            conversation_messages=messages, model=model, response_type=response_type
+        )
+        return response
+
+    def build_llm_payload(
+        self,
+        prompt: UserAndSystemMessages,
+        previous_responses: List[ConversationTurn] = [],
+        tools: Optional[ConversationTool] = None,
+        cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+    ) -> Dict[str, Any]:
+        """
+        Formats the conversation for OpenAI's GPT model.
+
+        Args:
+            prompt (Dict[str, str]): A prompt object.
+            previous_responses (List[Dict[str, str]] ): previous messages to pass to LLM
+
+        Returns:
+            List[Dict[str, str]]: A formatted list of message dictionaries.
+        """
+        message = [
+            {"role": "system", "content": prompt["system_message"]},
+            {"role": "user", "content": prompt["user_message"]},
+        ]
+        return message
