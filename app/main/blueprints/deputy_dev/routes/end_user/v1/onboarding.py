@@ -1,4 +1,4 @@
-from deputydev_core.exception.exception import OnboardingError
+from app.backend_common.exception.exception import OnboardingError
 from sanic import Blueprint, Request, response
 from sanic_ext import validate
 from torpedo import get_error_body_response

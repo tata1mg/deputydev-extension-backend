@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Tuple
 
-from deputydev_core.exception.exception import CredentialsError
+from app.backend_common.exception.exception import CredentialsError
 from git.util import Actor
 from torpedo import CONFIG
 from tortoise.exceptions import DoesNotExist

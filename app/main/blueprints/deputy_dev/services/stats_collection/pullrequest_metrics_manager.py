@@ -1,4 +1,4 @@
-from deputydev_core.exception import RetryException
+from app.backend_common.exception import RetryException
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG

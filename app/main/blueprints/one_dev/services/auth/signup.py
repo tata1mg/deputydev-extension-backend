@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from deputydev_core.exception.exception import SignUpError
+from app.backend_common.exception.exception import SignUpError
 from torpedo import CONFIG
 
 from app.backend_common.constants.onboarding import UserRoles
