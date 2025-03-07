@@ -20,11 +20,15 @@ class QuerySolverInput(BaseModel):
     tool_use_response: Optional[ToolUseResponseInput] = None
 
 
+class CodeSelectionInput(BaseModel):
+    selected_text: str
+    file_path: str
+
 class InlineEditInput(BaseModel):
     session_id: int
     query: str
     relevant_chunks: List[Any]
-    code_selection: str
+    code_selection: CodeSelectionInput
     auth_data: AuthData
 
 
