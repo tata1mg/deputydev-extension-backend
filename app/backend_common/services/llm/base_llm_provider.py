@@ -5,8 +5,8 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple
 
-from deputydev_core.exception import RetryException
-from deputydev_core.exception.exception import ParseException
+from app.backend_common.exception import RetryException
+from app.backend_common.exception.exception import ParseException
 from deputydev_core.utils.app_logger import AppLogger
 from torpedo import CONFIG, Task
 

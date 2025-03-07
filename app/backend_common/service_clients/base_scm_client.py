@@ -3,8 +3,8 @@ from __future__ import annotations
 import typing as t
 
 from deputydev_core.clients.http.base_http_client import BaseHTTPClient
-from deputydev_core.exception import RefreshTokenFailed
-from deputydev_core.exception.exception import RateLimitError
+from app.backend_common.exception import RefreshTokenFailed
+from app.backend_common.exception.exception import RateLimitError
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 

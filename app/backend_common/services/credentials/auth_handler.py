@@ -5,7 +5,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
-from deputydev_core.exception.exception import CredentialsError
+from app.backend_common.exception.exception import CredentialsError
 from git.util import Actor
 from tortoise.exceptions import DoesNotExist
 
