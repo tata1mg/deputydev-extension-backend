@@ -67,7 +67,8 @@ class Claude3Point5RelevantChatFilterPrompt(BaseClaude3Point5SonnetPrompt):
             xml_output += "<Chat>"
             xml_output += f"<ID>{chat.id}</ID>"
             xml_output += f"<Summary>{chat.summary}</Summary>"
-            xml_output += f"<Query>{chat.query}</Query>"
+            if chat.query:
+                xml_output += f"<Query>{chat.query}</Query>"
             xml_output += "</Chat>"
 
         # Close root element
