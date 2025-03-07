@@ -90,9 +90,13 @@ class QuerySolver:
             },
             previous_responses=[],
             tools=None,
-            stream=True,
+            stream=False,
             session_id=session_id,
         )
+
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("Expected NonStreamingParsedLLMCallResponse")
+
         return llm_response.parsed_content[0].get("chat_ids")
 
     async def get_previous_messages(self, session_id: int, current_query: str) -> List[int]:

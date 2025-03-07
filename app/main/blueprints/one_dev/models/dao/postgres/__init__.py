@@ -1,9 +1,4 @@
-__all__ = [
-    "SessionChats",
-    "Job",
-    "JobFeedback",
-    "QuerySummaries"
-]
+__all__ = ["SessionChats", "Job", "JobFeedback", "QuerySummaries"]
 
 from .job import Job
 from .job_feedback import JobFeedback
