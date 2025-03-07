@@ -26,3 +26,13 @@ class InlineEditInput(BaseModel):
     relevant_chunks: List[Any]
     code_selection: str
     auth_data: AuthData
+
+
+class ResponseMetadataContent(BaseModel):
+    query_id: int
+    session_id: int
+
+
+class ResponseMetadataBlock(BaseModel):
+    content: ResponseMetadataContent
+    type: str

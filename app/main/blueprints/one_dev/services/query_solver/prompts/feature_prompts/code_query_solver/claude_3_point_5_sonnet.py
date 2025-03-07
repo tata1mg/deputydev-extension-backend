@@ -26,6 +26,10 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     CodeBlockEndContent,
     CodeBlockStart,
     CodeBlockStartContent,
+    SummaryBlockDelta,
+    SummaryBlockDeltaContent,
+    SummaryBlockEnd,
+    SummaryBlockStart,
     ThinkingBlockDelta,
     ThinkingBlockDeltaContent,
     ThinkingBlockEnd,
@@ -49,6 +53,28 @@ class ThinkingParser(BaseAnthropicTextDeltaParser):
 
         if last_event:
             self.event_buffer.append(ThinkingBlockEnd())
+
+        values_to_return = self.event_buffer
+        self.event_buffer = []
+        return values_to_return
+
+
+class SummaryParser(BaseAnthropicTextDeltaParser):
+    def __init__(self):
+        super().__init__(xml_tag="summary")
+
+    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
+        if not self.start_event_completed:
+            self.event_buffer.append(SummaryBlockStart())
+            self.start_event_completed = True
+
+        if event.content.text:
+            self.event_buffer.append(
+                SummaryBlockDelta(content=SummaryBlockDeltaContent(summary_delta=event.content.text))
+            )
+
+        if last_event:
+            self.event_buffer.append(SummaryBlockEnd())
 
         values_to_return = self.event_buffer
         self.event_buffer = []
@@ -268,6 +294,9 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             </important>
 
             Also, please use the tools provided to you to help you with the task.
+
+            At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag.
         """
 
         return UserAndSystemMessages(
