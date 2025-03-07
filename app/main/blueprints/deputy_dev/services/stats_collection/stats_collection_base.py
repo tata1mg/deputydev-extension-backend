@@ -1,6 +1,6 @@
 from abc import ABC
 
-from deputydev_core.exception import RetryException
+from app.backend_common.exception import RetryException
 from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
 

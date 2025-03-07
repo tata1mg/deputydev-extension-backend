@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from deputydev_core.exception.exception import OnboardingError
+from app.backend_common.exception.exception import OnboardingError
 from sanic.log import logger
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from deputydev_core.exception.exception import SignUpError
+from app.backend_common.exception.exception import SignUpError
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
