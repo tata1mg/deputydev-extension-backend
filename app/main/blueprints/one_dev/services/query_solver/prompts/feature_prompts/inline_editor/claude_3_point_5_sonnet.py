@@ -37,7 +37,10 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
 
         user_message = f"""
             Here is the selected code from a repository
-            {self.params.get("code_selection")}
+            {self.params["code_selection"].selected_text}
+
+            Here is the filepath of the selected code
+            {self.params["code_selection"].file_path}
 
             Here are some related chunks of code from the same repository.
             {self.params.get("relevant_chunks")}
