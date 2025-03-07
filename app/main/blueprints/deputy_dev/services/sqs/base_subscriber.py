@@ -3,8 +3,8 @@ import asyncio
 import botocore.exceptions
 import ujson as json
 from commonutils import BaseSQSWrapper
-from deputydev_core.exception import RetryException
-from deputydev_core.exception.exception import RateLimitError
+from app.backend_common.exception import RetryException
+from app.backend_common.exception.exception import RateLimitError
 from sanic.log import logger
 
 from app.backend_common.constants.error_messages import ErrorMessages

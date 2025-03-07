@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from deputydev_core.exception.exception import OnboardingError
+from app.backend_common.exception.exception import OnboardingError
 from tortoise.exceptions import DoesNotExist
 
 from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations

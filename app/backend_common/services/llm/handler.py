@@ -1,7 +1,7 @@
 import asyncio
 from typing import Dict, List, Tuple
 
-from deputydev_core.exception import RetryException
+from app.backend_common.exception import RetryException
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 

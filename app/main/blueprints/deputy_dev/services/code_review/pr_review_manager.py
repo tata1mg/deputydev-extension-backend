@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.log_time import log_time
+from app.backend_common.utils.log_time import log_time
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
