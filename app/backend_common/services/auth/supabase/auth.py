@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
-from deputydev_core.services.authentication.jwt import JWTHandler
+from deputydev_core.utils.jwt_handler import JWTHandler
 
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
