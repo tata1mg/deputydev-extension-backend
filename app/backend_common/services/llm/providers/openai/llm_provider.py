@@ -10,7 +10,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.common.constants.constants import LLMProviders
-from deputydev_core. import ConfigManager
 
 
 class OpenAI(BaseLLMProvider):
