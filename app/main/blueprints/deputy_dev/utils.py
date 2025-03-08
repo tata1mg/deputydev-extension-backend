@@ -5,9 +5,9 @@ import re
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-from deputydev_core.utils.jwt_handler import JWTHandler
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
+from deputydev_core.utils.jwt_handler import JWTHandler
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 

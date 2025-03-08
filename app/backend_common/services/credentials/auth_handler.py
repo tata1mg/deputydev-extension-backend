@@ -5,11 +5,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
-from app.backend_common.exception.exception import CredentialsError
 from git.util import Actor
 from tortoise.exceptions import DoesNotExist
 
 from app.backend_common.constants.constants import TokenableType, TokenType
+from app.backend_common.exception.exception import CredentialsError
 from app.backend_common.models.dao.postgres.tokens import Tokens
 from app.backend_common.services.workspace.encryption_service import EncryptionService
 
