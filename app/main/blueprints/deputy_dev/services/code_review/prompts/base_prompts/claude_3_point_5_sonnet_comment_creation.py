@@ -10,12 +10,19 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
+from app.backend_common.utils.formatting import (
+    format_code_blocks,
+    format_comment_bucket_name,
+)
 from app.common.exception.exception import ParseException
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
+    LLMCommentData,
+)
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt):
     @classmethod
-    def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
+    def _parse_text_blocks(cls, text: str) -> Dict[str, List[LLMCommentData]]:
         review_content = None
         # Parse the XML string
         try:
@@ -26,18 +33,46 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
                 xml_content = review_content.group(0)  # Extract matched XML content
                 root = ET.fromstring(xml_content)
 
-                comments = []
-                for comment in root.find("comments").findall("comment"):
-                    comment_dict = {
-                        "comment": format_code_blocks(comment.find("description").text),
-                        "corrective_code": comment.find("corrective_code").text,
-                        "file_path": comment.find("file_path").text,
-                        "line_number": comment.find("line_number").text,
-                        "confidence_score": float(comment.find("confidence_score").text),
-                        "bucket": format_comment_bucket_name(comment.find("bucket").text),
-                    }
-                    comments.append(comment_dict)
-                return {"data": comments}
+                comments: List[LLMCommentData] = []
+                root_comments = root.find("comments")
+                if root_comments is None:
+                    raise ValueError("The XML string does not contain the expected <comments> tags.")
+
+                for comment in root_comments.findall("comment"):
+                    corrective_code_element = comment.find("corrective_code")
+                    description_element = comment.find("description")
+                    file_path_element = comment.find("file_path")
+                    line_number_element = comment.find("line_number")
+                    confidence_score_element = comment.find("confidence_score")
+                    bucket_element = comment.find("bucket")
+
+                    if (
+                        not description_element
+                        or not file_path_element
+                        or not line_number_element
+                        or not confidence_score_element
+                        or not bucket_element
+                        or not description_element.text
+                        or not file_path_element.text
+                        or not line_number_element.text
+                        or not confidence_score_element.text
+                        or not bucket_element.text
+                    ):
+                        raise ValueError("The XML string does not contain the expected comment elements.")
+
+                    comments.append(
+                        LLMCommentData(
+                            comment=format_code_blocks(description_element.text),
+                            corrective_code=corrective_code_element.text
+                            if corrective_code_element is not None
+                            else None,
+                            file_path=file_path_element.text,
+                            line_number=line_number_element.text,
+                            confidence_score=float(confidence_score_element.text),
+                            bucket=format_comment_bucket_name(bucket_element.text),
+                        )
+                    )
+                return {"comments": comments}
             else:
                 raise ValueError("The XML string does not contain the expected <review> tags.")
 
@@ -47,7 +82,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             )
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, List[LLMCommentData]]]:
         all_comments: List[Dict[str, Any]] = []
         for response_data in llm_response.content:
             if isinstance(response_data, TextBlockData):

@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.utils.app_utils import get_token_count, safe_index
 from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND
@@ -155,7 +157,7 @@ class PRDiffHandler:
         # Return the filtered PR diff with exclusions and inclusions
         return ignore_files(self.pr_diff, list(exclusions), list(inclusions))
 
-    async def pr_diffs_token_counts(self, operation: str = "code_review") -> dict:
+    async def pr_diffs_token_counts(self, operation: str = "code_review") -> Dict[str, int]:
         """
         Counts the number of tokens in the PR diffs for each agent or operation.
 
@@ -197,7 +199,7 @@ class PRDiffHandler:
         else:
             return 0
 
-    async def pr_diffs_token_counts_agent_name_wise(self, operation: str = "code_review") -> dict:
+    async def pr_diffs_token_counts_agent_name_wise(self, operation: str = "code_review") -> Dict[str, Any]:
         """
         Counts the PR diff tokens and maps them to agent names.
 
@@ -221,5 +223,5 @@ class PRDiffHandler:
         else:
             return pr_diff_token_count
 
-    async def get_pr_diff_token_count(self, operation="code_review") -> dict:
+    async def get_pr_diff_token_count(self, operation="code_review") -> Dict[str, Any]:
         return await self.pr_diffs_token_counts_agent_name_wise(operation)

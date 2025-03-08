@@ -15,6 +15,9 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 
 
@@ -30,9 +33,10 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
+        super().__init__(context_service, is_reflection_enabled, llm_handler, model)
         self.agent_setting = agent_setting
         self.agent_id = self.agent_setting.get("agent_id")
-        super().__init__(context_service, is_reflection_enabled, llm_handler, model)
+        self.agent_name = SettingService.helper.predefined_name_to_custom_name(self.agent_name)
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
         relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
