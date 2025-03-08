@@ -25,3 +25,5 @@ class AgentAndInitParams(BaseModel):
 class AgentRunResult(BaseModel):
     prompt_tokens_exceeded: bool
     agent_result: Optional[Dict[str, Any]] = None
+    agent_name: str
+    agent_type: AgentTypes

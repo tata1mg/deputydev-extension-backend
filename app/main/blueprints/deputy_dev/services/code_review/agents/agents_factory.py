@@ -1,21 +1,19 @@
-from enum import Enum
-from typing import List
+from typing import List, Union
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
-from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
-    BasePromptFeatureFactory,
-)
 from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
     BaseCodeReviewAgent,
 )
 from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comment_validator.comment_validator_agent import (
+    CommentValidatorAgent,
 )
 from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.commenters.commenter_agents.business_validation_agent import (
     BusinessValidationAgent,
@@ -35,6 +33,10 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comme
 from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
 )
+from app.main.blueprints.deputy_dev.services.code_review.comments.dataclasses.main import (
+    ParsedAggregatedCommentData,
+    ParsedCommentData,
+)
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
@@ -47,13 +49,17 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class AgentFactory:
-    agents = {
+    code_review_agents = {
         AgentTypes.BUSINESS_LOGIC_VALIDATION: BusinessValidationAgent,
         AgentTypes.CODE_MAINTAINABILITY: CodeMaintainabilityAgent,
         AgentTypes.CODE_COMMUNICATION: CodeCommunicationAgent,
         AgentTypes.ERROR: ErrorAgent,
         AgentTypes.PERFORMANCE_OPTIMIZATION: PerformanceOptimizationAgent,
         AgentTypes.SECURITY: SecurityAgent,
+    }
+
+    review_finalization_agents = {
+        AgentTypes.COMMENT_VALIDATION: CommentValidatorAgent,
     }
 
     @classmethod
@@ -91,7 +97,7 @@ class AgentFactory:
         return valid_agents
 
     @classmethod
-    def get_agents(
+    def get_code_review_agents(
         cls,
         context_service: ContextService,
         llm_handler: LLMHandler[PromptFeatures],
@@ -107,12 +113,40 @@ class AgentFactory:
             if not include_agent_types or agent_type_and_init_params.agent_type in include_agent_types:
                 if not exclude_agent_types or agent_type_and_init_params.agent_type not in exclude_agent_types:
                     initialized_agents.append(
-                        cls.agents[agent_type_and_init_params.agent_type](
+                        cls.code_review_agents[agent_type_and_init_params.agent_type](
                             context_service=context_service,
                             is_reflection_enabled=is_reflection_enabled,
                             llm_handler=llm_handler,
-                            model=LLModels(ConfigManager.configs["FEATURE_MODELS"]["PR_REVIEW"])
-                            ** agent_type_and_init_params.init_params,
+                            model=LLModels(ConfigManager.configs["FEATURE_MODELS"]["PR_REVIEW"]),
+                            agent_setting={},
+                            **agent_type_and_init_params.init_params,
+                        )
+                    )
+
+        return initialized_agents
+
+    @classmethod
+    def get_review_finalization_agents(
+        cls,
+        context_service: ContextService,
+        comments: Union[List[ParsedCommentData], List[ParsedAggregatedCommentData]],
+        llm_handler: LLMHandler[PromptFeatures],
+        is_reflection_enabled: bool = True,
+        include_agent_types: List[AgentTypes] = [],
+        exclude_agent_types: List[AgentTypes] = [],
+    ) -> List[BaseCodeReviewAgent]:
+        initialized_agents: List[BaseCodeReviewAgent] = []
+        for agent_type, agent_class in cls.review_finalization_agents.items():
+            if not include_agent_types or agent_type in include_agent_types:
+                if not exclude_agent_types or agent_type not in exclude_agent_types:
+                    initialized_agents.append(
+                        agent_class(
+                            context_service=context_service,
+                            is_reflection_enabled=is_reflection_enabled,
+                            llm_handler=llm_handler,
+                            model=LLModels(ConfigManager.configs["FEATURE_MODELS"]["PR_REVIEW"]),
+                            agent_setting={},
+                            comments=comments,
                         )
                     )
 
