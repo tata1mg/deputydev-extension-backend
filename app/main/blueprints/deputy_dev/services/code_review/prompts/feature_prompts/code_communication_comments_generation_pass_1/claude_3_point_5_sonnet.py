@@ -1,6 +1,9 @@
 from typing import Any, Dict
 
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
+from app.main.blueprints.deputy_dev.constants.constants import (
+    CUSTOM_PROMPT_INSTRUCTIONS,
+)
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
     BaseClaude3Point5SonnetCommentCreationPrompt,
@@ -20,6 +23,9 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             aspects. Your focus will be on documentation, docstrings, and logging. You will be provided with the
             pull request title, description, and the PR's diff (Output of `git diff` command)
         """
+
+        if self.params.get("REPO_INFO_PROMPT"):
+            system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
 
         user_message = f"""
             1. Here's the information for the pull request you need to review:
@@ -105,5 +111,8 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             -   Do not duplicate comments for similar issues across different locations.
             -   If you are suggesting any comment that is already catered please don't include those comment in response.
         """
+
+        if self.params.get("CUSTOM_PROMPT"):
+            user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
