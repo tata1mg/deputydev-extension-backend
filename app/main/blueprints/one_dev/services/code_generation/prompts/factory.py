@@ -5,7 +5,9 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.backend_common.services.llm.prompts.base_prompt_feature_factory import BasePromptFeatureFactory
+from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
+    BasePromptFeatureFactory,
+)
 
 from .dataclasses.main import PromptFeatures
 from .feature_prompts.chat_filter.factory import ChatRankingPromptFactory

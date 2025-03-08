@@ -4,7 +4,11 @@ from typing import Any, AsyncIterator, Dict, List
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
-from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, StreamingResponse, UserAndSystemMessages
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
