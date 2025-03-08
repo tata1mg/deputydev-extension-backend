@@ -1,6 +1,9 @@
 from typing import Optional
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
+    BasePromptFeatureFactory,
+)
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (
     BaseCodeReviewPrompt,
 )
@@ -8,7 +11,6 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_revie
 from .json_data_response.factory import CodeReviewJsonDataPromptFactory
 from .plain_text_response.factory import CodeReviewPlainTextPromptFactory
 from .xml_data_response.factory import CodeReviewXMLDataPromptFactory
-from app.backend_common.services.llm.prompts.base_prompt_feature_factory import BasePromptFeatureFactory
 
 
 class CodeReviewPromptFactory(BasePromptFeatureFactory):

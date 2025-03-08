@@ -5,9 +5,8 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from .claude_3_point_5_sonnet import (
-    Claude3Point5SecurityCommentsGenerationPass2Prompt,
-)
+
+from .claude_3_point_5_sonnet import Claude3Point5SecurityCommentsGenerationPass2Prompt
 
 
 class SecurityCommentsGenerationPass2PromptFactory(BaseFeaturePromptFactory):
