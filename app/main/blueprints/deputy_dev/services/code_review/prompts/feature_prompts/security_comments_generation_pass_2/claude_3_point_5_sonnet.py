@@ -1,6 +1,9 @@
 from typing import Any, Dict
 
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
+from app.main.blueprints.deputy_dev.constants.constants import (
+    CUSTOM_PROMPT_INSTRUCTIONS,
+)
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
     BaseClaude3Point5SonnetCommentCreationPrompt,
@@ -20,6 +23,8 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             issues and vulnerabilities. Your goal is to provide a thorough and accurate security review,
             improving upon an initial analysis.
         """
+        if self.params.get("REPO_INFO_PROMPT"):
+            system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
 
         user_message = f"""
             First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
@@ -115,5 +120,8 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             </comments>
             </review>
         """
+
+        if self.params.get("CUSTOM_PROMPT"):
+            user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)

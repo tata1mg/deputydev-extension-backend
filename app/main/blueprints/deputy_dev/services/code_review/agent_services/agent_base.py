@@ -29,7 +29,7 @@ class AgentServiceBase(ABC):
         self.agent_name = agent_name
         self.tiktoken = TikToken()
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_REVIEW"]
-        self.agent_setting = SettingService.Helper.agent_setting_by_name(agent_name)
+        self.agent_setting = SettingService.helper.agent_setting_by_name(agent_name)
         self.agent_id = self.agent_setting.get("agent_id")
 
     async def required_prompt_variables(self, comments: str = None) -> dict:

@@ -11,12 +11,14 @@ from app.backend_common.utils.app_utils import get_task_response
 from app.backend_common.utils.formatting import format_summary_with_metadata
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
-    AgentTypes,
     MultiAgentReflectionIteration,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
+from app.main.blueprints.deputy_dev.services.code_review.agents.agents_factory import (
     AgentFactory,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
@@ -73,7 +75,7 @@ class MultiAgentPRReviewManager:
 
     # section setting start
 
-    def _is_reflection_enabled(self):
+    def _is_reflection_enabled(self) -> bool:
         if self.reflection_enabled is None:
             self.reflection_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["REFLECTION_ENABLED"]
         return self.reflection_enabled
@@ -182,14 +184,6 @@ class MultiAgentPRReviewManager:
         await self._make_llm_calls()
         self.populate_meta_info()
 
-    def exclude_disabled_agents(self):
-        setting = get_context_value("setting")
-        for agent, agent_setting in setting["code_review_agent"]["agents"].items():
-            if not agent_setting["enable"] or not setting["code_review_agent"]["enable"]:
-                self.exclude_agent.add(agent)
-        if not setting[AgentTypes.PR_SUMMARY.value]["enable"]:
-            self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
-
     async def execute_pass_1(self):
         await self.__execute_pass()
         self.populate_pr_summary()
@@ -203,13 +197,21 @@ class MultiAgentPRReviewManager:
         # exclude summary agent
         self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
         # exclude custom_agents
-        agents_settings = SettingService.Helper.agents_settings()
+        agents_settings = SettingService.helper.agents_settings()
         for agent_name, agent_setting in agents_settings.items():
             if agent_setting["is_custom_agent"]:
                 self.exclude_agent.add(agent_name)
 
     async def get_code_review_comments(self):
-        self.exclude_disabled_agents()
+        # get all agents from factory
+        all_agents = AgentFactory.get_agents(
+            context_service=self.context_service,
+            is_reflection_enabled=self._is_reflection_enabled(),
+        )
+
+        # segregate agents in realtime based on whether they should execute or not
+        runnable_agents = [agent for agent in all_agents if await agent.should_execute()]
+
         await self.execute_pass_1()
         if get_context_value("setting")["code_review_agent"]["enable"]:
             await self.execute_pass_2() if self._is_reflection_enabled() else None
@@ -234,7 +236,16 @@ class MultiAgentPRReviewManager:
             formatted_summary = await format_summary_with_metadata(
                 summary=self.pr_summary["response"], loc=loc, commit_id=self.pr_service.pr_model().commit_id()
             )
-        return self.filtered_comments, formatted_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
+        return (
+            self.filtered_comments,
+            formatted_summary,
+            self.agents_tokens,
+            {
+                "issue_id": self.context_service.issue_id,
+                "confluence_doc_id": self.context_service.confluence_id,
+            },
+            self._is_large_pr,
+        )
 
     def all_prompts_exceed_token_limit(self):
         all_exceeded = True

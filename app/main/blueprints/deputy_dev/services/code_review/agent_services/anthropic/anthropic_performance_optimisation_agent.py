@@ -1,7 +1,10 @@
 # flake8: noqa
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes, TokenTypes
+from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
@@ -13,7 +16,7 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 class AnthropicPerformanceOptimisationAgent(AgentServiceBase):
     def __init__(self, context_service: ContextService, is_reflection_enabled: bool):
-        agent_name = SettingService.Helper.predefined_name_to_custom_name(AgentTypes.PERFORMANCE_OPTIMISATION.value)
+        agent_name = SettingService.helper.predefined_name_to_custom_name(AgentTypes.PERFORMANCE_OPTIMIZATION.value)
         super().__init__(context_service, is_reflection_enabled, agent_name)
 
     def get_with_reflection_system_prompt_pass1(self):
