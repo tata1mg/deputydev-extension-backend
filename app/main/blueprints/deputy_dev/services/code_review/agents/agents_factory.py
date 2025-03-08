@@ -1,7 +1,15 @@
-from typing import Any, Dict, List, Union
+from enum import Enum
+from typing import List
 
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+from torpedo import CONFIG
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
+    BasePromptFeatureFactory,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
     BaseCodeReviewAgent,
 )
@@ -29,6 +37,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comme
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
+)
+from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
+    PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
@@ -83,6 +94,7 @@ class AgentFactory:
     def get_agents(
         cls,
         context_service: ContextService,
+        llm_handler: LLMHandler[PromptFeatures],
         is_reflection_enabled: bool = True,
         include_agent_types: List[AgentTypes] = [],
         exclude_agent_types: List[AgentTypes] = [],
@@ -98,52 +110,10 @@ class AgentFactory:
                         cls.agents[agent_type_and_init_params.agent_type](
                             context_service=context_service,
                             is_reflection_enabled=is_reflection_enabled,
-                            **agent_type_and_init_params.init_params,
+                            llm_handler=llm_handler,
+                            model=LLModels(ConfigManager.configs["FEATURE_MODELS"]["PR_REVIEW"])
+                            ** agent_type_and_init_params.init_params,
                         )
                     )
 
         return initialized_agents
-
-    # async def build_prompts(self, reflection_stage, previous_review_comments, exclude_agents):
-    #     prompts = await self.build_code_review_agents_prompt(reflection_stage, previous_review_comments, exclude_agents)
-    #     prompt = await self.build_pr_summary_prompt(reflection_stage, previous_review_comments, exclude_agents)
-    #     if prompt:
-    #         prompts[AgentTypes.PR_SUMMARY.value] = prompt
-
-    #     meta_info = {
-    #         "issue_id": self.context_service.issue_id,
-    #         "confluence_doc_id": self.context_service.confluence_id,
-    #     }
-    #     return prompts, meta_info
-
-    # async def build_pr_summary_prompt(self, reflection_stage, previous_review_comments, exclude_agents):
-    #     agent = AgentTypes.PR_SUMMARY.value
-    #     _klass = self.factories[agent]
-    #     prompt = await self.__build_prompts(agent, _klass, reflection_stage, previous_review_comments, exclude_agents)
-    #     return prompt
-
-    # async def build_code_review_agents_prompt(self, reflection_stage, previous_review_comments, exclude_agents):
-    #     prompts = {}
-    #     for agent in SettingService.Helper.agents_settings().keys():
-    #         predefined_name = SettingService.Helper.custom_name_to_predefined_name(agent)
-    #         _klass = self.factories.get(predefined_name)
-    #         prompt = await self.__build_prompts(
-    #             agent, _klass, reflection_stage, previous_review_comments, exclude_agents
-    #         )
-    #         if prompt:
-    #             prompts[agent] = prompt
-    #     return prompts
-
-    # async def __build_prompts(self, agent, agent_class, reflection_stage, previous_review_comments, exclude_agents):
-    #     if not agent_class or agent in exclude_agents:
-    #         return
-
-    #     agent_instance = agent_class(self.context_service, self.reflection_enabled)
-    #     agent_callable = await agent_instance.should_execute()
-    #     if not agent_callable:
-    #         return
-
-    #     prompt = await agent_instance.get_system_n_user_prompt(
-    #         reflection_stage, previous_review_comments.get(agent, {}).get("response")
-    #     )
-    #     return prompt
