@@ -4,8 +4,13 @@ from typing import List, Optional
 from sanic.log import logger
 
 from app.backend_common.repository.db import DB
-from app.main.blueprints.one_dev.models.dao.postgres.query_summaries import QuerySummaries
-from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO, QuerySummaryData
+from app.main.blueprints.one_dev.models.dao.postgres.query_summaries import (
+    QuerySummaries,
+)
+from app.main.blueprints.one_dev.models.dto.query_summaries import (
+    QuerySummaryData,
+    QuerySummaryDTO,
+)
 
 
 class QuerySummarysRepository:
