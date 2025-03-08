@@ -1,8 +1,9 @@
 from typing import Any, Dict, List
 
+from app.backend_common.constants.constants import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
-from app.common.constants.constants import LLModels, PromptFeatures
+from app.common.constants.constants import PromptFeatures
 from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.base_code_gen_iterative_handler import (

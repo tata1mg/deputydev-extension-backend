@@ -4,7 +4,7 @@ from functools import wraps
 from sanic.log import logger
 from torpedo import Request, send_response
 
-from app.common.utils.headers import Headers
+from app.backend_common.utils.headers import Headers
 
 
 def http_v4_wrapper(func):
