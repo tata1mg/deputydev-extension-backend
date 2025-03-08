@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from app.backend_common.exception.exception import OnboardingError
 from sanic.log import logger
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
+from app.backend_common.exception.exception import OnboardingError
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.service_clients.bitbucket import BitbucketWorkspaceClient
 from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations
