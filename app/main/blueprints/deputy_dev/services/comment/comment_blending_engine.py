@@ -5,7 +5,6 @@ from typing import List
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants import LLMModelNames
 
-from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.openai_comment_summarization_agent import (
     OpenAICommentSummarizationAgent,
@@ -17,6 +16,8 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
     ContextService,
 )
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
+from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import CodeReviewPromptFactory
+from app.backend_common.models.dto.message_thread_dto import LLModels
 
 
 class CommentBlendingEngine:
@@ -92,7 +93,14 @@ class CommentBlendingEngine:
                 )
                 if prompt.get("exceeds_tokens"):  # Case when we exceed tokens of gpt
                     return
-                conversation_messages = self.llm_service.build_llm_payload(prompt)
+
+                prompt = CodeReviewPromptFactory.get_prompt_obj(
+                    model=LLModels.GPT_4O,
+                    prompt_return_type="json",
+                    should_parse=True,
+                    user_message=prompt.get("user_message"),
+                    system_message=prompt.get("system_message"),
+                )
                 response = await self.llm_service.call_service_client(
                     messages=conversation_messages,
                     model=LLMModelNames.GPT_4_O.value,
@@ -244,7 +252,14 @@ class CommentBlendingEngine:
                 )
                 if prompt.get("exceeds_tokens"):  # Case when we exceed tokens of gpt
                     return
-                conversation_messages = self.llm_service.build_llm_payload(prompt)
+
+                prompt = CodeReviewPromptFactory.get_prompt_obj(
+                    model=LLModels.GPT_4O,
+                    prompt_return_type="json",
+                    should_parse=True,
+                    user_message=prompt.get("user_message"),
+                    system_message=prompt.get("system_message"),
+                )
                 response = await self.llm_service.call_service_client(
                     messages=conversation_messages,
                     model=LLMModelNames.GPT_4_O.value,
