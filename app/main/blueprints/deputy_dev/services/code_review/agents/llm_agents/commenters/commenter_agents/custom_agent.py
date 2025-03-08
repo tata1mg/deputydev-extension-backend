@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
     AgentTypes,
 )
@@ -40,3 +41,11 @@ class CustomAgent(BaseCommenterAgent):
         variables = await super().required_prompt_variables(last_pass_result)
         variables["AGENT_NAME"] = self.agent_name
         return variables
+
+    def get_agent_specific_tokens_data(self) -> Dict[str, int]:
+        return {
+            TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
+            TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
+            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id],
+            TokenTypes.RELEVANT_CHUNK.value: self.context_service.embedding_input_tokens,
+        }

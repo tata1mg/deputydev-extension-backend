@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
@@ -52,7 +52,7 @@ class BaseCodeReviewAgent(ABC):
         """
         return True
 
-    def get_agent_specific_tokens_data(self) -> Dict[str, int]:
+    def get_agent_specific_tokens_data(self) -> Dict[str, Any]:
         """
         This method should be overridden by the child class to return the agent specific tokens data
         """
@@ -109,5 +109,7 @@ class BaseCodeReviewAgent(ABC):
 
         return AgentRunResult(
             agent_result=last_pass_result,
-            prompt_tokens_exceeded=self.has_exceeded_token_limit(rendered_messages),
+            prompt_tokens_exceeded=self.has_exceeded_token_limit(last_pass_result),
+            agent_name=self.agent_name,
+            agent_type=self.agent_type,
         )
