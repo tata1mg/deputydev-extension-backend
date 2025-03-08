@@ -4,9 +4,8 @@ import json
 import time
 
 import jwt
-from torpedo import CONFIG
-
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
+from torpedo import CONFIG
 
 
 class GithubOAuthClient:

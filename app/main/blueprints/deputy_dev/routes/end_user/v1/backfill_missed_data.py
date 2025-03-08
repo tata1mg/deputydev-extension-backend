@@ -1,13 +1,11 @@
 import asyncio
 
-from sanic import Blueprint, Sanic
-from torpedo import CONFIG, Request, send_response
+from sanic import Blueprint
+from torpedo import Request, send_response
 
-from app.main.blueprints.deputy_dev.services.backfill.agent_mapping_backfill_manager import AgentMappingBackfillManager
-from app.main.blueprints.deputy_dev.services.repository.pr.backfill_data_manager import (
-    BackfillManager,
+from app.main.blueprints.deputy_dev.services.backfill.agent_mapping_backfill_manager import (
+    AgentMappingBackfillManager,
 )
-
 
 backfill = Blueprint("backfil", "/backfill")
 

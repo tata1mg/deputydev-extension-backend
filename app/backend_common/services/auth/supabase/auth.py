@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
+from deputydev_core.utils.jwt_handler import JWTHandler
 
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.client import SupabaseClient
-from app.common.services.authentication.jwt import JWTHandler
 
 
 class SupabaseAuth:

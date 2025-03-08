@@ -1,5 +1,5 @@
+from app.backend_common.constants.constants import PRStatus, VCSTypes
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
-from app.common.constants.constants import PRStatus, VCSTypes
 
 
 class GitlabPrModel(BasePrModel):

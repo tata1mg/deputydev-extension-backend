@@ -2,6 +2,14 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+from deputydev_core.services.initialization.initialization_service import (
+    InitializationManager,
+)
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repo.local_repo.local_repo_factory import LocalRepoFactory
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.completion import (
     CompleteEvent,
@@ -13,14 +21,8 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
-from deputydev_core.services.repo.local_repo.base_local_repo_service import BaseLocalRepo
-from deputydev_core.services.repo.local_repo.local_repo_factory import LocalRepoFactory
-from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     RegisteredRepo,
-)
-from deputydev_core.services.initialization.initialization_service import (
-    InitializationManager,
 )
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,

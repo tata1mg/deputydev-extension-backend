@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from pydantic import BaseModel
 
-from app.common.constants.constants import LLModels
+from app.backend_common.constants.constants import LLModels
 
 
 class LLMUsage(BaseModel):

@@ -1,8 +1,9 @@
 import re
 
+from deputydev_core.utils.context_vars import set_context_values
+
 from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
-from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     AgentTypes,

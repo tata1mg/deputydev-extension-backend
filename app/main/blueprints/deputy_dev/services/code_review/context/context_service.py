@@ -1,13 +1,3 @@
-from torpedo import CONFIG
-
-from app.backend_common.services.embedding.openai_embedding_manager import (
-    OpenAIEmbeddingManager,
-)
-from app.backend_common.services.pr.base_pr import BasePR
-from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.utils.app_utils import safe_index
-from app.backend_common.utils.formatting import append_line_numbers
-from app.common.constants.constants import MAX_RELEVANT_CHUNKS
 from deputydev_core.services.chunking.chunker.handlers.non_vector_db_chunker import (
     NonVectorDBChunker,
 )
@@ -15,8 +5,18 @@ from deputydev_core.services.chunking.chunking_manager import ChunkingManger
 from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from deputydev_core.services.search.dataclasses.main import SearchTypes
 from deputydev_core.services.tiktoken import TikToken
-from app.common.utils.context_vars import get_context_value
-from app.common.utils.executor import process_executor
+from deputydev_core.utils.context_vars import get_context_value
+from torpedo import CONFIG
+
+from app.backend_common.constants.constants import MAX_RELEVANT_CHUNKS
+from app.backend_common.services.embedding.openai_embedding_manager import (
+    OpenAIEmbeddingManager,
+)
+from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.app_utils import safe_index
+from app.backend_common.utils.executor import process_executor
+from app.backend_common.utils.formatting import append_line_numbers
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
     ConfluenceManager,
