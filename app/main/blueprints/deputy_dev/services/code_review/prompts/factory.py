@@ -28,6 +28,10 @@ from .feature_prompts.code_maintainability_comments_generation_pass_1.factory im
 from .feature_prompts.code_maintainability_comments_generation_pass_2.factory import (
     CodeMaintainabilityCommentsGenerationPass2PromptFactory,
 )
+from .feature_prompts.comment_summarization.factory import (
+    CommentSummarizationPromptFactory,
+)
+from .feature_prompts.comment_validation.factory import CommentValidationPromptFactory
 from .feature_prompts.custom_agent_comments_generation.factory import (
     CustomAgentCommentGenerationPromptFactory,
 )
@@ -43,15 +47,13 @@ from .feature_prompts.performance_optimization_comments_generation_pass_1.factor
 from .feature_prompts.performance_optimization_comments_generation_pass_2.factory import (
     PerformanceOptimizationCommentsGenerationPass2PromptFactory,
 )
+from .feature_prompts.pr_summarization.factory import PRSummarizationPromptFactory
 from .feature_prompts.security_comments_generation_pass_1.factory import (
     SecurityCommentsGenerationPass1PromptFactory,
 )
 from .feature_prompts.security_comments_generation_pass_2.factory import (
     SecurityCommentsGenerationPass2PromptFactory,
 )
-from .feature_prompts.comment_validation.factory import CommentValidationPromptFactory
-from .feature_prompts.pr_summarization.factory import PRSummarizationPromptFactory
-from .feature_prompts.comment_summarization.factory import CommentSummarizationPromptFactory
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):

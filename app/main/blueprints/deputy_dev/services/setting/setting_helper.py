@@ -133,8 +133,17 @@ class SettingHelper:
         return setting.get("chat", {}) if setting else {}
 
     @classmethod
-    def agents_settings(cls):
+    def global_code_review_agent_rules(cls) -> Dict[str, Any]:
         setting = get_context_value("setting")
+        if not setting:
+            return {}
+        return setting["code_review_agent"]
+
+    @classmethod
+    def agents_settings(cls) -> Dict[str, Any]:
+        setting = get_context_value("setting")
+        if not setting:
+            return {}
         return setting["code_review_agent"]["agents"]
 
     @classmethod
@@ -146,8 +155,10 @@ class SettingHelper:
         return cls.DD_LEVEL_SETTINGS["pr_summary"]["agent_id"]
 
     @classmethod
-    def summary_agent_setting(cls):
+    def summary_agent_setting(cls) -> Dict[str, Any]:
         setting = get_context_value("setting")
+        if not setting:
+            return {}
         return setting["pr_summary"]
 
     @classmethod
