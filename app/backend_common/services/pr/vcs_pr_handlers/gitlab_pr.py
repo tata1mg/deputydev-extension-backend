@@ -1,6 +1,10 @@
+from typing import List
+
+from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 from torpedo.exceptions import BadRequestException
-from typing import List
+
+from app.backend_common.constants.constants import PR_NOT_FOUND, VCSTypes
 from app.backend_common.models.dto.comment_dto import CommentDTO
 from app.backend_common.models.dto.pr.gitlab_pr import GitlabPrModel
 from app.backend_common.service_clients.gitlab.gitlab_repo_client import (
@@ -10,8 +14,6 @@ from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.gitlab_repo import GitlabRepo
-from app.common.constants.constants import PR_NOT_FOUND, VCSTypes
-from app.common.utils.context_vars import get_context_value
 
 
 class GitlabPR(BasePR):

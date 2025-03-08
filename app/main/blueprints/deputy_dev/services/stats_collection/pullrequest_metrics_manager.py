@@ -1,9 +1,9 @@
+from app.backend_common.exception import RetryException
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
 
 from app.backend_common.utils.app_utils import convert_to_datetime
-from app.common.exception import RetryException
 from app.main.blueprints.deputy_dev.constants.constants import (
     MetaStatCollectionTypes,
     PrStatusTypes,

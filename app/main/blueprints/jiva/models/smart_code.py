@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.common.constants.constants import VCSTypes
+from app.backend_common.constants.constants import VCSTypes
 
 
 class SmartCodeReqeustModel(BaseModel):

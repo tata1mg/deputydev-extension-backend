@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 
-from app.common.constants.constants import (
+from app.backend_common.constants.constants import (
     PR_SIZING_TEXT,
     PR_SUMMARY_COMMIT_TEXT,
     PR_SUMMARY_TEXT,

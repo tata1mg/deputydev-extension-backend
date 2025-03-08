@@ -2,10 +2,10 @@ from typing import Dict, List
 
 from torpedo import CONFIG
 
+from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.services.llm.providers.anthropic_llm import Anthropic
 from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
 from app.backend_common.utils.app_utils import get_task_response
-from app.common.constants.constants import LLMProviders
 
 config = CONFIG.config
 
