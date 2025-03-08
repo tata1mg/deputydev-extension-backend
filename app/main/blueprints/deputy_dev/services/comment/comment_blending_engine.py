@@ -5,6 +5,7 @@ from typing import List
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants import LLMModelNames
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.openai_comment_summarization_agent import (
     OpenAICommentSummarizationAgent,
@@ -15,9 +16,10 @@ from app.main.blueprints.deputy_dev.services.code_review.agent_services.openai.o
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import (
+    CodeReviewPromptFactory,
+)
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
-from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import CodeReviewPromptFactory
-from app.backend_common.models.dto.message_thread_dto import LLModels
 
 
 class CommentBlendingEngine:

@@ -1,10 +1,10 @@
 from typing import Any, Dict
 
+from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 
-from app.backend_common.services.llm.dataclasses.main import (
-    UserAndSystemMessages,
+from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
+    BaseClaude3Point5SonnetCommentCreationPrompt,
 )
-from ...base_prompts.claude_3_point_5_sonnet_comment_creation import BaseClaude3Point5SonnetCommentCreationPrompt
 from ...dataclasses.main import PromptFeatures
 
 
