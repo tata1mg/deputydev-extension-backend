@@ -45,11 +45,17 @@ from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_se
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
-from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import QuerySummarysRepository
+from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+    QuerySummarysRepository,
+)
 
+from ..code_generation.prompts.dataclasses.main import (
+    PromptFeatures as CodePromptFeatures,
+)
+from ..code_generation.prompts.factory import (
+    PromptFeatureFactory as CodePromptFeatureFactory,
+)
 from .prompts.factory import PromptFeatureFactory
-from ..code_generation.prompts.factory import PromptFeatureFactory as CodePromptFeatureFactory
-from ..code_generation.prompts.dataclasses.main import PromptFeatures as CodePromptFeatures
 
 
 class QuerySolver:

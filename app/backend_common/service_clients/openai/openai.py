@@ -1,8 +1,9 @@
-from typing import List
+from typing import Any, Dict, List, Optional
 
 import httpx
 from deputydev_core.utils.singleton import Singleton
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletion
 from torpedo import CONFIG
 
 config = CONFIG.config
@@ -25,12 +26,12 @@ class OpenAIServiceClient(metaclass=Singleton):
 
     async def get_llm_response(
         self,
-        conversation_messages: List,
+        conversation_messages: List[Dict[str, Any]],
         model: str,
-        tool_choice: str = None,
-        tools: list = None,
+        tool_choice: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         response_type: str = "json_object",
-    ):
+    ) -> ChatCompletion:
         completion = await self.__client.chat.completions.create(
             model=model,
             response_format={"type": response_type},
