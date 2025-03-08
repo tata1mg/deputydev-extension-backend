@@ -296,6 +296,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             Also, please use the tools provided to you to help you with the task.
 
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+            Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag.
         """
 

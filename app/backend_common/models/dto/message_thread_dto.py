@@ -27,7 +27,7 @@ class TextBlockContent(BaseModel):
 
 
 class ToolUseRequestContent(BaseModel):
-    tool_input: Dict[str, Any]
+    tool_input: str
     tool_name: str
     tool_use_id: str
 
@@ -62,7 +62,6 @@ class LLModels(Enum):
     GPT_4O = "GPT_4O"
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
     GPT_40_MINI = "GPT_40_MINI"
-    GPT_O1_MINI = "GPT_O1_MINI"
 
 
 class LLMUsage(BaseModel):

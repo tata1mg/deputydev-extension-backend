@@ -24,6 +24,7 @@ class CodeSelectionInput(BaseModel):
     selected_text: str
     file_path: str
 
+
 class InlineEditInput(BaseModel):
     session_id: int
     query: str
