@@ -209,7 +209,7 @@ class SettingHelper:
         return agent_settings[agent_name]["agent_id"]
 
     @classmethod
-    def predefined_name_to_custom_name(cls, agent_name):
+    def predefined_name_to_custom_name(cls, agent_name: str) -> str:
         pre_defined_agents = cls.pre_defined_agents()
         if agent_name in pre_defined_agents:
             agent_id = pre_defined_agents[agent_name]["agent_id"]
