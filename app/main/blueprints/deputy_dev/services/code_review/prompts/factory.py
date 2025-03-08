@@ -49,6 +49,9 @@ from .feature_prompts.security_comments_generation_pass_1.factory import (
 from .feature_prompts.security_comments_generation_pass_2.factory import (
     SecurityCommentsGenerationPass2PromptFactory,
 )
+from .feature_prompts.comment_validation.factory import CommentValidationPromptFactory
+from .feature_prompts.pr_summarization.factory import PRSummarizationPromptFactory
+from .feature_prompts.comment_summarization.factory import CommentSummarizationPromptFactory
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
@@ -66,6 +69,9 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.SECURITY_COMMENTS_GENERATION_PASS_1: SecurityCommentsGenerationPass1PromptFactory,
         PromptFeatures.SECURITY_COMMENTS_GENERATION_PASS_2: SecurityCommentsGenerationPass2PromptFactory,
         PromptFeatures.CUSTOM_AGENT_COMMENTS_GENERATION: CustomAgentCommentGenerationPromptFactory,
+        PromptFeatures.COMMENT_VALIDATION: CommentValidationPromptFactory,
+        PromptFeatures.PR_SUMMARIZATION: PRSummarizationPromptFactory,
+        PromptFeatures.COMMENT_SUMMARIZATION: CommentSummarizationPromptFactory,
     }
 
     @classmethod
