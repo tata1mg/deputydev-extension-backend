@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
@@ -20,3 +20,8 @@ class AgentTypes(Enum):
 class AgentAndInitParams(BaseModel):
     agent_type: AgentTypes
     init_params: Dict[str, Any] = {}
+
+
+class AgentRunResult(BaseModel):
+    prompt_tokens_exceeded: bool
+    agent_result: Optional[Dict[str, Any]] = None

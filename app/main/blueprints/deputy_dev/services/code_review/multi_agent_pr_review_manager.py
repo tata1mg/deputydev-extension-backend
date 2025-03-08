@@ -1,15 +1,12 @@
-from typing import Dict, List
+import asyncio
 
 from deputydev_core.services.tiktoken import TikToken
-from torpedo import CONFIG, Task
+from torpedo import CONFIG
 
-from app.backend_common.services.llm.dataclasses.main import ParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.utils.app_utils import get_task_response
 from app.backend_common.utils.formatting import format_summary_with_metadata
-from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     MultiAgentReflectionIteration,
 )
@@ -23,17 +20,14 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (
-    BaseCodeReviewPrompt,
+from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
+    PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import (
-    CodeReviewPromptFactory,
+    PromptFeatureFactory,
 )
 from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
     CommentBlendingEngine,
-)
-from app.main.blueprints.deputy_dev.services.setting.setting_service import (
-    SettingService,
 )
 
 
@@ -45,6 +39,7 @@ class MultiAgentPRReviewManager:
         pr_diff_handler: PRDiffHandler,
         prompt_version=None,
         eligible_agents=None,
+        session_id: int = None,
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service
@@ -72,6 +67,11 @@ class MultiAgentPRReviewManager:
         )
         self._is_large_pr = False
         self.pr_diff_handler = pr_diff_handler
+        self.llm_handler = LLMHandler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
+        self.session_id = session_id
 
     # section setting start
 
@@ -79,85 +79,6 @@ class MultiAgentPRReviewManager:
         if self.reflection_enabled is None:
             self.reflection_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["REFLECTION_ENABLED"]
         return self.reflection_enabled
-
-    # section setting end
-
-    # section prompt start
-
-    async def _build_prompts(self):
-        self.current_prompts, self.meta_info_to_save = await self.agent_factory.build_prompts(
-            reflection_stage=self.multi_agent_reflection_stage,
-            previous_review_comments=self.llm_comments,
-            exclude_agents=self.exclude_agent,
-        )
-
-    async def _build_post_reflection_prompt(self):
-        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
-        self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
-        await self._build_prompts()
-
-    # section prompt end
-
-    @classmethod
-    async def get_llm_response(cls, prompt_list: List[Dict[str, str]]):
-        """
-        Retrieves LLM responses based on the configured LLM type.
-
-        Args:
-            prompt_list (List[Dict[str, str]]): List of prompt objects.
-
-        Returns:
-            Dict[str, str]: A dictionary mapping prompt keys to LLM responses.
-        """
-
-        prompt_objs: List[BaseCodeReviewPrompt] = []
-
-        for prompt in prompt_list:
-            if "model" not in prompt:
-                raise ValueError("Model not found in prompt")
-
-            prompt_model = prompt["model"]
-            prompt_structure_type = prompt.get("structure_type", "default")
-            parse = prompt.get("parse", False)
-            user_message = prompt["user_message"]
-            system_message = prompt.get("system_message")
-            prompt_key = prompt["key"]
-
-            prompt_obj = CodeReviewPromptFactory.get_prompt_obj(
-                model=prompt_model,
-                prompt_return_type=prompt_structure_type,
-                should_parse=parse,
-                user_message=user_message,
-                system_message=system_message,
-            )
-            prompt_objs.append(prompt_obj)
-
-            tasks: List[Task] = []
-            for prompt_obj in prompt_objs:
-                tasks.append(
-                    Task(
-                        LLMHandler(prompt_handler=prompt_obj).start_llm_query(previous_responses=[]),
-                        result_key=prompt_key,
-                    )
-                )
-
-            responses = await get_task_response(tasks)
-            return {
-                response_key: response_data.parsed_llm_data.get("data")
-                for response_key, response_data in responses.items()
-                if isinstance(response_data, ParsedLLMCallResponse)
-            }
-
-    # llm handler start
-    async def _make_llm_calls(self):
-        contexts = []
-        for agent in self.current_prompts:
-            if agent not in self.exclude_agent:
-                contexts.append(self.current_prompts[agent])
-        self.llm_comments = await self.get_llm_response(contexts)
-        return self.llm_comments
-
-    # llm handler end
 
     # blending engine section start
     async def filter_comments(self):
@@ -170,53 +91,20 @@ class MultiAgentPRReviewManager:
     def populate_pr_summary(self):
         self.pr_summary = self.llm_comments.pop(AgentTypes.PR_SUMMARY.value, "")
 
-    async def __execute_pass(self):
-        await self._build_prompts()
-        if not self.current_prompts:
-            self.llm_comments = {}
-            return
-        self.all_prompts_exceed_token_limit()
-        if self._is_large_pr:
+    def all_prompts_exceed_token_limit(self):
+        all_exceeded = True
+
+        for prompt, prompt_data in self.current_prompts.items():
+            if prompt_data["exceeds_tokens"]:
+                self.exclude_agent.add(prompt)
+            else:
+                all_exceeded = False
+
+        self._is_large_pr = all_exceeded
+        if all_exceeded:
             self.llm_comments = {}
             pr_diff_tokens_count = await self.pr_diff_handler.get_pr_diff_token_count()
             self.agents_tokens = pr_diff_tokens_count
-            return
-        await self._make_llm_calls()
-        self.populate_meta_info()
-
-    async def execute_pass_1(self):
-        await self.__execute_pass()
-        self.populate_pr_summary()
-
-    async def execute_pass_2(self):
-        self.exclude_pass_1_specific_agents()
-        self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
-        await self.__execute_pass()
-
-    def exclude_pass_1_specific_agents(self):
-        # exclude summary agent
-        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
-        # exclude custom_agents
-        agents_settings = SettingService.helper.agents_settings()
-        for agent_name, agent_setting in agents_settings.items():
-            if agent_setting["is_custom_agent"]:
-                self.exclude_agent.add(agent_name)
-
-    async def get_code_review_comments(self):
-        # get all agents from factory
-        all_agents = AgentFactory.get_agents(
-            context_service=self.context_service,
-            is_reflection_enabled=self._is_reflection_enabled(),
-        )
-
-        # segregate agents in realtime based on whether they should execute or not
-        runnable_agents = [agent for agent in all_agents if await agent.should_execute()]
-
-        await self.execute_pass_1()
-        if get_context_value("setting")["code_review_agent"]["enable"]:
-            await self.execute_pass_2() if self._is_reflection_enabled() else None
-            await self.filter_comments()
-        return await self.return_final_response()
 
     def populate_meta_info(self):
         for agent, prompt in self.current_prompts.items():
@@ -247,13 +135,19 @@ class MultiAgentPRReviewManager:
             self._is_large_pr,
         )
 
-    def all_prompts_exceed_token_limit(self):
-        all_exceeded = True
+    async def get_code_review_comments(self):
+        # get all agents from factory
+        all_agents = AgentFactory.get_agents(
+            context_service=self.context_service,
+            is_reflection_enabled=self._is_reflection_enabled(),
+            llm_handler=self.llm_handler,
+        )
 
-        for prompt, prompt_data in self.current_prompts.items():
-            if prompt_data["exceeds_tokens"]:
-                self.exclude_agent.add(prompt)
-            else:
-                all_exceeded = False
-
-        self._is_large_pr = all_exceeded
+        # segregate agents in realtime based on whether they should execute or not
+        runnable_agents = [agent for agent in all_agents if await agent.should_execute()]
+        agent_tasks = [agent.run_agent(session_id=self.session_id) for agent in runnable_agents]
+        agent_tasks_results = await asyncio.gather(*agent_tasks, return_exceptions=True)
+        self.populate_pr_summary()
+        self.populate_meta_info()
+        await self.filter_comments()
+        return await self.return_final_response()
