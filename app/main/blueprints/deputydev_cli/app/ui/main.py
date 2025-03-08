@@ -12,7 +12,10 @@ from typing import List, Optional, Tuple, Type
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
+
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIOperations
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     FeatureNextAction,
@@ -151,7 +154,7 @@ async def render_home(app_context: AppContext) -> AppContext:
 
 
 async def main(process_executor: ProcessPoolExecutor):
-    one_dev_client = OneDevClient(ConfigManager.configs["HOST_AND_TIMEOUT"])
+    one_dev_client = OneDevCliClient(ConfigManager.configs["HOST_AND_TIMEOUT"])
     parser = argparse.ArgumentParser(description="DeputyDev CLI")
     init_args(parser)
 

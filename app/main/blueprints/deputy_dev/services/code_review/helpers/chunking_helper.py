@@ -1,4 +1,4 @@
-from app.common.constants.constants import MAX_RELEVANT_CHUNKS
+from app.backend_common.constants.constants import MAX_RELEVANT_CHUNKS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )

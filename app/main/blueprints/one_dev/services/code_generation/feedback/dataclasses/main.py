@@ -1,6 +1,5 @@
+from deputydev_core.utils.constants.feedbacks import UpvoteDownvoteFeedbacks
 from pydantic import BaseModel
-
-from app.common.constants.feedbacks import UpvoteDownvoteFeedbacks
 
 
 class CodeGenerationFeedbackInput(BaseModel):

@@ -1,11 +1,9 @@
 from datetime import datetime, timezone
 from functools import wraps
 from typing import Union
-
-from sanic.log import logger
-
-from app.common.constants.constants import TimeFormat
-from app.common.utils.context_vars import set_context_values
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.constants.constants import TimeFormat
+from deputydev_core.utils.context_vars import set_context_values
 
 
 def get_time_difference(
@@ -80,7 +78,7 @@ def log_time(func):
         if request_id:
             start_message = start_message + f", for request ID - {request_id}"
             set_context_values(request_id=request_id)
-        logger.info(start_message)
+        AppLogger.log_info(start_message)
 
         try:
             result = await func(*args, **kwargs)
@@ -91,7 +89,7 @@ def log_time(func):
             if request_id:
                 exception_message = exception_message + f", for request ID - {request_id}"
             exception_message = exception_message + f" - {e}"
-            logger.error(exception_message)
+            AppLogger.log_error(exception_message)
             raise e
 
         end_time = datetime.now(timezone.utc)
@@ -99,7 +97,7 @@ def log_time(func):
         end_message = f"End: {func.__name__} at {formatted_end_time} - Elapsed: {get_time_difference(start_time, end_time, TimeFormat.SECONDS.value):6f} seconds"
         if request_id:
             end_message = end_message + f", for request ID - {request_id}"
-        logger.info(end_message)
+        AppLogger.log_info(end_message)
 
         return result
 

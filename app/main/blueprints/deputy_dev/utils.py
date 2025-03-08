@@ -5,16 +5,16 @@ import re
 from datetime import datetime
 from typing import Dict, List, Tuple
 
+from deputydev_core.utils.jwt_handler import JWTHandler
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import set_context_values
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
+from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.repository.db import DB
 from app.backend_common.services.credentials import AuthHandler, AuthHandlerFactory
-from app.common.constants.constants import VCSTypes
-from app.common.services.authentication.jwt import JWTHandler
-from deputydev_core.utils.app_logger import AppLogger
-from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
     BitbucketBots,

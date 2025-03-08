@@ -2,15 +2,15 @@ import asyncio
 import sys
 from typing import Dict, Optional
 
+from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.exceptions import InvalidVersionException
 from prompt_toolkit import PromptSession
 
-from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
-from deputydev_core.utils.exceptions import (
-    InvalidVersionException,
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
 )
 
-one_dev_client = OneDevClient()
+one_dev_client = OneDevCliClient()
 
 auth_token: Optional[str] = None
 
