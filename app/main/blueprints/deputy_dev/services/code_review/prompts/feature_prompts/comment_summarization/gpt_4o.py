@@ -1,7 +1,9 @@
 from typing import Any, Dict
 
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
-from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import BaseGPT4OPrompt
+from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
+    BaseGPT4OPrompt,
+)
 
 from ...dataclasses.main import PromptFeatures
 

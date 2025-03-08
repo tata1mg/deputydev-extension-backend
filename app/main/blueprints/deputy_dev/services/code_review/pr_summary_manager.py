@@ -4,12 +4,14 @@ from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
-    AgentTypes,
     FeatureFlows,
     PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentTypes,
+)
 from app.main.blueprints.deputy_dev.services.code_review.base_pr_review_manager import (
     BasePRReviewManager,
 )

@@ -4,9 +4,11 @@ from string import Template
 
 from torpedo import CONFIG
 
-from app.main.blueprints.deputy_dev.constants.constants import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,

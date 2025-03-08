@@ -3,13 +3,12 @@ from torpedo import CONFIG
 
 from app.common.constants.constants import PRStatus
 from app.common.utils.context_vars import get_context_value
-from app.main.blueprints.deputy_dev.constants.constants import (
-    AgentTypes,
-    FeatureFlows,
-    TokenTypes,
-)
+from app.main.blueprints.deputy_dev.constants.constants import FeatureFlows, TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_base import (
     AgentServiceBase,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
@@ -28,8 +27,8 @@ class OpenAIPRSummaryAgent(AgentServiceBase):
         super().__init__(context_service, is_reflection_enabled, AgentTypes.PR_SUMMARY.value)
         # TODO: for now not picking model from setting, This can be updated if required:
         self.model = CONFIG.config["FEATURE_MODELS"]["PR_SUMMARY"]
-        self.agent_setting = SettingService.Helper.summary_agent_setting()
-        self.agent_id = SettingService.Helper.summary_agent_id()
+        self.agent_setting = SettingService.helper.summary_agent_setting()
+        self.agent_id = SettingService.helper.summary_agent_id()
 
     def get_with_reflection_system_prompt_pass1(self):
         return """
