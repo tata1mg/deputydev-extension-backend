@@ -41,3 +41,11 @@ async def generate_inline_edit(_request: Request, auth_data: AuthData, session_i
         payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     )
     return send_response({"job_id": data})
+
+@query_solver.route("/get-inline-edit-result", methods=["GET"])
+@authenticate
+@ensure_session_id
+async def get_inline_edit_result(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
+    headers = _request.headers
+    data = await InlineEditGenerator().get_inline_diff_result(headers)
+    return send_response(data)
