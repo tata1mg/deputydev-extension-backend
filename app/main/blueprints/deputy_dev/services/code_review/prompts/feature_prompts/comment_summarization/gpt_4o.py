@@ -1,9 +1,11 @@
 from typing import Any, AsyncIterator, Dict, List
 
+from app.backend_common.models.dto.message_thread_dto import TextBlockData
 from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, StreamingResponse, UserAndSystemMessages
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )
+from app.backend_common.utils.formatting import format_code_blocks
 
 from ...dataclasses.main import PromptFeatures
 
@@ -189,8 +191,20 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
 
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Any]:
-        raise NotImplementedError("This method must be implemented in the child class")
+    def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
+        return {"data": format_code_blocks(text)}
+
+
+    @classmethod
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+        all_comments: List[Dict[str, Any]] = []
+        for response_data in llm_response.content:
+            if isinstance(response_data, TextBlockData):
+                comments = cls._parse_text_blocks(response_data.content.text)
+                if comments:
+                    all_comments.append(comments)
+
+        return all_comments
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:

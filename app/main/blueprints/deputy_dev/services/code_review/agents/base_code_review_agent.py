@@ -103,6 +103,7 @@ class BaseCodeReviewAgent(ABC):
                     prompt_tokens_exceeded=True,
                     agent_name=self.agent_name,
                     agent_type=self.agent_type,
+                    model = self.model
                 )
 
             llm_response = await self.llm_handler.start_llm_query(
@@ -124,4 +125,5 @@ class BaseCodeReviewAgent(ABC):
             prompt_tokens_exceeded=False,
             agent_name=self.agent_name,
             agent_type=self.agent_type,
+            model = self.model
         )
