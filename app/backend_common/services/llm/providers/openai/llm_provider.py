@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
@@ -30,7 +31,7 @@ class OpenAI(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.OPENAI.value)
         self.anthropic_client = None
-        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["GPT_4_O"]
+        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["GPT_4O"]
 
     def build_llm_payload(
         self,
@@ -81,6 +82,10 @@ class OpenAI(BaseLLMProvider):
         """
         non_streaming_content_blocks: List[ResponseData] = []
 
+        # print("***************XXXXXXXX")
+        # print(response.choices[0].message.content)
+        # print("***************XXXXXXXX")
+
         if response.choices[0].message.content:
             non_streaming_content_blocks.append(
                 TextBlockData(content=TextBlockContent(text=response.choices[0].message.content))
@@ -126,12 +131,22 @@ class OpenAI(BaseLLMProvider):
             str: The response from the GPT model.
         """
         if not response_type:
-            response_type = "json_object"
+            response_type = "text"
 
         if stream:
             raise ValueError("Stream is not supported for OpenAI")
 
         model_config = self._get_model_config(model)
+
+        print("***************XXXXXX")
+        print(
+            {
+                "conversation_messages": llm_payload["conversation_messages"],
+                "model": model_config["NAME"],
+                "response_type": response_type,
+            }
+        )
+        print("***************XXXXXX")
 
         response = await OpenAIServiceClient().get_llm_response(
             conversation_messages=llm_payload["conversation_messages"],
