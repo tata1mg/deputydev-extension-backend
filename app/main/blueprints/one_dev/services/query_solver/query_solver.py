@@ -1,5 +1,7 @@
 import asyncio
-from typing import List
+from typing import AsyncIterator, List, Optional
+
+from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -10,24 +12,49 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
+    ParsedLLMCallResponse,
+    StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
+    PreviousChats,
+)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
+    ResponseMetadataBlock,
+    ResponseMetadataContent,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
+    StreamingContentBlockType,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.code_searcher import (
-    CODE_SEARCHER,
+from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
+    FOCUSED_SNIPPETS_SEARCHER,
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
+    RELATED_CODE_SEARCHER,
+)
+from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+    QuerySummarysRepository,
 )
 
+from ..code_generation.prompts.dataclasses.main import (
+    PromptFeatures as CodePromptFeatures,
+)
+from ..code_generation.prompts.factory import (
+    PromptFeatureFactory as CodePromptFeatureFactory,
+)
 from .prompts.factory import PromptFeatureFactory
 
 
@@ -53,16 +80,115 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await MessageSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
-    async def get_previous_messages(self, session_id: int) -> List[int]:
+    async def rerank_previous_queries(
+        self,
+        chats: List[PreviousChats],
+        query: str,
+        session_id: int,
+    ) -> List[int]:
+        code_llm_handler = LLMHandler(prompt_factory=CodePromptFeatureFactory, prompt_features=CodePromptFeatures)
+        llm_response = await code_llm_handler.start_llm_query(
+            prompt_feature=CodePromptFeatures.CHAT_RERANKING,
+            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            prompt_vars={
+                "chats": chats,
+                "query": query,
+            },
+            previous_responses=[],
+            tools=None,
+            stream=False,
+            session_id=session_id,
+        )
+
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("Expected NonStreamingParsedLLMCallResponse")
+
+        return llm_response.parsed_content[0].get("chat_ids")
+
+    async def get_previous_messages(self, session_id: int, current_query: str) -> List[int]:
         all_previous_responses = await MessageThreadsRepository.get_message_threads_for_session(
             session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
         )
 
+        all_query_summaries = await QuerySummarysRepository.get_all_session_query_summaries(session_id=session_id)
+        if all_query_summaries:
+            reranked_chat_ids = await self.rerank_previous_queries(
+                chats=[
+                    PreviousChats(
+                        id=summary.query_id,
+                        summary=summary.summary,
+                    )
+                    for summary in all_query_summaries
+                ],
+                session_id=session_id,
+                query=current_query,
+            )
+
+            # filter out the previous responses which are not in reranked_chat_ids
+            filtered_previous_responses = [
+                response for response in all_previous_responses if response.id in reranked_chat_ids
+            ]
+            # sort the filtered_previous_responses based on the reranked_chat_ids
+            filtered_previous_responses.sort(key=lambda x: reranked_chat_ids.index(x.id))
+            all_previous_responses = filtered_previous_responses
         return [response.id for response in all_previous_responses]
 
-    async def solve_query(self, payload: QuerySolverInput):
+    async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
+        existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
+        if existing_summary:
+            new_updated_summary = existing_summary.summary + "\n" + summary
+            await QuerySummarysRepository.update_query_summary(
+                session_id=session_id, query_id=query_id, summary=new_updated_summary
+            )
+        else:
+            await QuerySummarysRepository.create_query_summary(
+                QuerySummaryData(
+                    session_id=session_id,
+                    query_id=query_id,
+                    summary=summary,
+                )
+            )
 
-        tools_to_use = [CODE_SEARCHER, ASK_USER_INPUT]
+    async def get_final_stream_iterator(
+        self, llm_response: ParsedLLMCallResponse, session_id: int
+    ) -> AsyncIterator[BaseModel]:
+
+        query_summary: Optional[str] = None
+
+        async def _streaming_content_block_generator():
+            nonlocal llm_response
+            nonlocal query_summary
+            if not isinstance(llm_response, StreamingParsedLLMCallResponse):
+                raise ValueError("Expected StreamingParsedLLMCallResponse")
+
+            yield ResponseMetadataBlock(
+                content=ResponseMetadataContent(query_id=llm_response.query_id, session_id=session_id),
+                type="RESPONSE_METADATA",
+            )
+
+            async for data_block in llm_response.parsed_content:
+                if data_block.type in [
+                    StreamingContentBlockType.SUMMARY_BLOCK_START,
+                    StreamingContentBlockType.SUMMARY_BLOCK_DELTA,
+                    StreamingContentBlockType.SUMMARY_BLOCK_END,
+                ]:
+                    if data_block.type == StreamingContentBlockType.SUMMARY_BLOCK_DELTA:
+                        query_summary = (query_summary or "") + data_block.content.summary_delta
+
+                    elif data_block.type == StreamingContentBlockType.SUMMARY_BLOCK_END and query_summary:
+                        asyncio.create_task(
+                            self._update_query_summary(llm_response.query_id, query_summary, session_id)
+                        )
+
+                else:
+                    yield data_block
+
+        return _streaming_content_block_generator()
+
+    async def solve_query(self, payload: QuerySolverInput) -> AsyncIterator[BaseModel]:
+
+        # tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER]
+        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT]
 
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
@@ -76,12 +202,12 @@ class QuerySolver:
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
                 prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
-                previous_responses=await self.get_previous_messages(payload.session_id),
+                previous_responses=await self.get_previous_messages(payload.session_id, current_query=payload.query),
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
             )
-            return llm_response
+            return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
             llm_response = await llm_handler.submit_tool_use_response(
@@ -96,7 +222,7 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
             )
-            return llm_response
+            return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         else:
             raise ValueError("Invalid input")

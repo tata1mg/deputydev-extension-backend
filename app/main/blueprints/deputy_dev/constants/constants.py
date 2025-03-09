@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from deputydev_core.utils.constants import ExtendedEnum
+from deputydev_core.utils.constants.constants import ExtendedEnum
 from torpedo.common_utils import CONFIG
 
 from app.common.constants.constants import SettingErrorType
@@ -210,18 +210,6 @@ class CombinedTagsList:
 
 
 COMBINED_TAGS_LIST = CombinedTagsList.combine()
-
-
-class AgentTypes(ExtendedEnum):
-    SECURITY = "security"
-    CODE_COMMUNICATION = "code_communication"
-    PERFORMANCE_OPTIMISATION = "performance_optimisation"
-    CODE_MAINTAINABILITY = "code_maintainability"
-    ERROR = "error"
-    BUSINESS_LOGIC_VALIDATION = "business_logic_validation"
-    PR_SUMMARY = "pr_summary"
-    COMMENT_VALIDATION = "comment_validation"
-    COMMENT_SUMMARIZATION = "comment_summarization"
 
 
 class Feature(ExtendedEnum):
