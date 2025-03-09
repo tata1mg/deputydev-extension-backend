@@ -127,7 +127,7 @@ StreamingEvent = Annotated[
 
 
 class StreamingResponse(BaseModel):
-    type: Literal[LLMCallResponseTypes.STREAMING]
+    type: Literal[LLMCallResponseTypes.STREAMING] = LLMCallResponseTypes.STREAMING
     content: AsyncIterator[StreamingEvent]
     usage: Task[LLMUsage]
     accumulated_events: Task[List[StreamingEvent]]
@@ -136,7 +136,7 @@ class StreamingResponse(BaseModel):
 
 
 class NonStreamingResponse(BaseModel):
-    type: Literal[LLMCallResponseTypes.NON_STREAMING]
+    type: Literal[LLMCallResponseTypes.NON_STREAMING] = LLMCallResponseTypes.NON_STREAMING
     content: List[ResponseData]
     usage: LLMUsage
 
