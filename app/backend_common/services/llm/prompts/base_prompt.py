@@ -3,7 +3,7 @@ from typing import Any, AsyncIterator, Dict, List
 
 from pydantic import BaseModel
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -30,4 +30,9 @@ class BasePrompt(ABC):
     @classmethod
     @abstractmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
+        raise NotImplementedError("This method must be implemented in the child class")
+
+    @classmethod
+    @abstractmethod
+    async def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[BaseModel]:
         raise NotImplementedError("This method must be implemented in the child class")

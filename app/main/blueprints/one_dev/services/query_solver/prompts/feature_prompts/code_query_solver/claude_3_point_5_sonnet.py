@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
-    TextBlockData,
+    MessageData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -306,32 +306,34 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         )
 
     @classmethod
-    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
-        final_query_resp: Optional[str] = None
-        is_task_done: Optional[bool] = None
-        summary: Optional[str] = None
-        text_block_text = text_block.content.text.strip()
-        if "<response>" in text_block_text:
-            final_query_resp = text_block_text.split("<response>")[1].split("</response>")[0].strip()
-        if "<is_task_done>true</is_task_done>" in text_block_text:
-            is_task_done = True
-        if "<summary>" in text_block_text:
-            summary = text_block_text.split("<summary>")[1].split("</summary>")[0].strip()
+    def get_parsed_response_blocks(
+        cls, response_block: List[MessageData]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        final_content = []
+        tool_use_map: Dict[str, Any] = {}
+        for block in response_block:
+            if block.type == ContentBlockCategory("TEXT_BLOCK"):
+                final_content.extend(cls.parsing(block.content.text))
+            elif block.type == ContentBlockCategory("TOOL_USE_REQUEST"):
+                tool_use_request_block = {
+                    "type": "TOOL_USE_REQUEST_BLOCK",
+                    "content": {
+                        "tool_name": block.content.tool_name,
+                        "tool_use_id": block.content.tool_use_id,
+                        "tool_input_json": block.content.tool_input,
+                    },
+                }
+                final_content.append(tool_use_request_block)
+                tool_use_map[block.content.tool_use_id] = tool_use_request_block
 
-        if final_query_resp and is_task_done is not None:
-            return {"response": final_query_resp, "is_task_done": is_task_done, "summary": summary}
-        raise ValueError("Invalid LLM response format. Response not found.")
+        return final_content, tool_use_map
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
 
         final_content: List[Dict[str, Any]] = []
 
-        for content_block in llm_response.content:
-            if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
-                final_content.append({"tool_use_request": content_block.content.model_dump(mode="json")})
-            elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
-                final_content.append(cls._parse_text_block(content_block))
+        final_content = cls.get_parsed_response_blocks(llm_response.content)
 
         return final_content
 
@@ -340,3 +342,69 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return cls.parse_streaming_text_block_events(
             events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser(), SummaryParser()]
         )
+
+    @classmethod
+    def parsing(cls, input_string: str) -> List[Dict[str, Any]]:
+        result: List[Dict[str, Any]] = []
+
+        # Define the patterns
+        thinking_pattern = r"<thinking>(.*?)</thinking>"
+        code_block_pattern = r"<code_block>(.*?)</code_block>"
+
+        # Find all occurrences of either pattern
+        matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
+        matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
+
+        # Combine matches and sort by start position
+        matches = list(matches_thinking) + list(matches_code_block)
+        matches.sort(key=lambda match: match.start())
+
+        last_end = 0
+        for match in matches:
+            start_index = match.start()
+            end_index = match.end()
+
+            if start_index > last_end:
+                text_before = input_string[last_end:start_index]
+                if text_before.strip():  # Only append if not empty
+                    result.append({"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}})
+
+            if match.re.pattern == code_block_pattern:
+                code_block_string = match.group(1).strip()
+                code_block_info = cls.extract_code_block_info(code_block_string)
+                result.append({"type": "CODE_BLOCK", "content": code_block_info})
+            elif match.re.pattern == thinking_pattern:
+                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+
+            last_end = end_index
+
+        # Append any remaining text
+        if last_end < len(input_string):
+            remaining_text = input_string[last_end:]
+            if remaining_text.strip():  # Only append if not empty
+                result.append({"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}})
+
+        return result
+
+    @classmethod
+    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, str]:
+
+        # Define the patterns
+        language_pattern = r"<programming_language>(.*?)</programming_language>"
+        file_path_pattern = r"<file_path>(.*?)</file_path>"
+
+        # Extract language and file path
+        language_match = re.search(language_pattern, code_block_string)
+        file_path_match = re.search(file_path_pattern, code_block_string)
+
+        language = language_match.group(1) if language_match else ""
+        file_path = file_path_match.group(1) if file_path_match else ""
+
+        # Extract code
+        code_start_index = file_path_match.end() if file_path_match else 0
+        code = code_block_string[code_start_index:].strip()
+
+        # Remove any remaining tags from the code
+        code = re.sub(r"<.*?>", "", code)
+
+        return {"language": language, "file_path": file_path, "code": code}
