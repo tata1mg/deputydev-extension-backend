@@ -1,8 +1,10 @@
 import json
-from typing import Optional
+from datetime import datetime
+from typing import List, Optional
 
 from sanic.log import logger
 
+from app.backend_common.constants.past_workflows import SessionStatus
 from app.backend_common.models.dao.postgres.message_sessions import MessageSession
 from app.backend_common.models.dto.message_sessions_dto import (
     MessageSessionData,
@@ -63,4 +65,50 @@ class MessageSessionsRepository:
             await DB.update_by_filters(None, MessageSession, {"summary": summary}, {"id": session_id})
         except Exception as ex:
             logger.error(f"error occurred while updating message_session in DB, ex: {ex}")
+            raise ex
+
+    @classmethod
+    async def get_message_sessions_by_user_team_id(
+        cls, user_team_id: int, limit: int, offset: int
+    ) -> List[MessageSessionDTO]:
+        try:
+            message_sessions = await DB.by_filters(
+                model_name=MessageSession,
+                where_clause={"user_team_id": user_team_id, "status": SessionStatus.ACTIVE.value},
+                fetch_one=False,
+                limit=limit,
+                offset=offset,
+                order_by=["-created_at"],
+            )
+            if not message_sessions:
+                return []
+            return [MessageSessionDTO(**message_session) for message_session in message_sessions]
+
+        except Exception as ex:
+            logger.error(
+                f"error occurred while fetching message_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
+            )
+            return []
+
+    @classmethod
+    async def soft_delete_message_session_by_id(cls, session_id: int, user_team_id: int):
+        try:
+            # First check if the session belongs to the user
+            message_session = await DB.by_filters(
+                model_name=MessageSession,
+                where_clause={"id": session_id, "user_team_id": user_team_id},
+                fetch_one=True,
+            )
+            if not message_session:
+                raise ValueError("Session not found or you don't have permission to delete it")
+
+            # Soft delete the session
+            await DB.update_by_filters(
+                None,
+                MessageSession,
+                {"status": SessionStatus.DELETED.value, "deleted_at": datetime.now()},
+                {"id": session_id},
+            )
+        except (ValueError, Exception) as ex:
+            logger.error(f"error occurred while soft deleting message_session in DB, ex: {ex}")
             raise ex
