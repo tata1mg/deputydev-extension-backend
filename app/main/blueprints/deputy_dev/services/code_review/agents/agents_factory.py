@@ -12,6 +12,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main
     AgentAndInitParams,
     AgentTypes,
 )
+from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comment_summarizer.comment_summarizer_agent import CommentSummarizerAgent
 from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comment_validator.comment_validator_agent import (
     CommentValidatorAgent,
 )
@@ -33,6 +34,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comme
 from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
 )
+from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import PRSummarizerAgent
 from app.main.blueprints.deputy_dev.services.code_review.comments.dataclasses.main import (
     ParsedAggregatedCommentData,
     ParsedCommentData,
@@ -49,6 +51,18 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class AgentFactory:
+    agent_type_to_model_map = {
+        AgentTypes.BUSINESS_LOGIC_VALIDATION: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.CODE_MAINTAINABILITY: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.CODE_COMMUNICATION: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.ERROR: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.SECURITY: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.PR_SUMMARY: LLModels.GPT_4O,
+        AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4O,
+        AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4O,
+    }
+
     code_review_agents = {
         AgentTypes.BUSINESS_LOGIC_VALIDATION: BusinessValidationAgent,
         AgentTypes.CODE_MAINTAINABILITY: CodeMaintainabilityAgent,
@@ -56,10 +70,12 @@ class AgentFactory:
         AgentTypes.ERROR: ErrorAgent,
         AgentTypes.PERFORMANCE_OPTIMIZATION: PerformanceOptimizationAgent,
         AgentTypes.SECURITY: SecurityAgent,
+        AgentTypes.PR_SUMMARY: PRSummarizerAgent,
     }
 
     review_finalization_agents = {
         AgentTypes.COMMENT_VALIDATION: CommentValidatorAgent,
+        AgentTypes.COMMENT_SUMMARIZATION: CommentSummarizerAgent,
     }
 
     @classmethod
@@ -117,8 +133,7 @@ class AgentFactory:
                             context_service=context_service,
                             is_reflection_enabled=is_reflection_enabled,
                             llm_handler=llm_handler,
-                            model=LLModels(ConfigManager.configs["FEATURE_MODELS"]["PR_REVIEW"]),
-                            agent_setting={},
+                            model=cls.agent_type_to_model_map[agent_type_and_init_params.agent_type],
                             **agent_type_and_init_params.init_params,
                         )
                     )
@@ -144,7 +159,7 @@ class AgentFactory:
                             context_service=context_service,
                             is_reflection_enabled=is_reflection_enabled,
                             llm_handler=llm_handler,
-                            model=LLModels(ConfigManager.configs["FEATURE_MODELS"]["PR_REVIEW"]),
+                            model=cls.agent_type_to_model_map[agent_type],
                             agent_setting={},
                             comments=comments,
                         )

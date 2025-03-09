@@ -1,6 +1,6 @@
-from typing import Any, Dict
+from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
+from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, StreamingResponse, UserAndSystemMessages
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )
@@ -112,3 +112,12 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
+
+
+    @classmethod
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Any]:
+        raise NotImplementedError("This method must be implemented in the child class")
+
+    @classmethod
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
+        raise NotImplementedError("Streaming events not supported for this prompt")

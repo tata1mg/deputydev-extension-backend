@@ -237,7 +237,7 @@ class SettingHelper:
         return agents_settings[agent_id]["agent_name"]
 
     @classmethod
-    def agent_setting_by_name(cls, agent_name):
+    def agent_setting_by_name(cls, agent_name: str) -> Dict[str, Any]:
         return cls.agents_settings().get(agent_name, {})
 
     @classmethod

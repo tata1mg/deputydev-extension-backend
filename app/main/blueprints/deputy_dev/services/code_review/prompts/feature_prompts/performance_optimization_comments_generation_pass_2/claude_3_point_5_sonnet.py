@@ -51,7 +51,7 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass2Prompt(BaseClau
             </contextually_related_code_snippets>
             
             <junior_developer_comments>
-            {self.params['JUNIOR_DEVELOPER_COMMENTS']}
+            {self.params['REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER']}
             </junior_developer_comments>
             </data>
             

@@ -39,7 +39,7 @@ from app.main.blueprints.deputy_dev.utils import get_filtered_response
 
 class SingleAgentPRReviewManager:
     def __init__(
-        self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, prompt_version: None
+        self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler, session_id: int, prompt_version: None
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service

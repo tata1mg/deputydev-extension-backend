@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from deputydev_core.utils.constants import ExtendedEnum
+from deputydev_core.utils.constants.constants import ExtendedEnum
 from torpedo.common_utils import CONFIG
 
 from app.common.constants.constants import SettingErrorType
