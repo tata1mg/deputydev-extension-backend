@@ -27,7 +27,7 @@ class TextBlockContent(BaseModel):
 
 
 class ToolUseRequestContent(BaseModel):
-    tool_input: Dict[str, Any]
+    tool_input: str
     tool_name: str
     tool_use_id: str
 
