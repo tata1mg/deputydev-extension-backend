@@ -139,11 +139,13 @@ class OpenAI(BaseLLMProvider):
         model_config = self._get_model_config(model)
 
         print("***************XXXXXX")
-        print({
-            "conversation_messages": llm_payload["conversation_messages"],
-            "model": model_config["NAME"],
-            "response_type": response_type,
-        })
+        print(
+            {
+                "conversation_messages": llm_payload["conversation_messages"],
+                "model": model_config["NAME"],
+                "response_type": response_type,
+            }
+        )
         print("***************XXXXXX")
 
         response = await OpenAIServiceClient().get_llm_response(

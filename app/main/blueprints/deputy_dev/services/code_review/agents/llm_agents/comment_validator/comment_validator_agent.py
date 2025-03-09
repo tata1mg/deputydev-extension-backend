@@ -48,9 +48,7 @@ class CommentValidatorAgent(BaseCodeReviewAgent):
         chunks = [relevant_chunks["relevant_chunks"][index] for index in relevant_chunks_indexes]
         return render_snippet_array(chunks)
 
-    async def required_prompt_variables(
-        self, last_pass_result: Optional[Any] = None
-    ) -> Dict[str, Optional[str]]:
+    async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
         relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
         return {
             "RELEVANT_CHUNKS": self.agent_relevant_chunk(relevant_chunks),

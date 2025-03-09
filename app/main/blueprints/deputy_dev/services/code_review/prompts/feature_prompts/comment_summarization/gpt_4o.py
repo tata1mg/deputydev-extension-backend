@@ -1,7 +1,11 @@
 from typing import Any, AsyncIterator, Dict, List
 
 from app.backend_common.models.dto.message_thread_dto import TextBlockData
-from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, StreamingResponse, UserAndSystemMessages
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )
@@ -189,11 +193,9 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
-
     @classmethod
     def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
         return {"data": format_code_blocks(text)}
-
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:

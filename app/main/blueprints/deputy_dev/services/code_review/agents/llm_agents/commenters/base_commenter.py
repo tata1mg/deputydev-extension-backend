@@ -13,7 +13,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import LLMCommentData
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
+    LLMCommentData,
+)
 from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -50,15 +52,12 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             agent_relevant_chunks.append(relevant_chunks["relevant_chunks"][index])
         return render_snippet_array(agent_relevant_chunks)
 
-    async def required_prompt_variables(
-        self, last_pass_result: Optional[Any] = None
-    ) -> Dict[str, Optional[str]]:
+    async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
         relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
         last_pass_comments_str = ""
         if last_pass_result:
             last_pass_comments: List[LLMCommentData] = last_pass_result.get("comments") or []
             last_pass_comments_str = json.dumps([comment.model_dump(mode="json") for comment in last_pass_comments])
-
 
         return {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
