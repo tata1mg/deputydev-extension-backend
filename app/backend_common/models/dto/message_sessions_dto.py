@@ -9,9 +9,11 @@ class MessageSessionData(BaseModel):
     summary: Optional[str] = None
     client: str
     client_version: Optional[str] = None
+    status: str = "ACTIVE"
 
 
 class MessageSessionDTO(MessageSessionData):
     id: int
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime]
