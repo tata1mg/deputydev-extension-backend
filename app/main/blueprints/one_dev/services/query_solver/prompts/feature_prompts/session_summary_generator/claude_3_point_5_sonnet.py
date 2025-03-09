@@ -1,0 +1,68 @@
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+from pydantic import BaseModel
+
+from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    TextBlockData,
+)
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
+    BaseClaude3Point5SonnetPrompt,
+)
+
+
+class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
+    prompt_type = "SESSION_SUMMARY_GENERATOR"
+
+    def __init__(self, params: Dict[str, Any]):
+        self.params = params
+
+    def get_prompt(self) -> UserAndSystemMessages:
+        system_message = """
+            You are tasked with generating a session summary based on a query asked on some repository by the user. If you do it well, you will be rewarded handsomely.
+            """
+
+        user_message = f"""
+            Here is a query asked on some repository by the user.
+            {self.params.get("query")}
+
+            Summarize this in a single line to be used as a title for the session.
+            Send the response in the following format:
+            <summary>
+                Your summary here
+            </summary>
+        """
+
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
+
+    @classmethod
+    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
+        summary: Optional[str] = None
+        if "<summary>" in text_block.content.text:
+            summary = text_block.content.text.split("<summary>")[1].split("</summary>")[0].strip()
+
+        if summary:
+            return {"summary": summary}
+        raise ValueError("Invalid LLM response format. Summary not found.")
+
+    @classmethod
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+
+        final_content: List[Dict[str, Any]] = []
+
+        for content_block in llm_response.content:
+            if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                raise NotImplementedError("Tool use request not implemented for this prompt")
+            elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
+                final_content.append(cls._parse_text_block(content_block))
+
+        return final_content
+
+    @classmethod
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
+        raise NotImplementedError(f"Streaming events not implemented for {cls.prompt_type}")
