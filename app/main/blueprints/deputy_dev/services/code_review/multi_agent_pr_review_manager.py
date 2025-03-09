@@ -57,7 +57,7 @@ class MultiAgentPRReviewManager:
         self.tiktoken = TikToken()
         self.agents_tokens = {}
         self.filtered_comments = None
-        self.pr_summary : Optional[Dict[str, Any]] = None
+        self.pr_summary: Optional[Dict[str, Any]] = None
         self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
         self.eligible_agents = eligible_agents
         self._is_large_pr: bool = False
