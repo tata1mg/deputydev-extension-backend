@@ -36,10 +36,13 @@ class OpenAIServiceClient(metaclass=Singleton):
             model=model,
             response_format={"type": response_type},
             messages=conversation_messages,
-            tools=tools,
-            tool_choice=tool_choice,
             temperature=0.5,
         )
+
+        print("***************XXXXXX")
+        print(completion)
+        print("***************XXXXXX")
+
         # we need both message and output token now to returning full completion message
         return completion
 
