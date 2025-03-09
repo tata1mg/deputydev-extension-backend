@@ -161,9 +161,9 @@ class Anthropic(BaseLLMProvider):
 
         non_streaming_content_blocks: List[ResponseData] = []
         for content_block in content_array:
-            print("#######################")
-            print(content_block)
-            print("#######################")
+            # print("#######################")
+            # print(content_block)
+            # print("#######################")
             if content_block["type"] == AnthropicResponseTypes.TEXT.value:
                 non_streaming_content_blocks.append(
                     TextBlockData(
@@ -183,9 +183,9 @@ class Anthropic(BaseLLMProvider):
                     )
                 )
 
-        print("#######################")
-        print(non_streaming_content_blocks)
-        print("#######################")
+        # print("#######################")
+        # print(non_streaming_content_blocks)
+        # print("#######################")
         return NonStreamingResponse(
             content=non_streaming_content_blocks,
             usage=LLMUsage(input=llm_response["usage"]["input_tokens"], output=llm_response["usage"]["output_tokens"]),

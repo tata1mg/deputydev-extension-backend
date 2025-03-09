@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.utils.config_manager import ConfigManager
 from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -41,7 +42,7 @@ class BaseLLMProvider(ABC):
         raise NotImplementedError("Must implement format_conversation in subclass")
 
     def _get_model_config(self, model: LLModels) -> Dict[str, Any]:
-        return CONFIG.config.get("LLM_MODELS").get(model.value)
+        return ConfigManager.configs["LLM_MODELS"][model.value]
 
     async def call_service_client(
         self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None
