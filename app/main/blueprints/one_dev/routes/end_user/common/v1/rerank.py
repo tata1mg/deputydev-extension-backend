@@ -1,6 +1,6 @@
 from sanic import Blueprint
 
-from app.backend_common.services.chunking.reranker.handler.llm_based import LLMBasedChunkReranker
+from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import LLMBasedChunkReranker
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from torpedo import Request, send_response
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
