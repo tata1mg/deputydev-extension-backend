@@ -65,10 +65,10 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
     JobService,
 )
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.pre_authenticate_handler import (
-    validate_cli_version,
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
 )
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 code_gen = Blueprint("code_gen", "/")
@@ -77,7 +77,7 @@ config = CONFIG.config
 
 
 @code_gen.route("/generate-code", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def generate_code(_request: Request, auth_data: AuthData, **kwargs):
@@ -89,7 +89,7 @@ async def generate_code(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/generate-docs", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def generate_docs(_request: Request, auth_data: AuthData, **kwargs):
@@ -102,7 +102,7 @@ async def generate_docs(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/generate-test-cases", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def generate_test_case(_request: Request, auth_data: AuthData, **kwargs):
@@ -115,7 +115,7 @@ async def generate_test_case(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/generate-code-plan", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def generate_code_plan(_request: Request, auth_data: AuthData, **kwargs):
@@ -128,7 +128,7 @@ async def generate_code_plan(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/generate-diff", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def generate_code_diff(_request: Request, auth_data: AuthData, **kwargs):
@@ -141,7 +141,7 @@ async def generate_code_diff(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/iterative-chat", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def iterative_chat(_request: Request, auth_data: AuthData, **kwargs):
@@ -153,7 +153,7 @@ async def iterative_chat(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/plan-code-generation", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
@@ -164,14 +164,13 @@ async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/get-job-status", methods=["GET"])
-@validate_cli_version
-@ensure_session_id
+@validate_client_version
 @authenticate
-async def get_job_status(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def get_job_status(_request: Request, auth_data: AuthData, session_id: int, **kwargs):
     payload = {key: var for key, var in _request.query_args}
-    job = await JobService.db_get(
-        filters={"id": int(payload.get("job_id")), "session_id": _request.headers.get("X-Session-Id")}, fetch_one=True
-    )
+    print(payload)
+    job = await JobService.db_get(filters={"id": int(payload.get("job_id"))}, fetch_one=True)
     if not job:
         return send_response({"status": "JOB_NOT_FOUND"})
     response = {
@@ -182,7 +181,7 @@ async def get_job_status(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/create-embedding", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @authenticate
 async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
     payload = _request.custom_json()
@@ -193,7 +192,7 @@ async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/record-feedback", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
@@ -203,7 +202,7 @@ async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @code_gen.route("/relevant-chat-history", methods=["POST"])
-@validate_cli_version
+@validate_client_version
 @ensure_session_id
 @authenticate
 async def fetch_relevant_chat_history(_request: Request, auth_data: AuthData, **kwargs):
