@@ -19,6 +19,7 @@ pillow = "==10.2.0"
 google-generativeai = "==0.3.2"
 pyjwt = "==2.9.0"
 supabase = "==2.11.0"
+types-aiobotocore-bedrock-runtime = "==2.11.2"
 torpedo = { editable = true, ref = "3.6.1-rc2-bumped-websockets", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
 realtime = "==2.3.0"
 

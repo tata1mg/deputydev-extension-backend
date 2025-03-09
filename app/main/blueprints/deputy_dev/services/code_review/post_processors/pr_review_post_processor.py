@@ -221,7 +221,7 @@ class PRReviewPostProcessor:
             if scm_comment_id in inserted_comments_dict:
                 inserted_comment = inserted_comments_dict[scm_comment_id]
                 comments_by_ids[inserted_comment.id] = valid_comment
-        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        current_agents_by_id = SettingService.helper.agents_setting_by_agent_uuid()
         is_new_agents_created = await cls.upsert_agents(pr_dto.repo_id, saved_agents_by_id, current_agents_by_id)
         if is_new_agents_created:
             saved_agents_by_id = await cls.fetch_agents(agent_filter)

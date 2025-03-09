@@ -28,8 +28,8 @@ from app.main.blueprints.deputy_dev.utils import (
 
 
 class SettingService:
-    Helper = SettingHelper
-    Validator = SettingValidator
+    helper = SettingHelper
+    validator = SettingValidator
 
     def __init__(self, repo_service: BaseRepo, team_id: Optional[int] = None, default_branch: Optional[str] = None):
         """
@@ -64,15 +64,15 @@ class SettingService:
         team_level_settings = await self.team_level_settings()
 
         # Remove repository-specific settings from team-level settings.
-        team_level_settings = self.Helper.remove_repo_specific_setting(team_level_settings)
+        team_level_settings = self.helper.remove_repo_specific_setting(team_level_settings)
 
         # Retrieve base (default) settings.
-        base_settings = self.Helper.dd_level_settings()
+        base_settings = self.helper.dd_level_settings()
         final_setting = copy.deepcopy(base_settings)
 
         # Merge settings in the order: base -> team -> repository.
-        final_setting = self.Helper.merge_setting(final_setting, team_level_settings)
-        final_setting = self.Helper.merge_setting(final_setting, repo_level_settings)
+        final_setting = self.helper.merge_setting(final_setting, team_level_settings)
+        final_setting = self.helper.merge_setting(final_setting, repo_level_settings)
 
         # Cache the final settings in context.
         set_context_values(setting=final_setting)
@@ -147,7 +147,7 @@ class SettingService:
         team_settings = await self.team_level_settings()
 
         if repo_level_settings and not is_invalid_setting:
-            error, is_invalid_setting = self.Validator.validate_repo_settings(repo_level_settings, team_settings)
+            error, is_invalid_setting = self.validator.validate_repo_settings(repo_level_settings, team_settings)
 
         # Handle errors and cache the repository settings.
         repo_level_settings = await self.handle_error_and_cache(
@@ -270,16 +270,16 @@ class SettingService:
             return
 
         repo_existing_settings = repo_existing_settings.configuration if repo_existing_settings else {}
-        dd_agents = self.Helper.agents(self.Helper.DD_LEVEL_SETTINGS)
-        team_agents = self.Helper.agents(team_settings)
-        repo_agents = self.Helper.agents(repo_settings)
-        repo_existing_agents = self.Helper.agents(repo_existing_settings)
+        dd_agents = self.helper.agents(self.helper.DD_LEVEL_SETTINGS)
+        team_agents = self.helper.agents(team_settings)
+        repo_agents = self.helper.agents(repo_settings)
+        repo_existing_agents = self.helper.agents(repo_existing_settings)
 
         # Determine updated and deleted agent IDs.
         updated_agent_ids, deleted_agent_ids = self.updated_and_deleted_agent_ids(repo_existing_agents, repo_agents)
 
         if updated_agent_ids or deleted_agent_ids:
-            agents_data = self.Helper.agents_analytics_info(dd_agents, team_agents, repo_agents)
+            agents_data = self.helper.agents_analytics_info(dd_agents, team_agents, repo_agents)
             agents_ids_to_update = updated_agent_ids + deleted_agent_ids
             updated_agents = self.create_agents_objects(repo_id, agents_ids_to_update, agents_data)
             await self.upsert_agents(updated_agents)
@@ -320,8 +320,8 @@ class SettingService:
         Returns:
             Tuple[List[int], List[int]]: A tuple containing updated and deleted agent IDs.
         """
-        existing_agents = cls.Helper.agent_data_by_id(existing_agents)
-        updated_agents = cls.Helper.agent_data_by_id(updated_agents)
+        existing_agents = cls.helper.agent_data_by_id(existing_agents)
+        updated_agents = cls.helper.agent_data_by_id(updated_agents)
 
         updated_agent_ids, deleted_agent_ids = [], []
         for agent_id, agent in updated_agents.items():
@@ -421,7 +421,7 @@ class SettingService:
             workspace = await get_workspace(scm=payload["vcs_type"], scm_workspace_id=payload["scm_workspace_id"])
 
             # Validate the team settings using the defined helper and validator.
-            errors = cls.Validator.validate_team_settings(cls.Helper.dd_level_settings(), setting)
+            errors = cls.validator.validate_team_settings(cls.helper.dd_level_settings(), setting)
             if errors:
                 raise BadRequestException(f"Invalid Setting: {errors}")
 
@@ -467,8 +467,8 @@ class SettingService:
         existing_team_setting = existing_team_setting.configuration if existing_team_setting else {}
 
         # Extract agents from the updated and existing settings
-        team_agents = cls.Helper.agents(updated_team_setting)
-        existing_team_agents = cls.Helper.agents(existing_team_setting)
+        team_agents = cls.helper.agents(updated_team_setting)
+        existing_team_agents = cls.helper.agents(existing_team_setting)
 
         # Identify updated and deleted agents
         updated_agent_ids, deleted_agent_ids = cls.updated_and_deleted_agent_ids(team_agents, existing_team_agents)
@@ -484,14 +484,14 @@ class SettingService:
             agents_ids_to_update = updated_agent_ids + deleted_agent_ids
 
             # Extract DD-level agents
-            dd_agents = cls.Helper.agents(cls.Helper.DD_LEVEL_SETTINGS)
+            dd_agents = cls.helper.agents(cls.helper.DD_LEVEL_SETTINGS)
 
             # Prepare the updated agents list
             updated_agents = []
             for repo_id in repo_ids:
                 repo_setting = repo_settings.get(repo_id) or {}
-                repo_agents = cls.Helper.agents(repo_setting)
-                agents_data = cls.Helper.agents_analytics_info(dd_agents, team_agents, repo_agents)
+                repo_agents = cls.helper.agents(repo_setting)
+                agents_data = cls.helper.agents_analytics_info(dd_agents, team_agents, repo_agents)
                 updated_agents.extend(cls.create_agents_objects(repo_id, agents_ids_to_update, agents_data))
 
             # Insert or update agents in the database

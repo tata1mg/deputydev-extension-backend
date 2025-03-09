@@ -1,0 +1,35 @@
+from sanic import Blueprint
+from torpedo import Request, send_response
+
+from app.backend_common.services.auth.supabase.session import SupabaseSession
+from app.main.blueprints.one_dev.services.auth.auth import Auth
+from app.main.blueprints.one_dev.services.auth.signup import SignUp
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+)
+
+auth = Blueprint("auth", "/")
+
+
+@auth.route("/verify-auth-token", methods=["POST"])
+@validate_client_version
+async def verify_auth_token(_request: Request, **kwargs):
+    headers = _request.headers
+    response = await Auth.extract_and_verify_token(headers)
+    return send_response(response)
+
+
+@auth.route("/get-session", methods=["GET"])
+@validate_client_version
+async def get_session(_request: Request, **kwargs):
+    headers = _request.headers
+    response = await SupabaseSession.get_session_by_supabase_session_id(headers)
+    return send_response(response)
+
+
+@auth.route("/sign-up", methods=["POST"])
+@validate_client_version
+async def sign_up(_request: Request, **kwargs):
+    headers = _request.headers
+    response = await SignUp.signup(headers)
+    return send_response(response)

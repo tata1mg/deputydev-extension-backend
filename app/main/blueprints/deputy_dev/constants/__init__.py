@@ -11,7 +11,6 @@ __all__ = [
     "ExperimentStatusTypes",
     "BitbucketBots",
     "PRDiffSizingLabel",
-    "LLMModelNames",
     "GraphTypes",
     "DashboardQueries",
     "SerializerTypes",
@@ -21,8 +20,6 @@ __all__ = [
     "AbAnalysisDates",
     "AbAnalysisPhases",
 ]
-
-from deputydev_core.utils.constants.constants import LLMModelNames
 
 from app.backend_common.services.openai.openai_service import (
     EMBEDDING_MODEL,
