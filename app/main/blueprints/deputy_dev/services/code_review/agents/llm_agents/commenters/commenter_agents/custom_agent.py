@@ -35,9 +35,7 @@ class CustomAgent(BaseCommenterAgent):
         super().__init__(context_service, is_reflection_enabled, agent_setting, llm_handler, model)
         self.agent_name = custom_commenter_name  # overrides the agent_name value from the base class
 
-    async def required_prompt_variables(
-        self, last_pass_result: Optional[Any] = None
-    ) -> Dict[str, Optional[str]]:
+    async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
         variables = await super().required_prompt_variables(last_pass_result)
         variables["AGENT_NAME"] = self.agent_name
         return variables

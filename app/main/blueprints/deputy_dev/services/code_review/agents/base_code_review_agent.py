@@ -75,9 +75,7 @@ class BaseCodeReviewAgent(ABC):
         return True
 
     @abstractmethod
-    async def required_prompt_variables(
-        self, last_pass_result: Optional[Any] = None
-    ) -> Dict[str, Optional[str]]:
+    async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
         """
         Return the required prompt variables for the agent
         """
@@ -94,7 +92,9 @@ class BaseCodeReviewAgent(ABC):
 
             # check if the token limit has been exceeded
             prompt_vars = await self.required_prompt_variables(last_pass_result=last_pass_result or {})
-            prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(model_name=self.model, feature=prompt_feature)(prompt_vars)
+            prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(
+                model_name=self.model, feature=prompt_feature
+            )(prompt_vars)
             user_and_system_messages = prompt_handler.get_prompt()
             token_limit_exceeded = self.has_exceeded_token_limit(user_and_system_messages)
             if token_limit_exceeded:
@@ -103,7 +103,7 @@ class BaseCodeReviewAgent(ABC):
                     prompt_tokens_exceeded=True,
                     agent_name=self.agent_name,
                     agent_type=self.agent_type,
-                    model = self.model
+                    model=self.model,
                 )
 
             llm_response = await self.llm_handler.start_llm_query(
@@ -125,5 +125,5 @@ class BaseCodeReviewAgent(ABC):
             prompt_tokens_exceeded=False,
             agent_name=self.agent_name,
             agent_type=self.agent_type,
-            model = self.model
+            model=self.model,
         )
