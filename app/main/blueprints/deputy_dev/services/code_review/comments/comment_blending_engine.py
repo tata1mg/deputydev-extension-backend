@@ -3,9 +3,9 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
 
 from app.backend_common.services.llm.handler import LLMHandler
-from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.code_review.agents.agents_factory import (
     AgentFactory,
 )

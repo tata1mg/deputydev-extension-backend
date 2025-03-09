@@ -42,6 +42,7 @@ async def generate_inline_edit(_request: Request, auth_data: AuthData, session_i
     )
     return send_response({"job_id": data})
 
+
 @query_solver.route("/get-inline-edit-result", methods=["GET"])
 @authenticate
 @ensure_session_id

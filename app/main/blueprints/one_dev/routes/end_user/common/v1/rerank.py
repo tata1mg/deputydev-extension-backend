@@ -1,10 +1,12 @@
 from sanic import Blueprint
-
-from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import LLMBasedChunkReranker
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from torpedo import Request, send_response
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+
+from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
+    LLMBasedChunkReranker,
+)
 from app.main.blueprints.one_dev.models.dto.reranking_input import RerankingInput
+from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 rerank = Blueprint("rerank", "/")
 
