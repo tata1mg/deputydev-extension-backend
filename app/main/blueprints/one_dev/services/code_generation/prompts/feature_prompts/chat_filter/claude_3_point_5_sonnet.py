@@ -1,6 +1,14 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, AsyncIterator, Dict, List
 
+from pydantic import BaseModel
+
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
@@ -12,14 +20,41 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 class Claude3Point5RelevantChatFilterPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = ""
 
-    def __init__(self, params: dict):
+    def __init__(self, params: Dict[str, Any]):
         self.params = params
 
-    def get_prompt(self) -> Dict[str, Any]:
+    def _create_xml_chats(self, previous_chats: List[PreviousChats]) -> str:
+        """
+        Create an XML representation of a list of PreviousChats objects.
+
+        Args:
+            previous_chats (List[PreviousChats]): List of PreviousChats objects.
+
+        Returns:
+            str: XML string.
+        """
+        # Root element
+        xml_output = "<PreviousChatsList>"
+
+        # Add each chat to the XML structure
+        for chat in previous_chats:
+            xml_output += "<Chat>"
+            xml_output += f"<ID>{chat.id}</ID>"
+            xml_output += f"<Summary>{chat.summary}</Summary>"
+            if chat.query:
+                xml_output += f"<Query>{chat.query}</Query>"
+            xml_output += "</Chat>"
+
+        # Close root element
+        xml_output += "</PreviousChatsList>"
+
+        return xml_output
+
+    def get_prompt(self) -> UserAndSystemMessages:
         user_message = f"""
             Please sort and filter the following chat history based on the user's query, so that it can be used as a context for a LLM to answer the query.
             <chat_history>
-            {self.create_xml_chats(self.params.get("chats"))}
+            {self._create_xml_chats(self.params["chats"])}
             </chat_history>
             The user query is as follows -
             <user_query>{self.params.get("query")}</user_query>
@@ -40,37 +75,26 @@ class Claude3Point5RelevantChatFilterPrompt(BaseClaude3Point5SonnetPrompt):
             "You are a codebase expert whose task is to filter and rerank code snippet provided for a user query"
         )
 
-        return {"system_message": system_message, "user_message": user_message}
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
-    def get_parsed_result(cls, llm_response: str) -> Dict[str, List[int]]:
-        chunks_match = re.search(r"<sorted_and_filtered_chat>(.*?)</sorted_and_filtered_chat>", llm_response, re.DOTALL)
-        chunks_content = chunks_match.group(1).strip()
-        chat_ids = re.findall(r"<chat>(\d+)</chat>", chunks_content)
-        return {"chat_ids": [int(chat_id) for chat_id in chat_ids]}
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Any]:
+        final_data: List[Any] = []
+        for response_data in llm_response.content:
+            if response_data.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                # Skip the tool use request block, as it is not relevant to this prompt
+                continue
 
-    def create_xml_chats(self, previous_chats: List[PreviousChats]) -> str:
-        """
-        Create an XML representation of a list of PreviousChats objects.
+            chunks_match = re.search(
+                r"<sorted_and_filtered_chat>(.*?)</sorted_and_filtered_chat>", response_data.content.text, re.DOTALL
+            )
+            if chunks_match:
+                chunks_content = chunks_match.group(1).strip()
+                chat_ids = re.findall(r"<chat>(\d+)</chat>", chunks_content)
+                final_data.append({"chat_ids": [int(chat_id) for chat_id in chat_ids]})
 
-        Args:
-            previous_chats (List[PreviousChats]): List of PreviousChats objects.
+        return final_data
 
-        Returns:
-            str: XML string.
-        """
-        # Root element
-        xml_output = "<PreviousChatsList>"
-
-        # Add each chat to the XML structure
-        for chat in previous_chats:
-            xml_output += "<Chat>"
-            xml_output += f"<ID>{chat.id}</ID>"
-            xml_output += f"<Summary>{chat.summary}</Summary>"
-            xml_output += f"<Query>{chat.query}</Query>"
-            xml_output += "</Chat>"
-
-        # Close root element
-        xml_output += "</PreviousChatsList>"
-
-        return xml_output
+    @classmethod
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
+        raise NotImplementedError("Streaming not supported for this prompt")

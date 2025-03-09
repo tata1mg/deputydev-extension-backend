@@ -24,9 +24,20 @@ class CodeSelectionInput(BaseModel):
     selected_text: str
     file_path: str
 
+
 class InlineEditInput(BaseModel):
     session_id: int
     query: str
     relevant_chunks: List[Any]
     code_selection: CodeSelectionInput
     auth_data: AuthData
+
+
+class ResponseMetadataContent(BaseModel):
+    query_id: int
+    session_id: int
+
+
+class ResponseMetadataBlock(BaseModel):
+    content: ResponseMetadataContent
+    type: str
