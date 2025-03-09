@@ -2,6 +2,7 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List
 
+from app.backend_common.exception.exception import ParseException
 from app.backend_common.models.dto.message_thread_dto import TextBlockData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -14,7 +15,6 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.common.exception.exception import ParseException
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )

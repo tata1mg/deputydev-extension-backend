@@ -7,6 +7,7 @@ from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar, 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 
+from app.backend_common.exception import RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     LLModels,
@@ -47,7 +48,6 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 )
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
-from app.backend_common.exception import RetryException
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 

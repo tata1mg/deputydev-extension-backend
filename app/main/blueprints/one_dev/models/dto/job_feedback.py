@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from deputydev_core.utils.constants.feedbacks import UpvoteDownvoteFeedbacks
 from pydantic import BaseModel
+
+from app.backend_common.constants.feedbacks import UpvoteDownvoteFeedbacks
 
 
 class JobFeedbackDTO(BaseModel):
