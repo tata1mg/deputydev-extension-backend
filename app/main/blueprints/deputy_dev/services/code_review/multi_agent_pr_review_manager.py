@@ -41,9 +41,9 @@ class MultiAgentPRReviewManager:
         repo_service: BaseRepo,
         pr_service: BasePR,
         pr_diff_handler: PRDiffHandler,
+        session_id: int,
         prompt_version=None,
         eligible_agents=None,
-        session_id: int = None,
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service
@@ -62,11 +62,6 @@ class MultiAgentPRReviewManager:
         self.pr_summary = None
         self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
         self.eligible_agents = eligible_agents
-        self.agent_factory = AgentFactory(
-            reflection_enabled=self._is_reflection_enabled(),
-            context_service=self.context_service,
-            eligible_agents=self.eligible_agents,
-        )
         self._is_large_pr: bool = False
         self.pr_diff_handler = pr_diff_handler
         self.llm_handler = LLMHandler(
@@ -74,6 +69,9 @@ class MultiAgentPRReviewManager:
             prompt_features=PromptFeatures,
         )
         self.session_id = session_id
+        print("******************************")
+        print(self.session_id)
+        print("******************************")
 
     # section setting start
 
@@ -139,7 +137,7 @@ class MultiAgentPRReviewManager:
         # segregate agents in realtime based on whether they should execute or not
         runnable_agents = [agent for agent in all_agents if await agent.should_execute()]
         agent_tasks = [agent.run_agent(session_id=self.session_id) for agent in runnable_agents]
-        agent_tasks_results = await asyncio.gather(*agent_tasks, return_exceptions=True)
+        agent_tasks_results = await asyncio.gather(*agent_tasks, return_exceptions=False)
         non_error_results = [
             task_result for task_result in agent_tasks_results if not isinstance(task_result, BaseException)
         ]

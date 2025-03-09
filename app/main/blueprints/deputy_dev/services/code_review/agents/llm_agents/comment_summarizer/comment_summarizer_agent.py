@@ -40,7 +40,7 @@ class CommentSummarizerAgent(BaseCodeReviewAgent):
         super().__init__(context_service, is_reflection_enabled, llm_handler, model)
 
     async def required_prompt_variables(
-        self, last_pass_result: Dict[str, Optional[str]] = {}
+        self, last_pass_result: Optional[Any] = None
     ) -> Dict[str, Optional[str]]:
         return {
             "COMMENTS": json.dumps([comment.model_dump(mode="json") for comment in self.comments]),
