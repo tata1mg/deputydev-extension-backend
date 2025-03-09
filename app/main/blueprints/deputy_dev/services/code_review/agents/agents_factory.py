@@ -12,7 +12,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main
     AgentAndInitParams,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comment_summarizer.comment_summarizer_agent import CommentSummarizerAgent
+from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comment_summarizer.comment_summarizer_agent import (
+    CommentSummarizerAgent,
+)
 from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comment_validator.comment_validator_agent import (
     CommentValidatorAgent,
 )
@@ -34,7 +36,9 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.comme
 from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import PRSummarizerAgent
+from app.main.blueprints.deputy_dev.services.code_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
+    PRSummarizerAgent,
+)
 from app.main.blueprints.deputy_dev.services.code_review.comments.dataclasses.main import (
     ParsedAggregatedCommentData,
     ParsedCommentData,
