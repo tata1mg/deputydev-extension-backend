@@ -1,8 +1,8 @@
+from typing import Any, Dict
+
 from deputydev_core.utils.context_vars import get_context_value
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND
-from typing import Any, Dict
-
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.utils.app_utils import get_token_count, safe_index
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
