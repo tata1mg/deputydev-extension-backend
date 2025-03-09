@@ -50,7 +50,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
-from app.common.constants.constants import LLMProviders
+from app.backend_common.constants.constants import LLMProviders
 
 
 class Anthropic(BaseLLMProvider):

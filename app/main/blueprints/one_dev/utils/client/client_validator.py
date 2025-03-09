@@ -3,8 +3,7 @@ from typing import Any, Optional, Tuple
 
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
-
-from app.common.constants.error_codes import APIErrorCodes
+from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_CLI_VERSION,
     MIN_SUPPORTED_VSCODE_EXT_VERSION,
