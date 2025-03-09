@@ -1,0 +1,27 @@
+from typing import Any, Dict, Type
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
+    BaseFeaturePromptFactory,
+)
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+
+from .dataclasses.main import PromptFeatures
+from .feature_prompts.chunk_re_ranking.factory import ChunkReRankingPromptFactory
+
+
+class PromptFeatureFactory:
+    feature_prompt_factory_map: Dict[PromptFeatures, Type[BaseFeaturePromptFactory]] = {
+        PromptFeatures.RE_RANKING: ChunkReRankingPromptFactory,
+    }
+
+    @classmethod
+    def get_prompt(
+        cls, prompt_feature: PromptFeatures, model_name: LLModels, init_params: Dict[str, Any]
+    ) -> BasePrompt:
+        feature_prompt_factory = cls.feature_prompt_factory_map.get(prompt_feature)
+        if not feature_prompt_factory:
+            raise ValueError(f"Invalid prompt feature: {prompt_feature}")
+
+        prompt_class = feature_prompt_factory.get_prompt(model_name)
+        return prompt_class(init_params)
