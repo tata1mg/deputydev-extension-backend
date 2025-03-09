@@ -76,7 +76,7 @@ class BaseCodeReviewAgent(ABC):
 
     @abstractmethod
     async def required_prompt_variables(
-        self, last_pass_result: Dict[str, Optional[str]] = {}
+        self, last_pass_result: Optional[Any] = None
     ) -> Dict[str, Optional[str]]:
         """
         Return the required prompt variables for the agent
@@ -88,10 +88,23 @@ class BaseCodeReviewAgent(ABC):
         Run the agent and return the agent run result
         """
         total_passes = 1 if not self.is_dual_pass else 2
-        last_pass_result: Optional[Dict[str, Optional[str]]] = None
+        last_pass_result: Optional[Any] = None
         for pass_num in range(1, total_passes + 1):
             prompt_feature = self.prompt_features[pass_num - 1]  # 0 indexed
+
+            # check if the token limit has been exceeded
             prompt_vars = await self.required_prompt_variables(last_pass_result=last_pass_result or {})
+            prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(model_name=self.model, feature=prompt_feature)(prompt_vars)
+            user_and_system_messages = prompt_handler.get_prompt()
+            token_limit_exceeded = self.has_exceeded_token_limit(user_and_system_messages)
+            if token_limit_exceeded:
+                return AgentRunResult(
+                    agent_result=None,
+                    prompt_tokens_exceeded=True,
+                    agent_name=self.agent_name,
+                    agent_type=self.agent_type,
+                )
+
             llm_response = await self.llm_handler.start_llm_query(
                 session_id=session_id,
                 prompt_feature=prompt_feature,
@@ -106,10 +119,9 @@ class BaseCodeReviewAgent(ABC):
             # if this is not the case, we can override this method in the child class
             rendered_messages = llm_response.parsed_content[0]
             last_pass_result = rendered_messages
-
         return AgentRunResult(
             agent_result=last_pass_result,
-            prompt_tokens_exceeded=self.has_exceeded_token_limit(last_pass_result),
+            prompt_tokens_exceeded=False,
             agent_name=self.agent_name,
             agent_type=self.agent_type,
         )

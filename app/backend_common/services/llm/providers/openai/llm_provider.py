@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
@@ -30,7 +31,7 @@ class OpenAI(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.OPENAI.value)
         self.anthropic_client = None
-        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["GPT_4_O"]
+        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["GPT_4O"]
 
     def build_llm_payload(
         self,
@@ -80,6 +81,10 @@ class OpenAI(BaseLLMProvider):
             NonStreamingResponse: Parsed response
         """
         non_streaming_content_blocks: List[ResponseData] = []
+
+        print("***************XXXXXXXX")
+        print(response.choices[0].message.content)
+        print("***************XXXXXXXX")
 
         if response.choices[0].message.content:
             non_streaming_content_blocks.append(
@@ -133,9 +138,9 @@ class OpenAI(BaseLLMProvider):
 
         model_config = self._get_model_config(model)
 
-        response = await OpenAIServiceClient().get_llm_response(
+        response = await asyncio.wait_for(OpenAIServiceClient().get_llm_response(
             conversation_messages=llm_payload["conversation_messages"],
             model=model_config["NAME"],
             response_type=response_type,
-        )
+        ), timeout=60*3)
         return self._parse_non_streaming_response(response)
