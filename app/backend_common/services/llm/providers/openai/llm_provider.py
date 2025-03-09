@@ -82,9 +82,9 @@ class OpenAI(BaseLLMProvider):
         """
         non_streaming_content_blocks: List[ResponseData] = []
 
-        print("***************XXXXXXXX")
-        print(response.choices[0].message.content)
-        print("***************XXXXXXXX")
+        # print("***************XXXXXXXX")
+        # print(response.choices[0].message.content)
+        # print("***************XXXXXXXX")
 
         if response.choices[0].message.content:
             non_streaming_content_blocks.append(
@@ -131,16 +131,24 @@ class OpenAI(BaseLLMProvider):
             str: The response from the GPT model.
         """
         if not response_type:
-            response_type = "json_object"
+            response_type = "text"
 
         if stream:
             raise ValueError("Stream is not supported for OpenAI")
 
         model_config = self._get_model_config(model)
 
-        response = await asyncio.wait_for(OpenAIServiceClient().get_llm_response(
+        print("***************XXXXXX")
+        print({
+            "conversation_messages": llm_payload["conversation_messages"],
+            "model": model_config["NAME"],
+            "response_type": response_type,
+        })
+        print("***************XXXXXX")
+
+        response = await OpenAIServiceClient().get_llm_response(
             conversation_messages=llm_payload["conversation_messages"],
             model=model_config["NAME"],
             response_type=response_type,
-        ), timeout=60*3)
+        )
         return self._parse_non_streaming_response(response)
