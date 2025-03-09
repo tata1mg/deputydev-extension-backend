@@ -46,10 +46,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
     BasePromptFeatureFactory,
 )
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
-from app.backend_common.services.llm.providers.open_ai_reasioning_llm import (
-    OpenAIReasoningLLM,
-)
-from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
+from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.common.exception import RetryException
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
@@ -58,9 +55,8 @@ PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 class LLMHandler(Generic[PromptFeatures]):
     model_to_provider_class_map = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
-        LLModels.GPT_4O: OpenaiLLM,
-        LLModels.GPT_40_MINI: OpenaiLLM,
-        LLModels.GPT_O1_MINI: OpenAIReasoningLLM,
+        LLModels.GPT_4O: OpenAI,
+        LLModels.GPT_40_MINI: OpenAI,
     }
 
     def __init__(
@@ -125,14 +121,12 @@ class LLMHandler(Generic[PromptFeatures]):
         query_id: int,
         call_chain_category: MessageCallChainCategory,
     ) -> None:
-        print("storing task started ********************************************************")
         response_to_use: NonStreamingResponse
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             response_to_use = await self.get_non_streaming_response_from_streaming_response(llm_response)
         else:
             response_to_use = llm_response
 
-        print("response to use generated *********************************************************")
         response_to_use.content.sort(key=lambda x: x.type.value)
         data_to_store: Sequence[ResponseData] = response_to_use.content
         data_hash = xxhash.xxh64(json.dumps([data.model_dump(mode="json") for data in data_to_store])).hexdigest()
@@ -149,10 +143,7 @@ class LLMHandler(Generic[PromptFeatures]):
             usage=response_to_use.usage,
             call_chain_category=call_chain_category,
         )
-        print("response data *********************************************************")
-        print(message_thread)
         await MessageThreadsRepository.create_message_thread(message_thread)
-        print("HHBDKJDHODIE")
 
     async def store_llm_query_in_db(
         self,
@@ -222,7 +213,6 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
                 llm_response = await client.call_service_client(llm_payload, llm_model, stream=stream)
                 # start task for storing LLM message in DB
-                print("storing task started ********************************************************")
                 asyncio.create_task(
                     self.store_llm_response_in_db(
                         llm_response,
@@ -233,11 +223,9 @@ class LLMHandler(Generic[PromptFeatures]):
                         call_chain_category=call_chain_category,
                     )
                 )
-                print("storing task started ********************************************************")
                 return llm_response
             except Exception as e:
                 AppLogger.log_debug(traceback.format_exc())
-                print(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry}  Error while fetching data from LLM: {e}")
                 await asyncio.sleep(2)
         raise RetryException(f"Failed to get response from LLM after {max_retry} retries")
