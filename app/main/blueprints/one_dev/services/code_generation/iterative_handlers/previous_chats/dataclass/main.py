@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -9,7 +11,7 @@ class PreviousChatPayload(BaseModel):
 class PreviousChats(BaseModel):
     id: int
     summary: str
-    query: str
+    query: Optional[str] = None
 
 
 class PreviousChatResponse(BaseModel):

@@ -2,11 +2,9 @@ from typing import List
 
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 
-from app.backend_common.constants.constants import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.dataclasses.main import LLMMeta
 from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
-from app.common.constants.constants import PromptFeatures
-from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.features.base_code_gen_feature import (
     BaseCodeGenFeature,
@@ -33,6 +31,9 @@ from app.main.blueprints.one_dev.services.repository.session_chat.main import (
     SessionChatService,
 )
 
+from ...prompts.dataclasses.main import PromptFeatures
+from ...prompts.factory import PromptFeatureFactory
+
 
 class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
     feature = CodeGenFeature.CODE_GENERATION
@@ -54,7 +55,7 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
             update_data={"status": "PROMPT_GENERATED"},
         )
 
-        llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=[])
+        llm_response = await LLMHandler(prompt_handler=prompt).start_llm_query(previous_responses=[])
         code_lines = get_response_code_lines(llm_response.parsed_llm_data["response"])
         llm_meta.append(llm_response.llm_meta)
         await JobService.db_update(

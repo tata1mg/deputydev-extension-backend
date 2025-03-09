@@ -1,12 +1,13 @@
 from typing import List
 
-from app.backend_common.constants.constants import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.common.constants.constants import PromptFeatures
-from app.common.services.prompt.factory import PromptFeatureFactory
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
     PreviousChats,
 )
+
+from ....prompts.dataclasses.main import PromptFeatures
+from ....prompts.factory import PromptFeatureFactory
 
 
 class LLMBasedChatFiltration:
@@ -24,7 +25,7 @@ class LLMBasedChatFiltration:
                 "chats": chats,
             },
         )
-        response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=[])
+        response = await LLMHandler(prompt_handler=prompt).start_llm_query(previous_responses=[])
         if response:
             filtered_chat_ids = response.parsed_llm_data["chat_ids"]
         else:

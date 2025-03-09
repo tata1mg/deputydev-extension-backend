@@ -3,7 +3,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.common.constants.constants import PromptFeatures
+from app.main.blueprints.one_dev.services.code_generation.prompts.dataclasses.main import (
+    PromptFeatures,
+)
 
 
 class SessionChatDTO(BaseModel):
