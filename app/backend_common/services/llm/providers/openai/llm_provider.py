@@ -24,7 +24,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.common.constants.constants import LLMProviders
+from app.backend_common.constants.constants import LLMProviders
 
 
 class OpenAI(BaseLLMProvider):

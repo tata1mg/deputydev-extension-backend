@@ -14,7 +14,7 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.common.exception.exception import ParseException
+from app.backend_common.exception.exception import ParseException
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
