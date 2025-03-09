@@ -3,6 +3,8 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
+
 
 class AgentTypes(Enum):
     SECURITY = "security"
@@ -27,3 +29,4 @@ class AgentRunResult(BaseModel):
     agent_result: Optional[Dict[str, Any]] = None
     agent_name: str
     agent_type: AgentTypes
+    model: LLModels

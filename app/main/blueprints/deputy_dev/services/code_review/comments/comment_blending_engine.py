@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -10,6 +10,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.agents_factory i
     AgentFactory,
 )
 from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentRunResult,
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.comments.dataclasses.main import (
@@ -35,7 +36,7 @@ from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_re
 class CommentBlendingEngine:
     def __init__(
         self,
-        llm_comments: Dict[str, Dict[str, List[LLMCommentData]]],
+        llm_comments: Dict[str, AgentRunResult],
         context_service: ContextService,
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
@@ -75,8 +76,12 @@ class CommentBlendingEngine:
         agent_settings = SettingService.helper.agents_settings()
         for agent, data in self.llm_comments.items():
             confidence_threshold = self.llm_confidence_score_limit[agent]["confidence_score_limit"]
-            comments = data.get("comments", [])
 
+            commenter_agent_result: Optional[Dict[str, List[LLMCommentData]]] = data.agent_result
+            if not commenter_agent_result:
+                continue
+
+            comments = commenter_agent_result.get("comments", [])
             if not comments:
                 continue
 
@@ -95,7 +100,7 @@ class CommentBlendingEngine:
                             ],
                             confidence_score=comment.confidence_score,
                             corrective_code=comment.corrective_code,
-                            model=data.get("model"),
+                            model=data.model.value,
                         )
                     )
 
