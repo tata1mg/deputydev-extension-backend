@@ -605,7 +605,7 @@
             "version": "==6.3.2"
         },
         "cqa": {
-            "git": "git+ssh://git@bitbucket.org/tata1mg/cqa.git@v0.1.5",
+            "git": "git+ssh://git@bitbucket.org/tata1mg/cqa.git",
             "markers": "python_version >= '3.6'",
             "ref": "9c6ee50aa5e8543b7a11553f6dd36647e5db2954"
         },
@@ -2388,7 +2388,7 @@
             "version": "==4.0.0"
         },
         "pytest-sanic": {
-            "git": "git+https://github.com/dollardhingra/pytest-sanic@fix_sanic_after_22_12_websockets_dependency_conflic#egg=pytest-sanic",
+            "git": "git+https://github.com/dollardhingra/pytest-sanic",
             "markers": "python_version >= '3.7'",
             "ref": "6fe260a97c8035c34b7e79718476731d9c953a9d"
         },
@@ -3170,7 +3170,7 @@
                 "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
                 "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
-            "markers": "python_version >= '3.8'",
+            "markers": "python_version < '3.10'",
             "version": "==4.12.2"
         },
         "typing-inspect": {
@@ -3883,7 +3883,7 @@
                 "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
                 "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
-            "markers": "python_version >= '3.8'",
+            "markers": "python_version < '3.10'",
             "version": "==4.12.2"
         }
     }
