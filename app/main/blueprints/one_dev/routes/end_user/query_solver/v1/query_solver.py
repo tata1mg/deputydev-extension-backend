@@ -27,15 +27,8 @@ async def solve_user_query(_request: Request, auth_data: AuthData, session_id: i
     response.content_type = "text/event-stream"
     data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json, session_id=session_id))
 
-    await response.send(
-        "data: "
-        + json.dumps({"type": "RESPONSE_METADATA", "content": {"query_id": data.query_id, "session_id": session_id}})
-        + "\r\n\r\n"
-    )
-
-    async for data_block in data.parsed_content:
+    async for data_block in data:
         await response.send("data: " + json.dumps(data_block.model_dump(mode="json")) + "\r\n\r\n")
-        # await response.send("data: " + "GAGAGAGGA" + "\r\n\r\n")
 
     await response.eof()
 

@@ -21,6 +21,9 @@ class StreamingContentBlockType(Enum):
     CODE_BLOCK_START = "CODE_BLOCK_START"
     CODE_BLOCK_DELTA = "CODE_BLOCK_DELTA"
     CODE_BLOCK_END = "CODE_BLOCK_END"
+    SUMMARY_BLOCK_START = "SUMMARY_BLOCK_START"
+    SUMMARY_BLOCK_DELTA = "SUMMARY_BLOCK_DELTA"
+    SUMMARY_BLOCK_END = "SUMMARY_BLOCK_END"
 
 
 # CODE_BLOCK CONTENTS
@@ -74,6 +77,26 @@ class CodeBlockEnd(BaseModel):
     content: CodeBlockEndContent
 
 
+# SUMMARY BLOCKS
+
+
+class SummaryBlockDeltaContent(BaseModel):
+    summary_delta: str
+
+
+class SummaryBlockStart(BaseModel):
+    type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_START] = StreamingContentBlockType.SUMMARY_BLOCK_START
+
+
+class SummaryBlockDelta(BaseModel):
+    type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_DELTA] = StreamingContentBlockType.SUMMARY_BLOCK_DELTA
+    content: SummaryBlockDeltaContent
+
+
+class SummaryBlockEnd(BaseModel):
+    type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_END] = StreamingContentBlockType.SUMMARY_BLOCK_END
+
+
 StreamingContentBlock = Annotated[
     Union[
         TextBlockStart,
@@ -88,6 +111,9 @@ StreamingContentBlock = Annotated[
         CodeBlockStart,
         CodeBlockDelta,
         CodeBlockEnd,
+        SummaryBlockStart,
+        SummaryBlockDelta,
+        SummaryBlockEnd,
     ],
     Field(discriminator="type"),
 ]

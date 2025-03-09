@@ -1,37 +1,35 @@
-from typing import Dict, List
+import asyncio
+from typing import Any, Dict, List, Optional, Tuple
 
 from deputydev_core.services.tiktoken import TikToken
-from torpedo import CONFIG, Task
+from deputydev_core.utils.config_manager import ConfigManager
 
-from app.backend_common.services.llm.dataclasses.main import ParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.backend_common.utils.app_utils import get_task_response
 from app.backend_common.utils.formatting import format_summary_with_metadata
-from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
-    AgentTypes,
     MultiAgentReflectionIteration,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
-from app.main.blueprints.deputy_dev.services.code_review.agent_services.agent_factory import (
+from app.main.blueprints.deputy_dev.services.code_review.agents.agents_factory import (
     AgentFactory,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentRunResult,
+    AgentTypes,
+)
+from app.main.blueprints.deputy_dev.services.code_review.comments.comment_blending_engine import (
+    CommentBlendingEngine,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.prompts.base_code_review_prompt import (
-    BaseCodeReviewPrompt,
+from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
+    PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import (
-    CodeReviewPromptFactory,
-)
-from app.main.blueprints.deputy_dev.services.comment.comment_blending_engine import (
-    CommentBlendingEngine,
-)
-from app.main.blueprints.deputy_dev.services.setting.setting_service import (
-    SettingService,
+    PromptFeatureFactory,
 )
 
 
@@ -41,6 +39,7 @@ class MultiAgentPRReviewManager:
         repo_service: BaseRepo,
         pr_service: BasePR,
         pr_diff_handler: PRDiffHandler,
+        session_id: int,
         prompt_version=None,
         eligible_agents=None,
     ):
@@ -50,8 +49,7 @@ class MultiAgentPRReviewManager:
         self.reflection_enabled = None
         self.pr_diff = None
         self.contexts = None
-        self.current_prompts = None
-        self.llm_comments = {}
+        self.agent_results: Dict[str, AgentRunResult] = {}
         self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_1.value
         self.tokens_data = {}
         self.meta_info_to_save = {}
@@ -59,190 +57,102 @@ class MultiAgentPRReviewManager:
         self.tiktoken = TikToken()
         self.agents_tokens = {}
         self.filtered_comments = None
-        self.pr_summary = None
-        self.exclude_agent = set()
+        self.pr_summary: Optional[Dict[str, Any]] = None
         self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
         self.eligible_agents = eligible_agents
-        self.agent_factory = AgentFactory(
-            reflection_enabled=self._is_reflection_enabled(),
-            context_service=self.context_service,
-            eligible_agents=self.eligible_agents,
-        )
-        self._is_large_pr = False
+        self._is_large_pr: bool = False
         self.pr_diff_handler = pr_diff_handler
+        self.llm_handler = LLMHandler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
+        self.session_id = session_id
+        print("******************************")
+        print(self.session_id)
+        print("******************************")
 
     # section setting start
 
-    def _is_reflection_enabled(self):
+    def _is_reflection_enabled(self) -> bool:
         if self.reflection_enabled is None:
-            self.reflection_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["REFLECTION_ENABLED"]
+            self.reflection_enabled = ConfigManager.configs["PR_REVIEW_SETTINGS"]["REFLECTION_ENABLED"]
         return self.reflection_enabled
-
-    # section setting end
-
-    # section prompt start
-
-    async def _build_prompts(self):
-        self.current_prompts, self.meta_info_to_save = await self.agent_factory.build_prompts(
-            reflection_stage=self.multi_agent_reflection_stage,
-            previous_review_comments=self.llm_comments,
-            exclude_agents=self.exclude_agent,
-        )
-
-    async def _build_post_reflection_prompt(self):
-        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)  # Exclude summary in reflection call
-        self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
-        await self._build_prompts()
-
-    # section prompt end
-
-    @classmethod
-    async def get_llm_response(cls, prompt_list: List[Dict[str, str]]):
-        """
-        Retrieves LLM responses based on the configured LLM type.
-
-        Args:
-            prompt_list (List[Dict[str, str]]): List of prompt objects.
-
-        Returns:
-            Dict[str, str]: A dictionary mapping prompt keys to LLM responses.
-        """
-
-        prompt_objs: List[BaseCodeReviewPrompt] = []
-
-        for prompt in prompt_list:
-            if "model" not in prompt:
-                raise ValueError("Model not found in prompt")
-
-            prompt_model = prompt["model"]
-            prompt_structure_type = prompt.get("structure_type", "default")
-            parse = prompt.get("parse", False)
-            user_message = prompt["user_message"]
-            system_message = prompt.get("system_message")
-            prompt_key = prompt["key"]
-
-            prompt_obj = CodeReviewPromptFactory.get_prompt_obj(
-                model=prompt_model,
-                prompt_return_type=prompt_structure_type,
-                should_parse=parse,
-                user_message=user_message,
-                system_message=system_message,
-            )
-            prompt_objs.append(prompt_obj)
-
-            tasks: List[Task] = []
-            for prompt_obj in prompt_objs:
-                tasks.append(
-                    Task(
-                        LLMHandler(prompt_handler=prompt_obj).start_llm_query(previous_responses=[]),
-                        result_key=prompt_key,
-                    )
-                )
-
-            responses = await get_task_response(tasks)
-            return {
-                response_key: response_data.parsed_llm_data.get("data")
-                for response_key, response_data in responses.items()
-                if isinstance(response_data, ParsedLLMCallResponse)
-            }
-
-    # llm handler start
-    async def _make_llm_calls(self):
-        contexts = []
-        for agent in self.current_prompts:
-            if agent not in self.exclude_agent:
-                contexts.append(self.current_prompts[agent])
-        self.llm_comments = await self.get_llm_response(contexts)
-        return self.llm_comments
-
-    # llm handler end
 
     # blending engine section start
     async def filter_comments(self):
-        if not self.llm_comments:
+        if not self.agent_results:
             return
-        self.filtered_comments = await CommentBlendingEngine(self.llm_comments, self.context_service).blend_comments()
+        self.filtered_comments = await CommentBlendingEngine(
+            self.agent_results, self.context_service, self.llm_handler, self.session_id
+        ).blend_comments()
 
     # blending engine section end
 
     def populate_pr_summary(self):
-        self.pr_summary = self.llm_comments.pop(AgentTypes.PR_SUMMARY.value, "")
-
-    async def __execute_pass(self):
-        await self._build_prompts()
-        if not self.current_prompts:
-            self.llm_comments = {}
-            return
-        self.all_prompts_exceed_token_limit()
-        if self._is_large_pr:
-            self.llm_comments = {}
-            pr_diff_tokens_count = await self.pr_diff_handler.get_pr_diff_token_count()
-            self.agents_tokens = pr_diff_tokens_count
-            return
-        await self._make_llm_calls()
-        self.populate_meta_info()
-
-    def exclude_disabled_agents(self):
-        setting = get_context_value("setting")
-        for agent, agent_setting in setting["code_review_agent"]["agents"].items():
-            if not agent_setting["enable"] or not setting["code_review_agent"]["enable"]:
-                self.exclude_agent.add(agent)
-        if not setting[AgentTypes.PR_SUMMARY.value]["enable"]:
-            self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
-
-    async def execute_pass_1(self):
-        await self.__execute_pass()
-        self.populate_pr_summary()
-
-    async def execute_pass_2(self):
-        self.exclude_pass_1_specific_agents()
-        self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_2.value
-        await self.__execute_pass()
-
-    def exclude_pass_1_specific_agents(self):
-        # exclude summary agent
-        self.exclude_agent.add(AgentTypes.PR_SUMMARY.value)
-        # exclude custom_agents
-        agents_settings = SettingService.Helper.agents_settings()
-        for agent_name, agent_setting in agents_settings.items():
-            if agent_setting["is_custom_agent"]:
-                self.exclude_agent.add(agent_name)
-
-    async def get_code_review_comments(self):
-        self.exclude_disabled_agents()
-        await self.execute_pass_1()
-        if get_context_value("setting")["code_review_agent"]["enable"]:
-            await self.execute_pass_2() if self._is_reflection_enabled() else None
-            await self.filter_comments()
-        return await self.return_final_response()
+        self.pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value).agent_result
 
     def populate_meta_info(self):
-        for agent, prompt in self.current_prompts.items():
-            agent_identifier = prompt["key"] + prompt["reflection_iteration"]
-            self.agents_tokens[agent_identifier] = prompt.pop("tokens")
-            self.agents_tokens[agent_identifier].update(
-                {
-                    "input_tokens": self.llm_comments.get(agent, {}).get("input_tokens", 0),
-                    "output_tokens": self.llm_comments.get(agent, {}).get("output_tokens", 0),
-                }
-            )
+        # for agent, prompt in self.current_prompts.items():
+        #     agent_identifier = prompt["key"] + prompt["reflection_iteration"]
+        #     self.agents_tokens[agent_identifier] = prompt.pop("tokens")
+        #     self.agents_tokens[agent_identifier].update(
+        #         {
+        #             "input_tokens": self.agent_results.get(agent, {}).get("input_tokens", 0),
+        #             "output_tokens": self.agent_results.get(agent, {}).get("output_tokens", 0),
+        #         }
+        #     )
+        pass
 
-    async def return_final_response(self):
+    async def return_final_response(
+        self,
+    ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         formatted_summary = ""
-        if self.pr_summary and isinstance(self.pr_summary, dict) and self.pr_summary.get("response"):
+        if self.pr_summary and self.pr_summary.get("response"):
             loc = await self.pr_service.get_loc_changed_count()
             formatted_summary = await format_summary_with_metadata(
                 summary=self.pr_summary["response"], loc=loc, commit_id=self.pr_service.pr_model().commit_id()
             )
-        return self.filtered_comments, formatted_summary, self.agents_tokens, self.meta_info_to_save, self._is_large_pr
+        return (
+            [comment.model_dump(mode="json") for comment in self.filtered_comments] if self.filtered_comments else None,
+            formatted_summary,
+            self.agents_tokens,
+            {
+                "issue_id": self.context_service.issue_id,
+                "confluence_doc_id": self.context_service.confluence_id,
+            },
+            self._is_large_pr,
+        )
 
-    def all_prompts_exceed_token_limit(self):
-        all_exceeded = True
+    async def get_code_review_comments(
+        self,
+    ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
+        # get all agents from factory
+        all_agents = AgentFactory.get_code_review_agents(
+            context_service=self.context_service,
+            is_reflection_enabled=self._is_reflection_enabled(),
+            llm_handler=self.llm_handler,
+        )
 
-        for prompt, prompt_data in self.current_prompts.items():
-            if prompt_data["exceeds_tokens"]:
-                self.exclude_agent.add(prompt)
-            else:
-                all_exceeded = False
+        # segregate agents in realtime based on whether they should execute or not
+        runnable_agents = [agent for agent in all_agents if await agent.should_execute()]
+        agent_tasks = [agent.run_agent(session_id=self.session_id) for agent in runnable_agents]
+        agent_tasks_results = await asyncio.gather(*agent_tasks, return_exceptions=False)
+        non_error_results = [
+            task_result for task_result in agent_tasks_results if not isinstance(task_result, BaseException)
+        ]
+        self._is_large_pr = all([agent_result.prompt_tokens_exceeded for agent_result in non_error_results])
 
-        self._is_large_pr = all_exceeded
+        # TODO: Remoove this, same variable should not be used for two different purposes
+        if self._is_large_pr:
+            self.agents_tokens = await self.pr_diff_handler.get_pr_diff_token_count()
+
+        # set self.llm_comments
+        for agent_result in non_error_results:
+            if agent_result.agent_result is not None:
+                self.agent_results[agent_result.agent_name] = agent_result
+
+        self.populate_pr_summary()
+        print(self.pr_summary)
+        self.populate_meta_info()
+        await self.filter_comments()
+        return await self.return_final_response()

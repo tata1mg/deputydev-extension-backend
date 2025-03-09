@@ -225,7 +225,7 @@ class AgentMappingBackfillManager:
 
     @classmethod
     async def backfill_agents(cls, repo_id):
-        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        current_agents_by_id = SettingService.helper.agents_setting_by_agent_uuid()
         agent_ids = list(current_agents_by_id.keys())
         agent_filter = {"repo_id": repo_id, "agent_id__in": agent_ids}
         saved_agents_by_id = await cls.fetch_agents(agent_filter)
@@ -262,7 +262,7 @@ class AgentMappingBackfillManager:
 
     @classmethod
     def agent_id_by_display_names(cls, saved_agents_by_id):
-        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        current_agents_by_id = SettingService.helper.agents_setting_by_agent_uuid()
         agent_id_by_display_names = {}
         for agent_id, agent_obj in saved_agents_by_id.items():
             display_name = current_agents_by_id[agent_id]["display_name"]
