@@ -1,5 +1,5 @@
 import re
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel
 
@@ -23,8 +23,13 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     CodeBlockDelta,
     CodeBlockDeltaContent,
     CodeBlockEnd,
+    CodeBlockEndContent,
     CodeBlockStart,
     CodeBlockStartContent,
+    SummaryBlockDelta,
+    SummaryBlockDeltaContent,
+    SummaryBlockEnd,
+    SummaryBlockStart,
     ThinkingBlockDelta,
     ThinkingBlockDeltaContent,
     ThinkingBlockEnd,
@@ -54,31 +59,136 @@ class ThinkingParser(BaseAnthropicTextDeltaParser):
         return values_to_return
 
 
+class SummaryParser(BaseAnthropicTextDeltaParser):
+    def __init__(self):
+        super().__init__(xml_tag="summary")
+
+    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
+        if not self.start_event_completed:
+            self.event_buffer.append(SummaryBlockStart())
+            self.start_event_completed = True
+
+        if event.content.text:
+            self.event_buffer.append(
+                SummaryBlockDelta(content=SummaryBlockDeltaContent(summary_delta=event.content.text))
+            )
+
+        if last_event:
+            self.event_buffer.append(SummaryBlockEnd())
+
+        values_to_return = self.event_buffer
+        self.event_buffer = []
+        return values_to_return
+
+
 class CodeBlockParser(BaseAnthropicTextDeltaParser):
     def __init__(self):
         super().__init__(xml_tag="code_block")
+        self.diff_buffer = ""
+        self.udiff_line_start: Optional[str] = None
+        self.is_diff: Optional[bool] = None
+        self.diff_line_buffer = ""
+        self.added_lines = 0
+        self.removed_lines = 0
+
+    def find_newline_instances(self, input_string: str) -> List[Tuple[int, int]]:
+        # Regular expression to match either \n or \r\n
+        pattern = r"\r?\n"
+
+        # Find all matches
+        matches = [(m.start(), m.end()) for m in re.finditer(pattern, input_string)]
+
+        return matches
+
+    async def _get_udiff_line_start(self, line_data: str) -> Optional[str]:
+        print("line_data", line_data[:2])
+        if line_data.startswith("@@"):
+            return "@@"
+        if line_data.startswith("---"):
+            return "---"
+        if line_data.startswith("+++"):
+            return "+++"
+        if line_data.startswith(" "):
+            return " "
+        if line_data.startswith("+"):
+            return "+"
+        if line_data.startswith("-"):
+            return "-"
+        return None
 
     async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
+        print("*************************************************************************************************")
+        print("*************************************************************************************************")
+        print("event text", event.content.text)
+        print("temp_buffer", self.diff_line_buffer)
+        print("text_buffer", self.text_buffer)
+        print("diff_buffer", self.diff_buffer)
+        print("*************************************************************************************************")
+        print("*************************************************************************************************")
+        if self.is_diff is None:
+            self.text_buffer += event.content.text
+        elif self.is_diff:
+            self.diff_line_buffer += event.content.text
+            self.diff_buffer += event.content.text
+            if self.udiff_line_start:
+                # end current udiff line if we have reached the end of the line
+                # in case the line buffer contains a newline character
+                newline_instances = self.find_newline_instances(self.diff_line_buffer)
+                while newline_instances:
+                    start, end = newline_instances.pop(0)
+                    pre_line_part = self.diff_line_buffer[:start]
+                    self.diff_line_buffer = self.diff_line_buffer[end:]
+                    newline_instances = self.find_newline_instances(self.diff_line_buffer)
+                    if self.udiff_line_start in [" ", "+"]:
+                        self.text_buffer += (
+                            pre_line_part.replace(f"{self.udiff_line_start}", "", 1) + "\n"
+                        )  # replace only the first instance of the udiff line start
+                        if self.udiff_line_start == "+":
+                            self.added_lines += 1
+                    if self.udiff_line_start == "@@":
+                        # skip till the last @@ in the line and add the line to the text buffer
+                        last_index = pre_line_part.rfind("@@")
+                        addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
+                        self.text_buffer += addable_part + "\n" if addable_part else ""
+                    if self.udiff_line_start == "-":
+                        self.removed_lines += 1
+                    self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
+            self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
+            print("udiff_line_start", self.udiff_line_start)
+        else:
+            self.text_buffer += event.content.text
 
-        self.text_buffer += event.content.text
+        if last_event and self.diff_line_buffer and self.udiff_line_start in [" ", "+"]:
+            self.text_buffer += self.diff_line_buffer
 
         programming_language_block = re.search(r"<programming_language>(.*?)</programming_language>", self.text_buffer)
         file_path_block = re.search(r"<file_path>(.*?)</file_path>", self.text_buffer)
         is_diff_block = re.search(r"<is_diff>(.*?)</is_diff>", self.text_buffer)
         if programming_language_block and file_path_block and is_diff_block:
+            self.is_diff = is_diff_block.group(1) == "true"
             self.event_buffer.append(
                 CodeBlockStart(
                     content=CodeBlockStartContent(
                         language=programming_language_block.group(1),
                         filepath=file_path_block.group(1),
-                        is_diff=is_diff_block.group(1) == "true",
+                        is_diff=self.is_diff,  # type: ignore
                     )
                 )
             )
-            self.text_buffer = self.text_buffer.replace(programming_language_block.group(0), "").replace(
-                file_path_block.group(0), ""
-            ).replace(is_diff_block.group(0), "")
-            self.text_buffer = self.text_buffer.strip()
+
+            if not self.is_diff:
+                self.text_buffer = (
+                    self.text_buffer.replace(programming_language_block.group(0), "")
+                    .replace(file_path_block.group(0), "")
+                    .replace(is_diff_block.group(0), "")
+                )
+            else:
+                self.diff_line_buffer = (
+                    self.text_buffer.replace(programming_language_block.group(0), "")
+                    .replace(file_path_block.group(0), "")
+                    .replace(is_diff_block.group(0), "")
+                )
+                self.text_buffer = ""
             self.start_event_completed = True
 
         if self.start_event_completed and self.text_buffer:
@@ -86,7 +196,17 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             self.text_buffer = ""
 
         if last_event:
-            self.event_buffer.append(CodeBlockEnd())
+            if self.diff_buffer:
+                self.event_buffer.append(
+                    CodeBlockEnd(
+                        content=CodeBlockEndContent(
+                            diff=self.diff_buffer, added_lines=self.added_lines, removed_lines=self.removed_lines
+                        )
+                    )
+                )
+                self.diff_buffer = ""
+            else:
+                self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
 
         values_to_return = self.event_buffer
         self.event_buffer = []
@@ -174,6 +294,10 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             </important>
 
             Also, please use the tools provided to you to help you with the task.
+
+            At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+            Do provide the summary once you're done with the task.
+            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag.
         """
 
         return UserAndSystemMessages(
@@ -214,5 +338,5 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
-            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser()]
+            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser(), SummaryParser()]
         )
