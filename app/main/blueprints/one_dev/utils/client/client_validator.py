@@ -1,11 +1,18 @@
 from functools import wraps
 from typing import Any, Optional, Tuple
+
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
 from app.common.constants.error_codes import APIErrorCodes
-from app.main.blueprints.one_dev.constants.constants import MIN_SUPPORTED_CLI_VERSION, MIN_SUPPORTED_VSCODE_EXT_VERSION
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData, Clients
+from app.main.blueprints.one_dev.constants.constants import (
+    MIN_SUPPORTED_CLI_VERSION,
+    MIN_SUPPORTED_VSCODE_EXT_VERSION,
+)
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import (
+    ClientData,
+    Clients,
+)
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 

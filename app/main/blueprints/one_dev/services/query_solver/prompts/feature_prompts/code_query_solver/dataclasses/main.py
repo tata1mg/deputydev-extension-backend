@@ -1,6 +1,6 @@
 # THINKING BLOCKS
 from enum import Enum
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -21,6 +21,9 @@ class StreamingContentBlockType(Enum):
     CODE_BLOCK_START = "CODE_BLOCK_START"
     CODE_BLOCK_DELTA = "CODE_BLOCK_DELTA"
     CODE_BLOCK_END = "CODE_BLOCK_END"
+    SUMMARY_BLOCK_START = "SUMMARY_BLOCK_START"
+    SUMMARY_BLOCK_DELTA = "SUMMARY_BLOCK_DELTA"
+    SUMMARY_BLOCK_END = "SUMMARY_BLOCK_END"
 
 
 # CODE_BLOCK CONTENTS
@@ -32,6 +35,12 @@ class CodeBlockStartContent(BaseModel):
 
 class CodeBlockDeltaContent(BaseModel):
     code_delta: str
+
+
+class CodeBlockEndContent(BaseModel):
+    diff: Optional[str] = None
+    added_lines: Optional[int] = None
+    removed_lines: Optional[int] = None
 
 
 # THINKING_BLOCK CONTENTS
@@ -65,6 +74,27 @@ class CodeBlockDelta(BaseModel):
 
 class CodeBlockEnd(BaseModel):
     type: Literal[StreamingContentBlockType.CODE_BLOCK_END] = StreamingContentBlockType.CODE_BLOCK_END
+    content: CodeBlockEndContent
+
+
+# SUMMARY BLOCKS
+
+
+class SummaryBlockDeltaContent(BaseModel):
+    summary_delta: str
+
+
+class SummaryBlockStart(BaseModel):
+    type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_START] = StreamingContentBlockType.SUMMARY_BLOCK_START
+
+
+class SummaryBlockDelta(BaseModel):
+    type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_DELTA] = StreamingContentBlockType.SUMMARY_BLOCK_DELTA
+    content: SummaryBlockDeltaContent
+
+
+class SummaryBlockEnd(BaseModel):
+    type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_END] = StreamingContentBlockType.SUMMARY_BLOCK_END
 
 
 StreamingContentBlock = Annotated[
@@ -81,6 +111,9 @@ StreamingContentBlock = Annotated[
         CodeBlockStart,
         CodeBlockDelta,
         CodeBlockEnd,
+        SummaryBlockStart,
+        SummaryBlockDelta,
+        SummaryBlockEnd,
     ],
     Field(discriminator="type"),
 ]
