@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
@@ -12,6 +13,7 @@ from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import LLMCommentData
 from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -29,16 +31,19 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         self,
         context_service: ContextService,
         is_reflection_enabled: bool,
-        agent_setting: Dict[str, Any],
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
         super().__init__(context_service, is_reflection_enabled, llm_handler, model)
-        self.agent_setting = agent_setting
-        self.agent_id = self.agent_setting.get("agent_id")
         self.agent_name = SettingService.helper.predefined_name_to_custom_name(self.agent_name)
+        self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
+        self.agent_id = self.agent_setting.get("agent_id")
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
+        print("***************")
+        print(self.agent_id)
+        print(relevant_chunks)
+        print("***************")
         relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
         agent_relevant_chunks: List[ChunkInfo] = []
         for index in relevant_chunks_index:
@@ -46,16 +51,22 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         return render_snippet_array(agent_relevant_chunks)
 
     async def required_prompt_variables(
-        self, last_pass_result: Dict[str, Optional[str]] = {}
+        self, last_pass_result: Optional[Any] = None
     ) -> Dict[str, Optional[str]]:
         relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
+        last_pass_comments_str = ""
+        if last_pass_result:
+            last_pass_comments: List[LLMCommentData] = last_pass_result.get("comments") or []
+            last_pass_comments_str = json.dumps([comment.model_dump(mode="json") for comment in last_pass_comments])
+
+
         return {
             "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
             "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
             "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
                 append_line_no_info=True, agent_id=self.agent_id
             ),
-            "REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER": last_pass_result.get("REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER", ""),
+            "REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER": last_pass_comments_str,
             "CONTEXTUALLY_RELATED_CODE_SNIPPETS": self.agent_relevant_chunk(relevant_chunks),
             "USER_STORY": await self.context_service.get_user_story(),
             "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),

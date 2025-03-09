@@ -1,5 +1,9 @@
 import re
 
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
 from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
@@ -56,12 +60,16 @@ class PRSummaryManager(BasePRReviewManager):
     async def _process_summary(cls, repo_service, pr_service, comment_service, chat_request):
         """Process PR summary generation and posting."""
         pr_diff_handler = PRDiffHandler(pr_service)
+        session = await MessageSessionsRepository.create_message_session(
+            message_session_data=MessageSessionData(user_team_id=1, client="BACKEND", client_version="1.0.0")
+        )
 
         review_manager = MultiAgentPRReviewManager(
             repo_service=repo_service,
             pr_service=pr_service,
             pr_diff_handler=pr_diff_handler,
             eligible_agents=[AgentTypes.PR_SUMMARY.value],
+            session_id=session.id,
         )
 
         # Get summary using MultiAgentPRReviewManager

@@ -47,17 +47,24 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
                     bucket_element = comment.find("bucket")
 
                     if (
-                        not description_element
-                        or not file_path_element
-                        or not line_number_element
-                        or not confidence_score_element
-                        or not bucket_element
-                        or not description_element.text
-                        or not file_path_element.text
-                        or not line_number_element.text
-                        or not confidence_score_element.text
-                        or not bucket_element.text
+                        description_element is None
+                        or file_path_element is None
+                        or line_number_element is None
+                        or confidence_score_element is None
+                        or bucket_element is None
+                        or description_element.text is None
+                        or file_path_element.text is None
+                        or line_number_element.text is None
+                        or confidence_score_element.text is None
+                        or bucket_element.text is None
                     ):
+                        print("XXXXXXXXXXXXXXXX")
+                        print(description_element)
+                        print(file_path_element)
+                        print(line_number_element)
+                        print(confidence_score_element)
+                        print(bucket_element)
+                        print("XXXXXXXXXXXXXXXX")
                         raise ValueError("The XML string does not contain the expected comment elements.")
 
                     comments.append(

@@ -35,13 +35,12 @@ class PRSummarizerAgent(BaseCodeReviewAgent):
         self,
         context_service: ContextService,
         is_reflection_enabled: bool,
-        agent_setting: Dict[str, Any],
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
-        self.agent_setting = agent_setting
-        self.agent_id: str = SettingService.helper.summary_agent_id()
         super().__init__(context_service, is_reflection_enabled, llm_handler, model)
+        self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
+        self.agent_id: str = SettingService.helper.summary_agent_id()
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
         relevant_chunks_indexes = relevant_chunks["comment_validation_relevant_chunks_mapping"]
