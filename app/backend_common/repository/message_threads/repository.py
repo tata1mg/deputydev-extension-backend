@@ -28,6 +28,8 @@ class MessageThreadsRepository:
                 model_name=MessageThread,
                 where_clause=filters,
                 fetch_one=False,
+                # limit=limit,
+                # offset=offset,
             )
             if not message_threads:
                 return []
