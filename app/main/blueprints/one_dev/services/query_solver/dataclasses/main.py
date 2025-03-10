@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from pydantic import BaseModel
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 

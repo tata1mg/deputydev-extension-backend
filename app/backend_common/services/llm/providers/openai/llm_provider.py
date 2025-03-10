@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from deputydev_core.utils.config_manager import ConfigManager
 from openai.types.chat import ChatCompletion
 
+from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     LLMUsage,
@@ -24,7 +25,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.constants.constants import LLMProviders
 
 
 class OpenAI(BaseLLMProvider):
