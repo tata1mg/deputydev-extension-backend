@@ -28,9 +28,8 @@ class BasePrompt(ABC):
         raise NotImplementedError("This method must be implemented in the child class")
 
     @classmethod
-    @abstractmethod
-    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
-        raise NotImplementedError("This method must be implemented in the child class")
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
+        raise NotImplementedError("Streaming not supported for this prompt")
 
     @classmethod
     @abstractmethod

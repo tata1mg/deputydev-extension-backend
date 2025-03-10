@@ -11,9 +11,6 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 
 from .dataclasses.main import PromptFeatures
 from .feature_prompts.chat_filter.factory import ChatRankingPromptFactory
-from .feature_prompts.chunk_description_generation.factory import (
-    ChunkDescriptionGenerationPromptFactory,
-)
 from .feature_prompts.code_generation.factory import CodeGenerationPromptFactory
 from .feature_prompts.diff_creation.factory import DiffCreationPromptFactory
 from .feature_prompts.docs_generation.factory import DocsGenerationPromptFactory
@@ -25,9 +22,6 @@ from .feature_prompts.task_plan_generation.factory import (
 from .feature_prompts.test_case_generation.factory import (
     TestCaseGenerationPromptFactory,
 )
-from .feature_prompts.test_plan_generation.factory import (
-    TestPlanGenerationPromptFactory,
-)
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
@@ -35,9 +29,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.CODE_GENERATION: CodeGenerationPromptFactory,
         PromptFeatures.TEST_GENERATION: TestCaseGenerationPromptFactory,
         PromptFeatures.DOCS_GENERATION: DocsGenerationPromptFactory,
-        PromptFeatures.CHUNK_DESCRIPTION_GENERATION: ChunkDescriptionGenerationPromptFactory,
         PromptFeatures.TASK_PLANNER: TaskPlanGenerationPromptFactory,
-        PromptFeatures.TEST_PLAN_GENERATION: TestPlanGenerationPromptFactory,
         PromptFeatures.ITERATIVE_CODE_CHAT: IterativeCodeChatPromptFactory,
         PromptFeatures.DIFF_CREATION: DiffCreationPromptFactory,
         PromptFeatures.PLAN_CODE_GENERATION: PlanCodeGenerationPromptFactory,
