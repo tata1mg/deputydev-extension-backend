@@ -1,7 +1,7 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import CONFIG, Request, send_response
+from torpedo import Request, send_response
 
 from app.main.blueprints.one_dev.services.repos.main import ReposHandler
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
@@ -10,7 +10,6 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 repos = Blueprint("repos", "/")
 
