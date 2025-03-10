@@ -3,11 +3,13 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
+
 
 class MessageSessionData(BaseModel):
     user_team_id: int
     summary: Optional[str] = None
-    client: str
+    client: Clients
     client_version: Optional[str] = None
     status: str = "ACTIVE"
 

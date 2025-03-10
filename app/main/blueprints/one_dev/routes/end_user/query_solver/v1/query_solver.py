@@ -13,6 +13,9 @@ from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
 )
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+)
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
@@ -20,6 +23,7 @@ query_solver = Blueprint("query_solver", "/")
 
 
 @query_solver.route("/solve-user-query")
+@validate_client_version
 @authenticate
 @ensure_session_id
 async def solve_user_query(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
@@ -34,6 +38,7 @@ async def solve_user_query(_request: Request, auth_data: AuthData, session_id: i
 
 
 @query_solver.route("/generate-inline-edit", methods=["POST"])
+@validate_client_version
 @authenticate
 @ensure_session_id
 async def generate_inline_edit(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
@@ -43,6 +48,7 @@ async def generate_inline_edit(_request: Request, auth_data: AuthData, session_i
     return send_response({"job_id": data})
 
 
+# TODO: Remove this
 @query_solver.route("/get-inline-edit-result", methods=["GET"])
 @authenticate
 @ensure_session_id
