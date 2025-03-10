@@ -47,21 +47,21 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
                     "properties": {
                         "keyword": {
                             "type": "string",
-                            "description": "The search keyword, which can be a class, function, or file name whose content needs to be searched."
+                            "description": "The search keyword, which can be a class, function, or file name whose content needs to be searched.",
                         },
                         "type": {
                             "type": "string",
-                            "description": "Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'."
+                            "description": "Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'.",
                         },
                         "file_path": {
                             "type": "string",
-                            "description": "The file path where the search term is located (optional)."
-                        }
+                            "description": "The file path where the search term is located (optional).",
+                        },
                     },
-                    "required": ["keyword", "type"]
-                }
+                    "required": ["keyword", "type"],
+                },
             }
         },
-        "required": ["search_terms"]
-    }
+        "required": ["search_terms"],
+    },
 )

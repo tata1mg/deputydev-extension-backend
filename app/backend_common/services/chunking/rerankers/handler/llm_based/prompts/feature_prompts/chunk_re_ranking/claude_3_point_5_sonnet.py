@@ -1,5 +1,14 @@
 import re
+from typing import Any, Dict, List
 
+from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    TextBlockData,
+)
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
@@ -8,10 +17,7 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 class Claude3Point5ChunkReRankingPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "CHUNK_RE_RANKING"
 
-    def __init__(self, params: dict):
-        self.params = params
-
-    def get_prompt(self):
+    def get_prompt(self) -> UserAndSystemMessages:
         focus_chunks_prompt = (
             f"""
             Here are the chunks that are taken from the files/snippets the user has explicitly mentioned:
@@ -50,17 +56,32 @@ class Claude3Point5ChunkReRankingPrompt(BaseClaude3Point5SonnetPrompt):
             "You are a codebase expert whose task is to filter and rerank code snippet provided by a user query."
         )
 
-        return {"system_message": system_message, "user_message": user_message}
+        return UserAndSystemMessages(system_message=system_message, user_message=user_message)
 
     @classmethod
-    def get_parsed_result(cls, llm_response: str) -> dict:
+    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
+        llm_response = text_block.content.text
         chunks_match = re.search(
             r"<sorted_and_filtered_chunks>(.*?)</sorted_and_filtered_chunks>", llm_response, re.DOTALL
         )
         # Now we can safely use group(1) since we confirmed we have a match
+        if not chunks_match:
+            return {"filtered_chunks": []}
         chunks_content = chunks_match.group(1)
 
         # Extract source information
         sources = re.findall(r"<source>(.*?)</source>", chunks_content)
 
         return {"filtered_chunks": sources}
+
+    @classmethod
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+        final_content: List[Dict[str, Any]] = []
+
+        for content_block in llm_response.content:
+            if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                raise NotImplementedError("Tool use request not implemented for this prompt")
+            elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
+                final_content.append(cls._parse_text_block(content_block))
+
+        return final_content
