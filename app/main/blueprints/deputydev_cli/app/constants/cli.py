@@ -1,9 +1,9 @@
 from enum import Enum
 
-from deputydev_core.utils.config_manager import ConfigManager
+# from deputydev_core.utils.config_manager import ConfigManager
 
-MAX_RELEVANT_CHUNKS = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
-IS_LLM_RERANKING_ENABLED = ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"]
+# MAX_RELEVANT_CHUNKS = ConfigManager.configs["CHUNKING"]["NUMBER_OF_CHUNKS"]
+# IS_LLM_RERANKING_ENABLED = ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"]
 
 
 class CLIOperations(Enum):
