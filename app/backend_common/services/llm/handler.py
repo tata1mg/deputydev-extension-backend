@@ -177,12 +177,12 @@ class LLMHandler(Generic[PromptFeatures]):
                 TextBlockData(
                     type=ContentBlockCategory.TEXT_BLOCK,
                     content=TextBlockContent(text=prompt_rendered_messages.user_message),
+                    content_vars=prompt_vars if prompt_vars else None,
                 )
             ],
             data_hash=data_hash,
             prompt_type=prompt_type,
             llm_model=llm_model,
-            query_vars=prompt_vars,
             call_chain_category=call_chain_category,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
