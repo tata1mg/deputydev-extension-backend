@@ -89,7 +89,8 @@ class MultiAgentPRReviewManager:
     # blending engine section end
 
     def populate_pr_summary(self):
-        self.pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value).agent_result
+        pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value, None)
+        self.pr_summary = self.pr_summary.agent_result if self.pr_summary else None
 
     def populate_meta_info(self):
         # for agent, prompt in self.current_prompts.items():
