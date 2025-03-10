@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from sanic import Blueprint
 from torpedo import Request, send_response
 
@@ -82,7 +83,7 @@ code_gen_v1_bp = Blueprint("code_gen_v1_bp", url_prefix="v1")
 async def generate_code(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await CodeGenerationHandler.start_feature(
-        payload=CodeGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
+        payload=CodeGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -95,7 +96,7 @@ async def generate_docs(_request: Request, client_data: ClientData, auth_data: A
     payload = _request.custom_json()
     print(payload)
     response = await DocsGenerationHandler.start_feature(
-        payload=CodeDocsGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
+        payload=CodeDocsGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -110,7 +111,7 @@ async def generate_test_case(
     payload = _request.custom_json()
     print(payload)
     response = await TestCaseGenerationHandler.start_feature(
-        payload=TestCaseGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
+        payload=TestCaseGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -125,7 +126,7 @@ async def generate_code_plan(
     payload = _request.custom_json()
     print(payload)
     response = await CodePlanHandler.start_feature(
-        payload=CodePlanGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
+        payload=CodePlanGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -140,7 +141,7 @@ async def generate_code_diff(
     payload = _request.custom_json()
     print(payload)
     response = await DiffCreationHandler.start_feature(
-        payload=DiffCreationInput(session_id=_request.headers.get("X-Session-Id"), **payload, auth_data=auth_data)
+        payload=DiffCreationInput(session_id=session_id, **payload, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -152,7 +153,7 @@ async def generate_code_diff(
 async def iterative_chat(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await IterativeChatHandler.start_feature(
-        payload=IterativeChatInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
+        payload=IterativeChatInput(**payload, session_id=session_id, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -163,7 +164,7 @@ async def iterative_chat(_request: Request, client_data: ClientData, auth_data: 
 @ensure_session_id
 async def plan_to_code(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     response = await PlanCodeGenerationHandler.start_feature(
-        payload=PlanCodeGenerationInput(session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
+        payload=PlanCodeGenerationInput(session_id=session_id, auth_data=auth_data)
     )
     return send_response(response, headers=kwargs.get("response_headers"))
 
@@ -214,8 +215,8 @@ async def record_feedback(_request: Request, client_data: ClientData, auth_data:
 async def fetch_relevant_chat_history(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
 ):
-    payload = _request.custom_json()
+    payload: Dict[str, Any] = _request.custom_json()
     response = await ChatHistoryHandler(
-        PreviousChatPayload(query=payload["query"], session_id=_request.headers.get("X-Session-Id"))
+        PreviousChatPayload(query=payload["query"], session_id=session_id)
     ).get_relevant_previous_chats()
     return send_response(response, headers=kwargs.get("response_headers"))

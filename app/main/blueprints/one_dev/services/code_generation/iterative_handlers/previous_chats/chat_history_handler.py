@@ -1,6 +1,14 @@
-from typing import List
+import asyncio
+from typing import Dict, List, Tuple, Union
 
-from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
+from app.backend_common.models.dto.message_thread_dto import (
+    MessageCallChainCategory,
+    MessageThreadDTO,
+    MessageType,
+    TextBlockData,
+)
+from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
+from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChatPayload,
     PreviousChats,
@@ -8,52 +16,106 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.reranking.main import (
     LLMBasedChatFiltration,
 )
-from app.main.blueprints.one_dev.services.code_generation.prompts.dataclasses.main import (
-    PromptFeatures,
-)
-from app.main.blueprints.one_dev.services.repository.session_chat.main import (
-    SessionChatService,
-)
+from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import QuerySummarysRepository
 
 
 class ChatHistoryHandler:
     def __init__(self, previous_chat_payload: PreviousChatPayload):
         self.payload = previous_chat_payload
-        self.session_chats: List[SessionChatDTO] = []
+        self.previous_chats: List[PreviousChats] = []
+        self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO]] = {}
+
+    async def filter_chat_summaries(self, with_responses: bool = False) -> List[int]:
+        if not self.previous_chats:
+            raise ValueError("No previous chats found")
+        reranked_chat_ids = await LLMBasedChatFiltration.rerank(
+            self.previous_chats, self.payload.query, self.payload.session_id
+        )
+        return reranked_chat_ids
+
+    def _set_data_map(
+        self, all_message_threads: List[MessageThreadDTO], all_query_summaries: List[QuerySummaryDTO]
+    ) -> None:
+        # firstly create query_id to summary map
+        query_id_to_summary_map: Dict[int, QuerySummaryDTO] = {}
+        for query_summary in all_query_summaries:
+            query_id_to_summary_map[query_summary.query_id] = query_summary
+
+        # create a map of query_id to message
+        non_query_message_threads: List[MessageThreadDTO] = []
+        for message_thread in all_message_threads:
+            if message_thread.message_type == MessageType.QUERY:
+                self.data_map[message_thread.id] = (message_thread, [], query_id_to_summary_map[message_thread.id])
+            else:
+                non_query_message_threads.append(message_thread)
+
+        # add non query message threads to the map
+        for message_thread in non_query_message_threads:
+            if message_thread.query_id and message_thread.query_id in self.data_map:
+                self.data_map[message_thread.query_id][1].append(message_thread)
+            else:
+                raise ValueError("Erorr in mapping message threads to query id")
+
+    def _get_responses_data_for_previous_chats(self, query_id: int) -> List[str]:
+        _query_message_thread, non_query_message_threads, _query_summary = self.data_map[query_id]
+        responses: List[str] = []
+        for message_thread in non_query_message_threads:
+            if (
+                message_thread.message_data
+                and message_thread.message_data[0]
+                and isinstance(message_thread.message_data[0], TextBlockData)
+            ):
+                responses.append(message_thread.message_data[0].content.text)
+        return responses
 
     async def get_relevant_previous_chats(self):
-        all_session_chats = await SessionChatService.db_get(
-            filters={
-                "session_id": self.payload.session_id,
-                "prompt_type__in": [
-                    prompt_feature.value
-                    for prompt_feature in [
-                        PromptFeatures.CODE_GENERATION,
-                        PromptFeatures.DOCS_GENERATION,
-                        PromptFeatures.TASK_PLANNER,
-                        PromptFeatures.TEST_GENERATION,
-                        PromptFeatures.ITERATIVE_CODE_CHAT,
-                        PromptFeatures.PLAN_CODE_GENERATION,
-                    ]
-                ],
-            }
+        all_session_query_summaries = await QuerySummarysRepository.get_all_session_query_summaries(
+            session_id=self.payload.session_id
         )
-        self.session_chats = sorted(all_session_chats, key=lambda x: x.created_at)
-        chat_summaries_ids = await self.get_chat_summaries()
-        response: List[dict] = []
-        for chat in self.session_chats:
-            if chat.id in chat_summaries_ids:
-                response.append({"id": chat.id, "response": chat.llm_response, "query": chat.user_query})
+        all_session_query_summaries.sort(key=lambda x: x.query_id, reverse=False)
+
+        gathered_result = await asyncio.gather(
+            *[
+                QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
+                MessageThreadsRepository.get_message_threads_for_session(
+                    session_id=self.payload.session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
+                ),
+            ]
+        )
+
+        all_session_query_summaries: List[QuerySummaryDTO] = gathered_result[0]  # type: ignore
+        all_query_message_threads: List[MessageThreadDTO] = gathered_result[1]  # type: ignore
+
+        self._set_data_map(all_query_message_threads, all_session_query_summaries)
+
+        for _query_id, (query_message_thread, _non_query_message_threads, query_summary) in self.data_map.items():
+            if (
+                query_message_thread.message_data
+                and query_message_thread.message_data[0]
+                and isinstance(query_message_thread.message_data[0], TextBlockData)
+                and query_message_thread.message_data[0].content_vars
+                and query_message_thread.message_data[0].content_vars.get("query")
+            ):
+                self.previous_chats.append(
+                    PreviousChats(
+                        id=query_summary.query_id,
+                        query=query_message_thread.message_data[0].content_vars["query"],
+                        summary=query_summary.summary,
+                    )
+                )
+
+        # sort the previous chats based on query_id
+        self.previous_chats.sort(key=lambda x: x.id, reverse=False)
+        filtered_query_ids = await self.filter_chat_summaries()
+
+        response: List[Dict[str, Union[str, int, List[str]]]] = []
+        for chat in self.previous_chats:
+            if chat.id in filtered_query_ids:
+                response.append(
+                    {
+                        "id": chat.id,
+                        "response": self._get_responses_data_for_previous_chats(chat.id),
+                        "query": chat.query,
+                    }
+                )
         return {"chats": response}
-
-    async def get_chat_summaries(self) -> List[int]:
-        summaries: List[PreviousChats] = [
-            PreviousChats(id=chat.id, query=chat.user_query, summary=chat.response_summary)
-            for chat in self.session_chats
-        ]
-        summaries_ids = await self.filter_chat_summaries(summaries)
-        return summaries_ids
-
-    async def filter_chat_summaries(self, chats: List[PreviousChats]) -> List[int]:
-        reranked_chat_ids = await LLMBasedChatFiltration.rerank(chats, self.payload.query, self.payload.session_id)
-        return reranked_chat_ids
