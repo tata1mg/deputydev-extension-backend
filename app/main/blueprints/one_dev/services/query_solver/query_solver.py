@@ -22,7 +22,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChats,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
