@@ -37,7 +37,11 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
     @classmethod
     async def _feature_task(cls, payload: CodeDocsGenerationInput, job_id: int, llm_meta: List[LLMMeta]):
         relevant_chunks = await cls.rerank(
-            payload.query, payload.relevant_chunks, payload.focus_chunks or [], bool(payload.is_llm_reranking_enabled)
+            payload.query,
+            payload.relevant_chunks,
+            payload.focus_chunks or [],
+            bool(payload.is_llm_reranking_enabled),
+            sesison_id=payload.session_id,
         )
         relevant_chunks = render_snippet_array(relevant_chunks)
 

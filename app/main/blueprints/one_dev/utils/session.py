@@ -43,5 +43,5 @@ def ensure_session_id(session_type: str = "MESSAGE") -> Any:
             return await func(_request, client_data=client_data, auth_data=auth_data, session_id=session_id, **kwargs)
 
         return wrapper
-    
+
     return _ensure_session_id

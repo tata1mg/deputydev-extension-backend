@@ -33,7 +33,11 @@ class TestCaseGenerationHandler(BaseCodeGenFeature[TestCaseGenerationInput]):
         cls, payload: TestCaseGenerationInput, job_id: int, llm_meta: List[LLMMeta]
     ) -> Dict[str, Any]:
         relevant_chunks = await cls.rerank(
-            payload.query, payload.relevant_chunks, payload.focus_chunks or [], bool(payload.is_llm_reranking_enabled)
+            payload.query,
+            payload.relevant_chunks,
+            payload.focus_chunks or [],
+            bool(payload.is_llm_reranking_enabled),
+            sesison_id=payload.session_id,
         )
         relevant_chunks = render_snippet_array(relevant_chunks)
         prompt_vars = {
