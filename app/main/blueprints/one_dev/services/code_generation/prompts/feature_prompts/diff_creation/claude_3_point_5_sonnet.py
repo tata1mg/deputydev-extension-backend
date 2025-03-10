@@ -1,5 +1,14 @@
 import re
+from typing import Any, Dict, List
 
+from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    TextBlockData,
+)
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
@@ -8,10 +17,7 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 class Claude3Point5DiffCreationPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "DIFF_CREATION"
 
-    def __init__(self, params: dict):
-        self.params = params
-
-    def get_prompt(self):
+    def get_prompt(self) -> UserAndSystemMessages:
         system_message = """
                 You are a senior developer who has a huge amount of experience in applying code diff. You will be given some blocks of code or documentation in the previous conversation
                 and you would be asked to get diffs that could be applied to the original codebase and is expected to run without syntactical errors.
@@ -103,10 +109,11 @@ class Claude3Point5DiffCreationPrompt(BaseClaude3Point5SonnetPrompt):
             If a chunk has changes at 2 places, provide it like 2 separate chunks, and change the line numbers accordingly, by checking line numbers from given initial query.
         """
 
-        return {"system_message": system_message, "user_message": user_message}
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
-    def get_parsed_result(cls, llm_response: str) -> dict:
+    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
+        llm_response = text_block.content.text
         # get all chunks from response via regex
         all_chunks_block = re.search(r"<all_chunks>(.*?)</all_chunks>", llm_response, re.DOTALL)
 
@@ -134,3 +141,15 @@ class Claude3Point5DiffCreationPrompt(BaseClaude3Point5SonnetPrompt):
             commit_message = commit_message.group(1)
 
         return {"chunks_by_file": chunks_by_file, "pr_title": pr_title, "commit_message": commit_message}
+
+    @classmethod
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+        final_content: List[Dict[str, Any]] = []
+
+        for content_block in llm_response.content:
+            if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                raise NotImplementedError("Tool use request not implemented for this prompt")
+            elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
+                final_content.append(cls._parse_text_block(content_block))
+
+        return final_content
