@@ -20,10 +20,10 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
-query_solver = Blueprint("query_solver", "/")
+code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="v2")
 
 
-@query_solver.route("/solve-user-query")
+@code_gen_v2_bp.route("/solve-user-query")
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -40,7 +40,7 @@ async def solve_user_query(
     await response.eof()
 
 
-@query_solver.route("/generate-inline-edit", methods=["POST"])
+@code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
