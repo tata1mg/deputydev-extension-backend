@@ -59,14 +59,19 @@ class BaseCodeGenFeature(ABC, Generic[PayloadType]):
 
     @classmethod
     async def rerank(
-        cls, query: str, relevant_chunks: List[ChunkInfo], focus_chunks: List[ChunkInfo], is_llm_reranking_enabled: bool
+        cls,
+        query: str,
+        relevant_chunks: List[ChunkInfo],
+        focus_chunks: List[ChunkInfo],
+        is_llm_reranking_enabled: bool,
+        sesison_id: int,
     ) -> List[ChunkInfo]:
         filtered_and_ranked_chunks = None
         if is_llm_reranking_enabled:
-            filtered_and_ranked_chunks = await LLMBasedChunkReranker().rerank(
+            filtered_and_ranked_chunks = await LLMBasedChunkReranker(session_id=sesison_id).rerank(
                 query=query, related_codebase_chunks=relevant_chunks, focus_chunks=focus_chunks
             )
-            return cls.get_chunks_from_denotation(relevant_chunks + focus_chunks, filtered_and_ranked_chunks)
+            return filtered_and_ranked_chunks
         elif not is_llm_reranking_enabled or not filtered_and_ranked_chunks:
             filtered_and_ranked_chunks = cls.get_default_chunks(focus_chunks, relevant_chunks)
         return filtered_and_ranked_chunks
@@ -79,11 +84,3 @@ class BaseCodeGenFeature(ABC, Generic[PayloadType]):
         chunks = focus_chunks + related_codebase_chunks
         chunks.sort(key=lambda chunk: chunk.search_score, reverse=True)
         return chunks[:max_default_chunks_to_return]
-
-    @classmethod
-    def get_chunks_from_denotation(cls, chunks: List[ChunkInfo], denotations: List[str]) -> List[ChunkInfo]:
-        result = []
-        for chunk in chunks:
-            if chunk.denotation in denotations:
-                result.append(chunk)
-        return result

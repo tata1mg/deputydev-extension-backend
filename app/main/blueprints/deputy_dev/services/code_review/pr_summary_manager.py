@@ -62,7 +62,9 @@ class PRSummaryManager(BasePRReviewManager):
         """Process PR summary generation and posting."""
         pr_diff_handler = PRDiffHandler(pr_service)
         session = await MessageSessionsRepository.create_message_session(
-            message_session_data=MessageSessionData(user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_SUMMARY")
+            message_session_data=MessageSessionData(
+                user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_SUMMARY"
+            )
         )
 
         review_manager = MultiAgentPRReviewManager(
