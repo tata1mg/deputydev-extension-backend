@@ -41,6 +41,7 @@ class ToolUseResponseContent(BaseModel):
 class TextBlockData(BaseModel):
     type: Literal[ContentBlockCategory.TEXT_BLOCK] = ContentBlockCategory.TEXT_BLOCK
     content: TextBlockContent
+    content_vars: Optional[Dict[str, str]] = None
 
 
 class ToolUseRequestData(BaseModel):
@@ -96,7 +97,6 @@ class MessageThreadData(BaseModel):
     actor: MessageThreadActor
     query_id: Optional[int] = None
     message_type: MessageType
-    query_vars: Optional[Dict[str, Any]] = None
     conversation_chain: List[int] = []
     data_hash: str
     message_data: Sequence[MessageData]
