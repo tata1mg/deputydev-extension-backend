@@ -1,6 +1,6 @@
 from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import TextBlockData
+from app.backend_common.models.dto.message_thread_dto import TextBlockData, MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -58,3 +58,7 @@ class GPT4OPRSummarizationPrompt(BaseGPT4OPrompt):
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
         raise NotImplementedError("Streaming events not supported for this prompt")
+
+    @classmethod
+    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
+        raise NotImplementedError("This method must be implemented in the child class")
