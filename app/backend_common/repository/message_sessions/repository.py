@@ -49,6 +49,7 @@ class MessageSessionsRepository:
                         summary=message_sesison.summary,
                         created_at=message_sesison.created_at.isoformat(),
                         updated_at=message_sesison.updated_at.isoformat(),
+                        session_type=message_sesison.session_type,
                     )
                 )
             )

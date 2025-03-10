@@ -212,6 +212,15 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         self.event_buffer = []
         return values_to_return
 
+    async def cleanup(self) -> None:
+        await super().cleanup()
+        self.diff_buffer = ""
+        self.udiff_line_start = None
+        self.is_diff = None
+        self.added_lines = 0
+        self.removed_lines = 0
+        self.diff_line_buffer = ""
+
 
 class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "CODE_QUERY_SOLVER"
