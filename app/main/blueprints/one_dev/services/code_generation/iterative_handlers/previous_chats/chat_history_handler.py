@@ -29,9 +29,9 @@ class ChatHistoryHandler:
         self.previous_chats: List[PreviousChats] = []
         self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO]] = {}
 
-    async def filter_chat_summaries(self, with_responses: bool = False) -> List[int]:
+    async def filter_chat_summaries(self) -> List[int]:
         if not self.previous_chats:
-            raise ValueError("No previous chats found")
+            return []
         reranked_chat_ids = await LLMBasedChatFiltration.rerank(
             self.previous_chats, self.payload.query, self.payload.session_id
         )
@@ -48,7 +48,7 @@ class ChatHistoryHandler:
         # create a map of query_id to message
         non_query_message_threads: List[MessageThreadDTO] = []
         for message_thread in all_message_threads:
-            if message_thread.message_type == MessageType.QUERY:
+            if message_thread.message_type == MessageType.QUERY and query_id_to_summary_map.get(message_thread.id):
                 self.data_map[message_thread.id] = (message_thread, [], query_id_to_summary_map[message_thread.id])
             else:
                 non_query_message_threads.append(message_thread)
@@ -72,7 +72,7 @@ class ChatHistoryHandler:
                 responses.append(message_thread.message_data[0].content.text)
         return responses
 
-    async def get_relevant_previous_chats(self):
+    async def get_relevant_previous_chats(self) -> Dict[str, List[Dict[str, Union[str, int, List[str]]]]]:
         all_session_query_summaries = await QuerySummarysRepository.get_all_session_query_summaries(
             session_id=self.payload.session_id
         )
@@ -111,6 +111,8 @@ class ChatHistoryHandler:
         # sort the previous chats based on query_id
         self.previous_chats.sort(key=lambda x: x.id, reverse=False)
         filtered_query_ids = await self.filter_chat_summaries()
+        if not filtered_query_ids:
+            return {"chats": []}
 
         response: List[Dict[str, Union[str, int, List[str]]]] = []
         for chat in self.previous_chats:
