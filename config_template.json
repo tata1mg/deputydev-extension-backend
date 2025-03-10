@@ -214,7 +214,8 @@
       "dao": {
         "models": [
           "app.main.blueprints.deputy_dev.models.dao.postgres",
-          "app.main.blueprints.one_dev.models.dao.postgres"
+          "app.main.blueprints.one_dev.models.dao.postgres",
+          "app.backend_common.models.dao.postgres"
         ],
         "default_connection": "default"
       }
