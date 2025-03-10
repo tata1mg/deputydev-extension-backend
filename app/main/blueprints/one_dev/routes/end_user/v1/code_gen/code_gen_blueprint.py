@@ -1,4 +1,3 @@
-from typing import Any, Dict
 
 from sanic import Blueprint
 from torpedo import Request, send_response
@@ -50,12 +49,6 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pla
 )
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.plan_to_code.main import (
     PlanCodeGenerationHandler,
-)
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
-    ChatHistoryHandler,
-)
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
-    PreviousChatPayload,
 )
 from app.main.blueprints.one_dev.services.embedding.dataclasses.main import (
     OneDevEmbeddingPayload,
@@ -206,18 +199,4 @@ async def get_embeddings(_request: Request, client_data: ClientData, auth_data: 
 async def record_feedback(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await FeedbackService.record_feedback(payload=CodeGenerationFeedbackInput(**payload))
-    return send_response(response, headers=kwargs.get("response_headers"))
-
-
-@code_gen_v1_bp.route("/relevant-chat-history", methods=["POST"])
-@validate_client_version
-@authenticate
-@ensure_session_id(session_type="CODE_GENERATION_V1")
-async def fetch_relevant_chat_history(
-    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
-):
-    payload: Dict[str, Any] = _request.custom_json()
-    response = await ChatHistoryHandler(
-        PreviousChatPayload(query=payload["query"], session_id=session_id)
-    ).get_relevant_previous_chats()
     return send_response(response, headers=kwargs.get("response_headers"))
