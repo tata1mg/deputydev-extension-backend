@@ -3,9 +3,11 @@ from typing import List
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import LLMMeta
+from app.backend_common.services.llm.dataclasses.main import (
+    LLMMeta,
+    NonStreamingParsedLLMCallResponse,
+)
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.features.base_code_gen_feature import (
     BaseCodeGenFeature,
 )
@@ -21,15 +23,6 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dif
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.diff_creation.main import (
     DiffCreationHandler,
 )
-from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
-    get_response_code_lines,
-)
-from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
-    JobService,
-)
-from app.main.blueprints.one_dev.services.repository.session_chat.main import (
-    SessionChatService,
-)
 
 from ...prompts.dataclasses.main import PromptFeatures
 from ...prompts.factory import PromptFeatureFactory
@@ -41,48 +34,30 @@ class CodeGenerationHandler(BaseCodeGenFeature[CodeGenerationInput]):
     @classmethod
     async def _feature_task(cls, payload: CodeGenerationInput, job_id: int, llm_meta: List[LLMMeta]):
         relevant_chunks = await cls.rerank(
-            payload.query, payload.relevant_chunks, payload.focus_chunks, payload.is_llm_reranking_enabled
+            payload.query, payload.relevant_chunks, payload.focus_chunks or [], bool(payload.is_llm_reranking_enabled)
         )
         relevant_chunks = render_snippet_array(relevant_chunks)
-        prompt = PromptFeatureFactory.get_prompt(
+
+        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+
+        llm_response = await llm_handler.start_llm_query(
+            session_id=payload.session_id,
             prompt_feature=PromptFeatures.CODE_GENERATION,
-            model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-            init_params={"query": payload.query, "relevant_chunks": relevant_chunks},
-        )
-
-        await JobService.db_update(
-            filters={"id": job_id},
-            update_data={"status": "PROMPT_GENERATED"},
-        )
-
-        llm_response = await LLMHandler(prompt_handler=prompt).start_llm_query(previous_responses=[])
-        code_lines = get_response_code_lines(llm_response.parsed_llm_data["response"])
-        llm_meta.append(llm_response.llm_meta)
-        await JobService.db_update(
-            filters={"id": job_id},
-            update_data={
-                "status": "LLM_RESPONSE",
-                "meta_info": {
-                    "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
-                },
+            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            prompt_vars={
+                "query": payload.query,
+                "relevant_chunks": relevant_chunks,
             },
         )
 
-        await SessionChatService.db_create(
-            SessionChatDTO(
-                session_id=payload.session_id,
-                prompt_type=PromptFeatures.CODE_GENERATION,
-                llm_prompt=llm_response.raw_prompt,
-                llm_response=llm_response.raw_llm_response,
-                llm_model=llm_response.llm_meta.llm_model.value,
-                response_summary=llm_response.parsed_llm_data["summary"],
-                user_query=payload.query,
-                code_lines_count=code_lines,
-            )
-        )
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
+
+        # TODO: Move this to a separate function
+        # code_lines = get_response_code_lines(llm_response.parsed_content[0]["response"])
 
         final_resp = {
-            "display_response": llm_response.parsed_llm_data["response"],
+            "display_response": llm_response.parsed_content[0]["response"],
             "session_id": payload.session_id,
         }
 

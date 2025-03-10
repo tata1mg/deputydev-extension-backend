@@ -15,5 +15,5 @@ class CodeGenerationInput(BaseCodeGenFeaturePayload):
     pr_config: Optional[PRConfig] = None
     apply_diff: Optional[bool] = None
     relevant_chunks: list[ChunkInfo]
-    focus_chunks: Optional[list[ChunkInfo]]
+    focus_chunks: Optional[list[ChunkInfo]] = None
     is_llm_reranking_enabled: Optional[bool] = False

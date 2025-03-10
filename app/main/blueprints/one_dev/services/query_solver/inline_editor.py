@@ -69,23 +69,3 @@ class InlineEditGenerator:
         )
         asyncio.create_task(self.start_job(payload, job_id=job.id))
         return job.id
-
-    async def get_inline_diff_result(self, headers: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            job_id = headers["job_id"]
-            if not job_id:
-                raise ValueError("job_id is required")
-            inline_diff_result = await JobService.db_get(filters={"id": job_id}, fetch_one=True)
-            if inline_diff_result.status != "COMPLETED":
-                return {
-                    "status": "PENDING",
-                }
-            return {
-                "status": "COMPLETED",
-                "result": inline_diff_result.final_output,
-            }
-        except Exception as ex:
-            return {
-                "status": "FAILED",
-                "error": str(ex),
-            }

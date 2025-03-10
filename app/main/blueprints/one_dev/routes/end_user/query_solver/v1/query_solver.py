@@ -16,6 +16,7 @@ from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
@@ -26,7 +27,9 @@ query_solver = Blueprint("query_solver", "/")
 @validate_client_version
 @authenticate
 @ensure_session_id
-async def solve_user_query(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def solve_user_query(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+):
     response = await _request.respond()
     response.content_type = "text/event-stream"
     data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json, session_id=session_id))
@@ -41,18 +44,10 @@ async def solve_user_query(_request: Request, auth_data: AuthData, session_id: i
 @validate_client_version
 @authenticate
 @ensure_session_id
-async def generate_inline_edit(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def generate_inline_edit(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+):
     data = await InlineEditGenerator().create_and_start_job(
         payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     )
     return send_response({"job_id": data})
-
-
-# TODO: Remove this
-@query_solver.route("/get-inline-edit-result", methods=["GET"])
-@authenticate
-@ensure_session_id
-async def get_inline_edit_result(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
-    headers = _request.headers
-    data = await InlineEditGenerator().get_inline_diff_result(headers)
-    return send_response(data)
