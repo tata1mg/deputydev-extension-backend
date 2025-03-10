@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadDTO,
     MessageType,
+    TextBlockData,
 )
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
@@ -29,11 +30,18 @@ class PastChatsSerializer(BaseSerializer):
             prompt_feature = item.prompt_type
             actor = item.actor.value
 
-            if message_type == MessageType("QUERY"):
+            if message_type == MessageType.QUERY:
+                text_data = item.message_data[0]
+                if (
+                    not isinstance(text_data, TextBlockData)
+                    or not text_data.content_vars
+                    or not isinstance((text_data.content_vars or {}).get("query"), str)
+                ):
+                    continue
                 formatted_data.append(
-                    {"type": "TEXT_BLOCK", "content": {"text": item.query_vars["query"]}, "actor": actor}
+                    {"type": "TEXT_BLOCK", "content": {"text": text_data.content_vars["query"]}, "actor": actor}
                 )
-            elif message_type == MessageType("TOOL_RESPONSE"):
+            elif message_type == MessageType.TOOL_RESPONSE:
                 tool_use_id = response_block[0].content.tool_use_id
                 if tool_use_id not in tool_use_map:
                     continue
