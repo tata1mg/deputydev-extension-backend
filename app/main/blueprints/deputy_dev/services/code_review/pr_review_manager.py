@@ -134,7 +134,7 @@ class PRReviewManager(BasePRReviewManager):
         pr_diff_handler: PRDiffHandler,
     ):
         session = await MessageSessionsRepository.create_message_session(
-            message_session_data=MessageSessionData(user_team_id=1, client="BACKEND", client_version="1.0.0")
+            message_session_data=MessageSessionData(user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_REVIEW")
         )
 
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
