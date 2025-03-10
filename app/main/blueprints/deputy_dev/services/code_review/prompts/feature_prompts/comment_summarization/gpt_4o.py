@@ -1,6 +1,6 @@
 from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import TextBlockData
+from app.backend_common.models.dto.message_thread_dto import TextBlockData, MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -76,8 +76,8 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                     "Performance: Fixed batch size needs optimization"
                 ],
                 "buckets": [
-                    {"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
-                    {"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}
+                    {{"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
+                    {{"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}}
                 ],
                 "corrective_code": [
                     "BATCH_SIZE = config.get('REDIS_BATCH_SIZE', 100)",
@@ -97,9 +97,9 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                     "RUNTIME_ERROR: Unique error handling approach needed"
                 ],
                 "buckets": [
-                    {"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
-                    {"name": "CODE_ROBUSTNESS", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]},
-                    {"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}
+                    {{"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
+                    {{"name": "CODE_ROBUSTNESS", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}},
+                    {{"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}}
                 ],
                 "corrective_code": [
                     "# Refactor to remove duplication",
@@ -122,7 +122,7 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                 'comment': '<A single summarized comment for all the comments. Make bucket wise bullets in summary>',
                 'corrective_code': '<Intelligently union of combined Corrective code for all the comments provided as a string.>',
                 'confidence_score': '<confidence_score field value in input comment>;,
-                'buckets': <This is list of buckets [{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}]>,
+                'buckets': <This is list of buckets [{{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}}]>,
                 'model': <model field value in input comment>,
                 'agent': <agent field value in input comment>,
                 'is_valid': <is_valid field value in input comment. It can be true, false or null. Return as it is as mentioned in input comment>
@@ -137,8 +137,8 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                     "line_number": "+138",
                     "comment": "- **SECURITY**: Hardcoded batch size (100) poses potential DoS risk through memory exhaustion\\n- **PERFORMANCE**: Implement dynamic batch sizing for optimal Redis operations",
                     "buckets": [
-                        {"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
-                        {"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}
+                        {{"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
+                        {{"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}}
                     ],
                     "corrective_code": "# Configure dynamic batch size with security limits\nMAX_BATCH_SIZE = config.get('REDIS_MAX_BATCH_SIZE', 1000)\nMIN_BATCH_SIZE = config.get('REDIS_MIN_BATCH_SIZE', 100)\n\nbatch_size = max(MIN_BATCH_SIZE, min(MAX_BATCH_SIZE, total_embeddings // 10))\n\nfor i in range(0, len(cache_keys), batch_size):\n    batch = cache_keys[i:i + batch_size]",
                     "is_valid": true,
@@ -152,8 +152,8 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                     "line_number": "42",
                     "comment": "- **MAINTAINABILITY**: Duplicated method violates DRY principle and introduces maintenance challenges\\n- **RUNTIME_ERROR**: Unique error handling approach needed",
                     "buckets": [
-                        {"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"},
-                        {"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}
+                        {{"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
+                        {{"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}}
                     ]
                     "corrective_code": "Intelligently combine: # Refactor to remove duplication and standardize method implementation and Implement comprehensive error handling strategy",
                     "is_valid": true,
@@ -211,3 +211,7 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
         raise NotImplementedError("Streaming events not supported for this prompt")
+
+    @classmethod
+    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
+        raise NotImplementedError("This method must be implemented in the child class")
