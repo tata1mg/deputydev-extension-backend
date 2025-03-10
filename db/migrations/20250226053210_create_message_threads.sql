@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS message_threads (
     usage JSON,
     llm_model TEXT NOT NULL,
     prompt_type TEXT NOT NULL,
-    query_vars JSON,
     call_chain_category TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

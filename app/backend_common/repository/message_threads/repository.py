@@ -87,6 +87,10 @@ class MessageThreadsRepository:
 
     @classmethod
     async def get_message_threads_by_ids(cls, message_thread_ids: List[int]) -> List[MessageThreadDTO]:
+        """
+        Get message threads by message_thread_ids
+        Returned message threads are sorted by the order of message_thread_ids
+        """
         try:
             message_threads = await DB.by_filters(
                 model_name=MessageThread,
@@ -95,8 +99,9 @@ class MessageThreadsRepository:
             )
             if not message_threads:
                 return []
-            return [MessageThreadDTO(**message_thread) for message_thread in message_threads]
-
+            message_threads = [MessageThreadDTO(**message_thread) for message_thread in message_threads]
+            message_threads.sort(key=lambda x: message_thread_ids.index(x.id))
+            return message_threads
         except Exception as ex:
             logger.error(
                 f"error occurred while fetching message_threads from db for message_thread_ids filters : {message_thread_ids}, ex: {ex}"
