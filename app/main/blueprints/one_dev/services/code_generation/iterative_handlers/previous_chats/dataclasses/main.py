@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class PreviousChatPayload(BaseModel):
     query: str
-    session_id: str
+    session_id: int
 
 
 class PreviousChats(BaseModel):

@@ -1,7 +1,7 @@
 from typing import List
 
 from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChatPayload,
     PreviousChats,
 )
@@ -56,5 +56,5 @@ class ChatHistoryHandler:
         return summaries_ids
 
     async def filter_chat_summaries(self, chats: List[PreviousChats]) -> List[int]:
-        reranked_chat_ids = await LLMBasedChatFiltration.rerank(chats, self.payload.query)
+        reranked_chat_ids = await LLMBasedChatFiltration.rerank(chats, self.payload.query, self.payload.session_id)
         return reranked_chat_ids

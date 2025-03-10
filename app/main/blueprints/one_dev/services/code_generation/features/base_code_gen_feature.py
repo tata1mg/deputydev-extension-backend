@@ -59,17 +59,17 @@ class BaseCodeGenFeature(ABC, Generic[PayloadType]):
 
     @classmethod
     async def rerank(
-        cls, query: str, relevant_chunks: List[ChunkInfo], focus_chunks: List[ChunkInfo], is_llm_reranking_enabled
+        cls, query: str, relevant_chunks: List[ChunkInfo], focus_chunks: List[ChunkInfo], is_llm_reranking_enabled: bool
     ) -> List[ChunkInfo]:
-        filter_and_ranked_chunks = None
+        filtered_and_ranked_chunks = None
         if is_llm_reranking_enabled:
-            filter_and_ranked_chunks = await LLMBasedChunkReranker().rerank(
+            filtered_and_ranked_chunks = await LLMBasedChunkReranker().rerank(
                 query=query, related_codebase_chunks=relevant_chunks, focus_chunks=focus_chunks
             )
-            return cls.get_chunks_from_denotation(relevant_chunks + focus_chunks, filter_and_ranked_chunks)
-        elif not is_llm_reranking_enabled or not filter_and_ranked_chunks:
-            filter_and_ranked_chunks = cls.get_default_chunks(focus_chunks, relevant_chunks)
-        return filter_and_ranked_chunks
+            return cls.get_chunks_from_denotation(relevant_chunks + focus_chunks, filtered_and_ranked_chunks)
+        elif not is_llm_reranking_enabled or not filtered_and_ranked_chunks:
+            filtered_and_ranked_chunks = cls.get_default_chunks(focus_chunks, relevant_chunks)
+        return filtered_and_ranked_chunks
 
     @classmethod
     def get_default_chunks(
