@@ -36,7 +36,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
     return send_response(response)
 
 
-@history_v1_bp.route("/delete_session", methods=["PUT"])
+@history_v1_bp.route("/delete-session", methods=["PUT"])
 @authenticate
 async def delete_session(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers
