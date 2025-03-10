@@ -35,6 +35,7 @@ class AuthenticationManager:
                         "X-Supabase-Session-Id": supabase_session_id,
                     }
                 )
+                print(response)
 
                 if response.get("status") == AuthStatus.AUTHENTICATED.value:
                     if not response.get("encrypted_session_data") or response.get("encrypted_session_data") is None:

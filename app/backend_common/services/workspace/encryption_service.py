@@ -78,6 +78,7 @@ class EncryptionService:
         """
 
         salt, iv, ciphertext = cls.__decode(encrypted_data)
+        print(salt, iv, ciphertext)
 
         # Derive the AES key using the same salt
         key = cls.__derive_key(salt=salt)
