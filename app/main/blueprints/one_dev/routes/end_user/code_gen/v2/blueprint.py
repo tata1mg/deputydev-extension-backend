@@ -26,7 +26,7 @@ code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="v2")
 @code_gen_v2_bp.route("/solve-user-query")
 @validate_client_version
 @authenticate
-@ensure_session_id
+@ensure_session_id(session_type="CODE_GENERATION_V2")
 async def solve_user_query(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
@@ -43,7 +43,7 @@ async def solve_user_query(
 @code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
 @validate_client_version
 @authenticate
-@ensure_session_id
+@ensure_session_id(session_type="CODE_GENERATION_V2")
 async def generate_inline_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
