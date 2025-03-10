@@ -72,10 +72,10 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
-code_gen = Blueprint("code_gen", "/")
+code_gen_v1_bp = Blueprint("code_gen_v1_bp", url_prefix="v1")
 
 
-@code_gen.route("/generate-code", methods=["POST"])
+@code_gen_v1_bp.route("/generate-code", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -87,7 +87,7 @@ async def generate_code(_request: Request, client_data: ClientData, auth_data: A
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/generate-docs", methods=["POST"])
+@code_gen_v1_bp.route("/generate-docs", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -100,7 +100,7 @@ async def generate_docs(_request: Request, client_data: ClientData, auth_data: A
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/generate-test-cases", methods=["POST"])
+@code_gen_v1_bp.route("/generate-test-cases", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -115,7 +115,7 @@ async def generate_test_case(
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/generate-code-plan", methods=["POST"])
+@code_gen_v1_bp.route("/generate-code-plan", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -130,7 +130,7 @@ async def generate_code_plan(
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/generate-diff", methods=["POST"])
+@code_gen_v1_bp.route("/generate-diff", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -145,7 +145,7 @@ async def generate_code_diff(
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/iterative-chat", methods=["POST"])
+@code_gen_v1_bp.route("/iterative-chat", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -157,7 +157,7 @@ async def iterative_chat(_request: Request, client_data: ClientData, auth_data: 
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/plan-code-generation", methods=["POST"])
+@code_gen_v1_bp.route("/plan-code-generation", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -168,7 +168,7 @@ async def plan_to_code(_request: Request, client_data: ClientData, auth_data: Au
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/get-job-status", methods=["GET"])
+@code_gen_v1_bp.route("/get-job-status", methods=["GET"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -185,7 +185,7 @@ async def get_job_status(_request: Request, client_data: ClientData, auth_data: 
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/create-embedding", methods=["POST"])
+@code_gen_v1_bp.route("/create-embedding", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -197,7 +197,7 @@ async def get_embeddings(_request: Request, client_data: ClientData, auth_data: 
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/record-feedback", methods=["POST"])
+@code_gen_v1_bp.route("/record-feedback", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
@@ -207,7 +207,7 @@ async def record_feedback(_request: Request, client_data: ClientData, auth_data:
     return send_response(response, headers=kwargs.get("response_headers"))
 
 
-@code_gen.route("/relevant-chat-history", methods=["POST"])
+@code_gen_v1_bp.route("/relevant-chat-history", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id
