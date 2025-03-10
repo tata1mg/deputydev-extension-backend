@@ -13,5 +13,5 @@ class CodeGenFeature(Enum):
 
 
 class BaseCodeGenFeaturePayload(BaseModel):
-    session_id: str
+    session_id: int
     auth_data: AuthData
