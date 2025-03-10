@@ -11,6 +11,7 @@ class MessageSession(Base):
         "client_version",
         "user_team_id",
         "status",
+        "session_type",
         "created_at",
         "updated_at",
         "deleted_at",
@@ -23,6 +24,7 @@ class MessageSession(Base):
     user_team_id = fields.IntField()
     status = fields.TextField()
     deleted_at = fields.DatetimeField(null=True)
+    session_type = fields.TextField(null=True)
 
     class Meta:
         table = "message_sessions"

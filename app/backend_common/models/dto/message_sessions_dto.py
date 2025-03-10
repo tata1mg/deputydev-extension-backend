@@ -12,6 +12,7 @@ class MessageSessionData(BaseModel):
     client: Clients
     client_version: Optional[str] = None
     status: str = "ACTIVE"
+    session_type: str
 
 
 class MessageSessionDTO(MessageSessionData):
