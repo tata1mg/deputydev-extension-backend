@@ -18,6 +18,7 @@ class QuerySolverInput(BaseModel):
     write_mode: bool = False
     session_id: int
     tool_use_response: Optional[ToolUseResponseInput] = None
+    previous_query_ids: List[int] = []
 
 
 class CodeSelectionInput(BaseModel):

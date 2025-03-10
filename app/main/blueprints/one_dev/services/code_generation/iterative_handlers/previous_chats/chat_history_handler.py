@@ -7,7 +7,9 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageType,
     TextBlockData,
 )
-from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChatPayload,
@@ -16,7 +18,9 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.reranking.main import (
     LLMBasedChatFiltration,
 )
-from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import QuerySummarysRepository
+from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+    QuerySummarysRepository,
+)
 
 
 class ChatHistoryHandler:
