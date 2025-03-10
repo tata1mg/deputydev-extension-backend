@@ -1,6 +1,6 @@
 from typing import List
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
@@ -32,6 +32,7 @@ class LLMBasedChatFiltration:
                 "query": query,
                 "chats": chats,
             },
+            call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
         )
 
         if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
