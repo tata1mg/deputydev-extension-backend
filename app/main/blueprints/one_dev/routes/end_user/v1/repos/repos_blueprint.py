@@ -11,10 +11,10 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
-repos = Blueprint("repos", "/")
+repos_v1_bp = Blueprint("repos_v1_bp", url_prefix="/repos")
 
 
-@repos.route("/get-registered-repo-details", methods=["GET"])
+@repos_v1_bp.route("/get-registered-repo-details", methods=["GET"])
 @validate_client_version
 @authenticate
 async def get_repos(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):

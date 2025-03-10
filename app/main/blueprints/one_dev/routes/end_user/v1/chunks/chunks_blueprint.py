@@ -13,10 +13,10 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
-rerank = Blueprint("rerank", "/rerank")
+chunks_v1_bp = Blueprint("chunks_v1_bp", url_prefix="/chunks")
 
 
-@rerank.route("/llm_based", methods=["POST"])
+@chunks_v1_bp.route("/llm_based", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id(session_type="CODE_GENERATION_V1")
