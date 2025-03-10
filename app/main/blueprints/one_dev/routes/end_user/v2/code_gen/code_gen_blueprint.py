@@ -20,7 +20,7 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
-code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="v2")
+code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
 
 @code_gen_v2_bp.route("/solve-user-query")

@@ -11,10 +11,10 @@ from app.main.blueprints.one_dev.services.past_workflows.past_workflows import (
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
-history = Blueprint("history", "/")
+history_v1_bp = Blueprint("history_v1_bp", url_prefix="/history")
 
 
-@history.route("/chats", methods=["GET"])
+@history_v1_bp.route("/chats", methods=["GET"])
 @authenticate
 async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers
@@ -25,7 +25,7 @@ async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
     return send_response(response)
 
 
-@history.route("/sessions", methods=["GET"])
+@history_v1_bp.route("/sessions", methods=["GET"])
 @authenticate
 async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers
@@ -36,7 +36,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
     return send_response(response)
 
 
-@history.route("/delete_session", methods=["PUT"])
+@history_v1_bp.route("/delete_session", methods=["PUT"])
 @authenticate
 async def delete_session(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers

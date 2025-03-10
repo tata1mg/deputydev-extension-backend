@@ -41,7 +41,7 @@ class ToolUseResponseContent(BaseModel):
 class TextBlockData(BaseModel):
     type: Literal[ContentBlockCategory.TEXT_BLOCK] = ContentBlockCategory.TEXT_BLOCK
     content: TextBlockContent
-    content_vars: Optional[Dict[str, str]] = None
+    content_vars: Optional[Dict[str, Any]] = None
 
 
 class ToolUseRequestData(BaseModel):

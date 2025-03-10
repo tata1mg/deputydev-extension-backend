@@ -8,10 +8,10 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
 
-auth = Blueprint("auth", "/")
+auth_v1_bp = Blueprint("auth_v1_bp", url_prefix="/auth")
 
 
-@auth.route("/verify-auth-token", methods=["POST"])
+@auth_v1_bp.route("/verify-auth-token", methods=["POST"])
 @validate_client_version
 async def verify_auth_token(_request: Request, **kwargs):
     headers = _request.headers
@@ -19,7 +19,7 @@ async def verify_auth_token(_request: Request, **kwargs):
     return send_response(response)
 
 
-@auth.route("/get-session", methods=["GET"])
+@auth_v1_bp.route("/get-session", methods=["GET"])
 @validate_client_version
 async def get_session(_request: Request, **kwargs):
     headers = _request.headers
@@ -27,7 +27,7 @@ async def get_session(_request: Request, **kwargs):
     return send_response(response)
 
 
-@auth.route("/sign-up", methods=["POST"])
+@auth_v1_bp.route("/sign-up", methods=["POST"])
 @validate_client_version
 async def sign_up(_request: Request, **kwargs):
     headers = _request.headers

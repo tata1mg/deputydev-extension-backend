@@ -74,7 +74,7 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
-code_gen_v1_bp = Blueprint("code_gen_v1_bp", url_prefix="v1")
+code_gen_v1_bp = Blueprint("code_gen_v1_bp", url_prefix="/code_gen")
 
 
 @code_gen_v1_bp.route("/generate-code", methods=["POST"])

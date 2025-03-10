@@ -9,17 +9,17 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
-config = Blueprint("config", "/")
+config_v1_bp = Blueprint("config_v1_bp", url_prefix="/configs")
 
 
-@config.route("/get-essential-configs", methods=["GET"])
+@config_v1_bp.route("/get-essential-configs", methods=["GET"])
 @validate_client_version
 async def get_essential_configs(_request: Request, client_data: ClientData, **kwargs):
     response = ConfigFetcher.fetch_configs(client=client_data.client, config_type=ConfigType.ESSENTIAL)
     return send_response(response)
 
 
-@config.route("/get-configs", methods=["GET"])
+@config_v1_bp.route("/get-configs", methods=["GET"])
 @validate_client_version
 @authenticate
 async def get_configs(_request: Request, client_data: ClientData, **kwargs):

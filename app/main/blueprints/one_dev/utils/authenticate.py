@@ -34,7 +34,8 @@ def authenticate(func: Any) -> Any:
             raise Exception("Authorization header is missing")
 
         # decode encrypted session data and get the supabase access token
-        encrypted_session_data = authorization_header.split(" ")[1]
+        encrypted_session_data = authorization_header.split(" ")[1].strip()
+        print(encrypted_session_data)
         try:
             # first decrypt the token using session encryption service
             session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
@@ -42,7 +43,8 @@ def authenticate(func: Any) -> Any:
             session_data = json.loads(session_data_string)
             # extract supabase access token
             access_token = session_data.get("access_token")
-            token_data = await SupabaseAuth.verify_auth_token(access_token)
+            print(access_token)
+            token_data = await SupabaseAuth.verify_auth_token(access_token.strip())
             if not token_data["valid"]:
                 return {"status": AuthStatus.NOT_VERIFIED.value}
         except ExpiredSignatureError:
