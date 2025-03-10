@@ -11,7 +11,7 @@ class PreviousChatPayload(BaseModel):
 class PreviousChats(BaseModel):
     id: int
     summary: str
-    query: Optional[str] = None
+    query: str
 
 
 class PreviousChatResponse(BaseModel):

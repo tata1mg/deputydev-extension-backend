@@ -15,7 +15,6 @@ class MessageThread(Base):
         "data_hash",
         "usage",
         "llm_model",
-        "query_vars",
         "prompt_type",
         "call_chain_category",
         "created_at",
@@ -31,7 +30,6 @@ class MessageThread(Base):
     message_data = fields.JSONField()
     data_hash = fields.TextField()
     usage = fields.JSONField(null=True)
-    query_vars = fields.JSONField(null=True)
     llm_model = fields.TextField()
     prompt_type = fields.TextField()
     call_chain_category = fields.TextField()
