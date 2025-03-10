@@ -1,5 +1,5 @@
 from sanic import Blueprint
-from torpedo import CONFIG, Request, send_response
+from torpedo import Request, send_response
 
 from app.main.blueprints.one_dev.services.code_generation.features.code_generator.dataclasses.main import (
     CodeGenerationInput,
@@ -68,19 +68,18 @@ from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 code_gen = Blueprint("code_gen", "/")
 
-config = CONFIG.config
-
 
 @code_gen.route("/generate-code", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def generate_code(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def generate_code(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await CodeGenerationHandler.start_feature(
         payload=CodeGenerationInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
@@ -90,9 +89,9 @@ async def generate_code(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/generate-docs", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def generate_docs(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def generate_docs(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     print(payload)
     response = await DocsGenerationHandler.start_feature(
@@ -103,9 +102,11 @@ async def generate_docs(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/generate-test-cases", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def generate_test_case(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def generate_test_case(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
+):
     payload = _request.custom_json()
     print(payload)
     response = await TestCaseGenerationHandler.start_feature(
@@ -116,9 +117,11 @@ async def generate_test_case(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/generate-code-plan", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def generate_code_plan(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def generate_code_plan(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
+):
     payload = _request.custom_json()
     print(payload)
     response = await CodePlanHandler.start_feature(
@@ -129,9 +132,11 @@ async def generate_code_plan(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/generate-diff", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def generate_code_diff(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def generate_code_diff(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
+):
     payload = _request.custom_json()
     print(payload)
     response = await DiffCreationHandler.start_feature(
@@ -142,9 +147,9 @@ async def generate_code_diff(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/iterative-chat", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def iterative_chat(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def iterative_chat(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await IterativeChatHandler.start_feature(
         payload=IterativeChatInput(**payload, session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
@@ -154,9 +159,9 @@ async def iterative_chat(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/plan-code-generation", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def plan_to_code(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     response = await PlanCodeGenerationHandler.start_feature(
         payload=PlanCodeGenerationInput(session_id=_request.headers.get("X-Session-Id"), auth_data=auth_data)
     )
@@ -167,7 +172,7 @@ async def plan_to_code(_request: Request, auth_data: AuthData, **kwargs):
 @validate_client_version
 @authenticate
 @ensure_session_id
-async def get_job_status(_request: Request, auth_data: AuthData, session_id: int, **kwargs):
+async def get_job_status(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = {key: var for key, var in _request.query_args}
     print(payload)
     job = await JobService.db_get(filters={"id": int(payload.get("job_id"))}, fetch_one=True)
@@ -183,7 +188,8 @@ async def get_job_status(_request: Request, auth_data: AuthData, session_id: int
 @code_gen.route("/create-embedding", methods=["POST"])
 @validate_client_version
 @authenticate
-async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def get_embeddings(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await OneDevEmbeddingManager.create_embeddings(
         payload=OneDevEmbeddingPayload(**payload, auth_data=auth_data)
@@ -193,9 +199,9 @@ async def get_embeddings(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/record-feedback", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def record_feedback(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
     response = await FeedbackService.record_feedback(payload=CodeGenerationFeedbackInput(**payload))
     return send_response(response, headers=kwargs.get("response_headers"))
@@ -203,9 +209,11 @@ async def record_feedback(_request: Request, auth_data: AuthData, **kwargs):
 
 @code_gen.route("/relevant-chat-history", methods=["POST"])
 @validate_client_version
-@ensure_session_id
 @authenticate
-async def fetch_relevant_chat_history(_request: Request, auth_data: AuthData, **kwargs):
+@ensure_session_id
+async def fetch_relevant_chat_history(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
+):
     payload = _request.custom_json()
     response = await ChatHistoryHandler(
         PreviousChatPayload(query=payload["query"], session_id=_request.headers.get("X-Session-Id"))

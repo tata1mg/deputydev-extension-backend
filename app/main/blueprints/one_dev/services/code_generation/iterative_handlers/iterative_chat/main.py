@@ -1,9 +1,11 @@
 from typing import Any, Dict, List
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import LLMMeta
+from app.backend_common.services.llm.dataclasses.main import (
+    LLMMeta,
+    NonStreamingParsedLLMCallResponse,
+)
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.base_code_gen_iterative_handler import (
     BaseCodeGenIterativeHandler,
 )
@@ -12,12 +14,6 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dat
 )
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.iterative_chat.dataclasses.main import (
     IterativeChatInput,
-)
-from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
-    JobService,
-)
-from app.main.blueprints.one_dev.services.repository.session_chat.main import (
-    SessionChatService,
 )
 
 from ...prompts.dataclasses.main import PromptFeatures
@@ -39,41 +35,23 @@ class IterativeChatHandler(BaseCodeGenIterativeHandler[IterativeChatInput]):
 
     @classmethod
     async def _feature_task(cls, payload: IterativeChatInput, job_id: int, llm_meta: List[LLMMeta]) -> Dict[str, Any]:
-        prompt = PromptFeatureFactory.get_prompt(
+
+        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+
+        previous_responses = await cls._get_previous_responses(payload)
+
+        llm_response = llm_handler.start_llm_query(
+            session_id=payload.session_id,
             prompt_feature=PromptFeatures.ITERATIVE_CODE_CHAT,
-            model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-            init_params={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+            previous_responses=previous_responses,
         )
 
-        await JobService.db_update(
-            filters={"id": job_id},
-            update_data={"status": "PROMPT_GENERATED"},
-        )
-        previous_responses = await cls._get_previous_responses(payload)
-        llm_response = await LLMHandler(prompt_handler=prompt).start_llm_query(previous_responses=previous_responses)
-        llm_meta.append(llm_response.llm_meta)
-        await JobService.db_update(
-            filters={"id": job_id},
-            update_data={
-                "status": "LLM_RESPONSE",
-                "meta_info": {
-                    "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
-                },
-            },
-        )
-        await SessionChatService.db_create(
-            SessionChatDTO(
-                session_id=payload.session_id,
-                prompt_type=PromptFeatures.ITERATIVE_CODE_CHAT,
-                llm_prompt=llm_response.raw_prompt,
-                llm_response=llm_response.raw_llm_response,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
-                response_summary=llm_response.parsed_llm_data["summary"],
-                user_query=payload.query,
-            )
-        )
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
         return {
             "session_id": payload.session_id,
-            "display_response": llm_response.parsed_llm_data["response"],
+            "display_response": llm_response.parsed_content[0]["response"],
         }
