@@ -23,7 +23,7 @@ from app.main.blueprints.one_dev.utils.session import ensure_session_id
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
 
-@code_gen_v2_bp.route("/solve-user-query")
+@code_gen_v2_bp.route("/generate-code")
 @validate_client_version
 @authenticate
 @ensure_session_id(session_type="CODE_GENERATION_V2")
