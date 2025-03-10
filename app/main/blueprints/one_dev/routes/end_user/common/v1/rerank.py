@@ -8,12 +8,13 @@ from app.main.blueprints.one_dev.models.dto.reranking_input import RerankingInpu
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
-rerank = Blueprint("rerank", "/")
+rerank = Blueprint("rerank", "/rerank")
 
 
 @rerank.route("/llm_based", methods=["POST"])
-@authenticate
-async def reranker(_request: Request, auth_data: AuthData, **kwargs):
+# @authenticate
+# async def reranker(_request: Request, auth_data: AuthData, **kwargs):
+async def reranker(_request: Request):
     payload = _request.custom_json()
     payload = RerankingInput(**payload)
     response = await LLMBasedChunkReranker().rerank(
