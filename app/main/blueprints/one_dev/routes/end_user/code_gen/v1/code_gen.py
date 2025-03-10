@@ -52,7 +52,7 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pla
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
     ChatHistoryHandler,
 )
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChatPayload,
 )
 from app.main.blueprints.one_dev.services.embedding.dataclasses.main import (
