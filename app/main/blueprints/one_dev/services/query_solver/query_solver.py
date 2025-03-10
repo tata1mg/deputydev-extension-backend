@@ -22,9 +22,6 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
-    PreviousChats,
-)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     ResponseMetadataBlock,
@@ -39,9 +36,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
-    FOCUSED_SNIPPETS_SEARCHER,
-)
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
@@ -49,12 +43,6 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
     QuerySummarysRepository,
 )
 
-from ..code_generation.prompts.dataclasses.main import (
-    PromptFeatures as CodePromptFeatures,
-)
-from ..code_generation.prompts.factory import (
-    PromptFeatureFactory as CodePromptFeatureFactory,
-)
 from .prompts.factory import PromptFeatureFactory
 
 
@@ -80,58 +68,23 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await MessageSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
-    async def rerank_previous_queries(
-        self,
-        chats: List[PreviousChats],
-        query: str,
-        session_id: int,
-    ) -> List[int]:
-        code_llm_handler = LLMHandler(prompt_factory=CodePromptFeatureFactory, prompt_features=CodePromptFeatures)
-        llm_response = await code_llm_handler.start_llm_query(
-            prompt_feature=CodePromptFeatures.CHAT_RERANKING,
-            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-            prompt_vars={
-                "chats": chats,
-                "query": query,
-            },
-            previous_responses=[],
-            tools=None,
-            stream=False,
-            session_id=session_id,
-        )
-
-        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
-            raise ValueError("Expected NonStreamingParsedLLMCallResponse")
-
-        return llm_response.parsed_content[0].get("chat_ids")
-
-    async def get_previous_messages(self, session_id: int, current_query: str) -> List[int]:
+    async def get_previous_message_thread_ids(self, session_id: int, previous_query_ids: List[int]) -> List[int]:
         all_previous_responses = await MessageThreadsRepository.get_message_threads_for_session(
             session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
         )
+        all_previous_responses.sort(key=lambda x: x.id, reverse=False)
 
-        all_query_summaries = await QuerySummarysRepository.get_all_session_query_summaries(session_id=session_id)
-        if all_query_summaries:
-            reranked_chat_ids = await self.rerank_previous_queries(
-                chats=[
-                    PreviousChats(
-                        id=summary.query_id,
-                        summary=summary.summary,
-                    )
-                    for summary in all_query_summaries
-                ],
-                session_id=session_id,
-                query=current_query,
-            )
+        if not all_previous_responses:
+            return []
 
-            # filter out the previous responses which are not in reranked_chat_ids
-            filtered_previous_responses = [
-                response for response in all_previous_responses if response.id in reranked_chat_ids
-            ]
-            # sort the filtered_previous_responses based on the reranked_chat_ids
-            filtered_previous_responses.sort(key=lambda x: reranked_chat_ids.index(x.id))
-            all_previous_responses = filtered_previous_responses
-        return [response.id for response in all_previous_responses]
+        if not previous_query_ids:
+            return [response.id for response in all_previous_responses]
+
+        return [
+            response.id
+            for response in all_previous_responses
+            if response.query_id in previous_query_ids or response.id in previous_query_ids
+        ]
 
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
         existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
@@ -202,7 +155,9 @@ class QuerySolver:
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
                 prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
-                previous_responses=await self.get_previous_messages(payload.session_id, current_query=payload.query),
+                previous_responses=await self.get_previous_message_thread_ids(
+                    payload.session_id, payload.previous_query_ids
+                ),
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
