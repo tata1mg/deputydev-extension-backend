@@ -63,7 +63,9 @@ async def fetch_relevant_chat_history(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     payload: Dict[str, Any] = _request.custom_json()
+    print(payload)
     response = await ChatHistoryHandler(
         PreviousChatPayload(query=payload["query"], session_id=session_id)
     ).get_relevant_previous_chats()
+    print(response)
     return send_response(response, headers=kwargs.get("response_headers"))

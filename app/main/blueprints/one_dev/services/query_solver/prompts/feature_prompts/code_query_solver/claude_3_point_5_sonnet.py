@@ -181,7 +181,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     self.text_buffer.replace(programming_language_block.group(0), "")
                     .replace(file_path_block.group(0), "")
                     .replace(is_diff_block.group(0), "")
-                )
+                ).lstrip("\n\r")
             else:
                 self.diff_line_buffer = (
                     self.text_buffer.replace(programming_language_block.group(0), "")
