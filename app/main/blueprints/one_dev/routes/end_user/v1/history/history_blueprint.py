@@ -21,6 +21,7 @@ history_v1_bp = Blueprint("history_v1_bp", url_prefix="/history")
 
 
 @history_v1_bp.route("/chats", methods=["GET"])
+@validate_client_version
 @authenticate
 async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers
@@ -32,6 +33,7 @@ async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @history_v1_bp.route("/sessions", methods=["GET"])
+@validate_client_version
 @authenticate
 async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers
@@ -43,6 +45,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @history_v1_bp.route("/delete-session", methods=["PUT"])
+@validate_client_version
 @authenticate
 async def delete_session(_request: Request, auth_data: AuthData, **kwargs):
     headers = _request.headers
