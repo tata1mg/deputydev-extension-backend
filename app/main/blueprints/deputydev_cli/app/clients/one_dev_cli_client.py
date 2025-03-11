@@ -2,6 +2,8 @@ from typing import Any, Dict, Optional
 
 from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
 
+from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigConsumer
+
 
 class OneDevCliClient(OneDevClient):
     async def generate_code(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
@@ -95,13 +97,13 @@ class OneDevCliClient(OneDevClient):
 
     async def get_essential_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
         path = "/end_user/v1/configs/get-essential-configs"
-        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"}, params={"consumer": "CLI"})
+        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"}, params={"consumer": ConfigConsumer.CLI.value})
         print(await result.json())
         return (await result.json()).get("data")
 
     async def get_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
         path = "/end_user/v1/configs/get-configs"
-        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"}, params={"consumer": "CLI"})
+        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"}, params={"consumer": ConfigConsumer.CLI.value})
         return (await result.json()).get("data")
 
     async def fetch_relevant_chat_history(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
