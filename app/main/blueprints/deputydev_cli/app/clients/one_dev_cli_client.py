@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
 
-from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigConsumer
+from deputydev_core.utils.constants.enums import ConfigConsumer
 
 
 class OneDevCliClient(OneDevClient):
