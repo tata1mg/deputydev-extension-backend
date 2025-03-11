@@ -7,4 +7,4 @@ from pydantic import BaseModel
 class RerankingInput(BaseModel):
     query: str
     relevant_chunks: list[ChunkInfo]
-    focus_chunks: Optional[list[ChunkInfo]]
+    focus_chunks: Optional[list[ChunkInfo]] = []
