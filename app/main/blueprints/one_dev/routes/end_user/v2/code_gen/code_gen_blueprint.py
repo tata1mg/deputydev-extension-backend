@@ -31,8 +31,11 @@ async def solve_user_query(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     response = await _request.respond()
+    payload = QuerySolverInput(**_request.json, session_id=session_id)
+    print("previous_query_ids")
+    print(payload.previous_query_ids)
     response.content_type = "text/event-stream"
-    data = await QuerySolver().solve_query(payload=QuerySolverInput(**_request.json, session_id=session_id))
+    data = await QuerySolver().solve_query(payload=payload)
 
     async for data_block in data:
         await response.send("data: " + json.dumps(data_block.model_dump(mode="json")) + "\r\n\r\n")
