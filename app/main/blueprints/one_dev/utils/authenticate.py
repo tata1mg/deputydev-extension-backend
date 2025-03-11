@@ -96,7 +96,7 @@ def authenticate(func: Any) -> Any:
 
         # prepare the auth data
         auth_data = AuthData(
-            user_team_id=10,
+            user_team_id=1,
         )
 
         return await func(_request, client_data=client_data, auth_data=auth_data, **kwargs)
