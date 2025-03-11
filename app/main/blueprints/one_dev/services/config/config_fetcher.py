@@ -3,7 +3,7 @@ from typing import Any, Dict
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType
-from deputydev_core.utils.enums import ConfigConsumer
+from deputydev_core.utils.constants.enums import ConfigConsumer
 
 
 ConfigManager.configs
