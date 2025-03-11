@@ -95,13 +95,13 @@ class OneDevCliClient(OneDevClient):
 
     async def get_essential_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
         path = "/end_user/v1/configs/get-essential-configs"
-        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"})
+        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"}, params={"consumer": "CLI"})
         print(await result.json())
         return (await result.json()).get("data")
 
     async def get_configs(self, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
         path = "/end_user/v1/configs/get-configs"
-        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"})
+        result = await self.get(url=self._host + path, headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"}, params={"consumer": "CLI"})
         return (await result.json()).get("data")
 
     async def fetch_relevant_chat_history(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
