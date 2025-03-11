@@ -2,8 +2,9 @@ from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 
-from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType, ConfigConsumer
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
+from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType
+from deputydev_core.utils.enums import ConfigConsumer
+
 
 ConfigManager.configs
 
