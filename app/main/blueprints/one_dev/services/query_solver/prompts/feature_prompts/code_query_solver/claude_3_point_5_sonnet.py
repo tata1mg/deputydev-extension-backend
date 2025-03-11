@@ -365,13 +365,15 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         # Define the patterns
         thinking_pattern = r"<thinking>(.*?)</thinking>"
         code_block_pattern = r"<code_block>(.*?)</code_block>"
+        summary_pattern = r"<summary>(.*?)</summary>"
 
         # Find all occurrences of either pattern
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
         matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
+        matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
-        matches = list(matches_thinking) + list(matches_code_block)
+        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
         matches.sort(key=lambda match: match.start())
 
         last_end = 0
@@ -407,19 +409,29 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
         file_path_pattern = r"<file_path>(.*?)</file_path>"
+        is_diff_pattern = r"<is_diff>(.*?)</is_diff>"
 
         # Extract language and file path
         language_match = re.search(language_pattern, code_block_string)
         file_path_match = re.search(file_path_pattern, code_block_string)
+        is_diff_match = re.search(is_diff_pattern, code_block_string)
+
+        is_diff = is_diff_match.group(1).strip() == "true"
 
         language = language_match.group(1) if language_match else ""
         file_path = file_path_match.group(1) if file_path_match else ""
 
         # Extract code
-        code_start_index = file_path_match.end() if file_path_match else 0
-        code = code_block_string[code_start_index:].strip()
+        code = code_block_string.replace(language_match.group(0), "").replace(file_path_match.group(0), "").replace(is_diff_match.group(0), "").lstrip("\n\r")
 
-        # Remove any remaining tags from the code
-        code = re.sub(r"<.*?>", "", code)
+        if is_diff:
+            code_selected_lines: List[str] = []
+            code_lines = code.split("\n")
+
+            for line in code_lines:
+                if line.startswith(" ") or line.startswith("+") and not line.startswith("++"):
+                    code_selected_lines.append(line[1:])
+
+            code = "\n".join(code_selected_lines)
 
         return {"language": language, "file_path": file_path, "code": code}
