@@ -9,7 +9,6 @@ ConfigManager.configs
 
 
 class ConfigFetcher:
-
     essential_configs = {
         Clients.CLI: {
             "NUMBER_OF_WORKERS": 1,
@@ -73,6 +72,19 @@ class ConfigFetcher:
                 "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": 60,
             },
+            "RELEVANT_CHUNKS": {
+                "CHUNKING_ENABLED": False
+            },
+            "DEPUTY_DEV": {
+                "HOST": "http://localhost:8084",
+                "TIMEOUT": 20,
+                "LIMIT": 0,
+                "LIMIT_PER_HOST": 0,
+                "TTL_DNS_CACHE": 10
+            },
+            "WEAVIATE_HOST": "127.0.0.1",
+            "WEAVIATE_HTTP_PORT": 8079,
+            "WEAVIATE_GRPC_PORT": 50050,
         },
     }
 
