@@ -90,6 +90,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         self.diff_line_buffer = ""
         self.added_lines = 0
         self.removed_lines = 0
+        self.first_data_block_sent = False
 
     def find_newline_instances(self, input_string: str) -> List[Tuple[int, int]]:
         # Regular expression to match either \n or \r\n
@@ -192,7 +193,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
             self.start_event_completed = True
 
         if self.start_event_completed and self.text_buffer:
-            self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
+            if self.first_data_block_sent:
+                self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
+            else:
+                self.first_data_block_sent = True
+                self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer.lstrip("\n\r"))))
             self.text_buffer = ""
 
         if last_event:
@@ -219,6 +224,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         self.is_diff = None
         self.added_lines = 0
         self.removed_lines = 0
+        self.first_data_block_sent = False
         self.diff_line_buffer = ""
 
 
