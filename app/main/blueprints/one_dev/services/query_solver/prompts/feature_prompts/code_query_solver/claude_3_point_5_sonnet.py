@@ -253,7 +253,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             11. Its super important that if there are previous chats (or code within them) with the user, you should consider them wisely w.r.t the current query, and provide the best possible solution, taking into account whether the previous context is relevant or not.
             12. Use think before you do approach, do not think at the end.
             13. Try to go deep into downstream functions and classes to understand the codebase at a deeper level and decide to change the code accordingly. Use the tools provided to you to help you with the task.
-            14. Do not assume things (like meanings, full forms etc. on your own) unless you are sure about them.
+            14. This is very important - Do not assume things (like meanings, full forms etc. on your own). Rely on facts to be sure of them. Say for example, you can get this information by searching for various classes, functions etc. in the codebase.
 
             Debugging Guidelines
             1. Address root causes, not symptoms
