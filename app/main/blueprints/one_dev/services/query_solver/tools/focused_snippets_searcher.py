@@ -4,8 +4,14 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
     name="focused_snippets_searcher",
     description="""
         Searches the codebase for specific code definitions or snippets based on a given class name, function name, or file name.
+        View the content of a code item node, such as a class or a function in a file using a fully qualified code item name.
         Use this tool to retrieve relevant code snippets that contain or define the specified search terms. 
         You can provide multiple search terms at once, and the tool will return the most relevant code snippets for each.
+        The search can be good for finding specific code snippets related to a class, function, or file in the codebase, and therefore should ideally be used to 
+        search for specific code snippets rather than general code search queries. Also, it works best when there is ground truth in the search term, i.e.
+        the serach term is valid class, function or file name in the codebase (for eg. search terms directly picked from the relevant code snippets).
+
+        If search term is not valid in the codebase, it would basically work as a lexical search and return the code snippets containing the search term or containing similar terms.
 
         ### Expected Input Format:
         Each search term should include:
