@@ -6,15 +6,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.models.dto.message_thread_dto import TextBlockData, MessageData
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )
 
 from ...dataclasses.main import PromptFeatures
+import json
 
 
 class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
     prompt_type = PromptFeatures.COMMENT_VALIDATION.value
+    response_type = "json_object"
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -118,9 +121,16 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
+
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Any]:
-        raise NotImplementedError("This method must be implemented in the child class")
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+        all_comments: List[Dict[str, Any]] = []
+        for response_data in llm_response.content:
+            if isinstance(response_data, TextBlockData):
+                comments = json.loads(response_data.content.text)
+                if comments:
+                    all_comments.append(comments)
+        return all_comments
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
