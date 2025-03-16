@@ -1,3 +1,4 @@
+import json
 from typing import Any, AsyncIterator, Dict, List
 
 from app.backend_common.models.dto.message_thread_dto import TextBlockData, MessageData
@@ -16,6 +17,7 @@ from ...dataclasses.main import PromptFeatures
 
 class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
     prompt_type = PromptFeatures.COMMENT_SUMMARIZATION.value
+    response_type = "json_object"
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -193,16 +195,16 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
-    @classmethod
-    def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
-        return {"data": format_code_blocks(text)}
+    # @classmethod
+    # def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
+    #     return {"data": format_code_blocks(text)}
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
         all_comments: List[Dict[str, Any]] = []
         for response_data in llm_response.content:
             if isinstance(response_data, TextBlockData):
-                comments = cls._parse_text_blocks(response_data.content.text)
+                comments = json.loads(response_data.content.text)
                 if comments:
                     all_comments.append(comments)
 

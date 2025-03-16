@@ -90,28 +90,28 @@ class MultiAgentPRReviewManager:
 
     def populate_pr_summary(self):
         pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value, None)
-        self.pr_summary = self.pr_summary.agent_result if self.pr_summary else None
+        self.pr_summary = pr_summary.agent_result if pr_summary else None
 
     def populate_meta_info(self):
-        # for agent, prompt in self.current_prompts.items():
-        #     agent_identifier = prompt["key"] + prompt["reflection_iteration"]
-        #     self.agents_tokens[agent_identifier] = prompt.pop("tokens")
-        #     self.agents_tokens[agent_identifier].update(
-        #         {
-        #             "input_tokens": self.agent_results.get(agent, {}).get("input_tokens", 0),
-        #             "output_tokens": self.agent_results.get(agent, {}).get("output_tokens", 0),
-        #         }
-        #     )
-        pass
+        for agent, prompt in self.current_prompts.items():
+            agent_identifier = prompt["key"] + prompt["reflection_iteration"]
+            self.agents_tokens[agent_identifier] = prompt.pop("tokens")
+            self.agents_tokens[agent_identifier].update(
+                {
+                    "input_tokens": self.agent_results.get(agent, {}).get("input_tokens", 0),
+                    "output_tokens": self.agent_results.get(agent, {}).get("output_tokens", 0),
+                }
+            )
+        # pass
 
     async def return_final_response(
         self,
     ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         formatted_summary = ""
-        if self.pr_summary and self.pr_summary.get("response"):
+        if self.pr_summary:
             loc = await self.pr_service.get_loc_changed_count()
-            formatted_summary = await format_summary_with_metadata(
-                summary=self.pr_summary["response"], loc=loc, commit_id=self.pr_service.pr_model().commit_id()
+            formatted_summary = format_summary_with_metadata(
+                summary=self.pr_summary, loc=loc, commit_id=self.pr_service.pr_model().commit_id()
             )
         return (
             [comment.model_dump(mode="json") for comment in self.filtered_comments] if self.filtered_comments else None,
