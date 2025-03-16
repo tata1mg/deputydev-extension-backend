@@ -147,6 +147,7 @@ class CommentBlendingEngine:
                 if agent_result.agent_result is None:
                     raise ValueError("Agent result is None")
 
+                # self.filtered_comments = agent_result.agent_result.get("comments")
                 self.filtered_comments = self.extract_validated_comments(agent_result.agent_result)
                 return
 
@@ -276,14 +277,14 @@ class CommentBlendingEngine:
             for comment in agent_result.agent_result["comments"]:
                 processed_comments.append(
                     ParsedCommentData(
-                        file_path=comment.file_path,
-                        line_number=comment.line_number,
-                        comment=comment.comment,
-                        buckets=comment.buckets,
-                        confidence_score=comment.confidence_score,
-                        corrective_code=comment.corrective_code,
-                        model=comment.model,
-                        is_valid=comment.is_valid,
+                        file_path=comment.get("file_path"),
+                        line_number=comment.get("line_number"),
+                        comment=comment.get("comment"),
+                        buckets=comment.get("buckets"),
+                        confidence_score=comment.get("confidence_score"),
+                        corrective_code=comment.get("corrective_code"),
+                        model=comment.get("model"),
+                        is_valid=comment.get("is_valid"),
                         is_summarized=True,
                     )
                 )
