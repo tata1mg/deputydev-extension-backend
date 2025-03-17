@@ -49,6 +49,7 @@ class CommentBlendingEngine:
         self.context_service = context_service
         self.MAX_RETRIES = 2
         self.session_id = session_id
+        self.agent_results: Dict[str, AgentRunResult] = {}
 
     @staticmethod
     def get_confidence_score_limit() -> Dict[str, Dict[str, float]]:
@@ -60,13 +61,13 @@ class CommentBlendingEngine:
             llm_confidence_score_limit[agent] = {"confidence_score_limit": setting["confidence_score"]}
         return llm_confidence_score_limit
 
-    async def blend_comments(self) -> List[ParsedCommentData]:
+    async def blend_comments(self) -> Tuple[List[ParsedCommentData], Dict[str, AgentRunResult]]:
         # this function can contain other operations in future
         self.apply_agent_confidence_score_limit()
         await self.validate_comments()
         await self.process_all_comments()
         self.filtered_comments.extend(self.invalid_comments)
-        return self.filtered_comments
+        return self.filtered_comments, self.agent_results
 
     def apply_agent_confidence_score_limit(self) -> None:
         """
@@ -141,13 +142,13 @@ class CommentBlendingEngine:
 
                 comment_validation_agent = agents[0]
                 agent_result = await comment_validation_agent.run_agent(session_id=self.session_id)
+                self.agent_results[agent_result.agent_name] = agent_result
                 if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
                     return
 
                 if agent_result.agent_result is None:
                     raise ValueError("Agent result is None")
 
-                # self.filtered_comments = agent_result.agent_result.get("comments")
                 self.filtered_comments = self.extract_validated_comments(agent_result.agent_result)
                 return
 
@@ -268,6 +269,7 @@ class CommentBlendingEngine:
 
             comment_summarization_agent = agents[0]
             agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
+            self.agent_results[agent_result.agent_name] = agent_result
             if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
                 return
 
@@ -290,21 +292,3 @@ class CommentBlendingEngine:
                 )
             self.filtered_comments = processed_comments
             return
-
-            # except json.JSONDecodeError as e:
-            #     AppLogger.log_warn(
-            #         f"Retry {attempt + 1}/{self.MAX_RETRIES}  Json decode error during comment summarization: {str(e)}"
-            #     )
-            #
-            # except asyncio.TimeoutError as timeout_err:
-            #     AppLogger.log_warn(
-            #         f"Timeout on attempt {attempt + 1}/{self.MAX_RETRIES} during comment summarization: {str(timeout_err)}"
-            #     )
-            #
-            # except Exception as e:
-            #     AppLogger.log_warn(f"Retry {attempt + 1}/{self.MAX_RETRIES}  comments summarization call: {e}")
-            # if attempt == self.MAX_RETRIES - 1:
-            #
-            #     AppLogger.log_warn(f"Summarization failed after {self.MAX_RETRIES} attempts")
-            #     break
-            await asyncio.sleep(1)
