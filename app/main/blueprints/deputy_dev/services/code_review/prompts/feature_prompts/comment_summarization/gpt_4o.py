@@ -10,7 +10,6 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )
-from app.backend_common.utils.formatting import format_code_blocks
 
 from ...dataclasses.main import PromptFeatures
 
@@ -190,14 +189,13 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                 
             5. Unique Buckets:
                 - If multiple comments exist for the same bucket on same line, merge the comments and return only unique buckets for a line in the specified structure.  
+                
+            6. Make sure to return response in json_object format only.
         
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
-    # @classmethod
-    # def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
-    #     return {"data": format_code_blocks(text)}
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:

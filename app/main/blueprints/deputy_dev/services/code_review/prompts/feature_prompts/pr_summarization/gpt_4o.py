@@ -40,12 +40,9 @@ class GPT4OPRSummarizationPrompt(BaseGPT4OPrompt):
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
-    # @classmethod
-    # def _parse_text_blocks(cls, text: str) -> Dict[str, Any]:
-    #     return {"response": format_code_blocks(text)}
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[str]:
         llm_parsed_response = []
         for response_data in llm_response.content:
             if isinstance(response_data, TextBlockData):
@@ -54,14 +51,6 @@ class GPT4OPRSummarizationPrompt(BaseGPT4OPrompt):
                     llm_parsed_response.append(summary)
 
         return llm_parsed_response
-        # all_comments: List[Dict[str, Any]] = []
-        # for response_data in llm_response.content:
-        #     if isinstance(response_data, TextBlockData):
-        #         comments = cls._parse_text_blocks(response_data.content.text)
-        #         if comments:
-        #             all_comments.append(comments)
-        #
-        # return all_comments
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
