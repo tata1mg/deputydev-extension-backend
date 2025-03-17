@@ -1,6 +1,5 @@
 from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -117,6 +116,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
             - Any appreciation comments should be marked as invalid
             - All comments should be made on PR diff. And if any comment is made for relevant_chunks_in_repo mark it as invalid.
             - In case the comment is related to user story or business validation. Always mark it a valid comment. 
+            - Make sure to return response in json_object format only.
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
