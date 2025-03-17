@@ -187,54 +187,6 @@ class LLMHandler(Generic[PromptFeatures]):
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
-    # async def get_llm_response(
-    #     self,
-    #     client: BaseLLMProvider,
-    #     session_id: int,
-    #     prompt_type: str,
-    #     llm_model: LLModels,
-    #     query_id: int,
-    #     call_chain_category: MessageCallChainCategory,
-    #     tools: Optional[List[ConversationTool]] = None,
-    #     user_and_system_messages: Optional[UserAndSystemMessages] = None,
-    #     tool_use_response: Optional[ToolUseResponseData] = None,
-    #     previous_responses: List[MessageThreadDTO] = [],
-    #     max_retry: int = 2,
-    #     stream: bool = False,
-    #     response_type: Optional[str] = None
-    # ) -> UnparsedLLMCallResponse:
-    #     for i in range(0, max_retry):
-    #         try:
-    #             llm_payload = client.build_llm_payload(
-    #                 prompt=user_and_system_messages,
-    #                 tool_use_response=tool_use_response,
-    #                 previous_responses=previous_responses,
-    #                 tools=tools,
-    #                 cache_config=self.cache_config,
-    #             )
-    #             llm_response = await client.call_service_client(llm_payload, llm_model, stream=stream, response_type=response_type)
-    #             # start task for storing LLM message in DB
-    #             asyncio.create_task(
-    #                 self.store_llm_response_in_db(
-    #                     llm_response,
-    #                     session_id,
-    #                     prompt_type=prompt_type,
-    #                     llm_model=llm_model,
-    #                     query_id=query_id,
-    #                     call_chain_category=call_chain_category,
-    #                 )
-    #             )
-    #             return llm_response
-    #         except GeneratorExit:
-    #             # Properly handle GeneratorExit exception when the coroutine is cancelled
-    #             AppLogger.log_warn("LLM response generation was cancelled")
-    #             raise  # Re-raise to properly propagate the exception
-    #         except Exception as e:
-    #             AppLogger.log_debug(traceback.format_exc())
-    #             AppLogger.log_warn(f"Retry {i + 1}/{max_retry}  Error while fetching data from LLM: {e}")
-    #             await asyncio.sleep(2)
-    #     raise RetryException(f"Failed to get response from LLM after {max_retry} retries")
-
 
     async def get_llm_response(
         self,
@@ -587,23 +539,6 @@ class LLMHandler(Generic[PromptFeatures]):
             stream=stream,
             response_type=prompt_handler.response_type
         )
-        # llm_response = await self.get_llm_response(
-        #     user_and_system_messages=user_and_system_messages,
-        #     client=client,
-        #     prompt_type=prompt_handler.prompt_type,
-        #     llm_model=prompt_handler.model_name,
-        #     session_id=session_id,
-        #     tools=tools,
-        #     previous_responses=conversation_chain_messages,
-        #     stream=stream,
-        #     query_id=prompt_thread.id,
-        #     call_chain_category=call_chain_category,
-        #     response_type=prompt_handler.response_type
-        # )
-        #
-        # return await self.parse_llm_response_data(
-        #     llm_response=llm_response, prompt_handler=prompt_handler, query_id=prompt_thread.id
-        # )
 
     async def store_tool_use_ressponse_in_db(
         self,
