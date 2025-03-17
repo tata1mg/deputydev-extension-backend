@@ -35,23 +35,23 @@ class PastSessionsSerializer(BaseSerializer):
                 {
                     "id": item.id,
                     "summary": item.summary,
-                    "age": self.calculate_age(current_time, item.created_at),
+                    "age": self.calculate_age(current_time, item.updated_at),
                 }
             )
         return formatted_data
 
-    def calculate_age(self, current_time: datetime, created_at: datetime) -> str:
+    def calculate_age(self, current_time: datetime, updated_at: datetime) -> str:
         """
         Calculates the age of a message session based on the current time and its creation time.
 
         Args:
             current_time (datetime): The current time.
-            created_at (datetime): The creation time of the message session.
+            updated_at (datetime): The creation time of the message session.
 
         Returns:
             str: A string representing the age in minutes, hours, or days.
         """
-        age_in_seconds = (current_time - created_at).total_seconds()
+        age_in_seconds = (current_time - updated_at).total_seconds()
         if age_in_seconds < 60:
             return f"{int(age_in_seconds)}s"
         elif age_in_seconds < 3600:
