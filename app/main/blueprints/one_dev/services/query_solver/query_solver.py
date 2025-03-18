@@ -167,6 +167,9 @@ class QuerySolver:
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
+            print("Tool use response")
+            print(payload.tool_use_response.response)
+
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
                 tool_use_response=ToolUseResponseData(

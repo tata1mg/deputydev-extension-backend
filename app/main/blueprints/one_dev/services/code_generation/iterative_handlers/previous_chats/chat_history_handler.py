@@ -58,7 +58,8 @@ class ChatHistoryHandler:
             if message_thread.query_id and message_thread.query_id in self.data_map:
                 self.data_map[message_thread.query_id][1].append(message_thread)
             else:
-                raise ValueError("Erorr in mapping message threads to query id")
+                continue
+                # raise ValueError("Erorr in mapping message threads to query id")
 
     def _get_responses_data_for_previous_chats(self, query_id: int) -> List[str]:
         _query_message_thread, non_query_message_threads, _query_summary = self.data_map[query_id]
