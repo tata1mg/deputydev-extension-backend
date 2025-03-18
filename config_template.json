@@ -297,6 +297,7 @@
   },
   "ONE_DEV": {
     "HOST": "http://localhost:8084",
+    "GATEWAY_HOST": "http://localhost:8084",
     "TIMEOUT": 10000
   },
   "OPENAI_TIMEOUT": 1000,
@@ -309,5 +310,6 @@
     "TTL_DNS_CACHE": 10
   },
   "VALID_ADVOCACY_IDS": [1,2,3,4],
-  "AUTH_TOKEN_GRACE_PERIOD": 1800
+  "AUTH_TOKEN_GRACE_PERIOD": 1800,
+  "USE_GRACE_PERIOD_FOR_EMBEDDING": true
 }
