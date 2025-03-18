@@ -79,7 +79,7 @@ class MessageSessionsRepository:
                 fetch_one=False,
                 limit=limit,
                 offset=offset,
-                order_by=["-created_at"],
+                order_by=["-updated_at"],
             )
             if not message_sessions:
                 return []
