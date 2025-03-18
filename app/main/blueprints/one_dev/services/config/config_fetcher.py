@@ -61,7 +61,7 @@ class ConfigFetcher:
             "USE_NEW_CHUNKING": True,
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
-            "WEAVIATE_SCHEMA_VERSION": 4
+            "WEAVIATE_SCHEMA_VERSION": 5
         },
         ConfigConsumer.BINARY: {
             "CHUNKING": {
@@ -87,7 +87,7 @@ class ConfigFetcher:
             "WEAVIATE_HOST": "127.0.0.1",
             "WEAVIATE_HTTP_PORT": 8079,
             "WEAVIATE_GRPC_PORT": 50050,
-            "WEAVIATE_SCHEMA_VERSION": 4,
+            "WEAVIATE_SCHEMA_VERSION": 5,
             "NUMBER_OF_WORKERS": 1
         },
         ConfigConsumer.VSCODE_EXT: {}
