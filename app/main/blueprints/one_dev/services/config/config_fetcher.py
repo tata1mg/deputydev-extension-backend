@@ -78,7 +78,7 @@ class ConfigFetcher:
                 "CHUNKING_ENABLED": False
             },
             "DEPUTY_DEV": {
-                "HOST": "http://localhost:8084",
+                "HOST": ConfigManager.configs["ONE_DEV"]["GATEWAY_HOST"],
                 "TIMEOUT": 20,
                 "LIMIT": 0,
                 "LIMIT_PER_HOST": 0,
@@ -88,7 +88,8 @@ class ConfigFetcher:
             "WEAVIATE_HTTP_PORT": 8079,
             "WEAVIATE_GRPC_PORT": 50050,
             "WEAVIATE_SCHEMA_VERSION": 5,
-            "NUMBER_OF_WORKERS": 1
+            "NUMBER_OF_WORKERS": 1,
+            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["USE_GRACE_PERIOD_FOR_EMBEDDING"]
         },
         ConfigConsumer.VSCODE_EXT: {}
     }
