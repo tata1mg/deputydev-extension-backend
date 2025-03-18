@@ -28,6 +28,7 @@ class MessageThreadsRepository:
                 model_name=MessageThread,
                 where_clause=filters,
                 fetch_one=False,
+                order_by=["id"],
                 # limit=limit,
                 # offset=offset,
             )
