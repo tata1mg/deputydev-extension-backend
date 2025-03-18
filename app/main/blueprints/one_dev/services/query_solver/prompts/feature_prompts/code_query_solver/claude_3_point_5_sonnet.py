@@ -339,12 +339,15 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
             <extra_important>
             Make sure you provide different code snippets for different files.
-            Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, use non diff block.
+            Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, except for the case where a new file might be needed, use non diff block.
+            Make sure to provide diffs whenever you can. Lean more towards it.
             Path is clear in one of the two ways only -
-            1. You need to edit an existing file, and the file path is found from existing chunks.
-            2. You are sure where to create a new file. Make sure it is something tangible. Not something like path/to/file.py.
+            1. You need to edit an existing file, and the file path is there in existing chunks.
+            2. You can create a new file.
 
             Write all generic code in non diff blocks.
+            Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+            In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
             </extra_important>
             </important>
 
