@@ -282,6 +282,8 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             {self.params.get("relevant_chunks")}
         """
 
+        print(self.params.get("relevant_chunks"))
+
         user_message = f"""
             User Query: {self.params.get("query")}
 
@@ -337,6 +339,12 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
             <extra_important>
             Make sure you provide different code snippets for different files.
+            Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, use non diff block.
+            Path is clear in one of the two ways only -
+            1. You need to edit an existing file, and the file path is found from existing chunks.
+            2. You are sure where to create a new file. Make sure it is something tangible. Not something like path/to/file.py.
+
+            Write all generic code in non diff blocks.
             </extra_important>
             </important>
 

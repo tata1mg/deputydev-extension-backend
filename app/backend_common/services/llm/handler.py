@@ -493,6 +493,7 @@ class LLMHandler(Generic[PromptFeatures]):
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
             session_id=session_id, call_chain_category=call_chain_category
         )
+        session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
 
         detected_llm: Optional[LLModels] = None
@@ -530,6 +531,7 @@ class LLMHandler(Generic[PromptFeatures]):
         conversation_chain_messages = [
             message for message in session_messages if message.id <= tool_use_request_message_id
         ]
+
         await self.store_tool_use_ressponse_in_db(
             session_id=session_id,
             previous_responses=conversation_chain_messages,
