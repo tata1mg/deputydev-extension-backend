@@ -74,7 +74,7 @@ class IterativeChatHandler(BaseFeatureHandler):
         final_payload["query"] = self.query.text
 
         self.final_payload = final_payload
-        self.final_headers: Dict[str, str] = {"X-Session-Id": self.session_id}
+        self.final_headers: Dict[str, str] = {"X-Session-Id": str(self.session_id)}
 
         self.redirections = FeatureHandlingRedirections(
             success_redirect=FeatureNextAction.CONTINUE_CHAT,
