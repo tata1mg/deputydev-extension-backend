@@ -61,7 +61,7 @@ class ConfigFetcher:
             "USE_NEW_CHUNKING": True,
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
-            "WEAVIATE_SCHEMA_VERSION": 5
+            "WEAVIATE_SCHEMA_VERSION": 5,
         },
         ConfigConsumer.BINARY: {
             "CHUNKING": {
@@ -74,23 +74,21 @@ class ConfigFetcher:
                 "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": 60,
             },
-            "RELEVANT_CHUNKS": {
-                "CHUNKING_ENABLED": False
-            },
+            "RELEVANT_CHUNKS": {"CHUNKING_ENABLED": False},
             "DEPUTY_DEV": {
                 "HOST": "http://localhost:8084",
                 "TIMEOUT": 20,
                 "LIMIT": 0,
                 "LIMIT_PER_HOST": 0,
-                "TTL_DNS_CACHE": 10
+                "TTL_DNS_CACHE": 10,
             },
             "WEAVIATE_HOST": "127.0.0.1",
             "WEAVIATE_HTTP_PORT": 8079,
             "WEAVIATE_GRPC_PORT": 50050,
             "WEAVIATE_SCHEMA_VERSION": 5,
-            "NUMBER_OF_WORKERS": 1
+            "NUMBER_OF_WORKERS": 1,
         },
-        ConfigConsumer.VSCODE_EXT: {}
+        ConfigConsumer.VSCODE_EXT: {},
     }
 
     @classmethod

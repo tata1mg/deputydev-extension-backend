@@ -174,7 +174,11 @@ class QuerySolver:
             tool_response = payload.tool_use_response.response
             if payload.tool_use_response.tool_name == "focused_snippets_searcher":
                 tool_response = {
-                    "chunks": [ChunkInfo(**chunk).get_xml() for search_response in tool_response["batch_chunks_search"]['response'] for chunk in search_response["chunks"]],
+                    "chunks": [
+                        ChunkInfo(**chunk).get_xml()
+                        for search_response in tool_response["batch_chunks_search"]["response"]
+                        for chunk in search_response["chunks"]
+                    ],
                 }
 
             llm_response = await llm_handler.submit_tool_use_response(

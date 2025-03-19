@@ -146,11 +146,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                         )  # replace only the first instance of the udiff line start
                         if self.udiff_line_start == "+":
                             self.added_lines += 1
-                    if self.udiff_line_start == "@@":
-                        # skip till the last @@ in the line and add the line to the text buffer
-                        last_index = pre_line_part.rfind("@@")
-                        addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
-                        self.text_buffer += addable_part + "\n" if addable_part else ""
+                    # if self.udiff_line_start == "@@":
+                    #     # skip till the last @@ in the line and add the line to the text buffer
+                    #     last_index = pre_line_part.rfind("@@")
+                    #     addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
+                    #     self.text_buffer += addable_part + "\n" if addable_part else ""
                     if self.udiff_line_start == "-":
                         self.removed_lines += 1
                     self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
@@ -197,7 +197,9 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                 self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
             else:
                 self.first_data_block_sent = True
-                self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer.lstrip("\n\r"))))
+                self.event_buffer.append(
+                    CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer.lstrip("\n\r")))
+                )
             self.text_buffer = ""
 
         if last_event:
@@ -466,7 +468,12 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         file_path = file_path_match.group(1) if file_path_match else ""
 
         # Extract code
-        code = code_block_string.replace(language_match.group(0), "").replace(file_path_match.group(0), "").replace(is_diff_match.group(0), "").lstrip("\n\r")
+        code = (
+            code_block_string.replace(language_match.group(0), "")
+            .replace(file_path_match.group(0), "")
+            .replace(is_diff_match.group(0), "")
+            .lstrip("\n\r")
+        )
 
         if is_diff:
             code_selected_lines: List[str] = []
