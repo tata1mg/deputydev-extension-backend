@@ -75,7 +75,11 @@ class MessageSessionsRepository:
         try:
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
-                where_clause={"user_team_id": user_team_id, "status": SessionStatus.ACTIVE.value, "session_type": "CODE_GENERATION_V2"},
+                where_clause={
+                    "user_team_id": user_team_id,
+                    "status": SessionStatus.ACTIVE.value,
+                    "session_type": "CODE_GENERATION_V2",
+                },
                 fetch_one=False,
                 limit=limit,
                 offset=offset,

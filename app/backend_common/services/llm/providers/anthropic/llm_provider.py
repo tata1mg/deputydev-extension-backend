@@ -16,6 +16,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
+    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -68,10 +69,22 @@ class Anthropic(BaseLLMProvider):
             List[ConversationTurn]: The formatted conversation turns.
         """
         conversation_turns: List[ConversationTurn] = []
+        last_tool_use_request: bool = False
         for message in previous_responses:
+            if (
+                last_tool_use_request
+                and message.actor != MessageThreadActor.USER
+                and message.message_type != MessageType.TOOL_RESPONSE
+            ):
+                # remove the tool use request if the user has not responded to it
+                conversation_turns.pop()
+                last_tool_use_request = False
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             content: List[Dict[str, Any]] = []
-            for message_data in message.message_data:
+            # sort message datas, keep text block first and tool use request last
+            message_datas = list(message.message_data)
+            message_datas.sort(key=lambda x: 0 if isinstance(x, TextBlockData) else 1)
+            for message_data in message_datas:
                 content_data = message_data.content
                 if isinstance(content_data, TextBlockContent):
                     content.append(
@@ -80,6 +93,7 @@ class Anthropic(BaseLLMProvider):
                             "text": content_data.text,
                         }
                     )
+                    last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
                     content.append(
                         {
@@ -88,6 +102,7 @@ class Anthropic(BaseLLMProvider):
                             "content": json.dumps(content_data.response),
                         }
                     )
+                    last_tool_use_request = False
                 else:
                     content.append(
                         {
@@ -97,6 +112,7 @@ class Anthropic(BaseLLMProvider):
                             "input": content_data.tool_input,
                         }
                     )
+                    last_tool_use_request = True
             conversation_turns.append(ConversationTurn(role=role, content=content))
 
         return conversation_turns
