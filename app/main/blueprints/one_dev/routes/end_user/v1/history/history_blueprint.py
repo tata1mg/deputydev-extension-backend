@@ -6,8 +6,12 @@ from torpedo.exceptions import BadRequestException
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import ChatHistoryHandler
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import PreviousChatPayload
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+    ChatHistoryHandler,
+)
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
+    PreviousChatPayload,
+)
 from app.main.blueprints.one_dev.services.past_workflows.past_workflows import (
     PastWorkflows,
 )

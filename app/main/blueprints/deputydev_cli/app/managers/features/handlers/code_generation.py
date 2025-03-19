@@ -48,7 +48,7 @@ class CodeGenerationHandler(BaseFeatureHandler):
         chunkable_files_with_hashes: Dict[str, str],
         auth_token: str,
         pr_config: Optional[PRConfig] = None,
-        session_id: Optional[str] = None,
+        session_id: Optional[int] = None,
         apply_diff: bool = False,
         registered_repo_details: Optional[RegisteredRepo] = None,
     ):
