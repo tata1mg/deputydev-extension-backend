@@ -136,7 +136,6 @@ class OneDevCliClient(OneDevClient):
         result = await self.get(
             url=self._host + path,
             headers={**headers, "X-Client-Version": "1.5.0", "X-Client": "CLI"},
-            params={"consumer": ConfigConsumer.CLI.value},
         )
         return (await result.json()).get("data")
 
