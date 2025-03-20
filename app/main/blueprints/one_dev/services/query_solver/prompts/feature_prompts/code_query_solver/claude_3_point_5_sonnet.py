@@ -1,5 +1,5 @@
 import re
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
@@ -450,7 +450,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return result
 
     @classmethod
-    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, str]:
+    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool]]:
 
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
@@ -485,4 +485,4 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
             code = "\n".join(code_selected_lines)
 
-        return {"language": language, "file_path": file_path, "code": code}
+        return {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
