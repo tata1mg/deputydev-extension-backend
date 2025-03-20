@@ -47,6 +47,7 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 )
 
 from .prompts.factory import PromptFeatureFactory
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 
 class QuerySolver:
@@ -167,13 +168,26 @@ class QuerySolver:
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
+            print("Tool use response")
+            print(payload.tool_use_response.response)
+
+            tool_response = payload.tool_use_response.response
+            if payload.tool_use_response.tool_name == "focused_snippets_searcher":
+                tool_response = {
+                    "chunks": [
+                        ChunkInfo(**chunk).get_xml()
+                        for search_response in tool_response["batch_chunks_search"]["response"]
+                        for chunk in search_response["chunks"]
+                    ],
+                }
+
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
                 tool_use_response=ToolUseResponseData(
                     content=ToolUseResponseContent(
                         tool_name=payload.tool_use_response.tool_name,
                         tool_use_id=payload.tool_use_response.tool_use_id,
-                        response=payload.tool_use_response.response,
+                        response=tool_response,
                     )
                 ),
                 tools=tools_to_use,
