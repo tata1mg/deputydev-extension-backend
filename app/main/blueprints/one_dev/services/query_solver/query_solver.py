@@ -51,14 +51,25 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 
 class QuerySolver:
-    async def _generate_session_summary(self, session_id: int, query: str, llm_handler: LLMHandler[PromptFeatures]):
+    async def _generate_session_summary(
+        self, session_id: int, query: str, focus_chunks: List[ChunkInfo], llm_handler: LLMHandler[PromptFeatures]
+    ):
         current_session = await MessageSessionsRepository.get_by_id(session_id)
         if current_session and current_session.summary:
             return
+
+        # if no summary, first generate a summary by directly putting first 100 characters of the query.
+        # this will be used as a placeholder until the LLM generates a more detailed summary.
+        brief_query_preview = query[:100]
+        await MessageSessionsRepository.update_session_summary(
+            session_id=session_id, summary=f"{brief_query_preview}..."
+        )
+
+        # then generate a more detailed summary using LLM
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-            prompt_vars={"query": query},
+            prompt_vars={"query": query, "focus_chunks": focus_chunks},
             previous_responses=[],
             tools=[],
             stream=False,
@@ -151,13 +162,20 @@ class QuerySolver:
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
-                    session_id=payload.session_id, query=payload.query, llm_handler=llm_handler
+                    session_id=payload.session_id,
+                    query=payload.query,
+                    focus_chunks=payload.focus_chunks,
+                    llm_handler=llm_handler,
                 )
             )
+
+            print("focus_chunks +++++++++++++++++++++++++++++++++++")
+            print(payload.focus_chunks)
+            print("focus_chunks +++++++++++++++++++++++++++++++++++")
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-                prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+                prompt_vars={"query": payload.query, "focus_chunks": payload.focus_chunks},
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
                 ),
