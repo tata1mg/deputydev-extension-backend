@@ -1,4 +1,3 @@
-
 from sanic import Blueprint
 from torpedo import Request, send_response
 

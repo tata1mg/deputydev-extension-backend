@@ -7,6 +7,7 @@ class Clients(Enum):
     CLI = "CLI"
     BACKEND = "BACKEND"
     VSCODE_EXT = "VSCODE_EXT"
+    BINARY = "BINARY"
 
 
 class ClientData(BaseModel):
