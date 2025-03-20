@@ -1,0 +1,10 @@
+{
+    "python.analysis.typeCheckingMode": "strict",
+    "cSpell.words": [
+        "batchified",
+        "batchify",
+        "chunkable",
+        "Chunker",
+        "weaviate"
+    ]
+}

@@ -37,8 +37,6 @@ def ensure_session_id(session_type: str = "MESSAGE") -> Any:
                     )
                 )
                 session_id = message_session.id
-                # Add the session ID to the request headers
-                _request.headers["X-Session-ID"] = session_id
             # Proceed to the wrapped function
             return await func(_request, client_data=client_data, auth_data=auth_data, session_id=session_id, **kwargs)
 
