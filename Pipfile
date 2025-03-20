@@ -7,7 +7,7 @@ name = "pypi"
 cache_wrapper = { editable = true, ref = "2.4.1", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git" }
 tortoise-wrapper = {ref = "0.6.2", git = "ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git"}
 commonutils = {ref = "DD-386-aiohttp-upgrade", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git"}
-deputydev-core = { ref = "file_dto_benchmark", git = "ssh://git@github.com/tata1mg/deputydev-core.git" }
+deputydev-core = { ref = "common_headers", git = "ssh://git@github.com/tata1mg/deputydev-core.git" }
 tortoise-orm = "==0.21.3"
 langchain = "==0.0.344"
 psycopg2-binary = "==2.9.9"
