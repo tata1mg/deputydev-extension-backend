@@ -5,7 +5,6 @@ from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType
 from deputydev_core.utils.constants.enums import ConfigConsumer
 
-
 ConfigManager.configs
 
 
@@ -68,6 +67,8 @@ class ConfigFetcher:
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
                 "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
                 "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
+                "DEFAULT_MAX_CHUNKS_CODE_GENERATION": ConfigManager.configs["CHUNKING"][
+                    "DEFAULT_MAX_CHUNKS_CODE_GENERATION"]
             },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],
