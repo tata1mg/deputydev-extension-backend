@@ -5,11 +5,11 @@ from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
 
+
 ConfigManager.configs
 
 
 class ConfigFetcher:
-
     essential_configs = {
         Clients.CLI: {
             "NUMBER_OF_WORKERS": 1,
@@ -61,8 +61,9 @@ class ConfigFetcher:
             "USE_NEW_CHUNKING": True,
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
+            "WEAVIATE_SCHEMA_VERSION": 5,
         },
-        Clients.VSCODE_EXT: {
+        Clients.BINARY: {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
                 "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
@@ -73,18 +74,32 @@ class ConfigFetcher:
                 "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": 60,
             },
+            "RELEVANT_CHUNKS": {"CHUNKING_ENABLED": False},
+            "DEPUTY_DEV": {
+                "HOST": "http://localhost:8084",
+                "TIMEOUT": 20,
+                "LIMIT": 0,
+                "LIMIT_PER_HOST": 0,
+                "TTL_DNS_CACHE": 10,
+            },
+            "WEAVIATE_HOST": "127.0.0.1",
+            "WEAVIATE_HTTP_PORT": 8079,
+            "WEAVIATE_GRPC_PORT": 50050,
+            "WEAVIATE_SCHEMA_VERSION": 5,
+            "NUMBER_OF_WORKERS": 1,
         },
+        Clients.VSCODE_EXT: {},
     }
 
     @classmethod
-    def fetch_configs(cls, client: Clients, config_type: ConfigType) -> Dict[str, Any]:
+    def fetch_configs(cls, consumer: Clients, config_type: ConfigType) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
-            if client in cls.essential_configs:
-                return cls.essential_configs[client]
+            if consumer in cls.essential_configs:
+                return cls.essential_configs[consumer]
             else:
-                raise ValueError(f"Essential configs not found for client {client}")
+                raise ValueError(f"Essential configs not found for client {consumer}")
 
-        if client in cls.main_configs:
-            return cls.main_configs[client]
+        if consumer in cls.main_configs:
+            return cls.main_configs[consumer]
         else:
-            raise ValueError(f"Main configs not found for client {client}")
+            raise ValueError(f"Main configs not found for {consumer}")
