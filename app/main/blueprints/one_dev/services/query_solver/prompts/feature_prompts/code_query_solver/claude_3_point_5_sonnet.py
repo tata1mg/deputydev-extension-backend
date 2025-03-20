@@ -279,12 +279,15 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             9. Do not provide any personal information about yourself or the situation you are in
             """
 
-        code_chunk_message = f"""
-            Here are some chunks of code from a repository:
-            {self.params.get("relevant_chunks")}
+        print(self.params.get("focus_chunks"))
+        focus_chunks_message = (
+            """
+            Here are some focus snippets that the user has provided:
         """
-
-        print(self.params.get("relevant_chunks"))
+            + "\n".join([chunk.get_xml() for chunk in self.params["focus_chunks"]])
+            if self.params.get("focus_chunks")
+            else ""
+        )
 
         user_message = f"""
             User Query: {self.params.get("query")}
@@ -362,7 +365,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         """
 
         return UserAndSystemMessages(
-            user_message=user_message if not self.params.get("relevant_chunks") else code_chunk_message + user_message,
+            user_message=user_message if not focus_chunks_message else focus_chunks_message + user_message,
             system_message=system_message,
         )
 

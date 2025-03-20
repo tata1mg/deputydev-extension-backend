@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
 from app.backend_common.repository.message_sessions.repository import (
@@ -21,7 +21,9 @@ class PastWorkflows:
     """
 
     @classmethod
-    async def get_past_sessions(cls, user_team_id: int, headers: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def get_past_sessions(
+        cls, user_team_id: int, session_type: str, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         Fetch past sessions for a given user team ID.
 
@@ -36,13 +38,16 @@ class PastWorkflows:
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
-        limit = headers["X-Limit"]
-        offset = headers["X-Offset"]
+        print(session_type)
+        print(user_team_id)
+        print(limit)
+        print(offset)
         raw_data = await MessageSessionsRepository.get_message_sessions_by_user_team_id(
-            user_team_id, int(limit), int(offset)
+            user_team_id=user_team_id, limit=limit, offset=offset, session_type=session_type
         )
-        serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_SESSIONS"))
+        serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = serializer_service.get_processed_data()
+        print(processed_data)
         return processed_data
 
     @classmethod

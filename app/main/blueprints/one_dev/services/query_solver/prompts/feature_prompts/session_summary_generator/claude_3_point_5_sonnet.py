@@ -27,10 +27,20 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
             You are tasked with generating a session summary based on a query asked on some repository by the user. If you do it well, you will be rewarded handsomely.
             """
 
+        focus_chunks_str = (
+            "The focus chunks are - "
+            + "\n"
+            + "\n".join([f"{chunk.get_xml()}" for chunk in self.params["focus_chunks"]])
+            if self.params.get("focus_chunks")
+            else ""
+        )
+
         user_message = f"""
             Here is a query asked on some repository by the user.
             {self.params.get("query")}
+        """
 
+        summarization_prompt = """
             Summarize this in a single line to be used as a title for the session.
             Send the response in the following format:
             <summary>
@@ -38,7 +48,12 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
             </summary>
         """
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
+        return UserAndSystemMessages(
+            user_message=(user_message + focus_chunks_str + summarization_prompt)
+            if focus_chunks_str
+            else (user_message + summarization_prompt),
+            system_message=system_message,
+        )
 
     @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
