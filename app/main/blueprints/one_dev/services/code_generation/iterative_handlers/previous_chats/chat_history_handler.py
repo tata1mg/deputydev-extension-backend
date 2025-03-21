@@ -79,6 +79,10 @@ class ChatHistoryHandler:
         )
         all_session_query_summaries.sort(key=lambda x: x.query_id, reverse=False)
 
+        # consider only latest 10 queries
+        if len(all_session_query_summaries) > 10:
+            all_session_query_summaries = all_session_query_summaries[-10:]
+
         gathered_result = await asyncio.gather(
             *[
                 QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
@@ -111,6 +115,8 @@ class ChatHistoryHandler:
 
         # sort the previous chats based on query_id
         self.previous_chats.sort(key=lambda x: x.id, reverse=False)
+
+        # this will keep max 5 most relevant chats
         filtered_query_ids = await self.filter_chat_summaries()
         if not filtered_query_ids:
             return {"chats": []}
