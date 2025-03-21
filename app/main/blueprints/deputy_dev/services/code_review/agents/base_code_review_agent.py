@@ -87,6 +87,7 @@ class BaseCodeReviewAgent(ABC):
         """
         total_passes = 1 if not self.is_dual_pass else 2
         last_pass_result: Optional[Any] = None
+        tokens_data: Dict[str, Dict[str, Any]] = {}
         for pass_num in range(1, total_passes + 1):
             prompt_feature = self.prompt_features[pass_num - 1]  # 0 indexed
 
@@ -96,7 +97,12 @@ class BaseCodeReviewAgent(ABC):
                 model_name=self.model, feature=prompt_feature
             )(prompt_vars)
             user_and_system_messages = prompt_handler.get_prompt()
+            current_tokens_data = self.get_tokens_data(user_and_system_messages)
             token_limit_exceeded = self.has_exceeded_token_limit(user_and_system_messages)
+
+            token_key = f"{self.agent_name}PASS_{pass_num}"
+            tokens_data[token_key] = current_tokens_data
+
             if token_limit_exceeded:
                 return AgentRunResult(
                     agent_result=None,
@@ -104,6 +110,7 @@ class BaseCodeReviewAgent(ABC):
                     agent_name=self.agent_name,
                     agent_type=self.agent_type,
                     model=self.model,
+                    tokens_data=tokens_data,
                 )
 
             llm_response = await self.llm_handler.start_llm_query(
@@ -116,6 +123,13 @@ class BaseCodeReviewAgent(ABC):
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
                 raise ValueError(f"LLM Response is not of type NonStreamingParsedLLMCallResponse: {llm_response}")
 
+            tokens_data[token_key].update(
+                {
+                    "input_tokens": llm_response.usage.input,
+                    "output_tokens": llm_response.usage.output,
+                }
+            )
+
             # these agents only support one response block in entire list
             # if this is not the case, we can override this method in the child class
             rendered_messages = llm_response.parsed_content[0]
@@ -126,4 +140,5 @@ class BaseCodeReviewAgent(ABC):
             agent_name=self.agent_name,
             agent_type=self.agent_type,
             model=self.model,
+            tokens_data=tokens_data,
         )
