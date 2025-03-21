@@ -1,4 +1,3 @@
-
 from sanic import Blueprint
 
 from .auth.auth_blueprint import auth_v1_bp
