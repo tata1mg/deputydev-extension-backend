@@ -3,14 +3,14 @@ from typing import Any, Dict
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType
-from deputydev_core.utils.constants.enums import ConfigConsumer
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
 
 ConfigManager.configs
 
 
 class ConfigFetcher:
     essential_configs = {
-        ConfigConsumer.CLI: {
+        Clients.CLI: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
                 # "HOST": "https://api.deputydev.ai",
@@ -19,7 +19,7 @@ class ConfigFetcher:
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
         },
-        ConfigConsumer.VSCODE_EXT: {
+        Clients.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
                 # "HOST": "https://api.deputydev.ai",
@@ -31,7 +31,7 @@ class ConfigFetcher:
     }
 
     main_configs = {
-        ConfigConsumer.CLI: {
+        Clients.CLI: {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
                 "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
@@ -60,9 +60,9 @@ class ConfigFetcher:
             "USE_NEW_CHUNKING": True,
             "USE_LLM_RE_RANKING": False,
             "USE_VECTOR_DB": True,
-            "WEAVIATE_SCHEMA_VERSION": 5
+            "WEAVIATE_SCHEMA_VERSION": 5,
         },
-        ConfigConsumer.BINARY: {
+        Clients.BINARY: {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
                 "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
@@ -75,15 +75,13 @@ class ConfigFetcher:
                 "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": 60,
             },
-            "RELEVANT_CHUNKS": {
-                "CHUNKING_ENABLED": False
-            },
+            "RELEVANT_CHUNKS": {"CHUNKING_ENABLED": False},
             "DEPUTY_DEV": {
                 "HOST": ConfigManager.configs["ONE_DEV"]["GATEWAY_HOST"],
                 "TIMEOUT": 20,
                 "LIMIT": 0,
                 "LIMIT_PER_HOST": 0,
-                "TTL_DNS_CACHE": 10
+                "TTL_DNS_CACHE": 10,
             },
             "WEAVIATE_HOST": "127.0.0.1",
             "WEAVIATE_HTTP_PORT": 8079,
@@ -92,11 +90,11 @@ class ConfigFetcher:
             "NUMBER_OF_WORKERS": 1,
             "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["USE_GRACE_PERIOD_FOR_EMBEDDING"]
         },
-        ConfigConsumer.VSCODE_EXT: {}
+        Clients.VSCODE_EXT: {},
     }
 
     @classmethod
-    def fetch_configs(cls, consumer: ConfigConsumer, config_type: ConfigType) -> Dict[str, Any]:
+    def fetch_configs(cls, consumer: Clients, config_type: ConfigType) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
             if consumer in cls.essential_configs:
                 return cls.essential_configs[consumer]
