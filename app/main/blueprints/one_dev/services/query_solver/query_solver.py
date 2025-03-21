@@ -23,6 +23,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    DetailedFocusItem,
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
@@ -52,7 +53,7 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 class QuerySolver:
     async def _generate_session_summary(
-        self, session_id: int, query: str, focus_chunks: List[ChunkInfo], llm_handler: LLMHandler[PromptFeatures]
+        self, session_id: int, query: str, focus_items: List[DetailedFocusItem], llm_handler: LLMHandler[PromptFeatures]
     ):
         current_session = await MessageSessionsRepository.get_by_id(session_id)
         if current_session and current_session.summary:
@@ -69,7 +70,7 @@ class QuerySolver:
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-            prompt_vars={"query": query, "focus_chunks": focus_chunks},
+            prompt_vars={"query": query, "focus_items": focus_items},
             previous_responses=[],
             tools=[],
             stream=False,
@@ -164,18 +165,18 @@ class QuerySolver:
                 self._generate_session_summary(
                     session_id=payload.session_id,
                     query=payload.query,
-                    focus_chunks=payload.focus_chunks,
+                    focus_items=payload.focus_items,
                     llm_handler=llm_handler,
                 )
             )
 
-            print("focus_chunks +++++++++++++++++++++++++++++++++++")
-            print(payload.focus_chunks)
-            print("focus_chunks +++++++++++++++++++++++++++++++++++")
+            print("focus_items +++++++++++++++++++++++++++++++++++")
+            print(payload.focus_items)
+            print("focus_items +++++++++++++++++++++++++++++++++++")
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-                prompt_vars={"query": payload.query, "focus_chunks": payload.focus_chunks},
+                prompt_vars={"query": payload.query, "focus_items": payload.focus_items},
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
                 ),
