@@ -37,6 +37,8 @@ async def solve_user_query(
     print("previous_query_ids")
     print(payload.previous_query_ids)
     response.content_type = "text/event-stream"
+    if kwargs.get("response_headers"):
+        response.headers = kwargs.get("response_headers")
     data = await QuerySolver().solve_query(payload=payload)
 
     async for data_block in data:

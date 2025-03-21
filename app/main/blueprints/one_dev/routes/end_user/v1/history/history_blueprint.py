@@ -33,7 +33,7 @@ async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
         response = await PastWorkflows.get_past_chats(session_id=headers.get("X-Session-ID"))
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past chats: {str(e)}")
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/sessions", methods=["GET"])
@@ -50,7 +50,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
         )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/delete-session", methods=["PUT"])
@@ -64,7 +64,7 @@ async def delete_session(_request: Request, auth_data: AuthData, **kwargs):
         )
     except Exception as e:
         raise BadRequestException(f"Failed to delete session: {str(e)}")
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/relevant-chat-history", methods=["POST"])
