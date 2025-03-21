@@ -35,7 +35,7 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
-
+from deputydev_core.utils.constants.enums import SharedMemoryKeys
 
 class RepoPathCompleter(Completer):
     def get_completions(self, document: Document, complete_event: CompleteEvent):
@@ -91,7 +91,7 @@ class RepoPathValidator(AsyncValidator):
         try:
             init_manager = InitializationManager(
                 input_text,
-                auth_token=self.app_context.auth_token,
+                auth_token_key=SharedMemoryKeys.CLI_AUTH_TOKEN.value,
                 one_dev_client=self.app_context.one_dev_client,
                 process_executor=self.app_context.process_executor,
             )
@@ -152,7 +152,7 @@ class RepoSelection(BaseScreenHandler):
             if self.app_context.init_manager.repo_path != repo_path:
                 self.app_context.init_manager = InitializationManager(
                     repo_path,
-                    auth_token=self.app_context.auth_token,
+                    auth_token_key=SharedMemoryKeys.CLI_AUTH_TOKEN.value,
                     one_dev_client=self.app_context.one_dev_client,
                     process_executor=self.app_context.process_executor,
                     weaviate_client=self.app_context.init_manager.weaviate_client,
@@ -160,7 +160,7 @@ class RepoSelection(BaseScreenHandler):
         else:
             self.app_context.init_manager = InitializationManager(
                 repo_path,
-                auth_token=self.app_context.auth_token,
+                auth_token_key=SharedMemoryKeys.CLI_AUTH_TOKEN.value,
                 one_dev_client=self.app_context.one_dev_client,
                 process_executor=self.app_context.process_executor,
             )

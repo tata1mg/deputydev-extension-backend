@@ -3,8 +3,10 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 import jwt
+from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.jwt_handler import JWTHandler
 
+from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
@@ -33,13 +35,16 @@ class SupabaseAuth:
         raise jwt.InvalidTokenError("Invalid token.")
 
     @classmethod
-    async def verify_auth_token(cls, access_token: str) -> Dict[str, Any]:
+    async def verify_auth_token(cls, access_token: str, use_grace_period: bool = False,
+                                enable_grace_period: bool = False) -> Dict[str, Any]:
 
         """
         Validate a Supabase access token and check if it's expired.
 
         Args:
             access_token (str): The access token to validate.
+            enable_grace_period(bool): If this is true, auth token is considered valid for current_time + grace_period
+            use_grace_period(bool): If this is true only then grace_period is used
 
         Returns:
             Dict[str, Any]: A dictionary containing:
@@ -47,17 +52,27 @@ class SupabaseAuth:
                 - 'message' (str): Status message explaining the validation result.
                 - 'user_email' (Optional[str]): Email of the user if the token is valid, otherwise None.
                 - 'user_name' (Optional[str]): Name of the user if the token is valid, otherwise None.
+
         """
         try:
             # Decode the JWT token without verification to check expiration
             decoded_token = JWTHandler.verify_token_without_signature_verification(access_token)
+            if use_grace_period and await cls.is_grace_period_available(access_token):
+                return {
+                    "valid": True,
+                    "message": "Token is valid",
+                    "user_email": decoded_token.get("email"),
+                    "user_name": decoded_token.get("user_metadata").get("full_name"),
+                }
+
             # Verifying expiry of the token before supabase network call
             is_token_expired = cls.is_token_expired(decoded_token)
             if is_token_expired:
                 raise jwt.ExpiredSignatureError
-
             # Verify token with Supabase
             user_response = cls.supabase.auth.get_user(access_token)
+            if enable_grace_period:
+                await cls.add_grace_period(access_token, decoded_token)
             if user_response.user:
                 return {
                     "valid": True,
@@ -74,6 +89,19 @@ class SupabaseAuth:
             raise jwt.InvalidTokenError("Invalid token.")
         except Exception as e:
             raise Exception(f"Token validation failed: {str(e)}")
+
+    @classmethod
+    async def is_grace_period_available(cls, access_token):
+        is_token_present = await AuthTokenGracePeriod.get(access_token)
+        return bool(is_token_present)
+
+    @classmethod
+    async def add_grace_period(cls, access_token, decoded_token):
+        exp_timestamp = decoded_token.get("exp")
+        if exp_timestamp is not None:
+            current_time = int(datetime.now(timezone.utc).timestamp())
+            if (exp_timestamp - current_time) < ConfigManager.configs["AUTH_TOKEN_GRACE_PERIOD"]:
+                await AuthTokenGracePeriod.set(access_token, 1)
 
     @classmethod
     async def extract_and_validate_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:

@@ -12,9 +12,9 @@ from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
     OneDevCliClient,
 )
-from app.main.blueprints.deputydev_cli.app.managers.auth_token_storage.cli_auth_token_storage_manager import (
-    CLIAuthTokenStorageManager,
-)
+from deputydev_core.services.auth_token_storage.cli_auth_token_storage_manager import CLIAuthTokenStorageManager
+from deputydev_core.utils.constants.enums import SharedMemoryKeys
+from deputydev_core.utils.shared_memory import SharedMemory
 
 
 class AuthenticationManager:
@@ -42,6 +42,7 @@ class AuthenticationManager:
                         raise Exception("No encrypted session data found in response")
                     # Storing jwt token in user's machine using keyring
                     CLIAuthTokenStorageManager.store_auth_token(response["encrypted_session_data"])
+                    SharedMemory.create(SharedMemoryKeys.CLI_AUTH_TOKEN.value, response["encrypted_session_data"])
                     return response["encrypted_session_data"]  # Exit on success
                 time.sleep(3)  # Wait for 3 seconds before polling again
             except Exception as e:
@@ -75,6 +76,7 @@ class AuthenticationManager:
                 if not response.get("encrypted_session_data") or response.get("encrypted_session_data") is None:
                     raise Exception("No encrypted session data found in response")
                 CLIAuthTokenStorageManager.store_auth_token(response["encrypted_session_data"])
+                SharedMemory.create(SharedMemoryKeys.CLI_AUTH_TOKEN.value, response["encrypted_session_data"])
                 return CLIAuthTokenStorageManager.load_auth_token()
             else:
                 return None
