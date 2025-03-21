@@ -3,16 +3,23 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Optional, Type, Union
 
-from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.common.utils.app_logger import AppLogger
-from app.common.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
-from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
-from app.main.blueprints.deputydev_cli.app.exceptions.exceptions import (
-    InvalidVersionException,
+from deputydev_core.services.embedding.base_embedding_manager import (
+    BaseEmbeddingManager,
 )
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repository.dataclasses.main import (
+    WeaviateSyncAndAsyncClients,
+)
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.exceptions import InvalidVersionException
+
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
+from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
 )
@@ -65,7 +72,7 @@ class FeatureFactory:
         feature: CLIFeatures,
         process_executor: ProcessPoolExecutor,
         query: Union[PlainTextQuery, TextSelectionQuery],
-        one_dev_client: OneDevClient,
+        one_dev_client: OneDevCliClient,
         local_repo: BaseLocalRepo,
         weaviate_client: WeaviateSyncAndAsyncClients,
         embedding_manager: BaseEmbeddingManager,

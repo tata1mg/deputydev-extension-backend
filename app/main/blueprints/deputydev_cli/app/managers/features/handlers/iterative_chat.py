@@ -1,14 +1,23 @@
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, List, Optional, Union
 
-from app.common.constants.constants import MAX_ITERATIVE_CHUNKS
-from app.common.services.chunking.chunking_manager import ChunkingManger
-from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.common.services.search.dataclasses.main import SearchTypes
-from app.common.utils.config_manager import ConfigManager
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
+from deputydev_core.services.chunking.chunking_manager import ChunkingManger
+from deputydev_core.services.embedding.base_embedding_manager import (
+    BaseEmbeddingManager,
+)
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repository.dataclasses.main import (
+    WeaviateSyncAndAsyncClients,
+)
+from deputydev_core.services.search.dataclasses.main import SearchTypes
+from deputydev_core.utils.config_manager import ConfigManager
+
+from app.backend_common.constants.constants import MAX_ITERATIVE_CHUNKS
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
 from app.main.blueprints.deputydev_cli.app.managers.features.base_feature_handler import (
     BaseFeatureHandler,
 )
@@ -28,7 +37,7 @@ class IterativeChatHandler(BaseFeatureHandler):
         self,
         process_executor: ProcessPoolExecutor,
         query: Union[PlainTextQuery, TextSelectionQuery],
-        one_dev_client: OneDevClient,
+        one_dev_client: OneDevCliClient,
         local_repo: BaseLocalRepo,
         weaviate_client: WeaviateSyncAndAsyncClients,
         embedding_manager: BaseEmbeddingManager,
@@ -65,7 +74,7 @@ class IterativeChatHandler(BaseFeatureHandler):
         final_payload["query"] = self.query.text
 
         self.final_payload = final_payload
-        self.final_headers: Dict[str, str] = {"X-Session-Id": self.session_id}
+        self.final_headers: Dict[str, str] = {"X-Session-Id": str(self.session_id)}
 
         self.redirections = FeatureHandlingRedirections(
             success_redirect=FeatureNextAction.CONTINUE_CHAT,

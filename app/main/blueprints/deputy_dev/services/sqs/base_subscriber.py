@@ -5,11 +5,11 @@ import ujson as json
 from commonutils import BaseSQSWrapper
 from sanic.log import logger
 
+from app.backend_common.constants.error_messages import ErrorMessages
+from app.backend_common.constants.success_messages import SuccessMessages
+from app.backend_common.exception import RetryException
+from app.backend_common.exception.exception import RateLimitError
 from app.backend_common.utils.app_utils import log_combined_exception
-from app.common.constants.error_messages import ErrorMessages
-from app.common.constants.success_messages import SuccessMessages
-from app.common.exception import RetryException
-from app.common.exception.exception import RateLimitError
 from app.main.blueprints.deputy_dev.constants.sqs import SQS
 from app.main.blueprints.deputy_dev.services.sqs.sqs_model import Response
 

@@ -1,0 +1,96 @@
+import asyncio
+import json
+from typing import Any
+
+from sanic import Blueprint
+from torpedo import Request, send_response
+
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    InlineEditInput,
+    QuerySolverInput,
+)
+from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
+    InlineEditGenerator,
+)
+from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
+from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+)
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from app.main.blueprints.one_dev.utils.session import ensure_session_id
+
+code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
+
+
+@code_gen_v2_bp.route("/generate-code")
+@validate_client_version
+@authenticate
+@ensure_session_id(session_type="CODE_GENERATION_V2")
+async def solve_user_query(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+):
+    response = await _request.respond()
+    print(_request.json)
+    payload = QuerySolverInput(**_request.json, session_id=session_id)
+    print("previous_query_ids")
+    print(payload.previous_query_ids)
+    response.content_type = "text/event-stream"
+    if kwargs.get("response_headers"):
+        response.headers = kwargs.get("response_headers")
+    data = await QuerySolver().solve_query(payload=payload)
+
+    async for data_block in data:
+        await response.send("data: " + json.dumps(data_block.model_dump(mode="json")) + "\r\n\r\n")
+
+    await response.eof()
+
+
+@code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
+@validate_client_version
+@authenticate
+@ensure_session_id(session_type="CODE_GENERATION_V2")
+async def generate_inline_edit(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+):
+    data = await InlineEditGenerator().create_and_start_job(
+        payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
+    )
+    return send_response({"job_id": data})
+
+
+@code_gen_v2_bp.route("/sse-stream")
+async def sse_stream(request):
+    response = await request.respond()
+    response.content_type = "text/event-stream"
+    print("Streaming...")
+
+    async def event_generator():
+        for i in range(1, 6):  # Send 5 events, one every second
+            yield f"data: Event {i}\n\n"
+            await asyncio.sleep(1)  # Simulate data generation delay
+
+        yield "data: [DONE]\n\n"  # End event
+
+    async for data_block in event_generator():
+        await response.send("data: " + data_block)
+
+    await response.eof()
+
+
+@code_gen_v2_bp.websocket("/sse-websocket")
+async def sse_websocket(request, ws):
+    response = await request.respond()
+    # response.content_type = "text/event-stream"
+    print("Streaming...")
+
+    async def event_generator():
+        for i in range(1, 6):  # Send 5 events, one every second
+            yield f"data: Event {i}\n\n"
+            await asyncio.sleep(1)  # Simulate data generation delay
+
+        yield "data: [DONE]\n\n"  # End event
+
+    async for data_block in event_generator():
+        await ws.send("data: " + data_block)

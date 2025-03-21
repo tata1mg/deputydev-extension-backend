@@ -1,9 +1,18 @@
 from sanic import Blueprint
 
-from .auth import auth
-from .code_gen import code_gen
-from .config_handler import config
-from .repos import repos
+from .auth.auth_blueprint import auth_v1_bp
+from .configs.config_blueprint import config_v1_bp
+from .history.history_blueprint import history_v1_bp
+from .repos.repos_blueprint import repos_v1_bp
+from .code_gen.code_gen_blueprint import code_gen_v1_bp
+from .chunks.chunks_blueprint import chunks_v1_bp
 
-blueprints = [code_gen, repos, auth, config]
-one_dev_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
+blueprints = [
+    auth_v1_bp,
+    config_v1_bp,
+    history_v1_bp,
+    repos_v1_bp,
+    code_gen_v1_bp,
+    chunks_v1_bp,
+]
+common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")

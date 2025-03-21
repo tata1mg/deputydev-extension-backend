@@ -1,16 +1,22 @@
 import re
 
+from deputydev_core.utils.context_vars import set_context_values
+
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
 from app.backend_common.repository.repo.repo_repository import RepoRepository
-from app.backend_common.services.llm.providers.openai_llm import OpenaiLLM
-from app.common.utils.context_vars import set_context_values
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
-    AgentTypes,
     FeatureFlows,
     PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentTypes,
+)
 from app.main.blueprints.deputy_dev.services.code_review.base_pr_review_manager import (
     BasePRReviewManager,
 )
@@ -23,8 +29,6 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 
 class PRSummaryManager(BasePRReviewManager):
-    llm = OpenaiLLM()
-
     @classmethod
     async def generate_and_post_summary(cls, chat_request: ChatRequest) -> None:
         """Generate PR summary and post it as a reply."""
@@ -57,12 +61,18 @@ class PRSummaryManager(BasePRReviewManager):
     async def _process_summary(cls, repo_service, pr_service, comment_service, chat_request):
         """Process PR summary generation and posting."""
         pr_diff_handler = PRDiffHandler(pr_service)
+        session = await MessageSessionsRepository.create_message_session(
+            message_session_data=MessageSessionData(
+                user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_SUMMARY"
+            )
+        )
 
         review_manager = MultiAgentPRReviewManager(
             repo_service=repo_service,
             pr_service=pr_service,
             pr_diff_handler=pr_diff_handler,
             eligible_agents=[AgentTypes.PR_SUMMARY.value],
+            session_id=session.id,
         )
 
         # Get summary using MultiAgentPRReviewManager
