@@ -40,6 +40,7 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
 
         summarization_prompt = """
             Summarize this in a single line to be used as a title for the session.
+            Summarize in ~3-5 words.
             Send the response in the following format:
             <summary>
                 Your summary here
