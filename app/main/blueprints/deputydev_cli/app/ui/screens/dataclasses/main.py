@@ -3,21 +3,29 @@ from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
 from typing import Dict, Optional, Union
 
+from deputydev_core.services.embedding.base_embedding_manager import (
+    BaseEmbeddingManager,
+)
+from deputydev_core.services.initialization.initialization_service import (
+    InitializationManager,
+)
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repository.dataclasses.main import (
+    WeaviateSyncAndAsyncClients,
+)
 from pydantic import BaseModel, ConfigDict
 
-from app.common.services.embedding.base_embedding_manager import BaseEmbeddingManager
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from app.main.blueprints.deputydev_cli.app.clients.one_dev import OneDevClient
+from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
+    OneDevCliClient,
+)
 from app.main.blueprints.deputydev_cli.app.constants.cli import CLIFeatures
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     PlainTextQuery,
     PRConfig,
     RegisteredRepo,
     TextSelectionQuery,
-)
-from app.main.blueprints.deputydev_cli.app.managers.initialization.main import (
-    InitializationManager,
 )
 from app.main.blueprints.deputydev_cli.app.ui.dataclasses.main import FlowStatus
 
@@ -41,7 +49,7 @@ class QueryType(Enum):
 
 class AppContext(BaseModel):
     args: argparse.Namespace
-    one_dev_client: OneDevClient
+    one_dev_client: OneDevCliClient
     auth_token: Optional[str] = None
     session_id: Optional[str] = None
     local_repo: Optional[BaseLocalRepo] = None

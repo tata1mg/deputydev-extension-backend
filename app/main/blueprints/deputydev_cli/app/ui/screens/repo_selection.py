@@ -2,6 +2,14 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+from deputydev_core.services.initialization.initialization_service import (
+    InitializationManager,
+)
+from deputydev_core.services.repo.local_repo.base_local_repo_service import (
+    BaseLocalRepo,
+)
+from deputydev_core.services.repo.local_repo.local_repo_factory import LocalRepoFactory
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.completion import (
     CompleteEvent,
@@ -13,14 +21,8 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import ValidationError
 
-from app.common.services.repo.local_repo.base_local_repo import BaseLocalRepo
-from app.common.services.repo.local_repo.factory import LocalRepoFactory
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
 from app.main.blueprints.deputydev_cli.app.managers.features.dataclasses.main import (
     RegisteredRepo,
-)
-from app.main.blueprints.deputydev_cli.app.managers.initialization.main import (
-    InitializationManager,
 )
 from app.main.blueprints.deputydev_cli.app.ui.screens.base_screen_handler import (
     BaseScreenHandler,
@@ -33,7 +35,7 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
-
+from deputydev_core.utils.constants.enums import SharedMemoryKeys
 
 class RepoPathCompleter(Completer):
     def get_completions(self, document: Document, complete_event: CompleteEvent):
@@ -89,7 +91,7 @@ class RepoPathValidator(AsyncValidator):
         try:
             init_manager = InitializationManager(
                 input_text,
-                auth_token=self.app_context.auth_token,
+                auth_token_key=SharedMemoryKeys.CLI_AUTH_TOKEN.value,
                 one_dev_client=self.app_context.one_dev_client,
                 process_executor=self.app_context.process_executor,
             )
@@ -150,7 +152,7 @@ class RepoSelection(BaseScreenHandler):
             if self.app_context.init_manager.repo_path != repo_path:
                 self.app_context.init_manager = InitializationManager(
                     repo_path,
-                    auth_token=self.app_context.auth_token,
+                    auth_token_key=SharedMemoryKeys.CLI_AUTH_TOKEN.value,
                     one_dev_client=self.app_context.one_dev_client,
                     process_executor=self.app_context.process_executor,
                     weaviate_client=self.app_context.init_manager.weaviate_client,
@@ -158,7 +160,7 @@ class RepoSelection(BaseScreenHandler):
         else:
             self.app_context.init_manager = InitializationManager(
                 repo_path,
-                auth_token=self.app_context.auth_token,
+                auth_token_key=SharedMemoryKeys.CLI_AUTH_TOKEN.value,
                 one_dev_client=self.app_context.one_dev_client,
                 process_executor=self.app_context.process_executor,
             )

@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.base_pr import BasePR
-from app.common.utils.app_logger import AppLogger
-from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
     ExperimentStatusTypes,
@@ -221,7 +221,7 @@ class PRReviewPostProcessor:
             if scm_comment_id in inserted_comments_dict:
                 inserted_comment = inserted_comments_dict[scm_comment_id]
                 comments_by_ids[inserted_comment.id] = valid_comment
-        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        current_agents_by_id = SettingService.helper.agents_setting_by_agent_uuid()
         is_new_agents_created = await cls.upsert_agents(pr_dto.repo_id, saved_agents_by_id, current_agents_by_id)
         if is_new_agents_created:
             saved_agents_by_id = await cls.fetch_agents(agent_filter)

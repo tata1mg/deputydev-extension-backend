@@ -1,15 +1,19 @@
 from datetime import datetime
 from typing import Any, Dict
 
+from deputydev_core.utils.app_logger import AppLogger
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
 
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
-from app.common.utils.app_logger import AppLogger
-from app.common.utils.log_time import log_time
+from app.backend_common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
     PrStatusTypes,
@@ -129,10 +133,16 @@ class PRReviewManager(BasePRReviewManager):
         prompt_version,
         pr_diff_handler: PRDiffHandler,
     ):
+        session = await MessageSessionsRepository.create_message_session(
+            message_session_data=MessageSessionData(
+                user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_REVIEW"
+            )
+        )
+
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
-            repo_service, pr_service, pr_diff_handler, prompt_version
+            repo_service, pr_service, pr_diff_handler, session.id, prompt_version
         ).get_code_review_comments()
         # We will only post summary for first PR review request
         if pr_summary:
