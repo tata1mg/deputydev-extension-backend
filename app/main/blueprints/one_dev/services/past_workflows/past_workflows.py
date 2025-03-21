@@ -68,4 +68,5 @@ class PastWorkflows:
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
         processed_data = serializer_service.get_processed_data()
+        print(processed_data)
         return processed_data
