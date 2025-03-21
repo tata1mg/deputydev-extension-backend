@@ -1,12 +1,14 @@
 from typing import Any, Dict, List, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.dataclasses.main import (
+    LLMMeta,
+    NonStreamingParsedLLMCallResponse,
+)
 from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.services.llm.providers.dataclass.main import LLMMeta
 from app.backend_common.services.repo.repo_factory import RepoFactory
-from app.common.constants.constants import LLModels, PromptFeatures
-from app.common.services.prompt.factory import PromptFeatureFactory
-from app.common.utils.app_logger import AppLogger
-from app.main.blueprints.one_dev.models.dto.session_chat import SessionChatDTO
 from app.main.blueprints.one_dev.services.code_generation.helpers.code_application import (
     CodeApplicationHandler,
 )
@@ -22,12 +24,9 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dif
 from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
     get_chunks_by_file_total_lines,
 )
-from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
-    JobService,
-)
-from app.main.blueprints.one_dev.services.repository.session_chat.main import (
-    SessionChatService,
-)
+
+from ...prompts.dataclasses.main import PromptFeatures
+from ...prompts.factory import PromptFeatureFactory
 
 
 class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
@@ -77,44 +76,33 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
     async def _feature_task(cls, payload: DiffCreationInput, job_id: int, llm_meta: List[LLMMeta]) -> Dict[str, Any]:
 
         previous_responses = await cls._get_previous_responses(payload)
-        prompt = PromptFeatureFactory.get_prompt(
-            prompt_feature=PromptFeatures.DIFF_CREATION,
-            model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-            init_params={},
-        )
-        llm_response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=previous_responses)
-        llm_meta.append(llm_response.llm_meta)
-        code_lines = get_chunks_by_file_total_lines(llm_response.parsed_llm_data["chunks_by_file"])
-        await JobService.db_update(
-            filters={"id": job_id},
-            update_data={
-                "status": "LLM_RESPONSE",
-                "meta_info": {
-                    "llm_meta": [meta.model_dump(mode="json") for meta in llm_meta],
-                },
-            },
-        )
-        await SessionChatService.db_create(
-            SessionChatDTO(
-                session_id=payload.session_id,
-                prompt_type=PromptFeatures.DIFF_CREATION,
-                llm_prompt=llm_response.raw_prompt,
-                llm_response=llm_response.raw_llm_response,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET.value,
-                response_summary="",
-                user_query="generate diff",
-                code_lines_count=code_lines,
-            )
+        llm_handler = LLMHandler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
         )
 
-        if not llm_response.parsed_llm_data["chunks_by_file"]:
+        llm_response = await llm_handler.start_llm_query(
+            session_id=payload.session_id,
+            prompt_feature=PromptFeatures.DIFF_CREATION,
+            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            prompt_vars={},
+            previous_responses=previous_responses,
+        )
+
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
+
+        # TODO: Move this to a separate function
+        code_lines = get_chunks_by_file_total_lines(llm_response.parsed_content[0]["chunks_by_file"])
+
+        if not llm_response.parsed_content[0]["chunks_by_file"]:
             raise ValueError("Failed to generate diff")
 
         final_resp: Dict[str, Any] = {
             "session_id": payload.session_id,
-            "diff": llm_response.parsed_llm_data["chunks_by_file"],
-            "pr_title": llm_response.parsed_llm_data["pr_title"],
-            "commit_message": llm_response.parsed_llm_data["commit_message"],
+            "diff": llm_response.parsed_content[0]["chunks_by_file"],
+            "pr_title": llm_response.parsed_content[0]["pr_title"],
+            "commit_message": llm_response.parsed_content[0]["commit_message"],
         }
 
         if not (payload.pr_config):
@@ -126,10 +114,6 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
                 diff=final_resp["diff"],
                 commit_message=final_resp["commit_message"],
                 pr_title=final_resp["pr_title"],
-            )
-            await JobService.db_update(
-                filters={"id": job_id},
-                update_data={"status": "DIFF_APPLIED"},
             )
             final_resp.update(application_resp)
         except Exception as ex:

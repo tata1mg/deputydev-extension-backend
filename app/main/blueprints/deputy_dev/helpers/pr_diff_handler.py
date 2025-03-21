@@ -1,7 +1,10 @@
+from typing import Any, Dict
+
+from deputydev_core.utils.context_vars import get_context_value
+
+from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.utils.app_utils import get_token_count, safe_index
-from app.common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND
-from app.common.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
@@ -85,7 +88,7 @@ class PRDiffHandler:
         Maps the PR diffs for each agent in the code review operation.
         """
         # Fetch the list of agents by UUID
-        uuid_wise_agents = SettingService.Helper.get_uuid_wise_agents()
+        uuid_wise_agents = SettingService.helper.get_uuid_wise_agents()
 
         # For each agent, process the PR diff and map it
         for agent_id in uuid_wise_agents:
@@ -146,7 +149,7 @@ class PRDiffHandler:
 
         # Handle different operations (code_review or chat)
         if operation == "code_review":
-            inclusions, exclusions = SettingService.Helper.get_agent_inclusion_exclusions(agent_id)
+            inclusions, exclusions = SettingService.helper.get_agent_inclusion_exclusions(agent_id)
         elif operation == "chat":
             chat_setting = settings["chat"]
             inclusions = chat_setting.get("inclusions", [])
@@ -155,7 +158,7 @@ class PRDiffHandler:
         # Return the filtered PR diff with exclusions and inclusions
         return ignore_files(self.pr_diff, list(exclusions), list(inclusions))
 
-    async def pr_diffs_token_counts(self, operation: str = "code_review") -> dict:
+    async def pr_diffs_token_counts(self, operation: str = "code_review") -> Dict[str, int]:
         """
         Counts the number of tokens in the PR diffs for each agent or operation.
 
@@ -171,7 +174,7 @@ class PRDiffHandler:
         if operation == "chat":
             pr_diff_token_count["chat"] = await self.count_pr_diff_tokens(operation)
         else:
-            for agent_id in SettingService.Helper.get_uuid_wise_agents():
+            for agent_id in SettingService.helper.get_uuid_wise_agents():
                 pr_diff_token_count[agent_id] = await self.count_pr_diff_tokens(operation, agent_id)
 
         return pr_diff_token_count
@@ -197,7 +200,7 @@ class PRDiffHandler:
         else:
             return 0
 
-    async def pr_diffs_token_counts_agent_name_wise(self, operation: str = "code_review") -> dict:
+    async def pr_diffs_token_counts_agent_name_wise(self, operation: str = "code_review") -> Dict[str, Any]:
         """
         Counts the PR diff tokens and maps them to agent names.
 
@@ -213,7 +216,7 @@ class PRDiffHandler:
         # If the operation is "code_review", map the counts to agent names
         if operation == "code_review":
             pr_diff_token_count_agent_name_wise = {}
-            agents_uuid_wise = SettingService.Helper.get_uuid_wise_agents()
+            agents_uuid_wise = SettingService.helper.get_uuid_wise_agents()
             for agent_id, token_count in pr_diff_token_count.items():
                 agent_name = agents_uuid_wise[agent_id]["agent_name"]
                 pr_diff_token_count_agent_name_wise[agent_name] = token_count
@@ -221,5 +224,5 @@ class PRDiffHandler:
         else:
             return pr_diff_token_count
 
-    async def get_pr_diff_token_count(self, operation="code_review") -> dict:
+    async def get_pr_diff_token_count(self, operation="code_review") -> Dict[str, Any]:
         return await self.pr_diffs_token_counts_agent_name_wise(operation)

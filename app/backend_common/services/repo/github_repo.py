@@ -5,16 +5,16 @@ import toml
 from git.util import Actor
 from torpedo import CONFIG
 
+from app.backend_common.constants.constants import (
+    SETTING_ERROR_MESSAGE,
+    SettingErrorType,
+    VCSTypes,
+)
 from app.backend_common.service_clients.github.github_repo_client import (
     GithubRepoClient,
 )
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.constants.constants import (
-    SETTING_ERROR_MESSAGE,
-    SettingErrorType,
-    VCSTypes,
-)
 
 
 class GithubRepo(BaseRepo):

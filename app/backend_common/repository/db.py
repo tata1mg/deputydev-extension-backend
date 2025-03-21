@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Union
+from typing import Any, Dict, List, Union, overload
 
 from tortoise_wrapper.wrappers.db_wrapper import ORMWrapper
 
@@ -11,6 +11,33 @@ class DB(ORMWrapper):
         payload["updated_at"] = datetime.now().replace(tzinfo=timezone.utc)
         return await DB.create(model_name, payload)
 
+    @overload
+    @classmethod
+    async def by_filters(
+        cls,
+        model_name,
+        where_clause: dict,
+        limit: int = None,
+        offset: int = None,
+        order_by: Union[list, str] = None,
+        fetch_one: bool = True,
+        only: Union[list, str] = None,
+    ) -> Dict[str, Any]:
+        ...
+
+    @overload
+    async def by_filters(
+        cls,
+        model_name,
+        where_clause: dict,
+        limit: int = None,
+        offset: int = None,
+        order_by: Union[list, str] = None,
+        fetch_one: bool = False,
+        only: Union[list, str] = None,
+    ) -> List[Dict[str, Any]]:
+        ...
+
     @classmethod
     async def by_filters(
         cls,
@@ -21,7 +48,7 @@ class DB(ORMWrapper):
         order_by: Union[list, str] = None,
         fetch_one: bool = False,
         only: Union[list, str] = None,
-    ):
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         results = await cls.get_by_filters(
             model_name,
             where_clause,

@@ -1,7 +1,6 @@
+from deputydev_core.utils.singleton import Singleton
 from langchain.embeddings import OpenAIEmbeddings
 from torpedo import CONFIG
-
-from app.common.utils.singleton import Singleton
 
 config = CONFIG.config
 

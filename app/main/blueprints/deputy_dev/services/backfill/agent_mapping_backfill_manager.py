@@ -1,11 +1,12 @@
 import re
 from typing import Any, Dict
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dao.postgres import Repos
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
-from app.common.utils.app_logger import AppLogger
 from app.main.blueprints.deputy_dev.models.dao.postgres import (
     AgentCommentMappings,
     Agents,
@@ -224,7 +225,7 @@ class AgentMappingBackfillManager:
 
     @classmethod
     async def backfill_agents(cls, repo_id):
-        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        current_agents_by_id = SettingService.helper.agents_setting_by_agent_uuid()
         agent_ids = list(current_agents_by_id.keys())
         agent_filter = {"repo_id": repo_id, "agent_id__in": agent_ids}
         saved_agents_by_id = await cls.fetch_agents(agent_filter)
@@ -261,7 +262,7 @@ class AgentMappingBackfillManager:
 
     @classmethod
     def agent_id_by_display_names(cls, saved_agents_by_id):
-        current_agents_by_id = SettingService.Helper.agents_setting_by_agent_uuid()
+        current_agents_by_id = SettingService.helper.agents_setting_by_agent_uuid()
         agent_id_by_display_names = {}
         for agent_id, agent_obj in saved_agents_by_id.items():
             display_name = current_agents_by_id[agent_id]["display_name"]

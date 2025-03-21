@@ -1,22 +1,25 @@
+from typing import Any, Dict, List, Optional
+
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.chunker.handlers.non_vector_db_chunker import (
+    NonVectorDBChunker,
+)
+from deputydev_core.services.chunking.chunking_manager import ChunkingManger
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
+from deputydev_core.services.search.dataclasses.main import SearchTypes
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
+from app.backend_common.constants.constants import MAX_RELEVANT_CHUNKS
 from app.backend_common.services.embedding.openai_embedding_manager import (
     OpenAIEmbeddingManager,
 )
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.utils.app_utils import safe_index
+from app.backend_common.utils.executor import process_executor
 from app.backend_common.utils.formatting import append_line_numbers
-from app.common.constants.constants import MAX_RELEVANT_CHUNKS
-from app.common.services.chunking.chunker.handlers.non_vector_db_chunker import (
-    NonVectorDBChunker,
-)
-from app.common.services.chunking.chunking_manager import ChunkingManger
-from app.common.services.repo.local_repo.managers.git_repo import GitRepo
-from app.common.services.search.dataclasses.main import SearchTypes
-from app.common.services.tiktoken import TikToken
-from app.common.utils.context_vars import get_context_value
-from app.common.utils.executor import process_executor
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.atlassian.confluence.confluence_manager import (
     ConfluenceManager,
@@ -73,7 +76,8 @@ class ContextService:
         )
         return relevant_chunk
 
-    async def agent_wise_relevant_chunks(self) -> dict:
+    # TODO: Add type hints for the return value without Any
+    async def agent_wise_relevant_chunks(self) -> Dict[str, Any]:
         """
         Retrieves agent-wise relevant chunks by filtering and mapping ranked snippets to agents
         based on inclusion/exclusion rules. Avoids saving duplicate chunks to optimize memory usage.
@@ -91,9 +95,9 @@ class ContextService:
         if not self.relevant_chunk:
             # Get the ranked list of relevant code snippets
             ranked_snippets_list = await self.get_relevant_chunk()
-            agents = SettingService.Helper.get_uuid_wise_agents()  # Retrieve all agents
+            agents = SettingService.helper.get_uuid_wise_agents()  # Retrieve all agents
             remaining_agents = len(agents)  # Count of agents yet to be fulfilled
-            code_snippet_list = []  # Unique list of code snippets to avoid duplicates
+            code_snippet_list: List[ChunkInfo] = []  # Unique list of code snippets to avoid duplicates
             comment_validation_relevant_chunks_mapping = []  # Indices of snippets relevant to comment validation agents
 
             # Initialize a mapping of agent IDs to relevant chunk indices
@@ -111,7 +115,7 @@ class ContextService:
                         continue
 
                     # Get inclusion/exclusion rules for the agent
-                    inclusions, exclusions = SettingService.Helper.get_agent_inclusion_exclusions(agent_id)
+                    inclusions, exclusions = SettingService.helper.get_agent_inclusion_exclusions(agent_id)
 
                     # Check if the snippet path is relevant for the agent
                     if is_path_included(path, exclusions, inclusions):
@@ -122,7 +126,7 @@ class ContextService:
                             relevant_chunks_mapping[agent_id].append(index)
                         else:
                             # If it doesn't exist, add it to the list and map it to the agent
-                            if agent_id != SettingService.Helper.summary_agent_id():
+                            if agent_id != SettingService.helper.summary_agent_id():
                                 comment_validation_relevant_chunks_mapping.append(len(code_snippet_list))
                             relevant_chunks_mapping[agent_id].append(len(code_snippet_list))
                             code_snippet_list.append(snippet)
@@ -144,19 +148,21 @@ class ContextService:
 
         return self.relevant_chunk
 
-    def get_pr_title(self):
+    def get_pr_title(self) -> str:
         if not self.pr_title:
             self.pr_title = self.pr_service.pr_model().title()
             self.pr_title_tokens = self.tiktoken.count(self.pr_title)
         return self.pr_title
 
-    def get_pr_description(self):
+    def get_pr_description(self) -> str:
         if not self.pr_description:
             self.pr_description = self.pr_service.pr_model().description()
             self.pr_description_tokens = self.tiktoken.count(self.pr_description)
         return self.pr_description
 
-    async def get_pr_diff(self, append_line_no_info=False, operation="code_review", agent_id=None):
+    async def get_pr_diff(
+        self, append_line_no_info=False, operation="code_review", agent_id: Optional[str] = None
+    ) -> str:
         pr_diff = await self.pr_diff_handler.get_effective_pr_diff(operation, agent_id)
         self.pr_diff_tokens = await self.pr_diff_handler.pr_diffs_token_counts(operation)
         if append_line_no_info:
@@ -164,7 +170,7 @@ class ContextService:
         else:
             return pr_diff
 
-    async def get_user_story(self):
+    async def get_user_story(self) -> str:
         if self.jira_story:
             return self.jira_story
         self.jira_manager = JiraManager(issue_id=self.get_issue_id())
@@ -191,7 +197,7 @@ class ContextService:
             self.issue_id = self.pr_service.pr_details.issue_id
         return self.issue_id
 
-    def get_pr_status(self):
+    def get_pr_status(self) -> str:
         if not self.pr_status:
             self.pr_status = self.pr_service.pr_model().scm_state()
         return self.pr_status

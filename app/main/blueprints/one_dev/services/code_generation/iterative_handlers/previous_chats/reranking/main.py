@@ -1,11 +1,16 @@
 from typing import List
 
+from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
 from app.backend_common.services.llm.handler import LLMHandler
-from app.common.constants.constants import LLModels, PromptFeatures
-from app.common.services.prompt.factory import PromptFeatureFactory
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclass.main import (
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChats,
 )
+
+from ....prompts.dataclasses.main import PromptFeatures
+from ....prompts.factory import PromptFeatureFactory
 
 
 class LLMBasedChatFiltration:
@@ -14,20 +19,28 @@ class LLMBasedChatFiltration:
         cls,
         chats: List[PreviousChats],
         query: str,
+        session_id: int,
     ) -> List[int]:
-        prompt = PromptFeatureFactory.get_prompt(
+
+        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+
+        llm_response = await llm_handler.start_llm_query(
+            session_id=session_id,
             prompt_feature=PromptFeatures.CHAT_RERANKING,
-            model_name=LLModels.CLAUDE_3_POINT_5_SONNET,
-            init_params={
+            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            prompt_vars={
                 "query": query,
                 "chats": chats,
             },
+            call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
         )
-        response = await LLMHandler(prompt=prompt).get_llm_response_data(previous_responses=[])
-        if response:
-            filtered_chat_ids = response.parsed_llm_data["chat_ids"]
-        else:
-            # could be more better handling
-            # default case
-            filtered_chat_ids = [chat.id for chat in chats]
+
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
+
+        filtered_chat_ids: List[int] = (
+            llm_response.parsed_content[0]["chat_ids"]
+            if llm_response.parsed_content and llm_response.parsed_content[0].get("chat_ids")
+            else [chat.id for chat in chats]
+        )
         return filtered_chat_ids
