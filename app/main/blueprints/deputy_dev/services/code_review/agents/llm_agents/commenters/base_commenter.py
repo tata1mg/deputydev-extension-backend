@@ -1,0 +1,87 @@
+import json
+from typing import Any, Dict, List, Optional
+
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.context_vars import get_context_value
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
+    ContextService,
+)
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
+    LLMCommentData,
+)
+from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
+    PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.setting.setting_service import (
+    SettingService,
+)
+from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
+
+
+class BaseCommenterAgent(BaseCodeReviewAgent):
+    is_dual_pass: bool
+    prompt_features: List[PromptFeatures]
+
+    def __init__(
+        self,
+        context_service: ContextService,
+        is_reflection_enabled: bool,
+        llm_handler: LLMHandler[PromptFeatures],
+        model: LLModels,
+    ):
+        super().__init__(context_service, is_reflection_enabled, llm_handler, model)
+        self.agent_name = SettingService.helper.predefined_name_to_custom_name(self.agent_name)
+        self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
+        self.agent_id = self.agent_setting.get("agent_id")
+
+    def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
+        print("***************")
+        print(self.agent_id)
+        print(relevant_chunks)
+        print("***************")
+        relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
+        agent_relevant_chunks: List[ChunkInfo] = []
+        for index in relevant_chunks_index:
+            agent_relevant_chunks.append(relevant_chunks["relevant_chunks"][index])
+        return render_snippet_array(agent_relevant_chunks)
+
+    async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
+        relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
+        last_pass_comments_str = ""
+        if last_pass_result:
+            last_pass_comments: List[LLMCommentData] = last_pass_result.get("comments") or []
+            last_pass_comments_str = json.dumps([comment.model_dump(mode="json") for comment in last_pass_comments])
+
+        return {
+            "PULL_REQUEST_TITLE": self.context_service.get_pr_title(),
+            "PULL_REQUEST_DESCRIPTION": self.context_service.get_pr_description(),
+            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
+                append_line_no_info=True, agent_id=self.agent_id
+            ),
+            "REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER": last_pass_comments_str,
+            "CONTEXTUALLY_RELATED_CODE_SNIPPETS": self.agent_relevant_chunk(relevant_chunks),
+            "USER_STORY": await self.context_service.get_user_story(),
+            "PRODUCT_RESEARCH_DOCUMENT": await self.context_service.get_confluence_doc(),
+            "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(agent_id=self.agent_id),
+            "AGENT_OBJECTIVE": self.agent_setting.get("objective", ""),
+            "CUSTOM_PROMPT": self.agent_setting.get("custom_prompt") or "",
+            "BUCKET": self.agent_setting.get("display_name"),
+            "REPO_INFO_PROMPT": repo_meta_info_prompt(get_context_value("setting").get("app", {})),
+            "AGENT_NAME": self.agent_type.value,
+        }
+
+    def get_additional_info_prompt(self, tokens_info, reflection_iteration):
+        return {
+            "key": self.agent_name,
+            "comment_confidence_score": self.agent_setting.get("confidence_score"),
+            "model": self.model,
+            "tokens": tokens_info,
+            "reflection_iteration": reflection_iteration,
+        }

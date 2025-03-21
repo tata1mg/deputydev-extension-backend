@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from app.common.constants.constants import PRStatus
+from app.backend_common.constants.constants import PRStatus
 
 
 class PullRequestDTO(BaseModel):

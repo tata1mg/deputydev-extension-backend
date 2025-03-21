@@ -2,10 +2,10 @@ from typing import Optional, Tuple
 
 from git.util import Actor
 
+from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.repo.base_repo import BaseRepo
-from app.common.constants.constants import VCSTypes
 
 
 class BitbucketRepo(BaseRepo):

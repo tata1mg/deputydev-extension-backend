@@ -214,7 +214,8 @@
       "dao": {
         "models": [
           "app.main.blueprints.deputy_dev.models.dao.postgres",
-          "app.main.blueprints.one_dev.models.dao.postgres"
+          "app.main.blueprints.one_dev.models.dao.postgres",
+          "app.backend_common.models.dao.postgres"
         ],
         "default_connection": "default"
       }
@@ -270,7 +271,7 @@
       "VERSION": "bedrock-2023-05-31",
       "INPUT_TOKENS_LIMIT": 130000
     },
-    "GPT_4_O_MODEL": {
+    "GPT_4O": {
       "NAME": "gpt-4o-mini",
       "PROVIDER": "OPENAI",
       "ACCESS_KEY": "",
@@ -286,16 +287,17 @@
   },
   "FEATURE_MODELS": {
     "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
-    "PR_SUMMARY": "GPT_4_O_MODEL",
-    "PR_CHAT": "GPT_4_O_MODEL",
+    "PR_SUMMARY": "GPT_4O",
+    "PR_CHAT": "GPT_4O",
     "CODE_GENERATION": "CLAUDE_3_POINT_5_SONNET",
     "CHUNK_DESCRIPTION": "CLAUDE_3_POINT_5_SONNET",
-    "COMMENT_VALIDATION": "GPT_4_O_MODEL",
-    "COMMENT_SUMMARIZATION": "GPT_4_O_MODEL",
+    "COMMENT_VALIDATION": "GPT_4O",
+    "COMMENT_SUMMARIZATION": "GPT_4O",
     "RE_RANKING": "CLAUDE_3_POINT_5_SONNET"
   },
   "ONE_DEV": {
     "HOST": "http://localhost:8084",
+    "GATEWAY_HOST": "http://localhost:8084",
     "TIMEOUT": 10000
   },
   "OPENAI_TIMEOUT": 1000,
@@ -307,5 +309,11 @@
     "LIMIT_PER_HOST": 0,
     "TTL_DNS_CACHE": 10
   },
-  "VALID_ADVOCACY_IDS": [1,2,3,4]
+  "VALID_ADVOCACY_IDS": [1,2,3,4],
+  "AUTH_TOKEN_GRACE_PERIOD": 1800,
+  "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
+  "RUDDER": {
+        "WRITE_KEY": "",
+        "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+    }
 }

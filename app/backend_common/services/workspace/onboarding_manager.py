@@ -6,9 +6,9 @@ from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
 from app.backend_common.constants.onboarding import UserRoles
+from app.backend_common.exception.exception import SignUpError
 from app.backend_common.models.dao.postgres import Teams, Users, UserTeams
 from app.backend_common.models.request.onboarding import SignUpRequest
-from app.common.exception.exception import SignUpError
 
 
 class OnboardingManager:

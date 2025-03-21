@@ -3,10 +3,10 @@ from typing import List
 import ujson
 
 import app.main.blueprints.jiva.services.openai.openai_tools as OpenAITools
+from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.service_clients import OpenAIServiceClient
 from app.backend_common.services.openai.openaiembedding import OpenAIEmbeddingsCustom
-from app.common.constants.error_messages import ErrorMessages
-from app.common.utils.headers import Headers
+from app.backend_common.utils.headers import Headers
 from app.main.blueprints.jiva.constants import JivaChatTypes
 from app.main.blueprints.jiva.constants.prompts.v1.prompts import USER_LOCATION
 from app.main.blueprints.jiva.models.chat import ChatModel, ChatTypeMsg
