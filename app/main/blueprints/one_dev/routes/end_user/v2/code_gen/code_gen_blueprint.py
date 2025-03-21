@@ -63,6 +63,7 @@ async def sse_stream(request):
     response = await request.respond()
     response.content_type = "text/event-stream"
     print("Streaming...")
+
     async def event_generator():
         for i in range(1, 6):  # Send 5 events, one every second
             yield f"data: Event {i}\n\n"
@@ -75,11 +76,13 @@ async def sse_stream(request):
 
     await response.eof()
 
+
 @code_gen_v2_bp.websocket("/sse-websocket")
 async def sse_websocket(request, ws):
     response = await request.respond()
     # response.content_type = "text/event-stream"
     print("Streaming...")
+
     async def event_generator():
         for i in range(1, 6):  # Send 5 events, one every second
             yield f"data: Event {i}\n\n"
