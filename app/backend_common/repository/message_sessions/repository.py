@@ -70,16 +70,27 @@ class MessageSessionsRepository:
 
     @classmethod
     async def get_message_sessions_by_user_team_id(
-        cls, user_team_id: int, limit: int, offset: int
+        cls,
+        user_team_id: int,
+        session_type: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> List[MessageSessionDTO]:
+        if not limit:
+            limit = 10
+        if not offset:
+            offset = 0
         try:
+            filters = {
+                "user_team_id": user_team_id,
+                "status": SessionStatus.ACTIVE.value,
+            }
+            if session_type:
+                filters["session_type"] = session_type
+
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
-                where_clause={
-                    "user_team_id": user_team_id,
-                    "status": SessionStatus.ACTIVE.value,
-                    "session_type": "CODE_GENERATION_V2",
-                },
+                where_clause=filters,
                 fetch_one=False,
                 limit=limit,
                 offset=offset,
