@@ -456,7 +456,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return result
 
     @classmethod
-    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool]]:
+    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool, int]]:
 
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
@@ -481,6 +481,10 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             .lstrip("\n\r")
         )
 
+        diff = ""
+        added_lines = 0
+        removed_lines = 0
+
         if is_diff:
             code_selected_lines: List[str] = []
             code_lines = code.split("\n")
@@ -488,7 +492,24 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             for line in code_lines:
                 if line.startswith(" ") or line.startswith("+") and not line.startswith("++"):
                     code_selected_lines.append(line[1:])
+                if line.startswith("+"):
+                    added_lines += 1
+                elif line.startswith("-"):
+                    removed_lines += 1
 
             code = "\n".join(code_selected_lines)
+            diff = "\n".join(code_lines)
 
-        return {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
+        return (
+            {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
+            if not is_diff
+            else {
+                "language": language,
+                "file_path": file_path,
+                "code": code,
+                "diff": diff,
+                "is_diff": is_diff,
+                "added_lines": added_lines,
+                "removed_lines": removed_lines,
+            }
+        )
