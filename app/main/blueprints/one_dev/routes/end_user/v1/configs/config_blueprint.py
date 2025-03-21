@@ -16,7 +16,9 @@ config_v1_bp = Blueprint("config_v1_bp", url_prefix="/configs")
 @config_v1_bp.route("/get-essential-configs", methods=["GET"])
 @validate_client_version
 async def get_essential_configs(_request: Request, client_data: ClientData, **kwargs):
-    response = ConfigFetcher.fetch_configs(consumer=client_data.client, config_type=ConfigType.ESSENTIAL)
+    query_params = _request.request_params()
+    value = ConfigConsumer[query_params.get("consumer")]
+    response = ConfigFetcher.fetch_configs(consumer=value, config_type=ConfigType.ESSENTIAL)
     return send_response(response)
 
 
@@ -24,5 +26,8 @@ async def get_essential_configs(_request: Request, client_data: ClientData, **kw
 @validate_client_version
 @authenticate
 async def get_configs(_request: Request, client_data: ClientData, **kwargs):
-    response = ConfigFetcher.fetch_configs(consumer=client_data.client, config_type=ConfigType.MAIN)
+    query_params = _request.request_params()
+    value = ConfigConsumer[query_params.get("consumer")]
+    response = ConfigFetcher.fetch_configs(consumer=value, config_type=ConfigType.MAIN)
     return send_response(response, headers=kwargs.get("response_headers"))
+
