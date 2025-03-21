@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Any
 
@@ -31,6 +32,7 @@ async def solve_user_query(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     response = await _request.respond()
+    print(_request.json)
     payload = QuerySolverInput(**_request.json, session_id=session_id)
     print("previous_query_ids")
     print(payload.previous_query_ids)
@@ -55,4 +57,37 @@ async def generate_inline_edit(
     data = await InlineEditGenerator().create_and_start_job(
         payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     )
-    return send_response({"job_id": data}, headers=kwargs.get("response_headers"))
+    return send_response({"job_id": data})
+
+
+@code_gen_v2_bp.route("/sse-stream")
+async def sse_stream(request):
+    response = await request.respond()
+    response.content_type = "text/event-stream"
+    print("Streaming...")
+    async def event_generator():
+        for i in range(1, 6):  # Send 5 events, one every second
+            yield f"data: Event {i}\n\n"
+            await asyncio.sleep(1)  # Simulate data generation delay
+
+        yield "data: [DONE]\n\n"  # End event
+
+    async for data_block in event_generator():
+        await response.send("data: " + data_block)
+
+    await response.eof()
+
+@code_gen_v2_bp.websocket("/sse-websocket")
+async def sse_websocket(request, ws):
+    response = await request.respond()
+    # response.content_type = "text/event-stream"
+    print("Streaming...")
+    async def event_generator():
+        for i in range(1, 6):  # Send 5 events, one every second
+            yield f"data: Event {i}\n\n"
+            await asyncio.sleep(1)  # Simulate data generation delay
+
+        yield "data: [DONE]\n\n"  # End event
+
+    async for data_block in event_generator():
+        await ws.send("data: " + data_block)

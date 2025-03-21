@@ -31,7 +31,7 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
-                focus_chunks_message += "<item>" + f"<type>{focus_item['type']}</type>" + f"<value>{focus_item['value']}</value>" + "</item>"
+                focus_chunks_message += "<item>" + f"<type>{focus_item.type}</type>" + f"<value>{focus_item.value}</value>" + "</item>"
 
         user_message = f"""
             Here is a query asked on some repository by the user.
@@ -40,6 +40,7 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
 
         summarization_prompt = """
             Summarize this in a single line to be used as a title for the session.
+            Summarize in ~3-5 words.
             Send the response in the following format:
             <summary>
                 Your summary here
