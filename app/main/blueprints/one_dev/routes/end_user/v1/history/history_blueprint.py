@@ -6,8 +6,12 @@ from torpedo.exceptions import BadRequestException
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import ChatHistoryHandler
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import PreviousChatPayload
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+    ChatHistoryHandler,
+)
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
+    PreviousChatPayload,
+)
 from app.main.blueprints.one_dev.services.past_workflows.past_workflows import (
     PastWorkflows,
 )
@@ -35,10 +39,15 @@ async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
 @history_v1_bp.route("/sessions", methods=["GET"])
 @validate_client_version
 @authenticate
-async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
-    headers = _request.headers
+async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
+    query_params = _request.args
     try:
-        response = await PastWorkflows.get_past_sessions(user_team_id=auth_data.user_team_id, headers=headers)
+        response = await PastWorkflows.get_past_sessions(
+            user_team_id=auth_data.user_team_id,
+            session_type=query_params["session_type"][0],
+            limit=int(int(query_params["limit"][0])) if query_params.get("limit") else None,
+            offset=int(int(query_params["offset"][0])) if query_params.get("offset") else None,
+        )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")
     return send_response(response)

@@ -1,5 +1,5 @@
 import re
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
@@ -146,11 +146,11 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                         )  # replace only the first instance of the udiff line start
                         if self.udiff_line_start == "+":
                             self.added_lines += 1
-                    if self.udiff_line_start == "@@":
-                        # skip till the last @@ in the line and add the line to the text buffer
-                        last_index = pre_line_part.rfind("@@")
-                        addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
-                        self.text_buffer += addable_part + "\n" if addable_part else ""
+                    # if self.udiff_line_start == "@@":
+                    #     # skip till the last @@ in the line and add the line to the text buffer
+                    #     last_index = pre_line_part.rfind("@@")
+                    #     addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
+                    #     self.text_buffer += addable_part + "\n" if addable_part else ""
                     if self.udiff_line_start == "-":
                         self.removed_lines += 1
                     self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
@@ -197,7 +197,9 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                 self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
             else:
                 self.first_data_block_sent = True
-                self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer.lstrip("\n\r"))))
+                self.event_buffer.append(
+                    CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer.lstrip("\n\r")))
+                )
             self.text_buffer = ""
 
         if last_event:
@@ -277,12 +279,12 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             9. Do not provide any personal information about yourself or the situation you are in
             """
 
-        code_chunk_message = f"""
-            Here are some chunks of code from a repository:
-            {self.params.get("relevant_chunks")}
-        """
-
-        print(self.params.get("relevant_chunks"))
+        print(self.params.get("focus_items"))
+        focus_chunks_message = ""
+        if self.params.get("focus_items"):
+            focus_chunks_message = "The user has asked to focus on the following\n"
+            for focus_item in self.params["focus_items"]:
+                focus_chunks_message += "<item>" + f"<type>{focus_item.type.value}</type>" + f"<value>{focus_item.value}</value>" + "\n".join([chunk.get_xml() for chunk in focus_item.chunks]) + "</item>"
 
         user_message = f"""
             User Query: {self.params.get("query")}
@@ -339,12 +341,15 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
             <extra_important>
             Make sure you provide different code snippets for different files.
-            Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, use non diff block.
+            Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, except for the case where a new file might be needed, use non diff block.
+            Make sure to provide diffs whenever you can. Lean more towards it.
             Path is clear in one of the two ways only -
-            1. You need to edit an existing file, and the file path is found from existing chunks.
-            2. You are sure where to create a new file. Make sure it is something tangible. Not something like path/to/file.py.
+            1. You need to edit an existing file, and the file path is there in existing chunks.
+            2. You can create a new file.
 
             Write all generic code in non diff blocks.
+            Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+            In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
             </extra_important>
             </important>
 
@@ -357,7 +362,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         """
 
         return UserAndSystemMessages(
-            user_message=user_message if not self.params.get("relevant_chunks") else code_chunk_message + user_message,
+            user_message=user_message if not focus_chunks_message else focus_chunks_message + user_message,
             system_message=system_message,
         )
 
@@ -445,7 +450,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         return result
 
     @classmethod
-    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, str]:
+    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool]]:
 
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
@@ -463,7 +468,12 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         file_path = file_path_match.group(1) if file_path_match else ""
 
         # Extract code
-        code = code_block_string.replace(language_match.group(0), "").replace(file_path_match.group(0), "").replace(is_diff_match.group(0), "").lstrip("\n\r")
+        code = (
+            code_block_string.replace(language_match.group(0), "")
+            .replace(file_path_match.group(0), "")
+            .replace(is_diff_match.group(0), "")
+            .lstrip("\n\r")
+        )
 
         if is_diff:
             code_selected_lines: List[str] = []
@@ -475,4 +485,4 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
 
             code = "\n".join(code_selected_lines)
 
-        return {"language": language, "file_path": file_path, "code": code}
+        return {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
