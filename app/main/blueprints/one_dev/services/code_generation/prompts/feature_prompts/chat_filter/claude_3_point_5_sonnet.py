@@ -61,7 +61,7 @@ class Claude3Point5RelevantChatFilterPrompt(BaseClaude3Point5SonnetPrompt):
 
             <important>
             Please do check and ensure that you keep most of the chunks that are relevant. If one function is selected, keep all chunks related to that function.
-            Keep all the chats that are relevant to the user query, do not be too forceful in removing out context
+            Keep all the chats that are relevant to the user query, do not be too forceful in removing out context. Keep max 5 most relevant chats.
             </important>
 
             Please return the sorted and filtered chats in the following format:
