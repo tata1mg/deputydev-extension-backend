@@ -15,7 +15,8 @@ auth_v1_bp = Blueprint("auth_v1_bp", url_prefix="/auth")
 @validate_client_version
 async def verify_auth_token(_request: Request, **kwargs):
     headers = _request.headers
-    response = await Auth.extract_and_verify_token(headers)
+    payload = _request.custom_json() or {}
+    response = await Auth.extract_and_verify_token(headers, payload)
     return send_response(response)
 
 
