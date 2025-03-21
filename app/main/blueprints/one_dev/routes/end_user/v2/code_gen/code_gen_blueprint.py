@@ -35,6 +35,7 @@ async def solve_user_query(
     print("previous_query_ids")
     print(payload.previous_query_ids)
     response.content_type = "text/event-stream"
+    response.headers = kwargs.get("response_headers")
     data = await QuerySolver().solve_query(payload=payload)
 
     async for data_block in data:
@@ -53,4 +54,4 @@ async def generate_inline_edit(
     data = await InlineEditGenerator().create_and_start_job(
         payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     )
-    return send_response({"job_id": data})
+    return send_response({"job_id": data}, headers=kwargs.get("response_headers"))
