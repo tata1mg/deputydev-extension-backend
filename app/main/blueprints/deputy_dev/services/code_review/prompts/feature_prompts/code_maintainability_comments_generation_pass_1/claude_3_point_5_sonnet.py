@@ -153,6 +153,7 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
             12. Do not duplicate comments for similar issues across different locations.
             13. If you are suggesting any comment that is already catered please don't include those comment in response.
             14. Do not change the provided bucket name.
+            15. Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
             
             Begin your review now, focusing on providing valuable feedback to improve the code quality and
             maintainability of the pull request.
