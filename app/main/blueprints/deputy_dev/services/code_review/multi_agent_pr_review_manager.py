@@ -50,6 +50,7 @@ class MultiAgentPRReviewManager:
         self.pr_diff = None
         self.contexts = None
         self.agent_results: Dict[str, AgentRunResult] = {}
+        self.blending_agent_results: Dict[str, AgentRunResult] = {}
         self.multi_agent_reflection_stage = MultiAgentReflectionIteration.PASS_1.value
         self.tokens_data = {}
         self.meta_info_to_save = {}
@@ -58,6 +59,7 @@ class MultiAgentPRReviewManager:
         self.agents_tokens = {}
         self.filtered_comments = None
         self.pr_summary: Optional[Dict[str, Any]] = None
+        self.pr_summary_tokens = {}
         self.context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
         self.eligible_agents = eligible_agents
         self._is_large_pr: bool = False
@@ -82,35 +84,31 @@ class MultiAgentPRReviewManager:
     async def filter_comments(self):
         if not self.agent_results:
             return
-        self.filtered_comments = await CommentBlendingEngine(
+        self.filtered_comments, self.blending_agent_results = await CommentBlendingEngine(
             self.agent_results, self.context_service, self.llm_handler, self.session_id
         ).blend_comments()
 
     # blending engine section end
 
     def populate_pr_summary(self):
-        self.pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value).agent_result
+        pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value, None)
+        self.pr_summary = pr_summary.agent_result if pr_summary else None
+        self.pr_summary_tokens = pr_summary.tokens_data if pr_summary else {}
 
     def populate_meta_info(self):
-        # for agent, prompt in self.current_prompts.items():
-        #     agent_identifier = prompt["key"] + prompt["reflection_iteration"]
-        #     self.agents_tokens[agent_identifier] = prompt.pop("tokens")
-        #     self.agents_tokens[agent_identifier].update(
-        #         {
-        #             "input_tokens": self.agent_results.get(agent, {}).get("input_tokens", 0),
-        #             "output_tokens": self.agent_results.get(agent, {}).get("output_tokens", 0),
-        #         }
-        #     )
-        pass
+        self.agents_tokens.update(self.pr_summary_tokens)
+        for agent, agent_run_results in self.agent_results.items():
+            self.agents_tokens.update(agent_run_results.tokens_data)
+
 
     async def return_final_response(
         self,
     ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         formatted_summary = ""
-        if self.pr_summary and self.pr_summary.get("response"):
+        if self.pr_summary:
             loc = await self.pr_service.get_loc_changed_count()
-            formatted_summary = await format_summary_with_metadata(
-                summary=self.pr_summary["response"], loc=loc, commit_id=self.pr_service.pr_model().commit_id()
+            formatted_summary = format_summary_with_metadata(
+                summary=self.pr_summary, loc=loc, commit_id=self.pr_service.pr_model().commit_id()
             )
         return (
             [comment.model_dump(mode="json") for comment in self.filtered_comments] if self.filtered_comments else None,
@@ -153,6 +151,7 @@ class MultiAgentPRReviewManager:
 
         self.populate_pr_summary()
         print(self.pr_summary)
-        self.populate_meta_info()
         await self.filter_comments()
+        self.agent_results.update(self.blending_agent_results)
+        self.populate_meta_info()
         return await self.return_final_response()
