@@ -44,24 +44,26 @@ class PastChatsSerializer(BaseSerializer):
                 if text_data.content_vars.get("focus_items"):
                     for focus_item in text_data.content_vars["focus_items"]:
                         focus_item_data = DetailedFocusItem(**focus_item)
-                        focus_objects.append({
-                            "type": focus_item_data.type.value,
-                            "value": focus_item_data.value,
-                            "path": focus_item_data.path,
-                            "chunks": [{
-                                "start_line": chunk.source_details.start_line,
-                                "end_line": chunk.source_details.end_line,
-                            } for chunk in focus_item_data.chunks]
-                        })
+                        focus_objects.append(
+                            {
+                                "type": focus_item_data.type.value,
+                                "value": focus_item_data.value,
+                                "path": focus_item_data.path,
+                                "chunks": [
+                                    {
+                                        "start_line": chunk.source_details.start_line,
+                                        "end_line": chunk.source_details.end_line,
+                                    }
+                                    for chunk in focus_item_data.chunks
+                                ],
+                            }
+                        )
 
                 content = {"text": text_data.content_vars["query"]}
                 if focus_objects:
                     content["focus_items"] = focus_objects
 
-
-                formatted_data.append(
-                    {"type": "TEXT_BLOCK", "content": content, "actor": actor}
-                )
+                formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
             elif message_type == MessageType.TOOL_RESPONSE:
                 tool_use_id = response_block[0].content.tool_use_id
                 if tool_use_id not in tool_use_map:
