@@ -31,6 +31,7 @@ async def solve_user_query(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     response = await _request.respond()
+    print(_request.json)
     payload = QuerySolverInput(**_request.json, session_id=session_id)
     print("previous_query_ids")
     print(payload.previous_query_ids)
