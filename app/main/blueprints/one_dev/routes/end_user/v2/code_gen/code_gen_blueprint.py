@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Any
 
@@ -55,3 +56,36 @@ async def generate_inline_edit(
         payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     )
     return send_response({"job_id": data})
+
+
+@code_gen_v2_bp.route("/sse-stream")
+async def sse_stream(request):
+    response = await request.respond()
+    response.content_type = "text/event-stream"
+    print("Streaming...")
+    async def event_generator():
+        for i in range(1, 6):  # Send 5 events, one every second
+            yield f"data: Event {i}\n\n"
+            await asyncio.sleep(1)  # Simulate data generation delay
+
+        yield "data: [DONE]\n\n"  # End event
+
+    async for data_block in event_generator():
+        await response.send("data: " + data_block)
+
+    await response.eof()
+
+@code_gen_v2_bp.websocket("/sse-websocket")
+async def sse_websocket(request, ws):
+    response = await request.respond()
+    # response.content_type = "text/event-stream"
+    print("Streaming...")
+    async def event_generator():
+        for i in range(1, 6):  # Send 5 events, one every second
+            yield f"data: Event {i}\n\n"
+            await asyncio.sleep(1)  # Simulate data generation delay
+
+        yield "data: [DONE]\n\n"  # End event
+
+    async for data_block in event_generator():
+        await ws.send("data: " + data_block)
