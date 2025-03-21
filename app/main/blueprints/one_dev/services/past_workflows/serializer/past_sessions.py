@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List
 
-from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionDTO
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
 )
@@ -17,7 +17,7 @@ class PastSessionsSerializer(BaseSerializer):
     Inherits from BaseSerializer and implements the method to format raw message session data.
     """
 
-    def process_raw_data(self, raw_data: List[MessageSessionData], type: SerializerTypes) -> List[Dict[str, Any]]:
+    def process_raw_data(self, raw_data: List[MessageSessionDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
         """
         Processes raw message session data and formats it for output.
 
@@ -28,16 +28,17 @@ class PastSessionsSerializer(BaseSerializer):
         Returns:
             List[Dict[str, Any]]: A list of formatted message session data.
         """
-        formatted_data = []
+        formatted_data: List[Dict[str, Any]] = []
         current_time = datetime.now()
         for item in raw_data:
-            formatted_data.append(
-                {
-                    "id": item.id,
-                    "summary": item.summary,
-                    "age": self.calculate_age(current_time, item.updated_at),
-                }
-            )
+            if item.summary:
+                formatted_data.append(
+                    {
+                        "id": item.id,
+                        "summary": item.summary,
+                        "age": self.calculate_age(current_time, item.updated_at),
+                    }
+                )
         return formatted_data
 
     def calculate_age(self, current_time: datetime, updated_at: datetime) -> str:

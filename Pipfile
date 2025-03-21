@@ -7,7 +7,7 @@ name = "pypi"
 cache_wrapper = { editable = true, ref = "2.4.1", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git" }
 tortoise-wrapper = {ref = "0.6.2", git = "ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git"}
 commonutils = {ref = "DD-386-aiohttp-upgrade", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git"}
-deputydev-core = { ref = "file_dto_benchmark", git = "ssh://git@github.com/tata1mg/deputydev-core.git" }
+deputydev-core = { ref = "feature/common-code-separation", git = "ssh://git@github.com/tata1mg/deputydev-core.git" }
 tortoise-orm = "==0.21.3"
 langchain = "==0.0.344"
 psycopg2-binary = "==2.9.9"
@@ -22,6 +22,7 @@ supabase = "==2.11.0"
 types-aiobotocore-bedrock-runtime = "==2.11.2"
 torpedo = { editable = true, ref = "3.6.1-rc2-bumped-websockets", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
 realtime = "==2.3.0"
+fuzzywuzzy = "*"
 
 [dev-packages]
 flake8 = "==7.1.1"
