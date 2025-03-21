@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
@@ -12,9 +13,22 @@ class ToolUseResponseInput(BaseModel):
     response: Dict[str, Any]
 
 
+class FocusItemTypes(Enum):
+    FUNCTION = "function"
+    CLASS = "class"
+    FILE = "file"
+    DIRECTORY = "directory"
+
+
+class DetailedFocusItem(BaseModel):
+    type: FocusItemTypes
+    value: str
+    chunks: List[ChunkInfo] = []
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
-    focus_chunks: List[ChunkInfo] = []
+    focus_items: List[DetailedFocusItem] = []
     write_mode: bool = False
     session_id: int
     tool_use_response: Optional[ToolUseResponseInput] = None
