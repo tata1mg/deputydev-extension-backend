@@ -88,7 +88,12 @@ class ConfigFetcher:
             "WEAVIATE_SCHEMA_VERSION": 5,
             "NUMBER_OF_WORKERS": 1,
         },
-        ConfigConsumer.VSCODE_EXT: {},
+        ConfigConsumer.VSCODE_EXT: {
+            "RUDDER": {
+                "WRITE_KEY": ConfigManager.configs["RUDDER"]["WRITE_KEY"],
+                "DATA_PLANE_URL": ConfigManager.configs["RUDDER"]["DATA_PLANE_URL"],
+            }
+        },
     }
 
     @classmethod
