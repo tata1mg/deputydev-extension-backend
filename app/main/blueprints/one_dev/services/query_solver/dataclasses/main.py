@@ -24,6 +24,7 @@ class DetailedFocusItem(BaseModel):
     type: FocusItemTypes
     value: str
     chunks: List[ChunkInfo] = []
+    path: str
 
 
 class QuerySolverInput(BaseModel):
