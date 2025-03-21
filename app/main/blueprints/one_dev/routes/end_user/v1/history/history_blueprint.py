@@ -33,19 +33,24 @@ async def get_chats(_request: Request, auth_data: AuthData, **kwargs):
         response = await PastWorkflows.get_past_chats(session_id=headers.get("X-Session-ID"))
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past chats: {str(e)}")
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/sessions", methods=["GET"])
 @validate_client_version
 @authenticate
-async def get_sessions(_request: Request, auth_data: AuthData, **kwargs):
-    headers = _request.headers
+async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
+    query_params = _request.args
     try:
-        response = await PastWorkflows.get_past_sessions(user_team_id=auth_data.user_team_id, headers=headers)
+        response = await PastWorkflows.get_past_sessions(
+            user_team_id=auth_data.user_team_id,
+            session_type=query_params["session_type"][0],
+            limit=int(int(query_params["limit"][0])) if query_params.get("limit") else None,
+            offset=int(int(query_params["offset"][0])) if query_params.get("offset") else None,
+        )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/delete-session", methods=["PUT"])
@@ -59,7 +64,7 @@ async def delete_session(_request: Request, auth_data: AuthData, **kwargs):
         )
     except Exception as e:
         raise BadRequestException(f"Failed to delete session: {str(e)}")
-    return send_response(response)
+    return send_response(response, headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/relevant-chat-history", methods=["POST"])

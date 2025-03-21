@@ -23,6 +23,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    DetailedFocusItem,
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
@@ -36,6 +37,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import FILE_PATH_SEARCHER
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
@@ -51,14 +53,25 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 
 class QuerySolver:
-    async def _generate_session_summary(self, session_id: int, query: str, llm_handler: LLMHandler[PromptFeatures]):
+    async def _generate_session_summary(
+        self, session_id: int, query: str, focus_items: List[DetailedFocusItem], llm_handler: LLMHandler[PromptFeatures]
+    ):
         current_session = await MessageSessionsRepository.get_by_id(session_id)
         if current_session and current_session.summary:
             return
+
+        # if no summary, first generate a summary by directly putting first 100 characters of the query.
+        # this will be used as a placeholder until the LLM generates a more detailed summary.
+        brief_query_preview = query[:100]
+        await MessageSessionsRepository.update_session_summary(
+            session_id=session_id, summary=f"{brief_query_preview}..."
+        )
+
+        # then generate a more detailed summary using LLM
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-            prompt_vars={"query": query},
+            prompt_vars={"query": query, "focus_items": focus_items},
             previous_responses=[],
             tools=[],
             stream=False,
@@ -144,20 +157,27 @@ class QuerySolver:
 
     async def solve_query(self, payload: QuerySolverInput) -> AsyncIterator[BaseModel]:
 
-        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER]
+        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
 
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
-                    session_id=payload.session_id, query=payload.query, llm_handler=llm_handler
+                    session_id=payload.session_id,
+                    query=payload.query,
+                    focus_items=payload.focus_items,
+                    llm_handler=llm_handler,
                 )
             )
+
+            print("focus_items +++++++++++++++++++++++++++++++++++")
+            print(payload.focus_items)
+            print("focus_items +++++++++++++++++++++++++++++++++++")
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-                prompt_vars={"query": payload.query, "relevant_chunks": payload.relevant_chunks},
+                prompt_vars={"query": payload.query, "focus_items": payload.focus_items},
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
                 ),

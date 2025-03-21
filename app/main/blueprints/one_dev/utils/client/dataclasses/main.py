@@ -1,13 +1,5 @@
-from enum import Enum
-
+from deputydev_core.utils.constants.enums import Clients
 from pydantic import BaseModel
-
-
-class Clients(Enum):
-    CLI = "CLI"
-    BACKEND = "BACKEND"
-    VSCODE_EXT = "VSCODE_EXT"
-    BINARY = "BINARY"
 
 
 class ClientData(BaseModel):
