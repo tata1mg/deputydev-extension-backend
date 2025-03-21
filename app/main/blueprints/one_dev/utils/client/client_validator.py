@@ -11,8 +11,8 @@ from app.main.blueprints.one_dev.constants.constants import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import (
     ClientData,
-    Clients,
 )
+from deputydev_core.utils.constants.enums import Clients
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 
