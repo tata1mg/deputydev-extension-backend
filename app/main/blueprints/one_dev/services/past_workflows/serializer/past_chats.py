@@ -11,6 +11,7 @@ from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_co
 from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import (
     BaseSerializer,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import DetailedFocusItem
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -38,8 +39,28 @@ class PastChatsSerializer(BaseSerializer):
                     or not isinstance((text_data.content_vars or {}).get("query"), str)
                 ):
                     continue
+
+                focus_objects: List[Dict[str, Any]] = []
+                if text_data.content_vars.get("focus_items"):
+                    for focus_item in text_data.content_vars["focus_items"]:
+                        focus_item_data = DetailedFocusItem(**focus_item)
+                        focus_objects.append({
+                            "type": focus_item_data.type.value,
+                            "value": focus_item_data.value,
+                            "path": focus_item_data.path,
+                            "chunks": [{
+                                "start_line": chunk.source_details.start_line,
+                                "end_line": chunk.source_details.end_line,
+                            } for chunk in focus_item_data.chunks]
+                        })
+
+                content = {"text": text_data.content_vars["query"]}
+                if focus_objects:
+                    content["focus_items"] = focus_objects
+
+
                 formatted_data.append(
-                    {"type": "TEXT_BLOCK", "content": {"text": text_data.content_vars["query"]}, "actor": actor}
+                    {"type": "TEXT_BLOCK", "content": content, "actor": actor}
                 )
             elif message_type == MessageType.TOOL_RESPONSE:
                 tool_use_id = response_block[0].content.tool_use_id
