@@ -15,8 +15,16 @@
   },
   "SESSION_ENCRYPTION_PASSWORD": "",
   "ORG_INFO": {
-    "TATA_1MG": {"domain": "1mg.com", "team_id": 1, "org_name": "TATA 1mg"},
-    "TRAYA": {"domain": "traya.com", "team_id": 3, "org_name": "Traya"}
+    "TATA_1MG": {
+      "domain": "1mg.com",
+      "team_id": 1,
+      "org_name": "TATA 1mg"
+    },
+    "TRAYA": {
+      "domain": "traya.com",
+      "team_id": 3,
+      "org_name": "Traya"
+    }
   },
   "DEBUG": false,
   "ACCESS_LOG": true,
@@ -56,9 +64,15 @@
       "DESCRIPTION": "DeputyDev Review",
       "URL": "https://api.1mg.com/api/v1/scrit/init",
       "EVENTS": {
-        "BITBUCKET": ["pullrequest:created"],
-        "GITHUB": ["pull_request"],
-        "GITLAB": ["pull_requests"]
+        "BITBUCKET": [
+          "pullrequest:created"
+        ],
+        "GITHUB": [
+          "pull_request"
+        ],
+        "GITLAB": [
+          "pull_requests"
+        ]
       },
       "SECRET_TOKEN": ""
     },
@@ -67,9 +81,15 @@
       "DESCRIPTION": "DeputyDev Chat",
       "URL": "https://api.1mg.com/api/v1/scrit/chat",
       "EVENTS": {
-        "BITBUCKET": ["pullrequest:comment_created"],
-        "GITHUB": ["pull_request_review_comment"],
-        "GITLAB": ["comments"]
+        "BITBUCKET": [
+          "pullrequest:comment_created"
+        ],
+        "GITHUB": [
+          "pull_request_review_comment"
+        ],
+        "GITLAB": [
+          "comments"
+        ]
       },
       "SECRET_TOKEN": ""
     },
@@ -83,13 +103,16 @@
           "pullrequest:fulfilled",
           "pullrequest:rejected"
         ],
-        "GITHUB": ["pull_request"],
-        "GITLAB": ["pull_requests"]
+        "GITHUB": [
+          "pull_request"
+        ],
+        "GITLAB": [
+          "pull_requests"
+        ]
       },
       "SECRET_TOKEN": ""
     }
   ],
-
   "BITBUCKET": {
     "KEY": "",
     "URL": "https://api.bitbucket.org",
@@ -301,19 +324,34 @@
     "TIMEOUT": 10000
   },
   "OPENAI_TIMEOUT": 1000,
-  "TEAMS_ENABLED_FOR_EXPERIMENT": [123456, 23456],
+  "TEAMS_ENABLED_FOR_EXPERIMENT": [
+    123456,
+    23456
+  ],
   "JWT_SECRET_KEY": "XXXXXXXXXXXXXXXX",
-  "TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING": [1, 2],
+  "TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING": [
+    1,
+    2
+  ],
   "AIOHTTP": {
     "LIMIT": 0,
     "LIMIT_PER_HOST": 0,
     "TTL_DNS_CACHE": 10
   },
-  "VALID_ADVOCACY_IDS": [1,2,3,4],
+  "VALID_ADVOCACY_IDS": [
+    1,
+    2,
+    3,
+    4
+  ],
   "AUTH_TOKEN_GRACE_PERIOD": 1800,
   "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
   "RUDDER": {
-        "WRITE_KEY": "",
-        "DATA_PLANE_URL": "https://rudderapi.1mg.com"
-    }
+    "WRITE_KEY": "",
+    "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+  },
+  "AWS_API_GATEWAY": {
+    "HOST": "https://sample.com",
+    "AWS_REGION": "ap-south-1"
+  }
 }

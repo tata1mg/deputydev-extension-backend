@@ -1,10 +1,12 @@
 import asyncio
 import json
-from typing import Any
+from typing import Any, Dict, List
 
+import httpx
 from sanic import Blueprint
 from torpedo import Request, send_response
 
+from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import AWSAPIGatewayServiceClient
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
@@ -20,31 +22,59 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
+from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.app_logger import AppLogger
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
 
-@code_gen_v2_bp.route("/generate-code")
-@validate_client_version
-@authenticate
-@ensure_session_id(session_type="CODE_GENERATION_V2")
-async def solve_user_query(
-    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
-):
-    response = await _request.respond()
-    print(_request.json)
-    payload = QuerySolverInput(**_request.json, session_id=session_id)
+local_testing_stream_buffer : Dict[str, List[str]] = {}
+
+
+@code_gen_v2_bp.route("/generate-code", methods=["POST"])
+async def solve_user_query(_request: Request, **kwargs: Any):
+    json_payload = _request.json
+    print("json_payload", json_payload)
+    session_id = json_payload.get("session_id")
+    if not session_id:
+        session_id = ConfigManager().get("session_id")
+        json_payload["session_id"] = session_id
+
+    payload = QuerySolverInput(**_request.json)
     print("previous_query_ids")
     print(payload.previous_query_ids)
-    response.content_type = "text/event-stream"
-    if kwargs.get("response_headers"):
-        response.headers = kwargs.get("response_headers")
-    data = await QuerySolver().solve_query(payload=payload)
+    connection_id: str = _request.headers["connectionid"]  # type: ignore
 
-    async for data_block in data:
-        await response.send("data: " + json.dumps(data_block.model_dump(mode="json")) + "\r\n\r\n")
+    is_local: bool = _request.headers.get("X-Is-Local") == "true"
 
-    await response.eof()
+    async def solve_query():
+        nonlocal payload
+        nonlocal connection_id
+        try:
+            data = await QuerySolver().solve_query(payload=payload)
+            async for data_block in data:
+                if not is_local:
+                    await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
+                        "/generate-code-data",
+                        connection_id=connection_id,
+                        message=json.dumps(data_block.model_dump(mode="json")),
+                    )
+                else:
+                    local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data_block.model_dump(mode="json")))
+        except Exception as ex:
+            AppLogger.log_error(f"Error in solving query: {ex}")
+        finally:
+            if is_local:
+                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps({"type": "STREAM_END"}))
+            else:
+                await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
+                    "/generate-code-data",
+                    connection_id=connection_id,
+                    message=json.dumps({"type": "STREAM_END"}),
+                )
+
+    asyncio.create_task(solve_query())
+    return send_response({"status": "SUCCESS"})
 
 
 @code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
@@ -60,37 +90,45 @@ async def generate_inline_edit(
     return send_response({"job_id": data})
 
 
-@code_gen_v2_bp.route("/sse-stream")
-async def sse_stream(request):
-    response = await request.respond()
-    response.content_type = "text/event-stream"
-    print("Streaming...")
+# This is for testing purposes only
+# This mocks the AWS api gateway connection
+@code_gen_v2_bp.websocket("/generate-code-local-connection")
+async def sse_websocket(request: Request, ws: Any):
+    async with httpx.AsyncClient() as client:
+        # first mock connecting to the server using /connect endpoint
+        self_host_url = f"http://{ConfigManager.configs['HOST']}:{ConfigManager.configs['PORT']}"
+        connection_response = await client.post(
+            f"{self_host_url}/end_user/v1/websocket-connection/connect", headers={**dict(request.headers)}
+        )
+        connection_data = connection_response.json()
+        if connection_data.get("status") != "SUCCESS":
+            raise Exception("Connection failed")
 
-    async def event_generator():
-        for i in range(1, 6):  # Send 5 events, one every second
-            yield f"data: Event {i}\n\n"
-            await asyncio.sleep(1)  # Simulate data generation delay
+        # generate a random connectionid
+        connection_id = "random_connection_id"
 
-        yield "data: [DONE]\n\n"  # End event
+        # now receive the data
+        raw_payload = await ws.recv()
+        payload = json.loads(raw_payload)
 
-    async for data_block in event_generator():
-        await response.send("data: " + data_block)
+        # then get a stream of data from the /generate-code endpoint
+        message_response = await client.post(
+            f"{self_host_url}/end_user/v2/code-gen/generate-code", headers={"connectionid": connection_id, "X-Is-Local": "true"}, json=payload
+        )
+        print("message_response", message_response.json())
 
-    await response.eof()
+        while True:
+            if local_testing_stream_buffer.get(connection_id):
+                data = local_testing_stream_buffer[connection_id].pop(0)
+                await ws.send(data)
+                if data == json.dumps({"type": "STREAM_END"}):
+                    break
+            else:
+                await asyncio.sleep(0.2)
 
+        # iterate over message response and send the data to the client
 
-@code_gen_v2_bp.websocket("/sse-websocket")
-async def sse_websocket(request, ws):
-    response = await request.respond()
-    # response.content_type = "text/event-stream"
-    print("Streaming...")
-
-    async def event_generator():
-        for i in range(1, 6):  # Send 5 events, one every second
-            yield f"data: Event {i}\n\n"
-            await asyncio.sleep(1)  # Simulate data generation delay
-
-        yield "data: [DONE]\n\n"  # End event
-
-    async for data_block in event_generator():
-        await ws.send("data: " + data_block)
+        # finally, disconnect from the server using /disconnect endpoint
+        await client.post(
+            f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connection_id": connection_id}
+        )
