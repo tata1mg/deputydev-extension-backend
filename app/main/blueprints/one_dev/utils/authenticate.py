@@ -27,7 +27,7 @@ def authenticate(func: Any) -> Any:
     """
 
     @wraps(func)
-    async def wrapper(_request: Request, client_data: ClientData, **kwargs) -> Any:
+    async def wrapper(_request: Request, client_data: ClientData, **kwargs: Any) -> Any:
         # Check if the session ID is present in the headers
         authorization_header = _request.headers.get("Authorization")
         # TODO: update below logic, this is very specific
@@ -45,7 +45,6 @@ def authenticate(func: Any) -> Any:
 
         # decode encrypted session data and get the supabase access token
         encrypted_session_data = authorization_header.split(" ")[1].strip()
-        print(encrypted_session_data)
         try:
             # first decrypt the token using session encryption service
             session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
@@ -53,12 +52,11 @@ def authenticate(func: Any) -> Any:
             session_data = json.loads(session_data_string)
             # extract supabase access token
             access_token = session_data.get("access_token")
-            print(access_token)
-            # token_data = await SupabaseAuth.verify_auth_token(
-            #     access_token.strip(), use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
-            # )
-            # if not token_data["valid"]:
-            #     return {"status": AuthStatus.NOT_VERIFIED.value}
+            token_data = await SupabaseAuth.verify_auth_token(
+                access_token.strip(), use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
+            )
+            if not token_data["valid"]:
+                return {"status": AuthStatus.NOT_VERIFIED.value}
         except ExpiredSignatureError:
             # refresh the current session
             refresh_session_data = await SupabaseAuth.refresh_session(session_data)
@@ -108,7 +106,7 @@ def authenticate(func: Any) -> Any:
 
         # prepare the auth data
         auth_data = AuthData(
-            user_team_id=1,
+            user_team_id=user_team_id
         )
 
         return await func(_request, client_data=client_data, auth_data=auth_data, **kwargs)
