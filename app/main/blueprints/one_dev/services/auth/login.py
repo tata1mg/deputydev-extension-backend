@@ -23,13 +23,19 @@ class Login:
             response = await SupabaseAuth.verify_auth_token(access_token, enable_grace_period=enable_grace_period)
             if not response["valid"]:
                 return {"status": AuthStatus.NOT_VERIFIED.value}
-            return {"status": AuthStatus.VERIFIED.value}
+            return {
+                "status": AuthStatus.VERIFIED.value,
+                "user_email": response["user_email"],
+                "user_name": response["user_name"]
+            }
         except ExpiredSignatureError:
             # refresh the current session
-            refresh_session_data = await SupabaseAuth.refresh_session(session_data)
+            refresh_session_data, email, user_name = await SupabaseAuth.refresh_session(session_data)
             return {
                 "status": AuthStatus.EXPIRED.value,
                 "encrypted_session_data": refresh_session_data,
+                "user_email": email,
+                "user_name": user_name
             }
         except InvalidTokenError:
             return {

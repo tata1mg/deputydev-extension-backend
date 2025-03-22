@@ -37,12 +37,14 @@ class SupabaseSession:
 
         # Extract email from token data
         email = token_data["user_email"]
+        user_name = token_data["user_name"]
 
         # Fetch the registered user ID based on the email
         user = await UserRepository.db_get(filters={"email": email}, fetch_one=True)
 
         # Add email and user_id to session data
         data["email"] = email
+        data["user_name"] = user_name
         data["user_id"] = user.id
 
         return data
@@ -84,7 +86,7 @@ class SupabaseSession:
             # Encrypting session data using session encryption service
             encrypted_session_data = SessionEncryptionService.encrypt(updated_session_data_string)
 
-            return {"encrypted_session_data": encrypted_session_data, "status": AuthStatus.AUTHENTICATED.value}
+            return {"encrypted_session_data": encrypted_session_data, "user_email": updated_session_data["email"], "user_name": updated_session_data["user_name"], "status": AuthStatus.AUTHENTICATED.value}
 
         except APIError as e:
             if e.code == "PGRST116":
