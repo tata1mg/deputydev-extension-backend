@@ -105,9 +105,7 @@ def authenticate(func: Any) -> Any:
             raise BadRequestException("User team not found")
 
         # prepare the auth data
-        auth_data = AuthData(
-            user_team_id=user_team_id
-        )
+        auth_data = AuthData(user_team_id=user_team_id)
 
         return await func(_request, client_data=client_data, auth_data=auth_data, **kwargs)
 

@@ -10,6 +10,7 @@ from deputydev_core.services.repo.local_repo.base_local_repo_service import (
 )
 from deputydev_core.services.repo.local_repo.local_repo_factory import LocalRepoFactory
 from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
+from deputydev_core.utils.constants.enums import SharedMemoryKeys
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.completion import (
     CompleteEvent,
@@ -35,7 +36,6 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
     AppContext,
     ScreenType,
 )
-from deputydev_core.utils.constants.enums import SharedMemoryKeys
 
 
 class RepoPathCompleter(Completer):

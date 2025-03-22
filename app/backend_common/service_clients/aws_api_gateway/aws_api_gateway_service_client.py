@@ -1,7 +1,8 @@
 from typing import Optional
-from deputydev_core.utils.config_manager import ConfigManager
+
 from aiobotocore.session import AioSession
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
 
 

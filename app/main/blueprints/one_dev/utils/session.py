@@ -12,7 +12,9 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
-async def check_or_create_session(session_type: str, client_data: ClientData, auth_data: AuthData, sesison_id: Optional[int] = None) -> int:
+async def check_or_create_session(
+    session_type: str, client_data: ClientData, auth_data: AuthData, sesison_id: Optional[int] = None
+) -> int:
     final_session_id = sesison_id
     if not final_session_id:
         # get the client and client version from the headers
@@ -30,6 +32,7 @@ async def check_or_create_session(session_type: str, client_data: ClientData, au
         )
         final_session_id = message_session.id
     return final_session_id
+
 
 def ensure_session_id(session_type: str = "MESSAGE") -> Any:
     def _ensure_session_id(func: Any) -> Any:
