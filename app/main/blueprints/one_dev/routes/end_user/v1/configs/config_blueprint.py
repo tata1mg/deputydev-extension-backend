@@ -30,4 +30,3 @@ async def get_configs(_request: Request, client_data: ClientData, **kwargs):
     value = ConfigConsumer[query_params.get("consumer")]
     response = ConfigFetcher.fetch_configs(consumer=value, config_type=ConfigType.MAIN)
     return send_response(response, headers=kwargs.get("response_headers"))
-
