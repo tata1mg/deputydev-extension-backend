@@ -311,8 +311,7 @@
   },
   "VALID_ADVOCACY_IDS": [1,2,3,4],
   "AUTH_TOKEN_GRACE_PERIOD": 1800,
-  "USE_GRACE_PERIOD_FOR_EMBEDDING": true
-  "VALID_ADVOCACY_IDS": [1,2,3,4],
+  "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
   "RUDDER": {
         "WRITE_KEY": "",
         "DATA_PLANE_URL": "https://rudderapi.1mg.com"

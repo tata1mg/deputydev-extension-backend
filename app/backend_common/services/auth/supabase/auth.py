@@ -156,12 +156,16 @@ class SupabaseAuth:
             if not response.session:
                 raise Exception("Failed to refresh tokens.")
 
+            # extracting email and user name
+            email = response.user.email
+            user_name = response.user.user_metadata["full_name"]
+
             # update the session data with the refreshed access and refresh tokens
             session_data["access_token"] = response.session.access_token
             session_data["refresh_token"] = response.session.refresh_token
             # return the refreshed session data
             encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
-            return encrypted_session_data
+            return encrypted_session_data, email, user_name
         except Exception as e:
             # Handle exceptions (e.g., log the error)
             raise Exception(f"Error refreshing session: {str(e)}")
