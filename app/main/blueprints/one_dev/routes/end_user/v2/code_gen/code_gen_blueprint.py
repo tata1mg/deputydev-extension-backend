@@ -99,7 +99,6 @@ async def generate_inline_edit(
 # This mocks the AWS api gateway connection
 @code_gen_v2_bp.websocket("/generate-code-local-connection")
 async def sse_websocket(request: Request, ws: Any):
-    print("websocket connection")
     try:
         async with httpx.AsyncClient() as client:
             # generate a random connectionid
