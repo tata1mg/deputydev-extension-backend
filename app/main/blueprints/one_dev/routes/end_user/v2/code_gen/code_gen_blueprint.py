@@ -1,11 +1,13 @@
 import asyncio
 import json
 from typing import Any, Dict, List
+import uuid
 
 import httpx
 from sanic import Blueprint
 from torpedo import Request, send_response
 
+from app.backend_common.caches.websocket_connections_cache import WebsocketConnectionCache
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import AWSAPIGatewayServiceClient
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
@@ -35,15 +37,18 @@ local_testing_stream_buffer : Dict[str, List[str]] = {}
 async def solve_user_query(_request: Request, **kwargs: Any):
     json_payload = _request.json
     print("json_payload", json_payload)
-    session_id = json_payload.get("session_id")
-    if not session_id:
-        session_id = ConfigManager().get("session_id")
-        json_payload["session_id"] = session_id
 
-    payload = QuerySolverInput(**_request.json)
     print("previous_query_ids")
-    print(payload.previous_query_ids)
     connection_id: str = _request.headers["connectionid"]  # type: ignore
+
+    connection_data = await WebsocketConnectionCache.get(connection_id)
+    _auth_data = AuthData(**connection_data["auth_data"])
+    _client_data = ClientData(**connection_data["client_data"])
+    session_id: int = connection_data["session_id"]
+
+    payload = QuerySolverInput(**_request.json, session_id=session_id)
+    print(payload)
+
 
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
 
@@ -94,41 +99,42 @@ async def generate_inline_edit(
 # This mocks the AWS api gateway connection
 @code_gen_v2_bp.websocket("/generate-code-local-connection")
 async def sse_websocket(request: Request, ws: Any):
-    async with httpx.AsyncClient() as client:
-        # first mock connecting to the server using /connect endpoint
-        self_host_url = f"http://{ConfigManager.configs['HOST']}:{ConfigManager.configs['PORT']}"
-        connection_response = await client.post(
-            f"{self_host_url}/end_user/v1/websocket-connection/connect", headers={**dict(request.headers)}
-        )
-        connection_data = connection_response.json()
-        if connection_data.get("status") != "SUCCESS":
-            raise Exception("Connection failed")
+    print("websocket connection")
+    try:
+        async with httpx.AsyncClient() as client:
+            # generate a random connectionid
+            connection_id = uuid.uuid4().hex
+            # first mock connecting to the server using /connect endpoint
+            self_host_url = f"http://{ConfigManager.configs['HOST']}:{ConfigManager.configs['PORT']}"
+            connection_response = await client.post(
+                f"{self_host_url}/end_user/v1/websocket-connection/connect", headers={**dict(request.headers), "connectionid": connection_id}
+            )
+            connection_data = connection_response.json()
+            if connection_data.get("status") != "SUCCESS":
+                raise Exception("Connection failed")
 
-        # generate a random connectionid
-        connection_id = "random_connection_id"
+            # now receive the data
+            raw_payload = await ws.recv()
+            payload = json.loads(raw_payload)
 
-        # now receive the data
-        raw_payload = await ws.recv()
-        payload = json.loads(raw_payload)
+            # then get a stream of data from the /generate-code endpoint
+            await client.post(
+                f"{self_host_url}/end_user/v2/code-gen/generate-code", headers={"connectionid": connection_id, "X-Is-Local": "true"}, json=payload
+            )
 
-        # then get a stream of data from the /generate-code endpoint
-        message_response = await client.post(
-            f"{self_host_url}/end_user/v2/code-gen/generate-code", headers={"connectionid": connection_id, "X-Is-Local": "true"}, json=payload
-        )
-        print("message_response", message_response.json())
+            # iterate over message response and send the data to the client
+            while True:
+                if local_testing_stream_buffer.get(connection_id):
+                    data = local_testing_stream_buffer[connection_id].pop(0)
+                    await ws.send(data)
+                    if data == json.dumps({"type": "STREAM_END"}):
+                        break
+                else:
+                    await asyncio.sleep(0.2)
 
-        while True:
-            if local_testing_stream_buffer.get(connection_id):
-                data = local_testing_stream_buffer[connection_id].pop(0)
-                await ws.send(data)
-                if data == json.dumps({"type": "STREAM_END"}):
-                    break
-            else:
-                await asyncio.sleep(0.2)
-
-        # iterate over message response and send the data to the client
-
-        # finally, disconnect from the server using /disconnect endpoint
-        await client.post(
-            f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connection_id": connection_id}
-        )
+            # finally, disconnect from the server using /disconnect endpoint
+            await client.post(
+                f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connection_id": connection_id}
+            )
+    except Exception as _ex:
+        AppLogger.log_error(f"Error in websocket connection: {_ex}")
