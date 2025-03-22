@@ -356,12 +356,12 @@
         "Darwin": {
           "arm64": {
             "download_link": "",
-            "file_name": "",
+            "directory": "",
             "service_path": ""
           },
           "x86_64": {
             "download_link": "",
-            "file_name": "",
+            "directory": "",
             "service_path": ""
           }
         },
