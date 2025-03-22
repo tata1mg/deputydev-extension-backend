@@ -1,7 +1,7 @@
 import json
 from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import TextBlockData, MessageData
+from app.backend_common.models.dto.message_thread_dto import MessageData, TextBlockData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
