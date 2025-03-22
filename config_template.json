@@ -351,20 +351,25 @@
     "DATA_PLANE_URL": "https://rudderapi.1mg.com"
   },
   "BINARY": {
-    "0.0.1": {
-      "Darwin": {
-        "arm64": {
-          "download_link": "",
-          "file_name": ""
+    "FILE": {
+      "0.0.1": {
+        "Darwin": {
+          "arm64": {
+            "download_link": "",
+            "file_name": "",
+            "service_path": ""
+          },
+          "x86_64": {
+            "download_link": "",
+            "file_name": "",
+            "service_path": ""
+          }
         },
-        "x86_64": {
-          "download_link": "",
-          "file_name": ""
+        "Linux": {
         }
-      },
-      "Linux": {
       }
-    }
-  },
-  "BINARY_PASSWORD": ""
+    },
+    "PASSWORD": "",
+    "PORT_RANGE": [63000, 63500]
+  }
 }
