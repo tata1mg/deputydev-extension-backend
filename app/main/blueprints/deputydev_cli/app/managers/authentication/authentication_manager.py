@@ -2,9 +2,14 @@ import time
 import uuid
 from typing import Optional
 
+from deputydev_core.services.auth_token_storage.cli_auth_token_storage_manager import (
+    CLIAuthTokenStorageManager,
+)
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.auth import AuthStatus
+from deputydev_core.utils.constants.enums import SharedMemoryKeys
 from deputydev_core.utils.exceptions import InvalidVersionException
+from deputydev_core.utils.shared_memory import SharedMemory
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.validation import ValidationError
 
@@ -12,9 +17,6 @@ from app.main.blueprints.deputydev_cli.app.clients.browser import BrowserClient
 from app.main.blueprints.deputydev_cli.app.clients.one_dev_cli_client import (
     OneDevCliClient,
 )
-from deputydev_core.services.auth_token_storage.cli_auth_token_storage_manager import CLIAuthTokenStorageManager
-from deputydev_core.utils.constants.enums import SharedMemoryKeys
-from deputydev_core.utils.shared_memory import SharedMemory
 
 
 class AuthenticationManager:

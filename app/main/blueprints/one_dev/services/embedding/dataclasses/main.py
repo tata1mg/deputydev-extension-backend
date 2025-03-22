@@ -1,9 +1,8 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from typing import Optional
 
 
 class OneDevEmbeddingPayload(BaseModel):

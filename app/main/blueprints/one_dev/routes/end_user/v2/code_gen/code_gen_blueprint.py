@@ -1,14 +1,20 @@
 import asyncio
 import json
-from typing import Any, Dict, List
 import uuid
+from typing import Any, Dict, List
 
 import httpx
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint
 from torpedo import Request, send_response
 
-from app.backend_common.caches.websocket_connections_cache import WebsocketConnectionCache
-from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import AWSAPIGatewayServiceClient
+from app.backend_common.caches.websocket_connections_cache import (
+    WebsocketConnectionCache,
+)
+from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
+    AWSAPIGatewayServiceClient,
+)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
@@ -24,13 +30,11 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
-from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.utils.app_logger import AppLogger
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
 
-local_testing_stream_buffer : Dict[str, List[str]] = {}
+local_testing_stream_buffer: Dict[str, List[str]] = {}
 
 
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
@@ -49,7 +53,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     payload = QuerySolverInput(**_request.json, session_id=session_id)
     print(payload)
 
-
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
 
     async def solve_query():
@@ -65,7 +68,9 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                         message=json.dumps(data_block.model_dump(mode="json")),
                     )
                 else:
-                    local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data_block.model_dump(mode="json")))
+                    local_testing_stream_buffer.setdefault(connection_id, []).append(
+                        json.dumps(data_block.model_dump(mode="json"))
+                    )
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
         finally:
@@ -106,7 +111,8 @@ async def sse_websocket(request: Request, ws: Any):
             # first mock connecting to the server using /connect endpoint
             self_host_url = f"http://{ConfigManager.configs['HOST']}:{ConfigManager.configs['PORT']}"
             connection_response = await client.post(
-                f"{self_host_url}/end_user/v1/websocket-connection/connect", headers={**dict(request.headers), "connectionid": connection_id}
+                f"{self_host_url}/end_user/v1/websocket-connection/connect",
+                headers={**dict(request.headers), "connectionid": connection_id},
             )
             connection_data = connection_response.json()
             if connection_data.get("status") != "SUCCESS":
@@ -118,7 +124,9 @@ async def sse_websocket(request: Request, ws: Any):
 
             # then get a stream of data from the /generate-code endpoint
             await client.post(
-                f"{self_host_url}/end_user/v2/code-gen/generate-code", headers={"connectionid": connection_id, "X-Is-Local": "true"}, json=payload
+                f"{self_host_url}/end_user/v2/code-gen/generate-code",
+                headers={"connectionid": connection_id, "X-Is-Local": "true"},
+                json=payload,
             )
 
             # iterate over message response and send the data to the client
