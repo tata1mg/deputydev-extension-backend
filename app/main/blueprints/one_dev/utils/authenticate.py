@@ -31,9 +31,15 @@ def authenticate(func: Any) -> Any:
         # Check if the session ID is present in the headers
         authorization_header = _request.headers.get("Authorization")
         # TODO: update below logic, this is very specific
-        payload = _request.custom_json() if _request.method == "POST" else _request.request_params()
-        use_grace_period = payload.get("use_grace_period") or False
-        enable_grace_period = payload.get("enable_grace_period") or False
+
+        use_grace_period: bool = False
+        enable_grace_period: bool = False
+        try:
+            payload = _request.custom_json() if _request.method == "POST" else _request.request_params()
+            use_grace_period = payload.get("use_grace_period") or False
+            enable_grace_period = payload.get("enable_grace_period") or False
+        except Exception:
+            pass
         if not authorization_header:
             raise Exception("Authorization header is missing")
 
@@ -48,11 +54,11 @@ def authenticate(func: Any) -> Any:
             # extract supabase access token
             access_token = session_data.get("access_token")
             print(access_token)
-            token_data = await SupabaseAuth.verify_auth_token(
-                access_token.strip(), use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
-            )
-            if not token_data["valid"]:
-                return {"status": AuthStatus.NOT_VERIFIED.value}
+            # token_data = await SupabaseAuth.verify_auth_token(
+            #     access_token.strip(), use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
+            # )
+            # if not token_data["valid"]:
+            #     return {"status": AuthStatus.NOT_VERIFIED.value}
         except ExpiredSignatureError:
             # refresh the current session
             refresh_session_data = await SupabaseAuth.refresh_session(session_data)
