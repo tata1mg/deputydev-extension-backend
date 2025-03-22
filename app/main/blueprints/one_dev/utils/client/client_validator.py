@@ -8,6 +8,7 @@ from torpedo.exceptions import BadRequestException
 from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_CLI_VERSION,
     MIN_SUPPORTED_VSCODE_EXT_VERSION,
+    MIN_SUPPORTED_WEB_VERSION,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import (
     ClientData,
@@ -23,6 +24,10 @@ def validate_version(client: Clients, client_version: str) -> Tuple[bool, Option
         is_valid = compare_version(client_version, MIN_SUPPORTED_CLI_VERSION, ">=")
         if not is_valid:
             min_version_supported = MIN_SUPPORTED_CLI_VERSION
+    elif client == Clients.WEB:
+        is_valid = compare_version(client_version, MIN_SUPPORTED_WEB_VERSION, ">=")
+        if not is_valid:
+            min_version_supported = MIN_SUPPORTED_WEB_VERSION
     else:
         is_valid = compare_version(client_version, MIN_SUPPORTED_VSCODE_EXT_VERSION, ">=")
         if not is_valid:
