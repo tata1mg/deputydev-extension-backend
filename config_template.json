@@ -370,6 +370,8 @@
       }
     },
     "PASSWORD": "",
-    "PORT_RANGE": [63000, 63500]
+    "PORT_RANGE": [63000, 63500],
+    "MAX_INIT_RETRY": 600,
+    "MAX_ALIVE_RETRY": 5
   }
 }
