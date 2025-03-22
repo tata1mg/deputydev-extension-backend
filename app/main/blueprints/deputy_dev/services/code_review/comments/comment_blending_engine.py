@@ -49,6 +49,7 @@ class CommentBlendingEngine:
         self.context_service = context_service
         self.MAX_RETRIES = 2
         self.session_id = session_id
+        self.agent_results: Dict[str, AgentRunResult] = {}
 
     @staticmethod
     def get_confidence_score_limit() -> Dict[str, Dict[str, float]]:
@@ -60,13 +61,13 @@ class CommentBlendingEngine:
             llm_confidence_score_limit[agent] = {"confidence_score_limit": setting["confidence_score"]}
         return llm_confidence_score_limit
 
-    async def blend_comments(self) -> List[ParsedCommentData]:
+    async def blend_comments(self) -> Tuple[List[ParsedCommentData], Dict[str, AgentRunResult]]:
         # this function can contain other operations in future
         self.apply_agent_confidence_score_limit()
         await self.validate_comments()
         await self.process_all_comments()
         self.filtered_comments.extend(self.invalid_comments)
-        return self.filtered_comments
+        return self.filtered_comments, self.agent_results
 
     def apply_agent_confidence_score_limit(self) -> None:
         """
@@ -141,6 +142,7 @@ class CommentBlendingEngine:
 
                 comment_validation_agent = agents[0]
                 agent_result = await comment_validation_agent.run_agent(session_id=self.session_id)
+                self.agent_results[agent_result.agent_name] = agent_result
                 if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
                     return
 
@@ -257,53 +259,36 @@ class CommentBlendingEngine:
 
         # Attempt summarization with retries
         for attempt in range(self.MAX_RETRIES):
-            try:
-                agents = AgentFactory.get_review_finalization_agents(
-                    context_service=self.context_service,
-                    comments=multi_comments,
-                    llm_handler=self.llm_handler,
-                    include_agent_types=[AgentTypes.COMMENT_SUMMARIZATION],
-                )
+            # try:
+            agents = AgentFactory.get_review_finalization_agents(
+                context_service=self.context_service,
+                comments=multi_comments,
+                llm_handler=self.llm_handler,
+                include_agent_types=[AgentTypes.COMMENT_SUMMARIZATION],
+            )
 
-                comment_summarization_agent = agents[0]
-                agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
-                if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
-                    return
-
-                if agent_result.agent_result is None:
-                    raise ValueError("Agent result is None")
-
-                for comment in agent_result.agent_result["comments"]:
-                    processed_comments.append(
-                        ParsedCommentData(
-                            file_path=comment.file_path,
-                            line_number=comment.line_number,
-                            comment=comment.comment,
-                            buckets=comment.buckets,
-                            confidence_score=comment.confidence_score,
-                            corrective_code=comment.corrective_code,
-                            model=comment.model,
-                            is_valid=comment.is_valid,
-                            is_summarized=True,
-                        )
-                    )
-                self.filtered_comments = processed_comments
+            comment_summarization_agent = agents[0]
+            agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
+            self.agent_results[agent_result.agent_name] = agent_result
+            if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
                 return
 
-            except json.JSONDecodeError as e:
-                AppLogger.log_warn(
-                    f"Retry {attempt + 1}/{self.MAX_RETRIES}  Json decode error during comment summarization: {str(e)}"
+            if agent_result.agent_result is None:
+                raise ValueError("Agent result is None")
+
+            for comment in agent_result.agent_result["comments"]:
+                processed_comments.append(
+                    ParsedCommentData(
+                        file_path=comment.get("file_path"),
+                        line_number=comment.get("line_number"),
+                        comment=comment.get("comment"),
+                        buckets=comment.get("buckets"),
+                        confidence_score=comment.get("confidence_score"),
+                        corrective_code=comment.get("corrective_code"),
+                        model=comment.get("model"),
+                        is_valid=comment.get("is_valid"),
+                        is_summarized=True,
+                    )
                 )
-
-            except asyncio.TimeoutError as timeout_err:
-                AppLogger.log_warn(
-                    f"Timeout on attempt {attempt + 1}/{self.MAX_RETRIES} during comment summarization: {str(timeout_err)}"
-                )
-
-            except Exception as e:
-                AppLogger.log_warn(f"Retry {attempt + 1}/{self.MAX_RETRIES}  comments summarization call: {e}")
-            if attempt == self.MAX_RETRIES - 1:
-
-                AppLogger.log_warn(f"Summarization failed after {self.MAX_RETRIES} attempts")
-                break
-            await asyncio.sleep(1)
+            self.filtered_comments = processed_comments
+            return

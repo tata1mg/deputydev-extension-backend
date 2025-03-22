@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel
 
@@ -26,7 +26,8 @@ class AgentAndInitParams(BaseModel):
 
 class AgentRunResult(BaseModel):
     prompt_tokens_exceeded: bool
-    agent_result: Optional[Dict[str, Any]] = None
+    agent_result: Optional[Union[Dict[str, Any], str]] = None  # String in case of PR summary
     agent_name: str
     agent_type: AgentTypes
     model: LLModels
+    tokens_data: Optional[Dict[str, Dict[str, Any]]] = None

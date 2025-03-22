@@ -31,6 +31,10 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
                 {
                     "keyword": "serialize_feeds_data",
                     "type": "function"
+                },
+                {
+                    "keyword": "app.py",
+                    "type": "file"
                 }
             ]
         }
