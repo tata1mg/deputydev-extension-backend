@@ -48,8 +48,9 @@ def authenticate(func: Any) -> Any:
             # extract supabase access token
             access_token = session_data.get("access_token")
             print(access_token)
-            token_data = await SupabaseAuth.verify_auth_token(access_token.strip(), use_grace_period=use_grace_period,
-                                                              enable_grace_period=enable_grace_period)
+            token_data = await SupabaseAuth.verify_auth_token(
+                access_token.strip(), use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
+            )
             if not token_data["valid"]:
                 return {"status": AuthStatus.NOT_VERIFIED.value}
         except ExpiredSignatureError:
