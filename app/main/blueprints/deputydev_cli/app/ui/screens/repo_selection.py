@@ -37,6 +37,7 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.dataclasses.main import (
 )
 from deputydev_core.utils.constants.enums import SharedMemoryKeys
 
+
 class RepoPathCompleter(Completer):
     def get_completions(self, document: Document, complete_event: CompleteEvent):
         text = document.text

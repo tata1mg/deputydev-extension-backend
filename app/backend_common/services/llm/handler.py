@@ -187,7 +187,6 @@ class LLMHandler(Generic[PromptFeatures]):
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
-
     async def get_llm_response(
         self,
         client: BaseLLMProvider,
@@ -202,7 +201,7 @@ class LLMHandler(Generic[PromptFeatures]):
         previous_responses: List[MessageThreadDTO] = [],
         max_retry: int = 2,
         stream: bool = False,
-        response_type: Optional[str] = None
+        response_type: Optional[str] = None,
     ) -> UnparsedLLMCallResponse:
 
         llm_payload = client.build_llm_payload(
@@ -214,10 +213,7 @@ class LLMHandler(Generic[PromptFeatures]):
         )
 
         llm_response = await client.call_service_client(
-            llm_payload,
-            llm_model,
-            stream=stream,
-            response_type=response_type
+            llm_payload, llm_model, stream=stream, response_type=response_type
         )
 
         # start task for storing LLM message in DB
@@ -264,21 +260,21 @@ class LLMHandler(Generic[PromptFeatures]):
             )
 
     async def fetch_and_parse_llm_response(
-            self,
-            client: BaseLLMProvider,
-            session_id: int,
-            prompt_type: str,
-            llm_model: LLModels,
-            query_id: int,
-            prompt_handler: BasePrompt,
-            call_chain_category: MessageCallChainCategory,
-            tools: Optional[List[ConversationTool]] = None,
-            user_and_system_messages: Optional[UserAndSystemMessages] = None,
-            tool_use_response: Optional[ToolUseResponseData] = None,
-            previous_responses: List[MessageThreadDTO] = [],
-            max_retry: int = 2,
-            stream: bool = False,
-            response_type: Optional[str] = None
+        self,
+        client: BaseLLMProvider,
+        session_id: int,
+        prompt_type: str,
+        llm_model: LLModels,
+        query_id: int,
+        prompt_handler: BasePrompt,
+        call_chain_category: MessageCallChainCategory,
+        tools: Optional[List[ConversationTool]] = None,
+        user_and_system_messages: Optional[UserAndSystemMessages] = None,
+        tool_use_response: Optional[ToolUseResponseData] = None,
+        previous_responses: List[MessageThreadDTO] = [],
+        max_retry: int = 2,
+        stream: bool = False,
+        response_type: Optional[str] = None,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -313,10 +309,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 llm_response = await client.call_service_client(
-                    llm_payload,
-                    llm_model,
-                    stream=stream,
-                    response_type=response_type
+                    llm_payload, llm_model, stream=stream, response_type=response_type
                 )
 
                 # start task for storing LLM message in DB
@@ -333,9 +326,7 @@ class LLMHandler(Generic[PromptFeatures]):
 
                 # Parse the LLM response
                 parsed_response = await self.parse_llm_response_data(
-                    llm_response=llm_response,
-                    prompt_handler=prompt_handler,
-                    query_id=query_id
+                    llm_response=llm_response, prompt_handler=prompt_handler, query_id=query_id
                 )
 
                 return parsed_response
@@ -537,7 +528,7 @@ class LLMHandler(Generic[PromptFeatures]):
             previous_responses=conversation_chain_messages,
             max_retry=2,
             stream=stream,
-            response_type=prompt_handler.response_type
+            response_type=prompt_handler.response_type,
         )
 
     async def store_tool_use_ressponse_in_db(
@@ -659,4 +650,3 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=2,
             stream=stream,
         )
-
