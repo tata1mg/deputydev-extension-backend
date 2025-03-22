@@ -128,5 +128,7 @@ class ConfigFetcher:
             base_config["BINARY"] = {
                 **ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch],
                 "password": ConfigManager.configs["BINARY"]["PASSWORD"],
-                "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"]
+                "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],
+                "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
+                "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
