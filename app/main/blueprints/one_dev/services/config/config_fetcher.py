@@ -13,8 +13,8 @@ class ConfigFetcher:
         ConfigConsumer.CLI: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                # "HOST": "https://api.deputydev.ai",
-                "HOST": "http://localhost:8084",
+                "HOST": "https://api.deputydev.ai",
+                # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
@@ -22,8 +22,8 @@ class ConfigFetcher:
         ConfigConsumer.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                # "HOST": "https://api.deputydev.ai",
-                "HOST": "http://localhost:8084",
+                "HOST": "https://api.deputydev.ai",
+                # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
@@ -68,7 +68,8 @@ class ConfigFetcher:
                 "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
                 "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
                 "DEFAULT_MAX_CHUNKS_CODE_GENERATION": ConfigManager.configs["CHUNKING"][
-                    "DEFAULT_MAX_CHUNKS_CODE_GENERATION"]
+                    "DEFAULT_MAX_CHUNKS_CODE_GENERATION"
+                ],
             },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],
@@ -88,7 +89,7 @@ class ConfigFetcher:
             "WEAVIATE_GRPC_PORT": 50050,
             "WEAVIATE_SCHEMA_VERSION": 5,
             "NUMBER_OF_WORKERS": 1,
-            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["USE_GRACE_PERIOD_FOR_EMBEDDING"]
+            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["USE_GRACE_PERIOD_FOR_EMBEDDING"],
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
