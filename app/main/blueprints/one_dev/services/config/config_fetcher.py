@@ -13,8 +13,8 @@ class ConfigFetcher:
         ConfigConsumer.CLI: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                # "HOST": "https://api.deputydev.ai",
-                "HOST": "http://localhost:8084",
+                "HOST": "https://api.deputydev.ai",
+                # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
@@ -22,8 +22,8 @@ class ConfigFetcher:
         ConfigConsumer.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                # "HOST": "https://api.deputydev.ai",
-                "HOST": "http://localhost:8084",
+                "HOST": "https://api.deputydev.ai",
+                # "HOST": "http://localhost:8084",
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
