@@ -140,6 +140,7 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
             -   Do not comment on unchanged code unless directly impacted by the changes.
             -   Do not duplicate comments for similar issues across different locations.
             -   If you are suggesting any comment that is already catered please don't include those comment in response.
+            -   Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
             
             Remember to maintain a professional and constructive tone in your comments. Your goal is to help
             improve the code quality by identifying and explaining errors accurately.
