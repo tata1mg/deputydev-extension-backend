@@ -148,13 +148,13 @@ class PRReviewManager(BasePRReviewManager):
         if pr_summary:
             await pr_service.update_pr_description(pr_summary)
 
-        # if _is_large_pr:
-        #     await comment_service.create_pr_comment(
-        #         comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
-        #     )
-        # elif cls.check_no_pr_comments(llm_response):
-        #     await comment_service.create_pr_comment("LGTM!!", config.get("FEATURE_MODELS").get("PR_REVIEW"))
-        # else:
-        #     await comment_service.post_bots_comments(llm_response)
+        if _is_large_pr:
+            await comment_service.create_pr_comment(
+                comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
+            )
+        elif cls.check_no_pr_comments(llm_response):
+            await comment_service.create_pr_comment("LGTM!!", config.get("FEATURE_MODELS").get("PR_REVIEW"))
+        else:
+            await comment_service.post_bots_comments(llm_response)
 
         return llm_response, tokens_data, meta_info_to_save, _is_large_pr

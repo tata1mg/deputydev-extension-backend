@@ -5,15 +5,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.models.dto.message_thread_dto import TextBlockData, MessageData
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4OPrompt,
 )
 
 from ...dataclasses.main import PromptFeatures
+import json
 
 
 class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
     prompt_type = PromptFeatures.COMMENT_VALIDATION.value
+    response_type = "json_object"
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -51,7 +54,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
                     "comment": "Consider refactoring this function to improve readability.",
                     "confidence_score": 0.85,
                     "corrective_code": "def my_function(...): pass",
-                    "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
+                    "buckets": [{{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}}],
                 }},
                 {{
                     "file_path": "src/utils.py",
@@ -59,7 +62,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
                     "comment": "Replace '==' with 'is' for comparison.",
                     "confidence_score": 0.92,
                     "corrective_code": "if x is None: pass",
-                    "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
+                    "buckets": [{{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}}],
                 }}
             ]
             
@@ -72,7 +75,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
                 'comment': '<Same comment as provided in input comment>',
                 'corrective_code': '<Corrective code for the comment suggested. Same as provide in input>',
                 'is_valid': <boolean value telling whether the comment is actually relevant or not>,
-                "buckets": <This is list of buckets [{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}]>,
+                "buckets": <This is list of buckets [{{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}}]>,
                 }}]
                 ```
 
@@ -85,14 +88,14 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
                     "comment": "Consider refactoring this function to improve readability.",
                     "corrective_code": "def my_function(...): pass"
                     "is_valid": true,
-                    "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
+                    "buckets": [{{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}}],
                 }},
                 {{
                     "file_path": "src/utils.py",
                     "line_number": 27,
                     "comment": "Replace '==' with 'is' for comparison.",
                     "is_valid": false,
-                    "buckets": [{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}],
+                    "buckets": [{{"name": "CODE_MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}}],
                 }}
             ]
             ```
@@ -113,14 +116,26 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
             - Any appreciation comments should be marked as invalid
             - All comments should be made on PR diff. And if any comment is made for relevant_chunks_in_repo mark it as invalid.
             - In case the comment is related to user story or business validation. Always mark it a valid comment. 
+            - Make sure to return response in json_object format only.
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
+
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Any]:
-        raise NotImplementedError("This method must be implemented in the child class")
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
+        all_comments: List[Dict[str, Any]] = []
+        for response_data in llm_response.content:
+            if isinstance(response_data, TextBlockData):
+                comments = json.loads(response_data.content.text)
+                if comments:
+                    all_comments.append(comments)
+        return all_comments
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
         raise NotImplementedError("Streaming events not supported for this prompt")
+
+    @classmethod
+    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
+        raise NotImplementedError("This method must be implemented in the child class")
