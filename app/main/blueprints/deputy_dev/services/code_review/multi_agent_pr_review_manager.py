@@ -100,7 +100,6 @@ class MultiAgentPRReviewManager:
         for agent, agent_run_results in self.agent_results.items():
             self.agents_tokens.update(agent_run_results.tokens_data)
 
-
     async def return_final_response(
         self,
     ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
