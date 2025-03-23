@@ -353,19 +353,19 @@
   "BINARY": {
     "FILE": {
       "0.0.1": {
-        "Darwin": {
+        "darwin": {
           "arm64": {
             "download_link": "",
             "directory": "",
             "service_path": ""
           },
-          "x86_64": {
+          "x64": {
             "download_link": "",
             "directory": "",
             "service_path": ""
           }
         },
-        "Linux": {
+        "linux": {
         }
       }
     },
