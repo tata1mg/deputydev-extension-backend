@@ -63,7 +63,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             async for data_block in data:
                 if not is_local:
                     await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                        "/generate-code-data",
+                        f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
                         connection_id=connection_id,
                         message=json.dumps(data_block.model_dump(mode="json")),
                     )
@@ -78,7 +78,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                 local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps({"type": "STREAM_END"}))
             else:
                 await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                    "/generate-code-data",
+                    f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
                     connection_id=connection_id,
                     message=json.dumps({"type": "STREAM_END"}),
                 )
@@ -135,6 +135,8 @@ async def sse_websocket(request: Request, ws: Any):
                     data = local_testing_stream_buffer[connection_id].pop(0)
                     await ws.send(data)
                     if data == json.dumps({"type": "STREAM_END"}):
+                        # remove the connectionid from stream buffer
+                        del local_testing_stream_buffer[connection_id]
                         break
                 else:
                     await asyncio.sleep(0.2)
