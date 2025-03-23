@@ -18,11 +18,12 @@ class FocusItemTypes(Enum):
     CLASS = "class"
     FILE = "file"
     DIRECTORY = "directory"
+    CODE_SNIPPET = "code_snippet"
 
 
 class DetailedFocusItem(BaseModel):
     type: FocusItemTypes
-    value: str
+    value: Optional[str] = None
     chunks: List[ChunkInfo] = []
     path: str
 
