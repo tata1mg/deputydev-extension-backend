@@ -148,7 +148,8 @@
   "MAX_PR_DIFF_TOKEN_LIMIT": 150000,
   "EMBEDDING": {
     "MODEL": "text-embedding-3-small",
-    "TOKEN_LIMIT": 8192
+    "TOKEN_LIMIT": 8192,
+    "MAX_PARALLEL_TASKS": 60
   },
   "IGNORE_FILES": [
     "Pipfile",
@@ -297,8 +298,10 @@
   },
   "ONE_DEV": {
     "HOST": "http://localhost:8084",
-    "GATEWAY_HOST": "http://localhost:8084",
-    "TIMEOUT": 10000
+    "TIMEOUT": 10000,
+    "LIMIT": 0,
+    "LIMIT_PER_HOST": 0,
+    "TTL_DNS_CACHE": 10
   },
   "OPENAI_TIMEOUT": 1000,
   "TEAMS_ENABLED_FOR_EXPERIMENT": [123456, 23456],
@@ -311,9 +314,35 @@
   },
   "VALID_ADVOCACY_IDS": [1,2,3,4],
   "AUTH_TOKEN_GRACE_PERIOD": 1800,
-  "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
   "RUDDER": {
         "WRITE_KEY": "",
         "DATA_PLANE_URL": "https://rudderapi.1mg.com"
-    }
+  },
+  "BINARY": {
+    "WEAVIATE": {
+      "HTTP_PORT": 8079,
+      "GRPC_PORT": 50050,
+      "SCHEMA_VERSION": 5
+    },
+    "EMBEDDING": {
+      "NUMBER_OF_WORKERS": 1,
+      "MODEL": "text-embedding-3-small",
+      "TOKEN_LIMIT": 8192,
+      "MAX_PARALLEL_TASKS": 60
+    },
+    "CHUNKING": {
+      "CHARACTER_SIZE": 2000,
+      "MAX_CHUNKS_CODE_GENERATION": 100,
+      "IS_LLM_RERANKING_ENABLED": true,
+      "DEFAULT_MAX_CHUNKS_CODE_GENERATION": 20
+    },
+    "AUTOCOMPLETE_SEARCH": {
+      "PRE_FILTER_LIMIT": 2000,
+      "MAX_RECORDS_TO_RETURN": 20
+    },
+    "RELEVANT_CHUNKS": {
+      "CHUNKING_ENABLED": true
+    },
+    "USE_GRACE_PERIOD_FOR_EMBEDDING": true
+  }
 }
