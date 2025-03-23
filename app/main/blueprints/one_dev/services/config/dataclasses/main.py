@@ -10,13 +10,13 @@ class ConfigType(Enum):
 
 
 class Architecture(Enum):
-    x86_64 = "x86_64"
+    x64 = "x64"
     ARM_64 = "arm64"
 
 
 class OS(Enum):
-    DARWIN = "Darwin"
-    LINUX = "Linux"
+    DARWIN = "darwin"
+    LINUX = "linux"
 
 
 class ConfigParams(BaseModel):
