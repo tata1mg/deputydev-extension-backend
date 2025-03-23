@@ -50,7 +50,7 @@ class Login:
             return {
                 "status": AuthStatus.VERIFIED.value,
                 "user_email": response["user_email"],
-                "user_name": response["user_name"]
+                "user_name": response["user_name"],
             }
         except ExpiredSignatureError:
             # refresh the current session
@@ -59,7 +59,7 @@ class Login:
                 "status": AuthStatus.EXPIRED.value,
                 "encrypted_session_data": refresh_session_data,
                 "user_email": email,
-                "user_name": user_name
+                "user_name": user_name,
             }
         except InvalidTokenError:
             return {
