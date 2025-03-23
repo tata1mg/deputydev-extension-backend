@@ -6,6 +6,7 @@ from sanic.log import logger
 from app.backend_common.models.dao.postgres.message_threads import MessageThread
 from app.backend_common.models.dto.message_thread_dto import (
     MessageCallChainCategory,
+    MessageThreadActor,
     MessageThreadData,
     MessageThreadDTO,
 )
@@ -108,3 +109,22 @@ class MessageThreadsRepository:
                 f"error occurred while fetching message_threads from db for message_thread_ids filters : {message_thread_ids}, ex: {ex}"
             )
             return []
+
+    @classmethod
+    async def get_total_user_queries(
+        cls, session_ids: List[int], call_chain_category: MessageCallChainCategory
+    ) -> int:
+        try:
+            return await DB.count_by_filters(
+                model_name=MessageThread,
+                filters={
+                    "session_id__in": session_ids,
+                    "call_chain_category": call_chain_category.value,
+                    "actor": MessageThreadActor.USER.value,
+                },
+            )
+        except Exception as ex:
+            logger.error(
+                f"error occurred while fetching user queries count for session_ids: {session_ids}, ex: {ex}"
+            )
+            return 0
