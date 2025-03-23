@@ -349,8 +349,13 @@
   ],
   "AUTH_TOKEN_GRACE_PERIOD": 1800,
   "RUDDER": {
-        "WRITE_KEY": "",
-        "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+    "WRITE_KEY": "",
+    "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+  },
+  "AWS_API_GATEWAY": {
+    "HOST": "https://sample.com",
+    "AWS_REGION": "ap-south-1",
+    "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
   },
   "BINARY": {
     "WEAVIATE": {
@@ -392,12 +397,14 @@
             "service_path": ""
           }
         },
-        "linux": {
-        }
+        "linux": {}
       }
     },
     "PASSWORD": "",
-    "PORT_RANGE": [63000, 63500],
+    "PORT_RANGE": [
+      63000,
+      63500
+    ],
     "MAX_INIT_RETRY": 600,
     "MAX_ALIVE_RETRY": 5
   }
