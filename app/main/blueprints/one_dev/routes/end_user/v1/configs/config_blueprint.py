@@ -1,8 +1,12 @@
+from deputydev_core.utils.constants.enums import ConfigConsumer
 from sanic import Blueprint
 from torpedo import Request, send_response
 
 from app.main.blueprints.one_dev.services.config.config_fetcher import ConfigFetcher
-from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType, ConfigParams
+from app.main.blueprints.one_dev.services.config.dataclasses.main import (
+    ConfigParams,
+    ConfigType,
+)
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
