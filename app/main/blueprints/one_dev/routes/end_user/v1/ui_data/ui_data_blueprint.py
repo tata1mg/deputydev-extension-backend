@@ -14,7 +14,7 @@ from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 ui_data_v1_bp = Blueprint("ui_data_v1_bp", url_prefix="/ui_data")
 
 
-@ui_data_v1_bp.route("/profile", methods=["GET"])
+@ui_data_v1_bp.route("/profile_ui", methods=["GET"])
 @validate_client_version
 @authenticate
 async def get_ui_profile(_request: Request, **kwargs):
