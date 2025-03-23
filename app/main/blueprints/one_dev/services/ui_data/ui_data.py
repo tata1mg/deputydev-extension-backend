@@ -26,7 +26,7 @@ class UIProfile:
             {
                 "label": "Usage",
                 "type": "Expand",
-                "icon": "",
+                "icon": "https://onemg.gumlet.io/dd_usage.png",
                 "data": f"""<div className="p-2 bg-gray-500/20 rounded-bl rounded-br">
                     <p className="text-md">Current Plan - <b>Premium</b></p>
                     <div className="flex flex-col gap-2 mt-2">
@@ -41,13 +41,13 @@ class UIProfile:
             {
                 "label": "Feature Request",
                 "type": "Hyperlink",
-                "icon": "",
+                "icon": "https://onemg.gumlet.io/dd_request_feature.png",
                 "url": "https://forms.gle/Abd1FJJVf3J2daLP7"
             },
             {
                 "label": "Report a Bug",
                 "type": "Hyperlink",
-                "icon": "",
+                "icon": "https://onemg.gumlet.io/dd_report_bug.png",
                 "url": "https://forms.gle/s2Youjzo63YU9k7s9"
             },
             {

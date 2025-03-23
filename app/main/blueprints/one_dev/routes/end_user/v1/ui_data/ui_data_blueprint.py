@@ -15,8 +15,8 @@ ui_data_v1_bp = Blueprint("ui_data_v1_bp", url_prefix="/ui_data")
 
 
 @ui_data_v1_bp.route("/profile", methods=["GET"])
-# @validate_client_version
-# @authenticate
+@validate_client_version
+@authenticate
 async def get_ui_profile(_request: Request, **kwargs):
     try:
         response = await UIProfile.get_ui_profile(user_team_id=1)
