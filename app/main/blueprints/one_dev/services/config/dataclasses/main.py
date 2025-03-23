@@ -21,5 +21,5 @@ class OS(Enum):
 
 class ConfigParams(BaseModel):
     consumer: ConfigConsumer
-    arch: Optional[Architecture]
-    os: Optional[OS]
+    arch: Optional[Architecture] = None
+    os: Optional[OS] = None
