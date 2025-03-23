@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import jwt
 from deputydev_core.utils.config_manager import ConfigManager
@@ -131,7 +131,7 @@ class SupabaseAuth:
         return await cls.verify_auth_token(access_token)
 
     @classmethod
-    async def refresh_session(cls, session_data: Dict[str, Any]) -> str:
+    async def refresh_session(cls, session_data: Dict[str, Any]) -> Tuple[str, str, str]:
         """
         Refreshes the user session by obtaining new access and refresh tokens.
 
@@ -144,7 +144,8 @@ class SupabaseAuth:
                 including the refresh token.
 
         Returns:
-            str: The encrypted session data containing the new access and refresh tokens.
+            Tuple[str, str, str]: A tuple containing the encrypted session data,
+                the user's email, and the user's full name.
 
         Raises:
             Exception: If the refresh operation fails or if there is an error during
@@ -157,12 +158,16 @@ class SupabaseAuth:
             if not response.session:
                 raise Exception("Failed to refresh tokens.")
 
+            # extracting email and user name
+            email = response.user.email
+            user_name = response.user.user_metadata["full_name"]
+
             # update the session data with the refreshed access and refresh tokens
             session_data["access_token"] = response.session.access_token
             session_data["refresh_token"] = response.session.refresh_token
             # return the refreshed session data
             encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
-            return encrypted_session_data
+            return encrypted_session_data, email, user_name
         except Exception as e:
             # Handle exceptions (e.g., log the error)
             raise Exception(f"Error refreshing session: {str(e)}")
