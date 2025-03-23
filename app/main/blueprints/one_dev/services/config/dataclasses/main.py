@@ -2,7 +2,7 @@ from enum import Enum
 
 from deputydev_core.utils.constants.enums import ConfigConsumer
 from pydantic import BaseModel
-
+from typing import Optional
 
 class ConfigType(Enum):
     MAIN = "MAIN"
@@ -21,5 +21,5 @@ class OS(Enum):
 
 class ConfigParams(BaseModel):
     consumer: ConfigConsumer
-    arch: Architecture
-    os: OS
+    arch: Optional[Architecture]
+    os: Optional[OS]
