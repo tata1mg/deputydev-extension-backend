@@ -1,10 +1,12 @@
 from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
-
-from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType, ConfigParams
 from deputydev_core.utils.constants.enums import ConfigConsumer
 
+from app.main.blueprints.one_dev.services.config.dataclasses.main import (
+    ConfigParams,
+    ConfigType,
+)
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 ConfigManager.configs
@@ -15,7 +17,7 @@ class ConfigFetcher:
         ConfigConsumer.CLI: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                "HOST":  ConfigManager.configs["ONE_DEV"]["HOST"],
+                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
@@ -23,11 +25,11 @@ class ConfigFetcher:
         ConfigConsumer.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                "HOST":  ConfigManager.configs["ONE_DEV"]["HOST"],
+                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
-            "BINARY": {}
+            "BINARY": {},
         },
     }
 
@@ -77,7 +79,9 @@ class ConfigFetcher:
                 "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_PARALLEL_TASKS"],
             },
-            "RELEVANT_CHUNKS": {"CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"]["CHUNKING_ENABLED"]},
+            "RELEVANT_CHUNKS": {
+                "CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"]["CHUNKING_ENABLED"]
+            },
             "DEPUTY_DEV": {
                 "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
@@ -93,8 +97,10 @@ class ConfigFetcher:
             "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"]["USE_GRACE_PERIOD_FOR_EMBEDDING"],
             "AUTOCOMPLETE_SEARCH": {
                 "PRE_FILTER_LIMIT": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"]["PRE_FILTER_LIMIT"],
-                "MAX_RECORDS_TO_RETURN": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"]["MAX_RECORDS_TO_RETURN"]
-            }
+                "MAX_RECORDS_TO_RETURN": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"][
+                    "MAX_RECORDS_TO_RETURN"
+                ],
+            },
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
@@ -121,8 +127,9 @@ class ConfigFetcher:
             raise ValueError(f"Main configs not found for {params.consumer}")
 
     @classmethod
-    def add_vscode_ext_config(cls, base_config: Dict, params: ConfigParams, config_type: ConfigType,
-                              client_data: ClientData):
+    def add_vscode_ext_config(
+        cls, base_config: Dict, params: ConfigParams, config_type: ConfigType, client_data: ClientData
+    ):
         client_version = client_data.client_version
         arch = params.arch.value
         os = params.os.value

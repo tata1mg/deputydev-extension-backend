@@ -11,7 +11,9 @@ from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_co
 from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import (
     BaseSerializer,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import DetailedFocusItem
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    DetailedFocusItem,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )

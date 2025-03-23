@@ -19,7 +19,9 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
     BaseAnthropicTextDeltaParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItemTypes
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    FocusItemTypes,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockDeltaContent,
@@ -290,7 +292,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                 focus_chunks_message += (
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
-                    + f"<value>{focus_item.value}</value>"
+                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
                     + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
