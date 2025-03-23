@@ -15,8 +15,7 @@ class ConfigFetcher:
         ConfigConsumer.CLI: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                "HOST": "https://api.deputydev.ai",
-                # "HOST": "http://localhost:8084",
+                "HOST":  ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
@@ -24,8 +23,7 @@ class ConfigFetcher:
         ConfigConsumer.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
-                "HOST": "https://api.deputydev.ai",
-                # "HOST": "http://localhost:8084",
+                "HOST":  ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
@@ -67,32 +65,36 @@ class ConfigFetcher:
         },
         ConfigConsumer.BINARY: {
             "CHUNKING": {
-                "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
-                "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
-                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
+                "CHARACTER_SIZE": ConfigManager.configs["BINARY"]["CHUNKING"]["CHARACTER_SIZE"],
+                "NUMBER_OF_CHUNKS": ConfigManager.configs["BINARY"]["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
+                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["BINARY"]["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
                 "DEFAULT_MAX_CHUNKS_CODE_GENERATION": ConfigManager.configs["CHUNKING"][
                     "DEFAULT_MAX_CHUNKS_CODE_GENERATION"
                 ],
             },
             "EMBEDDING": {
-                "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],
-                "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
-                "MAX_PARALLEL_TASKS": 60,
+                "MODEL": ConfigManager.configs["BINARY"]["EMBEDDING"]["MODEL"],
+                "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"]["TOKEN_LIMIT"],
+                "MAX_PARALLEL_TASKS": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_PARALLEL_TASKS"],
             },
-            "RELEVANT_CHUNKS": {"CHUNKING_ENABLED": False},
+            "RELEVANT_CHUNKS": {"CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"]["CHUNKING_ENABLED"]},
             "DEPUTY_DEV": {
-                "HOST": ConfigManager.configs["ONE_DEV"]["GATEWAY_HOST"],
-                "TIMEOUT": 20,
-                "LIMIT": 0,
-                "LIMIT_PER_HOST": 0,
-                "TTL_DNS_CACHE": 10,
+                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
+                "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
+                "LIMIT": ConfigManager.configs["ONE_DEV"]["LIMIT"],
+                "LIMIT_PER_HOST": ConfigManager.configs["ONE_DEV"]["LIMIT_PER_HOST"],
+                "TTL_DNS_CACHE": ConfigManager.configs["ONE_DEV"]["TTL_DNS_CACHE"],
             },
             "WEAVIATE_HOST": "127.0.0.1",
-            "WEAVIATE_HTTP_PORT": 8079,
-            "WEAVIATE_GRPC_PORT": 50050,
-            "WEAVIATE_SCHEMA_VERSION": 5,
-            "NUMBER_OF_WORKERS": 1,
-            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["USE_GRACE_PERIOD_FOR_EMBEDDING"],
+            "WEAVIATE_HTTP_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["HTTP_PORT"],
+            "WEAVIATE_GRPC_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["GRPC_PORT"],
+            "WEAVIATE_SCHEMA_VERSION": ConfigManager.configs["BINARY"]["WEAVIATE"]["SCHEMA_VERSION"],
+            "NUMBER_OF_WORKERS": ConfigManager.configs["BINARY"]["EMBEDDING"]["NUMBER_OF_WORKERS"],
+            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"]["USE_GRACE_PERIOD_FOR_EMBEDDING"],
+            "AUTOCOMPLETE_SEARCH": {
+                "PRE_FILTER_LIMIT": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"]["PRE_FILTER_LIMIT"],
+                "MAX_RECORDS_TO_RETURN": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"]["MAX_RECORDS_TO_RETURN"]
+            }
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
