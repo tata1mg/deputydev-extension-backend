@@ -1,6 +1,7 @@
 import asyncio
 from typing import AsyncIterator, List, Optional
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -37,19 +38,20 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import FILE_PATH_SEARCHER
-from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
-    RELATED_CODE_SEARCHER,
+from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
+    FILE_PATH_SEARCHER,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
+    RELATED_CODE_SEARCHER,
 )
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
 
 from .prompts.factory import PromptFeatureFactory
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 
 class QuerySolver:

@@ -1,6 +1,7 @@
 from functools import wraps
 from typing import Any, Optional, Tuple
 
+from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
@@ -10,10 +11,7 @@ from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_VSCODE_EXT_VERSION,
     MIN_SUPPORTED_WEB_VERSION,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import (
-    ClientData,
-)
-from deputydev_core.utils.constants.enums import Clients
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 
