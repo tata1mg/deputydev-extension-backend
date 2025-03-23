@@ -27,17 +27,17 @@ class SupabaseSession:
             Dict[str, Any]: The updated session data including the user's email and user ID.
 
         Raises:
-            ValueError: If the access token is invalid or user cannot be found.
+            ValueError: If the access token is invalid, user cannot be found, or user information is missing.
         """
         access_token = data["access_token"]
         token_data = await SupabaseAuth.verify_auth_token(access_token)
 
-        if not token_data["valid"]:
-            raise ValueError("Invalid access token")
+        # Check for user_email and user_name in token_data
+        email = token_data.get("user_email")
+        user_name = token_data.get("user_name")
 
-        # Extract email from token data
-        email = token_data["user_email"]
-        user_name = token_data["user_name"]
+        if email is None or user_name is None:
+            raise ValueError("User information is missing from token data")
 
         # Fetch the registered user ID based on the email
         user = await UserRepository.db_get(filters={"email": email}, fetch_one=True)
@@ -52,15 +52,21 @@ class SupabaseSession:
     @classmethod
     async def get_session_by_supabase_session_id(cls, headers: Dict[str, str]) -> Dict[str, Any]:
         """
-        Query the external_sessions table for a session matching the given supabase session ID.
+        Query the external_sessions table for a session matching the given Supabase session ID.
 
         Args:
-            headers (Dict[str, str]): The headers containing the supabase session ID.
+            headers (Dict[str, str]): The headers containing the Supabase session ID.
 
         Returns:
-            Dict[str, Any]: A dictionary containing either:
-                - 'encrypted_session_data' (str): encrypted_session_data if found.
-                - 'error' (str): Error message if an error occurred.
+            Dict[str, Any]: A dictionary containing:
+                - 'encrypted_session_data' (str): The encrypted session data if found.
+                - 'user_email' (str): The email of the user associated with the session.
+                - 'user_name' (str): The name of the user associated with the session.
+                - 'status' (str): The authentication status, indicating if the user is authenticated or pending.
+
+        Raises:
+            ValueError: If no Supabase session ID is found or if no session data is found.
+            APIError: If there is an error during the API call.
         """
         supabase_session_id = headers.get("X-Supabase-Session-Id")
         if not supabase_session_id:
