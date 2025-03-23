@@ -2,8 +2,10 @@ from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 
-from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType
+from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigType, ConfigParams
 from deputydev_core.utils.constants.enums import ConfigConsumer
+
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 ConfigManager.configs
 
@@ -27,6 +29,7 @@ class ConfigFetcher:
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
+            "BINARY": {}
         },
     }
 
@@ -100,14 +103,32 @@ class ConfigFetcher:
     }
 
     @classmethod
-    def fetch_configs(cls, consumer: ConfigConsumer, config_type: ConfigType) -> Dict[str, Any]:
+    def fetch_configs(cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
-            if consumer in cls.essential_configs:
-                return cls.essential_configs[consumer]
+            if params.consumer in cls.essential_configs:
+                config = cls.essential_configs[params.consumer]
+                if params.consumer == ConfigConsumer.VSCODE_EXT:
+                    cls.add_vscode_ext_config(config, params=params, config_type=config_type, client_data=client_data)
+                return config
             else:
-                raise ValueError(f"Essential configs not found for client {consumer}")
+                raise ValueError(f"Essential configs not found for client {params.consumer}")
 
-        if consumer in cls.main_configs:
-            return cls.main_configs[consumer]
+        if params.consumer in cls.main_configs:
+            return cls.main_configs[params.consumer]
         else:
-            raise ValueError(f"Main configs not found for {consumer}")
+            raise ValueError(f"Main configs not found for {params.consumer}")
+
+    @classmethod
+    def add_vscode_ext_config(cls, base_config: Dict, params: ConfigParams, config_type: ConfigType,
+                              client_data: ClientData):
+        client_version = client_data.client_version
+        arch = params.arch.value
+        os = params.os.value
+        if config_type == ConfigType.ESSENTIAL:
+            base_config["BINARY"] = {
+                **ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch],
+                "password": ConfigManager.configs["BINARY"]["PASSWORD"],
+                "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],
+                "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
+                "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
+            }
