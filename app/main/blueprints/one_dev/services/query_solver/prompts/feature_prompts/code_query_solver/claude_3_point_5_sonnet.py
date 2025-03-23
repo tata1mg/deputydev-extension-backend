@@ -288,7 +288,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                 focus_chunks_message += (
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
-                    + f"<value>{focus_item.value}</value>"
+                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
                     + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
