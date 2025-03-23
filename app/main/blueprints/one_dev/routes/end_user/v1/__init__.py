@@ -7,6 +7,9 @@ from .configs.config_blueprint import config_v1_bp
 from .history.history_blueprint import history_v1_bp
 from .repos.repos_blueprint import repos_v1_bp
 from .ui_data.ui_data_blueprint import ui_data_v1_bp
+from .websocket_connection.websocket_connection_blueprint import (
+    websocket_connection_v1_bp,
+)
 
 blueprints = [
     auth_v1_bp,
@@ -15,6 +18,7 @@ blueprints = [
     repos_v1_bp,
     code_gen_v1_bp,
     chunks_v1_bp,
-    ui_data_v1_bp
+    ui_data_v1_bp,
+    websocket_connection_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
