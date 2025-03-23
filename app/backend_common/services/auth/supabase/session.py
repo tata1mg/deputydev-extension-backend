@@ -32,11 +32,14 @@ class SupabaseSession:
         access_token = data["access_token"]
         token_data = await SupabaseAuth.verify_auth_token(access_token)
 
-        # Check for user_email and user_name in token_data
-        email = token_data.get("user_email")
-        user_name = token_data.get("user_name")
+        if not token_data["valid"]:
+            raise ValueError("Invalid access token")
 
-        if email is None or user_name is None:
+        # Check for user_email and user_name in token_data
+        email = token_data.get("user_email", "")
+        user_name = token_data.get("user_name", "")
+
+        if not email or not user_name:
             raise ValueError("User information is missing from token data")
 
         # Fetch the registered user ID based on the email
