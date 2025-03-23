@@ -14,6 +14,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItemTypes
 
 
 class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
@@ -33,7 +34,7 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
             for focus_item in self.params["focus_items"]:
                 focus_chunks_message += (
                     "<item>" + f"<type>{focus_item.type}</type>" + f"<value>{focus_item.value}</value>" + "</item>"
-                )
+                ) if focus_item.type != FocusItemTypes.CODE_SNIPPET else "<item>" + f"<type>{focus_item.type}</type>" + "\n".join([chunk.get_xml() for chunk in focus_item.chunks]) + "</item>"
 
         user_message = f"""
             Here is a query asked on some repository by the user.
