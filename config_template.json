@@ -354,7 +354,8 @@
   },
   "AWS_API_GATEWAY": {
     "HOST": "https://sample.com",
-    "AWS_REGION": "ap-south-1"
+    "AWS_REGION": "ap-south-1",
+    "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
   },
   "BINARY": {
     "WEAVIATE": {
