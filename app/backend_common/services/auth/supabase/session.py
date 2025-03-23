@@ -92,7 +92,12 @@ class SupabaseSession:
             # Encrypting session data using session encryption service
             encrypted_session_data = SessionEncryptionService.encrypt(updated_session_data_string)
 
-            return {"encrypted_session_data": encrypted_session_data, "user_email": updated_session_data["email"], "user_name": updated_session_data["user_name"], "status": AuthStatus.AUTHENTICATED.value}
+            return {
+                "encrypted_session_data": encrypted_session_data,
+                "user_email": updated_session_data["email"],
+                "user_name": updated_session_data["user_name"],
+                "status": AuthStatus.AUTHENTICATED.value,
+            }
 
         except APIError as e:
             if e.code == "PGRST116":
