@@ -36,11 +36,8 @@ class SupabaseSession:
             raise ValueError("Invalid access token")
 
         # Check for user_email and user_name in token_data
-        email = token_data.get("user_email", "")
-        user_name = token_data.get("user_name", "")
-
-        if not email or not user_name:
-            raise ValueError("User information is missing from token data")
+        email = token_data["user_email"]
+        user_name = token_data["user_name"]
 
         # Fetch the registered user ID based on the email
         user = await UserRepository.db_get(filters={"email": email}, fetch_one=True)
