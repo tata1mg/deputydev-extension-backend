@@ -27,13 +27,19 @@ def authenticate(func: Any) -> Any:
     """
 
     @wraps(func)
-    async def wrapper(_request: Request, client_data: ClientData, **kwargs) -> Any:
+    async def wrapper(_request: Request, client_data: ClientData, **kwargs: Any) -> Any:
         # Check if the session ID is present in the headers
         authorization_header = _request.headers.get("Authorization")
         # TODO: update below logic, this is very specific
-        payload = _request.custom_json() if _request.method == "POST" else _request.request_params()
-        use_grace_period = payload.get("use_grace_period") or False
-        enable_grace_period = payload.get("enable_grace_period") or False
+
+        use_grace_period: bool = False
+        enable_grace_period: bool = False
+        try:
+            payload = _request.custom_json() if _request.method == "POST" else _request.request_params()
+            use_grace_period = payload.get("use_grace_period") or False
+            enable_grace_period = payload.get("enable_grace_period") or False
+        except Exception:
+            pass
         if not authorization_header:
             raise Exception("Authorization header is missing")
 
@@ -99,9 +105,7 @@ def authenticate(func: Any) -> Any:
             raise BadRequestException("User team not found")
 
         # prepare the auth data
-        auth_data = AuthData(
-            user_team_id=1,
-        )
+        auth_data = AuthData(user_team_id=user_team_id)
 
         return await func(_request, client_data=client_data, auth_data=auth_data, **kwargs)
 
