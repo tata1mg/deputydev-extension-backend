@@ -128,8 +128,10 @@ class ConfigFetcher:
 
     @classmethod
     def add_vscode_ext_config(
-        cls, base_config: Dict, params: ConfigParams, config_type: ConfigType, client_data: ClientData
+        cls, base_config: Dict[str, Any], params: ConfigParams, config_type: ConfigType, client_data: ClientData
     ):
+        if not params.os or not params.arch:
+            raise ValueError("os and arch are required for vscode extension config")
         client_version = client_data.client_version
         arch = params.arch.value
         os = params.os.value

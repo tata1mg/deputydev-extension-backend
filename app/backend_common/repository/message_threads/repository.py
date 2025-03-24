@@ -112,9 +112,7 @@ class MessageThreadsRepository:
             return []
 
     @classmethod
-    async def get_total_user_queries(
-        cls, session_ids: List[int], call_chain_category: MessageCallChainCategory
-    ) -> int:
+    async def get_total_user_queries(cls, session_ids: List[int], call_chain_category: MessageCallChainCategory) -> int:
         try:
             return await DB.count_by_filters(
                 model_name=MessageThread,
@@ -126,7 +124,5 @@ class MessageThreadsRepository:
                 },
             )
         except Exception as ex:
-            logger.error(
-                f"error occurred while fetching user queries count for session_ids: {session_ids}, ex: {ex}"
-            )
+            logger.error(f"error occurred while fetching user queries count for session_ids: {session_ids}, ex: {ex}")
             return 0
