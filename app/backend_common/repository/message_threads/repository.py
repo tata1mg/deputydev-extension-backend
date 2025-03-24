@@ -9,6 +9,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadActor,
     MessageThreadData,
     MessageThreadDTO,
+    MessageType,
 )
 from app.backend_common.repository.db import DB
 
@@ -121,6 +122,7 @@ class MessageThreadsRepository:
                     "session_id__in": session_ids,
                     "call_chain_category": call_chain_category.value,
                     "actor": MessageThreadActor.USER.value,
+                    "message_type": MessageType.QUERY.value,
                 },
             )
         except Exception as ex:
