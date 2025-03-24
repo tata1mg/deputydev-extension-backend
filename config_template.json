@@ -412,5 +412,18 @@
   },
   "CLIENT_DOWNLOAD_LINKS": {
     "VSCODE_EXT": "https://marketplace.visualstudio.com/items?itemName=Tata1mg.deputydev"
-  }
+  },
+  "ALLOWED_EMAILS": [
+    "anand.raj@1mg.com",
+    "pratham.verma@1mg.com",
+    "vaibhav.meena@1mg.com",
+    "vishal.khare@1mg.com",
+    "satyam.kumar1@1mg.com",
+    "sachendra.jain@1mg.com",
+    "deepak.sharma1@1mg.com",
+    "ankit.rana1@1mg.com",
+    "vijay.saini@1mg.com",
+    "anshul.yadav@1mg.com",
+    "manju.s@1mg.com"
+  ]
 }
