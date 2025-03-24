@@ -76,6 +76,15 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                     local_testing_stream_buffer.setdefault(connection_id, []).append(
                         json.dumps(data_block.model_dump(mode="json"))
                     )
+
+            if is_local:
+                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps({"type": "STREAM_END"}))
+            else:
+                await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
+                    f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+                    connection_id=connection_id,
+                    message=json.dumps({"type": "STREAM_END"}),
+                )
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
             error_data = {"type": "STREAM_ERROR", "message": str(ex)}
@@ -86,15 +95,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                     f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
                     connection_id=connection_id,
                     message=json.dumps(error_data),
-                )
-        finally:
-            if is_local:
-                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps({"type": "STREAM_END"}))
-            else:
-                await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                    f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-                    connection_id=connection_id,
-                    message=json.dumps({"type": "STREAM_END"}),
                 )
 
     asyncio.create_task(solve_query())
