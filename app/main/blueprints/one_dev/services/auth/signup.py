@@ -43,21 +43,14 @@ class SignUp:
 
     @classmethod
     def get_team_info_from_email(cls, email: str) -> Dict[str, Any]:
-        domain = email.split("@")[1]
-        if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
-            }
-        elif domain == CONFIG.config["ORG_INFO"]["TRAYA"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["TRAYA"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["TRAYA"]["org_name"],
-            }
-        elif domain == CONFIG.config["ORG_INFO"]["5CNETWORK"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["5CNETWORK"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["5CNETWORK"]["org_name"],
-            }
+        if email in CONFIG.config["ALLOWED_EMAILS"]:
+            domain = email.split("@")[1]
+            if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
+                return {
+                    "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                    "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
+                }
+            else:
+                return {"team_id": None, "org_name": None, "error": "Invalid domain"}
         else:
-            return {"team_id": None, "org_name": None, "error": "Invalid domain"}
+            return {"team_id": None, "org_name": None, "error": "Invalid email"}
