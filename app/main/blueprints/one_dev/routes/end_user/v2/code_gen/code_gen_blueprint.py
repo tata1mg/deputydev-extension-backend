@@ -39,25 +39,30 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
 async def solve_user_query(_request: Request, **kwargs: Any):
-    json_payload = _request.json
-    print("json_payload", json_payload)
-
-    print("previous_query_ids")
     connection_id: str = _request.headers["connectionid"]  # type: ignore
 
-    connection_data = await WebsocketConnectionCache.get(connection_id)
-    _auth_data = AuthData(**connection_data["auth_data"])
+    connection_data: Any = await WebsocketConnectionCache.get(connection_id)
+    auth_data = AuthData(**connection_data["auth_data"])
     _client_data = ClientData(**connection_data["client_data"])
     session_id: int = connection_data["session_id"]
 
     payload = QuerySolverInput(**_request.json, session_id=session_id)
-    print(payload)
-
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
 
     async def solve_query():
         nonlocal payload
         nonlocal connection_id
+        start_data = {"type": "STREAM_START"}
+        if auth_data.refresh_session_data:
+            start_data["new_session_data"] = auth_data.refresh_session_data[0]
+        if is_local:
+            local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(start_data))
+        else:
+            await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
+                f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+                connection_id=connection_id,
+                message=json.dumps(start_data),
+            )
         try:
             data = await QuerySolver().solve_query(payload=payload)
             async for data_block in data:
@@ -73,6 +78,15 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                     )
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
+            error_data = {"type": "STREAM_ERROR", "message": str(ex)}
+            if is_local:
+                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(error_data))
+            else:
+                await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
+                    f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+                    connection_id=connection_id,
+                    message=json.dumps(error_data),
+                )
         finally:
             if is_local:
                 local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps({"type": "STREAM_END"}))

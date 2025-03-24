@@ -158,13 +158,27 @@ class Anthropic(BaseLLMProvider):
         tools = sorted(tools, key=lambda x: x.name) if tools else []
 
         # create body
-        llm_payload = {
+        llm_payload: Dict[str, Any] = {
             "anthropic_version": self.model_settings["VERSION"],
             "max_tokens": self.model_settings["MAX_TOKENS"],
             "system": prompt.system_message if prompt else "",
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
+
+        if cache_config.tools and tools:
+            llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
+
+        if cache_config.system_message and prompt and prompt.system_message:
+            llm_payload["system"] = {
+                "type": "text",
+                "text": prompt.system_message,
+                "cache_control": {"type": "ephemeral"},
+            }
+
+        if cache_config.conversation and messages:
+            llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+
         print(llm_payload)
         return llm_payload
 

@@ -61,7 +61,7 @@ def authenticate(func: Any) -> Any:
             # refresh the current session
             refresh_session_data = await SupabaseAuth.refresh_session(session_data)
             # add the session data to the kwargs
-            kwargs["response_headers"] = {"new_session_data": refresh_session_data}
+            kwargs["response_headers"] = {"new_session_data": refresh_session_data[0]}
         except InvalidTokenError:
             return {
                 "status": AuthStatus.NOT_VERIFIED.value,
@@ -105,7 +105,13 @@ def authenticate(func: Any) -> Any:
             raise BadRequestException("User team not found")
 
         # prepare the auth data
-        auth_data = AuthData(user_team_id=user_team_id)
+        auth_data = None
+        if kwargs.get("response_headers") and kwargs["response_headers"]["new_session_data"]:
+            auth_data = AuthData(
+                user_team_id=user_team_id, refresh_session_data=kwargs["response_headers"]["new_session_data"]
+            )
+        else:
+            auth_data = AuthData(user_team_id=user_team_id)
 
         return await func(_request, client_data=client_data, auth_data=auth_data, **kwargs)
 
