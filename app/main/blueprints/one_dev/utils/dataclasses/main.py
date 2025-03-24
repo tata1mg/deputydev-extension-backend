@@ -1,7 +1,8 @@
-from typing import Optional, Tuple
+from typing import Optional
+
 from pydantic import BaseModel
 
 
 class AuthData(BaseModel):
     user_team_id: int
-    refresh_session_data: Optional[Tuple[str, str, str]] = None
+    session_refresh_token: Optional[str] = None
