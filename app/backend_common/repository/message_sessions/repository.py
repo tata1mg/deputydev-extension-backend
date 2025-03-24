@@ -69,6 +69,34 @@ class MessageSessionsRepository:
             raise ex
 
     @classmethod
+    async def get_message_sessions_ids(
+        cls,
+        user_team_id: int,
+        session_type: Optional[str] = None,
+    ) -> List[int]:  # Change the return type to List[int] for session IDs
+        try:
+            filters = {
+                "user_team_id": user_team_id,
+                "session_type": session_type
+            }
+            message_sessions = await DB.by_filters(
+                model_name=MessageSession,
+                where_clause=filters,
+                fetch_one=False,
+            )
+            if not message_sessions:
+                return []
+
+            # Return only the IDs of the message sessions
+            return [message_session["id"] for message_session in message_sessions]
+
+        except Exception as ex:
+            logger.error(
+                f"error occurred while fetching message_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
+            )
+            return []
+
+    @classmethod
     async def get_message_sessions_by_user_team_id(
         cls,
         user_team_id: int,
