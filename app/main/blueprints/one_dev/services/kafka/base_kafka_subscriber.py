@@ -28,7 +28,8 @@ class BaseKafkaSubscriber(ABC):
                     await self._process_message(message)
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}")
-                    await KafkaDeadLetterRepository.db_insert(message.value)
+                    dlq_payload = {"message_data": message.value}
+                    await KafkaDeadLetterRepository.db_insert(dlq_payload)
         except Exception as e:
             logger.error(f"Kafka consumer error: {str(e)}")
         finally:
