@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS session_events (
     event_type TEXT NOT NULL,
     lines INT NOT NULL,
     file_path TEXT,
+    client_version TEXT NOT NULL,
     user_id INT NOT NULL,
     team_id INT NOT NULL,
     timestamp TIMESTAMP with time zone NOT NULL,

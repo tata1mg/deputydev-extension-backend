@@ -28,7 +28,7 @@ class SessionEvents(Base):
     file_path = fields.TextField(null=True)
     user_id = fields.IntField()
     team_id = fields.IntField()
-    client_version = fields.IntField()
+    client_version = fields.TextField()
     timestamp = NaiveDatetimeField(null=True)
 
     class Meta:
