@@ -75,10 +75,7 @@ class MessageSessionsRepository:
         session_type: Optional[str] = None,
     ) -> List[int]:  # Change the return type to List[int] for session IDs
         try:
-            filters = {
-                "user_team_id": user_team_id,
-                "session_type": session_type
-            }
+            filters = {"user_team_id": user_team_id, "session_type": session_type}
             message_sessions = await DB.by_filters(
                 model_name=MessageSession,
                 where_clause=filters,
