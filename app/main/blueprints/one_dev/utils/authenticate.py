@@ -108,7 +108,7 @@ def authenticate(func: Any) -> Any:
         auth_data = None
         if kwargs.get("response_headers") and kwargs["response_headers"]["new_session_data"]:
             auth_data = AuthData(
-                user_team_id=user_team_id, refresh_session_data=kwargs["response_headers"]["new_session_data"]
+                user_team_id=user_team_id, session_refresh_token=kwargs["response_headers"]["new_session_data"]
             )
         else:
             auth_data = AuthData(user_team_id=user_team_id)
