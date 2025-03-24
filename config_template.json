@@ -293,14 +293,16 @@
       "BITBUCKET_TOKEN": "",
       "MAX_TOKENS": 8192,
       "VERSION": "bedrock-2023-05-31",
-      "INPUT_TOKENS_LIMIT": 130000
+      "INPUT_TOKENS_LIMIT": 130000,
+      "PROMPT_CACHING_SUPPORTED": false
     },
     "GPT_4O": {
       "NAME": "gpt-4o-mini",
       "PROVIDER": "OPENAI",
       "ACCESS_KEY": "",
       "BITBUCKET_TOKEN": "",
-      "INPUT_TOKENS_LIMIT": 130000
+      "INPUT_TOKENS_LIMIT": 130000,
+      "PROMPT_CACHING_SUPPORTED": false
     }
   },
   "GIT_ACTORS": {

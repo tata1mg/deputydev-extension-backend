@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from sanic import Blueprint, response
@@ -37,5 +38,5 @@ async def connect(_request: Request, client_data: ClientData, auth_data: AuthDat
 @websocket_connection_v1_bp.post("/disconnect")
 async def disconnect(_request: Request):
     connectionid: str = _request.headers["connectionid"]
-    await WebsocketConnectionCache.delete([connectionid])
+    asyncio.create_task(WebsocketConnectionCache.delete([connectionid]))
     return response.json({"status": "SUCCESS"}, status=200)

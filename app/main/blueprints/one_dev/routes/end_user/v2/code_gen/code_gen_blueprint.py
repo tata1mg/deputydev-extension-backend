@@ -53,8 +53,8 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         nonlocal payload
         nonlocal connection_id
         start_data = {"type": "STREAM_START"}
-        if auth_data.refresh_session_data:
-            start_data["new_session_data"] = auth_data.refresh_session_data[0]
+        if auth_data.session_refresh_token:
+            start_data["new_session_data"] = auth_data.session_refresh_token
         if is_local:
             local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(start_data))
         else:
@@ -157,7 +157,7 @@ async def sse_websocket(request: Request, ws: Any):
 
             # finally, disconnect from the server using /disconnect endpoint
             await client.post(
-                f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connection_id": connection_id}
+                f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connectionid": connection_id}
             )
     except Exception as _ex:
         AppLogger.log_error(f"Error in websocket connection: {_ex}")
