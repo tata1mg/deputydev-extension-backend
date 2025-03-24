@@ -1,4 +1,4 @@
-import json
+import asyncio
 from typing import Any
 
 from sanic import Blueprint, response
@@ -23,14 +23,7 @@ websocket_connection_v1_bp = Blueprint("websocket_connection_v1_bp", url_prefix=
 @authenticate
 @ensure_session_id(session_type="CODE_GENERATION_V2")
 async def connect(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
-    print("Here")
-    print("Headers: " + json.dumps(dict(_request.headers)))
-    if _request.body:
-        body_json = json.loads(_request.body.decode("utf-8"))
-        print("Body: " + json.dumps(body_json))
-    print("Query Params: " + json.dumps(dict(_request.args)))
-    connectionid = _request.headers.get("connectionid")
-    print("Connected")
+    connectionid: str = _request.headers["connectionid"]
     await WebsocketConnectionCache.set(
         key=connectionid,
         value={
@@ -44,10 +37,6 @@ async def connect(_request: Request, client_data: ClientData, auth_data: AuthDat
 
 @websocket_connection_v1_bp.post("/disconnect")
 async def disconnect(_request: Request):
-    print("Headers: " + json.dumps(dict(_request.headers)))
-    if _request.body:
-        body_json = json.loads(_request.body.decode("utf-8"))
-        print("Body: " + json.dumps(body_json))
-    print("Query Params: " + json.dumps(dict(_request.args)))
-    print("Disconnected")
+    connectionid: str = _request.headers["connectionid"]
+    asyncio.create_task(WebsocketConnectionCache.delete([connectionid]))
     return response.json({"status": "SUCCESS"}, status=200)
