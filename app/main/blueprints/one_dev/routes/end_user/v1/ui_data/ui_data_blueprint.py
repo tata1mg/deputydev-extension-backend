@@ -7,9 +7,7 @@ from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-
 
 ui_data_v1_bp = Blueprint("ui_data_v1_bp", url_prefix="/ui_data")
 
