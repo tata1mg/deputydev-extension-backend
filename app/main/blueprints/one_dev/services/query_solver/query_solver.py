@@ -19,6 +19,7 @@ from app.backend_common.repository.message_threads.repository import (
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
+    PromptCacheConfig,
     StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
@@ -161,7 +162,11 @@ class QuerySolver:
 
         tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
 
-        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+        llm_handler = LLMHandler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+            cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
+        )
 
         if payload.query:
             asyncio.create_task(
@@ -173,9 +178,6 @@ class QuerySolver:
                 )
             )
 
-            print("focus_items +++++++++++++++++++++++++++++++++++")
-            print(payload.focus_items)
-            print("focus_items +++++++++++++++++++++++++++++++++++")
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -190,9 +192,6 @@ class QuerySolver:
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
-            print("Tool use response")
-            print(payload.tool_use_response.response)
-
             tool_response = payload.tool_use_response.response
             if payload.tool_use_response.tool_name == "focused_snippets_searcher":
                 tool_response = {

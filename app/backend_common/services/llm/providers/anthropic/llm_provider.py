@@ -95,14 +95,20 @@ class Anthropic(BaseLLMProvider):
                     )
                     last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
-                    content.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": content_data.tool_use_id,
-                            "content": json.dumps(content_data.response),
-                        }
-                    )
-                    last_tool_use_request = False
+                    if (
+                        last_tool_use_request
+                        and conversation_turns
+                        and not isinstance(conversation_turns[-1].content, str)
+                        and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
+                    ):
+                        content.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": content_data.tool_use_id,
+                                "content": json.dumps(content_data.response),
+                            }
+                        )
+                        last_tool_use_request = False
                 else:
                     content.append(
                         {
@@ -113,7 +119,9 @@ class Anthropic(BaseLLMProvider):
                         }
                     )
                     last_tool_use_request = True
-            conversation_turns.append(ConversationTurn(role=role, content=content))
+
+            if content:
+                conversation_turns.append(ConversationTurn(role=role, content=content))
 
         return conversation_turns
 
@@ -131,7 +139,9 @@ class Anthropic(BaseLLMProvider):
 
         # add system and user messages to conversation
         if prompt:
-            user_message = ConversationTurn(role=ConversationRole.USER, content=prompt.user_message)
+            user_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
+            )
             messages.append(user_message)
 
         # add tool result to conversation
@@ -152,13 +162,34 @@ class Anthropic(BaseLLMProvider):
         tools = sorted(tools, key=lambda x: x.name) if tools else []
 
         # create body
-        llm_payload = {
+        llm_payload: Dict[str, Any] = {
             "anthropic_version": self.model_settings["VERSION"],
             "max_tokens": self.model_settings["MAX_TOKENS"],
             "system": prompt.system_message if prompt else "",
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
+
+        if cache_config.tools and tools and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
+            llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
+
+        if (
+            cache_config.system_message
+            and prompt
+            and prompt.system_message
+            and self.model_settings["PROMPT_CACHING_SUPPORTED"]
+        ):
+            llm_payload["system"] = [
+                {
+                    "type": "text",
+                    "text": prompt.system_message,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
+
+        if cache_config.conversation and messages and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
+            llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+
         print(llm_payload)
         return llm_payload
 
@@ -177,9 +208,6 @@ class Anthropic(BaseLLMProvider):
 
         non_streaming_content_blocks: List[ResponseData] = []
         for content_block in content_array:
-            # print("#######################")
-            # print(content_block)
-            # print("#######################")
             if content_block["type"] == AnthropicResponseTypes.TEXT.value:
                 non_streaming_content_blocks.append(
                     TextBlockData(
@@ -199,9 +227,6 @@ class Anthropic(BaseLLMProvider):
                     )
                 )
 
-        # print("#######################")
-        # print(non_streaming_content_blocks)
-        # print("#######################")
         return NonStreamingResponse(
             content=non_streaming_content_blocks,
             usage=LLMUsage(input=llm_response["usage"]["input_tokens"], output=llm_response["usage"]["output_tokens"]),
@@ -319,11 +344,6 @@ class Anthropic(BaseLLMProvider):
             current_running_block_type: Optional[ContentBlockCategory] = None
             async for event in response["body"]:
                 chunk = json.loads(event["chunk"]["bytes"])
-
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                print(chunk)
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-
                 # yield content block delta
 
                 try:
