@@ -95,14 +95,20 @@ class Anthropic(BaseLLMProvider):
                     )
                     last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
-                    content.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": content_data.tool_use_id,
-                            "content": json.dumps(content_data.response),
-                        }
-                    )
-                    last_tool_use_request = False
+                    if (
+                        last_tool_use_request
+                        and conversation_turns
+                        and not isinstance(conversation_turns[-1].content, str)
+                        and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
+                    ):
+                        content.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": content_data.tool_use_id,
+                                "content": json.dumps(content_data.response),
+                            }
+                        )
+                        last_tool_use_request = False
                 else:
                     content.append(
                         {
