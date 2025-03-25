@@ -37,9 +37,9 @@ class AWSAPIGatewayServiceClient:
         async with client as apigateway_client:
             try:
                 await apigateway_client.post_to_connection(ConnectionId=connection_id, Data=message.encode("utf-8"))
-            except client.exceptions.GoneException:
-                raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
+            # except client.exceptions.GoneException as _ex: , ideally this should be the exception to catch, but seems like it's not available in the aiobotocore
             except Exception as _ex:
                 AppLogger.log_error(
                     f"Error occurred while sending message to connection_id: {connection_id} for endpoint {endpoint}, ex: {_ex}"
                 )
+                raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
