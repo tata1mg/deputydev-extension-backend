@@ -35,6 +35,7 @@ class QuerySolverInput(BaseModel):
     session_id: int
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
+    deputy_dev_rules: Optional[str] = None
 
 
 class CodeSelectionInput(BaseModel):
@@ -48,6 +49,7 @@ class InlineEditInput(BaseModel):
     relevant_chunks: List[Any]
     code_selection: CodeSelectionInput
     auth_data: AuthData
+    deputy_dev_rules: Optional[str] = None
 
 
 class ResponseMetadataContent(BaseModel):
