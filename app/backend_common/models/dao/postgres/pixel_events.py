@@ -15,6 +15,7 @@ class PixelEvents(Base):
         "user_id",
         "team_id",
         "client_version",
+        "client",
         "timestamp",
         "created_at",
         "updated_at",
@@ -29,6 +30,7 @@ class PixelEvents(Base):
     user_id = fields.IntField()
     team_id = fields.IntField()
     client_version = fields.TextField()
+    client = fields.TextField()
     timestamp = NaiveDatetimeField(null=True)
 
     class Meta:
