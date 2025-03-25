@@ -54,13 +54,19 @@ class Login:
             }
         except ExpiredSignatureError:
             # refresh the current session
-            refresh_session_data, email, user_name = await SupabaseAuth.refresh_session(session_data)
-            return {
-                "status": AuthStatus.EXPIRED.value,
-                "encrypted_session_data": refresh_session_data,
-                "user_email": email,
-                "user_name": user_name,
-            }
+            try:
+                refresh_session_data, email, user_name = await SupabaseAuth.refresh_session(session_data)
+                return {
+                    "status": AuthStatus.EXPIRED.value,
+                    "encrypted_session_data": refresh_session_data,
+                    "user_email": email,
+                    "user_name": user_name,
+                }
+            except Exception as _ex:
+                return {
+                    "status": AuthStatus.NOT_VERIFIED.value,
+                    "error_message": str(_ex),
+                }
         except InvalidTokenError:
             return {
                 "status": AuthStatus.NOT_VERIFIED.value,
