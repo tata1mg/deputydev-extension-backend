@@ -29,7 +29,7 @@ class BaseKafkaSubscriber(ABC):
                     await self._process_message(message)
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}")
-                    dlq_payload = {"data": message.value, "type": "pixel_events"}
+                    dlq_payload = {"data": message.value, "type": message.value["event"]}
                     await FailedOperationsRepository.db_insert(dlq_payload)
         except Exception as e:
             logger.error(f"Kafka consumer error: {str(e)}")
