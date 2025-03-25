@@ -2,9 +2,12 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from deputydev_core.utils.config_manager import ConfigManager
+
+MAX_DEPUTY_DEV_RULES_LENGTH = ConfigManager.configs["MAX_DEPUTY_DEV_RULES_LENGTH"]
 
 
 class ToolUseResponseInput(BaseModel):
@@ -35,6 +38,15 @@ class QuerySolverInput(BaseModel):
     session_id: int
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
+    deputy_dev_rules: Optional[str] = None
+
+    @field_validator("deputy_dev_rules")
+    def character_limit(cls, v: Optional[str]):
+        if v is None:
+            return None
+        if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
+            return None
+        return v
 
 
 class CodeSelectionInput(BaseModel):
@@ -48,6 +60,15 @@ class InlineEditInput(BaseModel):
     relevant_chunks: List[Any]
     code_selection: CodeSelectionInput
     auth_data: AuthData
+    deputy_dev_rules: Optional[str] = None
+
+    @field_validator("deputy_dev_rules")
+    def character_limit(cls, v: Optional[str]):
+        if v is None:
+            return None
+        if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
+            return None
+        return v
 
 
 class ResponseMetadataContent(BaseModel):
