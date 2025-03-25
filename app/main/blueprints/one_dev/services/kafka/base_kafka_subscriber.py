@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from aiokafka import AIOKafkaConsumer
 from sanic.log import logger
 from ujson import loads
-from app.backend_common.repository.kafka_dead_letter.repository import (
-    KafkaDeadLetterRepository
+
+from app.backend_common.repository.failed_operations.repository import (
+    FailedOperationsRepository,
 )
 
 
@@ -28,8 +29,8 @@ class BaseKafkaSubscriber(ABC):
                     await self._process_message(message)
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}")
-                    dlq_payload = {"message_data": message.value}
-                    await KafkaDeadLetterRepository.db_insert(dlq_payload)
+                    dlq_payload = {"data": message.value, "type": "pixel_events"}
+                    await FailedOperationsRepository.db_insert(dlq_payload)
         except Exception as e:
             logger.error(f"Kafka consumer error: {str(e)}")
         finally:

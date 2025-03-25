@@ -1,10 +1,11 @@
 -- migrate:up
-create table if not exists failed_kafka_messages (
+create table if not exists failed_operations (
     id serial primary key,
-    message_data jsonb not null,
+    type TEXT NOT NULL,
+    data jsonb not null,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- migrate:down
-drop table if exists failed_kafka_messages;
+drop table if exists failed_operations;
