@@ -1,11 +1,8 @@
 from typing import Any, Optional
 
-import pytz
-from sanic.log import logger
 
 from app.backend_common.models.dto.pixel_events_dto import (
-    PixelEventsData,
-    PixelEventsDTO,
+    PixelEventsData
 )
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
@@ -45,7 +42,7 @@ class PixelEventSubscriber(BaseKafkaSubscriber):
         session_id = event_data.get("properties").get("session_id")
         lines = event_data.get("properties").get("lines")
         file_path = event_data.get("properties").get("file_path")
-        timestamp = event_data.get("properties").get("timestamp").replace(tzinfo=pytz.UTC)
+        timestamp = event_data.get("properties").get("timestamp")
 
         return {
             "event_id": event_id,
