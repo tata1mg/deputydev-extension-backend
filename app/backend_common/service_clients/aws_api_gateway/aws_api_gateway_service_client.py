@@ -6,6 +6,9 @@ from deputydev_core.utils.config_manager import ConfigManager
 from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
 
 
+class SocketClosedException(Exception):
+    pass
+
 class AWSAPIGatewayServiceClient:
     API_GATEWAY_MANAGEMENT_API_NAME = "apigatewaymanagementapi"
 
@@ -33,6 +36,8 @@ class AWSAPIGatewayServiceClient:
         async with client as apigateway_client:
             try:
                 await apigateway_client.post_to_connection(ConnectionId=connection_id, Data=message.encode("utf-8"))
+            except client.exceptions.GoneException:
+                raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
             except Exception as _ex:
                 AppLogger.log_error(
                     f"Error occurred while sending message to connection_id: {connection_id} for endpoint {endpoint}, ex: {_ex}"

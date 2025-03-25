@@ -13,7 +13,7 @@ from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
-    AWSAPIGatewayServiceClient,
+    AWSAPIGatewayServiceClient,SocketClosedException
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
@@ -48,54 +48,51 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     payload = QuerySolverInput(**_request.json, session_id=session_id)
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
+    connection_id_gone = False
+
+    async def push_to_connection_stream(data: Dict[str, Any]):
+        nonlocal connection_id
+        nonlocal is_local
+        nonlocal connection_id_gone
+
+        if not connection_id_gone:
+            if is_local:
+                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data))
+            else:
+                try:
+                    await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
+                        f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+                        connection_id=connection_id,
+                        message=json.dumps(data),
+                    )
+                except SocketClosedException:
+                    connection_id_gone = True            
 
     async def solve_query():
         nonlocal payload
         nonlocal connection_id
+
+        # push stream start message
         start_data = {"type": "STREAM_START"}
         if auth_data.session_refresh_token:
             start_data["new_session_data"] = auth_data.session_refresh_token
-        if is_local:
-            local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(start_data))
-        else:
-            await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-                connection_id=connection_id,
-                message=json.dumps(start_data),
-            )
+        await push_to_connection_stream(start_data)
         try:
             data = await QuerySolver().solve_query(payload=payload)
-            async for data_block in data:
-                if not is_local:
-                    await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                        f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-                        connection_id=connection_id,
-                        message=json.dumps(data_block.model_dump(mode="json")),
-                    )
-                else:
-                    local_testing_stream_buffer.setdefault(connection_id, []).append(
-                        json.dumps(data_block.model_dump(mode="json"))
-                    )
 
-            if is_local:
-                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps({"type": "STREAM_END"}))
-            else:
-                await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                    f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-                    connection_id=connection_id,
-                    message=json.dumps({"type": "STREAM_END"}),
-                )
+            # push data to stream
+            async for data_block in data:
+                await push_to_connection_stream(data_block.model_dump(mode="json"))
+
+            # push stream end message
+            end_data = {"type": "STREAM_END"}
+            await push_to_connection_stream(end_data)
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
+
+            # push error message to stream
             error_data = {"type": "STREAM_ERROR", "message": str(ex)}
-            if is_local:
-                local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(error_data))
-            else:
-                await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                    f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-                    connection_id=connection_id,
-                    message=json.dumps(error_data),
-                )
+            await push_to_connection_stream(error_data)
 
     asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
