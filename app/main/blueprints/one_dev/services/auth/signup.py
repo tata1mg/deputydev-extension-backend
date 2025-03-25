@@ -44,13 +44,14 @@ class SignUp:
                 raise Exception(str(e))
 
     @classmethod
-    def get_team_info_from_email(cls, email: str, external_auth_client: str) -> Dict[str, Any]:
+    def get_team_info_from_email(cls, email: str, external_auth_client: str = "") -> Dict[str, Any]:
         domain = email.split("@")[1]
-        if Clients(external_auth_client) == Clients.VSCODE_EXT:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
-            }
+        if external_auth_client:
+            if Clients(external_auth_client) == Clients.VSCODE_EXT:
+                return {
+                    "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                    "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
+                }
         if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
