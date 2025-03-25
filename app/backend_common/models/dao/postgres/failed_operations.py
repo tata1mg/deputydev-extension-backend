@@ -3,16 +3,18 @@ from tortoise import fields
 from .base import Base
 
 
-class FailedKafkaMessages(Base):
+class FailedOperations(Base):
     serializable_keys = {
         "id",
-        "message_data",
+        "type",
+        "data",
         "created_at",
         "updated_at",
     }
 
     id = fields.IntField(primary_key=True)
-    message_data = fields.JSONField()
+    type = fields.TextField()
+    data = fields.JSONField()
 
     class Meta:
-        table = "failed_kafka_messages"
+        table = "failed_operations"
