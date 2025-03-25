@@ -99,9 +99,7 @@ async def get_auth_data(request: Request) -> AuthData:
     # prepare the auth data
     auth_data = None
     if response_headers and response_headers["new_session_data"]:
-        auth_data = AuthData(
-            user_team_id=user_team_id, session_refresh_token=response_headers["new_session_data"]
-        )
+        auth_data = AuthData(user_team_id=user_team_id, session_refresh_token=response_headers["new_session_data"])
     else:
         auth_data = AuthData(user_team_id=user_team_id)
 

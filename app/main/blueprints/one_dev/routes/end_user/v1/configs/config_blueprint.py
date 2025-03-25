@@ -1,6 +1,10 @@
 from typing import Any, Dict, Optional
+
+from deputydev_core.utils.constants.enums import Clients
+from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic import Blueprint
 from torpedo import Request, send_response
+from torpedo.exceptions import BadRequestException
 
 from app.main.blueprints.one_dev.services.config.config_fetcher import ConfigFetcher
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
@@ -12,9 +16,6 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from torpedo.exceptions import BadRequestException
-from deputydev_core.utils.constants.error_codes import APIErrorCodes
-from deputydev_core.utils.constants.enums import Clients
 
 config_v1_bp = Blueprint("config_v1_bp", url_prefix="/configs")
 
