@@ -7,13 +7,15 @@ from app.backend_common.exception.exception import SignUpError
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.services.workspace.onboarding_manager import OnboardingManager
+from deputydev_core.utils.constants.enums import Clients
 
 
 class SignUp:
     @classmethod
     async def signup(cls, headers: Dict[str, Any]) -> Dict[str, Any]:
+        external_auth_client = headers.get("X-External-Auth-Client")
         email = headers.get("X-User-Email")
-        email_verification = cls.get_team_info_from_email(email)
+        email_verification = cls.get_team_info_from_email(email, external_auth_client)
         if "error" in email_verification:
             return {"success": False, "error": email_verification["error"]}
         else:
@@ -42,15 +44,27 @@ class SignUp:
                 raise Exception(str(e))
 
     @classmethod
-    def get_team_info_from_email(cls, email: str) -> Dict[str, Any]:
-        if email in CONFIG.config["ALLOWED_EMAILS"]:
-            domain = email.split("@")[1]
-            if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
-                return {
-                    "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
-                    "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
-                }
-            else:
-                return {"team_id": None, "org_name": None, "error": "Invalid domain"}
+    def get_team_info_from_email(cls, email: str, external_auth_client: str) -> Dict[str, Any]:
+        domain = email.split("@")[1]
+        if external_auth_client == Clients.VSCODE_EXT.value:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
+            }
+        if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
+            }
+        elif domain == CONFIG.config["ORG_INFO"]["TRAYA"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["TRAYA"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["TRAYA"]["org_name"],
+            }
+        elif domain == CONFIG.config["ORG_INFO"]["5CNETWORK"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["5CNETWORK"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["5CNETWORK"]["org_name"],
+            }
         else:
-            return {"team_id": None, "org_name": None, "error": "Invalid email"}
+            return {"team_id": None, "org_name": None, "error": "Invalid domain"}
