@@ -1,5 +1,5 @@
 -- migrate:up
-CREATE TABLE IF NOT EXISTS session_events (
+CREATE TABLE IF NOT EXISTS pixel_events (
     id SERIAL PRIMARY KEY,
     event_id UUID NOT NULL UNIQUE,
     session_id INT NOT NULL,
@@ -14,11 +14,11 @@ CREATE TABLE IF NOT EXISTS session_events (
     updated_at TIMESTAMP with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_session_events_session_id ON session_events(session_id);
-CREATE INDEX idx_session_events_user_id ON session_events(user_id);
-CREATE INDEX idx_session_events_team_id ON session_events(team_id);
+CREATE INDEX idx_pixel_events_session_id ON pixel_events(session_id);
+CREATE INDEX idx_pixel_events_user_id ON pixel_events(user_id);
+CREATE INDEX idx_pixel_events_team_id ON pixel_events(team_id);
 
 
 -- migrate:down
-DROP TABLE IF EXISTS session_events;
+DROP TABLE IF EXISTS pixel_events;
 

@@ -4,7 +4,7 @@ from tortoise_wrapper.db import NaiveDatetimeField
 from .base import Base
 
 
-class SessionEvents(Base):
+class PixelEvents(Base):
     serializable_keys = {
         "id",
         "event_id",
@@ -32,5 +32,5 @@ class SessionEvents(Base):
     timestamp = NaiveDatetimeField(null=True)
 
     class Meta:
-        table = "session_events"
+        table = "pixel_events"
         indexes = (("session_id",), ("user_id",), ("team_id",))

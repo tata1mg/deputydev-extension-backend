@@ -2,7 +2,9 @@ from torpedo.constants import ListenerEventTypes
 
 from app.main.blueprints.deputy_dev.services.sqs.genai_subscriber import GenaiSubscriber
 from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
-from app.main.blueprints.one_dev.services.kafka.session_event_subscriber import SessionEventSubscriber
+from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
+    PixelEventSubscriber,
+)
 
 
 async def initialize_sqs_subscribes(_app, loop):
@@ -20,6 +22,7 @@ async def initialize_sqs_subscribes(_app, loop):
         meta_subscribe = MetaSubscriber(_app.config)
         _app.add_task(await meta_subscribe.subscribe())
 
+
 async def initialize_kafka_subscriber(_app, loop):
     """
     Initialize Kafka subscriber for session events
@@ -28,7 +31,7 @@ async def initialize_kafka_subscriber(_app, loop):
     :return:
     """
     if _app.config.get("KAFKA", {}).get("ENABLED", False):
-        session_event_subscriber = SessionEventSubscriber(_app.config)
+        session_event_subscriber = PixelEventSubscriber(_app.config)
         _app.add_task(session_event_subscriber.consume())
 
 
