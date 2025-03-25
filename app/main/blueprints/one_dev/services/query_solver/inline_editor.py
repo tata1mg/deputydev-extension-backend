@@ -27,6 +27,7 @@ class InlineEditGenerator:
                 "query": payload.query,
                 "relevant_chunks": payload.relevant_chunks,
                 "code_selection": payload.code_selection,
+                "deputy_dev_rules": payload.deputy_dev_rules,
             },
             previous_responses=[],
             tools=[],

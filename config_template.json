@@ -410,6 +410,10 @@
     "MAX_INIT_RETRY": 600,
     "MAX_ALIVE_RETRY": 5
   },
+  "CLIENT_DOWNLOAD_LINKS": {
+    "VSCODE_EXT": "https://marketplace.visualstudio.com/items?itemName=Tata1mg.deputydev"
+  },
+  "MAX_DEPUTY_DEV_RULES_LENGTH": 8000,
   "KAFKA": {
     "HOST": "",
     "GROUP_ID": "",
