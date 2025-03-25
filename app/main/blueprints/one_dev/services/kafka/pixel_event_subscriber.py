@@ -37,12 +37,12 @@ class PixelEventSubscriber(BaseKafkaSubscriber):
 
     def parse_event_data(self, event_data: dict) -> dict[str, Optional[Any]]:
 
-        event_id = event_data.get("anonymousId")
-        event_type = event_data.get("event")
-        session_id = event_data.get("properties").get("session_id")
-        lines = event_data.get("properties").get("lines")
-        file_path = event_data.get("properties").get("file_path")
-        timestamp = event_data.get("properties").get("timestamp")
+        event_id = event_data["anonymousId"]
+        event_type = event_data["event"]
+        session_id = event_data["properties"]["session_id"]
+        lines = event_data["properties"]["lines"]
+        file_path = event_data["properties"]["file_path"]
+        timestamp = event_data["properties"]["timestamp"]
 
         return {
             "event_id": event_id,
