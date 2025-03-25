@@ -9,6 +9,7 @@ from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiCli
 class SocketClosedException(Exception):
     pass
 
+
 class AWSAPIGatewayServiceClient:
     API_GATEWAY_MANAGEMENT_API_NAME = "apigatewaymanagementapi"
 

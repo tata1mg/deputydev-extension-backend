@@ -13,7 +13,8 @@ from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
-    AWSAPIGatewayServiceClient,SocketClosedException
+    AWSAPIGatewayServiceClient,
+    SocketClosedException,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
@@ -66,7 +67,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                         message=json.dumps(data),
                     )
                 except SocketClosedException:
-                    connection_id_gone = True            
+                    connection_id_gone = True
 
     async def solve_query():
         nonlocal payload
