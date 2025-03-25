@@ -19,7 +19,9 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
     BaseAnthropicTextDeltaParser,
 )
-from app.main.blueprints.deputy_dev.constants.constants import CUSTOM_PROMPT_INSTRUCTIONS
+from app.main.blueprints.deputy_dev.constants.constants import (
+    CUSTOM_PROMPT_INSTRUCTIONS,
+)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
