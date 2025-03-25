@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from torpedo import CONFIG
 
@@ -44,7 +44,7 @@ class SignUp:
                 raise Exception(str(e))
 
     @classmethod
-    def get_team_info_from_email(cls, email: str, external_auth_client: str = "") -> Dict[str, Any]:
+    def get_team_info_from_email(cls, email: str, external_auth_client: Optional[str] = None) -> Dict[str, Any]:
         domain = email.split("@")[1]
         if external_auth_client:
             if Clients(external_auth_client) == Clients.VSCODE_EXT:
