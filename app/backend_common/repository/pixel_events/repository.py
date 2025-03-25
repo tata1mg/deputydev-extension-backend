@@ -13,6 +13,5 @@ class PixelEventsRepository:
     async def db_insert(cls, pixel_events_dto: PixelEventsData) -> PixelEventsDTO:
         pixel_events_dto.timestamp = pixel_events_dto.timestamp.replace(tzinfo=pytz.UTC)
         payload = pixel_events_dto.model_dump(mode="json")
-        payload["timestamp"] = payload["timestamp"].replace(tzinfo=pytz.UTC)
         row = await DB.insert_row(PixelEvents, payload)
         return row
