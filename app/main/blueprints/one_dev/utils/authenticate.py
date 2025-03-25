@@ -1,6 +1,6 @@
 import json
 from functools import wraps
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from deputydev_core.utils.constants.auth import AuthStatus
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -21,7 +21,7 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
-async def get_auth_data(request: Request) -> AuthData:
+async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
     """
     Get the auth data from the request
     """
@@ -103,7 +103,7 @@ async def get_auth_data(request: Request) -> AuthData:
     else:
         auth_data = AuthData(user_team_id=user_team_id)
 
-    return auth_data
+    return auth_data, response_headers
 
 
 def authenticate(func: Any) -> Any:
@@ -115,7 +115,8 @@ def authenticate(func: Any) -> Any:
     async def wrapper(request: Request, client_data: ClientData, **kwargs: Any) -> Any:
         try:
             # Get the auth data
-            auth_data = await get_auth_data(request)
+            auth_data, response_headers = await get_auth_data(request)
+            kwargs["response_headers"] = response_headers
         except Exception as ex:
             raise BadRequestException(str(ex))
         return await func(request, client_data=client_data, auth_data=auth_data, **kwargs)
