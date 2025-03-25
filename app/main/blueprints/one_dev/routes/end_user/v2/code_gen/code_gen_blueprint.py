@@ -16,6 +16,7 @@ from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_
     AWSAPIGatewayServiceClient,
     SocketClosedException,
 )
+from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
@@ -81,9 +82,16 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         try:
             data = await QuerySolver().solve_query(payload=payload)
 
+            last_block = None
             # push data to stream
             async for data_block in data:
+                last_block = data_block
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
+
+            # TODO: Sugar code this part
+            if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
+                query_end_data = {"type": "QUERY_COMPLETE"}
+                await push_to_connection_stream(query_end_data)
 
             # push stream end message
             end_data = {"type": "STREAM_END"}
