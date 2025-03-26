@@ -124,6 +124,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         return None
 
     async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
+        print(event.content.text)
         if self.is_diff is None:
             self.text_buffer += event.content.text
         elif self.is_diff:
@@ -181,11 +182,13 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     .replace(is_diff_block.group(0), "")
                 ).lstrip("\n\r")
             else:
-                self.diff_line_buffer = (
+                diff_part = (
                     self.text_buffer.replace(programming_language_block.group(0), "")
                     .replace(file_path_block.group(0), "")
                     .replace(is_diff_block.group(0), "")
                 )
+                self.diff_line_buffer = diff_part
+                self.diff_buffer = diff_part
                 self.text_buffer = ""
             self.start_event_completed = True
 
@@ -208,6 +211,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                         )
                     )
                 )
+                print(self.diff_buffer)
                 self.diff_buffer = ""
             else:
                 self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
