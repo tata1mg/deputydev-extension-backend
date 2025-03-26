@@ -1,6 +1,7 @@
 import json
 from typing import Any, AsyncIterator, Dict, List
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import MessageData, TextBlockData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -16,6 +17,7 @@ from ...dataclasses.main import PromptFeatures
 
 class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
     prompt_type = PromptFeatures.COMMENT_VALIDATION.value
+    prompt_category = PromptCategories.CODE_REVIEW.value
     response_type = "json_object"
 
     def __init__(self, params: Dict[str, Any]):

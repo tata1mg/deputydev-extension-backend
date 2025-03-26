@@ -190,7 +190,6 @@ class Anthropic(BaseLLMProvider):
         if cache_config.conversation and messages and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
-        print(llm_payload)
         return llm_payload
 
     async def _get_service_client(self):
@@ -248,15 +247,13 @@ class Anthropic(BaseLLMProvider):
         """
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
 
-        # message start blocks and delta blocks for usage tracking
-        if event["type"] == "message_start":
-            usage.input += event["message"]["usage"].get("input_tokens", 0)
-            usage.output += event["message"]["usage"].get("output_tokens", 0)
-            return None, None, usage
+        if event["type"] == "message_stop":
+            invocation_metrics = event["amazon-bedrock-invocationMetrics"]
+            if "inputTokenCount" in invocation_metrics:
+                usage.input = invocation_metrics.get("inputTokenCount")
+            if "outputTokenCount" in invocation_metrics:
+                usage.output = invocation_metrics.get("outputTokenCount")
 
-        if event["type"] == "message_delta":
-            usage.input += event["usage"].get("input_tokens", 0)
-            usage.output += event["usage"].get("output_tokens", 0)
             return None, None, usage
 
         # parsers for tool use request blocks
@@ -359,6 +356,7 @@ class Anthropic(BaseLLMProvider):
                 except Exception:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
+
             streaming_completed = True
 
         async def get_usage() -> LLMUsage:
@@ -366,6 +364,7 @@ class Anthropic(BaseLLMProvider):
             nonlocal streaming_completed
             while not streaming_completed:
                 await asyncio.sleep(0.1)
+
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
@@ -389,7 +388,9 @@ class Anthropic(BaseLLMProvider):
         AppLogger.log_debug(json.dumps(llm_payload))
         model_config = self._get_model_config(model)
         if stream is False:
-            response = await anthropic_client.get_llm_response(llm_payload=llm_payload, model=model_config["NAME"])
+            response = await anthropic_client.get_llm_non_stream_response(
+                llm_payload=llm_payload, model=model_config["NAME"]
+            )
             return await self._parse_non_streaming_response(response)
         else:
             response = await anthropic_client.get_llm_stream_response(

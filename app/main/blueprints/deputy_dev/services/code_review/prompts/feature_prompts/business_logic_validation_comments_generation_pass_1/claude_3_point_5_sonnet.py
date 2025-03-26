@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
@@ -13,6 +14,7 @@ from ...dataclasses.main import PromptFeatures
 
 class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCommentCreationPrompt):
     prompt_type = PromptFeatures.BUSINESS_LOGIC_VALIDATION_COMMENTS_GENERATION_PASS_1.value
+    prompt_category = PromptCategories.CODE_REVIEW.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params

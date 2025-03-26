@@ -42,10 +42,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         self.agent_id = self.agent_setting.get("agent_id")
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
-        print("***************")
-        print(self.agent_id)
-        print(relevant_chunks)
-        print("***************")
         relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
         agent_relevant_chunks: List[ChunkInfo] = []
         for index in relevant_chunks_index:
