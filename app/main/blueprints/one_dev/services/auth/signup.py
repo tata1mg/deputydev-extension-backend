@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.utils.constants.enums import Clients
 from torpedo import CONFIG
 
 from app.backend_common.constants.onboarding import UserRoles
@@ -7,7 +8,6 @@ from app.backend_common.exception.exception import SignUpError
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.services.workspace.onboarding_manager import OnboardingManager
-from deputydev_core.utils.constants.enums import Clients
 
 
 class SignUp:
