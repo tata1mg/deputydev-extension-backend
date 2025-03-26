@@ -1,5 +1,6 @@
 from typing import Any, AsyncIterator, Dict, List
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import MessageData, TextBlockData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -16,6 +17,7 @@ from ...dataclasses.main import PromptFeatures
 
 class GPT4OPRSummarizationPrompt(BaseGPT4OPrompt):
     prompt_type = PromptFeatures.PR_SUMMARIZATION.value
+    prompt_category = PromptCategories.CODE_REVIEW.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
