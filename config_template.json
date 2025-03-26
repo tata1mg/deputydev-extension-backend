@@ -413,5 +413,11 @@
   "CLIENT_DOWNLOAD_LINKS": {
     "VSCODE_EXT": "https://marketplace.visualstudio.com/items?itemName=Tata1mg.deputydev"
   },
-  "MAX_DEPUTY_DEV_RULES_LENGTH": 8000
+  "MAX_DEPUTY_DEV_RULES_LENGTH": 8000,
+  "KAFKA": {
+    "HOST": "",
+    "GROUP_ID": "",
+    "SESSION_QUEUE_NAME": "",
+    "ENABLED": true
+  }
 }

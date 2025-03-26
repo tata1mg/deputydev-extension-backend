@@ -2,10 +2,10 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel, field_validator
 
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from deputydev_core.utils.config_manager import ConfigManager
 
 MAX_DEPUTY_DEV_RULES_LENGTH = ConfigManager.configs["MAX_DEPUTY_DEV_RULES_LENGTH"]
 
