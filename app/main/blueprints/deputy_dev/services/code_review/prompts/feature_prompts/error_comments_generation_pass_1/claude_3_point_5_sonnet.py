@@ -31,70 +31,70 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
 
         user_message = f"""
             Here's the information about the pull request:
-            
+
             <pull_request_title>
             {self.params['PULL_REQUEST_TITLE']}
             </pull_request_title>
-            
+
             <pull_request_description>
             {self.params['PULL_REQUEST_DESCRIPTION']}
             </pull_request_description>
-            
+
             Now, examine the following diff and related code snippets:
-            
+
             <pull_request_diff>
             {self.params['PULL_REQUEST_DIFF']}
             </pull_request_diff>
-            
+
             <contextually_related_code_snippets>
             {self.params['CONTEXTUALLY_RELATED_CODE_SNIPPETS']}
             </contextually_related_code_snippets>
-            
+
             Focus on identifying the following types of errors:
-            
+
             1. Runtime errors
             2. Syntax errors
             3. Logical errors
             4. Semantic errors
             5. Edge cases
             6. Unhandled exceptions
-            
+
             Guidelines for identifying each error type:
             1. Runtime Errors:
             <runtime_error_guidelines>
             - Potential issues that could cause the program to crash or behave unexpectedly
             during execution.
             </runtime_error_guidelines>
-            
+
             2. Syntax Errors:
             <syntax_error_guidelines>
             - Check for missing semicolons, mismatched parentheses, or incorrect keyword usage.
             </syntax_error_guidelines>
-            
+
             3. Logical Errors:
             <logical_error_guidelines>
             - Analyze the code's flow and algorithms for incorrect calculations or faulty
             conditionals.
             </logical_error_guidelines>
-            
+
             4. Semantic Errors:
             <semantic_error_guidelines>
             - Identify misuse of language features, such as improper type conversions or
             incorrect method calls.
             </semantic_error_guidelines>
-            
+
             5. Edge Cases:
             <edge_cases_guidelines>
             - Consider extreme or unusual inputs that might cause unexpected behavior.
             </edge_cases_guidelines>
-            
+
             6. Unhandled exceptions:
             <unhandled_exceptions>
             - Check for Unhandled exceptions in critical code paths.
             </unhandled_exceptions> 
-            
+
             Analyze the code thoroughly and provide your feedback in the following XML format:
-            
+
             <review>
             <comments>
             <comment>
@@ -114,11 +114,11 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
             <!-- Repeat the <comment> block for each error found -->
             </comments>
             </review>
-            
+
             Important: Focus exclusively on identifying and reporting errors. Do not comment on other aspects of
             code review such as security, documentation, performance, or docstrings unless they directly relate
             to an error.
-            
+
             When reviewing the code:
             -  Carefully analyze each change in the diff.
             -  Focus solely on major error-related issues as outlined above.
@@ -143,7 +143,7 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
             -   Do not duplicate comments for similar issues across different locations.
             -   If you are suggesting any comment that is already catered please don't include those comment in response.
             -   Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
-            
+
             Remember to maintain a professional and constructive tone in your comments. Your goal is to help
             improve the code quality by identifying and explaining errors accurately.
         """
