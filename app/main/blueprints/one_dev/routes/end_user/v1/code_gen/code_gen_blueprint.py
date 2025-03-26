@@ -87,7 +87,6 @@ async def generate_code(_request: Request, client_data: ClientData, auth_data: A
 @ensure_session_id(session_type="CODE_GENERATION_V1")
 async def generate_docs(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = _request.custom_json()
-    print(payload)
     response = await DocsGenerationHandler.start_feature(
         payload=CodeDocsGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
@@ -102,7 +101,6 @@ async def generate_test_case(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
 ):
     payload = _request.custom_json()
-    print(payload)
     response = await TestCaseGenerationHandler.start_feature(
         payload=TestCaseGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
@@ -117,7 +115,6 @@ async def generate_code_plan(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
 ):
     payload = _request.custom_json()
-    print(payload)
     response = await CodePlanHandler.start_feature(
         payload=CodePlanGenerationInput(**payload, session_id=session_id, auth_data=auth_data)
     )
@@ -132,7 +129,6 @@ async def generate_code_diff(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs
 ):
     payload = _request.custom_json()
-    print(payload)
     response = await DiffCreationHandler.start_feature(
         payload=DiffCreationInput(session_id=session_id, **payload, auth_data=auth_data)
     )
@@ -168,7 +164,6 @@ async def plan_to_code(_request: Request, client_data: ClientData, auth_data: Au
 @ensure_session_id(session_type="CODE_GENERATION_V1")
 async def get_job_status(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs):
     payload = {key: var for key, var in _request.query_args}
-    print(payload)
     job = await JobService.db_get(filters={"id": int(payload.get("job_id"))}, fetch_one=True)
     if not job:
         return send_response({"status": "JOB_NOT_FOUND"})

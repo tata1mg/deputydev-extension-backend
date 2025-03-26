@@ -101,6 +101,7 @@ class MessageThreadData(BaseModel):
     data_hash: str
     message_data: Sequence[MessageData]
     prompt_type: str
+    prompt_category: str
     llm_model: LLModels
     usage: Optional[LLMUsage] = None
     call_chain_category: MessageCallChainCategory
