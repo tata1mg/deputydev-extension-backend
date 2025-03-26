@@ -39,4 +39,4 @@ class BaseKafkaSubscriber(ABC):
     @abstractmethod
     async def _process_message(self, message):
         """Abstract method to be implemented by subclasses for handling messages."""
-        pass
+        raise NotImplementedError()
