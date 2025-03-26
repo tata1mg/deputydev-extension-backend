@@ -211,7 +211,6 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                         )
                     )
                 )
-                print(self.diff_buffer)
                 self.diff_buffer = ""
             else:
                 self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
