@@ -118,7 +118,7 @@ def authenticate(func: Any) -> Any:
             auth_data, response_headers = await get_auth_data(request)
             kwargs["response_headers"] = response_headers
         except Exception as ex:
-            raise BadRequestException(str(ex))
+            raise BadRequestException(str(ex), sentry_raise=False)
         return await func(request, client_data=client_data, auth_data=auth_data, **kwargs)
 
     return wrapper

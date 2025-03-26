@@ -58,13 +58,6 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
                         or confidence_score_element.text is None
                         or bucket_element.text is None
                     ):
-                        print("XXXXXXXXXXXXXXXX")
-                        print(description_element)
-                        print(file_path_element)
-                        print(line_number_element)
-                        print(confidence_score_element)
-                        print(bucket_element)
-                        print("XXXXXXXXXXXXXXXX")
                         raise ValueError("The XML string does not contain the expected comment elements.")
 
                     comments.append(
