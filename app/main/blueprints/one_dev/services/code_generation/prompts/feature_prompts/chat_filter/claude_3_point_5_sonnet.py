@@ -3,6 +3,7 @@ from typing import Any, AsyncIterator, Dict, List
 
 from pydantic import BaseModel
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -18,7 +19,8 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 
 
 class Claude3Point5RelevantChatFilterPrompt(BaseClaude3Point5SonnetPrompt):
-    prompt_type = ""
+    prompt_type = "CHAT_RE_RANKING"
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params

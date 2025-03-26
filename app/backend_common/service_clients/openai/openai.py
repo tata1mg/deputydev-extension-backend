@@ -24,7 +24,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             ),
         )
 
-    async def get_llm_response(
+    async def get_llm_non_stream_response(
         self,
         conversation_messages: List[Dict[str, Any]],
         model: str,
@@ -38,10 +38,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             messages=conversation_messages,
             temperature=0.5,
         )
-
-        print("***************XXXXXX")
-        print(completion)
-        print("***************XXXXXX")
 
         # we need both message and output token now to returning full completion message
         return completion

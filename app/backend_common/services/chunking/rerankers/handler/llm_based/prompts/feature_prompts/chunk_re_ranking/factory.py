@@ -5,13 +5,10 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 
 from .claude_3_point_5_sonnet import Claude3Point5ChunkReRankingPrompt
 
-# from .open_ai_o1_mini import OpenAIO1MiniPrompt
-
 
 class ChunkReRankingPromptFactory(BaseFeaturePromptFactory):
     chunk_re_ranking_prompts = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5ChunkReRankingPrompt,
-        # LLModels.GPT_O1_MINI: OpenAIO1MiniPrompt,
     }
 
     @classmethod

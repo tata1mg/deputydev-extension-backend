@@ -2,6 +2,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockData,
@@ -21,6 +22,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 
 class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "SESSION_SUMMARY_GENERATOR"
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params

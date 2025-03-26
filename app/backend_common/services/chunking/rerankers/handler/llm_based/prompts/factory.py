@@ -15,7 +15,7 @@ from .feature_prompts.chunk_re_ranking.factory import ChunkReRankingPromptFactor
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
     feature_prompt_factory_map: Dict[PromptFeatures, Type[BaseFeaturePromptFactory]] = {
-        PromptFeatures.RE_RANKING: ChunkReRankingPromptFactory,
+        PromptFeatures.CHUNK_RE_RANKING: ChunkReRankingPromptFactory,
     }
 
     @classmethod
