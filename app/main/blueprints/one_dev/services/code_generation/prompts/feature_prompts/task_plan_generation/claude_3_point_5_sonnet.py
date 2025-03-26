@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockData,
@@ -15,6 +16,7 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 
 class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "TASK_PLANNER"
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = """
