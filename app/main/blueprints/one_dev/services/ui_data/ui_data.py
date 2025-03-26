@@ -51,6 +51,12 @@ class UIProfile:
                 "url": "https://forms.gle/Abd1FJJVf3J2daLP7",
             },
             {
+                "label": "Docs",
+                "type": "Hyperlink",
+                "icon": "https://onemg.gumlet.io/dd_docs_logo_26_03.png",
+                "url": "https://onedoc.ekdosis.com/space/52766277-7bce-49f4-b18a-6f9fa97cd4c1/page/f6dbbfd2-a068-499f-b4d9-0bb3930091f8",
+            },
+            {
                 "label": "Report a Bug",
                 "type": "Hyperlink",
                 "icon": "https://onemg.gumlet.io/dd_report_bug_24_03.png",
