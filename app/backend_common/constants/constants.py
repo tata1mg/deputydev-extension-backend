@@ -81,3 +81,9 @@ class PRStatus(Enum):
     MERGED = "MERGED"
     DECLINED = "DECLINED"
     APPROVED = "approved"
+
+
+class PixelEvents(Enum):
+    ACCEPTED = "accepted"
+    GENERATED = "generated"
+    COPIED = "copied"

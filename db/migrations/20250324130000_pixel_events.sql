@@ -18,8 +18,13 @@ CREATE TABLE IF NOT EXISTS pixel_events (
 CREATE INDEX idx_pixel_events_session_id ON pixel_events(session_id);
 CREATE INDEX idx_pixel_events_user_id ON pixel_events(user_id);
 CREATE INDEX idx_pixel_events_team_id ON pixel_events(team_id);
+CREATE INDEX idx_pixel_events_user_team ON pixel_events(user_id, team_id);
 
 
 -- migrate:down
+DROP INDEX IF EXISTS idx_pixel_events_session_id;
+DROP INDEX IF EXISTS idx_pixel_events_user_id;
+DROP INDEX IF EXISTS idx_pixel_events_team_id;
+DROP INDEX IF EXISTS idx_pixel_events_user_team;
 DROP TABLE IF EXISTS pixel_events;
 
