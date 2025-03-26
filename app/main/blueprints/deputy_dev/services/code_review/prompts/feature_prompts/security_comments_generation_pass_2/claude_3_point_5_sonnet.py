@@ -59,16 +59,16 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             g. Potential for injection attacks (SQL, XSS, CSRF, etc.)
             h. Secure configuration and environment variables
             i. Business logic flaws that could lead to security issues
-            
+
             4. For each security issue or vulnerability you identify:
             a. Describe the issue, it's potential impact and its severity. This will be a comment on the PR.
             b. Corrected code - Rewrite the code snippet. How the code should be written ideally.
             c. File path - path of the file on which comment is being made
             d. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
             e. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
-            
+
             Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
-            
+
             Keep in mind these important instructions when reviewing the code:
             1. Carefully analyze each change in the diff.
             2. Focus solely on major performance issues that could substantially impact system efficiency.
@@ -79,30 +79,30 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             7. Ensure that your comments are clear, concise, and actionable.
             8. Provide specific line numbers and file paths for each finding.
             9. Assign appropriate confidence scores based on your certainty of the findings or improvements.
-            10. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions. 
+            10. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions.
                 This is the primary focus for review comments. The diff shows:
                 - Added lines (prefixed with +)
                 - Removed lines (prefixed with -)
                 - Context lines (no prefix)
                 Only added lines and Removed lines changes should receive direct review comments.
-            11.  Comment should be part of code present in <pull_request_diff> and Use <contextually_related_code_snippets> 
-            only for understanding impact of change. 
+            11.  Comment should be part of code present in <pull_request_diff> and Use <contextually_related_code_snippets>
+            only for understanding impact of change.
             12.  comment should not be on unchanged code unless directly impacted by the changes.
             13.  comment should not be duplicated for similar issues across different locations.
             14.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
             15.  Do not change the provided bucket name.
-            
+
             </guidelines>
-            
-            Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned 
+
+            Next, receive the comments from <thinking> and remove comments which follow below criteria mentioned
             in new_guidelines.
             <new_guidelines>
-            1. If any comment is already catered. 
-            2. If comment is not part of added and Removed lines. 
+            1. If any comment is already catered.
+            2. If comment is not part of added and Removed lines.
             3. If any comment reflects appreciation.
             4. If comment is not part of PR diff.
             </new_guidelines>
-            
+
             Next, format comments from previous step in the following XML format:
             <review>
             <comments>
