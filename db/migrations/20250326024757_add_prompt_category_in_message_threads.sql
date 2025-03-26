@@ -1,5 +1,5 @@
 -- migrate:up
-ALTER TABLE message_threads ADD COLUMN prompt_category VARCHAR NOT NULL DEFAULT 'UNSET';
+ALTER TABLE message_threads ADD COLUMN IF NOT EXISTS prompt_category VARCHAR NOT NULL DEFAULT 'UNSET';
 
 
 -- migrate:down
