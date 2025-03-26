@@ -38,16 +38,11 @@ class PastWorkflows:
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
-        print(session_type)
-        print(user_team_id)
-        print(limit)
-        print(offset)
         raw_data = await MessageSessionsRepository.get_message_sessions_by_user_team_id(
             user_team_id=user_team_id, limit=limit, offset=offset, session_type=session_type
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = serializer_service.get_processed_data()
-        print(processed_data)
         return processed_data
 
     @classmethod
@@ -68,5 +63,4 @@ class PastWorkflows:
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
         processed_data = serializer_service.get_processed_data()
-        print(processed_data)
         return processed_data

@@ -16,6 +16,7 @@ class MessageThread(Base):
         "usage",
         "llm_model",
         "prompt_type",
+        "prompt_category",
         "call_chain_category",
         "created_at",
         "updated_at",
@@ -32,6 +33,7 @@ class MessageThread(Base):
     usage = fields.JSONField(null=True)
     llm_model = fields.TextField()
     prompt_type = fields.TextField()
+    prompt_category = fields.TextField()
     call_chain_category = fields.TextField()
 
     class Meta:

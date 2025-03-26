@@ -82,10 +82,6 @@ class OpenAI(BaseLLMProvider):
         """
         non_streaming_content_blocks: List[ResponseData] = []
 
-        # print("***************XXXXXXXX")
-        # print(response.choices[0].message.content)
-        # print("***************XXXXXXXX")
-
         if response.choices[0].message.content:
             non_streaming_content_blocks.append(
                 TextBlockData(content=TextBlockContent(text=response.choices[0].message.content))
@@ -138,17 +134,7 @@ class OpenAI(BaseLLMProvider):
 
         model_config = self._get_model_config(model)
 
-        print("***************XXXXXX")
-        print(
-            {
-                "conversation_messages": llm_payload["conversation_messages"],
-                "model": model_config["NAME"],
-                "response_type": response_type,
-            }
-        )
-        print("***************XXXXXX")
-
-        response = await OpenAIServiceClient().get_llm_response(
+        response = await OpenAIServiceClient().get_llm_non_stream_response(
             conversation_messages=llm_payload["conversation_messages"],
             model=model_config["NAME"],
             response_type=response_type,
