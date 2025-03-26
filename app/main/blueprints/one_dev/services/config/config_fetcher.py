@@ -106,7 +106,9 @@ class ConfigFetcher:
             "RUDDER": {
                 "WRITE_KEY": ConfigManager.configs["RUDDER"]["WRITE_KEY"],
                 "DATA_PLANE_URL": ConfigManager.configs["RUDDER"]["DATA_PLANE_URL"],
-            }
+            },
+            "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
+            "VSCODE_LOGS_RETENTION_DAYS": 7,
         },
     }
 
