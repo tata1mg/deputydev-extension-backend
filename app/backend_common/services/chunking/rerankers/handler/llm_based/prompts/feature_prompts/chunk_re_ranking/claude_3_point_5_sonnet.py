@@ -1,6 +1,7 @@
 import re
 from typing import Any, Dict, List
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockData,
@@ -12,10 +13,12 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
     BaseClaude3Point5SonnetPrompt,
 )
+from ...dataclasses.main import PromptFeatures
 
 
 class Claude3Point5ChunkReRankingPrompt(BaseClaude3Point5SonnetPrompt):
-    prompt_type = "CHUNK_RE_RANKING"
+    prompt_type = PromptFeatures.RE_RANKING.value
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:
         focus_chunks_prompt = (
