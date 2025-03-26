@@ -64,6 +64,7 @@ class MessageThreadsRepository:
                         usage=message_thread.usage,
                         llm_model=message_thread.llm_model,
                         prompt_type=message_thread.prompt_type,
+                        prompt_category=message_thread.prompt_category,
                         call_chain_category=message_thread.call_chain_category,
                     )
                 )

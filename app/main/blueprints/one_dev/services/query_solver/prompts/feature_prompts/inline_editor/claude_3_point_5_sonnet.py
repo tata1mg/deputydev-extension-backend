@@ -2,6 +2,7 @@ from typing import Any, AsyncIterator, Dict, List
 
 from pydantic import BaseModel
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockData,
@@ -18,6 +19,7 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 
 class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "INLINE_EDITOR"
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
