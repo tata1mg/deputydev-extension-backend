@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockData,
@@ -15,6 +16,7 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 
 class Claude3Point5CodeGenerationPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "CODE_GENERATION"
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = """You are Claude, an AI assistant created by Anthropic to be helpful, harmless, and honest. As an expert programmer, your task is to assist users with coding-related questions. Analyze the provided code context carefully and use it to inform your responses. If the context is insufficient, draw upon your general programming knowledge to provide accurate and helpful advice.

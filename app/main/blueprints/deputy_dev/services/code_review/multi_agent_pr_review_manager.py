@@ -69,9 +69,6 @@ class MultiAgentPRReviewManager:
             prompt_features=PromptFeatures,
         )
         self.session_id = session_id
-        print("******************************")
-        print(self.session_id)
-        print("******************************")
 
     # section setting start
 
@@ -149,7 +146,6 @@ class MultiAgentPRReviewManager:
                 self.agent_results[agent_result.agent_name] = agent_result
 
         self.populate_pr_summary()
-        print(self.pr_summary)
         await self.filter_comments()
         self.agent_results.update(self.blending_agent_results)
         self.populate_meta_info()

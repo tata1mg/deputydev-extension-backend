@@ -31,7 +31,7 @@ class BedrockServiceClient:
             raise ValueError("Failed to create Bedrock client")
         return self.client
 
-    async def get_llm_response(self, llm_payload: Dict[str, Any], model: str) -> InvokeModelResponseTypeDef:
+    async def get_llm_non_stream_response(self, llm_payload: Dict[str, Any], model: str) -> InvokeModelResponseTypeDef:
         bedrock_client = self._get_bedrock_client()
         async with bedrock_client as client:
             response = await client.invoke_model(modelId=model, body=json.dumps(llm_payload))
