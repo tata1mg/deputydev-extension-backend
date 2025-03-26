@@ -343,8 +343,6 @@ class Anthropic(BaseLLMProvider):
                 chunk = json.loads(event["chunk"]["bytes"])
                 # yield content block delta
 
-                print(chunk)
-
                 try:
                     event_block, event_block_category, event_usage = self._get_parsed_stream_event(
                         chunk, current_running_block_type
@@ -359,7 +357,6 @@ class Anthropic(BaseLLMProvider):
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
 
-            print("Streaming completed")
             streaming_completed = True
 
         async def get_usage() -> LLMUsage:
@@ -368,7 +365,6 @@ class Anthropic(BaseLLMProvider):
             while not streaming_completed:
                 await asyncio.sleep(0.1)
 
-            print(usage)
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
@@ -392,7 +388,9 @@ class Anthropic(BaseLLMProvider):
         AppLogger.log_debug(json.dumps(llm_payload))
         model_config = self._get_model_config(model)
         if stream is False:
-            response = await anthropic_client.get_llm_non_stream_response(llm_payload=llm_payload, model=model_config["NAME"])
+            response = await anthropic_client.get_llm_non_stream_response(
+                llm_payload=llm_payload, model=model_config["NAME"]
+            )
             return await self._parse_non_streaming_response(response)
         else:
             response = await anthropic_client.get_llm_stream_response(
