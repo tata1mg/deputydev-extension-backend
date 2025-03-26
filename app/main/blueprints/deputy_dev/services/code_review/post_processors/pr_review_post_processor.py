@@ -112,7 +112,6 @@ class PRReviewPostProcessor:
         self.loc_changed = await self.pr_service.get_loc_changed_count()
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
-        print(1)
         if is_large_pr:
             await self.post_process_pr_large_pr(pr_dto, tokens_data)
         elif llm_comments:

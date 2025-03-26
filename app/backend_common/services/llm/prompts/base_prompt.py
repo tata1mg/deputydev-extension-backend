@@ -14,6 +14,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 class BasePrompt(ABC):
     model_name: LLModels
     prompt_type: str
+    prompt_category: str
     response_type: str = "text"
 
     def __init__(self, params: Dict[str, Any]) -> None:

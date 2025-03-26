@@ -3,6 +3,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     MessageData,
@@ -108,7 +109,6 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         return matches
 
     async def _get_udiff_line_start(self, line_data: str) -> Optional[str]:
-        print("line_data", line_data[:2])
         if line_data.startswith("@@"):
             return "@@"
         if line_data.startswith("---"):
@@ -124,14 +124,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         return None
 
     async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
-        print("*************************************************************************************************")
-        print("*************************************************************************************************")
-        print("event text", event.content.text)
-        print("temp_buffer", self.diff_line_buffer)
-        print("text_buffer", self.text_buffer)
-        print("diff_buffer", self.diff_buffer)
-        print("*************************************************************************************************")
-        print("*************************************************************************************************")
+        print(event.content.text)
         if self.is_diff is None:
             self.text_buffer += event.content.text
         elif self.is_diff:
@@ -161,7 +154,6 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                         self.removed_lines += 1
                     self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
             self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
-            print("udiff_line_start", self.udiff_line_start)
         else:
             self.text_buffer += event.content.text
 
@@ -190,11 +182,13 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                     .replace(is_diff_block.group(0), "")
                 ).lstrip("\n\r")
             else:
-                self.diff_line_buffer = (
+                diff_part = (
                     self.text_buffer.replace(programming_language_block.group(0), "")
                     .replace(file_path_block.group(0), "")
                     .replace(is_diff_block.group(0), "")
                 )
+                self.diff_line_buffer = diff_part
+                self.diff_buffer = diff_part
                 self.text_buffer = ""
             self.start_event_completed = True
 
@@ -238,6 +232,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
 
 class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     prompt_type = "CODE_QUERY_SOLVER"
+    prompt_category = PromptCategories.CODE_GENERATION.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
