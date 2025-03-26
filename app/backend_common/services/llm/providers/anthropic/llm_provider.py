@@ -58,7 +58,7 @@ class Anthropic(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.ANTHROPIC.value)
         self.anthropic_client = None
-        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
+        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_7_SONNET"]
 
     def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[ConversationTurn]:
         """
