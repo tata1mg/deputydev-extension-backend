@@ -17,7 +17,7 @@ from ...dataclasses.main import PromptFeatures
 
 
 class Claude3Point5ChunkReRankingPrompt(BaseClaude3Point5SonnetPrompt):
-    prompt_type = PromptFeatures.RE_RANKING.value
+    prompt_type = PromptFeatures.CHUNK_RE_RANKING.value
     prompt_category = PromptCategories.CODE_GENERATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:

@@ -46,7 +46,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
             try:
                 llm_response = await llm_handler.start_llm_query(
                     session_id=self.session_id,
-                    prompt_feature=PromptFeatures.RE_RANKING,
+                    prompt_feature=PromptFeatures.CHUNK_RE_RANKING,
                     llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
                     prompt_vars={
                         "query": query,
