@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
@@ -10,6 +11,7 @@ from ...dataclasses.main import PromptFeatures
 
 class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCommentCreationPrompt):
     prompt_type = PromptFeatures.CUSTOM_AGENT_COMMENTS_GENERATION.value
+    prompt_category = PromptCategories.CODE_REVIEW.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
