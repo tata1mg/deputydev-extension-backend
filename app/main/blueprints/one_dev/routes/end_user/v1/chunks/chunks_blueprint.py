@@ -28,4 +28,6 @@ async def reranker(_request: Request, client_data: ClientData, auth_data: AuthDa
     reranked_chunks = await LLMBasedChunkReranker(session_id=session_id).rerank(
         query=payload.query, related_codebase_chunks=payload.relevant_chunks, focus_chunks=payload.focus_chunks or []
     )
-    return send_response({"reranked_denotations": [chunk.denotation for chunk in reranked_chunks], "session_id": session_id})
+    return send_response(
+        {"reranked_denotations": [chunk.denotation for chunk in reranked_chunks], "session_id": session_id}
+    )
