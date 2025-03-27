@@ -110,7 +110,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 @code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
 @validate_client_version
 @authenticate
-@ensure_session_id(session_type="CODE_GENERATION_V2")
+@ensure_session_id(auto_create=True)
 async def generate_inline_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):

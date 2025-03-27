@@ -13,10 +13,10 @@ from app.backend_common.repository.message_threads.repository import (
 
 class UIProfile:
     @classmethod
-    async def get_ui_profile(cls, user_team_id: int) -> Dict[str, Any]:
+    async def get_ui_profile(cls, user_team_id: int, session_type: str) -> Dict[str, Any]:
         try:
             sessions_ids = await MessageSessionsRepository.get_message_sessions_ids(
-                user_team_id=user_team_id, session_type="CODE_GENERATION_V2"
+                user_team_id=user_team_id, session_type=session_type
             )
             total_queries = await MessageThreadsRepository.get_total_user_queries(
                 session_ids=sessions_ids, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
