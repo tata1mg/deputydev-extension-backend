@@ -21,7 +21,7 @@ websocket_connection_v1_bp = Blueprint("websocket_connection_v1_bp", url_prefix=
 @websocket_connection_v1_bp.post("/connect")
 @validate_client_version
 @authenticate
-@ensure_session_id(session_type="CODE_GENERATION_V2")
+@ensure_session_id(auto_create=True)
 async def connect(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
     connectionid: str = _request.headers["connectionid"]
     await WebsocketConnectionCache.set(
