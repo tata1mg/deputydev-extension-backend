@@ -1,9 +1,6 @@
 from typing import Any, Optional
 
-
-from app.backend_common.models.dto.pixel_events_dto import (
-    PixelEventsData
-)
+from app.backend_common.models.dto.pixel_events_dto import PixelEventsData
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
