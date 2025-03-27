@@ -23,9 +23,12 @@ class BaseKafkaSubscriber(ABC):
     async def consume(self):
         """Start consuming messages from Kafka."""
         try:
+            logger.info("Starting kafka consumer")
             await self.consumer.start()
+            logger.info("Kafka consumer started")
             async for message in self.consumer:
                 try:
+                    logger.info("kafka message", message.value)
                     await self._process_message(message)
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}")
