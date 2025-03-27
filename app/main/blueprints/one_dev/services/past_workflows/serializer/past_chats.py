@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadDTO,
@@ -30,7 +30,12 @@ class PastChatsSerializer(BaseSerializer):
             message_type = item.message_type
             response_block = item.message_data
             llm_model = item.llm_model
-            prompt_feature = item.prompt_type
+            prompt_feature : Optional[PromptFeatures]= None
+            try:
+                prompt_feature = PromptFeatures(item.prompt_type)
+            except Exception:
+                continue
+
             actor = item.actor.value
 
             if message_type == MessageType.QUERY:
@@ -73,7 +78,7 @@ class PastChatsSerializer(BaseSerializer):
                 tool_use_request_block = tool_use_map[tool_use_id]
                 tool_use_request_block["content"]["result_json"] = response_block[0].content.response
             else:
-                parser_class = PromptFeatureFactory.get_prompt(llm_model, PromptFeatures(prompt_feature))
+                parser_class = PromptFeatureFactory.get_prompt(llm_model, prompt_feature)
                 parsed_blocks, tool_use_map = parser_class.get_parsed_response_blocks(response_block)
                 tool_use_map = tool_use_map
                 for block in parsed_blocks:
