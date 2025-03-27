@@ -24,7 +24,7 @@ types-aiobotocore-apigatewaymanagementapi = "==2.11.2"
 torpedo = { editable = true, ref = "3.6.1-rc2-bumped-websockets", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
 realtime = "==2.3.0"
 fuzzywuzzy = "*"
-aiokafka = "==0.10.0"
+aiokafka = { version = "==0.10.0", extras = ["zstd"] }
 
 [dev-packages]
 flake8 = "==7.1.1"
