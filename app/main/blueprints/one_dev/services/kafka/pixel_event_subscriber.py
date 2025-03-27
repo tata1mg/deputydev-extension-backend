@@ -21,7 +21,7 @@ class PixelEventSubscriber(BaseKafkaSubscriber):
         event_data = message.value
         parsed_event_data = self.parse_event_data(event_data)
         message_session_dto = await MessageSessionsRepository.get_by_id(parsed_event_data["session_id"])
-        user_teams_dto = await UserTeamRepository.db_get(filters={"id": message_session_dto.id}, fetch_one=True)
+        user_teams_dto = await UserTeamRepository.db_get(filters={"id": message_session_dto.user_team_id}, fetch_one=True)
         pixel_event_data = PixelEventsData(
             **parsed_event_data,
             user_id=user_teams_dto.user_id,
