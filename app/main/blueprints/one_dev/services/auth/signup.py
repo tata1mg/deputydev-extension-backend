@@ -48,10 +48,13 @@ class SignUp:
         domain = email.split("@")[1]
         if external_auth_client:
             if Clients(external_auth_client) == Clients.VSCODE_EXT:
-                return {
-                    "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
-                    "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
-                }
+                if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
+                    return {
+                        "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
+                        "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
+                    }
+                else:
+                    return {"team_id": None, "org_name": None, "error": "Invalid domain"}
         if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
