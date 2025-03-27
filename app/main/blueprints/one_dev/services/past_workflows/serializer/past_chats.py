@@ -30,7 +30,7 @@ class PastChatsSerializer(BaseSerializer):
             message_type = item.message_type
             response_block = item.message_data
             llm_model = item.llm_model
-            prompt_feature : Optional[PromptFeatures]= None
+            prompt_feature: Optional[PromptFeatures] = None
             try:
                 prompt_feature = PromptFeatures(item.prompt_type)
             except Exception:
