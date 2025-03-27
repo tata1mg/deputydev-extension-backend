@@ -2,9 +2,14 @@
 from functools import wraps
 from typing import Any, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
 from torpedo import Request
+from torpedo.exceptions import BadRequestException
 
-from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.message_sessions_dto import (
+    MessageSessionData,
+    MessageSessionDTO,
+)
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
@@ -12,29 +17,39 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 
-async def check_or_create_session(
-    session_type: str, client_data: ClientData, auth_data: AuthData, sesison_id: Optional[int] = None
-) -> int:
-    final_session_id = sesison_id
-    if not final_session_id:
-        # get the client and client version from the headers
-        client = client_data.client
-        client_version = client_data.client_version
+async def get_stored_session(session_id: Optional[int] = None) -> Optional[MessageSessionDTO]:
+    """
+    Check if the session ID is valid.
+    """
+    if not session_id:
+        return None
 
-        # Generate a new session entry
-        message_session = await MessageSessionsRepository.create_message_session(
-            MessageSessionData(
-                user_team_id=auth_data.user_team_id,
-                client=client,
-                client_version=client_version,
-                session_type=session_type,
-            )
+    try:
+        session = await MessageSessionsRepository.get_by_id(session_id=session_id)
+        return session
+    except Exception as _ex:
+        AppLogger.log_error(f"Error occurred while fetching session from DB: {str(_ex)}")
+        return None
+
+
+async def create_new_session(session_type: str, client_data: ClientData, auth_data: AuthData) -> MessageSessionDTO:
+    # get the client and client version from the headers
+    client = client_data.client
+    client_version = client_data.client_version
+
+    # Generate a new session entry
+    message_session = await MessageSessionsRepository.create_message_session(
+        MessageSessionData(
+            user_team_id=auth_data.user_team_id,
+            client=client,
+            client_version=client_version,
+            session_type=session_type,
         )
-        final_session_id = message_session.id
-    return final_session_id
+    )
+    return message_session
 
 
-def ensure_session_id(session_type: str = "MESSAGE") -> Any:
+def ensure_session_id(auto_create: bool = False) -> Any:
     def _ensure_session_id(func: Any) -> Any:
         """
         Wrapper to ensure a session ID is present in the request headers.
@@ -43,10 +58,29 @@ def ensure_session_id(session_type: str = "MESSAGE") -> Any:
         @wraps(func)
         async def wrapper(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any) -> Any:
             # Check if the session ID is present in the headers
-            session_id = _request.headers.get("X-Session-ID")
-            session_id = await check_or_create_session(session_type, client_data, auth_data, session_id)
+            session_id: Optional[str] = _request.headers.get("X-Session-ID")
+            session_type: Optional[str] = _request.headers.get("X-Session-Type")
+
+            # check if the session ID is valid
+            valid_session_data = await get_stored_session(session_id)
+
+            # If the session data is not valid, create a new session, if auto_create is set to True
+            if not valid_session_data:
+                if auto_create:
+                    try:
+                        if not session_type or not isinstance(session_type, str) or not session_type.strip():
+                            raise BadRequestException("Invalid session type provided while creating a new session")
+                        valid_session_data = await create_new_session(session_type, client_data, auth_data)
+                    except Exception as _ex:
+                        AppLogger.log_error(f"Error occurred while creating a new session: {str(_ex)}")
+                        raise BadRequestException(f"Failed to create a new session: {str(_ex)}")
+                else:
+                    raise BadRequestException("Invalid session ID")
+
             # Proceed to the wrapped function
-            return await func(_request, client_data=client_data, auth_data=auth_data, session_id=session_id, **kwargs)
+            return await func(
+                _request, client_data=client_data, auth_data=auth_data, session_id=valid_session_data.id, **kwargs
+            )
 
         return wrapper
 

@@ -121,7 +121,6 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         return None
 
     async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
-        print(event.content.text)
         if self.is_diff is None:
             self.text_buffer += event.content.text
         elif self.is_diff:

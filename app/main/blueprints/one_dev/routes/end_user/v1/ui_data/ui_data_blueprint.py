@@ -1,3 +1,5 @@
+from typing import Any
+
 from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
@@ -15,9 +17,12 @@ ui_data_v1_bp = Blueprint("ui_data_v1_bp", url_prefix="/ui_data")
 @ui_data_v1_bp.route("/profile_ui", methods=["GET"])
 @validate_client_version
 @authenticate
-async def get_ui_profile(_request: Request, auth_data: AuthData, **kwargs):
+async def get_ui_profile(_request: Request, auth_data: AuthData, **kwargs: Any):
+    query_params = _request.args
     try:
-        response = await UIProfile.get_ui_profile(user_team_id=auth_data.user_team_id)
+        response = await UIProfile.get_ui_profile(
+            user_team_id=auth_data.user_team_id, session_type=query_params["session_type"][0]
+        )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch ui profile data: {str(e)}")
     return send_response(response, headers=kwargs.get("response_headers"))
