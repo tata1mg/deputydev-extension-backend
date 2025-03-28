@@ -129,15 +129,6 @@ class PRReviewPreProcessor:
 
         if reviewed_pr_dto and reviewed_pr_dto.session_id:
             self.session_id = reviewed_pr_dto.session_id
-        elif reviewed_pr_dto:
-            session = await MessageSessionsRepository.create_message_session(
-                message_session_data=MessageSessionData(
-                    user_team_id=1, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_REVIEW"
-                )
-            )
-            self.session_id = session.id
-            # set session id for existing PR record, if not set
-            await PRService.db_update(filters={"id": reviewed_pr_dto.id}, payload={"session_id": self.session_id})
 
         # Handle already reviewed PRx
         if reviewed_pr_dto and reviewed_pr_dto.commit_id == self.pr_model.commit_id():
@@ -199,12 +190,13 @@ class PRReviewPreProcessor:
             return await PRService.db_update(filters={"id": failed_pr_dto.id}, payload=update_data)
 
         else:
-            session = await MessageSessionsRepository.create_message_session(
-                message_session_data=MessageSessionData(
-                    user_team_id=1, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_REVIEW"
+            if self.session_id is None:
+                session = await MessageSessionsRepository.create_message_session(
+                    message_session_data=MessageSessionData(
+                        user_team_id=1, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_REVIEW"
+                    )
                 )
-            )
-            self.session_id = session.id
+                self.session_id = session.id
             self.pr_model.meta_info = {
                 "review_status": PrStatusTypes.IN_PROGRESS.value,
                 "team_id": repo_dto.team_id,
