@@ -27,6 +27,7 @@ class PastChatsSerializer(BaseSerializer):
         tool_use_map: Dict[str, Any] = {}
         formatted_data: List[Dict[str, Any]] = []
         for item in raw_data:
+            current_query_write_mode: bool = False
             message_type = item.message_type
             response_block = item.message_data
             llm_model = item.llm_model
@@ -66,6 +67,9 @@ class PastChatsSerializer(BaseSerializer):
                             }
                         )
 
+                if text_data.content_vars.get("write_mode"):
+                    current_query_write_mode = text_data.content_vars["write_mode"]
+
                 content = {"text": text_data.content_vars["query"]}
                 if focus_objects:
                     content["focus_items"] = focus_objects
@@ -83,6 +87,7 @@ class PastChatsSerializer(BaseSerializer):
                 tool_use_map = tool_use_map
                 for block in parsed_blocks:
                     block["actor"] = actor
+                    block["write_mode"] = current_query_write_mode
                     formatted_data.append(block)
 
         return formatted_data
