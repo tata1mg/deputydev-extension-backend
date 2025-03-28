@@ -101,7 +101,7 @@ class PRReviewManager(BasePRReviewManager):
 
             if not pre_processor.session_id:
                 AppLogger.log_error("Session id not found for PR review")
-                return
+                raise Exception("Session id not found for PR review")
 
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
                 pre_processor.session_id,
