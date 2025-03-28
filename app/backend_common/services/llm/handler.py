@@ -557,6 +557,7 @@ class LLMHandler(Generic[PromptFeatures]):
         detected_llm: Optional[LLModels] = None
         tool_use_request_message_id = None
         detected_prompt_handler: Optional[BasePrompt] = None
+        selected_prev_query_ids = []
         main_query_id: int = 0
         for message in filtered_messages:
             for data in message.message_data:
@@ -567,6 +568,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     tool_use_request_message_id = message.id
                     if message.message_type == MessageType.QUERY:
                         main_query_id = message.id
+                        selected_prev_query_ids = message.conversation_chain
                     elif message.query_id:
                         main_query_id = message.query_id
                     else:
@@ -587,7 +589,13 @@ class LLMHandler(Generic[PromptFeatures]):
             raise ValueError("Prompt handler not found for prompt type")
 
         conversation_chain_messages = [
-            message for message in session_messages if message.id <= tool_use_request_message_id
+            message
+            for message in session_messages
+            if message.id <= tool_use_request_message_id
+            and (
+                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
+                or not selected_prev_query_ids
+            )
         ]
 
         await self.store_tool_use_ressponse_in_db(
