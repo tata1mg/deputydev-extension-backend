@@ -185,6 +185,7 @@ class QuerySolver:
                     "query": payload.query,
                     "focus_items": payload.focus_items,
                     "deputy_dev_rules": payload.deputy_dev_rules,
+                    "write_mode": payload.write_mode,
                 },
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
