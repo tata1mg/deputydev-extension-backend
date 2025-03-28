@@ -6,10 +6,14 @@ from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
 from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.user_teams.user_team_repository import (
+    UserTeamRepository,
+)
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
@@ -124,6 +128,13 @@ class PRReviewPreProcessor:
         """Process PR record creation/update logic"""
         if not repo_dto:
             return None
+
+        user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
+            {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
+        )
+        if not user_team_dto or not user_team_dto.id:
+            raise Exception("Owner not found for the team")
+
         # Check for existing reviewed PR
         reviewed_pr_dto = await self._get_reviewed_pr(repo_dto.id)
 
@@ -173,7 +184,10 @@ class PRReviewPreProcessor:
             else:
                 session = await MessageSessionsRepository.create_message_session(
                     message_session_data=MessageSessionData(
-                        user_team_id=1, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_REVIEW"
+                        user_team_id=user_team_dto.id,
+                        client=Clients.BACKEND,
+                        client_version="1.0.0",
+                        session_type="PR_REVIEW",
                     )
                 )
                 self.session_id = session.id
@@ -193,7 +207,10 @@ class PRReviewPreProcessor:
             if self.session_id is None:
                 session = await MessageSessionsRepository.create_message_session(
                     message_session_data=MessageSessionData(
-                        user_team_id=1, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_REVIEW"
+                        user_team_id=user_team_dto.id,
+                        client=Clients.BACKEND,
+                        client_version="1.0.0",
+                        session_type="PR_REVIEW",
                     )
                 )
                 self.session_id = session.id
