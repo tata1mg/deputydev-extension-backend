@@ -1,13 +1,18 @@
 import re
 from typing import Any, Dict
 
+from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.context_vars import set_context_values
 
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
 from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.user_teams.user_team_repository import (
+    UserTeamRepository,
+)
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     FeatureFlows,
@@ -56,15 +61,21 @@ class PRSummaryManager(BasePRReviewManager):
             setting["pr_summary"]["custom_prompt"] = custom_prompt
             set_context_values(setting=setting)
 
-        await cls._process_summary(repo_service, pr_service, comment_service, chat_request)
+        await cls._process_summary(repo_service, pr_service, comment_service, chat_request, team_id)
 
     @classmethod
-    async def _process_summary(cls, repo_service, pr_service, comment_service, chat_request):
+    async def _process_summary(cls, repo_service, pr_service, comment_service, chat_request, team_id):
         """Process PR summary generation and posting."""
         pr_diff_handler = PRDiffHandler(pr_service)
+
+        user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
+            {"team_id": team_id, "is_owner": True}, fetch_one=True
+        )
+        if not user_team_dto or not user_team_dto.id:
+            raise Exception("Owner not found for the team")
         session = await MessageSessionsRepository.create_message_session(
             message_session_data=MessageSessionData(
-                user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_SUMMARY"
+                user_team_id=user_team_dto.id, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_SUMMARY"
             )
         )
 
