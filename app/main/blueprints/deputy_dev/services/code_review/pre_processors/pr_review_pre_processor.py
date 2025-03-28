@@ -136,6 +136,9 @@ class PRReviewPreProcessor:
                 )
             )
             self.session_id = session.id
+            if reviewed_pr_dto:
+                # set session id for existing PR record, if not set
+                await PRService.db_update(filters={"id": reviewed_pr_dto.id}, payload={"session_id": self.session_id})
 
         # Handle already reviewed PRx
         if reviewed_pr_dto and reviewed_pr_dto.commit_id == self.pr_model.commit_id():
