@@ -7,7 +7,10 @@ from deputydev_core.services.chunking.utils.snippet_renderer import render_snipp
 from deputydev_core.services.reranker.base_chunk_reranker import BaseChunkReranker
 from deputydev_core.utils.app_logger import AppLogger
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    MessageCallChainCategory,
+)
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
