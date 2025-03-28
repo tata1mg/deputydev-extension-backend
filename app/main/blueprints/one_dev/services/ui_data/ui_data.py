@@ -54,7 +54,7 @@ class UIProfile:
                 "label": "Docs",
                 "type": "Hyperlink",
                 "icon": "https://onemg.gumlet.io/dd_docs_logo_26_03.png",
-                "url": "https://onedoc.ekdosis.com/space/52766277-7bce-49f4-b18a-6f9fa97cd4c1/page/f6dbbfd2-a068-499f-b4d9-0bb3930091f8",
+                "url": "https://onedoc.ekdosis.com/docs/deputydev/content/deputydev_vscode_plugin",
             },
             {
                 "label": "Report a Bug",
