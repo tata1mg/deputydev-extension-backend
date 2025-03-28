@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict
 
 from deputydev_core.utils.context_vars import set_context_values
 
@@ -103,7 +104,7 @@ class PRSummaryManager(BasePRReviewManager):
         return match.group(1)
 
     @staticmethod
-    def extract_service_initializing_metadata(chat_request: ChatRequest) -> dict:
+    def extract_service_initializing_metadata(chat_request: ChatRequest) -> Dict[str, Any]:
         return {
             "vcs_type": chat_request.repo.vcs_type,
             "repo_name": chat_request.repo.repo_name,

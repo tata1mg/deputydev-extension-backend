@@ -32,5 +32,6 @@ class PullRequestDTO(BaseModel):
     loc_changed: Optional[int] = 0
     pr_state: str = PRStatus.OPEN.value
     scm_approval_time: Optional[datetime] = None
+    session_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
