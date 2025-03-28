@@ -71,10 +71,8 @@ class Anthropic(BaseLLMProvider):
         conversation_turns: List[ConversationTurn] = []
         last_tool_use_request: bool = False
         for message in previous_responses:
-            if (
-                last_tool_use_request
-                and message.actor != MessageThreadActor.USER
-                and message.message_type != MessageType.TOOL_RESPONSE
+            if last_tool_use_request and not (
+                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
             ):
                 # remove the tool use request if the user has not responded to it
                 conversation_turns.pop()
