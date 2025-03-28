@@ -426,7 +426,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         )
 
     @classmethod
-    def _get_parsed_custom_blocks(input_string: str) -> List[Dict[str, Any]]:
+    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
