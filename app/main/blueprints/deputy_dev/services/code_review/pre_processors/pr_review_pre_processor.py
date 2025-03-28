@@ -1,10 +1,19 @@
 from typing import Optional
 
+from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.context_vars import set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.user_team_dto import UserTeamDTO
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
 from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.user_teams.user_team_repository import (
+    UserTeamRepository,
+)
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
@@ -59,6 +68,7 @@ class PRReviewPreProcessor:
         self.loc_changed = 0
         self.pr_diff_handler = pr_diff_handler
         self.is_reviewable_request = None
+        self.session_id: Optional[int] = None
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
@@ -118,8 +128,18 @@ class PRReviewPreProcessor:
         """Process PR record creation/update logic"""
         if not repo_dto:
             return None
+
+        user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
+            {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
+        )
+        if not user_team_dto or not user_team_dto.id:
+            raise Exception("Owner not found for the team")
+
         # Check for existing reviewed PR
         reviewed_pr_dto = await self._get_reviewed_pr(repo_dto.id)
+
+        if reviewed_pr_dto and reviewed_pr_dto.session_id:
+            self.session_id = reviewed_pr_dto.session_id
 
         # Handle already reviewed PRx
         if reviewed_pr_dto and reviewed_pr_dto.commit_id == self.pr_model.commit_id():
@@ -159,6 +179,18 @@ class PRReviewPreProcessor:
         failed_pr_dto = await PRService.find(filters=failed_pr_filters)
 
         if failed_pr_dto:
+            if failed_pr_dto.session_id:
+                self.session_id = failed_pr_dto.session_id
+            else:
+                session = await MessageSessionsRepository.create_message_session(
+                    message_session_data=MessageSessionData(
+                        user_team_id=user_team_dto.id,
+                        client=Clients.BACKEND,
+                        client_version="1.0.0",
+                        session_type="PR_REVIEW",
+                    )
+                )
+                self.session_id = session.id
             # Update failed PR
             update_data = {
                 "commit_id": self.pr_model.commit_id(),
@@ -167,10 +199,21 @@ class PRReviewPreProcessor:
                 "destination_branch": self.pr_model.destination_branch(),
                 "loc_changed": self.loc_changed,
                 "meta_info": self.meta_info,
+                "session_id": self.session_id,
             }
             return await PRService.db_update(filters={"id": failed_pr_dto.id}, payload=update_data)
 
         else:
+            if self.session_id is None:
+                session = await MessageSessionsRepository.create_message_session(
+                    message_session_data=MessageSessionData(
+                        user_team_id=user_team_dto.id,
+                        client=Clients.BACKEND,
+                        client_version="1.0.0",
+                        session_type="PR_REVIEW",
+                    )
+                )
+                self.session_id = session.id
             self.pr_model.meta_info = {
                 "review_status": PrStatusTypes.IN_PROGRESS.value,
                 "team_id": repo_dto.team_id,
@@ -182,6 +225,7 @@ class PRReviewPreProcessor:
                 **self.pr_model.get_pr_info(),
                 "pr_state": self.pr_model.scm_state(),
                 "loc_changed": self.loc_changed,
+                "session_id": self.session_id,
             }
             pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
             if not pr_dto:  # Handle integrity error case

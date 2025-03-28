@@ -6,10 +6,6 @@ from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
 
-from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
-from app.backend_common.repository.message_sessions.repository import (
-    MessageSessionsRepository,
-)
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
@@ -92,20 +88,36 @@ class PRReviewManager(BasePRReviewManager):
         try:
             tokens_data, execution_start_time = None, datetime.now()
             pre_processor = PRReviewPreProcessor(
-                repo_service, pr_service, comment_service, affirmation_service, pr_diff_handler
+                repo_service=repo_service,
+                pr_service=pr_service,
+                comment_service=comment_service,
+                affirmation_service=affirmation_service,
+                pr_diff_handler=pr_diff_handler,
             )
             await pre_processor.pre_process_pr()
 
             if not pre_processor.is_reviewable_request:
                 return
+
+            if not pre_processor.session_id:
+                AppLogger.log_error("Session id not found for PR review")
+                raise Exception("Session id not found for PR review")
+
             llm_comments, tokens_data, meta_info_to_save, is_large_pr = await cls.review_pr(
-                repo_service, comment_service, pr_service, data["prompt_version"], pr_diff_handler
+                pre_processor.session_id,
+                repo_service,
+                comment_service,
+                pr_service,
+                data["prompt_version"],
+                pr_diff_handler,
             )
             meta_info_to_save["execution_start_time"] = execution_start_time
             meta_info_to_save["pr_review_start_time"] = data.get("pr_review_start_time")
-            await PRReviewPostProcessor(pr_service, comment_service, affirmation_service).post_process_pr(
-                pre_processor.pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save
-            )
+            await PRReviewPostProcessor(
+                pr_service=pr_service,
+                comment_service=comment_service,
+                affirmation_service=affirmation_service,
+            ).post_process_pr(pre_processor.pr_dto, llm_comments, tokens_data, is_large_pr, meta_info_to_save)
 
         except Exception as ex:
             # if PR is inserted in db then only we will update status
@@ -127,22 +139,18 @@ class PRReviewManager(BasePRReviewManager):
     @classmethod
     async def review_pr(
         cls,
+        session_id: int,
         repo_service: BaseRepo,
         comment_service: BaseComment,
         pr_service: BasePR,
         prompt_version,
         pr_diff_handler: PRDiffHandler,
     ):
-        session = await MessageSessionsRepository.create_message_session(
-            message_session_data=MessageSessionData(
-                user_team_id=1, client="BACKEND", client_version="1.0.0", session_type="PR_REVIEW"
-            )
-        )
 
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
-            repo_service, pr_service, pr_diff_handler, session.id, prompt_version
+            repo_service, pr_service, pr_diff_handler, session_id, prompt_version
         ).get_code_review_comments()
         # We will only post summary for first PR review request
         if pr_summary:
