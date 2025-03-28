@@ -434,11 +434,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         code_block_pattern = r"<code_block>(.*?)</code_block>"
         summary_pattern = r"<summary>(.*?)</summary>"
 
-        # Find all occurrences of either pattern
-        matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
-        matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
-        matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
-
         # edge case, check if there is <code_block> tag in the input_string, and if it is not inside any other tag, and there
         # is not ending tag for it, then we append the ending tag for it
         # this is very rare, but can happen if the last block is not closed properly
@@ -455,6 +450,11 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         if not input_string[last_thinking_tag:].rfind("</thinking>"):
             # remove the last thinking tag
             input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
+
+        # Find all occurrences of either pattern
+        matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
+        matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
+        matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
         matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
