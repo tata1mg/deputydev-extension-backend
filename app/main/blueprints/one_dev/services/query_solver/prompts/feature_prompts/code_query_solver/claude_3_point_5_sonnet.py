@@ -426,7 +426,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         )
 
     @classmethod
-    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
+    def _get_parsed_custom_blocks(input_string: str) -> List[Dict[str, Any]]:
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
@@ -438,16 +438,16 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         # is not ending tag for it, then we append the ending tag for it
         # this is very rare, but can happen if the last block is not closed properly
         last_code_block_tag = input_string.rfind("<code_block>")
-        if not input_string[last_code_block_tag:].rfind("</code_block>"):
+        if last_code_block_tag != -1 and input_string[last_code_block_tag:].rfind("</code_block>") == -1:
             input_string += "</code_block>"
 
         last_summary_tag = input_string.rfind("<summary>")
-        if not input_string[last_summary_tag:].rfind("</summary>"):
+        if last_summary_tag != -1 and input_string[last_summary_tag:].rfind("</summary>") == -1:
             input_string += "</summary>"
 
         # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
         last_thinking_tag = input_string.rfind("<thinking>")
-        if not input_string[last_thinking_tag:].rfind("</thinking>"):
+        if last_thinking_tag != -1 and input_string[last_thinking_tag:].rfind("</thinking>") == -1:
             # remove the last thinking tag
             input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
 
