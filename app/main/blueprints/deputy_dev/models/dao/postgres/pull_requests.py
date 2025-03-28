@@ -34,6 +34,7 @@ class PullRequests(Base):
         "loc_changed",
         "pr_state",
         "scm_approval_time",
+        "session_id",
     }
 
     id = fields.BigIntField(primary_key=True)
@@ -58,6 +59,7 @@ class PullRequests(Base):
     loc_changed = fields.BigIntField(null=False)
     pr_state = fields.CharField(max_length=100, null=False)
     scm_approval_time = NaiveDatetimeField(null=True)
+    session_id = fields.BigIntField(null=True)
 
     class Meta:
         table = "pull_requests"
@@ -96,3 +98,4 @@ class PullRequests(Base):
         loc_changed = ("loc_changed",)
         pr_state = ("pr_state",)
         scm_approval_time = ("scm_approval_time",)
+        session_id = ("session_id",)

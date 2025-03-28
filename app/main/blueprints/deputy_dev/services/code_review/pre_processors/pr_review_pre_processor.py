@@ -4,6 +4,8 @@ from deputydev_core.utils.context_vars import set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
 from app.backend_common.repository.repo.repo_repository import RepoRepository
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -30,6 +32,7 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from deputydev_core.utils.constants.enums import Clients
 
 config = CONFIG.config
 
@@ -59,6 +62,7 @@ class PRReviewPreProcessor:
         self.loc_changed = 0
         self.pr_diff_handler = pr_diff_handler
         self.is_reviewable_request = None
+        self.session_id: Optional[int] = None
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
@@ -121,6 +125,16 @@ class PRReviewPreProcessor:
         # Check for existing reviewed PR
         reviewed_pr_dto = await self._get_reviewed_pr(repo_dto.id)
 
+        if reviewed_pr_dto and reviewed_pr_dto.session_id:
+            self.session_id = reviewed_pr_dto.session_id
+        else:
+            session = await MessageSessionsRepository.create_message_session(
+                message_session_data=MessageSessionData(
+                    user_team_id=1, client=Clients.BACKEND, client_version="1.0.0", session_type="PR_REVIEW"
+                )
+            )
+            self.session_id = session.id
+
         # Handle already reviewed PRx
         if reviewed_pr_dto and reviewed_pr_dto.commit_id == self.pr_model.commit_id():
             # Will be used to post affirmation message
@@ -182,6 +196,7 @@ class PRReviewPreProcessor:
                 **self.pr_model.get_pr_info(),
                 "pr_state": self.pr_model.scm_state(),
                 "loc_changed": self.loc_changed,
+                "session_id": self.session_id,
             }
             pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
             if not pr_dto:  # Handle integrity error case
