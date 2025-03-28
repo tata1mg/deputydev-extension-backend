@@ -26,8 +26,8 @@ class PastChatsSerializer(BaseSerializer):
     def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
         tool_use_map: Dict[str, Any] = {}
         formatted_data: List[Dict[str, Any]] = []
+        current_query_write_mode: bool = False
         for item in raw_data:
-            current_query_write_mode: bool = False
             message_type = item.message_type
             response_block = item.message_data
             llm_model = item.llm_model
