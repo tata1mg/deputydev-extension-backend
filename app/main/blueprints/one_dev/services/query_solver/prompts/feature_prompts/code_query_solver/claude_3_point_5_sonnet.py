@@ -5,8 +5,9 @@ from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
     MessageData,
+    TextBlockData,
+    ToolUseRequestData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -390,12 +391,12 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     def get_parsed_response_blocks(
         cls, response_block: List[MessageData]
     ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-        final_content = []
+        final_content: List[Dict[str, Any]] = []
         tool_use_map: Dict[str, Any] = {}
         for block in response_block:
-            if block.type == ContentBlockCategory("TEXT_BLOCK"):
-                final_content.extend(cls.parsing(block.content.text))
-            elif block.type == ContentBlockCategory("TOOL_USE_REQUEST"):
+            if isinstance(block, TextBlockData):
+                final_content.extend(cls._get_parsed_custom_blocks(block.content.text))
+            elif isinstance(block, ToolUseRequestData):
                 tool_use_request_block = {
                     "type": "TOOL_USE_REQUEST_BLOCK",
                     "content": {
@@ -425,7 +426,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         )
 
     @classmethod
-    def parsing(cls, input_string: str) -> List[Dict[str, Any]]:
+    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
@@ -437,6 +438,23 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
         matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
         matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
+
+        # edge case, check if there is <code_block> tag in the input_string, and if it is not inside any other tag, and there
+        # is not ending tag for it, then we append the ending tag for it
+        # this is very rare, but can happen if the last block is not closed properly
+        last_code_block_tag = input_string.rfind("<code_block>")
+        if not input_string[last_code_block_tag:].rfind("</code_block>"):
+            input_string += "</code_block>"
+
+        last_summary_tag = input_string.rfind("<summary>")
+        if not input_string[last_summary_tag:].rfind("</summary>"):
+            input_string += "</summary>"
+
+        # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
+        last_thinking_tag = input_string.rfind("<thinking>")
+        if not input_string[last_thinking_tag:].rfind("</thinking>"):
+            # remove the last thinking tag
+            input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
 
         # Combine matches and sort by start position
         matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
