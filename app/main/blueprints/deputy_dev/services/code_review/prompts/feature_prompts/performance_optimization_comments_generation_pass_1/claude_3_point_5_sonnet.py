@@ -99,6 +99,10 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
             <!-- Repeat the <comment> block for each code communication issue found -->
             </comments>
             </review>
+
+            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
+            Example:
+            <review><comments></comments></review>
             
             6. Focus your review solely on the specified categories and guidelines. Do not comment on other aspects
             of the code unless they directly relate to performance, algorithmic efficiency, or database query
