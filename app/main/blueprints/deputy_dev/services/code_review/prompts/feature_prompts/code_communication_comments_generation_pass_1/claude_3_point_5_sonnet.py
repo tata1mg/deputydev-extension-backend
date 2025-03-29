@@ -88,7 +88,11 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             <!-- Repeat the <comment> block for each code communication issue found -->
             </comments>
             </review>
-            
+
+            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
+            Example:
+            <review><comments></comments></review>
+
             4. Remember to focus solely on code communication aspects as outlined above. Do not comment on code
             functionality, performance, or other aspects outside the scope of documentation, docstrings, and
             logging.

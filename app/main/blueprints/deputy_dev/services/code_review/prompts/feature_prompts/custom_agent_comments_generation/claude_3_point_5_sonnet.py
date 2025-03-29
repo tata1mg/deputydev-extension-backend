@@ -104,6 +104,10 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 </comments>
                 </review>
 
+                If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
+                Example:
+                <review><comments></comments></review>
+
             8. Important reminders:
                 - Do not change the provided bucket name.
                 - Ensure all XML tags are properly closed and nested.
