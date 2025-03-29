@@ -152,6 +152,7 @@ class PRReviewManager(BasePRReviewManager):
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(
             repo_service, pr_service, pr_diff_handler, session_id, prompt_version
         ).get_code_review_comments()
+
         # We will only post summary for first PR review request
         if pr_summary:
             await pr_service.update_pr_description(pr_summary)
