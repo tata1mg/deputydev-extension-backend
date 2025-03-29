@@ -128,6 +128,7 @@ class PRReviewManager(BasePRReviewManager):
                     },
                     filters={"id": pre_processor.pr_dto.id},
                 )
+            AppLogger.log_error("Error while processing PR review")
             raise ex
         finally:
             repo_service.delete_local_repo()
