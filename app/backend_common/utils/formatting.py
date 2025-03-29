@@ -162,4 +162,7 @@ def append_line_numbers(pr_diff: str) -> str:
             new_line_number += 1
             original_line_number += 1
 
+    if not result:
+        return pr_diff
+
     return "\n".join(result)
