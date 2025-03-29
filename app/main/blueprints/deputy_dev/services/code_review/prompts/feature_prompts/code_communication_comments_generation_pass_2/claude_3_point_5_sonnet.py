@@ -57,8 +57,8 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass2Prompt(BaseClaude3Poi
             - Modify comments that are partially correct or need improvement
             - Remove irrelevant or incorrect comments
             - Add new comments for issues the junior developer missed
-            
-        For each category consider the following guidelines:
+
+            For each category consider the following guidelines:
             <documentation_guidelines>
             - Quality and presence of inline comments and annotations
             - API documentation, including function descriptions and usage examples
@@ -140,6 +140,10 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass2Prompt(BaseClaude3Poi
             <!-- Repeat the <comment> block for each code communication issue found -->
             </comments>
             </review>
+
+            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
+            Example:
+            <review><comments></comments></review>
         """
 
         if self.params.get("CUSTOM_PROMPT"):

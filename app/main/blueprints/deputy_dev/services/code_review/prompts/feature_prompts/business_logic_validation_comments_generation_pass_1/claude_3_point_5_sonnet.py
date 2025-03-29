@@ -92,9 +92,12 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             </comment>
             </comments>
             </review>
-            
+
             Repeat the <comment> block for each issue you find regarding business logic validation.
-            
+            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
+            Example:
+            <review><comments></comments></review>
+
             Remember:
             - Map exactly 1 comment to each comment tag in the output response.
             - Focus only on business logic correctness. Do not comment on any other aspects of code review.
