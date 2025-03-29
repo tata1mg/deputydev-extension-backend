@@ -46,11 +46,6 @@ class PRDiffHandler:
         if not self.pr_diff_mappings:
             self.set_pr_diff_mappings(operation)
 
-        print("PR DIFF: ", self.pr_diff)
-        print("PR DIFF MAPPINGS: ", self.pr_diff_mappings)
-        print("AGENT ID: ", agent_id)
-        print("OPERATION: ", operation)
-
         # Choose the correct PR diff based on the operation and agent ID
         if operation == "chat":
             diff_index = self.pr_diff_mappings.get("chat")
@@ -61,8 +56,6 @@ class PRDiffHandler:
                 diff_index = self.pr_diff_mappings["global_diff"]
 
         # Return the corresponding PR diff from the list
-        print("DIFF INDEX: ", diff_index)
-        print("PR DIFFS: ", self.pr_diffs)
         return self.pr_diffs[diff_index]
 
     def set_pr_diff_mappings(self, operation: str):
