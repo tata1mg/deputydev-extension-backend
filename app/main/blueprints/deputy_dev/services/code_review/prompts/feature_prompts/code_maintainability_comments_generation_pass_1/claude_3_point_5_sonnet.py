@@ -132,6 +132,10 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
             <!-- Repeat the <comment> block for each code maintainability issue found -->
             </comments>
             </review>
+
+            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
+            Example:
+            <review><comments></comments></review>
             
             Important instructions:
             1. Create exactly one <comment> block for each code maintainability issue found.
