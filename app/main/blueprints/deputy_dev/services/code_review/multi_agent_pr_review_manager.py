@@ -143,7 +143,7 @@ class MultiAgentPRReviewManager:
         # set self.llm_comments
         for agent_result in non_error_results:
             if agent_result.agent_result is not None:
-                if agent_result.agent_name != AgentTypes.PR_SUMMARY:
+                if agent_result.agent_type != AgentTypes.PR_SUMMARY:
                     self.update_bucket_name(agent_result)
                 self.agent_results[agent_result.agent_name] = agent_result
 
