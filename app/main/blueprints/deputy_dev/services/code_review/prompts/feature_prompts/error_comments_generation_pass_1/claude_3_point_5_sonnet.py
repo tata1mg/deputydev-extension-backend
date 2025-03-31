@@ -109,7 +109,9 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
             diff)</line_number>
             <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
             points)</confidence_score>
-            <bucket>$BUCKET</bucket>
+            <bucket>
+            {self.params['BUCKET']}
+            </bucket>
             </comment>
             <!-- Repeat the <comment> block for each error found -->
             </comments>
