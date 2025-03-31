@@ -143,6 +143,8 @@ class MultiAgentPRReviewManager:
         # set self.llm_comments
         for agent_result in non_error_results:
             if agent_result.agent_result is not None:
+                if agent_result.agent_name != AgentTypes.PR_SUMMARY:
+                    self.update_bucket_name(agent_result)
                 self.agent_results[agent_result.agent_name] = agent_result
 
         self.populate_pr_summary()
@@ -150,3 +152,11 @@ class MultiAgentPRReviewManager:
         self.agent_results.update(self.blending_agent_results)
         self.populate_meta_info()
         return await self.return_final_response()
+
+
+    def update_bucket_name(self, agent_result: AgentRunResult):
+        comments = agent_result.agent_result["comments"]
+        for comment in comments:
+            display_name = agent_result.display_name
+            comment.bucket = "_".join(display_name.upper().split())
+

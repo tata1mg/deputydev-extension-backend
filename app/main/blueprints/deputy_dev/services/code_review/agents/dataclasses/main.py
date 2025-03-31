@@ -31,3 +31,4 @@ class AgentRunResult(BaseModel):
     agent_type: AgentTypes
     model: LLModels
     tokens_data: Optional[Dict[str, Dict[str, Any]]] = None
+    display_name: Optional[str] = None
