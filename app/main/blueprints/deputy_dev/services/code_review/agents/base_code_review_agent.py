@@ -141,4 +141,8 @@ class BaseCodeReviewAgent(ABC):
             agent_type=self.agent_type,
             model=self.model,
             tokens_data=tokens_data,
+            display_name=self.get_display_name()
         )
+
+    def get_display_name(self):
+        pass
