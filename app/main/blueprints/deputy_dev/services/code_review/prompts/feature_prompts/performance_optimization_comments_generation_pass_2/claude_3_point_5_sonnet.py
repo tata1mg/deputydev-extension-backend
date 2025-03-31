@@ -129,7 +129,9 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass2Prompt(BaseClau
             <file_path>file path on which the comment is to be made</file_path>
             <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
             <confidence_score>floating point confidence score of the comment between 0.0 to 1.0 upto 2 decimal points</confidence_score>
-            <bucket>$BUCKET</bucket>
+            <bucket>
+            {self.params['BUCKET']}
+            </bucket>
             </comment>
             <!-- Repeat the <comment> block for each code communication issue found -->
             </comments>
