@@ -27,7 +27,6 @@ class InlineEditGenerator:
         tools_to_use = [RELATED_CODE_SEARCHER]
 
         if payload.tool_use_response:
-            print("***************",payload.tool_use_response)
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
                 tool_use_response=ToolUseResponseData(
