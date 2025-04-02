@@ -49,11 +49,11 @@ class InlineEditGenerator:
                     content=ToolUseResponseContent(
                         tool_name=payload.tool_use_response.tool_name,
                         tool_use_id=payload.tool_use_response.tool_use_id,
-                        response=tool_response,
+                        response=payload.tool_use_response,
                     )
                 ),
                 tools=tools_to_use,
-                stream=True,
+                stream=False,
             )
             return llm_response.parsed_content[0]
 
