@@ -386,22 +386,7 @@
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
         "FILE": {
-            "0.0.1": {
-                "darwin": {
-                    "arm64": {
-                        "download_link": "",
-                        "directory": "",
-                        "service_path": ""
-                    },
-                    "x64": {
-                        "download_link": "",
-                        "directory": "",
-                        "service_path": ""
-                    }
-                },
-                "linux": {}
-            },
-            "1.0.0": {
+            "latest": {
                 "darwin": {
                     "arm64": {
                         "download_link": "",
