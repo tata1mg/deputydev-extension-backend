@@ -138,8 +138,11 @@ class ConfigFetcher:
         arch = params.arch.value
         os = params.os.value
         if config_type == ConfigType.ESSENTIAL:
+            file_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]
+            if client_version in ConfigManager.configs["BINARY"]["FILE"]:
+                file_config = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]
             base_config["BINARY"] = {
-                **ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch],
+                **file_config,
                 "password": ConfigManager.configs["BINARY"]["PASSWORD"],
                 "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
