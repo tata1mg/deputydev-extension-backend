@@ -6,6 +6,7 @@ from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockData,
+    ToolUseRequestData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -144,6 +145,17 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
+    def _parse_tool_use_request(cls, tool_use_request: ToolUseRequestData) -> Dict[str, Any]:
+        return {
+            "type": ContentBlockCategory.TOOL_USE_REQUEST.value,
+            "content": {
+                "tool_name": tool_use_request.content.tool_name,
+                "tool_use_id": tool_use_request.content.tool_use_id,
+                "tool_input": tool_use_request.content.tool_input,
+            },
+        }
+
+    @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
         if "<code_snippets>" in text_block.content.text:
             code_blocks = text_block.content.text.split("<code_snippets>")[1].split("</code_snippets>")[0].strip()
@@ -168,7 +180,7 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
                 )
 
             return {"code_snippets": code_snippets}
-        return {"code_snippets": None}
+        return None
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
@@ -177,9 +189,13 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
 
         for content_block in llm_response.content:
             if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
-                raise NotImplementedError("Tool use request not implemented for this prompt")
+                parsed_tool_use_request = cls._parse_tool_use_request(content_block)
+                if parsed_tool_use_request:
+                    final_content.append(parsed_tool_use_request)
             elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
-                final_content.append(cls._parse_text_block(content_block))
+                parsed_text_block = cls._parse_text_block(content_block)
+                if parsed_text_block:
+                    final_content.append(parsed_text_block)
 
         return final_content
 
