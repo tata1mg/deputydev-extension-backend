@@ -146,14 +146,15 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def _parse_tool_use_request(cls, tool_use_request: ToolUseRequestData) -> Dict[str, Any]:
-        return {
+        tool_use_request_content = {
             "type": ContentBlockCategory.TOOL_USE_REQUEST.value,
             "content": {
                 "tool_name": tool_use_request.content.tool_name,
                 "tool_use_id": tool_use_request.content.tool_use_id,
                 "tool_input": tool_use_request.content.tool_input,
-            },
-        }
+                }
+            }
+        return {"tool_use_request": tool_use_request_content}
 
     @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
