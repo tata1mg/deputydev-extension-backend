@@ -26,6 +26,22 @@ class InlineEditGenerator:
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
         tools_to_use = [RELATED_CODE_SEARCHER]
 
+        if payload.tool_use_response:
+            print("***************",payload.tool_use_response)
+            llm_response = await llm_handler.submit_tool_use_response(
+                session_id=payload.session_id,
+                tool_use_response=ToolUseResponseData(
+                    content=ToolUseResponseContent(
+                        tool_name=payload.tool_use_response.tool_name,
+                        tool_use_id=payload.tool_use_response.tool_use_id,
+                        response=payload.tool_use_response.response,
+                    )
+                ),
+                tools=tools_to_use,
+                stream=False,
+            )
+            return llm_response.parsed_content[0]
+
         if payload.query and payload.code_selection:
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.INLINE_EDITOR,
@@ -39,21 +55,6 @@ class InlineEditGenerator:
                 tools=tools_to_use,
                 stream=False,
                 session_id=payload.session_id,
-            )
-            return llm_response.parsed_content[0]
-
-        else:
-            llm_response = await llm_handler.submit_tool_use_response(
-                session_id=payload.session_id,
-                tool_use_response=ToolUseResponseData(
-                    content=ToolUseResponseContent(
-                        tool_name=payload.tool_use_response.tool_name,
-                        tool_use_id=payload.tool_use_response.tool_use_id,
-                        response=payload.tool_use_response,
-                    )
-                ),
-                tools=tools_to_use,
-                stream=False,
             )
             return llm_response.parsed_content[0]
 
