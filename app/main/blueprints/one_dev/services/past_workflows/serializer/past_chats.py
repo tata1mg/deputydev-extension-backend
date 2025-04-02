@@ -67,7 +67,7 @@ class PastChatsSerializer(BaseSerializer):
                             }
                         )
 
-                if text_data.content_vars.get("write_mode"):
+                if "write_mode" in text_data.content_vars:
                     current_query_write_mode = text_data.content_vars["write_mode"]
 
                 content = {"text": text_data.content_vars["query"]}
