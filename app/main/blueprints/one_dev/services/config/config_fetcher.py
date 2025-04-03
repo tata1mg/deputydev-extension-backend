@@ -78,6 +78,7 @@ class ConfigFetcher:
                 "MODEL": ConfigManager.configs["BINARY"]["EMBEDDING"]["MODEL"],
                 "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_PARALLEL_TASKS"],
+                "MAX_BACKOFF": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_BACKOFF"],
             },
             "RELEVANT_CHUNKS": {
                 "CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"]["CHUNKING_ENABLED"]
