@@ -1,9 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
-from app.backend_common.repository.message_sessions.repository import (
-    MessageSessionsRepository,
-)
+from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
@@ -38,7 +36,7 @@ class PastWorkflows:
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
-        raw_data = await MessageSessionsRepository.get_message_sessions_by_user_team_id(
+        raw_data = await ExtensionSessionsRepository.get_extension_sessions_by_user_team_id(
             user_team_id=user_team_id, limit=limit, offset=offset, session_type=session_type
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
