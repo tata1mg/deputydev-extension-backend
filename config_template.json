@@ -369,7 +369,8 @@
             "NUMBER_OF_WORKERS": 1,
             "MODEL": "text-embedding-3-small",
             "TOKEN_LIMIT": 8192,
-            "MAX_PARALLEL_TASKS": 60
+            "MAX_PARALLEL_TASKS": 60,
+            "MAX_BACKOFF": 15
         },
         "CHUNKING": {
             "CHARACTER_SIZE": 2000,
