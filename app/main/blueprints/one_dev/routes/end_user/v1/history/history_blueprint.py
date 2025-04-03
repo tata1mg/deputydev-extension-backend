@@ -4,9 +4,7 @@ from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 
-from app.backend_common.repository.message_sessions.repository import (
-    MessageSessionsRepository,
-)
+from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
     ChatHistoryHandler,
 )
@@ -48,6 +46,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
         response = await PastWorkflows.get_past_sessions(
             user_team_id=auth_data.user_team_id,
             session_type=query_params["session_type"][0],
+            # pinned_sessions=query_params["pinned_sessions"][0],
             limit=int(int(query_params["limit"][0])) if query_params.get("limit") else None,
             offset=int(int(query_params["offset"][0])) if query_params.get("offset") else None,
         )
@@ -64,7 +63,7 @@ async def delete_session(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     try:
-        response = await MessageSessionsRepository.soft_delete_message_session_by_id(
+        response = await ExtensionSessionsRepository.soft_delete_extension_session_by_id(
             session_id=session_id, user_team_id=auth_data.user_team_id
         )
     except Exception as e:
