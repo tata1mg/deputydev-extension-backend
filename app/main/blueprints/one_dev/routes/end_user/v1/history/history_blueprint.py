@@ -46,7 +46,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
         response = await PastWorkflows.get_past_sessions(
             user_team_id=auth_data.user_team_id,
             session_type=query_params["session_type"][0],
-            # pinned_sessions=query_params["pinned_sessions"][0],
+            sessions_list_type=query_params["sessions_list_type"][0],
             limit=int(int(query_params["limit"][0])) if query_params.get("limit") else None,
             offset=int(int(query_params["offset"][0])) if query_params.get("offset") else None,
         )
