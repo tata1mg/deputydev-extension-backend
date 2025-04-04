@@ -10,6 +10,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import FOCUSED_SNIPPETS_SEARCHER
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import RELATED_CODE_SEARCHER
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
@@ -24,7 +25,7 @@ class InlineEditGenerator:
             raise ValueError("Either query and code selection or tool use response must be provided")
 
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
-        tools_to_use = [RELATED_CODE_SEARCHER]
+        tools_to_use = [RELATED_CODE_SEARCHER, FOCUSED_SNIPPETS_SEARCHER]
 
         if payload.tool_use_response:
             llm_response = await llm_handler.submit_tool_use_response(
