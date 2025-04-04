@@ -7,6 +7,7 @@ from app.backend_common.repository.message_threads.repository import (
 )
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
+    SessionsListTypes,
 )
 from app.main.blueprints.one_dev.services.past_workflows.serializer.serializers_factory import (
     SerializersFactory,
@@ -20,7 +21,7 @@ class PastWorkflows:
 
     @classmethod
     async def get_past_sessions(
-        cls, user_team_id: int, session_type: str, limit: Optional[int] = None, offset: Optional[int] = None
+        cls, user_team_id: int, session_type: str, sessions_list_type: str, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Fetch past sessions for a given user team ID.
@@ -36,8 +37,15 @@ class PastWorkflows:
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
+        if SessionsListTypes(sessions_list_type) == SessionsListTypes.PINNED:
+            pinned_rank_is_null = False
+        elif SessionsListTypes(sessions_list_type) == SessionsListTypes.UNPINNED:
+            pinned_rank_is_null = True
+        else:
+            raise ValueError("Invalid sessions list type")
+
         raw_data = await ExtensionSessionsRepository.get_extension_sessions_by_user_team_id(
-            user_team_id=user_team_id, limit=limit, offset=offset, session_type=session_type
+            user_team_id=user_team_id, limit=limit, offset=offset, session_type=session_type, pinned_rank_is_null=pinned_rank_is_null
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = serializer_service.get_processed_data()

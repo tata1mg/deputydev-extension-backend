@@ -37,6 +37,7 @@ class PastSessionsSerializer(BaseSerializer):
                         "id": item.session_id,
                         "summary": item.summary,
                         "age": self.calculate_age(current_time, item.updated_at),
+                        "pinned_rank": item.pinned_rank,
                         "created_at": item.created_at.isoformat(),
                         "updated_at": item.updated_at.isoformat(),
                     }

@@ -110,6 +110,7 @@ class ExtensionSessionsRepository:
         session_type: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
+        pinned_rank_is_null: bool = False,
     ) -> List[ExtensionSessionDTO]:
         if not limit:
             limit = 10
@@ -119,6 +120,7 @@ class ExtensionSessionsRepository:
             filters = {
                 "user_team_id": user_team_id,
                 "status": SessionStatus.ACTIVE.value,
+                "pinned_rank__isnull": pinned_rank_is_null,
             }
             if session_type:
                 filters["session_type"] = session_type
@@ -129,7 +131,7 @@ class ExtensionSessionsRepository:
                 fetch_one=False,
                 limit=limit,
                 offset=offset,
-                order_by=["-updated_at"],
+                order_by=["-updated_at"] if pinned_rank_is_null else ["pinned_rank"],
             )
             if not extension_sessions:
                 return []
