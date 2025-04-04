@@ -40,13 +40,13 @@ class InlineEditGenerator:
         tool_use_request: Dict[str, Any] = {}
         for response in parsed_llm_response:
             if "code_snippets" in response:
-                code_snippets.append(response["code_snippets"])
-            if "type" in response and response["type"] == "tool_use_request":
+                code_snippets.extend(response["code_snippets"])
+            if "type" in response and response["type"] == "TOOL_USE_REQUEST":
                 tool_use_request = response
 
         return {
             "code_snippets": code_snippets if code_snippets else None,
-            "tool_use_request": tool_use_request,
+            "tool_use_request": tool_use_request if tool_use_request else None,
         }
 
     async def get_inline_edit_diff_suggestion(
@@ -56,7 +56,11 @@ class InlineEditGenerator:
 
         tools_to_use = []
 
+        print(
+            f"Client version: {client_data.client_version}, Minimum supported version: {MIN_TOOL_USE_SUPPORTED_VERSION}"
+        )
         if compare_version(client_data.client_version, MIN_TOOL_USE_SUPPORTED_VERSION, ">="):
+            print("Using tool use response")
             tools_to_use = [RELATED_CODE_SEARCHER, FOCUSED_SNIPPETS_SEARCHER]
 
         if payload.tool_use_response:
