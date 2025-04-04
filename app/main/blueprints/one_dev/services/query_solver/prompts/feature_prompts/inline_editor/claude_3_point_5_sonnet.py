@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -144,7 +144,7 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
-    def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
+    def _parse_text_block(cls, text_block: TextBlockData) -> Optional[Dict[str, Any]]:
         if "<code_snippets>" in text_block.content.text:
             code_blocks = text_block.content.text.split("<code_snippets>")[1].split("</code_snippets>")[0].strip()
             all_code_blocks = code_blocks.split("<code_block>")
@@ -168,7 +168,7 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
                 )
 
             return {"code_snippets": code_snippets}
-        return {"code_snippets": None}
+        return None
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
@@ -177,10 +177,11 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
 
         for content_block in llm_response.content:
             if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
-                raise NotImplementedError("Tool use request not implemented for this prompt")
+                final_content.append(content_block.model_dump(mode="json"))
             elif content_block.type == ContentBlockCategory.TEXT_BLOCK:
-                final_content.append(cls._parse_text_block(content_block))
-
+                parsed_text_block = cls._parse_text_block(content_block)
+                if parsed_text_block:
+                    final_content.append(parsed_text_block)
         return final_content
 
     @classmethod
