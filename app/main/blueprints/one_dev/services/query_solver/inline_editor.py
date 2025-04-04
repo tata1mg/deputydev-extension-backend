@@ -55,12 +55,7 @@ class InlineEditGenerator:
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
         tools_to_use = []
-
-        print(
-            f"Client version: {client_data.client_version}, Minimum supported version: {MIN_TOOL_USE_SUPPORTED_VERSION}"
-        )
         if compare_version(client_data.client_version, MIN_TOOL_USE_SUPPORTED_VERSION, ">="):
-            print("Using tool use response")
             tools_to_use = [RELATED_CODE_SEARCHER, FOCUSED_SNIPPETS_SEARCHER]
 
         if payload.tool_use_response:
