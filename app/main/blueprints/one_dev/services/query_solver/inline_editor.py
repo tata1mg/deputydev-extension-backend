@@ -45,7 +45,7 @@ class InlineEditGenerator:
                 tool_use_request = response
 
         return {
-            "code_snippets": code_snippets,
+            "code_snippets": code_snippets if code_snippets else None,
             "tool_use_request": tool_use_request,
         }
 
