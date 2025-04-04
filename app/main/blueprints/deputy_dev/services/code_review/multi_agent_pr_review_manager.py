@@ -153,10 +153,8 @@ class MultiAgentPRReviewManager:
         self.populate_meta_info()
         return await self.return_final_response()
 
-
     def update_bucket_name(self, agent_result: AgentRunResult):
         comments = agent_result.agent_result["comments"]
         for comment in comments:
             display_name = agent_result.display_name
             comment.bucket = "_".join(display_name.upper().split())
-
