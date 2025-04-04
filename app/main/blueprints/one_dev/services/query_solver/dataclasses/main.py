@@ -61,6 +61,7 @@ class InlineEditInput(BaseModel):
     code_selection: Optional[CodeSelectionInput] = None
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
+    relevant_chunks: List[Any] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
