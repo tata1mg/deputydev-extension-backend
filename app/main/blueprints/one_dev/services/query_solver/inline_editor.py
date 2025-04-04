@@ -1,7 +1,11 @@
 import asyncio
 from typing import Any, Dict
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, ToolUseResponseContent, ToolUseResponseData
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    ToolUseResponseContent,
+    ToolUseResponseData,
+)
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -10,8 +14,12 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import FOCUSED_SNIPPETS_SEARCHER
-from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import RELATED_CODE_SEARCHER
+from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
+    FOCUSED_SNIPPETS_SEARCHER,
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
+    RELATED_CODE_SEARCHER,
+)
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
