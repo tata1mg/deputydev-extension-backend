@@ -70,3 +70,14 @@ class PastWorkflows:
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
         processed_data = serializer_service.get_processed_data()
         return processed_data
+
+    @classmethod
+    async def update_pinned_rank(cls, session_id: int, user_team_id: int, sessions_list_type: str, pinned_rank: int) -> None:
+        if SessionsListTypes(sessions_list_type) == SessionsListTypes.PINNED:
+            pinned_rank = pinned_rank
+        elif SessionsListTypes(sessions_list_type) == SessionsListTypes.UNPINNED:
+            pinned_rank = None
+        else:
+            raise ValueError("Invalid sessions list type")
+
+        await ExtensionSessionsRepository.update_session_pinned_rank(session_id, user_team_id, pinned_rank)
