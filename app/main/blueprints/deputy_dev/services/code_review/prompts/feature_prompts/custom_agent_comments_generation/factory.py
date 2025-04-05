@@ -7,10 +7,16 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 from .claude_3_point_5_sonnet import Claude3Point5CustomAgentCommentGenerationPrompt
+from .claude_3_point_7_sonnet import (
+    Claude3Point7CodeMaintainabilityCommentsGenerationPass2Prompt,
+)
 
 
 class CustomAgentCommentGenerationPromptFactory(BaseFeaturePromptFactory):
-    prompts = {LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CustomAgentCommentGenerationPrompt}
+    prompts = {
+        LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CustomAgentCommentGenerationPrompt,
+        LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CodeMaintainabilityCommentsGenerationPass2Prompt,
+    }
 
     @classmethod
     def get_prompt(cls, model_name: LLModels) -> Type[BasePrompt]:

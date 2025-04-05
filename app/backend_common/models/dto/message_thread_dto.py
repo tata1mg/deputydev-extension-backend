@@ -62,6 +62,7 @@ MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discrimi
 class LLModels(Enum):
     GPT_4O = "GPT_4O"
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
+    CLAUDE_3_POINT_7_SONNET = "CLAUDE_3_POINT_7_SONNET"
     GPT_40_MINI = "GPT_40_MINI"
     GPT_O1_MINI = "GPT_O1_MINI"
 

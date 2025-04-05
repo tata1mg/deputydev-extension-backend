@@ -58,7 +58,6 @@ class Anthropic(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.ANTHROPIC.value)
         self.anthropic_client = None
-        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
     def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[ConversationTurn]:
         """
@@ -125,6 +124,7 @@ class Anthropic(BaseLLMProvider):
 
     def build_llm_payload(
         self,
+        llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
@@ -132,6 +132,7 @@ class Anthropic(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
 
+        model_config = self._get_model_config(llm_model)
         # create conversation array
         messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
 
@@ -161,21 +162,21 @@ class Anthropic(BaseLLMProvider):
 
         # create body
         llm_payload: Dict[str, Any] = {
-            "anthropic_version": self.model_settings["VERSION"],
-            "max_tokens": self.model_settings["MAX_TOKENS"],
+            "anthropic_version": model_config["VERSION"],
+            "max_tokens": model_config["MAX_TOKENS"],
             "system": prompt.system_message if prompt else "",
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
 
-        if cache_config.tools and tools and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
+        if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
 
         if (
             cache_config.system_message
             and prompt
             and prompt.system_message
-            and self.model_settings["PROMPT_CACHING_SUPPORTED"]
+            and model_config["PROMPT_CACHING_SUPPORTED"]
         ):
             llm_payload["system"] = [
                 {
@@ -185,7 +186,7 @@ class Anthropic(BaseLLMProvider):
                 }
             ]
 
-        if cache_config.conversation and messages and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
+        if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
         return llm_payload

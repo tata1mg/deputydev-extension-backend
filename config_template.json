@@ -303,6 +303,16 @@
             "BITBUCKET_TOKEN": "",
             "INPUT_TOKENS_LIMIT": 130000,
             "PROMPT_CACHING_SUPPORTED": false
+        },
+        "CLAUDE_3_POINT_7_SONNET": {
+          "NAME": "",
+          "PROVIDER": "ANTHROPIC",
+          "ACCESS_KEY": "",
+          "MAX_TOKENS": 8000,
+          "VERSION": "",
+          "INPUT_TOKENS_LIMIT": 130000,
+          "THINKING_BUDGET_TOKENS": 5000,
+          "PROMPT_CACHING_SUPPORTED": false
         }
     },
     "GIT_ACTORS": {
