@@ -54,6 +54,30 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")
     return send_response(response, headers=kwargs.get("response_headers"))
 
+@history_v1_bp.route("/pin-unpin-session", methods=["PUT"])
+@validate_client_version
+@authenticate
+@ensure_session_id(auto_create=False)
+async def pin_unpin_session(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+    query_params = _request.args
+    try:
+        await PastWorkflows.update_pinned_rank(
+            session_id=session_id,
+            user_team_id=auth_data.user_team_id,
+            sessions_list_type=query_params["sessions_list_type"][0],
+            pinned_rank=int(int(query_params["pinned_rank"][0])) if query_params.get("pinned_rank") else None,
+        )
+    except Exception as e:
+        raise BadRequestException(f"Failed to pin/unpin session: {str(e)}")
+    return send_response(headers=kwargs.get("response_headers"))
+
+@history_v1_bp.route("/drag-session", methods=["PUT"])
+@validate_client_version
+@authenticate
+@ensure_session_id(auto_create=False)
+async def drag_session(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
+    pass
+
 
 @history_v1_bp.route("/delete-session", methods=["PUT"])
 @validate_client_version
