@@ -31,10 +31,10 @@ class OpenAI(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.OPENAI.value)
         self.anthropic_client = None
-        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["GPT_4O"]
 
     def build_llm_payload(
         self,
+        llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
