@@ -165,3 +165,27 @@ class ExtensionSessionsRepository:
         except (ValueError, Exception) as ex:
             logger.error(f"error occurred while soft deleting extension_session in DB, ex: {ex}")
             raise ex
+
+    @classmethod
+    async def update_session_pinned_rank(cls, session_id: int, user_team_id: int, pinned_rank: int) -> None:
+        try:
+            # First check if the session belongs to the user
+            extension_session = await DB.by_filters(
+                model_name=ExtensionSession,
+                where_clause={"session_id": session_id, "user_team_id": user_team_id},
+                fetch_one=True,
+            )
+            if not extension_session:
+                raise ValueError("Session not found or you don't have permission to delete it")
+
+            # Update the pinned rank
+            await DB.update_by_filters(
+                None,
+                ExtensionSession,
+                {"pinned_rank": pinned_rank},
+                {"session_id": session_id},
+            )
+        except (ValueError, Exception) as ex:
+            logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
+            raise ex
+
