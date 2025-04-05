@@ -26,6 +26,7 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     def build_llm_payload(
         self,
+        llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
