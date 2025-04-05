@@ -58,7 +58,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=False)
-async def pin_unpin_session(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def pin_unpin_session(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
     query_params = _request.args
     try:
         await PastWorkflows.update_pinned_rank(
