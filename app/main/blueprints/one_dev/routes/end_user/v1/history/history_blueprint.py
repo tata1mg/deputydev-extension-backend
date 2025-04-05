@@ -71,12 +71,20 @@ async def pin_unpin_session(_request: Request, client_data: ClientData, auth_dat
         raise BadRequestException(f"Failed to pin/unpin session: {str(e)}")
     return send_response(headers=kwargs.get("response_headers"))
 
-@history_v1_bp.route("/drag-session", methods=["PUT"])
+@history_v1_bp.route("/session-dragged", methods=["PUT"])
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=False)
-async def drag_session(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
-    pass
+async def session_dragged(_request: Request, auth_data: AuthData, **kwargs: Any):
+    try:
+        sessions_data = _request.custom_json()
+        await ExtensionSessionsRepository.update_pinned_rank_by_session_ids(
+            user_team_id=auth_data.user_team_id,
+            sessions_data=sessions_data,
+        )
+    except Exception as e:
+        raise BadRequestException(f"Failed to drag session: {str(e)}")
+    return send_response(headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/delete-session", methods=["PUT"])
