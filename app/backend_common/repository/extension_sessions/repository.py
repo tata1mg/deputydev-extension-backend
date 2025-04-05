@@ -169,24 +169,28 @@ class ExtensionSessionsRepository:
     @classmethod
     async def update_pinned_rank_by_session_ids(cls, user_team_id: int, sessions_data: Dict[int, int]) -> None:
         try:
-            for session_id, pinned_rank in sessions_data.items():
-                # First check if the session belongs to the user
-                extension_session = await DB.by_filters(
-                    model_name=ExtensionSession,
-                    where_clause={"session_id": session_id, "user_team_id": user_team_id},
-                    fetch_one=True,
-                )
-                if not extension_session:
-                    raise ValueError("Session not found or you don't have permission to update it")
+            if not sessions_data:
+                raise ValueError("No sessions data provided")
 
-                await DB.update_by_filters(
-                    None,
-                    ExtensionSession,
-                    {"pinned_rank": pinned_rank},
-                    {"session_id": session_id, "user_team_id": user_team_id},
-                )
+            case_statements = " ".join(
+                f"WHEN {session_id} THEN {pinned_rank}"
+                for session_id, pinned_rank in sessions_data.items()
+            )
+
+            session_ids = ", ".join(str(session_id) for session_id in sessions_data.keys())
+
+            query = f"""
+                UPDATE extension_sessions
+                SET pinned_rank = CASE session_id
+                    {case_statements}
+                END
+                WHERE session_id IN ({session_ids})
+                AND user_team_id = {user_team_id};
+            """
+
+            await DB.execute_raw_sql(query)
         except Exception as ex:
-            logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
+            logger.error(f"Error occurred while updating extension_session on drag in DB: {ex}")
             raise ex
 
     @classmethod
