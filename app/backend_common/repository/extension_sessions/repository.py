@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from sanic.log import logger
 
@@ -113,7 +113,7 @@ class ExtensionSessionsRepository:
         pinned_rank_is_null: bool = False,
     ) -> List[ExtensionSessionDTO]:
         if not limit:
-            limit = 10
+            limit = 5
         if not offset:
             offset = 0
         try:
@@ -164,6 +164,29 @@ class ExtensionSessionsRepository:
             )
         except (ValueError, Exception) as ex:
             logger.error(f"error occurred while soft deleting extension_session in DB, ex: {ex}")
+            raise ex
+
+    @classmethod
+    async def update_pinned_rank_by_session_ids(cls, user_team_id: int, sessions_data: Dict[int, int]) -> None:
+        try:
+            for session_id, pinned_rank in sessions_data.items():
+                # First check if the session belongs to the user
+                extension_session = await DB.by_filters(
+                    model_name=ExtensionSession,
+                    where_clause={"session_id": session_id, "user_team_id": user_team_id},
+                    fetch_one=True,
+                )
+                if not extension_session:
+                    raise ValueError("Session not found or you don't have permission to update it")
+
+                await DB.update_by_filters(
+                    None,
+                    ExtensionSession,
+                    {"pinned_rank": pinned_rank},
+                    {"session_id": session_id, "user_team_id": user_team_id},
+                )
+        except Exception as ex:
+            logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
             raise ex
 
     @classmethod

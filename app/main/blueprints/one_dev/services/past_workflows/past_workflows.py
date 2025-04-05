@@ -73,6 +73,21 @@ class PastWorkflows:
 
     @classmethod
     async def update_pinned_rank(cls, session_id: int, user_team_id: int, sessions_list_type: str, pinned_rank: int) -> None:
+        """
+        Updates the pinned rank of a session based on the specified sessions list type.
+
+        This method checks if the sessions list type is either 'PINNED' or 'UNPINNED'.
+        If 'PINNED', it retains the provided pinned rank; if 'UNPINNED', it sets the pinned rank to None.
+
+        Args:
+            session_id (int): The ID of the session to update.
+            user_team_id (int): The ID of the user's team.
+            sessions_list_type (str): The type of sessions list ('PINNED' or 'UNPINNED').
+            pinned_rank (int): The new pinned rank to set for the session.
+
+        Raises:
+            ValueError: If the sessions list type is invalid.
+        """
         if SessionsListTypes(sessions_list_type) == SessionsListTypes.PINNED:
             pinned_rank = pinned_rank
         elif SessionsListTypes(sessions_list_type) == SessionsListTypes.UNPINNED:
