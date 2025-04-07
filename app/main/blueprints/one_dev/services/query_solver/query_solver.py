@@ -45,14 +45,21 @@ from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
+    ITERATIVE_FILE_READER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
+
+MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "1.3.0"
 
 
 class QuerySolver:
@@ -158,9 +165,17 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
-    async def solve_query(self, payload: QuerySolverInput) -> AsyncIterator[BaseModel]:
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
 
-        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
+        tools_to_use = [
+            RELATED_CODE_SEARCHER,
+            ASK_USER_INPUT,
+            FOCUSED_SNIPPETS_SEARCHER,
+            FILE_PATH_SEARCHER,
+        ]
+
+        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
+            tools_to_use.append(ITERATIVE_FILE_READER)
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
