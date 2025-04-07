@@ -45,6 +45,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
+    ITERATIVE_FILE_READER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
@@ -160,7 +163,13 @@ class QuerySolver:
 
     async def solve_query(self, payload: QuerySolverInput) -> AsyncIterator[BaseModel]:
 
-        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
+        tools_to_use = [
+            RELATED_CODE_SEARCHER,
+            ASK_USER_INPUT,
+            FOCUSED_SNIPPETS_SEARCHER,
+            FILE_PATH_SEARCHER,
+            ITERATIVE_FILE_READER,
+        ]
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
