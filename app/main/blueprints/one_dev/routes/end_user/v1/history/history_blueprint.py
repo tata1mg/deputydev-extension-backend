@@ -4,6 +4,7 @@ from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 
+from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
 from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
     ChatHistoryHandler,
@@ -74,7 +75,6 @@ async def pin_unpin_session(_request: Request, auth_data: AuthData, session_id: 
 @history_v1_bp.route("/session-dragged", methods=["PUT"])
 @validate_client_version
 @authenticate
-@ensure_session_id(auto_create=False)
 async def session_dragged(_request: Request, auth_data: AuthData, **kwargs: Any):
     try:
         sessions_data = _request.custom_json()
@@ -95,12 +95,15 @@ async def delete_session(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     try:
-        response = await ExtensionSessionsRepository.soft_delete_extension_session_by_id(
+        await MessageSessionsRepository.soft_delete_message_session_by_id(
+            session_id=session_id, user_team_id=auth_data.user_team_id
+        )
+        await ExtensionSessionsRepository.soft_delete_extension_session_by_id(
             session_id=session_id, user_team_id=auth_data.user_team_id
         )
     except Exception as e:
         raise BadRequestException(f"Failed to delete session: {str(e)}")
-    return send_response(response, headers=kwargs.get("response_headers"))
+    return send_response(headers=kwargs.get("response_headers"))
 
 
 @history_v1_bp.route("/relevant-chat-history", methods=["POST"])
