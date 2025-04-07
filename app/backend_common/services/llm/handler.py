@@ -55,6 +55,7 @@ PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 class LLMHandler(Generic[PromptFeatures]):
     model_to_provider_class_map = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
+        LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
         LLModels.GPT_4O: OpenAI,
         LLModels.GPT_40_MINI: OpenAI,
     }
@@ -262,6 +263,7 @@ class LLMHandler(Generic[PromptFeatures]):
         for i in range(0, max_retry):
             try:
                 llm_payload = client.build_llm_payload(
+                    llm_model,
                     prompt=user_and_system_messages,
                     tool_use_response=tool_use_response,
                     previous_responses=previous_responses,
