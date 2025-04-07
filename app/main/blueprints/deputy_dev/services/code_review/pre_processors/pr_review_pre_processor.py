@@ -73,6 +73,9 @@ class PRReviewPreProcessor:
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
         setting = await self.fetch_setting()
+        set_context_values(
+            is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
+        )
 
         if not self.is_reviewable_based_on_settings(setting):
             self.is_valid = False
