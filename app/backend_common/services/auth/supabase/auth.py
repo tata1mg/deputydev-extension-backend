@@ -100,7 +100,6 @@ class SupabaseAuth:
     async def add_grace_period(cls, access_token, decoded_token):
         exp_timestamp = decoded_token.get("exp")
         if exp_timestamp is not None:
-            current_time = int(datetime.now(timezone.utc).timestamp())
             await AuthTokenGracePeriod.set(access_token, 1)
 
     @classmethod
