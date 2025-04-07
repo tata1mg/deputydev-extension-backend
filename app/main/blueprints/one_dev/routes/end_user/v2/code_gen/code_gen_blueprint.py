@@ -117,7 +117,8 @@ async def generate_inline_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     data = await InlineEditGenerator().create_and_start_job(
-        payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
+        payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data),
+        client_data=client_data,
     )
     return send_response({"job_id": data, "session_id": session_id})
 
