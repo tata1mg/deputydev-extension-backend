@@ -101,8 +101,7 @@ class SupabaseAuth:
         exp_timestamp = decoded_token.get("exp")
         if exp_timestamp is not None:
             current_time = int(datetime.now(timezone.utc).timestamp())
-            if (exp_timestamp - current_time) < ConfigManager.configs["AUTH_TOKEN_GRACE_PERIOD"]:
-                await AuthTokenGracePeriod.set(access_token, 1)
+            await AuthTokenGracePeriod.set(access_token, 1)
 
     @classmethod
     async def extract_and_validate_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:
