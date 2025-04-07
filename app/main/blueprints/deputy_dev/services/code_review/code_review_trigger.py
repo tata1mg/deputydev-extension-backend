@@ -13,7 +13,7 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
-from app.main.blueprints.deputy_dev.services.sqs.genai_subscriber import GenaiSubscriber
+from app.main.blueprints.deputy_dev.services.message_queue.genai_subscriber_factory import GenAiSubscriberFactory
 from app.main.blueprints.deputy_dev.services.webhook.pr_webhook import PRWebhook
 from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,
@@ -63,7 +63,7 @@ class CodeReviewTrigger:
         if not is_request_from_blocked_repo(code_review_request.repo_name):
             logger.info("Whitelisted request: {}".format(code_review_request))
             await cls.__notify_pr_review_initiation(code_review_request.dict())
-            await GenaiSubscriber(config=config).publish(payload=code_review_request.dict())
+            await GenAiSubscriberFactory.subscriber()(config=config).publish(payload=code_review_request.dict())
             return f"Processing Started with PR ID : {code_review_request.pr_id}"
         else:
             logger.info(
