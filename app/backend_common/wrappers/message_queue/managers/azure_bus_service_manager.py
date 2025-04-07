@@ -1,0 +1,165 @@
+from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient, ServiceBusReceiver
+from azure.servicebus.exceptions import ServiceBusError
+from app.backend_common.utils.types import AzureErrorMessages
+import logging
+from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION, ServiceBusReceivedMessage
+from azure.mgmt.servicebus import ServiceBusManagementClient
+from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
+from azure.identity import DefaultAzureCredential
+from app.backend_common.wrappers.message_queue.managers.message_queue_manager import MessageQueueManager
+from app.backend_common.utils.types import AzureBusServiceQueueType
+from typing import Optional, List, Tuple
+
+logger = logging.getLogger(__name__)
+
+
+class AzureServiceBusManager(MessageQueueManager):
+    def __init__(self, config: dict, config_key: str = "AZURE_BUS_SERVICE"):
+        self.config = config.get(config_key, {})
+        self._app_config = config
+        self.client: Optional[AsyncServiceBusClient] = None
+        self.async_credential = AsyncDefaultAzureCredential()
+        self.queue_name = None
+        self.queue_type = None
+
+    async def get_client(self, queue_name):
+        fully_qualified_namespace = self.config.get("NAMESPACE_FQDN")
+        logging_enabled = self.config.get("LOGGING_ENABLED")
+        retry_total = self.config.get("RETRY_TOTAL", 3)
+        retry_backoff_factor: float = self.config.get("RETRY_BACKOFF_FACTOR", 0.8)
+        retry_backoff_max: float = self.config.get("RETRY_BACKOFF_MAX", 120)
+        retry_mode: str = self.config.get("RETRY_MODE", "exponential")
+
+        self.client: AsyncServiceBusClient = AsyncServiceBusClient(
+            fully_qualified_namespace=fully_qualified_namespace,
+            credential=self.async_credential,
+            retry_total=retry_total,
+            retry_backoff_factor=retry_backoff_factor,
+            retry_mode=retry_mode,
+            retry_backoff_max=retry_backoff_max,
+            logging_enable=logging_enabled,
+        )
+        self.queue_name = queue_name
+        self.queue_type = self._get_queue_type()
+        return self.client
+
+    async def publish(self, payload: str = None, messages: list = None, attributes: dict = None, batch=False, **kwargs):
+        """
+        :param messages: list of messages to be sent to Azure Service Bus for batch requests
+        :param payload: message payload to be sent to Azure Service Bus for single events
+        :param attributes: message properties
+        :param batch: tells multiple message or single message
+        :return: True or False
+        """
+        messages, payload = messages or [], payload or {}
+        session_id = kwargs.get("session_id")  # message_group_id
+        message_id = kwargs.get("message_id")  # message_deduplication_id
+        self._validate_publish_to_service_bus(session_id, message_id)
+
+        _send, _retry_count, sent_response_data = False, 0, {}
+        _max_retries = kwargs.get("max_retries") or 3
+
+        while not _send and _retry_count < _max_retries:
+            try:
+                if batch:  # Batch messages
+                    # TODO: handle for batch messages
+                    pass
+                else:  # Single message
+                    await self._send_message(
+                        payload, session_id=session_id, message_id=message_id, attributes=attributes, batch=batch
+                    )
+                    _send = True
+
+            except ServiceBusError as err:
+                if "message size exceeds the limit" in str(err).lower():
+                    raise Exception(AzureErrorMessages.AzureServiceBusPayloadSize.value)
+                else:
+                    logger.info(
+                        AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count)
+                    )
+            except Exception as e:
+                logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=e, count=_retry_count))
+            finally:
+                _retry_count += 1
+
+        return _send
+
+    async def _send_message(
+        self, payload: str = None, messages: List[str] = None, attributes: dict = None, batch=False, **kwargs
+    ) -> None:
+        sender = self.client.get_queue_sender(self.queue_name)
+        if not batch:
+            if self.queue_type == AzureBusServiceQueueType.SESSION_ENABLED:
+                session_id = kwargs.get("session_id")
+                message_id = kwargs.get("message_id")
+                message = ServiceBusMessage(
+                    payload, session_id=session_id, message_id=message_id, application_properties=attributes
+                )
+            else:
+                message = ServiceBusMessage(payload, application_properties=attributes)
+
+            async with sender:
+                await sender.send_messages(message)
+                print("Message sent to Azure Service Bus")
+        else:
+            # TODO: provide batch message support
+            pass
+
+    async def close(self):
+        if self.client:
+            await self.client.close()
+        if self.async_credential:
+            await self.async_credential.close()
+
+    async def subscribe(
+        self, max_message_count=1, max_wait_time=5
+    ) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver]:
+        if not self.client or not self.queue_name:
+            raise ValueError("Service Bus client or entity name is not initialized")
+        if self.queue_type == AzureBusServiceQueueType.SESSION_DISABLED:
+            receiver = self.client.get_queue_receiver(self.queue_name)
+        else:
+            receiver = self.client.get_queue_receiver(self.queue_name, session_id=NEXT_AVAILABLE_SESSION)
+        try:
+            await receiver.__aenter__()
+            received_msgs = await receiver.receive_messages(
+                max_message_count=max_message_count, max_wait_time=max_wait_time
+            )
+            print(f"Received messages: {received_msgs}")
+            return received_msgs, receiver
+        except ServiceBusError as e:
+            logger.error(f"Error receiving messages: {str(e)}")
+            return [], None
+
+    def _validate_publish_to_service_bus(self, session_id, message_id):
+        queue_type = self._get_queue_type()
+        if queue_type == AzureBusServiceQueueType.SESSION_ENABLED:
+            if not session_id:
+                raise Exception(
+                    AzureErrorMessages.PARAMETER_REQUIRED.value.format(
+                        param_key="session_id", queue_name="Azure Service Bus topic publish"
+                    )
+                )
+        else:
+            if session_id or message_id:
+                raise Exception(
+                    AzureErrorMessages.PARAMETERS_NOT_ALLOWED.value.format(
+                        param_key="session_id or message_id", queue_name="Azure Service Bus queue publish"
+                    )
+                )
+
+    def _get_queue_type(self):
+        sync_credential = DefaultAzureCredential()
+        if self.queue_type:
+            return self.queue_type
+        client = ServiceBusManagementClient(sync_credential, self.config.get("SUBSCRIPTION_ID"))
+        queue = client.queues.get(self.config.get("RESOURCE_GROUP"), self.config.get("NAMESPACE"), self.queue_name)
+        self.queue_type = (
+            AzureBusServiceQueueType.SESSION_ENABLED
+            if queue.requires_session
+            else AzureBusServiceQueueType.SESSION_DISABLED
+        )
+        return self.queue_type
+
+    async def purge(self, message: ServiceBusReceivedMessage, receiver: ServiceBusReceiver):
+        await receiver.complete_message(message)

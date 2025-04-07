@@ -4,7 +4,7 @@ from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_f
 )
 
 
-class MetaSubscriber(BaseSubscriber):
+class SQSMetaSubscriber(BaseSubscriber):
     def get_queue_name(self):
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("METASYNC", {}).get("QUEUE_NAME", "")
 
