@@ -58,11 +58,12 @@ class CodeSelectionInput(BaseModel):
 
 class InlineEditInput(BaseModel):
     session_id: int
-    query: str
-    relevant_chunks: List[Any]
-    code_selection: CodeSelectionInput
+    query: Optional[str] = None
+    tool_use_response: Optional[ToolUseResponseInput] = None
+    code_selection: Optional[CodeSelectionInput] = None
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
+    relevant_chunks: List[Any] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
