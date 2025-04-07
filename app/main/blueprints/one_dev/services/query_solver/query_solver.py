@@ -48,6 +48,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_se
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
+    GREP_SEARCH,
+)
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
@@ -160,7 +163,7 @@ class QuerySolver:
 
     async def solve_query(self, payload: QuerySolverInput) -> AsyncIterator[BaseModel]:
 
-        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
+        tools_to_use = [RELATED_CODE_SEARCHER, ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER, GREP_SEARCH]
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
