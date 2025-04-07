@@ -23,7 +23,6 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt):
-    include_corrective_code = get_context_value("is_corrective_code_enabled")
 
     @classmethod
     def _parse_text_blocks(cls, text: str) -> Dict[str, List[LLMCommentData]]:
@@ -107,7 +106,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             <comment>
             <description>Describe the {agent_focus_area} issue and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors. Don't provide any code block inside this field</description>"""
 
-        if cls.include_corrective_code:
+        if get_context_value("is_corrective_code_enabled"):
             base_format += """
             <corrective_code>Rewrite or create new (in case of missing) code, docstring or documentation for developer
             to directly use it.
