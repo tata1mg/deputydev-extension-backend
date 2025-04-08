@@ -13,11 +13,10 @@ async def initialize_sqs_subscribes(_app, loop):
     :param loop:
     :return:
     """
-    if _app.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("ENABLED", False):
+    if MessageQueueFactory.is_queue_enabled(_app.config, "GENAI"):
         genai_subscribe = MessageQueueFactory.genai_subscriber()(_app.config)
         _app.add_task(await genai_subscribe.subscribe())
-
-    if _app.config.get("SQS", {}).get("SUBSCRIBE", {}).get("METASYNC", {}).get("ENABLED", False):
+    if MessageQueueFactory.is_queue_enabled(_app.config, "METASYNC"):
         meta_subscribe = MessageQueueFactory.meta_subscribers()(_app.config)
         _app.add_task(await meta_subscribe.subscribe())
 
