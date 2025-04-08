@@ -141,7 +141,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             error_data = {"type": "STREAM_ERROR", "message": str(ex)}
             await push_to_connection_stream(error_data)
 
-    await solve_query()
+    asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
 
 
