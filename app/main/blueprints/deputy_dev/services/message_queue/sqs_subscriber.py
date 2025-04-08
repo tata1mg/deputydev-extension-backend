@@ -15,7 +15,6 @@ from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_q
 )
 
 
-
 class SQSSubscriber(BaseSubscriber):
     @classmethod
     def format_attributes(cls):
