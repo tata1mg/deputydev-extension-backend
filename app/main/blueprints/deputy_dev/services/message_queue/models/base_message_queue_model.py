@@ -1,11 +1,9 @@
 class Response:
-
-    def __init__(self, messages):
-        from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import MessageQueueFactory
+    def __init__(self, messages, message_model):
         if not messages:
             self.messages = []
         else:
-            self.messages = [MessageQueueFactory.message_model()(message) for message in messages]
+            self.messages = [message_model(message) for message in messages]
 
 
 class Attribute:
