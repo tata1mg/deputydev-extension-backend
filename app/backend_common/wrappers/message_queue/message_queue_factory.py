@@ -10,5 +10,5 @@ class MessageQueueFactory:
 
     @classmethod
     def manager(cls) -> MessageQueueManager:
-        cloud_provider = CONFIG.config("CLOUD_PROVIDER")
+        cloud_provider = CONFIG.config["CLOUD_PROVIDER"]
         return cls.message_queue_managers[cloud_provider]

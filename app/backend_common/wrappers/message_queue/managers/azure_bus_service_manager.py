@@ -1,4 +1,4 @@
-from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient, ServiceBusReceiver
+from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient, ServiceBusReceiver, AutoLockRenewer
 from azure.servicebus.exceptions import ServiceBusError
 from app.backend_common.utils.types import AzureErrorMessages
 import logging
@@ -9,6 +9,7 @@ from azure.identity import DefaultAzureCredential
 from app.backend_common.wrappers.message_queue.managers.message_queue_manager import MessageQueueManager
 from app.backend_common.utils.types import AzureBusServiceQueueType
 from typing import Optional, List, Tuple
+from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import AzureBusServiceMessage
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class AzureServiceBusManager(MessageQueueManager):
 
     async def get_client(self, queue_name):
         fully_qualified_namespace = self.config.get("NAMESPACE_FQDN")
-        logging_enabled = self.config.get("LOGGING_ENABLED")
+        logging_enabled = self.config.get("LOGGING_ENABLED") or False
         retry_total = self.config.get("RETRY_TOTAL", 3)
         retry_backoff_factor: float = self.config.get("RETRY_BACKOFF_FACTOR", 0.8)
         retry_backoff_max: float = self.config.get("RETRY_BACKOFF_MAX", 120)
@@ -101,6 +102,7 @@ class AzureServiceBusManager(MessageQueueManager):
             async with sender:
                 await sender.send_messages(message)
                 print("Message sent to Azure Service Bus")
+            await sender.close()
         else:
             # TODO: provide batch message support
             pass
@@ -111,25 +113,37 @@ class AzureServiceBusManager(MessageQueueManager):
         if self.async_credential:
             await self.async_credential.close()
 
-    async def subscribe(
-        self, max_message_count=1, max_wait_time=5
-    ) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver]:
+    async def subscribe(self, **kwargs) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver]:
         if not self.client or not self.queue_name:
             raise ValueError("Service Bus client or entity name is not initialized")
-        if self.queue_type == AzureBusServiceQueueType.SESSION_DISABLED:
-            receiver = self.client.get_queue_receiver(self.queue_name)
-        else:
-            receiver = self.client.get_queue_receiver(self.queue_name, session_id=NEXT_AVAILABLE_SESSION)
+        max_message_count = 1
+        max_wait_time = 5
+        lock_renewer = AutoLockRenewer()
         try:
-            await receiver.__aenter__()
-            received_msgs = await receiver.receive_messages(
-                max_message_count=max_message_count, max_wait_time=max_wait_time
-            )
+            if self.queue_type == AzureBusServiceQueueType.SESSION_DISABLED:
+                receiver = self.client.get_queue_receiver(self.queue_name)
+                await receiver.__aenter__()
+                received_msgs = await receiver.receive_messages(
+                    max_message_count=max_message_count, max_wait_time=max_wait_time
+                )
+                for message in received_msgs:
+                    lock_renewer.register(receiver, message, max_lock_renewal_duration=self.config["LOCK_ENABLE_TIME"])
+            else:
+                receiver = self.client.get_queue_receiver(self.queue_name, session_id=NEXT_AVAILABLE_SESSION)
+                await receiver.__aenter__()
+                received_msgs = await receiver.receive_messages(
+                    max_message_count=max_message_count, max_wait_time=max_wait_time
+                )
+                lock_renewer.register(
+                    receiver, receiver.session, max_lock_renewal_duration=self.config["LOCK_ENABLE_TIME"]
+                )
+
             print(f"Received messages: {received_msgs}")
-            return received_msgs, receiver
-        except ServiceBusError as e:
-            logger.error(f"Error receiving messages: {str(e)}")
-            return [], None
+            return received_msgs, receiver, lock_renewer
+        except Exception as e:
+            await receiver.close()
+            await lock_renewer.close()
+            raise e
 
     def _validate_publish_to_service_bus(self, session_id, message_id):
         queue_type = self._get_queue_type()
@@ -161,5 +175,5 @@ class AzureServiceBusManager(MessageQueueManager):
         )
         return self.queue_type
 
-    async def purge(self, message: ServiceBusReceivedMessage, receiver: ServiceBusReceiver):
-        await receiver.complete_message(message)
+    async def purge(self, message: AzureBusServiceMessage, receiver: ServiceBusReceiver):
+        await receiver.complete_message(message.received_message)

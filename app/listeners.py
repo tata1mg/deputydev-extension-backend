@@ -1,7 +1,6 @@
 from torpedo.constants import ListenerEventTypes
 
-from app.main.blueprints.deputy_dev.services.message_queue.genai.genai_subscriber_factory import GenAiSubscriberFactory
-from app.main.blueprints.deputy_dev.services.message_queue.meta.meta_subscriber_factory import MetaSubscriberFactory
+from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import MessageQueueFactory
 from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
     PixelEventSubscriber,
 )
@@ -15,11 +14,11 @@ async def initialize_sqs_subscribes(_app, loop):
     :return:
     """
     if _app.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("ENABLED", False):
-        genai_subscribe = GenAiSubscriberFactory.genai_subscriber()(_app.config)
+        genai_subscribe = MessageQueueFactory.genai_subscriber()(_app.config)
         _app.add_task(await genai_subscribe.subscribe())
 
     if _app.config.get("SQS", {}).get("SUBSCRIBE", {}).get("METASYNC", {}).get("ENABLED", False):
-        meta_subscribe = MetaSubscriber(_app.config)
+        meta_subscribe = MessageQueueFactory.meta_subscribers()(_app.config)
         _app.add_task(await meta_subscribe.subscribe())
 
 
