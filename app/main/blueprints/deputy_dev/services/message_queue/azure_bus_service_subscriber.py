@@ -1,13 +1,23 @@
-from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import BaseSubscriber
 import asyncio
-from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import Response
+
+from azure.core.exceptions import (
+    ServiceRequestError,
+    ServiceRequestTimeoutError,
+    ServiceResponseTimeoutError,
+)
+from azure.servicebus.aio import AutoLockRenewer, ServiceBusReceiver
 from sanic.log import logger
-from azure.core.exceptions import ServiceRequestTimeoutError, ServiceResponseTimeoutError, ServiceRequestError
+
 from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.constants.success_messages import SuccessMessages
 from app.backend_common.exception import RetryException
 from app.backend_common.exception.exception import RateLimitError
-from azure.servicebus.aio import ServiceBusReceiver, AutoLockRenewer
+from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import (
+    BaseSubscriber,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import (
+    Response,
+)
 
 
 class AzureBusServiceSubscriber(BaseSubscriber):
@@ -19,8 +29,8 @@ class AzureBusServiceSubscriber(BaseSubscriber):
         show_configured_log = True
         while True:
             try:
-                receiver: ServiceBusReceiver
-                lock_renewer: AutoLockRenewer
+                receiver: ServiceBusReceiver = None
+                lock_renewer: AutoLockRenewer = None
                 response, receiver, lock_renewer = await self.receive_message(
                     max_no_of_messages=max_no_of_messages,
                     wait_time_in_seconds=wait_time_in_seconds,
@@ -44,14 +54,17 @@ class AzureBusServiceSubscriber(BaseSubscriber):
             except Exception as e:
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)
             finally:
-                await receiver.close()
-                await lock_renewer.close()
+                if receiver:
+                    await receiver.close()
+                if lock_renewer:
+                    await lock_renewer.close()
                 await self.message_queue_manager.close()
 
     async def receive_message(self, **kwargs):
         await self.init()
         response, receiver, lock_renewer = await self.message_queue_manager.subscribe(**kwargs)
-        response_model = Response(response)
+        message_model = self.message_queue_factory.message_model()
+        response_model = Response(response, message_model)
         logger.info(f"subscribe response model Azure Bus Service: {response_model.messages}")
         return response_model, receiver, lock_renewer
 

@@ -1,10 +1,15 @@
 import ujson as json
-from app.backend_common.wrappers.message_queue.message_queue_factory import MessageQueueFactory
-from app.backend_common.wrappers.message_queue.managers.message_queue_manager import MessageQueueManager
 from sanic.log import logger
-from app.backend_common.utils.app_utils import log_combined_exception
-from app.main.blueprints.deputy_dev.constants.constants import MESSAGE_QUEUE_LOG_LENGTH
 
+from app.backend_common.utils.app_utils import log_combined_exception
+from app.backend_common.wrappers.message_queue.managers.message_queue_manager import (
+    MessageQueueManager,
+)
+from app.backend_common.wrappers.message_queue.message_queue_factory import (
+    MessageQueueFactory,
+)
+from app.main.blueprints.deputy_dev.constants.constants import MESSAGE_QUEUE_LOG_LENGTH
+from typing import Type
 
 """
     implement get_queue_name function which will be returning queue name for every child class
@@ -13,7 +18,12 @@ from app.main.blueprints.deputy_dev.constants.constants import MESSAGE_QUEUE_LOG
 
 class BaseSubscriber:
     def __init__(self, config: dict):
+        from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import (
+            MessageQueueFactory as InternalMessageQueueFactory,
+        )
+
         self.config = config or {}
+        self.message_queue_factory: Type[InternalMessageQueueFactory] = InternalMessageQueueFactory
         self.message_queue_manager: MessageQueueManager = MessageQueueFactory.manager()(config)
         self.queue_name = self.get_queue_name()
         self.is_client_created = False
@@ -53,17 +63,17 @@ class BaseSubscriber:
     def log_error(self, message, exception, payload=None):
         message = message.format(queue_name=self.queue_name)
         if payload:
-            message += " Payload =  " + json.dumps(payload)[: MESSAGE_QUEUE_LOG_LENGTH]
+            message += " Payload =  " + json.dumps(payload)[:MESSAGE_QUEUE_LOG_LENGTH]
         log_combined_exception(message, exception)
 
     def log_info(self, message, payload=None):
         message = message.format(queue_name=self.queue_name)
         if payload:
-            message += " Payload = " + json.dumps(payload)[: MESSAGE_QUEUE_LOG_LENGTH]
+            message += " Payload = " + json.dumps(payload)[:MESSAGE_QUEUE_LOG_LENGTH]
         logger.info(message)
 
     def log_warn(self, message, payload=None):
         message = message.format(queue_name=self.queue_name)
         if payload:
-            message += " Payload =  " + json.dumps(payload)[: MESSAGE_QUEUE_LOG_LENGTH]
+            message += " Payload =  " + json.dumps(payload)[:MESSAGE_QUEUE_LOG_LENGTH]
         logger.warn(message)

@@ -1,16 +1,26 @@
+from typing import Union
+
 from torpedo import CONFIG
+
 from app.backend_common.utils.types import CloudProviders
-from app.main.blueprints.deputy_dev.services.message_queue.genai.sqs_genai_subscriber import SQSGenaiSubscriber
-from app.main.blueprints.deputy_dev.services.message_queue.meta_sync.sqs_meta_subscriber import SQSMetaSubscriber
 from app.main.blueprints.deputy_dev.services.message_queue.genai.azure_bus_service_genai_subscriber import (
     AzureBusServiceGenAiSubscriber,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.genai.sqs_genai_subscriber import (
+    SQSGenaiSubscriber,
 )
 from app.main.blueprints.deputy_dev.services.message_queue.meta_sync.azure_bus_service_meta_subscriber import (
     AzureBusServiceMetaSubscriber,
 )
-from typing import Union
-from app.main.blueprints.deputy_dev.services.message_queue.models.sqs_model import SQSMessage
-from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import AzureBusServiceMessage
+from app.main.blueprints.deputy_dev.services.message_queue.meta_sync.sqs_meta_subscriber import (
+    SQSMetaSubscriber,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import (
+    AzureBusServiceMessage,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.models.sqs_model import (
+    SQSMessage,
+)
 
 config = CONFIG.config
 

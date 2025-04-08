@@ -1,22 +1,32 @@
-from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient, ServiceBusReceiver, AutoLockRenewer
-from azure.servicebus.exceptions import ServiceBusError, MessageSizeExceededError
-from app.backend_common.utils.types import AzureErrorMessages
 import logging
-from azure.servicebus import (
-    ServiceBusMessage,
-    NEXT_AVAILABLE_SESSION,
-    ServiceBusReceivedMessage,
-    ServiceBusMessageBatch,
-)
-from azure.mgmt.servicebus import ServiceBusManagementClient
-from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
-from azure.identity import DefaultAzureCredential
-from app.backend_common.wrappers.message_queue.managers.message_queue_manager import MessageQueueManager
-from app.backend_common.utils.types import AzureBusServiceQueueType
-from typing import Optional, List, Tuple
-from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import AzureBusServiceMessage
-from app.backend_common.utils.types import DelayQueueTime
 from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
+
+from azure.identity import DefaultAzureCredential
+from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
+from azure.mgmt.servicebus import ServiceBusManagementClient
+from azure.servicebus import (
+    NEXT_AVAILABLE_SESSION,
+    ServiceBusMessage,
+    ServiceBusMessageBatch,
+    ServiceBusReceivedMessage,
+)
+from azure.servicebus.aio import AutoLockRenewer
+from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient
+from azure.servicebus.aio import ServiceBusReceiver
+from azure.servicebus.exceptions import MessageSizeExceededError, ServiceBusError
+
+from app.backend_common.utils.types import (
+    AzureBusServiceQueueType,
+    AzureErrorMessages,
+    DelayQueueTime,
+)
+from app.backend_common.wrappers.message_queue.managers.message_queue_manager import (
+    MessageQueueManager,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import (
+    AzureBusServiceMessage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +130,7 @@ class AzureServiceBusManager(MessageQueueManager):
 
             async with sender:
                 await sender.send_messages(message)
+            await sender.close()
         else:
             if self.queue_type == AzureBusServiceQueueType.SESSION_DISABLED:
                 async with sender:
