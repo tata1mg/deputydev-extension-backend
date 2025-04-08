@@ -20,6 +20,7 @@ SCRIT_DEPRECATION_NOTIFICATION = (
 )
 MESSAGE_QUEUE_LOG_LENGTH = 500
 
+
 class LLMModels(Enum):
     Summarization = "SCRIT_MODEL"
     FoundationModel = "SCRIT_MODEL"
