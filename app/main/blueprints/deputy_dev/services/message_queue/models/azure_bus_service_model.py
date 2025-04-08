@@ -24,7 +24,7 @@ class AzureBusServiceMessage:
         if not message:
             self.body = None
             self.attributes = []
-            self.lock_token = None
+            self.received_message = None
         else:
             self.received_message = message  # require for deleting message
             self.body = self.decompress(message.body)
