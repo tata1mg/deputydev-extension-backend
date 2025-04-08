@@ -1,3 +1,5 @@
+from typing import Type
+
 import ujson as json
 from sanic.log import logger
 
@@ -5,11 +7,10 @@ from app.backend_common.utils.app_utils import log_combined_exception
 from app.backend_common.wrappers.message_queue.managers.message_queue_manager import (
     MessageQueueManager,
 )
-from app.backend_common.wrappers.message_queue.message_queue_factory import (
-    MessageQueueFactory,
+from app.backend_common.wrappers.message_queue.message_queue_manager_factory import (
+    MessageQueueManagerFactory,
 )
 from app.main.blueprints.deputy_dev.constants.constants import MESSAGE_QUEUE_LOG_LENGTH
-from typing import Type
 
 """
     implement get_queue_name function which will be returning queue name for every child class
@@ -19,12 +20,12 @@ from typing import Type
 class BaseSubscriber:
     def __init__(self, config: dict):
         from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import (
-            MessageQueueFactory as InternalMessageQueueFactory,
+            MessageQueueFactory,
         )
 
         self.config = config or {}
-        self.message_queue_factory: Type[InternalMessageQueueFactory] = InternalMessageQueueFactory
-        self.message_queue_manager: MessageQueueManager = MessageQueueFactory.manager()(config)
+        self.message_queue_factory: Type[MessageQueueFactory] = MessageQueueFactory
+        self.message_queue_manager: MessageQueueManager = MessageQueueManagerFactory.manager()(config)
         self.queue_name = self.get_queue_name()
         self.is_client_created = False
 
