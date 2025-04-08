@@ -29,6 +29,10 @@ class MessageQueueFactory:
         CloudProviders.AZURE.value: AzureBusServiceMessage,
         CloudProviders.AWS.value: SQSMessage,
     }
+    queue_config_key = {
+        CloudProviders.AZURE.value: "AZURE_BUS_SERVICE",
+        CloudProviders.AWS.value: "SQS",
+    }
 
     @classmethod
     def genai_subscriber(cls) -> [Union[AzureBusServiceGenAiSubscriber, SQSGenaiSubscriber]]:
@@ -41,3 +45,9 @@ class MessageQueueFactory:
     @classmethod
     def message_model(cls):
         return cls.message_models[cls.cloud_provider]
+
+    @classmethod
+    def is_queue_enabled(cls, config, queue_type):
+        key = cls.queue_config_key[cls.cloud_provider]
+        config.get(key, {}).get("SUBSCRIBE", {}).get(queue_type, {}).get("ENABLED", False)
+        return config

@@ -1,5 +1,5 @@
 from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient, ServiceBusReceiver, AutoLockRenewer
-from azure.servicebus.exceptions import ServiceBusError
+from azure.servicebus.exceptions import ServiceBusError, MessageSizeExceededError
 from app.backend_common.utils.types import AzureErrorMessages
 import logging
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION, ServiceBusReceivedMessage
@@ -20,6 +20,7 @@ class AzureServiceBusManager(MessageQueueManager):
         self._app_config = config
         self.client: Optional[AsyncServiceBusClient] = None
         self.async_credential = AsyncDefaultAzureCredential()
+        self.sync_credential = DefaultAzureCredential()
         self.queue_name = None
         self.queue_type = None
 
@@ -70,14 +71,12 @@ class AzureServiceBusManager(MessageQueueManager):
                         payload, session_id=session_id, message_id=message_id, attributes=attributes, batch=batch
                     )
                     _send = True
-
+            except MessageSizeExceededError as err:
+                raise Exception(AzureErrorMessages.AzureServiceBusPayloadSize.value.format())
             except ServiceBusError as err:
-                if "message size exceeds the limit" in str(err).lower():
-                    raise Exception(AzureErrorMessages.AzureServiceBusPayloadSize.value)
-                else:
-                    logger.info(
-                        AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count)
-                    )
+                logger.info(
+                    AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count)
+                )
             except Exception as e:
                 logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=e, count=_retry_count))
             finally:
@@ -101,8 +100,6 @@ class AzureServiceBusManager(MessageQueueManager):
 
             async with sender:
                 await sender.send_messages(message)
-                print("Message sent to Azure Service Bus")
-            await sender.close()
         else:
             # TODO: provide batch message support
             pass
@@ -112,12 +109,14 @@ class AzureServiceBusManager(MessageQueueManager):
             await self.client.close()
         if self.async_credential:
             await self.async_credential.close()
+        if self.sync_credential:
+            self.sync_credential.close()
 
     async def subscribe(self, **kwargs) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver]:
         if not self.client or not self.queue_name:
             raise ValueError("Service Bus client or entity name is not initialized")
-        max_message_count = 1
-        max_wait_time = 5
+        max_message_count = kwargs.get("max_no_of_messages")
+        max_wait_time = kwargs.get("wait_time_in_seconds")
         lock_renewer = AutoLockRenewer()
         try:
             if self.queue_type == AzureBusServiceQueueType.SESSION_DISABLED:
@@ -163,10 +162,9 @@ class AzureServiceBusManager(MessageQueueManager):
                 )
 
     def _get_queue_type(self):
-        sync_credential = DefaultAzureCredential()
         if self.queue_type:
             return self.queue_type
-        client = ServiceBusManagementClient(sync_credential, self.config.get("SUBSCRIPTION_ID"))
+        client = ServiceBusManagementClient(self.sync_credential, self.config.get("SUBSCRIPTION_ID"))
         queue = client.queues.get(self.config.get("RESOURCE_GROUP"), self.config.get("NAMESPACE"), self.queue_name)
         self.queue_type = (
             AzureBusServiceQueueType.SESSION_ENABLED
