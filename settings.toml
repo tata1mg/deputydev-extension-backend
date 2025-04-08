@@ -22,7 +22,7 @@ exclusions = [
     "local_execute.sh",
     "local_build.sh",
 ]
-
+is_corrective_code_enabled = false
 inclusions = []
 
 # Objective have no use for pre-defined agents, Added this to make agents simmillar and extensible.
