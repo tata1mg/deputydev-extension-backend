@@ -1,8 +1,7 @@
-from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import MessageQueueFactory
-
-
 class Response:
+
     def __init__(self, messages):
+        from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import MessageQueueFactory
         if not messages:
             self.messages = []
         else:

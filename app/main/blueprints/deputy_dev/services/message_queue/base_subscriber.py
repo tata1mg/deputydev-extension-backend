@@ -2,12 +2,8 @@ import ujson as json
 from app.backend_common.wrappers.message_queue.message_queue_factory import MessageQueueFactory
 from app.backend_common.wrappers.message_queue.managers.message_queue_manager import MessageQueueManager
 from sanic.log import logger
-from app.backend_common.constants.error_messages import ErrorMessages
-from app.backend_common.constants.success_messages import SuccessMessages
-from app.backend_common.exception import RetryException
-from app.backend_common.exception.exception import RateLimitError
 from app.backend_common.utils.app_utils import log_combined_exception
-from app.main.blueprints.deputy_dev.constants.sqs import SQS
+from app.main.blueprints.deputy_dev.constants.constants import MESSAGE_QUEUE_LOG_LENGTH
 
 
 """
@@ -18,7 +14,7 @@ from app.main.blueprints.deputy_dev.constants.sqs import SQS
 class BaseSubscriber:
     def __init__(self, config: dict):
         self.config = config or {}
-        self.message_queue_manager: MessageQueueManager = MessageQueueFactory.manager()
+        self.message_queue_manager: MessageQueueManager = MessageQueueFactory.manager()(config)
         self.queue_name = self.get_queue_name()
         self.is_client_created = False
 
@@ -57,17 +53,17 @@ class BaseSubscriber:
     def log_error(self, message, exception, payload=None):
         message = message.format(queue_name=self.queue_name)
         if payload:
-            message += " Payload =  " + json.dumps(payload)[: SQS.LOG_LENGTH.value]
+            message += " Payload =  " + json.dumps(payload)[: MESSAGE_QUEUE_LOG_LENGTH]
         log_combined_exception(message, exception)
 
     def log_info(self, message, payload=None):
         message = message.format(queue_name=self.queue_name)
         if payload:
-            message += " Payload = " + json.dumps(payload)[: SQS.LOG_LENGTH.value]
+            message += " Payload = " + json.dumps(payload)[: MESSAGE_QUEUE_LOG_LENGTH]
         logger.info(message)
 
     def log_warn(self, message, payload=None):
         message = message.format(queue_name=self.queue_name)
         if payload:
-            message += " Payload =  " + json.dumps(payload)[: SQS.LOG_LENGTH.value]
+            message += " Payload =  " + json.dumps(payload)[: MESSAGE_QUEUE_LOG_LENGTH]
         logger.warn(message)

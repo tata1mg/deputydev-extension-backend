@@ -1,4 +1,4 @@
-from app.main.blueprints.deputy_dev.services.message_queue.base_message_queue_model import Attribute
+from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import Attribute
 import json
 
 
