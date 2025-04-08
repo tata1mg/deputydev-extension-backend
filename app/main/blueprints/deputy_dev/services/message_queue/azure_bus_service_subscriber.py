@@ -36,16 +36,12 @@ class AzureBusServiceSubscriber(BaseSubscriber):
                 if show_configured_log:
                     self.log_info(SuccessMessages.QUEUE_SUCCESSFULLY_CONFIGURED.value)
                 show_configured_log = False
-            except (ServiceRequestTimeoutError, ServiceResponseTimeoutError):
-                # We are simply passing this exception, since using return would break it out
-                # of the loop
+            except (ServiceRequestTimeoutError, ServiceResponseTimeoutError) as error:
+                self.log_error(ErrorMessages.QUEUE_TIMEOUT_ERROR.value, error)
                 logger.info("Message Queue subscribe event failed with read timeout error")
             except ServiceRequestError as error:
                 logger.info("Message Queue subscribe event failed with read timeout error")
             except Exception as e:
-                import pdb
-
-                pdb.set_trace()
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)
             finally:
                 await receiver.close()
