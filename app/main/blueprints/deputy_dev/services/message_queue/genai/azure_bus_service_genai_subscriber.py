@@ -22,7 +22,6 @@ class AzureBusServiceGenAiSubscriber(AzureBusServiceSubscriber):
 
         await self.init()
         payload = json.dumps(payload)
-        attributes = self.format_attributes(attributes)
         try:
             await self.message_queue_manager.publish(
                 payload=payload,
