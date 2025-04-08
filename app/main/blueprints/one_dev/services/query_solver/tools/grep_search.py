@@ -5,7 +5,7 @@ GREP_SEARCH = ConversationTool(
     description="""
     Searches for the content of all files in a given directory path.
     It is very important to provide the correct and complete directory path to search in; otherwise, the tool will return results from the repo root.
-    This tool reads the contents of the files and can return up to 100 files.
+    This tool reads the contents of the files and returns the lines that match the search terms.
 """,
     input_schema={
         "type": "object",
@@ -22,6 +22,6 @@ GREP_SEARCH = ConversationTool(
                 "description": "List of search terms to match against file names.",
             },
         },
-        "required": ["directory"],
+        "required": ["directory", "search_terms"],
     },
 )
