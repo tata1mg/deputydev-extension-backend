@@ -86,7 +86,7 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 4. Do not include opinions or non-technical content.
 
             7. After completing your review, provide your findings in the following format:
-                {self.get_xml_review_comments_format(self.params['BUCKET'])} 
+                {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'])} 
 
                 If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
                 Example:
