@@ -10,6 +10,8 @@ from app.backend_common.wrappers.message_queue.managers.message_queue_manager im
 from app.backend_common.utils.types import AzureBusServiceQueueType
 from typing import Optional, List, Tuple
 from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import AzureBusServiceMessage
+from app.backend_common.utils.types import DelayQueueTime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +76,7 @@ class AzureServiceBusManager(MessageQueueManager):
             except MessageSizeExceededError as err:
                 raise Exception(AzureErrorMessages.AzureServiceBusPayloadSize.value.format())
             except ServiceBusError as err:
-                logger.info(
-                    AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count)
-                )
+                logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count))
             except Exception as e:
                 logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=e, count=_retry_count))
             finally:
@@ -96,7 +96,17 @@ class AzureServiceBusManager(MessageQueueManager):
                     payload, session_id=session_id, message_id=message_id, application_properties=attributes
                 )
             else:
-                message = ServiceBusMessage(payload, application_properties=attributes)
+                delay_seconds = kwargs.get("delay_seconds", DelayQueueTime.MINIMUM_TIME.value)
+                scheduled_enqueue_time_utc = None
+                if (
+                    delay_seconds
+                    and isinstance(delay_seconds, int)
+                    and DelayQueueTime.MINIMUM_TIME.value < delay_seconds < DelayQueueTime.MAXIMUM_TIME.value
+                ):
+                    scheduled_enqueue_time_utc = datetime.utcnow() + timedelta(seconds=delay_seconds)
+                message = ServiceBusMessage(
+                    payload, application_properties=attributes, scheduled_enqueue_time_utc=scheduled_enqueue_time_utc
+                )
 
             async with sender:
                 await sender.send_messages(message)
@@ -112,7 +122,7 @@ class AzureServiceBusManager(MessageQueueManager):
         if self.sync_credential:
             self.sync_credential.close()
 
-    async def subscribe(self, **kwargs) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver]:
+    async def subscribe(self, **kwargs) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver, AutoLockRenewer]:
         if not self.client or not self.queue_name:
             raise ValueError("Service Bus client or entity name is not initialized")
         max_message_count = kwargs.get("max_no_of_messages")
@@ -144,7 +154,7 @@ class AzureServiceBusManager(MessageQueueManager):
             await lock_renewer.close()
             raise e
 
-    def _validate_publish_to_service_bus(self, session_id, message_id):
+    def _validate_publish_to_service_bus(self, session_id: str, message_id:str):
         queue_type = self._get_queue_type()
         if queue_type == AzureBusServiceQueueType.SESSION_ENABLED:
             if not session_id:
