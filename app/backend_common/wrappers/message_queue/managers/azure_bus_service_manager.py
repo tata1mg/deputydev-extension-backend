@@ -2,7 +2,12 @@ from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient, Serv
 from azure.servicebus.exceptions import ServiceBusError, MessageSizeExceededError
 from app.backend_common.utils.types import AzureErrorMessages
 import logging
-from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION, ServiceBusReceivedMessage
+from azure.servicebus import (
+    ServiceBusMessage,
+    NEXT_AVAILABLE_SESSION,
+    ServiceBusReceivedMessage,
+    ServiceBusMessageBatch,
+)
 from azure.mgmt.servicebus import ServiceBusManagementClient
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
 from azure.identity import DefaultAzureCredential
@@ -66,8 +71,13 @@ class AzureServiceBusManager(MessageQueueManager):
         while not _send and _retry_count < _max_retries:
             try:
                 if batch:  # Batch messages
-                    # TODO: handle for batch messages
-                    pass
+                    await self._send_message(
+                        messages=messages,
+                        session_id=session_id,
+                        message_id=message_id,
+                        attributes=attributes,
+                        batch=batch,
+                    )
                 else:  # Single message
                     await self._send_message(
                         payload, session_id=session_id, message_id=message_id, attributes=attributes, batch=batch
@@ -111,8 +121,22 @@ class AzureServiceBusManager(MessageQueueManager):
             async with sender:
                 await sender.send_messages(message)
         else:
-            # TODO: provide batch message support
-            pass
+            if self.queue_type == AzureBusServiceQueueType.SESSION_DISABLED:
+                async with sender:
+                    message_batch: ServiceBusMessageBatch = await sender.create_message_batch()
+                    for msg in messages:
+                        service_bus_message = ServiceBusMessage(msg, application_properties=attributes or {})
+                        try:
+                            message_batch.add_message(service_bus_message)
+                        except ValueError:
+                            # Message too large for current batch, send current batch
+                            await sender.send_messages(message_batch)
+                            # Start new batch
+                            message_batch = await sender.create_message_batch()
+                            message_batch.add_message(service_bus_message)
+                    # Send the final batch
+                    await sender.send_messages(message_batch)
+            # TODO: have few doubts in session_enabled bulk publish
 
     async def close(self):
         if self.client:
@@ -146,15 +170,13 @@ class AzureServiceBusManager(MessageQueueManager):
                 lock_renewer.register(
                     receiver, receiver.session, max_lock_renewal_duration=self.config["LOCK_ENABLE_TIME"]
                 )
-
-            print(f"Received messages: {received_msgs}")
             return received_msgs, receiver, lock_renewer
         except Exception as e:
             await receiver.close()
             await lock_renewer.close()
             raise e
 
-    def _validate_publish_to_service_bus(self, session_id: str, message_id:str):
+    def _validate_publish_to_service_bus(self, session_id: str, message_id: str):
         queue_type = self._get_queue_type()
         if queue_type == AzureBusServiceQueueType.SESSION_ENABLED:
             if not session_id:
