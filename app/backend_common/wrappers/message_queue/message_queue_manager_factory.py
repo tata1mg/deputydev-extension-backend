@@ -1,14 +1,15 @@
+from typing import Type, Union
+
 from torpedo import CONFIG
 
 from app.backend_common.utils.types import CloudProviders
 from app.backend_common.wrappers.message_queue.managers.azure_bus_service_manager import (
     AzureServiceBusManager,
 )
-from typing import Union, Type
 from app.backend_common.wrappers.message_queue.managers.sqs_manager import SQSManager
 
 
-class MessageQueueFactory:
+class MessageQueueManagerFactory:
     message_queue_managers = {CloudProviders.AZURE.value: AzureServiceBusManager, CloudProviders.AWS.value: SQSManager}
 
     @classmethod
