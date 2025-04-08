@@ -1,4 +1,4 @@
-from app.main.blueprints.deputy_dev.services.message_queue.base_message_queue_model import Attribute
+from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import Attribute
 from azure.servicebus import ServiceBusReceivedMessage
 import json
 
@@ -26,15 +26,15 @@ class AzureBusServiceMessage:
             self.attributes = []
             self.lock_token = None
         else:
-            self.body = message.body
+            self.received_message = message  # require for deleting message
+            self.body = self.decompress(message.body)
             message_attributes = message.application_properties or {}
             self.attributes = [
                 Attribute(attribute_name, attribute_value)
                 for attribute_name, attribute_value in message_attributes.items()
             ]
-            self.lock_token = message.lock_token  # require for deleting message
 
     @staticmethod
     def decompress(message):
-        data = b"".join(message.body).decode("utf-8")
+        data = b"".join(message).decode("utf-8")
         return json.loads(data)
