@@ -1,7 +1,12 @@
 import json
 from datetime import datetime
-from app.main.blueprints.deputy_dev.services.message_queue.sqs_subscriber import SQSSubscriber
-from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import PRReviewManager
+
+from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
+    PRReviewManager,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.sqs_subscriber import (
+    SQSSubscriber,
+)
 
 
 class SQSGenaiSubscriber(SQSSubscriber):

@@ -1,7 +1,12 @@
-from app.main.blueprints.deputy_dev.services.message_queue.azure_bus_service_subscriber import AzureBusServiceSubscriber
-from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import PRReviewManager
 import json
 from datetime import datetime
+
+from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
+    PRReviewManager,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.azure_bus_service_subscriber import (
+    AzureBusServiceSubscriber,
+)
 
 
 class AzureBusServiceGenAiSubscriber(AzureBusServiceSubscriber):

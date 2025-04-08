@@ -1,12 +1,19 @@
-from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import BaseSubscriber
 import asyncio
+
 import botocore.exceptions
 from sanic.log import logger
-from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import Response
+
 from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.constants.success_messages import SuccessMessages
 from app.backend_common.exception import RetryException
 from app.backend_common.exception.exception import RateLimitError
+from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import (
+    BaseSubscriber,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import (
+    Response,
+)
+
 
 
 class SQSSubscriber(BaseSubscriber):
@@ -47,7 +54,8 @@ class SQSSubscriber(BaseSubscriber):
     async def receive_message(self, **kwargs):
         await self.init()
         response = await self.message_queue_manager.subscribe(**kwargs)
-        response_model = Response(response.get("Messages"))
+        message_model = self.message_queue_factory.message_model()
+        response_model = Response(response.get("Messages"), message_model)
         logger.info(f"subscribe response model SQS: {response_model.messages}")
         return response_model
 
