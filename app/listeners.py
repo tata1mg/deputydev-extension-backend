@@ -1,8 +1,9 @@
 from torpedo.constants import ListenerEventTypes
-
-from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import MessageQueueFactory
 from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
     PixelEventSubscriber,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import (
+    MessageQueueFactory,
 )
 
 
