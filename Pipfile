@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 cache_wrapper = { editable = true, ref = "2.4.1", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git" }
 tortoise-wrapper = {ref = "0.6.2", git = "ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git"}
-commonutils = {ref = "DD-386-aiohttp-upgrade", git = "ssh://git@bitbucket.org/tata1mg/commonutils.git"}
 deputydev-core = { ref = "0.1.9", git = "ssh://git@github.com/tata1mg/deputydev-core.git" }
 tortoise-orm = "==0.21.3"
 langchain = "==0.0.344"
@@ -24,7 +23,13 @@ types-aiobotocore-apigatewaymanagementapi = "==2.11.2"
 torpedo = { editable = true, ref = "3.6.1-rc2-bumped-websockets", git = "ssh://git@bitbucket.org/tata1mg/torpedo.git" }
 realtime = "==2.3.0"
 fuzzywuzzy = "*"
+azure-servicebus = "==7.14.1"
+azure-mgmt-servicebus = "==8.2.1"
+azure-identity = "==1.21.0"
+aiobotocore = "==2.11.2"
+botocore = "==1.34.34"
 aiokafka = { version = "==0.10.0", extras = ["zstd"] }
+mmh3 = "==5.1.0"
 
 [dev-packages]
 flake8 = "==7.1.1"
