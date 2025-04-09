@@ -38,7 +38,7 @@ from app.main.blueprints.deputy_dev.services.code_review.pr_summary_manager impo
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import (
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
     MessageQueueFactory,
 )
 from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (

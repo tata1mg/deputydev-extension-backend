@@ -3,16 +3,16 @@ import logging
 import botocore.exceptions
 from aiobotocore.client import AioBaseClient
 
-from app.backend_common.utils.types import (
-    AWSErrorMessages,
-    AwsErrorType,
-    DelayQueueTime,
-    SQSQueueType,
-)
-from app.backend_common.wrappers.message_queue.managers.message_queue_manager import (
+from app.backend_common.service_clients.sqs.sqs_client import SQSClient
+from app.backend_common.services.message_queue.managers.message_queue_manager import (
     MessageQueueManager,
 )
-from app.backend_common.wrappers.sqs_client import SQSClient
+from app.backend_common.utils.types.aws import (
+    AWSErrorMessages,
+    AwsErrorType,
+    SQSQueueType,
+)
+from app.backend_common.utils.types.types import DelayQueueTime
 
 logger = logging.getLogger(__name__)
 

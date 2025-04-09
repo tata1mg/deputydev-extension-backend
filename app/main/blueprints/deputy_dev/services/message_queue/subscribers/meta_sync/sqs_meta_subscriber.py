@@ -1,4 +1,4 @@
-from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import (
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
     BaseSubscriber,
 )
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_factory import (

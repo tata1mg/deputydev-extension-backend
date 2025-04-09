@@ -7,11 +7,14 @@ from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.constants.success_messages import SuccessMessages
 from app.backend_common.exception import RetryException
 from app.backend_common.exception.exception import RateLimitError
-from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import (
-    BaseSubscriber,
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_parser_factory import (
+    MessageParserFactory,
 )
-from app.main.blueprints.deputy_dev.models.dto.message_queue.base_message_queue_model import (
-    Response,
+from app.main.blueprints.deputy_dev.services.message_queue.parsers.subscribe_response_parser import (
+    SubscribeResponseParser,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
+    BaseSubscriber,
 )
 
 
@@ -49,8 +52,8 @@ class SQSSubscriber(BaseSubscriber):
     async def receive_message(self, **kwargs):
         await self.init()
         response = await self.message_queue_manager.subscribe(**kwargs)
-        message_model = self.message_queue_factory.message_model()
-        response_model = Response(response.get("Messages"), message_model)
+        message_parser = MessageParserFactory.message_parser()
+        response_model = SubscribeResponseParser.parse(response.get("Messages"), message_parser)
         logger.info(f"subscribe response model SQS: {response_model.messages}")
         return response_model
 
