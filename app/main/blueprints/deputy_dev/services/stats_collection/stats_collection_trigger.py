@@ -10,7 +10,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     MetaStatCollectionTypes,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import (
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
     MessageQueueFactory,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService

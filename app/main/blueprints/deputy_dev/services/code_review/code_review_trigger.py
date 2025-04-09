@@ -13,7 +13,7 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.message_queue_factory import (
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
     MessageQueueFactory,
 )
 from app.main.blueprints.deputy_dev.services.webhook.pr_webhook import PRWebhook
