@@ -152,6 +152,7 @@ class SQSManager(MessageQueueManager):
                 AttributeNames=attribute_names,
                 MessageAttributeNames=message_attribute_names,
             )
+        logger.info(f"received messages: {messages}")
         return messages
 
     async def close(self):
