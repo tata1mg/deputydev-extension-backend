@@ -39,6 +39,41 @@ code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 local_testing_stream_buffer: Dict[str, List[str]] = {}
 
 
+@code_gen_v2_bp.route("/generate-code-non-stream", methods=["POST"])
+@validate_client_version
+@authenticate
+@ensure_session_id(auto_create=True)
+async def solve_user_query_non_stream(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+    payload = QuerySolverInput(**_request.json, session_id=session_id)
+
+    blocks = []
+
+    # Add stream start block
+    start_data = {"type": "STREAM_START"}
+    if auth_data.session_refresh_token:
+        start_data["new_session_data"] = auth_data.session_refresh_token
+    blocks.append(start_data)
+
+    try:
+        data = await QuerySolver().solve_query(payload=payload, client_data= client_data)
+
+        last_block = None
+        async for data_block in data:
+            last_block = data_block
+            blocks.append(data_block.model_dump(mode="json"))
+
+        if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
+            blocks.append({"type": "QUERY_COMPLETE"})
+
+        blocks.append({"type": "STREAM_END"})
+
+    except Exception as ex:
+        AppLogger.log_error(f"Error in solving query: {ex}")
+        blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
+
+    return send_response({"status": "SUCCESS", "blocks": blocks})
+
+
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
 async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]  # type: ignore
