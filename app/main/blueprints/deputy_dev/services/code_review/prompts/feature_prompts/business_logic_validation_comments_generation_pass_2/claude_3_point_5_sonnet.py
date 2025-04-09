@@ -4,6 +4,7 @@ from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
+    AgentFocusArea,
 )
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
@@ -18,6 +19,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt(BaseClau
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
+        self.agent_focus_area = AgentFocusArea.BUSINESS_LOGIC_VALIDATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = """
@@ -110,27 +112,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt(BaseClau
             
             Next, format comments from previous step in the following XML format:
             
-            <review>
-            <comments>
-            <comment>
-            <description>Describe the issue and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors </description>
-            <corrective_code>Rewrite or create new (in case of missing) code, docstring or documentation for
-            developer to directly use it.
-            Add this section under <![CDATA[ ]]> for avoiding xml paring error.
-            Set this value empty string if there is no suggestive code.
-            </corrective_code>
-            <file_path>file path on which the comment is to be made</file_path>
-            <line_number>line on which comment is relevant. get this value from `<>` block at each code start in
-            input. Return the exact value present with label `+` or `-`</line_number>
-            <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal
-            points</confidence_score>
-            <bucket>
-            {self.params['BUCKET']}
-            </bucket>
-            </comment>
-            <!-- Repeat the <comment> block for each issue that you find regarding business logic validation -->
-            </comments>
-            </review>
+            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

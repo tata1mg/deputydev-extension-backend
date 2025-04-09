@@ -78,6 +78,7 @@ class ConfigFetcher:
                 "MODEL": ConfigManager.configs["BINARY"]["EMBEDDING"]["MODEL"],
                 "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"]["TOKEN_LIMIT"],
                 "MAX_PARALLEL_TASKS": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_PARALLEL_TASKS"],
+                "MAX_BACKOFF": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_BACKOFF"],
             },
             "RELEVANT_CHUNKS": {
                 "CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"]["CHUNKING_ENABLED"]
@@ -101,6 +102,8 @@ class ConfigFetcher:
                     "MAX_RECORDS_TO_RETURN"
                 ],
             },
+            "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],
+            "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_BINARY_PATH"],
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {

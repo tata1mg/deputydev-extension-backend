@@ -123,7 +123,7 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                 'file_path': '<path of the file on which comment is being made, same as provided in input>',
                 'line_number' : <line on which comment is relevant. Return the exact value present with label `+` or `-` as present in the input>,
                 'comment': '<A single summarized comment for all the comments. Make bucket wise bullets in summary>',
-                'corrective_code': '<Intelligently union of combined Corrective code for all the comments provided as a string.>',
+                'corrective_code': '<Intelligently union of combined Corrective code for all the comments provided as a string. Strictly merge and provide corrective code only if input comments has corrective_code present inside comment>',
                 'confidence_score': '<confidence_score field value in input comment>;,
                 'buckets': <This is list of buckets [{{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}}]>,
                 'model': <model field value in input comment>,

@@ -9,10 +9,16 @@ from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from .claude_3_point_5_sonnet import (
     Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt,
 )
+from .claude_3_point_7_sonnet import (
+    Claude3Point7BusinessLogicValidationCommentsGenerationPass2Prompt,
+)
 
 
 class BusinessLogicValidationCommentsGenerationPass2PromptFactory(BaseFeaturePromptFactory):
-    prompts = {LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt}
+    prompts = {
+        LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt,
+        LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7BusinessLogicValidationCommentsGenerationPass2Prompt,
+    }
 
     @classmethod
     def get_prompt(cls, model_name: LLModels) -> Type[BasePrompt]:
