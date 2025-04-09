@@ -62,7 +62,8 @@ from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
 
-MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "1.3.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
 
 
 class QuerySolver:
@@ -181,11 +182,13 @@ class QuerySolver:
             ASK_USER_INPUT,
             FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
-            GREP_SEARCH,
         ]
 
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
             tools_to_use.append(ITERATIVE_FILE_READER)
+
+        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH, ">="):
+            tools_to_use.append(GREP_SEARCH)
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
