@@ -373,7 +373,9 @@
         "WEAVIATE": {
             "HTTP_PORT": 8079,
             "GRPC_PORT": 50050,
-            "SCHEMA_VERSION": 5
+            "SCHEMA_VERSION": 5,
+            "EMBEDDED_DB_PATH": "~/.deputydev/indexes",
+            "EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary"
         },
         "EMBEDDING": {
             "NUMBER_OF_WORKERS": 1,
