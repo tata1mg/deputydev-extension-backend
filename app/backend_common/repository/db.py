@@ -93,3 +93,15 @@ class DB(ORMWrapper):
         if payload and isinstance(payload, dict):
             payload["updated_at"] = datetime.now().replace(tzinfo=timezone.utc)
         await cls.update_with_filters(row, model_name, payload, where_clause, update_fields)
+
+    @classmethod
+    async def execute_raw_sql(cls, query, connection="default"):
+        """
+        Executes a raw SQL script using the specified connection.
+
+        :param query: contains raw sql query with multiple statements
+        which have to be executed
+        :param connection: connection on which raw sql will be run
+        :return:
+        """
+        return await cls.raw_sql_script(query, connection)

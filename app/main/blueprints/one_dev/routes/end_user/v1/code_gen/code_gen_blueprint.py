@@ -186,9 +186,7 @@ async def get_job_status(_request: Request, client_data: ClientData, auth_data: 
 # @authenticate
 async def get_embeddings(_request: Request, client_data: ClientData, **kwargs: Any):
     payload = _request.custom_json()
-    response = await OneDevEmbeddingManager.create_embeddings(
-        payload=OneDevEmbeddingPayload(**payload)
-    )
+    response = await OneDevEmbeddingManager.create_embeddings(payload=OneDevEmbeddingPayload(**payload))
     return send_response(response, headers=kwargs.get("response_headers"))
 
 

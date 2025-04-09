@@ -76,7 +76,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             
             For each issue you identify, create a comment using the following format:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.agent_focus_area)} 
+            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
 
             Repeat the <comment> block for each issue you find regarding business logic validation.
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.

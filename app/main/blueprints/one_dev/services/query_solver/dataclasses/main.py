@@ -39,6 +39,8 @@ class QuerySolverInput(BaseModel):
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
+    user_team_id: Optional[int] = None
+    session_type: Optional[str] = None
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
