@@ -129,14 +129,12 @@ class SQSManager(MessageQueueManager):
         return response.get("Attributes").get("QueueArn")
 
     async def subscribe(self, **kwargs):
-        logger.info("Started subscribing")
         max_no_of_messages = kwargs.get("max_no_of_messages") or 1
         wait_time_in_seconds = kwargs.get("wait_time_in_seconds") or 5
         message_attribute_names = kwargs.get("message_attribute_names") or ["All"]
         attribute_names = kwargs.get("attribute_names") or ["All"]
 
         if kwargs.get("visibility_timeout") is not None:
-            logger.info(f"visibility_timeout is present: {kwargs.get('visibility_timeout')}")
             visibility_timeout = kwargs.get("visibility_timeout")
             messages = await self.client.receive_message(
                 QueueUrl=self.queue_url,
@@ -147,7 +145,6 @@ class SQSManager(MessageQueueManager):
                 VisibilityTimeout=visibility_timeout,
             )
         else:
-            logger.info(f"queue url: {self.queue_url} wait_time_in_seconds: {wait_time_in_seconds}")
             messages = await self.client.receive_message(
                 QueueUrl=self.queue_url,
                 WaitTimeSeconds=wait_time_in_seconds,
@@ -155,7 +152,6 @@ class SQSManager(MessageQueueManager):
                 AttributeNames=attribute_names,
                 MessageAttributeNames=message_attribute_names,
             )
-        logger.info(f"received messages: {messages}")
         return messages
 
     async def close(self):
