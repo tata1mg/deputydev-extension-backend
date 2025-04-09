@@ -4,17 +4,17 @@ from datetime import datetime
 from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
     PRReviewManager,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.azure_bus_service_subscriber import (
-    AzureBusServiceSubscriber,
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.sqs_subscriber import (
+    SQSSubscriber,
 )
 
 
-class AzureBusServiceGenAiSubscriber(AzureBusServiceSubscriber):
+class SQSGenaiSubscriber(SQSSubscriber):
     def get_queue_name(self):
-        return self.config.get("AZURE_BUS_SERVICE", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
+        return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
 
     def get_queue_config(self):
-        return self.config.get("AZURE_BUS_SERVICE", {}).get("SUBSCRIBE", {}).get("GENAI", {})
+        return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {})
 
     @property
     def event_handler(self):
@@ -22,8 +22,8 @@ class AzureBusServiceGenAiSubscriber(AzureBusServiceSubscriber):
 
     # This can be removed and we can use publish function of base subscriber
     async def publish(self, payload: dict, attributes=None, **kwargs):
-        session_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}"
-        message_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}_{int(round(datetime.now().timestamp()))}"
+        message_group_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}"
+        message_deduplication_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}_{int(round(datetime.now().timestamp()))}"
 
         await self.init()
         payload = json.dumps(payload)
@@ -32,8 +32,8 @@ class AzureBusServiceGenAiSubscriber(AzureBusServiceSubscriber):
                 payload=payload,
                 attributes=attributes,
                 batch=False,
-                session_id=session_id,
-                message_id=message_id,
+                message_group_id=message_group_id,
+                message_deduplication_id=message_deduplication_id,
                 **kwargs,
             )
         finally:

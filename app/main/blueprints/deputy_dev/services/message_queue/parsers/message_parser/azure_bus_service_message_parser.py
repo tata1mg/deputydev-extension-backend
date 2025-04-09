@@ -2,13 +2,17 @@ import json
 
 from azure.servicebus import ServiceBusReceivedMessage
 
-from app.main.blueprints.deputy_dev.models.dto.message_queue.base_message_queue_model import (
+from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
+    AzureBusServiceMessage,
+)
+from app.main.blueprints.deputy_dev.models.dto.message_queue.common_message_queue_models import (
     Attribute,
 )
 
 
-class AzureBusServiceMessage:
-    def __init__(self, message: ServiceBusReceivedMessage):
+class AzureBusServiceMessageParser:
+    @classmethod
+    def parse(cls, message: ServiceBusReceivedMessage) -> AzureBusServiceMessage:
         """
         sample of  ServiceBusReceivedMessage:
         ServiceBusReceivedMessage(
@@ -26,17 +30,18 @@ class AzureBusServiceMessage:
         )
         """
         if not message:
-            self.body = None
-            self.attributes = []
-            self.received_message = None
+            body = None
+            attributes = []
+            received_message = None
         else:
-            self.received_message = message  # require for deleting message
-            self.body = self.decompress(message.body)
+            received_message = message  # require for deleting message
+            body = cls.decompress(message.body)
             message_attributes = message.application_properties or {}
-            self.attributes = [
-                Attribute(attribute_name, attribute_value)
+            attributes = [
+                Attribute(name=attribute_name, value=str(attribute_value))
                 for attribute_name, attribute_value in message_attributes.items()
             ]
+        return AzureBusServiceMessage(body=body, attributes=attributes, received_message=received_message)
 
     @staticmethod
     def decompress(message):
