@@ -11,7 +11,7 @@ from sanic.log import logger
 
 class SQSGenaiSubscriber(SQSSubscriber):
     def get_queue_name(self):
-        logger.info("GenAi queue getting picked")
+        logger.info(f"GenAi queue getting picked: {self.config.get('SQS')}")
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
 
     def get_queue_config(self):
