@@ -45,14 +45,14 @@ from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
+    GREP_SEARCH,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
-    GREP_SEARCH,
 )
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
@@ -239,6 +239,17 @@ class QuerySolver:
                     "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
                     "eof_reached": tool_response["data"]["eof_reached"],
                 }
+
+            if payload.tool_use_response.tool_name == "grep_search":
+                tool_response = {
+                    "matched_contents": "".join(
+                        [
+                            f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
+                            for matched_block in tool_response["data"]
+                        ]
+                    ),
+                }
+                print(tool_response)
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
