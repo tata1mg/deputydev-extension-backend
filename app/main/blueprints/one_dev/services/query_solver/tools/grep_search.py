@@ -10,7 +10,7 @@ GREP_SEARCH = ConversationTool(
     input_schema={
         "type": "object",
         "properties": {
-            "directory": {
+            "directory_path": {
                 "type": "string",
                 "description": "The complete path of the directory to search in",
             },
@@ -22,6 +22,6 @@ GREP_SEARCH = ConversationTool(
                 "description": "List of search terms to match against file names.",
             },
         },
-        "required": ["directory", "search_terms"],
+        "required": ["directory_path", "search_terms"],
     },
 )
