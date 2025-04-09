@@ -28,4 +28,7 @@ class ExtensionSession(Base):
 
     class Meta:
         table = "extension_sessions"
-        indexes = (("session_id",), ("user_team_id",),)
+        indexes = (
+            ("session_id",),
+            ("user_team_id",),
+        )

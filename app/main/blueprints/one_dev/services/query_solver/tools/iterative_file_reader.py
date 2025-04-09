@@ -3,9 +3,15 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool
 ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
     description="""
-        Reads a block of lines from a given file. Reads max 100 lines at a time.
+        Reads content of a file from a given start line number (1 indexed) to an end line number (1 indexed).
         This tool can be used iteratively to read a file in chunks by just providing the offset line.
-        To use this, only 2 things are needed, the file path and optionally, an offset line to start reading from.
+        At once, it can read maximum of 100 lines.
+        If you do not know the end line number, just provide the end line number as start_line + 100.
+        It will let you know if the end of the file is reached.
+        To use this, a valid file path is required.
+
+        Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
+        The response will EXPLICITLY mention if the end of the file is reached or not.
     """,
     input_schema={
         "type": "object",
@@ -14,11 +20,15 @@ ITERATIVE_FILE_READER = ConversationTool(
                 "type": "string",
                 "description": "The complete path of the file relative to the repo root",
             },
-            "line_offset": {
+            "start_line": {
                 "type": "number",
-                "description": "Offset line to start reading from. If not provided, it will start from the beginning of the file.",
+                "description": "Start line to read from. It is 1 indexed.",
+            },
+            "end_line": {
+                "type": "number",
+                "description": "End line to read until. It is 1 indexed.",
             },
         },
-        "required": ["file_path"],
+        "required": ["file_path", "start_line", "end_line"],
     },
 )
