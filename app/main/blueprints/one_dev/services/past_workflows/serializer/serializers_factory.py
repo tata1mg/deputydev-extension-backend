@@ -1,6 +1,5 @@
 from typing import Dict, List, Type, Union
 
-from app.backend_common.models.dto.message_sessions_dto import MessageSessionDTO
 from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
@@ -14,6 +13,7 @@ from app.main.blueprints.one_dev.services.past_workflows.serializer.past_chats i
 from app.main.blueprints.one_dev.services.past_workflows.serializer.past_sessions import (
     PastSessionsSerializer,
 )
+from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionDTO
 
 
 class SerializersFactory:
@@ -30,7 +30,7 @@ class SerializersFactory:
 
     @classmethod
     def get_serializer_service(
-        cls, raw_data: Union[List[MessageSessionDTO], List[MessageThreadDTO]], type: SerializerTypes
+        cls, raw_data: Union[List[ExtensionSessionDTO], List[MessageThreadDTO]], type: SerializerTypes
     ) -> BaseSerializer:
         """
         Retrieves the appropriate serializer service based on the specified type.

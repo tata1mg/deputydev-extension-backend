@@ -80,10 +80,12 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     auth_data = AuthData(**connection_data["auth_data"])
+    user_team_id = auth_data.user_team_id
     client_data = ClientData(**connection_data["client_data"])
     session_id: int = connection_data["session_id"]
+    session_type: str = connection_data["session_type"]
 
-    payload = QuerySolverInput(**_request.json, session_id=session_id)
+    payload = QuerySolverInput(**_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type)
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
 
