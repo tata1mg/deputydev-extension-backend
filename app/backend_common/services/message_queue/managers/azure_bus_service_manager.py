@@ -28,7 +28,7 @@ from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_m
     AzureBusServiceMessage,
 )
 
-logger = logging.getLogger(__name__)
+from sanic.log import logger
 
 
 class AzureServiceBusManager(MessageQueueManager):
