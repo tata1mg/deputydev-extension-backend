@@ -1,7 +1,6 @@
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
