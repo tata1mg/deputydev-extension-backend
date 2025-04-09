@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING, List, Type, Union
 
-from app.main.blueprints.deputy_dev.models.dto.message_queue.common_message_queue_models import (
-    Response,
-)
+from app.main.blueprints.deputy_dev.models.dto.message_queue.subscribe_response import SubscribeResponse
+
 
 if TYPE_CHECKING:
     from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
@@ -25,9 +24,9 @@ class SubscribeResponseParser:
         cls,
         messages: List[Union["AzureBusServiceMessage", "SQSMessage"]],
         message_parser: Type[Union["SQSMessageParser", "AzureBusServiceMessageParser"]],
-    ) -> Response:
+    ) -> SubscribeResponse:
         if not messages:
             messages = []
         else:
             messages = [message_parser.parse(message) for message in messages]
-        return Response(messages=messages)
+        return SubscribeResponse(messages=messages)
