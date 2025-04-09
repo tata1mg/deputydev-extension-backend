@@ -53,6 +53,7 @@ class SQSSubscriber(BaseSubscriber):
         logger.info("Receive message process start")
         await self.init()
         logger.info(f"Client created: {self.message_queue_manager.client}")
+        logger.info(f"Message queue manager: {self.message_queue_manager}")
         response = await self.message_queue_manager.subscribe(**kwargs)
         message_parser = MessageParserFactory.message_parser()
         response_model = SubscribeResponseParser.parse(response.get("Messages"), message_parser)
