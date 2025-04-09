@@ -10,11 +10,13 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     MetaStatCollectionTypes,
 )
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
+    MessageQueueFactory,
+)
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.webhook.human_comment_webhook import (
     HumanCommentWebhook,
 )
@@ -66,7 +68,7 @@ class StatsCollectionTrigger:
                     scm=vcs_type,
                     scm_pr_id=parsed_payload.scm_repo_id,
                 ):
-                    await MetaSubscriber(config=self.config).publish(data)
+                    await MessageQueueFactory.meta_subscriber()(config=self.config).publish(data)
 
     @classmethod
     async def repo_instance(cls, payload, vcs_type):
