@@ -249,7 +249,6 @@ class QuerySolver:
                         ]
                     ),
                 }
-                print(tool_response)
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
