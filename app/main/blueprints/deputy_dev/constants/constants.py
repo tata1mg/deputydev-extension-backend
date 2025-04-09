@@ -18,6 +18,7 @@ SCRIT_TAG = "#scrit"
 SCRIT_DEPRECATION_NOTIFICATION = (
     "Note :- #scrit is deprecated and will be removed with next releases. Recommended to use - #deputydev or #dd"
 )
+MESSAGE_QUEUE_LOG_LENGTH = 500
 
 
 class LLMModels(Enum):

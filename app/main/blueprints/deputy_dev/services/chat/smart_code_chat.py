@@ -38,13 +38,15 @@ from app.main.blueprints.deputy_dev.services.code_review.pr_summary_manager impo
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
+    MessageQueueFactory,
+)
 from app.main.blueprints.deputy_dev.services.prompt.chat_prompt_service import (
     ChatPromptService,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-from app.main.blueprints.deputy_dev.services.sqs.meta_subscriber import MetaSubscriber
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
     StatsCollectionTrigger,
 )
@@ -255,4 +257,4 @@ class SmartCodeChatManager:
                 "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
                 "vcs_type": vcs_type,
             }
-            await MetaSubscriber(config=config).publish(payload)
+            await MessageQueueFactory.meta_subscriber()(config=config).publish(payload)
