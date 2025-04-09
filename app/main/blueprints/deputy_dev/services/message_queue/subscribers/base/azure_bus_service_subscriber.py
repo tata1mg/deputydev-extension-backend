@@ -12,11 +12,11 @@ from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.constants.success_messages import SuccessMessages
 from app.backend_common.exception import RetryException
 from app.backend_common.exception.exception import RateLimitError
-from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import (
-    BaseSubscriber,
+from app.main.blueprints.deputy_dev.services.message_queue.factories.message_parser_factory import (
+    MessageParserFactory,
 )
-from app.main.blueprints.deputy_dev.models.dto.message_queue.base_message_queue_model import (
-    Response,
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
+    BaseSubscriber,
 )
 
 
@@ -62,9 +62,9 @@ class AzureBusServiceSubscriber(BaseSubscriber):
 
     async def receive_message(self, **kwargs):
         await self.init()
-        response, receiver, lock_renewer = await self.message_queue_manager.subscribe(**kwargs)
-        message_model = self.message_queue_factory.message_model()
-        response_model = Response(response, message_model)
+        messages, receiver, lock_renewer = await self.message_queue_manager.subscribe(**kwargs)
+        message_parser = MessageParserFactory.message_parser()
+        response_model = message_parser.parse(messages)
         logger.info(f"subscribe response model Azure Bus Service: {response_model.messages}")
         return response_model, receiver, lock_renewer
 

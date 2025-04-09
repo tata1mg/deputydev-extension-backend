@@ -1,4 +1,4 @@
-from app.main.blueprints.deputy_dev.services.message_queue.azure_bus_service_subscriber import (
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.azure_bus_service_subscriber import (
     AzureBusServiceSubscriber,
 )
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_factory import (

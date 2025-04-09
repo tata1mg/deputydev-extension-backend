@@ -1,12 +1,16 @@
 import json
 
-from app.main.blueprints.deputy_dev.models.dto.message_queue.base_message_queue_model import (
+from app.main.blueprints.deputy_dev.models.dto.message_queue.common_message_queue_models import (
     Attribute,
+)
+from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_message import (
+    SQSMessage,
 )
 
 
-class SQSMessage:
-    def __init__(self, message: dict):
+class SQSMessageParser:
+    @classmethod
+    def parse(cls, message: dict) -> SQSMessage:
         """
         Sample Message:
         {
@@ -33,17 +37,18 @@ class SQSMessage:
         }
         """
         if not message:
-            self.body = None
-            self.attributes = []
-            self.receipt_handle = None
+            body = None
+            attributes = []
+            receipt_handle = None
         else:
-            self.body = self.decompress(message["Body"])
+            body = cls.decompress(message["Body"])
             message_attributes = message.get("MessageAttributes", {})
-            self.attributes = [
-                Attribute(attribute_name, message_attributes[attribute_name].get("StringValue"))
+            attributes = [
+                Attribute(name=attribute_name, value=message_attributes[attribute_name].get("StringValue"))
                 for attribute_name in message_attributes
             ]
-            self.receipt_handle = message["ReceiptHandle"]
+            receipt_handle = message["ReceiptHandle"]
+        return SQSMessage(body=body, attributes=attributes, receipt_handle=receipt_handle)
 
     @staticmethod
     def decompress(message):

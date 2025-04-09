@@ -16,15 +16,18 @@ from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient
 from azure.servicebus.aio import ServiceBusReceiver
 from azure.servicebus.exceptions import MessageSizeExceededError, ServiceBusError
 
-from app.backend_common.utils.types import (
-    AzureBusServiceQueueType,
-    AzureErrorMessages,
-    DelayQueueTime,
-)
-from app.backend_common.wrappers.message_queue.managers.message_queue_manager import (
+from app.backend_common.services.message_queue.managers.message_queue_manager import (
     MessageQueueManager,
 )
-from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_model import AzureBusServiceMessage
+from app.backend_common.utils.types.azure import (
+    AzureBusServiceQueueType,
+    AzureErrorMessages,
+)
+from app.backend_common.utils.types.types import DelayQueueTime
+from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
+    AzureBusServiceMessage,
+)
+
 logger = logging.getLogger(__name__)
 
 
