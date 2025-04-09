@@ -14,7 +14,7 @@ from app.backend_common.utils.types.aws import (
 )
 from app.backend_common.utils.types.types import DelayQueueTime
 
-logger = logging.getLogger(__name__)
+from sanic.log import logger
 
 
 class SQSManager(MessageQueueManager):
