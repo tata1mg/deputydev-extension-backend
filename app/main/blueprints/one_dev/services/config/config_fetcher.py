@@ -102,6 +102,8 @@ class ConfigFetcher:
                     "MAX_RECORDS_TO_RETURN"
                 ],
             },
+            "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],
+            "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_BINARY_PATH"],
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
