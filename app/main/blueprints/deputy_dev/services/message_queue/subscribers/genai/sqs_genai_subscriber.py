@@ -7,10 +7,11 @@ from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager impor
 from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.sqs_subscriber import (
     SQSSubscriber,
 )
-
+from sanic.log import logger
 
 class SQSGenaiSubscriber(SQSSubscriber):
     def get_queue_name(self):
+        logger.info("GenAi queue getting picked")
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
 
     def get_queue_config(self):
