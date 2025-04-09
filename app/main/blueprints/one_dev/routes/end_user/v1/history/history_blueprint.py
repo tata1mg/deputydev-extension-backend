@@ -4,8 +4,12 @@ from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 
-from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
-from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+from app.backend_common.repository.extension_sessions.repository import (
+    ExtensionSessionsRepository,
+)
+from app.backend_common.repository.message_sessions.repository import (
+    MessageSessionsRepository,
+)
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
     ChatHistoryHandler,
 )
@@ -55,6 +59,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")
     return send_response(response, headers=kwargs.get("response_headers"))
 
+
 @history_v1_bp.route("/pin-unpin-session", methods=["PUT"])
 @validate_client_version
 @authenticate
@@ -71,6 +76,7 @@ async def pin_unpin_session(_request: Request, auth_data: AuthData, session_id: 
     except Exception as e:
         raise BadRequestException(f"Failed to pin/unpin session: {str(e)}")
     return send_response(headers=kwargs.get("response_headers"))
+
 
 @history_v1_bp.route("/session-dragged", methods=["PUT"])
 @validate_client_version
