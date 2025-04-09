@@ -10,7 +10,9 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseContent,
     ToolUseResponseData,
 )
-from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+from app.backend_common.repository.extension_sessions.repository import (
+    ExtensionSessionsRepository,
+)
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
@@ -62,7 +64,13 @@ MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "1.3.0"
 
 class QuerySolver:
     async def _generate_session_summary(
-        self, session_id: int, query: str, focus_items: List[DetailedFocusItem], llm_handler: LLMHandler[PromptFeatures], user_team_id: int, session_type: str
+        self,
+        session_id: int,
+        query: str,
+        focus_items: List[DetailedFocusItem],
+        llm_handler: LLMHandler[PromptFeatures],
+        user_team_id: int,
+        session_type: str,
     ):
         current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
         if current_session and current_session.summary:
@@ -189,7 +197,7 @@ class QuerySolver:
                     focus_items=payload.focus_items,
                     llm_handler=llm_handler,
                     user_team_id=payload.user_team_id,
-                    session_type=payload.session_type
+                    session_type=payload.session_type,
                 )
             )
 
@@ -220,6 +228,12 @@ class QuerySolver:
                         for search_response in tool_response["batch_chunks_search"]["response"]
                         for chunk in search_response["chunks"]
                     ],
+                }
+
+            if payload.tool_use_response.tool_name == "iterative_file_reader":
+                tool_response = {
+                    "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
+                    "eof_reached": tool_response["data"]["eof_reached"],
                 }
 
             llm_response = await llm_handler.submit_tool_use_response(
