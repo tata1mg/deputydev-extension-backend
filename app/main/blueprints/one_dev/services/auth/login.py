@@ -56,6 +56,7 @@ class Login:
             # refresh the current session
             try:
                 refresh_session_data, email, user_name = await SupabaseAuth.refresh_session(session_data)
+                await cls.verify_auth_token(refresh_session_data, enable_grace_period)
                 return {
                     "status": AuthStatus.EXPIRED.value,
                     "encrypted_session_data": refresh_session_data,
