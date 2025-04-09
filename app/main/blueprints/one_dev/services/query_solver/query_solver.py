@@ -51,6 +51,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_read
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
+    GREP_SEARCH,
+)
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
@@ -178,6 +181,7 @@ class QuerySolver:
             ASK_USER_INPUT,
             FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
+            GREP_SEARCH,
         ]
 
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
