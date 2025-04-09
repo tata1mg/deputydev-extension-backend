@@ -1,8 +1,6 @@
 import json
 
-from app.main.blueprints.deputy_dev.models.dto.message_queue.common_message_queue_models import (
-    Attribute,
-)
+from app.main.blueprints.deputy_dev.models.dto.message_queue.attribute import Attribute
 from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_message import (
     SQSMessage,
 )

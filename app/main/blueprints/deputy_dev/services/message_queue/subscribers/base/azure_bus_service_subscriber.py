@@ -18,6 +18,9 @@ from app.main.blueprints.deputy_dev.services.message_queue.factories.message_par
 from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
     BaseSubscriber,
 )
+from app.main.blueprints.deputy_dev.services.message_queue.parsers.subscribe_response_parser import (
+    SubscribeResponseParser,
+)
 
 
 class AzureBusServiceSubscriber(BaseSubscriber):
@@ -52,6 +55,9 @@ class AzureBusServiceSubscriber(BaseSubscriber):
             except ServiceRequestError as error:
                 logger.info("Message Queue subscribe event failed with read timeout error")
             except Exception as e:
+                import pdb
+
+                pdb.set_trace()
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)
             finally:
                 if receiver:
@@ -64,7 +70,7 @@ class AzureBusServiceSubscriber(BaseSubscriber):
         await self.init()
         messages, receiver, lock_renewer = await self.message_queue_manager.subscribe(**kwargs)
         message_parser = MessageParserFactory.message_parser()
-        response_model = message_parser.parse(messages)
+        response_model = SubscribeResponseParser.parse(messages, message_parser)
         logger.info(f"subscribe response model Azure Bus Service: {response_model.messages}")
         return response_model, receiver, lock_renewer
 
