@@ -10,7 +10,7 @@ from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
     PixelEventSubscriber,
 )
 
-
+from sanic.log import logger
 async def initialize_message_queue_subscribers(_app, loop):
     """
 
@@ -19,9 +19,11 @@ async def initialize_message_queue_subscribers(_app, loop):
     :return:
     """
     if MessageQueueHelper.is_queue_enabled(_app.config, "GENAI"):
+        logger.info("Genai queue enabled")
         genai_subscribe = MessageQueueFactory.genai_subscriber()(_app.config)
         _app.add_task(await genai_subscribe.subscribe())
     if MessageQueueHelper.is_queue_enabled(_app.config, "METASYNC"):
+        logger.info("METASYNC queue enabled")
         meta_subscribe = MessageQueueFactory.meta_subscriber()(_app.config)
         _app.add_task(await meta_subscribe.subscribe())
 
