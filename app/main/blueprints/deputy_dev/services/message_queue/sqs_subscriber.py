@@ -10,7 +10,7 @@ from app.backend_common.exception.exception import RateLimitError
 from app.main.blueprints.deputy_dev.services.message_queue.base_subscriber import (
     BaseSubscriber,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.models.base_message_queue_model import (
+from app.main.blueprints.deputy_dev.models.dto.message_queue.base_message_queue_model import (
     Response,
 )
 
