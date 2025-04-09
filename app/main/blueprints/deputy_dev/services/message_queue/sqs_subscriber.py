@@ -16,10 +16,6 @@ from app.main.blueprints.deputy_dev.models.dto.message_queue.base_message_queue_
 
 
 class SQSSubscriber(BaseSubscriber):
-    @classmethod
-    def format_attributes(cls):
-        pass
-
     async def subscribe(self, **kwargs):
         max_no_of_messages = kwargs.get("max_no_of_messages", self.get_queue_config().get("MAX_MESSAGES", 1))
         wait_time_in_seconds = kwargs.get(
