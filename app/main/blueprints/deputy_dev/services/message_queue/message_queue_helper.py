@@ -15,5 +15,5 @@ class MessageQueueHelper:
     @classmethod
     def is_queue_enabled(cls, config, queue_type):
         key = cls.queue_config_key[cls.cloud_provider]
-        config.get(key, {}).get("SUBSCRIBE", {}).get(queue_type, {}).get("ENABLED", False)
-        return config
+        is_queue_enabled = config.get(key, {}).get("SUBSCRIBE", {}).get(queue_type, {}).get("ENABLED", False)
+        return is_queue_enabled
