@@ -22,7 +22,7 @@ async def initialize_message_queue_subscribers(_app, loop):
         genai_subscribe = MessageQueueFactory.genai_subscriber()(_app.config)
         _app.add_task(await genai_subscribe.subscribe())
     if MessageQueueHelper.is_queue_enabled(_app.config, "METASYNC"):
-        meta_subscribe = MessageQueueFactory.meta_subscribers()(_app.config)
+        meta_subscribe = MessageQueueFactory.meta_subscriber()(_app.config)
         _app.add_task(await meta_subscribe.subscribe())
 
 
