@@ -257,4 +257,4 @@ class SmartCodeChatManager:
                 "stats_type": MetaStatCollectionTypes.HUMAN_COMMENT.value,
                 "vcs_type": vcs_type,
             }
-            await MessageQueueFactory.meta_subscribers()(config=config).publish(payload)
+            await MessageQueueFactory.meta_subscriber()(config=config).publish(payload)
