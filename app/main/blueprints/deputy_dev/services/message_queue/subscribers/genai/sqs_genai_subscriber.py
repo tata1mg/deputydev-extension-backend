@@ -1,12 +1,15 @@
 import json
 from datetime import datetime
 
-from app.main.blueprints.deputy_dev.services.sqs.base_subscriber import BaseSubscriber
+from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
+    PRReviewManager,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.sqs_subscriber import (
+    SQSSubscriber,
+)
 
-from ..code_review.pr_review_manager import PRReviewManager
 
-
-class GenaiSubscriber(BaseSubscriber):
+class SQSGenaiSubscriber(SQSSubscriber):
     def get_queue_name(self):
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
 
@@ -17,6 +20,7 @@ class GenaiSubscriber(BaseSubscriber):
     def event_handler(self):
         return PRReviewManager
 
+    # This can be removed and we can use publish function of base subscriber
     async def publish(self, payload: dict, attributes=None, **kwargs):
         message_group_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}"
         message_deduplication_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}_{int(round(datetime.now().timestamp()))}"
@@ -24,7 +28,7 @@ class GenaiSubscriber(BaseSubscriber):
         await self.init()
         payload = json.dumps(payload)
         try:
-            await self.sqs_manager.publish_to_sqs(
+            await self.message_queue_manager.publish(
                 payload=payload,
                 attributes=attributes,
                 batch=False,
@@ -34,4 +38,4 @@ class GenaiSubscriber(BaseSubscriber):
             )
         finally:
             self.is_client_created = False
-            await self.sqs_manager.close()
+            await self.message_queue_manager.close()

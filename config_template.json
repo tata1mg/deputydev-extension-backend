@@ -131,6 +131,7 @@
     },
     "REPO_BASE_DIR": "",
     "REPO_SETTINGS_FILE": "deputydev.toml",
+    "CLOUD_PROVIDER": "AWS",
     "SQS": {
         "SUBSCRIBE": {
             "GENAI": {
@@ -147,6 +148,27 @@
             }
         },
         "MESSAGE_RETENTION_TIME_SEC": 86400
+    },
+    "AZURE_BUS_SERVICE": {
+      "NAMESPACE_FQDN": "deputydevreviewnamespacev2.servicebus.windows.net",
+      "LOCK_ENABLE_TIME": 60,
+      "SUBSCRIPTION_ID": "uuid",
+      "NAMESPACE": "deputydevreviewnamespacev2",
+      "RESOURCE_GROUP": "deputyDev",
+      "SUBSCRIBE": {
+        "GENAI": {
+          "ENABLED": true,
+          "QUEUE_NAME": "code-review-dummy",
+          "MAX_MESSAGES": 1,
+          "WAIT_TIME_IN_SECONDS": 5
+        },
+        "METASYNC": {
+          "ENABLED": true,
+          "MAX_MESSAGES": 2,
+          "QUEUE_NAME": "code-review-dummy",
+          "WAIT_TIME_IN_SECONDS": 2
+        }
+      }
     },
     "FINETUNED_SCRIT_MODEL": {
         "MODEL": "",
