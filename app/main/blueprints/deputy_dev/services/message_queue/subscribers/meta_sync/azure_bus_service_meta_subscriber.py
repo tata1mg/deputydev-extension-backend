@@ -4,10 +4,11 @@ from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.azur
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_factory import (
     StatsCollectionFactory,
 )
-
+from sanic.log import logger
 
 class AzureBusServiceMetaSubscriber(AzureBusServiceSubscriber):
     def get_queue_name(self):
+        logger.info("Meta sync queue getting picked")
         return self.config.get("AZURE_BUS_SERVICE", {}).get("SUBSCRIBE", {}).get("METASYNC", {}).get("QUEUE_NAME", "")
 
     def get_queue_config(self):

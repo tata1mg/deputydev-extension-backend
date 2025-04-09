@@ -20,6 +20,7 @@ class BaseSubscriber:
         self.config = config or {}
         self.message_queue_manager: MessageQueueManager = MessageQueueManagerFactory.manager()(config)
         self.queue_name = self.get_queue_name()
+        logger.info(f"Queue name: {self.queue_name}")
         self.is_client_created = False
 
     def get_queue_name(self):
