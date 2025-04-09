@@ -24,10 +24,7 @@ from app.backend_common.utils.types import (
 from app.backend_common.wrappers.message_queue.managers.message_queue_manager import (
     MessageQueueManager,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import (
-    AzureBusServiceMessage,
-)
-
+from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_model import AzureBusServiceMessage
 logger = logging.getLogger(__name__)
 
 
