@@ -68,7 +68,7 @@ class StatsCollectionTrigger:
                     scm=vcs_type,
                     scm_pr_id=parsed_payload.scm_repo_id,
                 ):
-                    await MessageQueueFactory.meta_subscribers()(config=self.config).publish(data)
+                    await MessageQueueFactory.meta_subscriber()(config=self.config).publish(data)
 
     @classmethod
     async def repo_instance(cls, payload, vcs_type):
