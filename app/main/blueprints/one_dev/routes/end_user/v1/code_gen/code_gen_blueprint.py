@@ -183,12 +183,10 @@ async def get_job_status(_request: Request, client_data: ClientData, auth_data: 
 
 @code_gen_v1_bp.route("/create-embedding", methods=["POST"])
 @validate_client_version
-@authenticate
-async def get_embeddings(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
+# @authenticate
+async def get_embeddings(_request: Request, client_data: ClientData, **kwargs: Any):
     payload = _request.custom_json()
-    response = await OneDevEmbeddingManager.create_embeddings(
-        payload=OneDevEmbeddingPayload(**payload, auth_data=auth_data)
-    )
+    response = await OneDevEmbeddingManager.create_embeddings(payload=OneDevEmbeddingPayload(**payload))
     return send_response(response, headers=kwargs.get("response_headers"))
 
 

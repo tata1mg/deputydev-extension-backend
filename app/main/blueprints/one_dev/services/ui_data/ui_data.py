@@ -3,8 +3,8 @@ from typing import Any, Dict, List
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
-from app.backend_common.repository.message_sessions.repository import (
-    MessageSessionsRepository,
+from app.backend_common.repository.extension_sessions.repository import (
+    ExtensionSessionsRepository,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
@@ -15,7 +15,7 @@ class UIProfile:
     @classmethod
     async def get_ui_profile(cls, user_team_id: int, session_type: str) -> Dict[str, Any]:
         try:
-            sessions_ids = await MessageSessionsRepository.get_message_sessions_ids(
+            sessions_ids = await ExtensionSessionsRepository.get_extension_sessions_ids(
                 user_team_id=user_team_id, session_type=session_type
             )
             total_queries = await MessageThreadsRepository.get_total_user_queries(

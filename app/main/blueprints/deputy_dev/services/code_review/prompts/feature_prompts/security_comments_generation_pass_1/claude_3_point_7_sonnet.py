@@ -1,0 +1,5 @@
+from .claude_3_point_5_sonnet import Claude3Point5SecurityCommentsGenerationPass1Prompt
+
+
+class Claude3Point7SecurityCommentsGenerationPass1Prompt(Claude3Point5SecurityCommentsGenerationPass1Prompt):
+    pass

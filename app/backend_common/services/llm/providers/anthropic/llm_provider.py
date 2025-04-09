@@ -3,7 +3,7 @@ import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
+from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
     InvokeModelWithResponseStreamResponseTypeDef,
@@ -58,7 +58,6 @@ class Anthropic(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.ANTHROPIC.value)
         self.anthropic_client = None
-        self.model_settings: Dict[str, Any] = ConfigManager.configs["LLM_MODELS"]["CLAUDE_3_POINT_5_SONNET"]
 
     def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[ConversationTurn]:
         """
@@ -125,6 +124,7 @@ class Anthropic(BaseLLMProvider):
 
     def build_llm_payload(
         self,
+        llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
@@ -132,6 +132,7 @@ class Anthropic(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
 
+        model_config = self._get_model_config(llm_model)
         # create conversation array
         messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
 
@@ -161,21 +162,21 @@ class Anthropic(BaseLLMProvider):
 
         # create body
         llm_payload: Dict[str, Any] = {
-            "anthropic_version": self.model_settings["VERSION"],
-            "max_tokens": self.model_settings["MAX_TOKENS"],
+            "anthropic_version": model_config["VERSION"],
+            "max_tokens": model_config["MAX_TOKENS"],
             "system": prompt.system_message if prompt else "",
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
 
-        if cache_config.tools and tools and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
+        if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
 
         if (
             cache_config.system_message
             and prompt
             and prompt.system_message
-            and self.model_settings["PROMPT_CACHING_SUPPORTED"]
+            and model_config["PROMPT_CACHING_SUPPORTED"]
         ):
             llm_payload["system"] = [
                 {
@@ -185,7 +186,7 @@ class Anthropic(BaseLLMProvider):
                 }
             ]
 
-        if cache_config.conversation and messages and self.model_settings["PROMPT_CACHING_SUPPORTED"]:
+        if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
         return llm_payload
@@ -326,7 +327,7 @@ class Anthropic(BaseLLMProvider):
         return None, None, None
 
     async def _parse_streaming_response(
-        self, response: InvokeModelWithResponseStreamResponseTypeDef
+        self, response: InvokeModelWithResponseStreamResponseTypeDef, async_bedrock_client: BedrockRuntimeClient
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
@@ -372,6 +373,15 @@ class Anthropic(BaseLLMProvider):
                 await asyncio.sleep(0.1)
             return accumulated_events
 
+        # close the async bedrock client
+        async def close_client():
+            nonlocal streaming_completed
+            while not streaming_completed:
+                await asyncio.sleep(0.1)
+            await async_bedrock_client.__aexit__(None, None, None)
+
+        asyncio.create_task(close_client())
+
         return StreamingResponse(
             content=stream_content(),
             usage=asyncio.create_task(get_usage()),
@@ -391,7 +401,7 @@ class Anthropic(BaseLLMProvider):
             )
             return await self._parse_non_streaming_response(response)
         else:
-            response = await anthropic_client.get_llm_stream_response(
+            response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
-            return await self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response, async_bedrock_client)
