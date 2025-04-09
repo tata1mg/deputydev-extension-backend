@@ -55,9 +55,6 @@ class AzureBusServiceSubscriber(BaseSubscriber):
             except ServiceRequestError as error:
                 logger.info("Message Queue subscribe event failed with read timeout error")
             except Exception as e:
-                import pdb
-
-                pdb.set_trace()
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)
             finally:
                 if receiver:
