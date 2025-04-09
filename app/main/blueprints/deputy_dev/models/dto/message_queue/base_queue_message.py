@@ -1,5 +1,7 @@
 from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict
+
 from app.main.blueprints.deputy_dev.models.dto.message_queue.common_message_queue_models import (
     Attribute,
 )
