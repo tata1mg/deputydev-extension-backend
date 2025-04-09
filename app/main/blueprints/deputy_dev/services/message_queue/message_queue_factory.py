@@ -15,10 +15,10 @@ from app.main.blueprints.deputy_dev.services.message_queue.meta_sync.azure_bus_s
 from app.main.blueprints.deputy_dev.services.message_queue.meta_sync.sqs_meta_subscriber import (
     SQSMetaSubscriber,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.models.azure_bus_service_model import (
+from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_model import (
     AzureBusServiceMessage,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.models.sqs_model import (
+from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_model import (
     SQSMessage,
 )
 
