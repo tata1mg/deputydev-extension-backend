@@ -84,7 +84,7 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
             
             5. For each category, provide your analysis in the following format:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.agent_focus_area)} 
+            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

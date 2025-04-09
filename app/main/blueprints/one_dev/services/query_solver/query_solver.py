@@ -10,9 +10,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseContent,
     ToolUseResponseData,
 )
-from app.backend_common.repository.message_sessions.repository import (
-    MessageSessionsRepository,
-)
+from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
@@ -64,16 +62,16 @@ MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "1.3.0"
 
 class QuerySolver:
     async def _generate_session_summary(
-        self, session_id: int, query: str, focus_items: List[DetailedFocusItem], llm_handler: LLMHandler[PromptFeatures]
+        self, session_id: int, query: str, focus_items: List[DetailedFocusItem], llm_handler: LLMHandler[PromptFeatures], user_team_id: int, session_type: str
     ):
-        current_session = await MessageSessionsRepository.get_by_id(session_id)
+        current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
         if current_session and current_session.summary:
             return
 
         # if no summary, first generate a summary by directly putting first 100 characters of the query.
         # this will be used as a placeholder until the LLM generates a more detailed summary.
         brief_query_preview = query[:100]
-        await MessageSessionsRepository.update_session_summary(
+        await ExtensionSessionsRepository.update_session_summary(
             session_id=session_id, summary=f"{brief_query_preview}..."
         )
 
@@ -93,7 +91,7 @@ class QuerySolver:
             raise ValueError("Expected NonStreamingParsedLLMCallResponse")
 
         generated_summary = llm_response.parsed_content[0].get("summary")
-        await MessageSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
+        await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
     async def get_previous_message_thread_ids(self, session_id: int, previous_query_ids: List[int]) -> List[int]:
         all_previous_responses = await MessageThreadsRepository.get_message_threads_for_session(
@@ -190,6 +188,8 @@ class QuerySolver:
                     query=payload.query,
                     focus_items=payload.focus_items,
                     llm_handler=llm_handler,
+                    user_team_id=payload.user_team_id,
+                    session_type=payload.session_type
                 )
             )
 

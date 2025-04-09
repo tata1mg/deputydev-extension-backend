@@ -23,7 +23,6 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt):
-
     @classmethod
     def _parse_text_blocks(cls, text: str) -> Dict[str, List[LLMCommentData]]:
         review_content = None
@@ -100,13 +99,13 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         raise NotImplementedError("Streaming is not supported for comments generation prompts")
 
     @classmethod
-    def get_xml_review_comments_format(cls, bucket: str, agent_focus_area: str = "") -> str:
+    def get_xml_review_comments_format(cls, bucket: str, agent_name: str, agent_focus_area: str = "") -> str:
         base_format = f"""<review>
             <comments>
             <comment>
             <description>Describe the {agent_focus_area} issue and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors. Don't provide any code block inside this field</description>"""
 
-        if get_context_value("is_corrective_code_enabled"):
+        if cls.is_corrective_code_enabled(agent_name=agent_name):
             base_format += """
             <corrective_code>Rewrite or create new (in case of missing) code, docstring or documentation for developer
             to directly use it.
@@ -127,3 +126,9 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             </review>"""
 
         return base_format
+
+    @classmethod
+    def is_corrective_code_enabled(cls, agent_name):
+        agents_config = get_context_value("setting")["code_review_agent"]["agents"]
+
+        return agents_config[agent_name].get("is_corrective_code_enabled", False)
