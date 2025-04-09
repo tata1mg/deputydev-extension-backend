@@ -10,7 +10,9 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseContent,
     ToolUseResponseData,
 )
-from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+from app.backend_common.repository.extension_sessions.repository import (
+    ExtensionSessionsRepository,
+)
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
@@ -43,6 +45,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
+    GREP_SEARCH,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
@@ -57,12 +62,19 @@ from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
 
-MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "1.3.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
 
 
 class QuerySolver:
     async def _generate_session_summary(
-        self, session_id: int, query: str, focus_items: List[DetailedFocusItem], llm_handler: LLMHandler[PromptFeatures], user_team_id: int, session_type: str
+        self,
+        session_id: int,
+        query: str,
+        focus_items: List[DetailedFocusItem],
+        llm_handler: LLMHandler[PromptFeatures],
+        user_team_id: int,
+        session_type: str,
     ):
         current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
         if current_session and current_session.summary:
@@ -175,6 +187,9 @@ class QuerySolver:
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
             tools_to_use.append(ITERATIVE_FILE_READER)
 
+        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH, ">="):
+            tools_to_use.append(GREP_SEARCH)
+
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
@@ -189,7 +204,7 @@ class QuerySolver:
                     focus_items=payload.focus_items,
                     llm_handler=llm_handler,
                     user_team_id=payload.user_team_id,
-                    session_type=payload.session_type
+                    session_type=payload.session_type,
                 )
             )
 
@@ -220,6 +235,22 @@ class QuerySolver:
                         for search_response in tool_response["batch_chunks_search"]["response"]
                         for chunk in search_response["chunks"]
                     ],
+                }
+
+            if payload.tool_use_response.tool_name == "iterative_file_reader":
+                tool_response = {
+                    "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
+                    "eof_reached": tool_response["data"]["eof_reached"],
+                }
+
+            if payload.tool_use_response.tool_name == "grep_search":
+                tool_response = {
+                    "matched_contents": "".join(
+                        [
+                            f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
+                            for matched_block in tool_response["data"]
+                        ]
+                    ),
                 }
 
             llm_response = await llm_handler.submit_tool_use_response(

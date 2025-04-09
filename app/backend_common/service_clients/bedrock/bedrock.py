@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from aiobotocore.config import AioConfig  # type: ignore
 from aiobotocore.session import get_session  # type: ignore
@@ -39,7 +39,13 @@ class BedrockServiceClient:
 
     async def get_llm_stream_response(
         self, llm_payload: Dict[str, Any], model: str
-    ) -> InvokeModelWithResponseStreamResponseTypeDef:
+    ) -> Tuple[InvokeModelWithResponseStreamResponseTypeDef, BedrockRuntimeClient]:
         bedrock_client = await self._get_bedrock_client().__aenter__()
-        response = await bedrock_client.invoke_model_with_response_stream(modelId=model, body=json.dumps(llm_payload))
-        return response
+        try:
+            response = await bedrock_client.invoke_model_with_response_stream(
+                modelId=model, body=json.dumps(llm_payload)
+            )
+            return response, bedrock_client
+        except Exception as e:
+            await bedrock_client.__aexit__(None, None, None)
+            raise e

@@ -3,7 +3,7 @@ import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
+from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
     InvokeModelWithResponseStreamResponseTypeDef,
@@ -327,7 +327,7 @@ class Anthropic(BaseLLMProvider):
         return None, None, None
 
     async def _parse_streaming_response(
-        self, response: InvokeModelWithResponseStreamResponseTypeDef
+        self, response: InvokeModelWithResponseStreamResponseTypeDef, async_bedrock_client: BedrockRuntimeClient
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
@@ -373,6 +373,15 @@ class Anthropic(BaseLLMProvider):
                 await asyncio.sleep(0.1)
             return accumulated_events
 
+        # close the async bedrock client
+        async def close_client():
+            nonlocal streaming_completed
+            while not streaming_completed:
+                await asyncio.sleep(0.1)
+            await async_bedrock_client.__aexit__(None, None, None)
+
+        asyncio.create_task(close_client())
+
         return StreamingResponse(
             content=stream_content(),
             usage=asyncio.create_task(get_usage()),
@@ -392,7 +401,7 @@ class Anthropic(BaseLLMProvider):
             )
             return await self._parse_non_streaming_response(response)
         else:
-            response = await anthropic_client.get_llm_stream_response(
+            response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
-            return await self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response, async_bedrock_client)
