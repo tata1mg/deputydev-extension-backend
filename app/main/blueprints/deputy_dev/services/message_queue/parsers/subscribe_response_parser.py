@@ -1,21 +1,21 @@
-from typing import List, Type, Union
+from typing import TYPE_CHECKING, List, Type, Union
+
 from app.main.blueprints.deputy_dev.models.dto.message_queue.common_message_queue_models import (
     Response,
 )
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
+        AzureBusServiceMessage,
+    )
+    from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_message import (
+        SQSMessage,
+    )
     from app.main.blueprints.deputy_dev.services.message_queue.parsers.message_parser.azure_bus_service_message_parser import (
         AzureBusServiceMessageParser,
     )
     from app.main.blueprints.deputy_dev.services.message_queue.parsers.message_parser.sqs_message_parser import (
         SQSMessageParser,
-    )
-    from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_message import (
-        SQSMessage,
-    )
-    from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
-        AzureBusServiceMessage,
     )
 
 
