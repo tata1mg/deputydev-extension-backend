@@ -85,7 +85,9 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     session_id: int = connection_data["session_id"]
     session_type: str = connection_data["session_type"]
 
-    payload = QuerySolverInput(**_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type)
+    payload = QuerySolverInput(
+        **_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type
+    )
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
 

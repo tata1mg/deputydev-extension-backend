@@ -6,11 +6,14 @@ from sanic.log import logger
 
 from app.backend_common.constants.past_workflows import SessionStatus
 from app.backend_common.models.dao.postgres.extension_sessions import ExtensionSession
-from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionDTO, ExtensionSessionData
+from app.backend_common.models.dto.extension_sessions_dto import (
+    ExtensionSessionData,
+    ExtensionSessionDTO,
+)
 from app.backend_common.repository.db import DB
 
-class ExtensionSessionsRepository:
 
+class ExtensionSessionsRepository:
     @classmethod
     async def get_by_id(
         cls,
@@ -43,11 +46,11 @@ class ExtensionSessionsRepository:
                         session_id=extension_session.session_id,
                         user_team_id=extension_session.user_team_id,
                         summary=extension_session.summary,
-                        pinned_rank = extension_session.pinned_rank,
-                        status = extension_session.status,
+                        pinned_rank=extension_session.pinned_rank,
+                        status=extension_session.status,
                         session_type=extension_session.session_type,
                         created_at=extension_session.created_at.isoformat(),
-                        updated_at=extension_session.updated_at.isoformat()
+                        updated_at=extension_session.updated_at.isoformat(),
                     )
                 )
             )
@@ -173,8 +176,7 @@ class ExtensionSessionsRepository:
                 raise ValueError("No sessions data provided")
 
             case_statements = " ".join(
-                f"WHEN {session_id} THEN {pinned_rank}"
-                for session_id, pinned_rank in sessions_data.items()
+                f"WHEN {session_id} THEN {pinned_rank}" for session_id, pinned_rank in sessions_data.items()
             )
 
             session_ids = ", ".join(str(session_id) for session_id in sessions_data.keys())
@@ -215,4 +217,3 @@ class ExtensionSessionsRepository:
         except (ValueError, Exception) as ex:
             logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
             raise ex
-
