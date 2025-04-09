@@ -2,6 +2,8 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List
 
+from deputydev_core.utils.context_vars import get_context_value
+
 from app.backend_common.exception.exception import ParseException
 from app.backend_common.models.dto.message_thread_dto import TextBlockData
 from app.backend_common.services.llm.dataclasses.main import (
@@ -95,3 +97,38 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
         raise NotImplementedError("Streaming is not supported for comments generation prompts")
+
+    @classmethod
+    def get_xml_review_comments_format(cls, bucket: str, agent_name: str, agent_focus_area: str = "") -> str:
+        base_format = f"""<review>
+            <comments>
+            <comment>
+            <description>Describe the {agent_focus_area} issue and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors. Don't provide any code block inside this field</description>"""
+
+        if cls.is_corrective_code_enabled(agent_name=agent_name):
+            base_format += """
+            <corrective_code>Rewrite or create new (in case of missing) code, docstring or documentation for developer
+            to directly use it.
+            Add this section under <![CDATA[ ]]> for avoiding xml paring error.
+            Set this value empty string if there is no suggestive code.
+            </corrective_code>"""
+
+        base_format += f"""
+            <file_path>file path on which the comment is to be made</file_path>
+            <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
+            <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal points</confidence_score>
+            <bucket>
+            {bucket}
+            </bucket>
+            </comment>
+            <!-- Repeat the <comment> block for each {agent_focus_area} issue found -->
+            </comments>
+            </review>"""
+
+        return base_format
+
+    @classmethod
+    def is_corrective_code_enabled(cls, agent_name):
+        agents_config = get_context_value("setting")["code_review_agent"]["agents"]
+
+        return agents_config[agent_name].get("is_corrective_code_enabled", False)

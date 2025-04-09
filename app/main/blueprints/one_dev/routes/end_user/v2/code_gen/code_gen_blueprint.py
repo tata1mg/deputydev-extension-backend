@@ -45,10 +45,14 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     auth_data = AuthData(**connection_data["auth_data"])
-    _client_data = ClientData(**connection_data["client_data"])
+    user_team_id = auth_data.user_team_id
+    client_data = ClientData(**connection_data["client_data"])
     session_id: int = connection_data["session_id"]
+    session_type: str = connection_data["session_type"]
 
-    payload = QuerySolverInput(**_request.json, session_id=session_id)
+    payload = QuerySolverInput(
+        **_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type
+    )
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
 
@@ -73,6 +77,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     async def solve_query():
         nonlocal payload
         nonlocal connection_id
+        nonlocal client_data
 
         # push stream start message
         start_data = {"type": "STREAM_START"}
@@ -80,7 +85,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             start_data["new_session_data"] = auth_data.session_refresh_token
         await push_to_connection_stream(start_data)
         try:
-            data = await QuerySolver().solve_query(payload=payload)
+            data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
 
             last_block = None
             # push data to stream
@@ -115,7 +120,8 @@ async def generate_inline_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     data = await InlineEditGenerator().create_and_start_job(
-        payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
+        payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data),
+        client_data=client_data,
     )
     return send_response({"job_id": data, "session_id": session_id})
 

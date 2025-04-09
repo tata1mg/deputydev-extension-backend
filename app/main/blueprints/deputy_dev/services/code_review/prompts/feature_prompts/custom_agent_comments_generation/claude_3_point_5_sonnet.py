@@ -86,25 +86,7 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 4. Do not include opinions or non-technical content.
 
             7. After completing your review, provide your findings in the following format:
-                <review>
-                <comments>
-                <comment>
-                <description>Describe the issue, its potential impact,  in detail and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
-                <corrective_code>
-                Rewrite the code snippet. How the code should be written ideally.
-                Add this section under <![CDATA[ ]]> for avoiding xml paring error.
-                Set this value empty string if there is no suggestive code.
-                </corrective_code>
-                <file_path>file path on which the comment is to be made</file_path>
-                <line_number>line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`</line_number>
-                <confidence_score>floating point confidence score of the comment between 0.0 to 1.0  upto 2 decimal points</confidence_score>
-                <bucket>
-                {self.params['BUCKET']}
-                </bucket>
-                </comment>
-                <!-- Repeat the <comment> block for each security issue found -->
-                </comments>
-                </review>
+                {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'])} 
 
                 If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
                 Example:

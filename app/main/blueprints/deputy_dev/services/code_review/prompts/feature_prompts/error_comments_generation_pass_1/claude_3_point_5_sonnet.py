@@ -4,6 +4,7 @@ from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
+    AgentFocusArea,
 )
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
@@ -18,6 +19,7 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
+        self.agent_focus_area = AgentFocusArea.ERROR.value
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = """
@@ -95,27 +97,7 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
 
             Analyze the code thoroughly and provide your feedback in the following XML format:
 
-            <review>
-            <comments>
-            <comment>
-            <description>Describe the error and its potential impact and make sure to enclose description within <![CDATA[ ]]> to avoid XML parsing errors</description>
-            <corrective_code>
-            Provide corrected code or suggest improvements.
-            Add this section under <![CDATA[ ]]> for avoiding xml paring error.
-            Set this value empty string if there is no suggestive code.
-            </corrective_code>
-            <file_path>Specify the file path where the error occurs</file_path>
-            <line_number>Indicate the line number (use the exact value with '+' or '-' from the
-            diff)</line_number>
-            <confidence_score>Assign a confidence score between 0.0 and 1.0 (up to 2 decimal
-            points)</confidence_score>
-            <bucket>
-            {self.params['BUCKET']}
-            </bucket>
-            </comment>
-            <!-- Repeat the <comment> block for each error found -->
-            </comments>
-            </review>
+            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

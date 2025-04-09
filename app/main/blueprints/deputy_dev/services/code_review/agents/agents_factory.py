@@ -56,12 +56,12 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 
 class AgentFactory:
     agent_type_to_model_map = {
-        AgentTypes.BUSINESS_LOGIC_VALIDATION: LLModels.CLAUDE_3_POINT_5_SONNET,
-        AgentTypes.CODE_MAINTAINABILITY: LLModels.CLAUDE_3_POINT_5_SONNET,
-        AgentTypes.CODE_COMMUNICATION: LLModels.CLAUDE_3_POINT_5_SONNET,
-        AgentTypes.ERROR: LLModels.CLAUDE_3_POINT_5_SONNET,
-        AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_3_POINT_5_SONNET,
-        AgentTypes.SECURITY: LLModels.CLAUDE_3_POINT_5_SONNET,
+        AgentTypes.BUSINESS_LOGIC_VALIDATION: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.CODE_MAINTAINABILITY: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.CODE_COMMUNICATION: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.ERROR: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.SECURITY: LLModels.CLAUDE_3_POINT_7_SONNET,
         AgentTypes.PR_SUMMARY: LLModels.GPT_4O,
         AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4O,
         AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4O,
