@@ -50,10 +50,11 @@ class PRReviewManager(BasePRReviewManager):
         # someone was able to manually push invalid message to SQS, we will check the incoming SQS message
         # if it's fine then we start the PR review process, otherwise we log the invalid payload and purge the message
         try:
-            CodeReviewRequest(**data)
-            logger.info("Received MessageQueue Message: {}".format(data))
-            await cls.process_pr_review(data=data)
-            AppLogger.log_info("Completed PR review: ")
+            print(data)
+            # CodeReviewRequest(**data)
+            # logger.info("Received MessageQueue Message: {}".format(data))
+            # await cls.process_pr_review(data=data)
+            # AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
             AppLogger.log_error(f"Received Invalid Message From MessageQueue - {data}: {e}")
         except Exception as e:
