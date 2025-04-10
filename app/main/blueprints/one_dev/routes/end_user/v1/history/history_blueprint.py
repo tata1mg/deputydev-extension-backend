@@ -45,7 +45,7 @@ async def get_chats(_request: Request, client_data: ClientData, auth_data: AuthD
 @history_v1_bp.route("/sessions", methods=["GET"])
 @validate_client_version
 @authenticate
-async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
+async def get_sessions(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
     query_params = _request.args
     try:
         response = await PastWorkflows.get_past_sessions(
@@ -54,6 +54,7 @@ async def get_sessions(_request: Request, auth_data: AuthData, **kwargs: Any):
             sessions_list_type=query_params["sessions_list_type"][0],
             limit=int(int(query_params["limit"][0])) if query_params.get("limit") else None,
             offset=int(int(query_params["offset"][0])) if query_params.get("offset") else None,
+            client_data=client_data
         )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")
