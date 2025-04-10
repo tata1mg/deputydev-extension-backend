@@ -79,15 +79,12 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]  # type: ignore
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
-    auth_data = AuthData(**connection_data["auth_data"])
-    user_team_id = auth_data.user_team_id
+    auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
     client_data = ClientData(**connection_data["client_data"])
     session_id: int = connection_data["session_id"]
     session_type: str = connection_data["session_type"]
+    auth_error: bool = connection_data["auth_error"]
 
-    payload = QuerySolverInput(
-        **_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type
-    )
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
 
@@ -108,6 +105,16 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                     )
                 except SocketClosedException:
                     connection_id_gone = True
+
+    if auth_error or not auth_data:
+        error_data = {"type": "STREAM_ERROR", "message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
+        await push_to_connection_stream(error_data)
+        return send_response({"status": "SESSION_EXPIRED"})
+
+    user_team_id = auth_data.user_team_id
+    payload = QuerySolverInput(
+        **_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type
+    )
 
     async def solve_query():
         nonlocal payload
