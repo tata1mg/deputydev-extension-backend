@@ -49,6 +49,31 @@ async def create_new_session(session_type: str, client_data: ClientData, auth_da
     return message_session
 
 
+async def get_valid_session_data(
+    _request: Request, client_data: ClientData, auth_data: AuthData, auto_create: bool = False
+) -> MessageSessionDTO:
+    session_id: Optional[str] = _request.headers.get("X-Session-ID")
+    session_type: Optional[str] = _request.headers.get("X-Session-Type")
+
+    # check if the session ID is valid
+    valid_session_data = await get_stored_session(session_id)
+
+    # If the session data is not valid, create a new session, if auto_create is set to True
+    if not valid_session_data:
+        if auto_create:
+            try:
+                if not session_type or not isinstance(session_type, str) or not session_type.strip():
+                    raise BadRequestException("Invalid session type provided while creating a new session")
+                valid_session_data = await create_new_session(session_type, client_data, auth_data)
+            except Exception as _ex:
+                AppLogger.log_error(f"Error occurred while creating a new session: {str(_ex)}")
+                raise BadRequestException(f"Failed to create a new session: {str(_ex)}")
+        else:
+            raise BadRequestException("Invalid session ID")
+
+    return valid_session_data
+
+
 def ensure_session_id(auto_create: bool = False) -> Any:
     def _ensure_session_id(func: Any) -> Any:
         """
@@ -57,26 +82,12 @@ def ensure_session_id(auto_create: bool = False) -> Any:
 
         @wraps(func)
         async def wrapper(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any) -> Any:
-            # Check if the session ID is present in the headers
-            session_id: Optional[str] = _request.headers.get("X-Session-ID")
-            session_type: Optional[str] = _request.headers.get("X-Session-Type")
-
-            # check if the session ID is valid
-            valid_session_data = await get_stored_session(session_id)
-
-            # If the session data is not valid, create a new session, if auto_create is set to True
-            if not valid_session_data:
-                if auto_create:
-                    try:
-                        if not session_type or not isinstance(session_type, str) or not session_type.strip():
-                            raise BadRequestException("Invalid session type provided while creating a new session")
-                        valid_session_data = await create_new_session(session_type, client_data, auth_data)
-                    except Exception as _ex:
-                        AppLogger.log_error(f"Error occurred while creating a new session: {str(_ex)}")
-                        raise BadRequestException(f"Failed to create a new session: {str(_ex)}")
-                else:
-                    raise BadRequestException("Invalid session ID")
-
+            valid_session_data = await get_valid_session_data(
+                _request=_request,
+                client_data=client_data,
+                auth_data=auth_data,
+                auto_create=auto_create,
+            )
             # Proceed to the wrapped function
             return await func(
                 _request, client_data=client_data, auth_data=auth_data, session_id=valid_session_data.id, **kwargs
