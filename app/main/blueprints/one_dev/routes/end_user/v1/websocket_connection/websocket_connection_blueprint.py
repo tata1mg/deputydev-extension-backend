@@ -13,7 +13,10 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import ensure_session_id, get_valid_session_data
+from app.main.blueprints.one_dev.utils.session import (
+    ensure_session_id,
+    get_valid_session_data,
+)
 
 websocket_connection_v1_bp = Blueprint("websocket_connection_v1_bp", url_prefix="/websocket-connection")
 
