@@ -29,7 +29,7 @@ async def get_session(_request: Request, **kwargs):
 
 
 @auth_v1_bp.route("/sign-up", methods=["POST"])
-@validate_client_version
+# @validate_client_version
 async def sign_up(_request: Request, **kwargs):
     headers = _request.headers
     response = await SignUp.signup(headers)
