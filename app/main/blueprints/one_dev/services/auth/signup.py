@@ -53,6 +53,11 @@ class SignUp:
                         "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
                         "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
                     }
+                elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
+                    return {
+                        "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
+                        "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
+                    }
                 else:
                     return {"team_id": None, "org_name": None, "error": "Invalid domain"}
         if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
@@ -69,6 +74,11 @@ class SignUp:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["5CNETWORK"]["team_id"],
                 "org_name": CONFIG.config["ORG_INFO"]["5CNETWORK"]["org_name"],
+            }
+        elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
             }
         else:
             return {"team_id": None, "org_name": None, "error": "Invalid domain"}

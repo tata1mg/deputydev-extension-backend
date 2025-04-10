@@ -24,6 +24,16 @@
             "domain": "traya.com",
             "team_id": 3,
             "org_name": "Traya"
+        },
+        "5CNETWORK": {
+            "domain": "5cnetwork.com",
+            "team_id": 4,
+            "org_name": "5c Network"
+        },
+        "CARATLANE": {
+            "domain": "caratlane.com",
+            "team_id": 5,
+            "org_name": "Caratlane"
         }
     },
     "DEBUG": false,
