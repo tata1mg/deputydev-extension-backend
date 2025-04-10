@@ -49,7 +49,9 @@ async def create_new_session(session_type: str, client_data: ClientData, auth_da
     return message_session
 
 
-async def get_valid_session_data(_request: Request, client_data: ClientData, auth_data: AuthData, auto_create: bool = False) -> MessageSessionDTO:
+async def get_valid_session_data(
+    _request: Request, client_data: ClientData, auth_data: AuthData, auto_create: bool = False
+) -> MessageSessionDTO:
     session_id: Optional[str] = _request.headers.get("X-Session-ID")
     session_type: Optional[str] = _request.headers.get("X-Session-Type")
 
@@ -68,7 +70,7 @@ async def get_valid_session_data(_request: Request, client_data: ClientData, aut
                 raise BadRequestException(f"Failed to create a new session: {str(_ex)}")
         else:
             raise BadRequestException("Invalid session ID")
-        
+
     return valid_session_data
 
 
