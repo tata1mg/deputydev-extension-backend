@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
 from app.backend_common.repository.extension_sessions.repository import (
@@ -15,6 +15,9 @@ from app.main.blueprints.one_dev.services.past_workflows.serializer.serializers_
     SerializersFactory,
 )
 
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from app.main.blueprints.one_dev.utils.version import compare_version
+
 
 class PastWorkflows:
     """
@@ -25,11 +28,12 @@ class PastWorkflows:
     async def get_past_sessions(
         cls,
         user_team_id: int,
+        client_data: ClientData,
         session_type: str,
         sessions_list_type: str,
         limit: Optional[int] = None,
-        offset: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        offset: Optional[int] = None
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """
         Fetch past sessions for a given user team ID.
 
@@ -72,6 +76,8 @@ class PastWorkflows:
             raw_data = raw_data[:limit]
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = serializer_service.get_processed_data()
+        if compare_version(client_data.client_version, "2.0.1", "<="):
+            return processed_data
         return {
             "sessions": processed_data,
             "has_more": has_more,
