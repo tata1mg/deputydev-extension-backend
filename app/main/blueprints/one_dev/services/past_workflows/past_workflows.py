@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
 from app.backend_common.repository.extension_sessions.repository import (
@@ -29,21 +29,30 @@ class PastWorkflows:
         sessions_list_type: str,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         Fetch past sessions for a given user team ID.
 
         Args:
-            headers (Dict[str, Any]): The headers containing the user team ID.
+            user_team_id (int): The ID of the user team.
+            session_type (str): The type of session to fetch.
+            sessions_list_type (str): The type of sessions list to fetch (PINNED or UNPINNED).
+            limit (Optional[int]): Maximum number of sessions to return. Defaults to None.
+                If sessions_list_type is UNPINNED, one extra item is fetched to determine if there are more items.
+            offset (Optional[int]): Offset for pagination. Defaults to None.
 
         Returns:
-            List[Dict[str, Any]]: A list of processed past session data.
+            Dict[str, Any]: A dictionary containing:
+                - "sessions": List of processed session data (List[Dict[str, Any]])
+                - "has_more": Boolean indicating if there are more sessions available
+                    This is only applicable when sessions_list_type is UNPINNED.
 
         Raises:
-            ValueError: If there is an issue with the input or data retrieval.
+            ValueError: If sessions_list_type is not PINNED or UNPINNED.
             NotImplementedError: If the serializer method is not implemented.
             Exception: For any other errors encountered during the process.
         """
+        has_more: bool = False
         if SessionsListTypes(sessions_list_type) == SessionsListTypes.PINNED:
             pinned_rank_is_null = False
         elif SessionsListTypes(sessions_list_type) == SessionsListTypes.UNPINNED:
@@ -53,14 +62,20 @@ class PastWorkflows:
 
         raw_data = await ExtensionSessionsRepository.get_extension_sessions_by_user_team_id(
             user_team_id=user_team_id,
-            limit=limit,
+            limit=limit + 1 if SessionsListTypes(sessions_list_type) == SessionsListTypes.UNPINNED else limit,
             offset=offset,
             session_type=session_type,
             pinned_rank_is_null=pinned_rank_is_null,
         )
+        if SessionsListTypes(sessions_list_type) == SessionsListTypes.UNPINNED:
+            has_more = len(raw_data) > limit
+            raw_data = raw_data[:limit]
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = serializer_service.get_processed_data()
-        return processed_data
+        return {
+            "sessions": processed_data,
+            "has_more": has_more,
+        }
 
     @classmethod
     async def get_past_chats(cls, session_id: int) -> List[Dict[str, Any]]:
