@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING, List, Type, Union
 
-from app.main.blueprints.deputy_dev.models.dto.message_queue.subscribe_response import SubscribeResponse
-
+from app.main.blueprints.deputy_dev.models.dto.message_queue.subscribe_response import (
+    SubscribeResponse,
+)
 
 if TYPE_CHECKING:
     from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (

@@ -54,7 +54,7 @@ async def get_sessions(_request: Request, client_data: ClientData, auth_data: Au
             sessions_list_type=query_params["sessions_list_type"][0],
             limit=int(int(query_params["limit"][0])) if query_params.get("limit") else None,
             offset=int(int(query_params["offset"][0])) if query_params.get("offset") else None,
-            client_data=client_data
+            client_data=client_data,
         )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch past sessions: {str(e)}")

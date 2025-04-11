@@ -2,6 +2,7 @@ import logging
 
 import botocore.exceptions
 from aiobotocore.client import AioBaseClient
+from sanic.log import logger
 
 from app.backend_common.service_clients.sqs.sqs_client import SQSClient
 from app.backend_common.services.message_queue.managers.message_queue_manager import (
@@ -13,8 +14,6 @@ from app.backend_common.utils.types.aws import (
     SQSQueueType,
 )
 from app.backend_common.utils.types.types import DelayQueueTime
-
-from sanic.log import logger
 
 
 class SQSManager(MessageQueueManager):

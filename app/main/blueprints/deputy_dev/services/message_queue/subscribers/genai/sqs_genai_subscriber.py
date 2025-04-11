@@ -1,13 +1,15 @@
 import json
 from datetime import datetime
 
+from sanic.log import logger
+
 from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
     PRReviewManager,
 )
 from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.sqs_subscriber import (
     SQSSubscriber,
 )
-from sanic.log import logger
+
 
 class SQSGenaiSubscriber(SQSSubscriber):
     def get_queue_name(self):

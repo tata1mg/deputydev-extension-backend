@@ -43,7 +43,9 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def solve_user_query_non_stream(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def solve_user_query_non_stream(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+):
     payload = QuerySolverInput(**_request.json, session_id=session_id)
 
     blocks = []
@@ -55,7 +57,7 @@ async def solve_user_query_non_stream(_request: Request, client_data: ClientData
     blocks.append(start_data)
 
     try:
-        data = await QuerySolver().solve_query(payload=payload, client_data= client_data)
+        data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
 
         last_block = None
         async for data_block in data:
