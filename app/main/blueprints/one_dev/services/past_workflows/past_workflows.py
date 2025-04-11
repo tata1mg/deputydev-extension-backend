@@ -14,7 +14,6 @@ from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_co
 from app.main.blueprints.one_dev.services.past_workflows.serializer.serializers_factory import (
     SerializersFactory,
 )
-
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
@@ -32,7 +31,7 @@ class PastWorkflows:
         session_type: str,
         sessions_list_type: str,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """
         Fetch past sessions for a given user team ID.

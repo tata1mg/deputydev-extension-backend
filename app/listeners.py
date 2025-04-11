@@ -10,6 +10,7 @@ from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
     PixelEventSubscriber,
 )
 
+
 async def initialize_message_queue_subscribers(_app, loop):
     """
 
