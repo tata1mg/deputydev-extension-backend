@@ -18,6 +18,7 @@ class PixelEventsData(BaseModel):
     timestamp: datetime
     user_id: int
     team_id: int
+    source: Optional[str] = None
 
 
 class PixelEventsDTO(PixelEventsData):
