@@ -15,6 +15,7 @@ from azure.servicebus.aio import AutoLockRenewer
 from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient
 from azure.servicebus.aio import ServiceBusReceiver
 from azure.servicebus.exceptions import MessageSizeExceededError, ServiceBusError
+from sanic.log import logger
 
 from app.backend_common.services.message_queue.managers.message_queue_manager import (
     MessageQueueManager,
@@ -27,8 +28,6 @@ from app.backend_common.utils.types.types import DelayQueueTime
 from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
     AzureBusServiceMessage,
 )
-
-from sanic.log import logger
 
 
 class AzureServiceBusManager(MessageQueueManager):

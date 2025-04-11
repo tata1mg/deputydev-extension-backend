@@ -2,10 +2,10 @@ import json
 
 from azure.servicebus import ServiceBusReceivedMessage
 
+from app.main.blueprints.deputy_dev.models.dto.message_queue.attribute import Attribute
 from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_message import (
     AzureBusServiceMessage,
 )
-from app.main.blueprints.deputy_dev.models.dto.message_queue.attribute import Attribute
 
 
 class AzureBusServiceMessageParser:
