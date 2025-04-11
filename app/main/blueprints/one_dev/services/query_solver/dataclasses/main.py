@@ -36,7 +36,7 @@ class QuerySolverInput(BaseModel):
     focus_items: List[DetailedFocusItem] = []
     write_mode: bool = False
     session_id: int
-    tool_use_failed: Optional[bool] = False
+    tool_use_failed: Optional[bool] = None
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
