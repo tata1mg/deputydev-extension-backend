@@ -228,30 +228,31 @@ class QuerySolver:
 
         elif payload.tool_use_response:
             tool_response = payload.tool_use_response.response
-            if payload.tool_use_response.tool_name == "focused_snippets_searcher":
-                tool_response = {
-                    "chunks": [
-                        ChunkInfo(**chunk).get_xml()
-                        for search_response in tool_response["batch_chunks_search"]["response"]
-                        for chunk in search_response["chunks"]
-                    ],
-                }
+            if not payload.tool_use_failed:
+                if payload.tool_use_response.tool_name == "focused_snippets_searcher":
+                    tool_response = {
+                        "chunks": [
+                            ChunkInfo(**chunk).get_xml()
+                            for search_response in tool_response["batch_chunks_search"]["response"]
+                            for chunk in search_response["chunks"]
+                        ],
+                    }
 
-            if payload.tool_use_response.tool_name == "iterative_file_reader":
-                tool_response = {
-                    "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
-                    "eof_reached": tool_response["data"]["eof_reached"],
-                }
+                if payload.tool_use_response.tool_name == "iterative_file_reader":
+                    tool_response = {
+                        "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
+                        "eof_reached": tool_response["data"]["eof_reached"],
+                    }
 
-            if payload.tool_use_response.tool_name == "grep_search":
-                tool_response = {
-                    "matched_contents": "".join(
-                        [
-                            f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
-                            for matched_block in tool_response["data"]
-                        ]
-                    ),
-                }
+                if payload.tool_use_response.tool_name == "grep_search":
+                    tool_response = {
+                        "matched_contents": "".join(
+                            [
+                                f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
+                                for matched_block in tool_response["data"]
+                            ]
+                        ),
+                    }
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
