@@ -15,11 +15,11 @@ from app.backend_common.exception.exception import RateLimitError
 from app.main.blueprints.deputy_dev.services.message_queue.factories.message_parser_factory import (
     MessageParserFactory,
 )
-from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
-    BaseSubscriber,
-)
 from app.main.blueprints.deputy_dev.services.message_queue.parsers.subscribe_response_parser import (
     SubscribeResponseParser,
+)
+from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
+    BaseSubscriber,
 )
 
 
