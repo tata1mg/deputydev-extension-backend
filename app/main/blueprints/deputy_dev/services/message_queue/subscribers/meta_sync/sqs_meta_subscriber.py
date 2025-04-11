@@ -1,10 +1,12 @@
+from sanic.log import logger
+
 from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.sqs_subscriber import (
     SQSSubscriber,
 )
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_factory import (
     StatsCollectionFactory,
 )
-from sanic.log import logger
+
 
 class SQSMetaSubscriber(SQSSubscriber):
     def get_queue_name(self):
