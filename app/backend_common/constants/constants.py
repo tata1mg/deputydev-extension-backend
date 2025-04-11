@@ -87,3 +87,4 @@ class PixelEvents(Enum):
     ACCEPTED = "accepted"
     GENERATED = "generated"
     COPIED = "copied"
+    APPLIED = "applied"
