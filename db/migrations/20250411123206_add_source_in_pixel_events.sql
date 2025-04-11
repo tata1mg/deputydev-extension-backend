@@ -1,5 +1,5 @@
 -- migrate:up
-ALTER TABLE pixel_events ADD COLUMN IF NOT EXISTS source INT;
+ALTER TABLE pixel_events ADD COLUMN IF NOT EXISTS source TEXT;
 
 
 -- migrate:down
