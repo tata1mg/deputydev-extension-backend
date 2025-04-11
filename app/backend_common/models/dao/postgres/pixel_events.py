@@ -17,6 +17,7 @@ class PixelEvents(Base):
         "client_version",
         "client",
         "timestamp",
+        "source",
         "created_at",
         "updated_at",
     }
@@ -29,6 +30,7 @@ class PixelEvents(Base):
     file_path = fields.TextField(null=True)
     user_id = fields.IntField()
     team_id = fields.IntField()
+    source = fields.TextField(null=True)
     client_version = fields.TextField()
     client = fields.TextField()
     timestamp = NaiveDatetimeField(null=True)
