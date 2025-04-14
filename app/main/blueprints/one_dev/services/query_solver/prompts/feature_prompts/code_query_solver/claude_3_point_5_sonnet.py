@@ -374,7 +374,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                 2. The changes will be presented in a format that can be automatically applied.
                 3. The user will only need to review and approve/reject the complete changes.
                 4. No manual implementation is required from the user.
-                5. This mode is faster but requires careful review of the generated changes.
+                5. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
                 """
         else:
