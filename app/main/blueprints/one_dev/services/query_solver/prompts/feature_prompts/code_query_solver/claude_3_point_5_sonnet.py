@@ -367,6 +367,29 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag.
         """
 
+        if self.params.get("write_mode"):
+            user_message += f"""
+                Please respond in act mode. In this mode:
+                1. You will directly generate code changes that can be applied to the codebase.
+                2. The changes will be presented in a format that can be automatically applied.
+                3. The user will only need to review and approve/reject the complete changes.
+                4. No manual implementation is required from the user.
+                5. This mode requires careful review of the generated changes.
+                This mode is ideal for quick implementations where the user trusts the generated changes.
+                """
+        else:
+            user_message += f"""
+                Please respond in chat mode. In this mode:
+                1. You will respond with explanations and suggestions to the user query.
+                2. You can analyze code, suggest improvements, and provide guidance.
+                3. You will not make direct code changes.
+                4. You can propose code changes, user will need to manually implement them.
+                5. You can search through user's codebase and provide information.
+                6. You will provide step-by-step instructions for the user to follow.
+                7. The user will review and approve/reject each change before implementation.
+                This mode is great for getting advice and understanding code.
+                """
+
         if self.params.get("deputy_dev_rules"):
             user_message += f"""
             Here are some more user provided rules and information that you can take reference from:
