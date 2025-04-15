@@ -382,11 +382,10 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                 Please respond in chat mode. In this mode:
                 1. You will respond with explanations and suggestions to the user query.
                 2. You can analyze code, suggest improvements, and provide guidance.
-                3. You will not make direct code changes.
-                4. You can propose code changes, user will need to manually implement them.
-                5. You can search through user's codebase and provide information.
-                6. You will provide step-by-step instructions for the user to follow.
-                7. The user will review and approve/reject each change before implementation.
+                3. You can propose code changes using diff code blocks, user will need to apply them.
+                4. You can search through user's codebase and provide information.
+                5. You will provide step-by-step instructions for the user to follow.
+                6. The user will review and approve/reject each change before implementation.
                 This mode is great for getting advice and understanding code.
                 """
 
