@@ -464,5 +464,6 @@
         "GROUP_ID": "",
         "SESSION_QUEUE_NAME": "",
         "ENABLED": true
-    }
+    },
+    "IS_RELATED_CODE_SEARCHER_ENABLED": true
 }
