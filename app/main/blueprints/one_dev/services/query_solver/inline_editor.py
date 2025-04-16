@@ -30,7 +30,7 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-from torpedo import CONFIG
+from deputydev_core.utils.config_manager import ConfigManager
 
 MIN_TOOL_USE_SUPPORTED_VERSION = "1.2.0"
 
@@ -58,7 +58,7 @@ class InlineEditGenerator:
         tools_to_use = []
         if compare_version(client_data.client_version, MIN_TOOL_USE_SUPPORTED_VERSION, ">="):
             tools_to_use = [FOCUSED_SNIPPETS_SEARCHER]
-            if CONFIG.config["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+            if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
                 tools_to_use.append(RELATED_CODE_SEARCHER)
 
         if payload.tool_use_response:
