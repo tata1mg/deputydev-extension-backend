@@ -61,7 +61,7 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-from torpedo import CONFIG
+from deputydev_core.utils.config_manager import ConfigManager
 
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
@@ -183,7 +183,7 @@ class QuerySolver:
             FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
         ]
-        if CONFIG.config["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
 
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
