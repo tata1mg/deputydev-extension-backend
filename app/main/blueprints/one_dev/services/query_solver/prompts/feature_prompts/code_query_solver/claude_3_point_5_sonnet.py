@@ -377,17 +377,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                 5. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
                 """
-        else:
-            user_message += f"""
-                Please respond in chat mode. In this mode:
-                1. You will respond with explanations and suggestions to the user query.
-                2. You can analyze code, suggest improvements, and provide guidance.
-                3. You can propose code changes using diff code blocks, user will need to apply them.
-                4. You can search through user's codebase and provide information.
-                5. You will provide step-by-step instructions for the user to follow.
-                6. The user will review and approve/reject each change before implementation.
-                This mode is great for getting advice and understanding code.
-                """
 
         if self.params.get("deputy_dev_rules"):
             user_message += f"""
