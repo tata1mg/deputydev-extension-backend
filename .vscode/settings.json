@@ -6,5 +6,6 @@
         "chunkable",
         "Chunker",
         "weaviate"
-    ]
+    ],
+    "python.analysis.autoImportCompletions": true
 }
