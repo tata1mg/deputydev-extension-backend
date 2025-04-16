@@ -58,8 +58,8 @@ class InlineEditGenerator:
         tools_to_use = []
         if compare_version(client_data.client_version, MIN_TOOL_USE_SUPPORTED_VERSION, ">="):
             tools_to_use = [FOCUSED_SNIPPETS_SEARCHER]
-        if CONFIG.config["IS_RELATED_CODE_SEARCHER_ENABLED"]:
-            tools_to_use.append(RELATED_CODE_SEARCHER)
+            if CONFIG.config["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+                tools_to_use.append(RELATED_CODE_SEARCHER)
 
         if payload.tool_use_response:
             llm_response = await llm_handler.submit_tool_use_response(
