@@ -48,6 +48,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_se
 from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
     GREP_SEARCH,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
+    PUBLIC_URL_CONTENT_READER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
@@ -65,6 +68,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.1.1"
 
 
 class QuerySolver:
@@ -191,6 +195,11 @@ class QuerySolver:
 
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH, ">="):
             tools_to_use.append(GREP_SEARCH)
+
+        if compare_version(
+            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
+        ):
+            tools_to_use.append(PUBLIC_URL_CONTENT_READER)
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
