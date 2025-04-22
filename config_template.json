@@ -30,10 +30,10 @@
             "team_id": 4,
             "org_name": "5c Network"
         },
-        "CARATLANE": {
-            "domain": "caratlane.com",
+        "TBO": {
+            "domain": "tbo.com",
             "team_id": 5,
-            "org_name": "Caratlane"
+            "org_name": "TBO"
         },
         "DEPUTYDEV_PRIVATE": {
             "team_id": 6,
