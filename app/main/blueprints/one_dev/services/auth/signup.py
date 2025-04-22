@@ -53,10 +53,10 @@ class SignUp:
                         "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
                         "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
                     }
-                elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
+                elif domain == CONFIG.config["ORG_INFO"]["TBO"]["domain"]:
                     return {
-                        "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
-                        "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
+                        "team_id": CONFIG.config["ORG_INFO"]["TBO"]["team_id"],
+                        "org_name": CONFIG.config["ORG_INFO"]["TBO"]["org_name"],
                     }
                 else:
                     if email in CONFIG.config["ALLOWED_EMAILS"]:
@@ -81,10 +81,10 @@ class SignUp:
                 "team_id": CONFIG.config["ORG_INFO"]["5CNETWORK"]["team_id"],
                 "org_name": CONFIG.config["ORG_INFO"]["5CNETWORK"]["org_name"],
             }
-        elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
+        elif domain == CONFIG.config["ORG_INFO"]["TBO"]["domain"]:
             return {
-                "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
+                "team_id": CONFIG.config["ORG_INFO"]["TBO"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["TBO"]["org_name"],
             }
         else:
             if email in CONFIG.config["ALLOWED_EMAILS"]:
