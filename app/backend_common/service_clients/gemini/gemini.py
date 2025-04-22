@@ -38,11 +38,11 @@ class GeminiServiceClient(metaclass=Singleton):
         response_schema: Optional[Dict[str, Any]] = None,
         temperature: float = 0.5,
         tool_config=None,
-        response_mime_type: str = "application/json",
+        response_mime_type: str = "text/plain",
     ) -> GenerationResponse:
         generation_config = GenerationConfig(
             temperature=temperature,
-            max_output_tokens=config["LLM_MODELS"].get(model_name).get("MAX_TOKENS") or 8192,
+            max_output_tokens=8192,
             response_mime_type=response_mime_type,
             response_schema=response_schema,
         )
@@ -110,4 +110,4 @@ async def main():
     # actual_response = data.candidates[0].content.parts[0].text
 
 
-asyncio.run(main())
+# asyncio.run(main())
