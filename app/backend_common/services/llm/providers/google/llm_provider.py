@@ -30,7 +30,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 
 
-class GeminiVertexAI(BaseLLMProvider):
+class Google(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.GOOGLE.value)
 
