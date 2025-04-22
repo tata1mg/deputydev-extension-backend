@@ -467,5 +467,6 @@
     },
     "IS_RELATED_CODE_SEARCHER_ENABLED": true,
     "DD_HOST_WS": "ws://localhost:8084",
-    "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection"
+    "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
+    "POLLING_MAX_ATTEMPTS": 3000
 }
