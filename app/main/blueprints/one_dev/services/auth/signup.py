@@ -59,7 +59,13 @@ class SignUp:
                         "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
                     }
                 else:
-                    return {"team_id": None, "org_name": None, "error": "Invalid domain"}
+                    if email in CONFIG.config["ALLOWED_EMAILS"]:
+                        return {
+                            "team_id": CONFIG.config["ORG_INFO"]["DEPUTYDEV_PRIVATE"]["team_id"],
+                            "org_name": CONFIG.config["ORG_INFO"]["DEPUTYDEV_PRIVATE"]["org_name"],
+                        }
+                    else:
+                        return {"team_id": None, "org_name": None, "error": "Invalid domain"}
         if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
@@ -81,4 +87,10 @@ class SignUp:
                 "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
             }
         else:
-            return {"team_id": None, "org_name": None, "error": "Invalid domain"}
+            if email in CONFIG.config["ALLOWED_EMAILS"]:
+                return {
+                    "team_id": CONFIG.config["ORG_INFO"]["DEPUTYDEV_PRIVATE"]["team_id"],
+                    "org_name": CONFIG.config["ORG_INFO"]["DEPUTYDEV_PRIVATE"]["org_name"],
+                }
+            else:
+                return {"team_id": None, "org_name": None, "error": "Invalid domain"}
