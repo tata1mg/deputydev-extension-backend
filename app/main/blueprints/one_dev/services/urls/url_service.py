@@ -54,7 +54,7 @@ class UrlService:
                 llm_response = await llm_handler.start_llm_query(
                     session_id=session_id,
                     prompt_feature=PromptFeatures.URL_SUMMARIZATION,
-                    llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                    llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                     prompt_vars={"content": content},
                     call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
                 )
@@ -67,10 +67,8 @@ class UrlService:
                 AppLogger.log_warn(f"URL summarization call Attempt {attempt + 1} failed: {e}")
                 await asyncio.sleep(1)  # Optional: add a delay
 
-            if response:
-                import pdb
-                pdb.set_trace()
-                # TODO: handling of response
-                pass
+        if response:
+            generated_explanation = response.parsed_content[0].get("explanation")
+            return generated_explanation
 
-            return []
+        return {}
