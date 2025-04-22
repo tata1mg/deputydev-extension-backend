@@ -5,11 +5,10 @@ ITERATIVE_FILE_READER = ConversationTool(
     description="""
         Reads content of a file from a given start line number (1 indexed) to an end line number (1 indexed).
         This tool can be used iteratively to read a file in chunks by just providing the offset line.
-        At once, it can read maximum of 100 lines.
+        At once, it can read maximum of 200 lines.
         If you do not know the end line number, just provide the end line number as start_line + 100.
         It will let you know if the end of the file is reached.
         To use this, a valid file path is required.
-
         Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
         The response will EXPLICITLY mention if the end of the file is reached or not.
     """,

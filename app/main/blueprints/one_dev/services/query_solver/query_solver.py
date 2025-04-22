@@ -63,6 +63,9 @@ from app.main.blueprints.one_dev.utils.version import compare_version
 from .prompts.factory import PromptFeatureFactory
 from deputydev_core.utils.config_manager import ConfigManager
 
+from .tools.bash_tool import BASH_TOOL
+from .tools.str_replace_tool import STR_REPLACE_EDITOR
+
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
 
@@ -177,11 +180,12 @@ class QuerySolver:
         return _streaming_content_block_generator()
 
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
-
         tools_to_use = [
             ASK_USER_INPUT,
             FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
+            BASH_TOOL,
+            # STR_REPLACE_EDITOR,
         ]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
