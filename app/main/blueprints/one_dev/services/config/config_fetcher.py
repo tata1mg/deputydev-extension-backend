@@ -104,6 +104,12 @@ class ConfigFetcher:
             },
             "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],
             "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_BINARY_PATH"],
+            "URL_CONTENT_READER": {
+                "MAX_CONTENT_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["MAX_CONTENT_SIZE"],
+                "SUMMARIZE_LARGE_CONTENT": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
+                    "SUMMARIZE_LARGE_CONTENT"
+                ],
+            },
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
