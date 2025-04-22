@@ -65,6 +65,7 @@ class LLModels(Enum):
     CLAUDE_3_POINT_7_SONNET = "CLAUDE_3_POINT_7_SONNET"
     GPT_40_MINI = "GPT_40_MINI"
     GPT_O1_MINI = "GPT_O1_MINI"
+    GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
 
 
 class LLMUsage(BaseModel):

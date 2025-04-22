@@ -20,16 +20,11 @@ PUBLIC_URL_CONTENT_READER = ConversationTool(
         "properties": {
             "urls": {
                 "type": "array",
-                "items": {
-                    "type": "string",
-                    "format": "uri",
-                    "pattern": "^https?://"
-                },
+                "items": {"type": "string", "format": "uri", "pattern": "^https?://"},
                 "description": "A list of publicly accessible HTTP/HTTPS URLs (maximum: 5).",
-                "maxItems": 5
+                "maxItems": 5,
             },
         },
-        "required": ["urls"]
-    }
+        "required": ["urls"],
+    },
 )
-
