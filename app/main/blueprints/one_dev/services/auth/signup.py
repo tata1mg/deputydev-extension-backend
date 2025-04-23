@@ -58,6 +58,11 @@ class SignUp:
                         "team_id": CONFIG.config["ORG_INFO"]["TBO"]["team_id"],
                         "org_name": CONFIG.config["ORG_INFO"]["TBO"]["org_name"],
                     }
+                elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
+                    return {
+                        "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
+                        "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
+                    }
                 else:
                     if email in CONFIG.config["ALLOWED_EMAILS"]:
                         return {
@@ -85,6 +90,11 @@ class SignUp:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["TBO"]["team_id"],
                 "org_name": CONFIG.config["ORG_INFO"]["TBO"]["org_name"],
+            }
+        elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
             }
         else:
             if email in CONFIG.config["ALLOWED_EMAILS"]:
