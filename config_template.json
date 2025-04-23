@@ -38,6 +38,11 @@
         "DEPUTYDEV_PRIVATE": {
             "team_id": 6,
             "org_name": "DeputyDev Private"
+        },
+        "CARATLANE": {
+            "domain": "caratlane.com",
+            "team_id": 5,
+            "org_name": "Caratlane"
         }
     },
     "DEBUG": false,
