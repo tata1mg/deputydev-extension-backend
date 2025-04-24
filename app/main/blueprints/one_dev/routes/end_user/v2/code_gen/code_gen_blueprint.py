@@ -1,7 +1,7 @@
 import asyncio
 import json
 import uuid
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import httpx
 from deputydev_core.utils.app_logger import AppLogger
@@ -25,13 +25,13 @@ from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
 )
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import ensure_session_id
+from app.main.blueprints.one_dev.utils.session import ensure_session_id, get_valid_session_data
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -81,11 +81,22 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]  # type: ignore
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
-    auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
+    # Add JSON data to headers
+    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+
+    auth_data: Optional[AuthData] = None
+    auth_error: bool = False
+    try:
+        auth_data, _ = await get_auth_data(_request)
+    except Exception:
+        auth_error = True
+        auth_data = None
     client_data = ClientData(**connection_data["client_data"])
-    session_id: int = connection_data["session_id"]
-    session_type: str = connection_data["session_type"]
-    auth_error: bool = connection_data["auth_error"]
+    if auth_data:
+        session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
+        _request.json["session_id"] = session_data.id
 
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
@@ -115,7 +126,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     user_team_id = auth_data.user_team_id
     payload = QuerySolverInput(
-        **_request.json, session_id=session_id, user_team_id=user_team_id, session_type=session_type
+        **_request.json, user_team_id=user_team_id,
     )
 
     async def solve_query():
@@ -188,32 +199,37 @@ async def sse_websocket(request: Request, ws: Any):
             if connection_data.get("status") != "SUCCESS":
                 raise Exception("Connection failed")
 
-            # now receive the data
-            raw_payload = await ws.recv()
-            payload = json.loads(raw_payload)
-
-            # then get a stream of data from the /generate-code endpoint
-            await client.post(
-                f"{self_host_url}/end_user/v2/code-gen/generate-code",
-                headers={"connectionid": connection_id, "X-Is-Local": "true"},
-                json=payload,
-            )
-
-            # iterate over message response and send the data to the client
             while True:
-                if local_testing_stream_buffer.get(connection_id):
-                    data = local_testing_stream_buffer[connection_id].pop(0)
-                    await ws.send(data)
-                    if data == json.dumps({"type": "STREAM_END"}):
-                        # remove the connectionid from stream buffer
-                        del local_testing_stream_buffer[connection_id]
-                        break
-                else:
-                    await asyncio.sleep(0.2)
+                try:
+                    # now receive the data
+                    raw_payload = await ws.recv()
+                    payload = json.loads(raw_payload)
+
+                    # then get a stream of data from the /generate-code endpoint
+                    await client.post(
+                        f"{self_host_url}/end_user/v2/code-gen/generate-code",
+                        headers={"connectionid": connection_id, "X-Is-Local": "true"},
+                        json=payload,
+                    )
+
+                    # iterate over message response and send the data to the client
+                    while True:
+                        if local_testing_stream_buffer.get(connection_id):
+                            data = local_testing_stream_buffer[connection_id].pop(0)
+                            await ws.send(data)
+                            if data == json.dumps({"type": "STREAM_END"}):
+                                # remove the connectionid from stream buffer
+                                # del local_testing_stream_buffer[connection_id]
+                                break
+                        else:
+                            await asyncio.sleep(0.2)
+                except Exception as e:
+                    AppLogger.log_error(f"Error in websocket connection: {e}")
+                    break
 
             # finally, disconnect from the server using /disconnect endpoint
-            await client.post(
-                f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connectionid": connection_id}
-            )
+            # await client.post(
+            #     f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connectionid": connection_id}
+            # )
     except Exception as _ex:
         AppLogger.log_error(f"Error in websocket connection: {_ex}")
