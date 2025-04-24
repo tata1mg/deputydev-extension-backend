@@ -453,7 +453,20 @@
                         "service_path": ""
                     }
                 },
-                "linux": {}
+                "linux": {
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                },
+                "win32": {
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                }
             }
         },
         "PASSWORD": "",
