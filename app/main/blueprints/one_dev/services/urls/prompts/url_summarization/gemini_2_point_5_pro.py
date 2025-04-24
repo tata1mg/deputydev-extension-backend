@@ -15,16 +15,19 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro import (
     BaseGemini2Point5ProPrompt,
 )
+from torpedo import CONFIG
 
 
 class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
     prompt_type = "URL_SUMMARY_GENERATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
+    # MAX_CONTENT_SIZE is number of words, via dividing by 5 we are checking number of words
+    max_content_size = int(CONFIG.config["BINARY"]["URL_CONTENT_READER"]["MAX_CONTENT_SIZE"] / 5)
 
     def get_prompt(self) -> UserAndSystemMessages:
         # TODO: need to work on prompt
-        system_message = """
-            You are a highly capable language model assistant. Your job is to thoroughly cut down long-form articles between 16,000 and 25,000 words in depth and detail without lossing any data. 
+        system_message = f"""
+            You are a highly capable language model assistant. Your job is to thoroughly cut down long-form articles ranging in total size {self.max_content_size} and {self.max_content_size+10000} words in depth and detail without lossing any data. 
             You must not omit any content, including code blocks, tables, equations, or structured data. 
             Your explanation should mirror the structure of the original document, ensuring no part is skipped. 
             Your output should be clear, instructional, and highly accurate, without hallucinations. 
@@ -33,7 +36,7 @@ class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
             """
 
         user_message = f"""
-            I have an article that is between 16,000 to 25,000 words. Please provide a detailed explanation of the entire article.
+            I am providing articles. The total size of the combined articles ranges from {self.max_content_size} to {self.max_content_size + 10000} words.. Please provide a detailed explanation of the entire article.
             Follow these instructions:
             Structure: Preserve the structure and flow of the original article. Do not skip any section, appendix, footnote, or embedded note.
                 Code Blocks:
@@ -56,19 +59,36 @@ class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
                     Connect ideas logically and show why each part matters.
                     Avoid summarizing. Focus on complete explanation.
             Limits:
-                Your explanation should not exceed 16,000 words.
+                Your explanation should not exceed {self.max_content_size} words.
                 Do not add your own thoughts at all. Only give those explanation which is present in article.
                 
             Do not hallucinate or invent content not in the original article.
+            Give exact same number of articles as ginver
             Format the output with clear section headers, subheaders, and proper markdown for readability.
         """
 
         summarization_prompt = f"""
             {user_message}
-            Article is given below:
-            <article>
+            Input Example: 
+            <articles>
+                Content of URL {{url_link}}: 
+                    {{url content}}
+                Content of URL {{url_link}}: 
+                    {{url content}}
+            </articles>
+            
+            Output Example:
+            <explanation>
+                Explanation of URL {{url_link_1}}: 
+                    {{url explanation}}
+                Explanation of URL {{url_link_2}}: 
+                   {{url explanation}}
+            </explanation>
+            
+            Article is given below (Number of article = {self.params.get("content").count("Content of URL")}):
+            <articles>
                 {self.params.get("content")}
-            </article>
+            </articles>
             
             Send the response in the following format:
             <explanation>

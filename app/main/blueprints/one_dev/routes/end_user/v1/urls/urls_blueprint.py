@@ -9,7 +9,7 @@ from app.main.blueprints.one_dev.utils.client.client_validator import validate_c
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.services.urls.url_service import UrlService
-
+from app.main.blueprints.one_dev.models.dto.url import UrlDto
 urls_v1_bp = Blueprint("urls_v1_bp", url_prefix="/urls")
 
 
@@ -17,7 +17,7 @@ urls_v1_bp = Blueprint("urls_v1_bp", url_prefix="/urls")
 @validate_client_version
 @authenticate
 async def list_saved_urls(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
-    query_params = _request.args
+    query_params = _request.request_params()
     try:
         response = await UrlService.get_saved_urls(
             user_team_id=auth_data.user_team_id,
@@ -42,4 +42,18 @@ async def summarize_urls(
         response = await UrlService.summarize_urls_long_content(session_id=session_id, content=payload.get("content"))
     except Exception as e:
         raise BadRequestException(f"Failed to fetch saved URLs: {str(e)}")
+    return send_response(response, headers=kwargs.get("response_headers"))
+
+
+@urls_v1_bp.route("/save_url", methods=["POST"])
+@validate_client_version
+@authenticate
+async def save_url(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
+    payload = _request.json
+    try:
+        payload["user_team_id"] = auth_data.user_team_id
+        payload = UrlDto(**payload)
+        response = await UrlService.save_url(payload)
+    except Exception as e:
+        raise e
     return send_response(response, headers=kwargs.get("response_headers"))

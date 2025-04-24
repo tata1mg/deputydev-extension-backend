@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS urls
     is_deleted   BOOLEAN   DEFAULT FALSE,
     last_indexed TIMESTAMP,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (url, user_team_id)
 );
 
 

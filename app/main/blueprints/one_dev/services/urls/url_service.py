@@ -1,13 +1,16 @@
 import asyncio
 from deputydev_core.utils.app_logger import AppLogger
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.models.dao.postgres.saved_urls import SavedURL
+from app.main.blueprints.one_dev.models.dao.postgres.urls import Url
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.urls.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.services.urls.prompts.factory import PromptFeatureFactory
 from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
+from app.main.blueprints.one_dev.repository.url_repository import UrlRepository
+if TYPE_CHECKING:
+    from app.main.blueprints.one_dev.models.dto.url import UrlDto
 
 
 class UrlService:
@@ -15,14 +18,14 @@ class UrlService:
     async def get_saved_urls(user_team_id: int, limit: int, offset: int, client_data: ClientData) -> Dict[str, Any]:
         # Fetch saved URLs
         urls = (
-            await SavedURL.filter(user_team_id=user_team_id, is_deleted=False)
+            await Url.filter(user_team_id=user_team_id, is_deleted=False)
             .order_by("-created_at")
             .offset(offset)
             .limit(limit)
         )
 
         # Count total number of saved URLs
-        total_count = await SavedURL.filter(user_team_id=user_team_id, is_deleted=False).count()
+        total_count = await Url.filter(user_team_id=user_team_id, is_deleted=False).count()
 
         # Calculate pagination metadata
         total_pages = (total_count + limit - 1) // limit
@@ -72,3 +75,9 @@ class UrlService:
             return generated_explanation
 
         return {}
+
+    @classmethod
+    async def save_url(cls, payload: "UrlDto"):
+        url = await UrlRepository.save_url(payload)
+        return url.model_dump()
+
