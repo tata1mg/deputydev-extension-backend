@@ -182,10 +182,10 @@ class QuerySolver:
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
         tools_to_use = [
             ASK_USER_INPUT,
-            FOCUSED_SNIPPETS_SEARCHER,
+            # FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
             BASH_TOOL,
-            # STR_REPLACE_EDITOR,
+            STR_REPLACE_EDITOR,
         ]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
