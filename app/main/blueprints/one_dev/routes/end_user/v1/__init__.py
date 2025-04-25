@@ -10,6 +10,7 @@ from .ui_data.ui_data_blueprint import ui_data_v1_bp
 from .websocket_connection.websocket_connection_blueprint import (
     websocket_connection_v1_bp,
 )
+from .feedbacks.feedbacks_blueprint import feedbacks_v1_bp
 
 blueprints = [
     auth_v1_bp,
@@ -20,5 +21,6 @@ blueprints = [
     chunks_v1_bp,
     ui_data_v1_bp,
     websocket_connection_v1_bp,
+    feedbacks_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
