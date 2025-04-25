@@ -27,7 +27,7 @@ class Claude3Point5TerminalCommandEditorPrompt(BaseClaude3Point5SonnetPrompt):
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = f"""
             Rewrite the given terminal command based on the user’s query inside <terminal_command> tags.
-            The command should be properly formatted for the user's OS and shell (e.g., Darwin 24.4.0, default shell: /opt/homebrew/bin/fish).
+            The command should be properly formatted for the user's OS and shell.
 
         """
         if self.params.get("os_name") and self.params.get("shell"):
