@@ -1,4 +1,4 @@
-from .base import Base
+from app.backend_common.models.dao.postgres.base import Base
 from tortoise import fields
 
 class ExtensionFeedback(Base):
