@@ -9,7 +9,7 @@ __all__ = [
     "MessageSession",
     "PixelEvents",
     "FailedOperations",
-    "ExtensionSession",
+    "ExtensionSession"
 ]
 from .extension_sessions import ExtensionSession
 from .failed_operations import FailedOperations
