@@ -21,9 +21,8 @@ async def list_saved_urls(_request: Request, client_data: ClientData, auth_data:
     try:
         response = await UrlService.get_saved_urls(
             user_team_id=auth_data.user_team_id,
-            limit=int(query_params.get("limit", [5])[0]),
-            offset=int(query_params.get("offset", [0])[0]),
-            client_data=client_data,
+            limit=int(query_params.get("limit", 5)),
+            offset=int(query_params.get("offset", 0))
         )
     except Exception as e:
         raise BadRequestException(f"Failed to fetch saved URLs: {str(e)}")
@@ -56,4 +55,29 @@ async def save_url(_request: Request, client_data: ClientData, auth_data: AuthDa
         response = await UrlService.save_url(payload)
     except Exception as e:
         raise e
+    return send_response(response, headers=kwargs.get("response_headers"))
+
+@urls_v1_bp.route("/update_url", methods=["PUT"])
+@validate_client_version
+@authenticate
+async def update_url(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
+    payload = _request.json
+    try:
+        payload["user_team_id"] = auth_data.user_team_id
+        payload = UrlDto(**payload)
+        response = await UrlService.update_url(payload)
+    except Exception as e:
+        raise e
+    return send_response(response, headers=kwargs.get("response_headers"))
+
+@urls_v1_bp.route("/delete_url", methods=["GET"])
+@validate_client_version
+@authenticate
+async def delete_url(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
+    query_params = _request.request_params()
+    url_id = int(query_params.get("url_id"))
+    try:
+        response = await UrlService.delete_url(url_id)
+    except Exception as e:
+        raise BadRequestException(f"Failed to fetch saved URLs: {str(e)}")
     return send_response(response, headers=kwargs.get("response_headers"))
