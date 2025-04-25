@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from app.backend_common.models.dao.postgres.extension_sessions import ExtensionSession
-from app.backend_common.repository.extension_feedbacks.repository import ExtensionFeedbacksRepository
+from app.main.blueprints.one_dev.services.repository.extension_feedbacks.repository import ExtensionFeedbacksRepository
 from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from app.main.blueprints.one_dev.models.dto.job_feedback import JobFeedbackDTO
 from app.main.blueprints.one_dev.services.code_generation.feedback.dataclasses.main import (
@@ -31,9 +31,6 @@ class FeedbackService:
 
     @classmethod
     async def record_extension_feedback(cls, query_id: int, feedback: str, session_id: int, user_team_id: int) -> Dict[str, Any]:
-        if await ExtensionFeedbacksRepository.get_feedback_by_query_id(query_id=query_id):
-            return {"message": "Extension feedback already exists"}
-
         message_thread = await MessageThreadsRepository.get_message_thread_by_id(message_thread_id=query_id)
         if not message_thread or message_thread.session_id != session_id:
             raise ValueError("Invalid query_id/session_id provided")
