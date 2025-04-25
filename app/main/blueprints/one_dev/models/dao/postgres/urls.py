@@ -12,6 +12,7 @@ class Url(Base):
         "is_deleted",
         "created_at",
         "updated_at",
+        "last_indexed"
     }
     id = fields.IntField(primary_key=True)
     name = fields.TextField()
