@@ -20,11 +20,15 @@ from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
+    TerminalCommandEditInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
 )
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
+from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor import (
+    TerminalCommandEditGenerator,
+)
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
@@ -170,8 +174,25 @@ async def generate_inline_edit(
     return send_response({"job_id": data, "session_id": session_id})
 
 
+@code_gen_v2_bp.route("/terminal-command-edit", methods=["POST"])
+@validate_client_version
+@authenticate
+@ensure_session_id(auto_create=True)
+async def terminal_command_edit(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+):
+    input_data = TerminalCommandEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
+    result = await TerminalCommandEditGenerator().get_new_terminal_command(
+        payload=input_data,
+        client_data=client_data,
+    )
+    return send_response(result)
+
+
 # This is for testing purposes only
 # This mocks the AWS api gateway connection
+
+
 @code_gen_v2_bp.websocket("/generate-code-local-connection")
 async def sse_websocket(request: Request, ws: Any):
     try:

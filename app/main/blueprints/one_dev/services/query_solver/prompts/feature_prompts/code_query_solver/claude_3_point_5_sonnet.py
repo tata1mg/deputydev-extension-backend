@@ -291,6 +291,17 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+        if self.params.get("os_name") and self.params.get("shell"):
+            system_message += f"""
+            ====
+
+            SYSTEM INFORMATION:
+
+            Operating System: {self.params.get("os_name")}
+            Default Shell: {self.params.get("shell")}
+
+            ====
+             """
 
         user_message = f"""
             User Query: {self.params.get("query")}
@@ -392,7 +403,6 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             {self.params.get("deputy_dev_rules")}
             </user_rules_or_info>
             """
-
         return UserAndSystemMessages(
             user_message=user_message if not focus_chunks_message else focus_chunks_message + user_message,
             system_message=system_message,

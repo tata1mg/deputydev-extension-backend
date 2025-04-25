@@ -42,6 +42,8 @@ class QuerySolverInput(BaseModel):
     deputy_dev_rules: Optional[str] = None
     user_team_id: Optional[int] = None
     session_type: Optional[str] = None
+    os_name: str
+    shell: str
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
@@ -73,6 +75,15 @@ class InlineEditInput(BaseModel):
         if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
             return None
         return v
+
+
+class TerminalCommandEditInput(BaseModel):
+    session_id: int
+    query: str
+    old_terminal_command: str
+    os_name: str
+    shell: str
+    auth_data: AuthData
 
 
 class ResponseMetadataContent(BaseModel):
