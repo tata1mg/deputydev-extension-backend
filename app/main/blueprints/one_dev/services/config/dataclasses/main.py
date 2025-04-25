@@ -9,15 +9,14 @@ class ConfigType(Enum):
     MAIN = "MAIN"
     ESSENTIAL = "ESSENTIAL"
 
-
 class Architecture(Enum):
     x64 = "x64"
     ARM_64 = "arm64"
 
-
 class OS(Enum):
     DARWIN = "darwin"
     LINUX = "linux"
+    WINDOWS = "win32"
 
 
 class ConfigParams(BaseModel):

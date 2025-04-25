@@ -30,6 +30,15 @@
       "team_id": 4,
       "org_name": "5c Network"
     },
+    "TBO": {
+      "domain": "tbo.com",
+      "team_id": 5,
+      "org_name": "TBO"
+    },
+    "DEPUTYDEV_PRIVATE": {
+      "team_id": 6,
+      "org_name": "DeputyDev Private"
+    },
     "CARATLANE": {
       "domain": "caratlane.com",
       "team_id": 5,
@@ -450,7 +459,20 @@
             "service_path": ""
           }
         },
-        "linux": {}
+        "linux": {
+          "x64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        },
+        "win32": {
+          "x64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        }
       }
     },
     "PASSWORD": "",
@@ -478,6 +500,10 @@
     "ENABLED": true
   },
   "IS_RELATED_CODE_SEARCHER_ENABLED": true,
+  "DD_HOST_WS": "ws://localhost:8084",
+  "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
+  "POLLING_MAX_ATTEMPTS": 3000,
+  "ALLOWED_EMAILS": [],
   "VERTEX": {
     "type": "service_account",
     "project_id": "gen-lang-client-0459191601",
