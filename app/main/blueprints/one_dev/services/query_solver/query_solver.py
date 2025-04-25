@@ -71,7 +71,7 @@ from .prompts.factory import PromptFeatureFactory
 
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.1.0" # change to 2.2.2
+MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.3.2"  # change to 2.3.2?
 
 
 class QuerySolver:
@@ -184,7 +184,6 @@ class QuerySolver:
         return _streaming_content_block_generator()
 
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
-        print("QuerySolverInput:", payload)
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
