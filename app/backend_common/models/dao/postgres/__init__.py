@@ -10,6 +10,7 @@ __all__ = [
     "PixelEvents",
     "FailedOperations",
     "ExtensionSession",
+    "ExtensionFeedback",
 ]
 from .extension_sessions import ExtensionSession
 from .failed_operations import FailedOperations
@@ -22,3 +23,4 @@ from .tokens import Tokens
 from .user_teams import UserTeams
 from .users import Users
 from .workspaces import Workspaces
+from .extension_feedbacks import ExtensionFeedback
