@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from sanic.log import logger
 
@@ -15,6 +15,24 @@ from app.backend_common.repository.db import DB
 
 
 class MessageThreadsRepository:
+
+    @classmethod
+    async def get_message_thread_by_id(cls, message_thread_id: int) -> Optional[MessageThreadDTO]:
+        try:
+            message_thread = await DB.by_filters(
+                model_name=MessageThread,
+                where_clause={"id": message_thread_id},
+                fetch_one=True,
+            )
+            if not message_thread:
+                return None
+            return MessageThreadDTO(**message_thread)
+        except Exception as ex:
+            logger.error(
+                f"error occurred while getting message_thread in db for message_thread_id : {message_thread_id}, ex: {ex}"
+            )
+            raise ex
+
     @classmethod
     async def get_message_threads_for_session(
         cls, session_id: int, call_chain_category: MessageCallChainCategory, content_hashes: List[str] = []
