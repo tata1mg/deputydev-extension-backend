@@ -8,40 +8,20 @@ from app.main.blueprints.one_dev.services.urls.prompts.factory import PromptFeat
 from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
 from app.main.blueprints.one_dev.repository.url_repository import UrlRepository
-
-if TYPE_CHECKING:
-    from app.main.blueprints.one_dev.models.dto.url import UrlDto
+from app.main.blueprints.one_dev.models.dto.url import UrlDto
 
 
 class UrlService:
-    @staticmethod
-    async def get_saved_urls(user_team_id: int, limit: int, offset: int) -> Dict[str, Any]:
-        # Fetch saved URLs
-        urls = (
-            await Url.filter(user_team_id=user_team_id, is_deleted=False)
-            .order_by("-created_at")
-            .offset(offset)
-            .limit(limit)
+    @classmethod
+    async def get_saved_urls(cls, user_team_id: int, limit: int, offset: int) -> Dict[str, Any]:
+        urls, total_count = await UrlRepository.list_urls_with_count(
+            user_team_id=user_team_id, limit=limit, offset=offset
         )
-
-        # Count total number of saved URLs
-        total_count = await Url.filter(user_team_id=user_team_id, is_deleted=False).count()
-
         # Calculate pagination metadata
         total_pages = (total_count + limit - 1) // limit
-        page_number = offset // limit
-
+        page_number = (offset // limit) + 1
         # Prepare the response
-        url_list = [
-            {
-                "id": url.id,
-                "url": url.url,
-                "name": url.name,
-                "last_indexed": url.last_indexed.isoformat() if url.last_indexed else None,
-            }
-            for url in urls
-        ]
-
+        url_list = [cls.parse_url(UrlDto(**url)) for url in urls]
         return {
             "urls": url_list,
             "meta": {"page_number": page_number, "total_pages": total_pages, "total_count": total_count},
@@ -50,31 +30,26 @@ class UrlService:
     @classmethod
     async def summarize_urls_long_content(cls, session_id, content):
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
-        max_retries = 2
         response: Optional[NonStreamingParsedLLMCallResponse] = None
-        for attempt in range(max_retries + 1):
-            try:
-                llm_response = await llm_handler.start_llm_query(
-                    session_id=session_id,
-                    prompt_feature=PromptFeatures.URL_SUMMARIZATION,
-                    llm_model=LLModels.GEMINI_2_POINT_5_PRO,
-                    prompt_vars={"content": content},
-                    call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
-                )
-                if llm_response:
-                    if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
-                        raise ValueError("Expected NonStreamingParsedLLMCallResponse")
-                    response = llm_response
-                    break
-            except Exception as e:
-                AppLogger.log_warn(f"URL summarization call Attempt {attempt + 1} failed: {e}")
-                await asyncio.sleep(1)  # Optional: add a delay
+        try:
+            llm_response = await llm_handler.start_llm_query(
+                session_id=session_id,
+                prompt_feature=PromptFeatures.URL_SUMMARIZATION,
+                llm_model=LLModels.GEMINI_2_POINT_5_PRO,
+                prompt_vars={"content": content},
+                call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
+            )
+            if llm_response:
+                if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+                    raise ValueError("Expected NonStreamingParsedLLMCallResponse")
+                response = llm_response
+        except Exception as e:
+            AppLogger.log_warn(f"URL summarization call failed: {e}")
 
         if response:
             generated_explanation = response.parsed_content[0].get("explanation")
             return generated_explanation
-
-        return {}
+        return ""
 
     @classmethod
     async def save_url(cls, payload: "UrlDto"):
