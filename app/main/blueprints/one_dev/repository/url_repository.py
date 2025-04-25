@@ -26,3 +26,15 @@ class UrlRepository:
         url_dict = await DB.by_filters(Url, where_clause={"id": paylaod.id}, fetch_one=True)
         paylaod.url, paylaod.last_indexed = url_dict.get("url"), url_dict.get("last_indexed")
         return paylaod
+
+    @classmethod
+    async def list_urls_with_count(cls, user_team_id, limit, offset):
+        urls = (
+            await Url.filter(user_team_id=user_team_id, is_deleted=False)
+            .order_by("-created_at")
+            .offset(offset)
+            .limit(limit)
+        )
+        urls = [await url.to_dict() for url in urls]
+        count = await Url.filter(user_team_id=user_team_id, is_deleted=False).count()
+        return urls, count
