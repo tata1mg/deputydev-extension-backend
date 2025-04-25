@@ -252,6 +252,10 @@ class Anthropic(BaseLLMProvider):
                 usage.input = invocation_metrics.get("inputTokenCount")
             if "outputTokenCount" in invocation_metrics:
                 usage.output = invocation_metrics.get("outputTokenCount")
+            if "cacheReadInputTokenCount" in invocation_metrics:
+                usage.cache_read = invocation_metrics.get("cacheReadInputTokenCount")
+            if "cacheWriteInputTokenCount" in invocation_metrics:
+                usage.cache_write = invocation_metrics.get("cacheWriteInputTokenCount")
 
             return None, None, usage
 
