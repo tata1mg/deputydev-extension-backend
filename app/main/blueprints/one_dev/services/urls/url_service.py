@@ -1,7 +1,6 @@
 import asyncio
 from deputydev_core.utils.app_logger import AppLogger
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dao.postgres.urls import Url
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.urls.prompts.dataclasses.main import PromptFeatures
@@ -9,13 +8,14 @@ from app.main.blueprints.one_dev.services.urls.prompts.factory import PromptFeat
 from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
 from app.main.blueprints.one_dev.repository.url_repository import UrlRepository
+
 if TYPE_CHECKING:
     from app.main.blueprints.one_dev.models.dto.url import UrlDto
 
 
 class UrlService:
     @staticmethod
-    async def get_saved_urls(user_team_id: int, limit: int, offset: int, client_data: ClientData) -> Dict[str, Any]:
+    async def get_saved_urls(user_team_id: int, limit: int, offset: int) -> Dict[str, Any]:
         # Fetch saved URLs
         urls = (
             await Url.filter(user_team_id=user_team_id, is_deleted=False)
@@ -79,5 +79,20 @@ class UrlService:
     @classmethod
     async def save_url(cls, payload: "UrlDto"):
         url = await UrlRepository.save_url(payload)
-        return url.model_dump()
+        return cls.parse_url(url)
 
+    @classmethod
+    async def update_url(cls, payload: "UrlDto"):
+        url = await UrlRepository.update_url(payload)
+        return cls.parse_url(url)
+
+    @classmethod
+    async def delete_url(cls, url_id):
+        await UrlRepository.delete_url(url_id)
+
+    @classmethod
+    def parse_url(cls, url: "UrlDto"):
+        keys = ["id", "name", "url", "last_indexed"]
+        data = url.model_dump(include=set(keys))
+        data["last_indexed"] = url.last_indexed.isoformat() if url.last_indexed else None
+        return data
