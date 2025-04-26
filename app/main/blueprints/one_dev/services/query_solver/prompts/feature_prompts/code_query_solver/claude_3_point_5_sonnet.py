@@ -291,6 +291,10 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+        urls_message = ""
+        if self.params.get("urls"):
+            urls = self.params.get("urls")
+            urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
 
         user_message = f"""
             User Query: {self.params.get("query")}
@@ -393,8 +397,13 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             </user_rules_or_info>
             """
 
+        if focus_chunks_message:
+            user_message = focus_chunks_message + "\n" + user_message
+        if urls_message:
+            user_message = urls_message + "\n" + user_message
+
         return UserAndSystemMessages(
-            user_message=user_message if not focus_chunks_message else focus_chunks_message + user_message,
+            user_message=user_message,
             system_message=system_message,
         )
 
