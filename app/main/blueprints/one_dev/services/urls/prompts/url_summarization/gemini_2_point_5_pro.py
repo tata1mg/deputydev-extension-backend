@@ -2,11 +2,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    TextBlockData,
-    MessageData
-)
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory, TextBlockData, MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -25,55 +21,61 @@ class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
     max_content_size = int(CONFIG.config["BINARY"]["URL_CONTENT_READER"]["MAX_CONTENT_SIZE"] / 5)
 
     def get_prompt(self) -> UserAndSystemMessages:
-        # TODO: need to work on prompt
         system_message = f"""
             You are a highly capable language model assistant. Your job is to thoroughly cut down long-form articles ranging in total size {self.max_content_size} and {self.max_content_size+10000} words in depth and detail without lossing any data. 
             You must not omit any content, including code blocks, tables, equations, or structured data. 
             Your explanation should mirror the structure of the original document, ensuring no part is skipped. 
             Your output should be clear, instructional, and highly accurate, without hallucinations. 
-            All elements (such as code, tables, equations, and figures) must be preserved, referenced, and explained comprehensively. 
-            Maintain the original context, explain rationale and relationships between sections, and ensure the total response does not exceed 16,000 words.
+            All elements (such as code, tables, equations) must be preserved, referenced, and explained comprehensively. 
+            Maintain the original context, explain rationale and relationships between sections, and ensure the total response does not exceed {self.max_content_size} words.
             """
 
         user_message = f"""
-            I am providing articles. The total size of the combined articles ranges from {self.max_content_size} to {self.max_content_size + 10000} words.. Please provide a detailed explanation of the entire article.
-            Follow these instructions:
-            Structure: Preserve the structure and flow of the original article. Do not skip any section, appendix, footnote, or embedded note.
-                Code Blocks:
-                    Include every code snippet as it appears.
-                    Explain each snippet thoroughly, including line-by-line explanations where applicable.
-                    Describe context, input/output, and usage.
-    
-                Tables:
-                    Reproduce all tables accurately.
-                    Explain the content and significance of each table.
-    
-                Figures & Diagrams:
-                    Interpret and describe any figure or diagram mentioned in the article.
-                    If textual, reconstruct in markdown or ASCII if helpful.
-                Equations:
-                    Preserve all mathematical formulas.
-                    Explain variables, derivations, and usage.
-                Explanatory Style:
-                    Be clear, deep, and instructional.
-                    Connect ideas logically and show why each part matters.
-                    Avoid summarizing. Focus on complete explanation.
-            Limits:
-                Your explanation should not exceed {self.max_content_size} words.
-                Do not add your own thoughts at all. Only give those explanation which is present in article.
-                
-            Do not hallucinate or invent content not in the original article.
-            Give exact same number of articles as ginver
-            Format the output with clear section headers, subheaders, and proper markdown for readability.
+            I am providing articles. The total size of the combined articles ranges from {self.max_content_size} to {self.max_content_size + 10000} words. 
+            Please provide a detailed explanation of the entire article in not more than {self.max_content_size} words based solely on its content.
+            
+            Instructions:
+            
+            1. Structure:
+               - Preserve the original structure and flow of the article.
+               - Do not omit any sections, appendices, footnotes, or embedded notes.
+            
+            2. Content Elements:
+               - Code Blocks:
+                 - Include every code snippet exactly as it appears.
+                 - Only provide explanations if they are present in the article.
+                 - Do not add line-by-line explanations unless explicitly provided.
+            
+               - Tables:
+                 - Reproduce all tables accurately.
+                 - Explain content only if explanations are present in the article.
+            
+               - Equations:
+                 - Preserve all mathematical formulas.
+                 - Explain variables, derivations, and usage only as described in the article.
+            
+            3. Explanatory Style:
+               - Be clear and instructional, strictly adhering to the article's explanations.
+               - Connect ideas only as presented in the article.
+               - Avoid summarizing or interpreting content beyond what is provided.
+            
+            4. Constraints:
+               - Do not exceed {self.max_content_size} words.
+               - Do not add personal thoughts, interpretations, or external information.
+               - Refrain from hallucinating or inventing content not present in the original article.
+               - Provide exactly the same number of articles as given.
+            
+            5. Formatting:
+               - Use clear section headers and subheaders.
+               - Apply proper markdown formatting for readability.
         """
-
         summarization_prompt = f"""
             {user_message}
             Input Example: 
             <articles>
-                Content of URL {{url_link}}: 
+                Content of URL {{url_link_1}}: 
                     {{url content}}
-                Content of URL {{url_link}}: 
+                Content of URL {{url_link_2}}: 
                     {{url content}}
             </articles>
             
@@ -114,7 +116,6 @@ class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
         final_content: List[Dict[str, Any]] = []
-
         for content_block in llm_response.content:
             if content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
                 raise NotImplementedError("Tool use request not implemented for this prompt")
