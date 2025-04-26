@@ -216,7 +216,7 @@ class QuerySolver:
 
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                llm_model=LLModels.CLAUDE_3_POINT_7_SONNET,
                 prompt_vars={
                     "query": payload.query,
                     "focus_items": payload.focus_items,
