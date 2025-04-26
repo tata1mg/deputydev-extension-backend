@@ -22,13 +22,22 @@ class FocusItemTypes(Enum):
     FILE = "file"
     DIRECTORY = "directory"
     CODE_SNIPPET = "code_snippet"
+    URL = "url"
 
 
 class DetailedFocusItem(BaseModel):
     type: FocusItemTypes
     value: Optional[str] = None
     chunks: List[ChunkInfo] = []
-    path: str
+    path: Optional[str] = ""
+    url: Optional[str] = ""
+
+
+class Url(BaseModel):
+    value: str
+    url: str
+    type: str
+    keyword: str
 
 
 class QuerySolverInput(BaseModel):
@@ -42,6 +51,7 @@ class QuerySolverInput(BaseModel):
     deputy_dev_rules: Optional[str] = None
     user_team_id: Optional[int] = None
     session_type: Optional[str] = None
+    urls: Optional[List[Url]] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
