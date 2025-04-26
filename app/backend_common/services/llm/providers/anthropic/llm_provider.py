@@ -308,11 +308,24 @@ class Anthropic(BaseLLMProvider):
             )
 
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "text_delta":
+            delta_text = event["delta"]["text"]
+            # Skip completely empty text deltas
+            if not delta_text:
+                return None, current_running_block_type, None
+
+            # If it's only whitespace, either skip it or add a single space
+            if not delta_text.strip():
+                # Option 1: Skip whitespace-only deltas
+                return None, current_running_block_type, None
+
+                # Option 2 (alternative): Replace with a single space
+                # delta_text = " "
+
             return (
                 TextBlockDelta(
                     type=StreamingEventType.TEXT_BLOCK_DELTA,
                     content=TextBlockDeltaContent(
-                        text=event["delta"]["text"],
+                        text=delta_text,
                     ),
                 ),
                 ContentBlockCategory.TEXT_BLOCK,
