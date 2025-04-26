@@ -505,16 +505,16 @@
   "POLLING_MAX_ATTEMPTS": 3000,
   "ALLOWED_EMAILS": [],
   "VERTEX": {
-    "type": "service_account",
-    "project_id": "gen-lang-client-0459191601",
-    "private_key_id": "290e23b1d0111c40a2076b68cf68098c972f97e2",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDFQRAG5g24gZzE\ni7UjWovMTbIc7sVgonUpYkxUTkiwmdmzxgWjPRUcmFNUBzHf6uTCPquYRIQarWf+\nPbd416ooZD10Svrj9sYFuIfUeCC/2H/kCeans0VWpKrs9952CMIL47BwHTNjkDrU\nfgeYKE6j3PDmA/dWH/lzRaLK9awOh69TCEHO32h9cjVikDsbwm3j08DzQWdmxu7A\ndFYr2O7HFUizfE/Ueqv5tiX2o0YVyeKDzy5hAHU+u/rw7Re9i0HVgKkCimrBPKv5\nTrZMkq6Fsdqf5BrtT4JHrrLB/DmEVSNTA27xO8ygicZlbARYq056RAWAB9A7Cbqv\njtbb+rOHAgMBAAECggEASKGd6KRiDfuvwVFeB+AJ1NcRDAVBaUU4ld3rlCllK53i\n4wa5wbM2qFpQaILjsvsXc4zG+2DTMc2DGsMX4SesMIZEeKM5QaJ2pNmfLjVzfaCW\n6t1YcIyarf4hL/NPFzA/X0heCdI+v1z2xJKJclX5Ku4qR8/TDYPlgrPz7v7J9WkL\n+KL6TyTjZegxcBBxatFOZ/IgN8STACtzqdODQ3PZpSnUjidLtbOH+sL0A8t6V/xB\nD70Nv6Ad46jKgjEdz01BdsbVGamx+5GlAYXCtvqbsBrnowc0TuHY8EYSKLLh+rGH\nvB9/EkzUGKJITkhhYiaziY3TKj4aPxoE/hWMB+4VrQKBgQDuQO6NebO5pjINRw5T\nRJzbSqHzWtVgipBGpPWb2xLuhMcZdWIlpXkG7wSKQDFxqWdwuGMto8XyviRbslm7\nKRUnJoLllnz+SOGgATB28SQsrY5f0AUv/M6oyCMHivX2RRg/69ZYtAtvySfUQdk2\nExPxggk0ziEeF/vCH8Yq+DtWRQKBgQDT8lgi4gzKWzLcSnDeVnPCseK1mvWqGhKJ\nTs/dw6sEZBE90Edj89RVbUeYG8L3vVZYUB92YBj8k8EzUDYEXutaMPVqbrDaH11T\nqPL3qX8aPTBzj9ASpBlVV06qRJZIR6vpqRLslNktbqKZqbzZ1xIR9ZGG8DZ/q4EN\nKDOgIrf1WwKBgE52hdmDvgOizxL+VqJnkzzI7GLnhCQCHheV1ekZEbgJdERXGxaI\n0z3MU3NwRphHEPDXWJo8OEGECxdDujdgBT5aeXtAvzNDL0LxgVN6gM5R7fRx3nN6\nT1jYaGjgg7Yx9RWABpw51xZeacaGVRFw4P2FNKD2TYPKpDe/HRUjoO79AoGABhR1\nosqJQ2TKWLdp9XbVa0hfEIaZdX+5+GZiYCI0zbNxKyzGX3+nH6w62YoyVZkA2Rez\nT1oCXXx/llE+u3FdnwC4iY0TVa6Apt252pDqLH6E3UvK1D4Q2/ndL9U32mrz64gG\nGvNKJ5t83puX50fcJNe+jPhnF9J7qTz1/ioAzPECgYATVA7u53QJMIf89kaVSUhp\nd61rQpnCZHq0X0OHIiGfllRRFKPMlA9GRJkvMcOJAKnw1yc4ARJt+1SvUHsMGUXH\nDklx8x0XqV/VUmfuZ/ITyCY/hooaTIN7BHVdZj83fnjC3z/XlA9LK8OvKHFfxa17\n6in/uP4rNDMWAdhI2ERPRg==\n-----END PRIVATE KEY-----\n",
-    "client_email": "vertex-gemini-access@gen-lang-client-0459191601.iam.gserviceaccount.com",
-    "client_id": "105483986421560608689",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vertex-gemini-access%40gen-lang-client-0459191601.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
+    "type": "",
+    "project_id": "",
+    "private_key_id": "",
+    "private_key": "",
+    "client_email": "",
+    "client_id": "",
+    "auth_uri": "",
+    "token_uri": "",
+    "auth_provider_x509_cert_url": "",
+    "client_x509_cert_url": "",
+    "universe_domain": ""
   }
 }
