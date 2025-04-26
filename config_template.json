@@ -505,16 +505,16 @@
   "POLLING_MAX_ATTEMPTS": 3000,
   "ALLOWED_EMAILS": [],
   "VERTEX": {
-    "type": "service_account",
-    "project_id": "gen-lang-client-0459191601",
-    "private_key_id": "290e23b1d0111c40a2076b68cf68098c972f97e2",
-    "private_key": "***REMOVED***",
-    "client_email": "vertex-gemini-access@gen-lang-client-0459191601.iam.gserviceaccount.com",
-    "client_id": "105483986421560608689",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vertex-gemini-access%40gen-lang-client-0459191601.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
+    "type": "",
+    "project_id": "",
+    "private_key_id": "",
+    "private_key": "",
+    "client_email": "",
+    "client_id": "",
+    "auth_uri": "",
+    "token_uri": "",
+    "auth_provider_x509_cert_url": "",
+    "client_x509_cert_url": "",
+    "universe_domain": ""
   }
 }
