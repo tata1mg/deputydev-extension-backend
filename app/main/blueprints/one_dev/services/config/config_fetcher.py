@@ -115,7 +115,7 @@ class ConfigFetcher:
                 "VALIDATE_CONTENT_UPDATION": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
                     "VALIDATE_CONTENT_UPDATION"
                 ],
-                "BATCH_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["BATCH_SIZE"]
+                "BATCH_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["BATCH_SIZE"],
             },
         },
         ConfigConsumer.VSCODE_EXT: {

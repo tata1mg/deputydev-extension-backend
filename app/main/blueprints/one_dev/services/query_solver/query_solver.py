@@ -55,11 +55,11 @@ from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_se
 from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
     GREP_SEARCH,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
-    PUBLIC_URL_CONTENT_READER,
-)
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
+    PUBLIC_URL_CONTENT_READER,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
