@@ -50,8 +50,12 @@ class UserQueryEnhancer:
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
                 raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
-            return self._get_response_from_parsed_llm_response(
+            response = self._get_response_from_parsed_llm_response(
                 parsed_llm_response=llm_response.parsed_content,
             )
+
+            response["session_id"] = payload.session_id
+
+            return response
 
         raise ValueError("query must be provided")
