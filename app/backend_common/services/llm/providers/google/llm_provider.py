@@ -1,12 +1,20 @@
-from typing import Any, Dict, List, Optional, Union, AsyncIterator  # Added AsyncIterator
+from typing import (  # Added AsyncIterator
+    Any,
+    AsyncIterator,
+    Dict,
+    List,
+    Optional,
+    Union,
+)
+
 from vertexai.generative_models import (  # Add Vertex AI imports
     Content,
     GenerationResponse,
+    HarmCategory,
     Part,
+    SafetySetting,
     Tool,
     ToolConfig,
-    HarmCategory,
-    SafetySetting,
 )
 
 # Your existing DTOs and base class
@@ -20,6 +28,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     TextBlockData,
     ToolUseResponseData,
 )
+from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
@@ -27,7 +36,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     PromptCacheConfig,
     UserAndSystemMessages,
 )
-from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 
 
 class Google(BaseLLMProvider):

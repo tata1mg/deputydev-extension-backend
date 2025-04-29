@@ -1,16 +1,20 @@
 from typing import Any, Dict
 
 from app.backend_common.models.dao.postgres.extension_sessions import ExtensionSession
-from app.main.blueprints.one_dev.services.repository.extension_feedbacks.repository import ExtensionFeedbacksRepository
-from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
+from app.backend_common.repository.db import DB
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
 from app.main.blueprints.one_dev.models.dto.job_feedback import JobFeedbackDTO
 from app.main.blueprints.one_dev.services.code_generation.feedback.dataclasses.main import (
     CodeGenerationFeedbackInput,
 )
+from app.main.blueprints.one_dev.services.repository.extension_feedbacks.repository import (
+    ExtensionFeedbacksRepository,
+)
 from app.main.blueprints.one_dev.services.repository.job_feedback.main import (
     JobFeedbackService,
 )
-from app.backend_common.repository.db import DB
 
 
 class FeedbackService:
@@ -30,7 +34,9 @@ class FeedbackService:
         return {"message": "Feedback recorded successfully"}
 
     @classmethod
-    async def record_extension_feedback(cls, query_id: int, feedback: str, session_id: int, user_team_id: int) -> Dict[str, Any]:
+    async def record_extension_feedback(
+        cls, query_id: int, feedback: str, session_id: int, user_team_id: int
+    ) -> Dict[str, Any]:
         message_thread = await MessageThreadsRepository.get_message_thread_by_id(message_thread_id=query_id)
         if not message_thread or message_thread.session_id != session_id:
             raise ValueError("Invalid query_id/session_id provided")

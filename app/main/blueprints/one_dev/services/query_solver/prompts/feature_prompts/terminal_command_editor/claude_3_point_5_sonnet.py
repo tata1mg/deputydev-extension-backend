@@ -40,7 +40,7 @@ class Claude3Point5TerminalCommandEditorPrompt(BaseClaude3Point5SonnetPrompt):
             Default Shell: {self.params.get("shell")}
 
             ====
-             """
+            """
 
         user_message = f"""
         User Query: {self.params.get("query")}
