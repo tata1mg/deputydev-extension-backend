@@ -23,6 +23,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.s
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.terminal_command_editor.factory import (
     TerminalCommandEditorPromptFactory,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.factory import (
+    UserQueryEnhancerPromptFactory,
+)
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
@@ -31,6 +34,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.SESSION_SUMMARY_GENERATOR: SessionSummaryGeneratorPromptFactory,
         PromptFeatures.INLINE_EDITOR: InlineEditorPromptFactory,
         PromptFeatures.TERMINAL_COMMAND_EDITOR: TerminalCommandEditorPromptFactory,
+        PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
     }
 
     @classmethod
