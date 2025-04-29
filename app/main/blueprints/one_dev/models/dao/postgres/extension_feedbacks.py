@@ -1,5 +1,7 @@
-from app.backend_common.models.dao.postgres.base import Base
 from tortoise import fields
+
+from app.backend_common.models.dao.postgres.base import Base
+
 
 class ExtensionFeedback(Base):
     serializable_keys = {
