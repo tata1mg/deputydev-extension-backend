@@ -95,7 +95,7 @@ class Anthropic(BaseLLMProvider):
                         last_tool_use_request
                         and conversation_turns
                         and not isinstance(conversation_turns[-1].content, str)
-                        and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
+                        and conversation_turns[-1].content[-1]["toolUse"]["toolUseId"] == content_data.tool_use_id
                     ):
                         content.append({
                             "toolResult":
@@ -199,7 +199,6 @@ class Anthropic(BaseLLMProvider):
         if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
-        # print("llm message", llm_payload["messages"])
         return llm_payload
 
     def format_tools(self, tools: Optional[List[ConversationTool]]):
@@ -460,6 +459,7 @@ class Anthropic(BaseLLMProvider):
                         accumulated_events.append(event_block)
                         yield event_block
 
+                    # print("event meta data", event.get("metadata"))
                     # Handle usage metrics if provided separately
                     if "metadata" in event and "usage" in event["metadata"]:
                         usage.input = event["metadata"]["usage"].get("inputTokens", usage.input)
