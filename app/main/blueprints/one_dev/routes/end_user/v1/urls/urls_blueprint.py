@@ -3,13 +3,16 @@ from typing import Any
 from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
-from app.main.blueprints.one_dev.utils.session import ensure_session_id
+
+from app.main.blueprints.one_dev.models.dto.url import UrlDto
+from app.main.blueprints.one_dev.services.urls.url_service import UrlService
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.one_dev.utils.client.client_validator import validate_client_version
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+)
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.services.urls.url_service import UrlService
-from app.main.blueprints.one_dev.models.dto.url import UrlDto
+from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 urls_v1_bp = Blueprint("urls_v1_bp", url_prefix="/urls")
 

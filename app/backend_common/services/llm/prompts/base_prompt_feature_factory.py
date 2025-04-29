@@ -8,6 +8,7 @@ PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
 # Only getting used in CLI
 
+
 class BasePromptFeatureFactory(Generic[PromptFeatures]):
     @classmethod
     def get_prompt(cls, model_name: LLModels, feature: PromptFeatures) -> Type[BasePrompt]:
