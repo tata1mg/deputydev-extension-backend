@@ -93,3 +93,7 @@ class ResponseMetadataContent(BaseModel):
 class ResponseMetadataBlock(BaseModel):
     content: ResponseMetadataContent
     type: str
+
+class UserQueryEnhancerInput(BaseModel):
+    session_id: int
+    user_query: str
