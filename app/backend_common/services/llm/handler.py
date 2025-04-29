@@ -269,13 +269,13 @@ class LLMHandler(Generic[PromptFeatures]):
                     previous_responses=previous_responses,
                     tools=tools,
                     cache_config=self.cache_config,
+                    use_converse=True
                 )
 
                 llm_response = await client.call_service_client(
                     llm_payload, llm_model, stream=stream, response_type=response_type
                 )
 
-                # start task for storing LLM message in DB
                 asyncio.create_task(
                     self.store_llm_response_in_db(
                         llm_response,
