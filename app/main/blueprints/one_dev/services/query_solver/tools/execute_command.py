@@ -17,7 +17,17 @@ EXECUTE_COMMAND = ConversationTool(
 
         Be cautious: Some commands may be destructive or require elevated privileges. 
         Use the `requires_approval` flag to indicate if explicit user consent is needed.
+        Use the `isLongRunningProcess` flag to indicate if the command is expected to take a long time
 
+        If a command may invoke a pager (such as `git`, `less`, `man`, etc.), you must modify 
+        the command to disable it. You can do this by adding options like `--no-pager` (e.g., `git --no-pager`) 
+        or by piping the output through `cat` (e.g., `man ls | cat`). This ensures that output 
+        is streamed directly and not buffered or paginated.
+
+        Also ensure that the command does not require any user input or interaction if possible. (not strictly enforced)
+
+        The tool will return the terminal output in response.
+        
     """,
     input_schema={
         "type": "object",
@@ -39,7 +49,15 @@ EXECUTE_COMMAND = ConversationTool(
                     "Set to false for safe operations like reading files, listing contents, or starting a dev server, etc"
                 ),
             },
+            "is_long_running": {
+            "type": "boolean",
+            "description": (
+                "Indicates if the command is expected to take a long time to complete. "
+                "Set to true for operations like builds, server startups, or installations; "
+                "false for quick tasks like listing files or checking status."
+            ),
         },
-        "required": ["command", "requires_approval"],
+        },
+        "required": ["command", "requires_approval","is_long_running"],
     },
 )

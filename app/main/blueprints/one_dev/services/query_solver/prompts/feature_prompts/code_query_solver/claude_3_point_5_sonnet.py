@@ -375,7 +375,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
-            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag.
+            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
         """
 
         if self.params.get("write_mode"):
