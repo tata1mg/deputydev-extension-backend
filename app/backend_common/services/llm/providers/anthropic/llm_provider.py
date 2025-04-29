@@ -86,7 +86,6 @@ class Anthropic(BaseLLMProvider):
                 if isinstance(content_data, TextBlockContent):
                     content.append(
                         {
-                            "type": "text",
                             "text": content_data.text,
                         }
                     )
@@ -98,25 +97,26 @@ class Anthropic(BaseLLMProvider):
                         and not isinstance(conversation_turns[-1].content, str)
                         and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
                     ):
-                        content.append(
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": content_data.tool_use_id,
-                                "content": json.dumps(content_data.response),
+                        content.append({
+                            "toolResult":
+                                {
+                                    "toolUseId": content_data.tool_use_id,
+                                    "content": [{"json": content_data.response}],
+                                }
                             }
                         )
                         last_tool_use_request = False
                 else:
                     content.append(
                         {
-                            "type": "tool_use",
-                            "name": content_data.tool_name,
-                            "id": content_data.tool_use_id,
-                            "input": content_data.tool_input,
+                            "toolUse": {
+                                "name": content_data.tool_name,
+                                "toolUseId": content_data.tool_use_id,
+                                "input": content_data.tool_input,
+                            }
                         }
                     )
                     last_tool_use_request = True
-
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
 
@@ -130,7 +130,18 @@ class Anthropic(BaseLLMProvider):
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        use_converse=False
     ) -> Dict[str, Any]:
+
+        if use_converse:
+            return self.build_llm_payload_converse(
+                llm_model,
+                prompt,
+                tool_use_response,
+                previous_responses,
+                tools,
+                cache_config,
+            )
 
         model_config = self._get_model_config(llm_model)
         # create conversation array
@@ -147,16 +158,15 @@ class Anthropic(BaseLLMProvider):
         if tool_use_response:
             tool_message = ConversationTurn(
                 role=ConversationRole.USER,
-                content=[
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_response.content.tool_use_id,
+                content=[{
+                    "toolResult": {
+                        "toolUseId": tool_use_response.content.tool_use_id,
                         "content": json.dumps(tool_use_response.content.response),
+                    }
                     }
                 ],
             )
             messages.append(tool_message)
-
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []
 
@@ -189,7 +199,103 @@ class Anthropic(BaseLLMProvider):
         if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
+        # print("llm message", llm_payload["messages"])
         return llm_payload
+
+    def format_tools(self, tools: Optional[List[ConversationTool]]):
+        formatted_tools = []
+        for tool in tools:
+            formatted_tools.append({
+                "toolSpec": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "inputSchema": {
+                        "json": tool.input_schema
+                    }
+                }
+            })
+        return formatted_tools
+
+
+    def build_llm_payload_converse(
+        self,
+        llm_model,
+        prompt: Optional[UserAndSystemMessages] = None,
+        tool_use_response: Optional[ToolUseResponseData] = None,
+        previous_responses: List[MessageThreadDTO] = [],
+        tools: Optional[List[ConversationTool]] = None,
+        cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+    ) -> Dict[str, Any]:
+
+        model_config = self._get_model_config(llm_model)
+        # create conversation array
+        messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
+
+        # add system and user messages to conversation
+        if prompt:
+            user_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"text": prompt.user_message}]
+            )
+            messages.append(user_message)
+
+        # add tool result to conversation
+        if tool_use_response:
+            tool_message = ConversationTurn(
+                role=ConversationRole.USER,
+                content = [{
+                    "toolResult":
+                        {
+                            "toolUseId": tool_use_response.content.tool_use_id,
+                            "content": [{"json": tool_use_response.content.response}],
+                        }
+                }
+                ],
+            )
+            messages.append(tool_message)
+
+        # create tools sorted by name
+        tools = sorted(tools, key=lambda x: x.name) if tools else []
+        tools = self.format_tools(tools)
+        # create body
+        llm_payload: Dict[str, Any] = {
+            "anthropic_version": model_config["VERSION"],
+            "max_tokens": model_config["MAX_TOKENS"],
+            "system": prompt.system_message if prompt else "",
+            "messages": [message.model_dump(mode="json") for message in messages],
+            "toolConfig": {
+                "tools": tools
+            },
+        }
+
+        if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+            llm_payload["toolConfig"]["tools"].append({
+                                "cachePoint": {
+                                    "type": "default"
+                                }
+                            })
+        if (
+            cache_config.system_message
+            and prompt
+            and prompt.system_message
+            and model_config["PROMPT_CACHING_SUPPORTED"]
+        ):
+            llm_payload["system"] = [
+                {
+                    "text": prompt.system_message,
+                },
+                {
+                    "cachePoint": {"type": "default"},
+                }
+            ]
+
+        if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
+            llm_payload["messages"][-1]["content"].append({
+                    "cachePoint": {"type": "default"},
+                })
+
+        # print("llm message", llm_payload["messages"])
+        return llm_payload
+
 
     async def _get_service_client(self):
         if not self.anthropic_client:
@@ -232,111 +338,101 @@ class Anthropic(BaseLLMProvider):
         )
 
     def _get_parsed_stream_event(
-        self, event: Dict[str, Any], current_running_block_type: Optional[ContentBlockCategory] = None
+            self, event: Dict[str, Any], current_running_block_type: Optional[ContentBlockCategory] = None
     ) -> Tuple[Optional[StreamingEvent], Optional[ContentBlockCategory], Optional[LLMUsage]]:
-        """
-        Parses the streaming event and returns the corresponding content block and usage.
-
-        Args:
-            event (Dict[str, Any]): The event to parse.
-            current_running_block_type (ContentBlockCategory): The current running block type.
-
-        Returns:
-            Tuple[Optional[StreamingContentBlock], Optional[LLMUsage]]: The content block and usage.
-        """
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
 
-        if event["type"] == "message_stop":
-            invocation_metrics = event["amazon-bedrock-invocationMetrics"]
-            if "inputTokenCount" in invocation_metrics:
-                usage.input = invocation_metrics.get("inputTokenCount")
-            if "outputTokenCount" in invocation_metrics:
-                usage.output = invocation_metrics.get("outputTokenCount")
-            if "cacheReadInputTokenCount" in invocation_metrics:
-                usage.cache_read = invocation_metrics.get("cacheReadInputTokenCount")
-            if "cacheWriteInputTokenCount" in invocation_metrics:
-                usage.cache_write = invocation_metrics.get("cacheWriteInputTokenCount")
-
+        # Handle messageStop event
+        if "messageStop" in event:
             return None, None, usage
 
-        # parsers for tool use request blocks
-        if event["type"] == "content_block_start" and event["content_block"]["type"] == "tool_use":
-            return (
-                ToolUseRequestStart(
-                    type=StreamingEventType.TOOL_USE_REQUEST_START,
-                    content=ToolUseRequestStartContent(
-                        tool_name=event["content_block"]["name"],
-                        tool_use_id=event["content_block"]["id"],
+        # Handle contentBlockDelta
+        if "contentBlockDelta" in event:
+            delta = event["contentBlockDelta"]["delta"]
+
+            if "text" in delta and not (current_running_block_type and current_running_block_type != ContentBlockCategory.TEXT_BLOCK):
+                delta_text = delta.get("text", "").strip() or "empty"
+                return (
+                    TextBlockDelta(
+                        type=StreamingEventType.TEXT_BLOCK_DELTA,
+                        content=TextBlockDeltaContent(text=delta_text),
                     ),
-                ),
-                ContentBlockCategory.TOOL_USE_REQUEST,
-                None,
-            )
+                    ContentBlockCategory.TEXT_BLOCK,
+                    None,
+                )
 
-        if event["type"] == "content_block_delta" and event["delta"]["type"] == "input_json_delta":
-            return (
-                ToolUseRequestDelta(
-                    type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
-                    content=ToolUseRequestDeltaContent(
-                        input_params_json_delta=event["delta"]["partial_json"],
+            if "toolUse" in delta and current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+                tool_use_delta = delta.get("toolUse", {})
+                return (
+                    ToolUseRequestDelta(
+                        type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
+                        content=ToolUseRequestDeltaContent(
+                            input_params_json_delta=tool_use_delta.get("input", ""),
+                        ),
                     ),
-                ),
-                ContentBlockCategory.TOOL_USE_REQUEST,
-                None,
-            )
+                    ContentBlockCategory.TOOL_USE_REQUEST,
+                    None,
+                )
 
-        if (
-            event["type"] == "content_block_stop"
-            and current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST
-        ):
-            return (
-                ToolUseRequestEnd(
-                    type=StreamingEventType.TOOL_USE_REQUEST_END,
-                ),
-                ContentBlockCategory.TOOL_USE_REQUEST,
-                None,
-            )
-
-        # parsers for text blocks
-        if event["type"] == "content_block_start" and event["content_block"]["type"] == "text":
-            return (
-                TextBlockStart(
-                    type=StreamingEventType.TEXT_BLOCK_START,
-                ),
-                ContentBlockCategory.TEXT_BLOCK,
-                None,
-            )
-
-        if event["type"] == "content_block_delta" and event["delta"]["type"] == "text_delta":
-            delta_text = event["delta"]["text"]
-            # Skip completely empty text deltas
-            if not delta_text or not delta_text.strip():
-                delta_text = "empty"  # Single space as minimal non-empty content
-
-            return (
-                TextBlockDelta(
-                    type=StreamingEventType.TEXT_BLOCK_DELTA,
-                    content=TextBlockDeltaContent(
-                        text=delta_text,
+        # Handle contentBlockStart
+        if "contentBlockStart" in event:
+            start = event["contentBlockStart"]["start"]
+            if "toolUse" in start:
+                tool_use = start["toolUse"]
+                return (
+                    ToolUseRequestStart(
+                        type=StreamingEventType.TOOL_USE_REQUEST_START,
+                        content=ToolUseRequestStartContent(
+                            tool_name=tool_use.get("name", ""),
+                            tool_use_id=tool_use.get("toolUseId", ""),
+                        ),
                     ),
-                ),
-                ContentBlockCategory.TEXT_BLOCK,
-                None,
-            )
+                    ContentBlockCategory.TOOL_USE_REQUEST,
+                    None,
+                )
+            else:
+                # Assume it’s starting a text block
+                return (
+                    TextBlockStart(
+                        type=StreamingEventType.TEXT_BLOCK_START,
+                    ),
+                    ContentBlockCategory.TEXT_BLOCK,
+                    None,
+                )
 
-        if event["type"] == "content_block_stop" and current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
-            return (
-                TextBlockEnd(
-                    type=StreamingEventType.TEXT_BLOCK_END,
-                ),
-                ContentBlockCategory.TEXT_BLOCK,
-                None,
-            )
+        # Handle contentBlockStop
+        if "contentBlockStop" in event:
+            if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
+                return (
+                    TextBlockEnd(
+                        type=StreamingEventType.TEXT_BLOCK_END,
+                    ),
+                    None,
+                    None,
+                )
+            elif current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+                return (
+                    ToolUseRequestEnd(
+                        type=StreamingEventType.TOOL_USE_REQUEST_END,
+                    ),
+                    None,
+                    None,
+                )
 
-        return None, None, None
+        # Handle metadata event
+        if "metadata" in event:
+            usage_data = event["metadata"].get("usage", {})
+            usage.input = usage_data.get("inputTokens", 0)
+            usage.output = usage_data.get("outputTokens", 0)
+            usage.cache_read = usage_data.get("cacheReadInputTokens", 0)
+            usage.cache_write = usage_data.get("cacheWriteInputTokens", 0)
+            return None, current_running_block_type, usage
+
+        # Unrecognized event
+        return None, current_running_block_type, None
 
     async def _parse_streaming_response(
-        self, response: InvokeModelWithResponseStreamResponseTypeDef, async_bedrock_client: BedrockRuntimeClient
+            self, response: Any, async_bedrock_client: BedrockRuntimeClient
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
@@ -347,32 +443,43 @@ class Anthropic(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             current_running_block_type: Optional[ContentBlockCategory] = None
-            async for event in response["body"]:
-                chunk = json.loads(event["chunk"]["bytes"])
-                # yield content block delta
 
+            async for event in response["stream"]:
                 try:
+                    # Directly use the parsed event dictionary
                     event_block, event_block_category, event_usage = self._get_parsed_stream_event(
-                        chunk, current_running_block_type
+                        event, current_running_block_type
                     )
+
                     if event_usage:
                         usage += event_usage
+
                     if event_block:
-                        current_running_block_type = event_block_category
+                        if event_block_category is not None:
+                            current_running_block_type = event_block_category
                         accumulated_events.append(event_block)
                         yield event_block
-                except Exception:
-                    # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
-                    pass
 
-            streaming_completed = True
+                    # Handle usage metrics if provided separately
+                    if "metadata" in event and "usage" in event["metadata"]:
+                        usage.input = event["metadata"]["usage"].get("inputTokens", usage.input)
+                        usage.output = event["metadata"]["usage"].get("outputTokens", usage.output)
+                        usage.cache_read = event["metadata"]["usage"].get("cacheReadInputTokens", usage.cache_read)
+                        usage.cache_write = event["metadata"]["usage"].get("cacheWriteInputTokens", usage.cache_write)
+
+                    # Handle end of streaming
+                    if "messageStop" in event:
+                        streaming_completed = True
+
+                except Exception as e:
+                    print(f"Error processing streaming event: {e}")
+                    pass
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
             while not streaming_completed:
                 await asyncio.sleep(0.1)
-
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
@@ -409,8 +516,13 @@ class Anthropic(BaseLLMProvider):
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
             return await self._parse_non_streaming_response(response)
+
         else:
             response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
+            # data = []
+            # async for chunk in response["stream"]:
+            #     data.append(chunk)
+
             return await self._parse_streaming_response(response, async_bedrock_client)

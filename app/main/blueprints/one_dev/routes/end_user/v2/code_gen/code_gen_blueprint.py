@@ -63,6 +63,7 @@ async def solve_user_query_non_stream(
         async for data_block in data:
             last_block = data_block
             blocks.append(data_block.model_dump(mode="json"))
+            # blocks.append(data_block)
 
         if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
             blocks.append({"type": "QUERY_COMPLETE"})
@@ -70,7 +71,9 @@ async def solve_user_query_non_stream(
         blocks.append({"type": "STREAM_END"})
 
     except Exception as ex:
-        AppLogger.log_error(f"Error in solving query: {ex}")
+        import traceback
+        stack_trace = traceback.format_exc()
+        print(f"Error in solving query: {ex}\nStack trace:\n{stack_trace}")
         blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
 
     return send_response({"status": "SUCCESS", "blocks": blocks})
@@ -129,7 +132,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             start_data["new_session_data"] = auth_data.session_refresh_token
         await push_to_connection_stream(start_data)
         try:
-            data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
+            data = await QuerySolver().solve_query(payload=payload, client_data=client_data, summarised_session=False)
 
             last_block = None
             # push data to stream

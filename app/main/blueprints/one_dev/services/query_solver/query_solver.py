@@ -179,7 +179,7 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, summarised_session=False) -> AsyncIterator[BaseModel]:
         tools_to_use = [
             ASK_USER_INPUT,
             # FOCUSED_SNIPPETS_SEARCHER,
@@ -203,16 +203,17 @@ class QuerySolver:
         )
 
         if payload.query:
-            asyncio.create_task(
-                self._generate_session_summary(
-                    session_id=payload.session_id,
-                    query=payload.query,
-                    focus_items=payload.focus_items,
-                    llm_handler=llm_handler,
-                    user_team_id=payload.user_team_id,
-                    session_type=payload.session_type,
+            if summarised_session:
+                asyncio.create_task(
+                    self._generate_session_summary(
+                        session_id=payload.session_id,
+                        query=payload.query,
+                        focus_items=payload.focus_items,
+                        llm_handler=llm_handler,
+                        user_team_id=payload.user_team_id,
+                        session_type=payload.session_type,
+                    )
                 )
-            )
 
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
