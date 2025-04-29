@@ -1,8 +1,14 @@
 from typing import Any, AsyncIterator, Dict, List, Optional
+
 from pydantic import BaseModel
+from torpedo import CONFIG
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory, TextBlockData, MessageData
+from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    MessageData,
+    TextBlockData,
+)
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -11,7 +17,6 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro import (
     BaseGemini2Point5ProPrompt,
 )
-from torpedo import CONFIG
 
 
 class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):

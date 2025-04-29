@@ -2,11 +2,14 @@ from typing import Optional
 
 from sanic.log import logger
 
-from app.main.blueprints.one_dev.models.dao.postgres.extension_feedbacks import ExtensionFeedback
+from app.backend_common.repository.db import DB
+from app.main.blueprints.one_dev.models.dao.postgres.extension_feedbacks import (
+    ExtensionFeedback,
+)
 from app.main.blueprints.one_dev.models.dto.extension_feedbacks_dto import (
     ExtensionFeedbacksDTO,
 )
-from app.backend_common.repository.db import DB
+
 
 class ExtensionFeedbacksRepository:
     @classmethod
@@ -21,9 +24,7 @@ class ExtensionFeedbacksRepository:
                 return None
             return ExtensionFeedbacksDTO(**extension_feedback)
         except Exception as ex:
-            logger.error(
-                f"error occurred while getting extension_feedback in db for query_id : {query_id}, ex: {ex}"
-            )
+            logger.error(f"error occurred while getting extension_feedback in db for query_id : {query_id}, ex: {ex}")
             raise ex
 
     @classmethod
@@ -35,13 +36,10 @@ class ExtensionFeedbacksRepository:
                     model=ExtensionFeedback,
                     payload={"feedback": feedback},
                     where_clause={"query_id": query_id},
-                    update_fields=["feedback", "updated_at"]
+                    update_fields=["feedback", "updated_at"],
                 )
             else:
-                await DB.create(
-                    model=ExtensionFeedback,
-                    payload={"query_id": query_id, "feedback": feedback}
-                )
+                await DB.create(model=ExtensionFeedback, payload={"query_id": query_id, "feedback": feedback})
         except Exception as ex:
             logger.error(
                 f"error occurred while creating/updating extension_feedback in db for query_id : {query_id}, ex: {ex}"

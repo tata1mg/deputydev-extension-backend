@@ -50,14 +50,14 @@ EXECUTE_COMMAND = ConversationTool(
                 ),
             },
             "is_long_running": {
-            "type": "boolean",
-            "description": (
-                "Indicates if the command is expected to take a long time to complete. "
-                "Set to true for operations like builds, server startups, or installations; "
-                "false for quick tasks like listing files or checking status."
-            ),
+                "type": "boolean",
+                "description": (
+                    "Indicates if the command is expected to take a long time to complete. "
+                    "Set to true for operations like builds, server startups, or installations; "
+                    "false for quick tasks like listing files or checking status."
+                ),
+            },
         },
-        },
-        "required": ["command", "requires_approval","is_long_running"],
+        "required": ["command", "requires_approval", "is_long_running"],
     },
 )
