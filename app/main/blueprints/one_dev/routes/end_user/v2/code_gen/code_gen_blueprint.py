@@ -177,7 +177,7 @@ async def generate_inline_edit(
 @code_gen_v2_bp.route("/terminal-command-edit", methods=["POST"])
 @validate_client_version
 @authenticate
-@ensure_session_id(auto_create=True)
+@ensure_session_id(auto_create=False)
 async def terminal_command_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
