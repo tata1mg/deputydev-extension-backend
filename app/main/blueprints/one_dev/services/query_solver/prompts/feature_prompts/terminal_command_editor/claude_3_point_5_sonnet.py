@@ -17,22 +17,39 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.cl
 )
 
 
-class Claude3Point5UserQueryEnhancerPrompt(BaseClaude3Point5SonnetPrompt):
-    prompt_type = "USER_QUERY_ENHANCER"
+class Claude3Point5TerminalCommandEditorPrompt(BaseClaude3Point5SonnetPrompt):
+    prompt_type = "TERMINAL_COMMAND_EDITOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
 
     def get_prompt(self) -> UserAndSystemMessages:
-        system_message = "Generate an enhanced version of user query (reply with only the enhanced user query - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes)."
+        system_message = f"""
+            Rewrite the given terminal command based on the user’s query inside <terminal_command> tags.
+            The command should be properly formatted for the user's OS and shell.
+
+        """
+        if self.params.get("os_name") and self.params.get("shell"):
+            system_message += f"""
+            ====
+
+            SYSTEM INFORMATION:
+
+            Operating System: {self.params.get("os_name")}
+            Default Shell: {self.params.get("shell")}
+
+            ====
+            """
 
         user_message = f"""
         User Query: {self.params.get("query")}
+        Old Terminal Command: {self.params.get("old_terminal_command")}
+
         Respond with:
-        <enhanced_query>
-        new enhanced query here
-        </enhanced_query>
+        <terminal_command>
+        new command here
+        </terminal_command>
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
@@ -40,14 +57,14 @@ class Claude3Point5UserQueryEnhancerPrompt(BaseClaude3Point5SonnetPrompt):
     @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Optional[Dict[str, Any]]:
         content = text_block.content.text
-        start_tag = "<enhanced_query>"
-        end_tag = "</enhanced_query>"
+        start_tag = "<terminal_command>"
+        end_tag = "</terminal_command>"
 
         if start_tag in content and end_tag in content:
             try:
-                enhanced_query = content.split(start_tag)[1].split(end_tag)[0].strip()
-                if enhanced_query:
-                    return {"enhanced_query": enhanced_query}
+                command = content.split(start_tag)[1].split(end_tag)[0].strip()
+                if command:
+                    return {"terminal_command": command}
             except IndexError:
                 return None
         return None

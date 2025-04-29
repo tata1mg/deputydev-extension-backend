@@ -47,8 +47,9 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
     BasePromptFeatureFactory,
 )
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.backend_common.services.llm.providers.google.llm_provider import Google
+from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
 
@@ -58,7 +59,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
         LLModels.GPT_4O: OpenAI,
         LLModels.GPT_40_MINI: OpenAI,
-        LLModels.GEMINI_2_POINT_5_PRO: Google
+        LLModels.GEMINI_2_POINT_5_PRO: Google,
     }
 
     def __init__(

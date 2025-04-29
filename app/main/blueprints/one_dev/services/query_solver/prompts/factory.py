@@ -17,9 +17,14 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.inline_editor.factory import (
     InlineEditorPromptFactory,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.factory import UserQueryEnhancerPromptFactory
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.session_summary_generator.factory import (
     SessionSummaryGeneratorPromptFactory,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.terminal_command_editor.factory import (
+    TerminalCommandEditorPromptFactory,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.factory import (
+    UserQueryEnhancerPromptFactory,
 )
 
 
@@ -28,6 +33,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
         PromptFeatures.SESSION_SUMMARY_GENERATOR: SessionSummaryGeneratorPromptFactory,
         PromptFeatures.INLINE_EDITOR: InlineEditorPromptFactory,
+        PromptFeatures.TERMINAL_COMMAND_EDITOR: TerminalCommandEditorPromptFactory,
         PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
     }
 
