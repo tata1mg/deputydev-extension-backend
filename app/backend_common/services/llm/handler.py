@@ -48,7 +48,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 )
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
-
+from app.backend_common.services.llm.providers.google.llm_provider import Google
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
 
@@ -58,6 +58,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
         LLModels.GPT_4O: OpenAI,
         LLModels.GPT_40_MINI: OpenAI,
+        LLModels.GEMINI_2_POINT_5_PRO: Google
     }
 
     def __init__(
@@ -276,16 +277,14 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 # start task for storing LLM message in DB
-                asyncio.create_task(
-                    self.store_llm_response_in_db(
-                        llm_response,
-                        session_id,
-                        prompt_type=prompt_type,
-                        prompt_category=prompt_handler.prompt_category,
-                        llm_model=llm_model,
-                        query_id=query_id,
-                        call_chain_category=call_chain_category,
-                    )
+                await self.store_llm_response_in_db(
+                    llm_response,
+                    session_id,
+                    prompt_type=prompt_type,
+                    prompt_category=prompt_handler.prompt_category,
+                    llm_model=llm_model,
+                    query_id=query_id,
+                    call_chain_category=call_chain_category,
                 )
 
                 # Parse the LLM response

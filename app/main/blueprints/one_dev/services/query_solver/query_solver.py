@@ -55,6 +55,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_se
 from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
     GREP_SEARCH,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
+    PUBLIC_URL_CONTENT_READER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
@@ -71,7 +74,8 @@ from .prompts.factory import PromptFeatureFactory
 
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"  # change to 2.3.2?
+MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
 
 
 class QuerySolver:
@@ -200,6 +204,11 @@ class QuerySolver:
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
             tools_to_use.append(CREATE_NEW_WORKSPACE)
 
+        if compare_version(
+            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
+        ):
+            tools_to_use.append(PUBLIC_URL_CONTENT_READER)
+
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
@@ -226,6 +235,7 @@ class QuerySolver:
                     "focus_items": payload.focus_items,
                     "deputy_dev_rules": payload.deputy_dev_rules,
                     "write_mode": payload.write_mode,
+                    "urls": [url.model_dump() for url in payload.urls],
                     "os_name": payload.os_name,
                     "shell": payload.shell,
                 },

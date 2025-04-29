@@ -55,6 +55,7 @@ class Connections(Enum):
 class LLMProviders(Enum):
     OPENAI = "OPENAI"
     ANTHROPIC = "ANTHROPIC"
+    GOOGLE = "GOOGLE"
 
 
 class TokenableType(str, Enum):
