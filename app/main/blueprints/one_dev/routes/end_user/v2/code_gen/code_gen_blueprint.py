@@ -21,6 +21,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
     TerminalCommandEditInput,
+    UserQueryEnhancerInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
@@ -28,6 +29,9 @@ from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
 from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor import (
     TerminalCommandEditGenerator,
+)
+from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer import (
+    UserQueryEnhancer,
 )
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
@@ -158,6 +162,20 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
+
+
+@code_gen_v2_bp.route("/generate-enhanced-user-query", methods=["POST"])
+@validate_client_version
+@authenticate
+@ensure_session_id(auto_create=True)
+async def generate_enhanced_user_query(_request: Request, session_id: int, **kwargs: Any):
+    input_data = UserQueryEnhancerInput(**_request.json, session_id=session_id)
+
+    result = await UserQueryEnhancer().get_enhanced_user_query(
+        payload=input_data,
+    )
+
+    return send_response(result, headers=kwargs.get("response_headers"))
 
 
 @code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
