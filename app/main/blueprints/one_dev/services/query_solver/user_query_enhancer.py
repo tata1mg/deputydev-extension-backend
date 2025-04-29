@@ -12,7 +12,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 from .prompts.factory import PromptFeatureFactory
 
