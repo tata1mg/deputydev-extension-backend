@@ -278,14 +278,16 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 # start task for storing LLM message in DB
-                await self.store_llm_response_in_db(
-                    llm_response,
-                    session_id,
-                    prompt_type=prompt_type,
-                    prompt_category=prompt_handler.prompt_category,
-                    llm_model=llm_model,
-                    query_id=query_id,
-                    call_chain_category=call_chain_category,
+                asyncio.create_task(
+                    self.store_llm_response_in_db(
+                        llm_response,
+                        session_id,
+                        prompt_type=prompt_type,
+                        prompt_category=prompt_handler.prompt_category,
+                        llm_model=llm_model,
+                        query_id=query_id,
+                        call_chain_category=call_chain_category,
+                    )
                 )
 
                 # Parse the LLM response
