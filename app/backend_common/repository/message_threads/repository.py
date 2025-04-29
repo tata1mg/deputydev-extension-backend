@@ -15,7 +15,6 @@ from app.backend_common.repository.db import DB
 
 
 class MessageThreadsRepository:
-
     @classmethod
     async def get_message_thread_by_id(cls, message_thread_id: int) -> Optional[MessageThreadDTO]:
         try:
