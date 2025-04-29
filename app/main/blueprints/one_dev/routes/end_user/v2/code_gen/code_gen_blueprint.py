@@ -170,7 +170,7 @@ async def generate_enhanced_user_query(
         payload=input_data,
     )
 
-    return send_response(result)
+    return send_response(result, headers=kwargs.get("response_headers"))
 
 @code_gen_v2_bp.route("/generate-inline-edit", methods=["POST"])
 @validate_client_version
