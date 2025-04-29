@@ -1,10 +1,18 @@
-from typing import Any, Dict, List, Optional
-from deputydev_core.utils.singleton import Singleton
-from torpedo import CONFIG
-from google.oauth2 import service_account
-import vertexai
 import asyncio
-from vertexai.generative_models import GenerativeModel, Content, GenerationConfig, Tool, Part, GenerationResponse
+from typing import Any, Dict, List, Optional
+
+import vertexai
+from deputydev_core.utils.singleton import Singleton
+from google.oauth2 import service_account
+from torpedo import CONFIG
+from vertexai.generative_models import (
+    Content,
+    GenerationConfig,
+    GenerationResponse,
+    GenerativeModel,
+    Part,
+    Tool,
+)
 
 config = CONFIG.config
 

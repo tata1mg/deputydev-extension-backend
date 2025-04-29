@@ -1,6 +1,6 @@
-from app.main.blueprints.one_dev.models.dto.url import UrlDto
-from app.main.blueprints.one_dev.models.dao.postgres.urls import Url
 from app.backend_common.repository.db import DB
+from app.main.blueprints.one_dev.models.dao.postgres.urls import Url
+from app.main.blueprints.one_dev.models.dto.url import UrlDto
 
 
 class UrlRepository:
