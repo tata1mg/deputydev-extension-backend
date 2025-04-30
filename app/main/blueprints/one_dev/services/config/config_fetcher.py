@@ -100,7 +100,7 @@ class ConfigFetcher:
             ],
             "WEAVIATE_HTTP_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["HTTP_PORT"],
             "WEAVIATE_GRPC_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["GRPC_PORT"],
-            "WEAVIATE_VERSION": "1.27.0",
+            "WEAVIATE_VERSION": "v1.27.0",
             "NUMBER_OF_WORKERS": ConfigManager.configs["BINARY"]["EMBEDDING"]["NUMBER_OF_WORKERS"],
             "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"]["USE_GRACE_PERIOD_FOR_EMBEDDING"],
             "AUTOCOMPLETE_SEARCH": {
