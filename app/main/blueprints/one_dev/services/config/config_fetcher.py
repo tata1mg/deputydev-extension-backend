@@ -100,7 +100,9 @@ class ConfigFetcher:
             ],
             "WEAVIATE_HTTP_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["HTTP_PORT"],
             "WEAVIATE_GRPC_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["GRPC_PORT"],
-            "WEAVIATE_VERSION": "v1.27.0",
+            "WEAVIATE_VERSION": ConfigManager.configs["BINARY"]["WEAVIATE"]["VERSION"],
+            "WEAVIATE_CLIENT_TIMEOUTS": ConfigManager.configs["BINARY"]["WEAVIATE"]["CLIENT_TIMEOUTS"],
+            "WEAVIATE_ENV_VARIABLES": ConfigManager.configs["BINARY"]["WEAVIATE"]["ENV_VARIABLES"],
             "NUMBER_OF_WORKERS": ConfigManager.configs["BINARY"]["EMBEDDING"]["NUMBER_OF_WORKERS"],
             "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"]["USE_GRACE_PERIOD_FOR_EMBEDDING"],
             "AUTOCOMPLETE_SEARCH": {
@@ -109,7 +111,7 @@ class ConfigFetcher:
                     "MAX_RECORDS_TO_RETURN"
                 ],
             },
-            "WEAVIATE_DOWNLOAD_DIR": ConfigManager.configs["BINARY"]["WEAVIATE"]["DOWNLOAD_DIR"],
+            "WEAVIATE_BASE_DIR": ConfigManager.configs["BINARY"]["WEAVIATE"]["BASE_DIR"],
             "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],  # DEPRECATED
             "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"][
                 "EMBEDDED_DB_BINARY_PATH"
