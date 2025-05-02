@@ -23,6 +23,8 @@ async def update_extension_settings(_request: Request, client_data: ClientData, 
     try:
         user_team_id = auth_data.user_team_id
         settings_dict = _request.json.get("settings")
+        if not settings_dict:
+            raise BadRequestException("Settings not found in request")
 
         response = await ExtensionSettingsRepository.update_or_create_extension_settings(
             ExtensionSettingsData(
