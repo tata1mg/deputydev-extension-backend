@@ -1,5 +1,5 @@
 from sanic.log import error_logger
-from torpedo.exceptions import HTTPInterServiceRequestException
+from torpedo import InterServiceRequestException
 from torpedo.task import AsyncTaskResponse
 
 
@@ -27,7 +27,7 @@ class BaseCustomParser:
             return res
         else:
             error_logger.debug(self._data["error"])
-            raise HTTPInterServiceRequestException(
+            raise InterServiceRequestException(
                 error=self._data["error"],
                 status_code=self._data["status_code"],
                 meta=self._data.get("meta", None),
