@@ -33,7 +33,7 @@ async def update_extension_settings(_request: Request, client_data: ClientData, 
             )
         )
     except Exception as e:
-        raise BadRequestException(f"Failed to update extension settings: {str(e)}")
+        raise Exception(f"Failed to update extension settings: {str(e)}")
     return send_response({"message": "Extension settings updated successfully"}, headers=kwargs.get("response_headers"))
 
 @extension_settings_v1_bp.route("/get_extension_settings", methods=["GET"])
@@ -41,11 +41,10 @@ async def update_extension_settings(_request: Request, client_data: ClientData, 
 @authenticate
 async def get_extension_settings(_request: Request, auth_data: AuthData, **kwargs: Any):
     try:
-        user_team_id = auth_data.user_team_id
-        response = await ExtensionSettingsRepository.get_extension_settings_by_user_team_id(user_team_id)
+        response = await ExtensionSettingsRepository.get_extension_settings_by_user_team_id(auth_data.user_team_id)
         if response is None:
             raise BadRequestException("Extension settings not found")
         settings = response.settings
     except Exception as e:
-        raise BadRequestException(f"Failed to get extension settings: {str(e)}")
+        raise Exception(f"Failed to get extension settings: {str(e)}")
     return send_response(settings.model_dump(mode="json"), headers=kwargs.get("response_headers"))
