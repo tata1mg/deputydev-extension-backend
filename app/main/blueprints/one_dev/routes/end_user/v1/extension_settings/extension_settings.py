@@ -21,21 +21,20 @@ extension_settings_v1_bp = Blueprint("extension_settings_v1_bp", url_prefix="/ex
 @authenticate
 async def update_extension_settings(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
     try:
-        user_team_id = auth_data.user_team_id
         settings_dict = _request.json.get("settings")
         if not settings_dict:
             raise BadRequestException("Settings not found in request")
 
-        response = await ExtensionSettingsRepository.update_or_create_extension_settings(
+        await ExtensionSettingsRepository.update_or_create_extension_settings(
             ExtensionSettingsData(
-                user_team_id=user_team_id,
+                user_team_id=auth_data.user_team_id,
                 client=client_data.client,
                 settings=Settings(**settings_dict)
             )
         )
     except Exception as e:
         raise BadRequestException(f"Failed to update extension settings: {str(e)}")
-    return send_response(response, headers=kwargs.get("response_headers"))
+    return send_response({"message": "Extension settings updated successfully"}, headers=kwargs.get("response_headers"))
 
 @extension_settings_v1_bp.route("/get_extension_settings", methods=["GET"])
 @validate_client_version
