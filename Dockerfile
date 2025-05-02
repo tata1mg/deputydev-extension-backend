@@ -1,5 +1,5 @@
 ARG cloud
-FROM --platform=linux/amd64 ${cloud:+"831059512818.dkr.ecr.ap-south-1.amazonaws.com/utility/docker/library/"}python:3.9.16-slim
+FROM --platform=linux/amd64 ${cloud:+"831059512818.dkr.ecr.ap-south-1.amazonaws.com/utility/docker/library/"}python:3.11.9-slim
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
