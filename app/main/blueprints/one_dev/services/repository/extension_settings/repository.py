@@ -29,7 +29,7 @@ class ExtensionSettingsRepository:
             raise ex
 
     @classmethod
-    async def update_or_create_extension_settings(cls, extension_settings_data: ExtensionSettingsData):
+    async def update_or_create_extension_settings(cls, extension_settings_data: ExtensionSettingsData) -> None:
         try:
             if await cls.get_extension_settings_by_user_team_id(extension_settings_data.user_team_id):
                 await DB.update_with_filters(
