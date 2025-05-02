@@ -1,4 +1,4 @@
-image: python:3.9
+image: python:3.11
 
 pipelines:
   pull-requests:
@@ -14,16 +14,16 @@ pipelines:
             - step:
                 name: Black Formatter Check
                 script:
-                  - pip install black=="22.3.0"
+                  - pip install black=="24.8.0"
                   # Enforce style consistency across Python projects https://flake8.pycqa.org/en/latest/manpage.html
                   - black app/ --check
             - step:
                 name: isort Check
                 script:
-                  - pip install isort=="5.10.1"
+                  - pip install isort==5.3.12
                   - isort app/ --check --profile black
             - step:
                 name: Flake8 Check
                 script:
-                  - pip install flake8=="4.0.1"
+                  - pip install flake8==7.1.1
                   - flake8 app/ --show-source --statistics
