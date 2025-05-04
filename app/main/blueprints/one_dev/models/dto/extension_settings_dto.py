@@ -8,6 +8,9 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
 class TerminalSettings(BaseModel):
     enable_yolo_mode: bool
     command_deny_list: List[str]
+    terminal_output_limit: int
+    shell_integration_timeout: int
+    shell_command_timeout: int
 
 class Settings(BaseModel):
     default_mode: str
