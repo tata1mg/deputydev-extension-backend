@@ -21,7 +21,7 @@ extension_settings_v1_bp = Blueprint("extension_settings_v1_bp", url_prefix="/ex
 @authenticate
 async def update_extension_settings(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any):
     try:
-        settings_dict = _request.json.get("settings")
+        settings_dict = _request.json
         if not settings_dict:
             raise BadRequestException("Settings not found in request")
 
