@@ -31,6 +31,9 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.mai
 from app.main.blueprints.deputy_dev.services.code_review.prompts.factory import (
     PromptFeatureFactory,
 )
+from app.backend_common.services.llm.dataclasses.main import (
+    PromptCacheConfig,
+)
 
 
 class MultiAgentPRReviewManager:
@@ -67,6 +70,7 @@ class MultiAgentPRReviewManager:
         self.llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
+            cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
         self.session_id = session_id
 
