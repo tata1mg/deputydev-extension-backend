@@ -253,6 +253,7 @@ class Anthropic(BaseLLMProvider):
             if "outputTokenCount" in invocation_metrics:
                 usage.output = invocation_metrics.get("outputTokenCount")
 
+
             return None, None, usage
 
         # parsers for tool use request blocks

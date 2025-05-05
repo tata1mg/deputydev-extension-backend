@@ -9,13 +9,14 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
         You can provide multiple search terms at once, and the tool will return the most relevant code snippets for each.
         The search can be good for finding specific code snippets related to a class, function, or file in the codebase, and therefore should ideally be used to
         search for specific code snippets rather than general code search queries. Also, it works best when there is ground truth in the search term, i.e.
-        the serach term is valid class, function or file name in the codebase (for eg. search terms directly picked from the relevant code snippets).
+        the search term is valid class, function or file name in the codebase (for eg. search terms directly picked from the relevant code snippets).
+        Only call this tool if keyword to search length is greater tha two
 
         If search term is not valid in the codebase, it would basically work as a lexical search and return the code snippets containing the search term or containing similar terms.
 
         ### Expected Input Format:
         Each search term should include:
-        - A **keyword**: The name of the class, function, or file to search for.
+        - A **keyword**: The name of the class, function, or file to search for, it should be greater than two characters.
         - A **type**: Must be one of 'class', 'function', or 'file' to specify what is being searched.
         - An optional **file path**: To narrow down the search to a specific location in the codebase.
 

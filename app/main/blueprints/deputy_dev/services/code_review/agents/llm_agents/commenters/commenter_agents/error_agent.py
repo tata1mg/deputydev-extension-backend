@@ -12,8 +12,10 @@ from ..base_commenter import BaseCommenterAgent
 
 
 class ErrorAgent(BaseCommenterAgent):
-    is_dual_pass = True
-    prompt_features = [PromptFeatures.ERROR_COMMENTS_GENERATION_PASS_1, PromptFeatures.ERROR_COMMENTS_GENERATION_PASS_2]
+    is_dual_pass = False
+    prompt_features = [PromptFeatures.ERROR_COMMENTS_GENERATION_PASS_1,
+                       # PromptFeatures.ERROR_COMMENTS_GENERATION_PASS_2
+                       ]
     agent_type = AgentTypes.ERROR
 
     def get_agent_specific_tokens_data(self) -> Dict[str, int]:

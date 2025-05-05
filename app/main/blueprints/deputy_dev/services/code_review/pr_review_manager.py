@@ -36,6 +36,8 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
+from deputydev_core.services.shared_chunks.shared_chunks_manager import SharedChunksManager
+from deputydev_core.utils.context_vars import set_context_values
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -52,6 +54,7 @@ class PRReviewManager(BasePRReviewManager):
         try:
             CodeReviewRequest(**data)
             logger.info("Received MessageQueue Message: {}".format(data))
+            SharedChunksManager.cleanup_shared_memory()
             await cls.process_pr_review(data=data)
             AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
@@ -98,7 +101,7 @@ class PRReviewManager(BasePRReviewManager):
 
             if not pre_processor.is_reviewable_request:
                 return
-
+            set_context_values(session_id=pre_processor.session_id)
             if not pre_processor.session_id:
                 AppLogger.log_error("Session id not found for PR review")
                 raise Exception("Session id not found for PR review")
@@ -132,6 +135,8 @@ class PRReviewManager(BasePRReviewManager):
             raise ex
         finally:
             repo_service.delete_local_repo()
+            SharedChunksManager.cleanup_shared_memory()
+
 
     @classmethod
     def check_no_pr_comments(cls, llm_response):

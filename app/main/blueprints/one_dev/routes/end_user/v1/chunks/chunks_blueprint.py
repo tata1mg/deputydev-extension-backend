@@ -18,12 +18,13 @@ from app.main.blueprints.one_dev.utils.session import ensure_session_id
 chunks_v1_bp = Blueprint("chunks_v1_bp", url_prefix="/chunks")
 
 
-@chunks_v1_bp.route("/rerank-via-llm", methods=["POST"])
+@chunks_v1_bp.route("a", methods=["POST"])
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def reranker(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def reranker(_request: Request, **kwargs: Any):
     payload = _request.custom_json()
+    session_id = _request.headers.get("X-Session-ID")
     payload = RerankingInput(**payload)
     reranked_chunks = await LLMBasedChunkReranker(session_id=session_id).rerank(
         query=payload.query, related_codebase_chunks=payload.relevant_chunks, focus_chunks=payload.focus_chunks or []

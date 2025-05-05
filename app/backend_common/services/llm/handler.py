@@ -276,8 +276,20 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 # start task for storing LLM message in DB
-                asyncio.create_task(
-                    self.store_llm_response_in_db(
+                if stream:
+                    asyncio.create_task(
+                        self.store_llm_response_in_db(
+                            llm_response,
+                            session_id,
+                            prompt_type=prompt_type,
+                            prompt_category=prompt_handler.prompt_category,
+                            llm_model=llm_model,
+                            query_id=query_id,
+                            call_chain_category=call_chain_category,
+                        )
+                    )
+                else:
+                    await self.store_llm_response_in_db(
                         llm_response,
                         session_id,
                         prompt_type=prompt_type,
@@ -286,7 +298,6 @@ class LLMHandler(Generic[PromptFeatures]):
                         query_id=query_id,
                         call_chain_category=call_chain_category,
                     )
-                )
 
                 # Parse the LLM response
                 parsed_response = await self.parse_llm_response_data(
@@ -535,6 +546,7 @@ class LLMHandler(Generic[PromptFeatures]):
         tools: Optional[List[ConversationTool]] = None,
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
+        prompt_type = None
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -551,7 +563,7 @@ class LLMHandler(Generic[PromptFeatures]):
         """
 
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category
+            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
         )
         session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
@@ -583,6 +595,9 @@ class LLMHandler(Generic[PromptFeatures]):
                     break
 
         if not tool_use_request_message_id or not detected_llm:
+            session_messages1 = await MessageThreadsRepository.get_message_threads_for_session(
+                session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            )
             raise ValueError(
                 f"Tool use request message not found for tool use response id {tool_use_response.content.tool_use_id}"
             )
