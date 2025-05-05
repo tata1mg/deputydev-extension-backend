@@ -418,13 +418,24 @@
   },
   "BINARY": {
     "WEAVIATE": {
+      "VERSION": "v1.27.22",
       "HTTP_PORT": 8079,
       "GRPC_PORT": 50050,
       "EMBEDDED_DB_PATH": "~/.deputydev/indexes",
       "EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
       "STARTUP_TIMEOUT": 30,
       "STARTUP_HEALTHCHECK_INTERVAL": 2,
-      "DOWNLOAD_DIR": "~/.deputydev/weaviate"
+      "BASE_DIR": "~/.deputydev/weaviate",
+      "CLIENT_TIMEOUTS": {
+        "INIT": 30,
+        "QUERY": 60,
+        "INSERT": 120
+      },
+      "ENV_VARIABLES": {
+        "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
+        "LIMIT_RESOURCES": true,
+        "LOG_LEVEL": "debug"
+      }
     },
     "EMBEDDING": {
       "NUMBER_OF_WORKERS": 1,
