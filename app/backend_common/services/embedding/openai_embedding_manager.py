@@ -47,7 +47,7 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
         return batches
 
     @classmethod
-    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[NDArray[np.float64], int]:
+    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True, progress_bar_counter = None) -> Tuple[NDArray[np.float64], int]:
         """
         Embeds a list of texts using OpenAI's embedding model.
 

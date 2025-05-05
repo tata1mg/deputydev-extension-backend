@@ -18,7 +18,7 @@ GREP_SEARCH = ConversationTool(
             "search_terms": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "List of search terms to match against file names.",
+                "description": "List of search terms to match against file names. ",
             },
         },
         "required": ["directory_path", "search_terms"],
