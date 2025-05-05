@@ -1,6 +1,10 @@
 import re
 import xml.etree.ElementTree as ET
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, AsyncIterator, Dict, List, Tuple
+from app.backend_common.models.dto.message_thread_dto import (
+    MessageData,
+    ToolUseRequestData,
+)
 
 from deputydev_core.utils.context_vars import get_context_value
 
@@ -85,15 +89,42 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, List[LLMCommentData]]]:
-        all_comments: List[Dict[str, Any]] = []
-        for response_data in llm_response.content:
-            if isinstance(response_data, TextBlockData):
-                comments = cls._parse_text_blocks(response_data.content.text)
-                if comments:
-                    all_comments.append(comments)
+        # all_comments: List[Dict[str, Any]] = []
+        # for response_data in llm_response.content:
+        #     if isinstance(response_data, TextBlockData):
+        #         comments = cls._parse_text_blocks(response_data.content.text)
+        #         if comments:
+        #             all_comments.append(comments)
+        #
+        # return all_comments
+        final_content: List[Dict[str, Any]] = []
 
-        return all_comments
+        final_content = cls.get_parsed_response_blocks(llm_response.content)
 
+        return final_content
+
+    @classmethod
+    def get_parsed_response_blocks(
+            cls, response_block: List[MessageData]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        final_content: List[Dict[str, Any]] = []
+        tool_use_map: Dict[str, Any] = {}
+        for block in response_block:
+            # if isinstance(block, TextBlockData):
+            #     final_content.extend(cls._get_parsed_custom_blocks(block.content.text))
+            if isinstance(block, ToolUseRequestData):
+                # tool_use_request_block = {
+                #     "type": "TOOL_USE_REQUEST_BLOCK",
+                #     "content": {
+                #         "tool_name": block.content.tool_name,
+                #         "tool_use_id": block.content.tool_use_id,
+                #         "tool_input": block.content.tool_input,
+                #     },
+                # }
+                final_content.append(block)
+                tool_use_map[block.content.tool_use_id] = ToolUseRequestData
+
+        return final_content
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
         raise NotImplementedError("Streaming is not supported for comments generation prompts")

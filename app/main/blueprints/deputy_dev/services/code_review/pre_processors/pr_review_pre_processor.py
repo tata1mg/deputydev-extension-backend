@@ -39,8 +39,19 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from deputydev_core.clients.http.service_clients.one_dev_client import OneDevClient
+from app.main.blueprints.deputy_dev.client.one_dev_review_client import OneDevReviewClient
+from app.main.blueprints.deputydev_cli.app.managers.authentication.authentication_manager import (
+            AuthenticationManager,
+)
+from app.main.blueprints.deputy_dev.services.code_review.initialization.initialization_service import InitializationService
+from deputydev_core.utils.app_logger import AppLogger
+import traceback
+from deputydev_core.services.shared_chunks.shared_chunks_manager import SharedChunksManager
+
 
 config = CONFIG.config
+one_dev_review_client = OneDevReviewClient()
 
 
 class PRReviewPreProcessor:
@@ -69,8 +80,11 @@ class PRReviewPreProcessor:
         self.pr_diff_handler = pr_diff_handler
         self.is_reviewable_request = None
         self.session_id: Optional[int] = None
+        self.auth_token = None
+        self.repo_path = None
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
+        SharedChunksManager.cleanup_shared_memory()
         repo_dto = await self.fetch_repo()
         setting = await self.fetch_setting()
         set_context_values(
@@ -85,6 +99,12 @@ class PRReviewPreProcessor:
 
         await self.insert_pr_record(repo_dto)
         await self.run_validations()
+        await  InitializationService.initialization()
+        # try:
+        await InitializationService.create_embedding(self.repo_path, self.repo_service)
+        # except Exception as e:
+        #     AppLogger.log_error(traceback.format_exc())
+        # await self.create_embedding()
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
@@ -364,9 +384,10 @@ class PRReviewPreProcessor:
         )
 
     async def validate_repo_clone(self):
-        _, is_repo_cloned = await self.repo_service.clone_branch(
+        _, is_repo_cloned, self.repo_path = await self.repo_service.clone_branch(
             self.pr_service.branch_name, "code_review"
         )  # return code 128 signifies bad request to github
+        set_context_values(repo_path=self.repo_path)
         if not is_repo_cloned:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value
