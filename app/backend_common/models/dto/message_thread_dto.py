@@ -66,6 +66,7 @@ class LLModels(Enum):
     GPT_40_MINI = "GPT_40_MINI"
     GPT_O1_MINI = "GPT_O1_MINI"
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
+    GEMINI_2_POINT_0_FLASH = "GEMINI_2_POINT_0_FLASH"
 
 
 class LLMUsage(BaseModel):
@@ -78,12 +79,16 @@ class LLMUsage(BaseModel):
         return LLMUsage(
             input=self.input + other.input,
             output=self.output + other.output,
-            cache_read=(self.cache_read or 0) + (other.cache_read or 0)
-            if self.cache_read is not None or other.cache_read is not None
-            else None,
-            cache_write=(self.cache_write or 0) + (other.cache_write or 0)
-            if self.cache_write is not None or other.cache_write is not None
-            else None,
+            cache_read=(
+                (self.cache_read or 0) + (other.cache_read or 0)
+                if self.cache_read is not None or other.cache_read is not None
+                else None
+            ),
+            cache_write=(
+                (self.cache_write or 0) + (other.cache_write or 0)
+                if self.cache_write is not None or other.cache_write is not None
+                else None
+            ),
         )
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
