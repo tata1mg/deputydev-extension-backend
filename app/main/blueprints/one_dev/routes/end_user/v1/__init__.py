@@ -4,6 +4,7 @@ from .auth.auth_blueprint import auth_v1_bp
 from .chunks.chunks_blueprint import chunks_v1_bp
 from .code_gen.code_gen_blueprint import code_gen_v1_bp
 from .configs.config_blueprint import config_v1_bp
+from .extension_settings.extension_settings import extension_settings_v1_bp
 from .feedbacks.feedbacks_blueprint import feedbacks_v1_bp
 from .history.history_blueprint import history_v1_bp
 from .repos.repos_blueprint import repos_v1_bp
@@ -24,5 +25,6 @@ blueprints = [
     websocket_connection_v1_bp,
     feedbacks_v1_bp,
     urls_v1_bp,
+    extension_settings_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
