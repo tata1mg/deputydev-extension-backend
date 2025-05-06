@@ -40,6 +40,11 @@ class Url(BaseModel):
     keyword: str
 
 
+class LLMModel(Enum):
+    CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
+    GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
@@ -52,6 +57,8 @@ class QuerySolverInput(BaseModel):
     user_team_id: Optional[int] = None
     session_type: Optional[str] = None
     urls: Optional[List[Url]] = []
+    search_web: Optional[bool] = False
+    llm_model: LLMModel
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
