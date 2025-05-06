@@ -52,6 +52,8 @@ class QuerySolverInput(BaseModel):
     user_team_id: Optional[int] = None
     session_type: Optional[str] = None
     urls: Optional[List[Url]] = []
+    os_name: Optional[str] = None
+    shell: Optional[str] = None
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
@@ -85,6 +87,15 @@ class InlineEditInput(BaseModel):
         return v
 
 
+class TerminalCommandEditInput(BaseModel):
+    session_id: int
+    query: str
+    old_terminal_command: str
+    os_name: str
+    shell: str
+    auth_data: AuthData
+
+
 class ResponseMetadataContent(BaseModel):
     query_id: int
     session_id: int
@@ -93,3 +104,8 @@ class ResponseMetadataContent(BaseModel):
 class ResponseMetadataBlock(BaseModel):
     content: ResponseMetadataContent
     type: str
+
+
+class UserQueryEnhancerInput(BaseModel):
+    session_id: int
+    user_query: str
