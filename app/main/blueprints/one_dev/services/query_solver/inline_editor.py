@@ -1,6 +1,8 @@
 import asyncio
 from typing import Any, Dict, List
 
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     ToolUseResponseContent,
@@ -30,7 +32,6 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-from deputydev_core.utils.config_manager import ConfigManager
 
 MIN_TOOL_USE_SUPPORTED_VERSION = "1.2.0"
 
