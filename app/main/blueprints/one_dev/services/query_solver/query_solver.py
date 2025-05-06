@@ -51,6 +51,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import 
 from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
     PUBLIC_URL_CONTENT_READER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
+    WEB_SEARCH,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
@@ -69,6 +72,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
 
 
 class QuerySolver:
@@ -200,6 +204,10 @@ class QuerySolver:
             client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
         ):
             tools_to_use.append(PUBLIC_URL_CONTENT_READER)
+        if payload.search_web and compare_version(
+            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH, ">="
+        ):
+            tools_to_use.append(WEB_SEARCH)
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
@@ -235,7 +243,6 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
-                search_web=payload.search_web,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 

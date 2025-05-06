@@ -85,7 +85,7 @@ class InlineEditGenerator:
         if payload.query and payload.code_selection:
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.INLINE_EDITOR,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 prompt_vars={
                     "query": payload.query,
                     "code_selection": payload.code_selection,
