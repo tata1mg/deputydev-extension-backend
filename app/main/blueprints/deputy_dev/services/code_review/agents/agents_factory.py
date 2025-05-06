@@ -124,18 +124,12 @@ class AgentFactory:
         is_reflection_enabled: bool = True,
         include_agent_types: List[AgentTypes] = [],
         exclude_agent_types: List[AgentTypes] = [],
-        only_summary_agent: bool = False,
     ) -> List[BaseCodeReviewAgent]:
         valid_agents_and_init_params = cls.get_valid_agents_and_init_params_for_review()
 
         initialized_agents: List[BaseCodeReviewAgent] = []
 
         for agent_type_and_init_params in valid_agents_and_init_params:
-            agent_type = agent_type_and_init_params.agent_type
-
-            if only_summary_agent and agent_type != AgentTypes.PR_SUMMARY:
-                continue
-
             if not include_agent_types or agent_type_and_init_params.agent_type in include_agent_types:
                 if not exclude_agent_types or agent_type_and_init_params.agent_type not in exclude_agent_types:
                     initialized_agents.append(
