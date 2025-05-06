@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS extension_feedbacks (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_extension_feedbacks_query_id ON extension_feedbacks(query_id);
+CREATE INDEX IF NOT EXISTS idx_extension_feedbacks_query_id ON extension_feedbacks(query_id);
 
 
 -- migrate:down

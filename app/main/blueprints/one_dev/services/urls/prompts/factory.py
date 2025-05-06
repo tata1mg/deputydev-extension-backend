@@ -1,4 +1,5 @@
 from typing import Dict, Type
+
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
     BaseFeaturePromptFactory,
@@ -9,7 +10,9 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 )
 
 from .dataclasses.main import PromptFeatures
-from .url_summarization.url_summarization_prompt_factory import UrlSummarizationPromptFactory
+from .url_summarization.url_summarization_prompt_factory import (
+    UrlSummarizationPromptFactory,
+)
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
