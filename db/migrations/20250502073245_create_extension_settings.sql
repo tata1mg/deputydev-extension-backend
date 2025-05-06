@@ -1,5 +1,5 @@
 -- migrate:up
-CREATE TABLE extension_settings (
+CREATE TABLE IF NOT EXISTS extension_settings (
     id SERIAL PRIMARY KEY,
     user_team_id INT NOT NULL,
     client TEXT NOT NULL,
