@@ -13,21 +13,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     ResponseData,
     TextBlockContent,
     TextBlockData,
-    ToolUseRequestContent,
-    ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationRole,
     ConversationRoleGemini,
-    ConversationTool,
-    ConversationTurn,
     LLMCallResponseTypes,
-    NonStreamingResponse,
-    PromptCacheConfig,
     StreamingEvent,
-    StreamingEventType,
     StreamingResponse,
     TextBlockDelta,
     TextBlockDeltaContent,
@@ -39,7 +31,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
     ToolUseRequestStartContent,
     UnparsedLLMCallResponse,
-    UserAndSystemMessages,
 )
 
 # Your existing DTOs and base class

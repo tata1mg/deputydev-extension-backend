@@ -76,7 +76,7 @@ class PastChatsSerializer(BaseSerializer):
                                 "value": focus_item_data.value,
                                 "path": focus_item_data.url,
                                 "url": focus_item_data.url,
-                                "chunks": []
+                                "chunks": [],
                             }
                         )
 
