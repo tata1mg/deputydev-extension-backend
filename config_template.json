@@ -418,11 +418,24 @@
   },
   "BINARY": {
     "WEAVIATE": {
+      "VERSION": "v1.27.22",
       "HTTP_PORT": 8079,
       "GRPC_PORT": 50050,
-      "SCHEMA_VERSION": 5,
       "EMBEDDED_DB_PATH": "~/.deputydev/indexes",
-      "EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary"
+      "EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
+      "STARTUP_TIMEOUT": 30,
+      "STARTUP_HEALTHCHECK_INTERVAL": 2,
+      "BASE_DIR": "~/.deputydev/weaviate",
+      "CLIENT_TIMEOUTS": {
+        "INIT": 30,
+        "QUERY": 60,
+        "INSERT": 120
+      },
+      "ENV_VARIABLES": {
+        "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
+        "LIMIT_RESOURCES": true,
+        "LOG_LEVEL": "debug"
+      }
     },
     "EMBEDDING": {
       "NUMBER_OF_WORKERS": 1,
@@ -518,6 +531,15 @@
     "universe_domain": "",
     "location": ""
   },
+  "DEFAULT_EXTENSION_SETTINGS": {
+    "default_mode": "ask",
+    "terminal_settings": {
+      "enable_yolo_mode": false,
+      "command_deny_list": [
+        "rm"
+      ]
+    }
+  },
   "CODE_GEN_LLM_MODELS": [
     {
       "id": 1,
@@ -529,5 +551,5 @@
       "display_name": "Gemini 2.5 Pro",
       "name": "GEMINI_2_POINT_5_PRO"
     }
-  ],
+  ]
 }
