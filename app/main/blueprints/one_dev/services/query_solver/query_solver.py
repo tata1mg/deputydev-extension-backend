@@ -221,13 +221,13 @@ class QuerySolver:
 
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                llm_model=LLModels(payload.llm_model.value),
                 prompt_vars={
                     "query": payload.query,
                     "focus_items": payload.focus_items,
                     "deputy_dev_rules": payload.deputy_dev_rules,
                     "write_mode": payload.write_mode,
-                    "urls": [url.model_dump() for url in payload.urls]
+                    "urls": [url.model_dump() for url in payload.urls],
                 },
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
@@ -235,6 +235,7 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
+                search_web=payload.search_web,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 

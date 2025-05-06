@@ -107,7 +107,7 @@ class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
     def _parse_text_block(cls, text_block: TextBlockData) -> Dict[str, Any]:
         explanation: Optional[str] = None
         if "<explanation>" in text_block.content.text:
-            explanation = text_block.content.text.split("<explanation>")[1].split("<explanation>")[0].strip()
+            explanation = text_block.content.text.split("<explanation>")[1].split("</explanation>")[0].strip()
 
         if explanation:
             return {"explanation": explanation}
