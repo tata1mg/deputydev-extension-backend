@@ -2,6 +2,7 @@ import asyncio
 from typing import AsyncIterator, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -39,6 +40,12 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.create_new_workspace import (
+    CREATE_NEW_WORKSPACE,
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.execute_command import (
+    EXECUTE_COMMAND,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
@@ -48,14 +55,14 @@ from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_se
 from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
     GREP_SEARCH,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
+    ITERATIVE_FILE_READER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
     PUBLIC_URL_CONTENT_READER,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
-    ITERATIVE_FILE_READER,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
@@ -67,10 +74,10 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-from deputydev_core.utils.config_manager import ConfigManager
 
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
 
@@ -185,12 +192,7 @@ class QuerySolver:
         return _streaming_content_block_generator()
 
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
-
-        tools_to_use = [
-            ASK_USER_INPUT,
-            FOCUSED_SNIPPETS_SEARCHER,
-            FILE_PATH_SEARCHER,
-        ]
+        tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
 
@@ -199,6 +201,12 @@ class QuerySolver:
 
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH, ">="):
             tools_to_use.append(GREP_SEARCH)
+
+        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
+            tools_to_use.append(EXECUTE_COMMAND)
+
+        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
+            tools_to_use.append(CREATE_NEW_WORKSPACE)
 
         if compare_version(
             client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
@@ -236,6 +244,8 @@ class QuerySolver:
                     "deputy_dev_rules": payload.deputy_dev_rules,
                     "write_mode": payload.write_mode,
                     "urls": [url.model_dump() for url in payload.urls],
+                    "os_name": payload.os_name,
+                    "shell": payload.shell,
                 },
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
