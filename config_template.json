@@ -519,5 +519,14 @@
     "client_x509_cert_url": "",
     "universe_domain": "",
     "location": ""
+  },
+  "DEFAULT_EXTENSION_SETTINGS": {
+    "default_mode": "ask",
+    "terminal_settings": {
+      "enable_yolo_mode": false,
+      "command_deny_list": [
+        "rm"
+      ]
+    }
   }
 }
