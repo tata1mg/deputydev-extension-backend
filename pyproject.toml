@@ -5,7 +5,7 @@ python = "3.11.9"
 name = "deputydev"
 version = "0.1.1"
 description = ""
-authors = ["Sachendra Jain <sachendra.jain@1mg.com>"]
+authors = ["Deputy Dev <deputydev@1mg.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -13,7 +13,7 @@ python = "3.11.*"
 cache_wrapper = { git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git", rev = "4.1.0" }
 torpedo = { git = "ssh://git@bitbucket.org/tata1mg/torpedo.git", python = ">=3.11,<4.0", rev = "version_upgrades" }
 tortoise_wrapper = { git = "ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git", rev = "tortorise_version_upgrade" }
-deputydev-core = { rev = "pyproject_setup", git = "ssh://git@github.com/tata1mg/deputydev-core.git" }
+deputydev-core = { git = "ssh://git@github.com/tata1mg/deputydev-core.git", rev = "pyproject_setup" }
 langchain = "==0.3.24"
 psycopg2-binary = "==2.9.9"
 pgvector = "==0.2.4"
