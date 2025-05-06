@@ -118,13 +118,14 @@ class MultiAgentPRReviewManager:
         )
 
     async def get_code_review_comments(
-        self,
+        self, only_summary_agent: bool = False,
     ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         # get all agents from factory
         all_agents = AgentFactory.get_code_review_agents(
             context_service=self.context_service,
             is_reflection_enabled=self._is_reflection_enabled(),
             llm_handler=self.llm_handler,
+            only_summary_agent=only_summary_agent
         )
 
         # segregate agents in realtime based on whether they should execute or not

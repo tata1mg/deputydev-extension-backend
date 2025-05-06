@@ -88,7 +88,7 @@ class PRSummaryManager(BasePRReviewManager):
         )
 
         # Get summary using MultiAgentPRReviewManager
-        _, pr_summary, agents_tokens, _, is_large_pr = await review_manager.get_code_review_comments()
+        _, pr_summary, agents_tokens, _, is_large_pr = await review_manager.get_code_review_comments(only_summary_agent=True)
         if is_large_pr:
             await comment_service.create_comment_on_parent("PR is too large for summarization", chat_request.comment.id)
             return
