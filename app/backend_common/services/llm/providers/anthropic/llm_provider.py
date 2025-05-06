@@ -130,6 +130,7 @@ class Anthropic(BaseLLMProvider):
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        **kwargs,
     ) -> Dict[str, Any]:
 
         model_config = self._get_model_config(llm_model)
