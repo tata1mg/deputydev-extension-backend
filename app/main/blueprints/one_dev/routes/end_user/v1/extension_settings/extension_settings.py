@@ -1,4 +1,5 @@
 from typing import Any
+from torpedo import CONFIG
 
 from sanic import Blueprint
 from torpedo import Request, send_response
@@ -43,8 +44,9 @@ async def get_extension_settings(_request: Request, auth_data: AuthData, **kwarg
     try:
         response = await ExtensionSettingsRepository.get_extension_settings_by_user_team_id(auth_data.user_team_id)
         if response is None:
-            raise BadRequestException("Extension settings not found")
-        settings = response.settings
+            settings = CONFIG.config["DEFAULT_EXTENSION_SETTINGS"]
+        else:
+            settings = response.settings.model_dump(mode="json")
     except Exception as e:
         raise HTTPRequestException(f"Failed to get extension settings: {str(e)}")
-    return send_response(settings.model_dump(mode="json"), headers=kwargs.get("response_headers"))
+    return send_response(settings, headers=kwargs.get("response_headers"))
