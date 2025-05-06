@@ -83,7 +83,7 @@ class PRSummaryManager(BasePRReviewManager):
             repo_service=repo_service,
             pr_service=pr_service,
             pr_diff_handler=pr_diff_handler,
-            eligible_agents=[AgentTypes.PR_SUMMARY.value],
+            eligible_agents=[AgentTypes.PR_SUMMARY],
             session_id=session.id,
         )
 
