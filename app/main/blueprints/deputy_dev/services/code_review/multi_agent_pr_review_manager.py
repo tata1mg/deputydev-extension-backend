@@ -41,7 +41,7 @@ class MultiAgentPRReviewManager:
         pr_diff_handler: PRDiffHandler,
         session_id: int,
         prompt_version=None,
-        eligible_agents=None,
+        eligible_agents=[],
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service
@@ -118,14 +118,14 @@ class MultiAgentPRReviewManager:
         )
 
     async def get_code_review_comments(
-        self, only_summary_agent: bool = False,
+        self
     ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         # get all agents from factory
         all_agents = AgentFactory.get_code_review_agents(
             context_service=self.context_service,
             is_reflection_enabled=self._is_reflection_enabled(),
             llm_handler=self.llm_handler,
-            only_summary_agent=only_summary_agent
+            include_agent_types=self.eligible_agents
         )
 
         # segregate agents in realtime based on whether they should execute or not
