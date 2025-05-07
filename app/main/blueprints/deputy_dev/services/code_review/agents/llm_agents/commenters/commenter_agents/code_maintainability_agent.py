@@ -15,7 +15,6 @@ class CodeMaintainabilityAgent(BaseCommenterAgent):
     is_dual_pass = False
     prompt_features = [
         PromptFeatures.CODE_MAINTAINABILITY_COMMENTS_GENERATION_PASS_1,
-        # PromptFeatures.CODE_MAINTAINABILITY_COMMENTS_GENERATION_PASS_2,
     ]
     agent_type = AgentTypes.CODE_MAINTAINABILITY
 

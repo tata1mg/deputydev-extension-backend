@@ -15,7 +15,6 @@ class SecurityAgent(BaseCommenterAgent):
     is_dual_pass = False
     prompt_features = [
         PromptFeatures.SECURITY_COMMENTS_GENERATION_PASS_1,
-        # PromptFeatures.SECURITY_COMMENTS_GENERATION_PASS_2,
     ]
     agent_type = AgentTypes.SECURITY
 

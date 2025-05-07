@@ -11,8 +11,8 @@ PARSE_FINAL_RESPONSE = ConversationTool(
         This tool should only be called when the LLM has finished gathering all the necessary information and is ready to provide the final review.
     """,
     input_schema={
-            "type": "object",
-            "properties": {
+        "type": "object",
+        "properties": {
             "comments": {
                 "type": "array",
                 "items": {
@@ -41,15 +41,19 @@ PARSE_FINAL_RESPONSE = ConversationTool(
                         "bucket": {
                             "type": "string",
                             "description": "Bucket name or label provided by LLM.",
-                        }
+                        },
                     },
                     "required": [
-                        "description", "corrective_code", "file_path",
-                        "line_number", "confidence_score", "bucket"
-                    ]
-                }
+                        "description",
+                        "corrective_code",
+                        "file_path",
+                        "line_number",
+                        "confidence_score",
+                        "bucket",
+                    ],
+                },
             }
         },
-            "required": ["comments"]
-        },
-) 
+        "required": ["comments"],
+    },
+)
