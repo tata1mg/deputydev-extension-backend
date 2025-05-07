@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
-from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,

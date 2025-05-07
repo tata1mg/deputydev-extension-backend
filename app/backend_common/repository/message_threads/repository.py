@@ -17,7 +17,11 @@ from app.backend_common.repository.db import DB
 class MessageThreadsRepository:
     @classmethod
     async def get_message_threads_for_session(
-        cls, session_id: int, call_chain_category: MessageCallChainCategory, content_hashes: List[str] = [], prompt_type = None
+        cls,
+        session_id: int,
+        call_chain_category: MessageCallChainCategory,
+        content_hashes: List[str] = [],
+        prompt_type=None,
     ) -> List[MessageThreadDTO]:
         try:
             filters: Dict[str, Union[List[str], int, str]] = {

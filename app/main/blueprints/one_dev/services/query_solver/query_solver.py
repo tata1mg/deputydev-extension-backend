@@ -2,6 +2,7 @@ import asyncio
 from typing import AsyncIterator, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -61,7 +62,6 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-from deputydev_core.utils.config_manager import ConfigManager
 
 MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"

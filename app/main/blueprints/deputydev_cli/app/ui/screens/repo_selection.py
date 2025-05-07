@@ -149,7 +149,7 @@ class RepoSelection(BaseScreenHandler):
             only_complete_on_completer_selection=True,
         )
         if self.app_context.init_manager:
-            # repeat initialization
+            # repeat pr_review_initialization
             if self.app_context.init_manager.repo_path != repo_path:
                 self.app_context.init_manager = InitializationManager(
                     repo_path,

@@ -1,7 +1,14 @@
 from datetime import datetime
 from typing import Any, Dict
 
+from deputydev_core.services.initialization.vector_store.weaviate.weaviate_initializer import (
+    WeaviateInitializer,
+)
+from deputydev_core.services.shared_chunks.shared_chunks_manager import (
+    SharedChunksManager,
+)
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
@@ -36,8 +43,6 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from deputydev_core.services.shared_chunks.shared_chunks_manager import SharedChunksManager
-from deputydev_core.utils.context_vars import set_context_values
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -54,7 +59,6 @@ class PRReviewManager(BasePRReviewManager):
         try:
             CodeReviewRequest(**data)
             logger.info("Received MessageQueue Message: {}".format(data))
-            SharedChunksManager.cleanup_shared_memory()
             await cls.process_pr_review(data=data)
             AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
@@ -136,7 +140,7 @@ class PRReviewManager(BasePRReviewManager):
         finally:
             repo_service.delete_local_repo()
             SharedChunksManager.cleanup_shared_memory()
-
+            await WeaviateInitializer().clean_weaviate_collections()
 
     @classmethod
     def check_no_pr_comments(cls, llm_response):

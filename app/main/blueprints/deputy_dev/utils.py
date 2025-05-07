@@ -20,9 +20,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     BitbucketBots,
 )
 from app.main.blueprints.deputy_dev.models.dao.postgres import Integrations
-from deputydev_core.utils.config_manager import ConfigManager
-from sanic import Sanic
-from deputydev_core.services.initialization.review_initialization_manager import  WeaviateSyncAndAsyncClients
 
 
 def remove_special_char(char, input_string):
@@ -371,24 +368,3 @@ def is_any_regex_present(text, regex_list):
         if re.search(pattern, text):
             return True
     return False
-
-
-
-def get_common_headers():
-    return {
-        "X-Client-Version": "2.0.0",
-        "X-Client": "CLI",
-    }
-
-async def weaviate_connection():
-    app = Sanic.get_app()
-    if app.ctx.weaviate_client:
-        weaviate_clients: WeaviateSyncAndAsyncClients = app.ctx.weaviate_client
-        if not weaviate_clients.async_client.is_connected():
-            print(f"Async Connection was dropped, Reconnecting")
-            await weaviate_clients.async_client.connect()
-        if not weaviate_clients.sync_client.is_connected():
-            print(f"Sync Connection was dropped, Reconnecting")
-            weaviate_clients.sync_client.connect()
-        return weaviate_clients
-

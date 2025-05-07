@@ -1,5 +1,3 @@
-import logging
-
 import botocore.exceptions
 from aiobotocore.client import AioBaseClient
 from sanic.log import logger
