@@ -107,7 +107,7 @@ def init_args(parser: argparse.ArgumentParser):
     config_group.add_argument("--debug", help="Run in debug mode", action="store_true")
     config_group.add_argument(
         "--clean-cache",
-        help="Clean the cache. Use this to clean up if its taking more storage on your system. This might slow down DeputyDev CLI's initialization process",
+        help="Clean the cache. Use this to clean up if its taking more storage on your system. This might slow down DeputyDev CLI's pr_review_initialization process",
         action="store_true",
     )
 

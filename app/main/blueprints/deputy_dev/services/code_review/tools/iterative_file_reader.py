@@ -9,6 +9,7 @@ ITERATIVE_FILE_READER = ConversationTool(
         If you do not know the end line number, just provide the end line number as start_line + 100.
         It will let you know if the end of the file is reached.
         To use this, a valid file path is required.
+        If you are not confident about import statements, then you can use this tool to read initial lines of the file to check imports.
 
         Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
         The response will EXPLICITLY mention if the end of the file is reached or not.

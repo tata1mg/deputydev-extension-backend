@@ -364,7 +364,6 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
 
                 """
 
-
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod
