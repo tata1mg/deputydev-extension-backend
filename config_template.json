@@ -43,6 +43,11 @@
       "domain": "caratlane.com",
       "team_id": 5,
       "org_name": "Caratlane"
+    },
+    "HSV_DIGITAL": {
+      "domain": "mohit@hsv.digital",
+      "team_id": 329,
+      "org_name": "HSV digital"
     }
   },
   "DEBUG": false,
