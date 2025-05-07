@@ -7,9 +7,9 @@ from deputydev_core.services.auth_token_storage.cli_auth_token_storage_manager i
 )
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.auth import AuthStatus
-from deputydev_core.utils.constants.enums import SharedMemoryKeys
+from deputydev_core.utils.constants.enums import ContextValueKeys
+from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.exceptions import InvalidVersionException
-from deputydev_core.utils.shared_memory import SharedMemory
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.validation import ValidationError
 
@@ -44,7 +44,7 @@ class AuthenticationManager:
                         raise Exception("No encrypted session data found in response")
                     # Storing jwt token in user's machine using keyring
                     CLIAuthTokenStorageManager.store_auth_token(response["encrypted_session_data"])
-                    SharedMemory.create(SharedMemoryKeys.CLI_AUTH_TOKEN.value, response["encrypted_session_data"])
+                    ContextValue.get(ContextValueKeys.CLI_AUTH_TOKEN.value, response["encrypted_session_data"])
                     return response["encrypted_session_data"]  # Exit on success
                 time.sleep(3)  # Wait for 3 seconds before polling again
             except Exception as e:
@@ -78,7 +78,7 @@ class AuthenticationManager:
                 if not response.get("encrypted_session_data") or response.get("encrypted_session_data") is None:
                     raise Exception("No encrypted session data found in response")
                 CLIAuthTokenStorageManager.store_auth_token(response["encrypted_session_data"])
-                SharedMemory.create(SharedMemoryKeys.CLI_AUTH_TOKEN.value, response["encrypted_session_data"])
+                ContextValue.get(ContextValueKeys.CLI_AUTH_TOKEN.value, response["encrypted_session_data"])
                 return CLIAuthTokenStorageManager.load_auth_token()
             else:
                 return None

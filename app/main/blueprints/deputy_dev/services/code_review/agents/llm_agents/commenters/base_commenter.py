@@ -3,12 +3,20 @@ from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
+from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
     BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+    AgentRunResult,
 )
 from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
     ContextService,
@@ -19,21 +27,13 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.deputy_dev.services.code_review.tools.tool_request_manager import (
+    ToolRequestManager,
+)
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
-from app.main.blueprints.deputy_dev.services.code_review.tools.tool_request_manager import (
-    ToolRequestManager,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
-    AgentRunResult,
-    AgentTypes,
-)
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):
@@ -62,7 +62,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         return render_snippet_array(agent_relevant_chunks)
 
     async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
-        # relevant_chunks = await self.context_service.agent_wise_relevant_chunks()
         last_pass_comments_str = ""
         if last_pass_result:
             last_pass_comments: List[LLMCommentData] = last_pass_result.get("comments") or []
@@ -154,7 +153,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
             # Process tool use requests iteratively
             current_response = llm_response
-            max_iterations = 25  # Limit the number of iterations to prevent infinite loops
+            max_iterations = CONFIG.config[
+                "MAX_REVIEW_TOOL_ITERATIONS"
+            ]  # Limit the number of iterations to prevent infinite loops
             iteration_count = 0
 
             while iteration_count < max_iterations:
@@ -165,14 +166,14 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     break
 
                 # Iterative tool use
-                tool_use_response = await self.tool_request_manager.process_tool_use_request(current_response,
-                                                                                             session_id)
+                tool_use_response = await self.tool_request_manager.process_tool_use_request(
+                    current_response, session_id
+                )
 
                 if tool_use_response is None:
                     print(current_response.parsed_content)
                     last_pass_result = {}
-                    AppLogger.log_warn(
-                        f"No tools were used for agent {self.agent_name}")
+                    AppLogger.log_error(f"No tools were used for agent {self.agent_name}")
                     break
 
                 # Submit the tool use response to the LLM
@@ -180,14 +181,15 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     session_id=session_id,
                     tool_use_response=tool_use_response,
                     tools=tools_to_use,
-                    prompt_type=prompt_handler.prompt_type
+                    prompt_type=prompt_handler.prompt_type,
                 )
 
                 iteration_count += 1
 
             if iteration_count >= max_iterations:
-                AppLogger.log_warn(
-                    f"Maximum number of iterations ({max_iterations}) reached for agent {self.agent_name}")
+                AppLogger.log_error(
+                    f"Maximum number of iterations ({max_iterations}) reached for agent {self.agent_name}"
+                )
                 last_pass_result = {}
 
         return AgentRunResult(
