@@ -51,7 +51,7 @@ class EncryptionService:
         # derive AES-256 key from password and salt
         key = cls.__derive_key(salt=salt)
 
-        # Generate a random 16-byte pr_review_initialization vector (IV)
+        # Generate a random 16-byte initialization vector (IV)
         iv = os.urandom(cls.IV_LENGTH)
 
         cipher = cls._get_cipher(key=key, iv=iv)
@@ -99,7 +99,7 @@ class EncryptionService:
 
         Args:
             key (bytes): The AES key.
-            iv (bytes): The pr_review_initialization vector.
+            iv (bytes): The initialization vector.
 
         Returns:
             Cipher: The AES cipher object.
@@ -164,7 +164,7 @@ class EncryptionService:
 
         Args:
             salt (bytes): The cryptographic salt.
-            iv (bytes): The pr_review_initialization vector.
+            iv (bytes): The initialization vector.
             ciphertext (bytes): The encrypted ciphertext.
 
         Returns:
