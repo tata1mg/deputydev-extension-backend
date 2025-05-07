@@ -546,7 +546,6 @@ class LLMHandler(Generic[PromptFeatures]):
         tools: Optional[List[ConversationTool]] = None,
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
-        prompt_type=None,
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -563,7 +562,7 @@ class LLMHandler(Generic[PromptFeatures]):
         """
 
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id, call_chain_category=call_chain_category
         )
         session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
