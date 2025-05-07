@@ -181,7 +181,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     session_id=session_id,
                     tool_use_response=tool_use_response,
                     tools=tools_to_use,
-                    prompt_type=prompt_handler.prompt_type,
                 )
 
                 iteration_count += 1
