@@ -11,27 +11,29 @@ from deputydev_core.services.file_path_search.dataclass.main import (
 from deputydev_core.services.file_path_search.file_path_search_service import (
     FilePathSearchService,
 )
-from deputydev_core.services.focussed_snippet_search.dataclass.main import (
-    FocussedSnippetSearchParams,
-)
-from deputydev_core.services.focussed_snippet_search.focussed_snippet_search_service import (
-    FocussedSnippetSearchService,
-)
-from deputydev_core.services.grep_search.dataclass.main import GrepSearchRequestParams
-from deputydev_core.services.grep_search.grep_search_service import GrepSearchService
 from deputydev_core.services.initialization.review_initialization_manager import (
     ReviewInitialisationManager,
 )
-from deputydev_core.services.iterative_file_reader.dataclass.main import (
+from deputydev_core.services.tools.focussed_snippet_search.dataclass.main import (
+    FocussedSnippetSearchParams,
+)
+from deputydev_core.services.tools.focussed_snippet_search.focussed_snippet_search import (
+    FocussedSnippetSearch,
+)
+from deputydev_core.services.tools.grep_search.dataclass.main import (
+    GrepSearchRequestParams,
+)
+from deputydev_core.services.tools.grep_search.grep_search import GrepSearch
+from deputydev_core.services.tools.iterative_file_reader.dataclass.main import (
     IterativeFileReaderRequestParams,
 )
-from deputydev_core.services.iterative_file_reader.iterative_file_reader import (
+from deputydev_core.services.tools.iterative_file_reader.iterative_file_reader import (
     IterativeFileReader,
 )
-from deputydev_core.services.relevant_chunks.dataclass.main import RelevantChunksParams
-from deputydev_core.services.relevant_chunks.relevant_chunk_service import (
-    RelevantChunksService,
+from deputydev_core.services.tools.relevant_chunks.dataclass.main import (
+    RelevantChunksParams,
 )
+from deputydev_core.services.tools.relevant_chunks.relevant_chunk import RelevantChunks
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ContextValueKeys
 from deputydev_core.utils.context_vars import get_context_value
@@ -74,7 +76,7 @@ class ToolHandlers:
                 repo_path=payload.repo_path, process_executor=executor, one_dev_client=one_dev_review_client
             )
 
-            chunks = await RelevantChunksService(payload.repo_path).get_relevant_chunks(
+            chunks = await RelevantChunks(payload.repo_path).get_relevant_chunks(
                 payload,
                 one_dev_review_client,
                 embedding_manager,
@@ -99,7 +101,7 @@ class ToolHandlers:
         if isinstance(tool_input["search_terms"], str):
             tool_input["search_terms"] = [tool_input["search_terms"]]
         payload = GrepSearchRequestParams(**tool_input)
-        grep_search_results = await GrepSearchService(repo_path=payload.repo_path).perform_grep_search(
+        grep_search_results = await GrepSearch(repo_path=payload.repo_path).perform_grep_search(
             directory_path=payload.directory_path,
             search_terms=payload.search_terms,
         )
@@ -160,7 +162,7 @@ class ToolHandlers:
             initialisation_manager = ReviewInitialisationManager(
                 repo_path=payload.repo_path, process_executor=executor, one_dev_client=one_dev_client
             )
-            chunks = await FocussedSnippetSearchService.search_code(payload, weaviate_client, initialisation_manager)
+            chunks = await FocussedSnippetSearch.search_code(payload, weaviate_client, initialisation_manager)
         return chunks
 
     @staticmethod
