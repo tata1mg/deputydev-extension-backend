@@ -97,11 +97,7 @@ class PRReviewPreProcessor:
         await self.insert_pr_record(repo_dto)
         await self.run_validations()
         await PRReviewInitializationService.initialization()
-        # try:
         await PRReviewInitializationService.create_embedding(self.repo_path, self.repo_service)
-        # except Exception as e:
-        #     AppLogger.log_error(traceback.format_exc())
-        # await self.create_embedding()
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
@@ -208,18 +204,6 @@ class PRReviewPreProcessor:
         failed_pr_dto = await PRService.find(filters=failed_pr_filters)
 
         if failed_pr_dto:
-            # if failed_pr_dto.session_id:
-            #     self.session_id = failed_pr_dto.session_id
-            # else:
-            #     session = await MessageSessionsRepository.create_message_session(
-            #         message_session_data=MessageSessionData(
-            #             user_team_id=user_team_dto.id,
-            #             client=Clients.BACKEND,
-            #             client_version="1.0.0",
-            #             session_type="PR_REVIEW",
-            #         )
-            #     )
-            #     self.session_id = session.id
             # Update failed PR
             update_data = {
                 "commit_id": self.pr_model.commit_id(),
@@ -234,16 +218,6 @@ class PRReviewPreProcessor:
             return await PRService.db_update(filters={"id": failed_pr_dto.id}, payload=update_data)
 
         else:
-            # if self.session_id is None:
-            #     session = await MessageSessionsRepository.create_message_session(
-            #         message_session_data=MessageSessionData(
-            #             user_team_id=user_team_dto.id,
-            #             client=Clients.BACKEND,
-            #             client_version="1.0.0",
-            #             session_type="PR_REVIEW",
-            #         )
-            #     )
-            #     self.session_id = session.id
             self.pr_model.meta_info = {
                 "review_status": PrStatusTypes.IN_PROGRESS.value,
                 "team_id": repo_dto.team_id,
