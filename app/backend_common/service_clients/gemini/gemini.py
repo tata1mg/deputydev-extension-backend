@@ -45,6 +45,7 @@ class GeminiServiceClient(metaclass=Singleton):
         temperature: float = 0.5,
         tool_config=None,
         response_mime_type: str = "text/plain",
+        max_output_tokens: int = 8192,
     ) -> types.GenerateContentResponse:
         data = await self.client.aio.models.generate_content(
             model=model_name,
@@ -55,7 +56,7 @@ class GeminiServiceClient(metaclass=Singleton):
                 temperature=temperature,
                 response_mime_type=response_mime_type,
                 response_schema=response_schema,
-                max_output_tokens=8192,
+                max_output_tokens=max_output_tokens,
             ),
         )
         return data
@@ -70,6 +71,7 @@ class GeminiServiceClient(metaclass=Singleton):
         temperature: float = 0.5,
         tool_config=None,
         response_mime_type: str = "text/plain",
+        max_output_tokens: int = 8192,
     ) -> AsyncIterator[types.GenerateContentResponse]:
         data = await self.client.aio.models.generate_content_stream(
             model=model_name,
@@ -80,7 +82,7 @@ class GeminiServiceClient(metaclass=Singleton):
                 temperature=temperature,
                 response_mime_type=response_mime_type,
                 response_schema=response_schema,
-                max_output_tokens=8192,
+                max_output_tokens=max_output_tokens,
             ),
         )
         return data
