@@ -15,6 +15,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     TextBlockData,
     ToolUseResponseContent,
     ToolUseResponseData,
+    ToolUseRequestData,
+    ToolUseRequestContent,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationRoleGemini,
@@ -255,12 +257,20 @@ class Google(BaseLLMProvider):
                 if part.text:
                     content_blocks.append(TextBlockData(content=TextBlockContent(text=part.text)))
                 elif part.function_call:
-                    # The model is requesting a tool call
-                    raise ValueError("Tool use is not yet implemented for GeminiVertexAI provider.")
+                    content_blocks.append(
+                        ToolUseRequestData(
+                            type=ContentBlockCategory.TOOL_USE_REQUEST,
+                            content=ToolUseRequestContent(
+                                tool_input=part.function_call.args,
+                                tool_name=part.function_call.name,
+                                tool_use_id=str(uuid.uuid4()),
+                            ),
+                        )
+                    )
 
         return NonStreamingResponse(
             content=content_blocks,
-            usage=LLMUsage(input=input_tokens, output=output_tokens),
+            usage=LLMUsage(input=input_tokens or 0, output=output_tokens or 0),
         )
 
     async def _parse_streaming_response(
@@ -397,6 +407,7 @@ class Google(BaseLLMProvider):
         """
         model_config = self._get_model_config(model)  # Get your internal config
         vertex_model_name = model_config.get("NAME")
+        max_output_tokens = model_config.get("MAX_TOKENS") or 8192
         client = GeminiServiceClient()
 
         if stream:
@@ -406,6 +417,7 @@ class Google(BaseLLMProvider):
                 tools=llm_payload.get("tools"),
                 tool_config=llm_payload.get("tool_config"),
                 system_instruction=llm_payload.get("system_instruction"),
+                max_output_tokens=max_output_tokens,
             )
             return await self._parse_streaming_response(response)
         else:
@@ -415,5 +427,6 @@ class Google(BaseLLMProvider):
                 tools=llm_payload.get("tools"),
                 tool_config=llm_payload.get("tool_config"),
                 system_instruction=llm_payload.get("system_instruction"),
+                max_output_tokens=max_output_tokens,
             )
             return self._parse_non_streaming_response(response)
