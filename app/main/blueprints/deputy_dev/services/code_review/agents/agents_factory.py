@@ -67,10 +67,10 @@ class AgentFactory:
     }
 
     code_review_agents = {
-        # AgentTypes.BUSINESS_LOGIC_VALIDATION: BusinessValidationAgent,
-        # AgentTypes.CODE_MAINTAINABILITY: CodeMaintainabilityAgent,
-        # AgentTypes.CODE_COMMUNICATION: CodeCommunicationAgent,
-        # AgentTypes.ERROR: ErrorAgent,
+        AgentTypes.BUSINESS_LOGIC_VALIDATION: BusinessValidationAgent,
+        AgentTypes.CODE_MAINTAINABILITY: CodeMaintainabilityAgent,
+        AgentTypes.CODE_COMMUNICATION: CodeCommunicationAgent,
+        AgentTypes.ERROR: ErrorAgent,
         AgentTypes.PERFORMANCE_OPTIMIZATION: PerformanceOptimizationAgent,
         AgentTypes.SECURITY: SecurityAgent,
         AgentTypes.PR_SUMMARY: PRSummarizerAgent,
