@@ -5,11 +5,11 @@ from typing import Any, Dict
 from deputydev_core.services.embedding.pr_review_embedding_manager import (
     PRReviewEmbeddingManager,
 )
-from deputydev_core.services.file_path_search.dataclass.main import (
+from deputydev_core.services.tools.file_path_search.dataclass.main import (
     FilePathSearchPayload,
 )
-from deputydev_core.services.file_path_search.file_path_search_service import (
-    FilePathSearchService,
+from deputydev_core.services.tools.file_path_search.file_path_search import (
+    FilePathSearch,
 )
 from deputydev_core.services.initialization.review_initialization_manager import (
     ReviewInitialisationManager,
@@ -178,7 +178,7 @@ class ToolHandlers:
         """
         tool_input["repo_path"] = get_context_value("repo_path")
         payload = FilePathSearchPayload(**tool_input)
-        files = FilePathSearchService(repo_path=payload.repo_path).list_files(
+        files = FilePathSearch(repo_path=payload.repo_path).list_files(
             directory=payload.directory,
             search_terms=payload.search_terms,
         )
