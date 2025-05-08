@@ -60,7 +60,7 @@ class QuerySolverInput(BaseModel):
     os_name: Optional[str] = None
     shell: Optional[str] = None
     search_web: Optional[bool] = False
-    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET.value
+    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
