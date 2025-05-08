@@ -32,6 +32,8 @@ def validate_version(client: Clients, client_version: str) -> Tuple[bool, Option
         is_valid = compare_version(client_version, MIN_SUPPORTED_WEB_VERSION, ">=")
         if not is_valid:
             min_version_supported = MIN_SUPPORTED_WEB_VERSION
+    elif client == Clients.REVIEW:
+        pass
     else:
         is_valid = compare_version(client_version, MIN_SUPPORTED_VSCODE_EXT_VERSION, ">=")
         if not is_valid:

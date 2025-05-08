@@ -34,7 +34,10 @@ class MessageThreadsRepository:
 
     @classmethod
     async def get_message_threads_for_session(
-        cls, session_id: int, call_chain_category: MessageCallChainCategory, content_hashes: List[str] = []
+        cls,
+        session_id: int,
+        call_chain_category: MessageCallChainCategory,
+        content_hashes: List[str] = [],
     ) -> List[MessageThreadDTO]:
         try:
             filters: Dict[str, Union[List[str], int, str]] = {
