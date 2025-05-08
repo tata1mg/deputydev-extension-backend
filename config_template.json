@@ -370,6 +370,12 @@
       "INPUT_TOKENS_LIMIT": 130000,
       "THINKING_BUDGET_TOKENS": 5000,
       "PROMPT_CACHING_SUPPORTED": false
+    },
+    "GEMINI_2_POINT_0_FLASH": {
+      "NAME": "gemini-2.0-flash",
+      "PROVIDER": "GOOGLE",
+      "MAX_TOKENS": 8192,
+      "INPUT_TOKENS_LIMIT": 100000
     }
   },
   "GIT_ACTORS": {
