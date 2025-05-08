@@ -569,5 +569,6 @@
     },
     "RELEVANT_CHUNKS": {
       "CHUNKING_ENABLED": true
-    }
+    },
+    "NUMBER_OF_WORKERS": 1
 }
