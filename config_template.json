@@ -45,9 +45,14 @@
       "org_name": "Caratlane"
     },
     "HSV_DIGITAL": {
-      "domain": "mohit@hsv.digital",
+      "domain": "hsv.digital",
       "team_id": 329,
       "org_name": "HSV digital"
+    },
+     "ROZANA": {
+      "domain": "rozana.in",
+      "team_id": 332,
+      "org_name": "Rozana"
     }
   },
   "DEBUG": false,
