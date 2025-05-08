@@ -232,8 +232,8 @@ class Anthropic(BaseLLMProvider):
             usage=LLMUsage(
                 input=llm_response["usage"]["input_tokens"],
                 output=llm_response["usage"]["output_tokens"],
-                cache_read=llm_response["usage"]["cache_read_input_tokens"],
-                cache_write=llm_response["usage"]["cache_creation_input_tokens"],
+                cache_read=llm_response["usage"].get("cache_read_input_tokens"),
+                cache_write=llm_response["usage"].get("cache_creation_input_tokens"),
             ),
             type=LLMCallResponseTypes.NON_STREAMING,
         )
