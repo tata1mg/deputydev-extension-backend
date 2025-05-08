@@ -40,6 +40,11 @@ class Url(BaseModel):
     keyword: str
 
 
+class LLMModel(Enum):
+    CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
+    GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
@@ -54,6 +59,8 @@ class QuerySolverInput(BaseModel):
     urls: Optional[List[Url]] = []
     os_name: Optional[str] = None
     shell: Optional[str] = None
+    search_web: Optional[bool] = False
+    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
@@ -77,6 +84,7 @@ class InlineEditInput(BaseModel):
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
     relevant_chunks: List[Any] = []
+    llm_model: LLMModel
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):

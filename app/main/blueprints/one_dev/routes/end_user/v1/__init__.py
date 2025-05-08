@@ -13,6 +13,9 @@ from .urls.urls_blueprint import urls_v1_bp
 from .websocket_connection.websocket_connection_blueprint import (
     websocket_connection_v1_bp,
 )
+from .feedbacks.feedbacks_blueprint import feedbacks_v1_bp
+from .urls.urls_blueprint import urls_v1_bp
+from .web_search.web_search import websearch_v1_bp
 
 blueprints = [
     auth_v1_bp,
@@ -25,6 +28,7 @@ blueprints = [
     websocket_connection_v1_bp,
     feedbacks_v1_bp,
     urls_v1_bp,
+    websearch_v1_bp,
     extension_settings_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
