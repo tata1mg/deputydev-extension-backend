@@ -61,6 +61,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_read
 from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
     PUBLIC_URL_CONTENT_READER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
+    WEB_SEARCH,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
@@ -76,6 +79,7 @@ MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
 
 
 class QuerySolver:
@@ -208,6 +212,10 @@ class QuerySolver:
             client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
         ):
             tools_to_use.append(PUBLIC_URL_CONTENT_READER)
+        if payload.search_web and compare_version(
+            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH, ">="
+        ):
+            tools_to_use.append(WEB_SEARCH)
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
@@ -229,7 +237,7 @@ class QuerySolver:
 
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                llm_model=LLModels(payload.llm_model.value),
                 prompt_vars={
                     "query": payload.query,
                     "focus_items": payload.focus_items,
