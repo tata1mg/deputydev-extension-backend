@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.config_manager import ConfigManager
 
+from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -67,6 +68,7 @@ class MultiAgentPRReviewManager:
         self.llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
+            cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
         self.session_id = session_id
 

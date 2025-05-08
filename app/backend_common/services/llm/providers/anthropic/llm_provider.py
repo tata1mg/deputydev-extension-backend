@@ -186,8 +186,10 @@ class Anthropic(BaseLLMProvider):
                 }
             ]
 
-        if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
-            llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+        # Todo Uncomment this later when bedrock provide support of prompt caching
+
+        # if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
+        #     llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
         return llm_payload
 
@@ -227,7 +229,12 @@ class Anthropic(BaseLLMProvider):
 
         return NonStreamingResponse(
             content=non_streaming_content_blocks,
-            usage=LLMUsage(input=llm_response["usage"]["input_tokens"], output=llm_response["usage"]["output_tokens"]),
+            usage=LLMUsage(
+                input=llm_response["usage"]["input_tokens"],
+                output=llm_response["usage"]["output_tokens"],
+                cache_read=llm_response["usage"]["cache_read_input_tokens"],
+                cache_write=llm_response["usage"]["cache_creation_input_tokens"],
+            ),
             type=LLMCallResponseTypes.NON_STREAMING,
         )
 
