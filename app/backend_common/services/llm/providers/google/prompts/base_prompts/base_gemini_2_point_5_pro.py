@@ -18,8 +18,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
-# TODO: this is getting imported from anthropic
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.dataclasses.main import (
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.dataclasses.main import (
     XMLWrappedContentPosition,
     XMLWrappedContentTagPosition,
 )
@@ -55,7 +54,6 @@ class BaseGemini2Point5ProPrompt(BasePrompt):
             # Handling non TextBlockDelta events
             ################################################################################################################
             # if event is not text block, yield it
-            print(event)
             if (
                 isinstance(event, ToolUseRequestStart)
                 or isinstance(event, ToolUseRequestEnd)
@@ -80,7 +78,6 @@ class BaseGemini2Point5ProPrompt(BasePrompt):
             ################################################################################################################
             # accumulate text from TextBlockDelta events
             text_buffer += event.content.text.replace("```diff", "").replace("```", "")
-            print(f"text_buffer: {text_buffer}")
 
             # if there is no ongoing tag, we try to find a new tag in the text, otherwise we keep yielding text
             # we use regex to find the tag, because partial tags are possible
@@ -218,7 +215,6 @@ class BaseGemini2Point5ProPrompt(BasePrompt):
                     )
                     for event in events_to_yield:
                         yield event
-                    # TODO: This text buffer will have </code_block> also
                     # now, we update the text buffer to the text after the end tag
                     text_buffer = text_buffer[yieldable_text_end:]
                     xml_wrapped_text_position.start.start_pos = 0
