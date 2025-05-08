@@ -439,7 +439,8 @@
       "ENV_VARIABLES": {
         "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
         "LIMIT_RESOURCES": true,
-        "LOG_LEVEL": "debug"
+        "LOG_LEVEL": "debug",
+        "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes"
       }
     },
     "EMBEDDING": {
