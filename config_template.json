@@ -541,30 +541,33 @@
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
     "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
     "WEAVIATE_EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
-      "WEAVIATE_HOST": "127.0.0.1",
-      "WEAVIATE_HTTP_PORT": 8079,
-      "WEAVIATE_GRPC_PORT": 50050,
-      "WEAVIATE_BASE_DIR": "~/.deputydev/weaviate",
-      "WEAVIATE_VERSION": "v1.27.22",
-      "WEAVIATE_STARTUP_TIMEOUT": 30,
-      "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": 30,
-      "WEAVIATE_ENV_VARIABLES": {
+    "WEAVIATE_HOST": "127.0.0.1",
+    "WEAVIATE_HTTP_PORT": 8079,
+    "WEAVIATE_GRPC_PORT": 50050,
+    "WEAVIATE_BASE_DIR": "~/.deputydev/weaviate",
+    "WEAVIATE_VERSION": "v1.27.22",
+    "WEAVIATE_STARTUP_TIMEOUT": 30,
+    "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": 30,
+    "WEAVIATE_ENV_VARIABLES": {
         "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
         "LIMIT_RESOURCES": true,
         "LOG_LEVEL": "debug"
-      },
-      "WEAVIATE_CLIENT_TIMEOUTS": {
+    },
+    "WEAVIATE_CLIENT_TIMEOUTS": {
             "INIT": 30,
             "QUERY": 60,
             "INSERT": 120
-          },
+    },
     "DEFAULT_EXTENSION_SETTINGS": {
-    "default_mode": "ask",
-    "terminal_settings": {
-      "enable_yolo_mode": false,
-      "command_deny_list": [
-        "rm"
-      ]
+        "default_mode": "ask",
+        "terminal_settings": {
+            "enable_yolo_mode": false,
+            "command_deny_list": [
+                "rm"
+            ]
+        }
+    },
+    "RELEVANT_CHUNKS": {
+      "CHUNKING_ENABLED": true
     }
-  }
 }
