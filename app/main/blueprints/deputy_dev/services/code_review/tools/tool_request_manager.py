@@ -106,6 +106,9 @@ class ToolRequestManager:
                             response=tool_response,
                         )
                     )
+                else:
+                    AppLogger.log_error(f"Empty response returned for  tool {tool_name}: tool_use_id {tool_use_id} tool_input: {tool_input} tool_response: {tool_response}")
+
 
         return None
 
