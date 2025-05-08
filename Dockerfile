@@ -15,18 +15,38 @@ ARG SSH_PRIVATE_KEY
 ARG SSH_PUBLIC_KEY
 ARG SERVICE_NAME
 
-RUN apt-get update && \
-    apt-get install -y \
-        git \
-        gcc \
+RUN apt-get update && apt-get install -y \
         openssh-server \
+        gcc \
+        wget \
+        ca-certificates \
+        build-essential \
+        libssl-dev \
+        libcurl4-gnutls-dev \
+        libexpat1-dev \
+        gettext \
+        unzip \
+        zlib1g-dev \
+        procps \
         curl
 
-RUN echo "Y" | apt-get install procps
+# Define Git version
+ARG GIT_VERSION=2.42.0
+
+# Download and compile Git
+RUN wget https://github.com/git/git/archive/refs/tags/v$GIT_VERSION.zip -O git.zip && \
+    unzip git.zip && \
+    cd git-$GIT_VERSION && \
+    make prefix=/usr/local all && \
+    make prefix=/usr/local install && \
+    cd .. && \
+    rm -rf git-$GIT_VERSION git.zip
+
+# Verify Git installation
+RUN git --version
 
 RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 && chmod +x /usr/local/bin/dbmate
-# For Dexter service
-# For hr_digitisation service
+RUN apt-get remove -y libaom3 && apt-get autoremove -y
 
 # Authorize SSH Host
 RUN mkdir -p /root/.ssh && \
@@ -41,7 +61,7 @@ RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
     chmod 600 /root/.ssh/id_ed25519.pub
 
 
-RUN pip install poetry=="1.8.3"
+RUN pip install poetry=="1.8.4"
 RUN pip install --upgrade pip
 
 COPY poetry.lock pyproject.toml ./
