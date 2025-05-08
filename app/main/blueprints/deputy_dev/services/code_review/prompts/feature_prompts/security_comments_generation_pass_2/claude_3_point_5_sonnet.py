@@ -93,6 +93,7 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             13.  comment should not be duplicated for similar issues across different locations.
             14.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
             15.  Do not change the provided bucket name.
+            16.  Use all the required tools if you need to fetch some piece of code based on it. 
 
             </guidelines>
 
@@ -105,7 +106,8 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             4. If comment is not part of PR diff.
             </new_guidelines>
 
-            Next, format comments from previous step in the following XML format:
+           Once you have gathered all necessary context and are confident in your findings, call the
+            "parse_final_response" tool with your review in XML format:
             {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
