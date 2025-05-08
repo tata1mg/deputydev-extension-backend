@@ -1,18 +1,9 @@
-import asyncio
-from typing import Any, Dict, List, Optional
-
-import vertexai
+from typing import Any, Dict, List, Optional, AsyncIterator
 from deputydev_core.utils.singleton import Singleton
-from google.oauth2 import service_account
 from torpedo import CONFIG
-from vertexai.generative_models import (
-    Content,
-    GenerationConfig,
-    GenerationResponse,
-    GenerativeModel,
-    Part,
-    Tool,
-)
+from google.oauth2 import service_account
+from google import genai
+from google.genai import types
 
 config = CONFIG.config
 
@@ -32,29 +23,66 @@ class GeminiServiceClient(metaclass=Singleton):
             "client_x509_cert_url": config["VERTEX"].get("client_x509_cert_url"),
             "universe_domain": config["VERTEX"].get("universe_domain"),
         }
-        credentials = service_account.Credentials.from_service_account_info(credentials_dict)
-        vertexai.init(
-            project=credentials_dict["project_id"], location=config["VERTEX"].get("location"), credentials=credentials
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_dict,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+        self.client = genai.Client(
+            http_options=types.HttpOptions(api_version="v1"),
+            vertexai=True,
+            credentials=credentials,
+            project=credentials_dict["project_id"],
+            location=config["VERTEX"].get("location"),
         )
 
     async def get_llm_non_stream_response(
         self,
         model_name,
-        contents: List[Content],
-        system_instruction: Part = None,
-        tools: List[Tool] = None,
+        contents: List[types.Content],
+        system_instruction: types.Part = None,
+        tools: List[types.Tool] = None,
         response_schema: Optional[Dict[str, Any]] = None,
         temperature: float = 0.5,
         tool_config=None,
         response_mime_type: str = "text/plain",
-    ) -> GenerationResponse:
-        generation_config = GenerationConfig(
-            temperature=temperature,
-            max_output_tokens=8192,
-            response_mime_type=response_mime_type,
-            response_schema=response_schema,
+        max_output_tokens: int = 8192,
+    ) -> types.GenerateContentResponse:
+        data = await self.client.aio.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                tools=tools,
+                temperature=temperature,
+                response_mime_type=response_mime_type,
+                response_schema=response_schema,
+                max_output_tokens=max_output_tokens,
+            ),
         )
-        data = await GenerativeModel(
-            model_name=model_name, system_instruction=system_instruction
-        ).generate_content_async(contents=contents, generation_config=generation_config, tools=tools)
+        return data
+
+    async def get_llm_stream_response(
+        self,
+        model_name,
+        contents: List[types.Content],
+        system_instruction: types.Part = None,
+        tools: List[types.Tool] = None,
+        response_schema: Optional[Dict[str, Any]] = None,
+        temperature: float = 0.5,
+        tool_config=None,
+        response_mime_type: str = "text/plain",
+        max_output_tokens: int = 8192,
+    ) -> AsyncIterator[types.GenerateContentResponse]:
+        data = await self.client.aio.models.generate_content_stream(
+            model=model_name,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                tools=tools,
+                temperature=temperature,
+                response_mime_type=response_mime_type,
+                response_schema=response_schema,
+                max_output_tokens=max_output_tokens,
+            ),
+        )
         return data

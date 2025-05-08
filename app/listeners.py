@@ -9,7 +9,9 @@ from app.main.blueprints.deputy_dev.services.message_queue.message_queue_helper 
 from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
     PixelEventSubscriber,
 )
-
+from redis_wrapper.registry import DEFAULT_CACHE_LABEL, cache_registry
+from sanic import Sanic
+from tortoise_wrapper import TortoiseWrapper
 
 async def initialize_message_queue_subscribers(_app, loop):
     """
@@ -37,9 +39,22 @@ async def initialize_kafka_subscriber(_app, loop):
         session_event_subscriber = PixelEventSubscriber(_app.config)
         _app.add_task(session_event_subscriber.consume())
 
+async def setup_caches(app: Sanic):
+    cache_config = app.config["REDIS_CACHE_HOSTS"]
+    cache_registry.from_config(cache_config)
+
+async def setup_tortoise(app: Sanic):
+    await TortoiseWrapper.setup(config=app.config, orm_config=app.config["DB_CONNECTIONS"])
+
+
+async def teardown_tortoise(app: Sanic):
+    await TortoiseWrapper.teardown()
 
 # Initializing listeners with background task only if it the background worker flag is enabled.
 listeners = [
+    (setup_caches, ListenerEventTypes.BEFORE_SERVER_START.value),
     (initialize_kafka_subscriber, ListenerEventTypes.AFTER_SERVER_START.value),
     (initialize_message_queue_subscribers, ListenerEventTypes.AFTER_SERVER_START.value),
+    (setup_tortoise, ListenerEventTypes.BEFORE_SERVER_START.value),
+    (teardown_tortoise, ListenerEventTypes.AFTER_SERVER_STOP.value),
 ]

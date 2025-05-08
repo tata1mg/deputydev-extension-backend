@@ -550,5 +550,17 @@
         "rm"
       ]
     }
-  }
+  },
+  "CODE_GEN_LLM_MODELS": [
+    {
+      "id": 1,
+      "display_name": "Claude 3.5 Sonnet",
+      "name": "CLAUDE_3_POINT_5_SONNET"
+    },
+    {
+      "id": 2,
+      "display_name": "Gemini 2.5 Pro",
+      "name": "GEMINI_2_POINT_5_PRO"
+    }
+  ]
 }
