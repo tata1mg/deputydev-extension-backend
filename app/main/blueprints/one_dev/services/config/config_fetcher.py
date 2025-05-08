@@ -175,6 +175,6 @@ class ConfigFetcher:
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
             if os == OS.LINUX.value:
-                base_config["BINARY"]["LLM_MODELS"] = ConfigManager.configs["CODE_GEN_LLM_MODELS"][:1]
+                base_config["LLM_MODELS"] = ConfigManager.configs["CODE_GEN_LLM_MODELS"][:1]
             else:
-                base_config["BINARY"]["LLM_MODELS"] = ConfigManager.configs["CODE_GEN_LLM_MODELS"]
+                base_config["LLM_MODELS"] = ConfigManager.configs["CODE_GEN_LLM_MODELS"]
