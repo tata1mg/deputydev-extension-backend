@@ -1,7 +1,14 @@
 from datetime import datetime
 from typing import Any, Dict
 
+from deputydev_core.services.initialization.vector_store.weaviate.weaviate_initializer import (
+    WeaviateInitializer,
+)
+from deputydev_core.services.shared_chunks.shared_chunks_manager import (
+    SharedChunksManager,
+)
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
@@ -98,7 +105,7 @@ class PRReviewManager(BasePRReviewManager):
 
             if not pre_processor.is_reviewable_request:
                 return
-
+            set_context_values(session_id=pre_processor.session_id)
             if not pre_processor.session_id:
                 AppLogger.log_error("Session id not found for PR review")
                 raise Exception("Session id not found for PR review")
@@ -132,6 +139,8 @@ class PRReviewManager(BasePRReviewManager):
             raise ex
         finally:
             repo_service.delete_local_repo()
+            SharedChunksManager.cleanup_shared_memory()
+            await WeaviateInitializer().clean_weaviate_collections()
 
     @classmethod
     def check_no_pr_comments(cls, llm_response):
