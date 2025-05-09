@@ -7,8 +7,12 @@ PARSE_FINAL_RESPONSE = ConversationTool(
         it should call this tool with the complete review in XML format. The XML must match the format
         previously used (a <review> root with nested <comments> and one <comment> per finding,
         including file paths, line numbers, messages, and confidence/severity attributes).
+        Note: 
+        - For each finding or improvement, create a separate <comment> block within the <comments> section.
+        - If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
         
         This tool should only be called when the LLM has finished gathering all the necessary information and is ready to provide the final review.
+        Always Provide response for this Tool in Tool Use Request block.
     """,
     input_schema={
         "type": "object",
