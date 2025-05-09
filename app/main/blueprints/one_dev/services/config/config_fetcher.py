@@ -34,6 +34,7 @@ class ConfigFetcher:
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
             "POLLING_MAX_ATTEMPTS": ConfigManager.configs["POLLING_MAX_ATTEMPTS"],
+            "LLM_MODELS": ConfigManager.configs["CODE_GEN_LLM_MODELS"]
         },
     }
 
@@ -174,7 +175,3 @@ class ConfigFetcher:
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
-            if os == OS.LINUX.value:
-                base_config["LLM_MODELS"] = ConfigManager.configs["CODE_GEN_LLM_MODELS"][:1]
-            else:
-                base_config["LLM_MODELS"] = ConfigManager.configs["CODE_GEN_LLM_MODELS"]
