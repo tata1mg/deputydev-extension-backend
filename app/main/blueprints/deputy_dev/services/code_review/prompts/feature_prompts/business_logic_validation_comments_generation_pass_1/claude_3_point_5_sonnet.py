@@ -94,15 +94,6 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             - Do not repeat similar comments for multiple instances of the same issue.
             - Do not provide general observations or suggestions unless they are critical to meeting the
             business requirements.
-            
-            For each issue you identify, create a comment using the following format:
-            
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
-
-            Repeat the <comment> block for each issue you find regarding business logic validation.
-            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
-            Example:
-            <review><comments></comments></review>
 
             Remember:
             - Map exactly 1 comment to each comment tag in the output response.
@@ -122,6 +113,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             -   Do not comment on unchanged code unless directly impacted by the changes.
             -   Do not duplicate comments for similar issues across different locations.
             -   If you are suggesting any comment that is already catered please don't include those comment in response.
+            -  Use all the required tools if you need to fetch some piece of code based on it. 
             - Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
             
             Your review should help ensure that the changes in the pull request accurately implement the
