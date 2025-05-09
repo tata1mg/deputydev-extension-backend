@@ -211,6 +211,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 query_id=query_id,
             )
         else:
+            print(llm_response)
             parsed_content = prompt_handler.get_parsed_result(llm_response)
             return NonStreamingParsedLLMCallResponse(
                 type=llm_response.type,
