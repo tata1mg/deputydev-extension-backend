@@ -145,6 +145,10 @@ class PRReviewManager(BasePRReviewManager):
             SharedChunksManager.cleanup_shared_memory()
             weaviate_client: WeaviateSyncAndAsyncClients = ContextValue.get(ContextValueKeys.WEAVIATE_CLIENT.value)
             await WeaviateInitializer().clean_weaviate_collections()
+            weaviate_client.sync_client.close()
+            await weaviate_client.async_client.close()
+            ContextValue.set(ContextValueKeys.WEAVIATE_CLIENT.value, None)
+
 
     @classmethod
     def check_no_pr_comments(cls, llm_response):
