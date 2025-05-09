@@ -95,16 +95,8 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             understanding the context of the logged events.
             </logging_guidelines>
             
-            3. For each bucket (Documentation, Docstrings, and Logging), provide your comments to be made on PR for improvements.
-            Use the following format for your review comments:
-            
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)}            
 
-            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
-            Example:
-            <review><comments></comments></review>
-
-            4. Remember to focus solely on code communication aspects as outlined above. Do not comment on code
+            3. Remember to focus solely on code communication aspects as outlined above. Do not comment on code
             functionality, performance, or other aspects outside the scope of documentation, docstrings, and
             logging.
             
@@ -128,6 +120,7 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             -   Do not duplicate comments for similar issues across different locations.
             -   If you are suggesting any comment that is already catered please don't include those comment in response.
             -   Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
+            -  Use all the required tools if you need to fetch some piece of code based on it. 
             - Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
         """
 
