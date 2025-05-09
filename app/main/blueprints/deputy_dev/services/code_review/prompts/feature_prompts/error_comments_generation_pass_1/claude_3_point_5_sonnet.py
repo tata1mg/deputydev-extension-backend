@@ -45,6 +45,10 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
             call the parse_final_response tool with your complete review comments in given format.
             </tool_calling>
             
+            IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+            Never provide review comments as plain text in your response. All final reviews MUST be delivered
+            through the parse_final_response tool inside a tool use block.
+            
             <searching_and_reading>
             You have tools to search the codebase and read files. Follow these rules regarding tool calls:
             1. If available, heavily prefer the function, class search,  grep search, file search, and list dir tools.
@@ -128,7 +132,6 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
                 -  Do not provide appreciation comments or positive feedback.
                 - Do not change the provided bucket name.
                 -  Consider the context provided by related code snippets.
-                -  For each error found, create a separate <comment> block within the <comments> section.
                 -  Ensure that your comments are clear, concise, and actionable.
                 -  Provide specific line numbers and file paths for each error.
                 -  Assign appropriate confidence scores based on your certainty of the error.

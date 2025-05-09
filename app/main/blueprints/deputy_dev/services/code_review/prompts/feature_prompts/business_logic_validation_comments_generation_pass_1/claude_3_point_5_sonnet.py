@@ -39,6 +39,10 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             - Parse large functions completely before commenting using `ITERATIVE_FILE_READER`.
             - If unsure about correctness, dig deeper before suggesting anything.
             
+            IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+            Never provide review comments as plain text in your response. All final reviews MUST be delivered
+            through the parse_final_response tool inside a tool use block.
+            
             Only after you have gathered all relevant code snippets and feel confident in your analysis,
             call the parse_final_response tool with your complete review comments in given format.
             </tool_calling>

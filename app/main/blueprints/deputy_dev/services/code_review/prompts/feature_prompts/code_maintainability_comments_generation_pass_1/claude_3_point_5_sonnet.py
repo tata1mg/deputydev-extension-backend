@@ -51,6 +51,10 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
             call the parse_final_response tool with your complete review comments in given format.
             </tool_calling>
             
+            IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+            Never provide review comments as plain text in your response. All final reviews MUST be delivered
+            through the parse_final_response tool inside a tool use block.
+            
             <searching_and_reading>
             You have tools to search the codebase and read files. Follow these rules regarding tool calls:
             1. If available, heavily prefer the function, class search,  grep search, file search, and list dir tools.
