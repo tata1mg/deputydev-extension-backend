@@ -45,6 +45,10 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             call the parse_final_response tool with your complete review comments in given format.
             </tool_calling>
             
+            IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+            Never provide review comments as plain text in your response. All final reviews MUST be delivered
+            through the parse_final_response tool inside a tool use block.
+            
             <searching_and_reading>
             You have tools to search the codebase and read files. Follow these rules regarding tool calls:
             1. If available, heavily prefer the function, class search,  grep search, file search, and list dir tools.
@@ -103,8 +107,6 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             Keep in mind these important instructions when reviewing the code:
             - Focus solely on major code communication issues as outlined above.
             - Carefully analyze each change in the diff.
-            - For each finding or improvement, create a separate <comment> block within the <comments> section.
-            - If you find nothing to improve the PR, there should be no <comment> tags inside <comments> tag. Don't say anything other than identified issues/improvements. If no issue is identified, don't say anything.
             - Ensure that your comments are clear, concise, and actionable.
             - Provide specific line numbers and file paths for each finding.
             - Assign appropriate confidence scores based on your certainty of the findings or suggestion
