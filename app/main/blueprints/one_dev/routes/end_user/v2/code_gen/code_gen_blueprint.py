@@ -96,8 +96,8 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     client_data = ClientData(**connection_data["client_data"])
 
-    session_id: int
-    session_type: str
+    session_id: Optional[int] = None
+    session_type: Optional[str] = None
     auth_error: bool
     auth_data: Optional[AuthData] = None
     # support older versions of the client
@@ -119,8 +119,8 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             _request.json["session_id"] = session_data.id
 
     else:
-        session_id: int = connection_data["session_id"]
-        session_type: str = connection_data["session_type"]
+        session_id = connection_data["session_id"]
+        session_type = connection_data["session_type"]
         auth_error: bool = connection_data["auth_error"]
         auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
 
@@ -156,7 +156,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         user_team_id=user_team_id,
         **(
             {"session_id": session_id, "session_type": session_type}
-            if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">=")
+            if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", "<")
             else {}
         ),
     )
