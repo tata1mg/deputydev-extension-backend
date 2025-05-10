@@ -10,12 +10,10 @@ from .history.history_blueprint import history_v1_bp
 from .repos.repos_blueprint import repos_v1_bp
 from .ui_data.ui_data_blueprint import ui_data_v1_bp
 from .urls.urls_blueprint import urls_v1_bp
+from .web_search.web_search import websearch_v1_bp
 from .websocket_connection.websocket_connection_blueprint import (
     websocket_connection_v1_bp,
 )
-from .feedbacks.feedbacks_blueprint import feedbacks_v1_bp
-from .urls.urls_blueprint import urls_v1_bp
-from .web_search.web_search import websearch_v1_bp
 
 blueprints = [
     auth_v1_bp,
