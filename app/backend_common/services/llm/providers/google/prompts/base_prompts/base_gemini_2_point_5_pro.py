@@ -17,7 +17,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-
 from app.backend_common.services.llm.providers.google.prompts.base_prompts.dataclasses.main import (
     XMLWrappedContentPosition,
     XMLWrappedContentTagPosition,
