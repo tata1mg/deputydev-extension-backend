@@ -25,9 +25,9 @@ class ChatPromptService:
                 else f"-{chat_request.comment.line_number_from}"
             ),
             "file_path": chat_request.comment.path,
-            "context_lines": append_line_numbers(chat_request.comment.context_lines)
-            if chat_request.comment.context_lines
-            else "",
+            "context_lines": (
+                append_line_numbers(chat_request.comment.context_lines) if chat_request.comment.context_lines else ""
+            ),
         }
         is_inline_question = question_info.get("file_path") is not None
         system_prompt = cls.__build_system_prompt(is_inline_question)
