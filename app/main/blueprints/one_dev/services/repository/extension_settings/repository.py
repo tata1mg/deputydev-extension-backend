@@ -8,7 +8,8 @@ from app.main.blueprints.one_dev.models.dao.postgres.extension_settings import (
     ExtensionSetting,
 )
 from app.main.blueprints.one_dev.models.dto.extension_settings_dto import (
-    ExtensionSettingsDTO, ExtensionSettingsData
+    ExtensionSettingsData,
+    ExtensionSettingsDTO,
 )
 
 
@@ -25,7 +26,9 @@ class ExtensionSettingsRepository:
                 return None
             return ExtensionSettingsDTO(**extension_settings)
         except Exception as ex:
-            logger.error(f"error occurred while getting extension_settings in db for user_team_id : {user_team_id}, ex: {ex}")
+            logger.error(
+                f"error occurred while getting extension_settings in db for user_team_id : {user_team_id}, ex: {ex}"
+            )
             raise ex
 
     @classmethod

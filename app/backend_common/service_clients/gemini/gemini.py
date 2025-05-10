@@ -1,9 +1,10 @@
-from typing import Any, Dict, List, Optional, AsyncIterator
+from typing import Any, AsyncIterator, Dict, List, Optional
+
 from deputydev_core.utils.singleton import Singleton
-from torpedo import CONFIG
-from google.oauth2 import service_account
 from google import genai
 from google.genai import types
+from google.oauth2 import service_account
+from torpedo import CONFIG
 
 config = CONFIG.config
 

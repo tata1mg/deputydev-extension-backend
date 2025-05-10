@@ -65,9 +65,9 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
                     comments.append(
                         LLMCommentData(
                             comment=format_code_blocks(description_element.text),
-                            corrective_code=corrective_code_element.text
-                            if corrective_code_element is not None
-                            else None,
+                            corrective_code=(
+                                corrective_code_element.text if corrective_code_element is not None else None
+                            ),
                             file_path=file_path_element.text,
                             line_number=line_number_element.text,
                             confidence_score=float(confidence_score_element.text),
