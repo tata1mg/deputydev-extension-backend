@@ -59,7 +59,10 @@ class PRConfigSelection(BaseScreenHandler):
                 "You'll need to commit and push your local changes first. Please confirm the branch and commit message for this..."
             )
 
-            (branch_name, _is_existing_arg_valid,) = await validate_existing_text_arg_or_get_input(
+            (
+                branch_name,
+                _is_existing_arg_valid,
+            ) = await validate_existing_text_arg_or_get_input(
                 session=self.session,
                 arg_name="working_branch",
                 prompt_message="Branch (This will be used for further steps): ",

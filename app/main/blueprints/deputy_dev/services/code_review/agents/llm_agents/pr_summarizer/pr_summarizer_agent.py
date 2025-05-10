@@ -59,9 +59,9 @@ class PRSummarizerAgent(BaseCodeReviewAgent):
         return {
             TokenTypes.PR_TITLE.value: self.context_service.pr_title_tokens,
             TokenTypes.PR_DESCRIPTION.value: self.context_service.pr_description_tokens,
-            TokenTypes.PR_DIFF_TOKENS.value: self.context_service.pr_diff_tokens[self.agent_id]
-            if self.context_service.pr_diff_tokens
-            else 0,
+            TokenTypes.PR_DIFF_TOKENS.value: (
+                self.context_service.pr_diff_tokens[self.agent_id] if self.context_service.pr_diff_tokens else 0
+            ),
         }
 
     async def should_execute(self) -> bool:

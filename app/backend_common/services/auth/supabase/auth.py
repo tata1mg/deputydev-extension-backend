@@ -38,7 +38,6 @@ class SupabaseAuth:
     async def verify_auth_token(
         cls, access_token: str, use_grace_period: bool = False, enable_grace_period: bool = False
     ) -> Dict[str, Any]:
-
         """
         Validate a Supabase access token and check if it's expired.
 
