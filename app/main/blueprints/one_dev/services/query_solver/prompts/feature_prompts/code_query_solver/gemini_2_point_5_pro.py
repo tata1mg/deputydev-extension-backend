@@ -1,6 +1,3 @@
-from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro import (
-    BaseGemini2Point5ProPrompt,
-)
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
@@ -18,7 +15,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     TextBlockDelta,
     UserAndSystemMessages,
 )
-
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro import (
+    BaseGemini2Point5ProPrompt,
+)
 from app.backend_common.services.llm.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
     BaseGoogleTextDeltaParser,
 )
