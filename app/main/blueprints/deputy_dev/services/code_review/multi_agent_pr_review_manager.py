@@ -41,7 +41,7 @@ class MultiAgentPRReviewManager:
         pr_diff_handler: PRDiffHandler,
         session_id: int,
         prompt_version=None,
-        eligible_agents=None,
+        eligible_agents=[],
     ):
         self.repo_service = repo_service
         self.pr_service = pr_service
@@ -125,6 +125,7 @@ class MultiAgentPRReviewManager:
             context_service=self.context_service,
             is_reflection_enabled=self._is_reflection_enabled(),
             llm_handler=self.llm_handler,
+            include_agent_types=self.eligible_agents,
         )
 
         # segregate agents in realtime based on whether they should execute or not
