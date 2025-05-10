@@ -213,10 +213,12 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                         TextBlockDelta(
                             content=TextBlockDeltaContent(text=text_buffer[yieldable_text_start:yieldable_text_end])
                         ),
-                        last_event=True
-                        if xml_wrapped_text_position.end is not None
-                        and xml_wrapped_text_position.end.end_pos is not None
-                        else False,
+                        last_event=(
+                            True
+                            if xml_wrapped_text_position.end is not None
+                            and xml_wrapped_text_position.end.end_pos is not None
+                            else False
+                        ),
                     )
                     for event in events_to_yield:
                         yield event

@@ -33,9 +33,9 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.pr_config_selection import
 class ChatScreen(BaseScreenHandler):
     def __init__(self, app_context: AppContext) -> None:
         super().__init__(app_context)
-        self.session: PromptSession[
-            Union[str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]]
-        ] = PromptSession()
+        self.session: PromptSession[Union[str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]]] = (
+            PromptSession()
+        )
 
     @property
     def screen_type(self) -> ScreenType:
@@ -147,12 +147,12 @@ class ChatScreen(BaseScreenHandler):
         if CLIFeatures.ITERATIVE_CHAT.value not in ConfigManager.configs["ENABLED_FEATURES"]:
             return await Exit(app_context=self.app_context).render()
         with patch_stdout():
-            message: Union[
-                str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]
-            ] = await self.session.prompt_async(
-                "You: ",
-                bottom_toolbar=self.bottom_toolbar,
-                key_bindings=await self.get_bindings(),
+            message: Union[str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]] = (
+                await self.session.prompt_async(
+                    "You: ",
+                    bottom_toolbar=self.bottom_toolbar,
+                    key_bindings=await self.get_bindings(),
+                )
             )
 
             next_action: Optional[FeatureNextAction] = None

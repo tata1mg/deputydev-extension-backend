@@ -117,9 +117,11 @@ class CodeGenerationHandler(BaseFeatureHandler):
         self.final_payload = final_payload
 
         self.redirections = FeatureHandlingRedirections(
-            success_redirect=FeatureNextAction.CONTINUE_CHAT
-            if not (self.pr_config or self.apply_diff)
-            else FeatureNextAction.HOME_SCREEN,
+            success_redirect=(
+                FeatureNextAction.CONTINUE_CHAT
+                if not (self.pr_config or self.apply_diff)
+                else FeatureNextAction.HOME_SCREEN
+            ),
             error_redirect=FeatureNextAction.ERROR_OUT_AND_END,
         )
 

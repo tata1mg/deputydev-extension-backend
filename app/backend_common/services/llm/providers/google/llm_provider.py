@@ -1,8 +1,13 @@
-from typing import Any, Dict, List, Optional, Union, AsyncIterator, Tuple
-import json
 import asyncio
+import json
 import uuid
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
+
 from google.genai import types
+from torpedo.exceptions import BadRequestException
+
+# Your existing DTOs and base class
+from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     LLModels,
@@ -13,14 +18,19 @@ from app.backend_common.models.dto.message_thread_dto import (
     ResponseData,
     TextBlockContent,
     TextBlockData,
+    ToolUseRequestContent,
+    ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ToolUseRequestData,
-    ToolUseRequestContent,
 )
+from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
+from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationRoleGemini,
+    ConversationTool,
     LLMCallResponseTypes,
+    NonStreamingResponse,
+    PromptCacheConfig,
     StreamingEvent,
     StreamingResponse,
     TextBlockDelta,
@@ -33,19 +43,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
     ToolUseRequestStartContent,
     UnparsedLLMCallResponse,
-)
-
-# Your existing DTOs and base class
-from app.backend_common.constants.constants import LLMProviders
-from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
-from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTool,
-    NonStreamingResponse,
-    PromptCacheConfig,
     UserAndSystemMessages,
 )
-from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
-from torpedo.exceptions import BadRequestException
 
 
 class Google(BaseLLMProvider):
