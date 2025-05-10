@@ -32,6 +32,11 @@ class ConversationRole(Enum):
     ASSISTANT = "assistant"
 
 
+class ConversationRoleGemini(Enum):
+    USER = "user"
+    MODEL = "model"
+
+
 class ConversationTurn(BaseModel):
     role: ConversationRole
     content: Union[str, List[Dict[str, Any]]]
@@ -81,6 +86,7 @@ class TextBlockDeltaContent(BaseModel):
 
 
 # STREAMING CONTENT BLOCKS
+
 
 # TEXT BLOCKS
 class TextBlockStart(BaseModel):
@@ -159,7 +165,7 @@ class StreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, StreamingRespo
 
 
 class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse):
-    parsed_content: List[Any]
+    parsed_content: Any
     query_id: int
 
 

@@ -1,7 +1,7 @@
-from torpedo import CONFIG, BaseApiRequest
+from torpedo import CONFIG, BaseAPIClient
 
 
-class Base(BaseApiRequest):
+class Base(BaseAPIClient):
     """
     Base class for all inter service requests. Each method will return
 

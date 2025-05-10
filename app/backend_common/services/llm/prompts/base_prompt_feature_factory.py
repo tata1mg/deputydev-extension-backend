@@ -6,6 +6,8 @@ from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
+# Only getting used in CLI
+
 
 class BasePromptFeatureFactory(Generic[PromptFeatures]):
     @classmethod
