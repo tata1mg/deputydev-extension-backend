@@ -48,6 +48,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 )
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from app.backend_common.services.llm.providers.google.llm_provider import Google
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -58,6 +59,8 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
         LLModels.GPT_4O: OpenAI,
         LLModels.GPT_40_MINI: OpenAI,
+        LLModels.GEMINI_2_POINT_5_PRO: Google,
+        LLModels.GEMINI_2_POINT_0_FLASH: Google,
     }
 
     def __init__(
@@ -237,6 +240,7 @@ class LLMHandler(Generic[PromptFeatures]):
         max_retry: int = 2,
         stream: bool = False,
         response_type: Optional[str] = None,
+        **kwargs,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -269,6 +273,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     previous_responses=previous_responses,
                     tools=tools,
                     cache_config=self.cache_config,
+                    **kwargs,
                 )
 
                 llm_response = await client.call_service_client(
@@ -287,12 +292,10 @@ class LLMHandler(Generic[PromptFeatures]):
                         call_chain_category=call_chain_category,
                     )
                 )
-
                 # Parse the LLM response
                 parsed_response = await self.parse_llm_response_data(
                     llm_response=llm_response, prompt_handler=prompt_handler, query_id=query_id
                 )
-
                 return parsed_response
 
             except GeneratorExit:
@@ -350,9 +353,9 @@ class LLMHandler(Generic[PromptFeatures]):
             if hash not in db_message_threads_hash_map:
                 message_thread = MessageThreadData(
                     session_id=session_id,
-                    actor=MessageThreadActor.USER
-                    if turn.role == ConversationRole.USER
-                    else MessageThreadActor.ASSISTANT,
+                    actor=(
+                        MessageThreadActor.USER if turn.role == ConversationRole.USER else MessageThreadActor.ASSISTANT
+                    ),
                     query_id=None,
                     message_type=MessageType.RESPONSE,
                     conversation_chain=[],
@@ -442,6 +445,7 @@ class LLMHandler(Generic[PromptFeatures]):
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
+        **kwargs,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -495,6 +499,7 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=2,
             stream=stream,
             response_type=prompt_handler.response_type,
+            **kwargs,
         )
 
     async def store_tool_use_ressponse_in_db(

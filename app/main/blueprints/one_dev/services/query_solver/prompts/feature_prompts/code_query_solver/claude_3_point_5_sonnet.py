@@ -291,6 +291,21 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+        urls_message = ""
+        if self.params.get("urls"):
+            urls = self.params.get("urls")
+            urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
+        if self.params.get("os_name") and self.params.get("shell"):
+            system_message += f"""
+            ====
+
+            SYSTEM INFORMATION:
+
+            Operating System: {self.params.get("os_name")}
+            Default Shell: {self.params.get("shell")}
+
+            ====
+            """
 
         user_message = f"""
             User Query: {self.params.get("query")}
@@ -364,7 +379,7 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
-            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag.
+            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
         """
 
         if self.params.get("write_mode"):
@@ -393,8 +408,13 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             </user_rules_or_info>
             """
 
+        if focus_chunks_message:
+            user_message = focus_chunks_message + "\n" + user_message
+        if urls_message:
+            user_message = urls_message + "\n" + user_message
+
         return UserAndSystemMessages(
-            user_message=user_message if not focus_chunks_message else focus_chunks_message + user_message,
+            user_message=user_message,
             system_message=system_message,
         )
 

@@ -32,6 +32,7 @@ class BaseLLMProvider(ABC):
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.

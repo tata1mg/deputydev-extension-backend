@@ -67,6 +67,19 @@ class PastChatsSerializer(BaseSerializer):
                             }
                         )
 
+                if text_data.content_vars.get("urls"):
+                    for focus_item in text_data.content_vars["urls"]:
+                        focus_item_data = DetailedFocusItem(**focus_item)
+                        focus_objects.append(
+                            {
+                                "type": focus_item_data.type.value,
+                                "value": focus_item_data.value,
+                                "path": focus_item_data.url,
+                                "url": focus_item_data.url,
+                                "chunks": [],
+                            }
+                        )
+
                 if "write_mode" in text_data.content_vars:
                     current_query_write_mode = text_data.content_vars["write_mode"]
 
