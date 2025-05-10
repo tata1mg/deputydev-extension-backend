@@ -22,15 +22,17 @@ websocket_connection_v1_bp = Blueprint("websocket_connection_v1_bp", url_prefix=
 @validate_client_version
 async def connect(_request: Request, client_data: ClientData, **kwargs: Any):
     connectionid: str = _request.headers["connectionid"]
-    session_type: str = _request.headers["x-session-type"]
+    session_type: Optional[str] = _request.headers["x-session-type"] if "x-session-type" in _request.headers else None
 
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
-    try:
-        auth_data, _ = await get_auth_data(_request)
-    except Exception:
-        auth_error = True
-        auth_data = None
+
+    if _request.headers.get("Authorization"):
+        try:
+            auth_data, _ = await get_auth_data(_request)
+        except Exception:
+            auth_error = True
+            auth_data = None
 
     session_id: Optional[int] = None
     if auth_data:
