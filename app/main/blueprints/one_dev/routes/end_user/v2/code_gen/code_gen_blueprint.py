@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.constants.enums import Clients
 from sanic import Blueprint
 from torpedo import Request, send_response
 
@@ -27,20 +28,23 @@ from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
 )
 from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
-from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
 from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor import (
     TerminalCommandEditGenerator,
 )
 from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer import (
     UserQueryEnhancer,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import ensure_session_id, get_valid_session_data
+from app.main.blueprints.one_dev.utils.session import (
+    ensure_session_id,
+    get_valid_session_data,
+)
+from app.main.blueprints.one_dev.utils.version import compare_version
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -90,22 +94,35 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]  # type: ignore
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
-    # Add JSON data to headers
-    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
-
-    auth_data: Optional[AuthData] = None
-    auth_error: bool = False
-    try:
-        auth_data, _ = await get_auth_data(_request)
-    except Exception:
-        auth_error = True
-        auth_data = None
     client_data = ClientData(**connection_data["client_data"])
-    if auth_data:
-        session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
-        _request.json["session_id"] = session_data.id
+
+    session_id: int
+    session_type: str
+    auth_error: bool
+    auth_data: Optional[AuthData] = None
+    # support older versions of the client
+    if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">="):
+        # TODO: Remove this when we have a proper way to handle this
+        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+
+        auth_data: Optional[AuthData] = None
+        auth_error: bool = False
+        try:
+            auth_data, _ = await get_auth_data(_request)
+        except Exception:
+            auth_error = True
+            auth_data = None
+        if auth_data:
+            session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
+            _request.json["session_id"] = session_data.id
+
+    else:
+        session_id: int = connection_data["session_id"]
+        session_type: str = connection_data["session_type"]
+        auth_error: bool = connection_data["auth_error"]
+        auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
 
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
@@ -135,7 +152,13 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     user_team_id = auth_data.user_team_id
     payload = QuerySolverInput(
-        **_request.json, user_team_id=user_team_id,
+        **_request.json,
+        user_team_id=user_team_id,
+        **(
+            {"session_id": session_id, "session_type": session_type}
+            if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">=")
+            else {}
+        ),
     )
 
     async def solve_query():
