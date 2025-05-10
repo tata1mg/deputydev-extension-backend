@@ -1,11 +1,20 @@
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
 from deputydev_core.utils.app_logger import AppLogger
-from typing import Dict, Any, Optional, TYPE_CHECKING
-from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.services.web_search.dataclasses.main import PromptFeatures
-from app.main.blueprints.one_dev.services.web_search.factory import PromptFeatureFactory
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
 from google.genai import types
+
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    MessageCallChainCategory,
+)
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.one_dev.services.web_search.dataclasses.main import (
+    PromptFeatures,
+)
+from app.main.blueprints.one_dev.services.web_search.factory import PromptFeatureFactory
 
 
 class WebSearchService:

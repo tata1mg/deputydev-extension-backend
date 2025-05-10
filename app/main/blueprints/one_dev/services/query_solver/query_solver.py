@@ -61,11 +61,11 @@ from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_read
 from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
     PUBLIC_URL_CONTENT_READER,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
-    WEB_SEARCH,
-)
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
+    WEB_SEARCH,
 )
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
