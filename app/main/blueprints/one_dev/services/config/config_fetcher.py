@@ -6,6 +6,7 @@ from deputydev_core.utils.constants.enums import ConfigConsumer
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
     ConfigParams,
     ConfigType,
+    OS,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
@@ -33,6 +34,7 @@ class ConfigFetcher:
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
             "POLLING_MAX_ATTEMPTS": ConfigManager.configs["POLLING_MAX_ATTEMPTS"],
+            "LLM_MODELS": ConfigManager.configs["CODE_GEN_LLM_MODELS"]
         },
     }
 
@@ -94,9 +96,15 @@ class ConfigFetcher:
                 "TTL_DNS_CACHE": ConfigManager.configs["ONE_DEV"]["TTL_DNS_CACHE"],
             },
             "WEAVIATE_HOST": "127.0.0.1",
+            "WEAVIATE_STARTUP_TIMEOUT": ConfigManager.configs["BINARY"]["WEAVIATE"]["STARTUP_TIMEOUT"],
+            "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "STARTUP_HEALTHCHECK_INTERVAL"
+            ],
             "WEAVIATE_HTTP_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["HTTP_PORT"],
             "WEAVIATE_GRPC_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["GRPC_PORT"],
-            "WEAVIATE_SCHEMA_VERSION": ConfigManager.configs["BINARY"]["WEAVIATE"]["SCHEMA_VERSION"],
+            "WEAVIATE_VERSION": ConfigManager.configs["BINARY"]["WEAVIATE"]["VERSION"],
+            "WEAVIATE_CLIENT_TIMEOUTS": ConfigManager.configs["BINARY"]["WEAVIATE"]["CLIENT_TIMEOUTS"],
+            "WEAVIATE_ENV_VARIABLES": ConfigManager.configs["BINARY"]["WEAVIATE"]["ENV_VARIABLES"],
             "NUMBER_OF_WORKERS": ConfigManager.configs["BINARY"]["EMBEDDING"]["NUMBER_OF_WORKERS"],
             "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"]["USE_GRACE_PERIOD_FOR_EMBEDDING"],
             "AUTOCOMPLETE_SEARCH": {
@@ -105,8 +113,21 @@ class ConfigFetcher:
                     "MAX_RECORDS_TO_RETURN"
                 ],
             },
-            "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],
-            "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_BINARY_PATH"],
+            "WEAVIATE_BASE_DIR": ConfigManager.configs["BINARY"]["WEAVIATE"]["BASE_DIR"],
+            "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],  # DEPRECATED
+            "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "EMBEDDED_DB_BINARY_PATH"
+            ],  # DEPRECATED
+            "URL_CONTENT_READER": {
+                "MAX_CONTENT_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["MAX_CONTENT_SIZE"],
+                "SUMMARIZE_LARGE_CONTENT": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
+                    "SUMMARIZE_LARGE_CONTENT"
+                ],
+                "VALIDATE_CONTENT_UPDATION": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
+                    "VALIDATE_CONTENT_UPDATION"
+                ],
+                "BATCH_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["BATCH_SIZE"],
+            },
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
