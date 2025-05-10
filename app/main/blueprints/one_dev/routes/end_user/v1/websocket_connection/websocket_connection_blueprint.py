@@ -30,10 +30,8 @@ async def connect(_request: Request, client_data: ClientData, **kwargs: Any):
     auth_error: bool = False
     session_id: Optional[int] = None
     session_type: Optional[str] = None
-    
-    if client_data.client == Clients.VSCODE_EXT and compare_version(
-        client_data.client_version, "3.0.0", "<"
-    ):
+
+    if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", "<"):
         session_type = _request.headers["x-session-type"] if "x-session-type" in _request.headers else None
         try:
             auth_data, _ = await get_auth_data(_request)
