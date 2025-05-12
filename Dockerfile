@@ -7,9 +7,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Poetry venv in same folder for easy mobility
-ENV POETRY_VIRTUALENVS_IN_PROJECT=1
-
 # Args passed in the build command
 ARG SSH_PRIVATE_KEY
 ARG SSH_PUBLIC_KEY
@@ -61,11 +58,11 @@ RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
     chmod 600 /root/.ssh/id_ed25519.pub
 
 
-RUN pip install poetry=="1.8.4"
-RUN pip install --upgrade pip
+RUN pip install uv
 
-COPY poetry.lock pyproject.toml ./
-RUN poetry install --only main --no-root -vvv
+COPY uv.lock pyproject.toml ./
+
+RUN uv sync
 
 # Create home ubuntu service hydra
 RUN mkdir -p /home/ubuntu/1mg/$SERVICE_NAME/logs
