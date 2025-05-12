@@ -6,17 +6,14 @@ from deputydev_core.services.initialization.review_initialization_manager import
     ReviewInitialisationManager,
     WeaviateSyncAndAsyncClients,
 )
-from deputydev_core.services.shared_chunks.shared_chunks_manager import (
-    SharedChunksManager,
-)
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import ContextValueKeys
-from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.weaviate import weaviate_connection
 
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )
+from sanic import Sanic
 
 
 class PRReviewInitializationService:
@@ -35,10 +32,12 @@ class PRReviewInitializationService:
 
     @classmethod
     async def is_weaviate_ready(cls) -> bool:
-        weaviate_client: WeaviateSyncAndAsyncClients = ContextValue.get(ContextValueKeys.WEAVIATE_CLIENT.value)
-        if not weaviate_client:
+        app = Sanic.get_app()
+        if not hasattr(app.ctx, "weaviate_client"):
             return False
-        return await weaviate_client.is_ready()
+        existing_client: WeaviateSyncAndAsyncClients = app.ctx.weaviate_client
+        return await existing_client.is_ready()
+
 
     @classmethod
     async def maintain_weaviate_heartbeat(cls):
@@ -47,15 +46,16 @@ class PRReviewInitializationService:
                 is_reachable = await cls.is_weaviate_ready()
                 if not is_reachable:
                     AppLogger.log_info(f"Is Weaviate reachable: {is_reachable}")
-                    weaviate_client: WeaviateSyncAndAsyncClients = ContextValue.get(
-                        ContextValueKeys.WEAVIATE_CLIENT.value
+
+                    app = Sanic.get_app()
+                    existing_client: WeaviateSyncAndAsyncClients = (
+                        app.ctx.weaviate_client
                     )
-                    if weaviate_client:
-                        await weaviate_client.async_client.close()
-                        weaviate_client.sync_client.close()
-                        await weaviate_client.ensure_connected()
-            except Exception:
-                AppLogger.log_error("Failed to maintain weaviate heartbeat")
+                    await existing_client.async_client.close()
+                    existing_client.sync_client.close()
+                    await existing_client.ensure_connected()
+            except Exception as ex:
+                AppLogger.log_error(f"Failed to maintain weaviate heartbeat: {ex}")
             await asyncio.sleep(3)
 
     @classmethod
@@ -71,17 +71,18 @@ class PRReviewInitializationService:
                     self.sync_client = weaviate_client.sync_client
                     self.async_client = weaviate_client.async_client
 
-        if not ContextValue.get(ContextValueKeys.WEAVIATE_CLIENT.value):
+        app = Sanic.get_app()
+        if not hasattr(app.ctx, "weaviate_client"):
             (
                 weaviate_client,
                 _new_weaviate_process,
                 _schema_cleaned,
             ) = await ReviewInitialisationManager().initialize_vector_db()
-            client_wrapper = ReviewWeaviateSyncAndAsyncClients(
+
+            app.ctx.weaviate_client = ReviewWeaviateSyncAndAsyncClients(
                 async_client=weaviate_client.async_client,
                 sync_client=weaviate_client.sync_client,
             )
-            ContextValue.set(ContextValueKeys.WEAVIATE_CLIENT.value, client_wrapper)
             asyncio.create_task(cls.maintain_weaviate_heartbeat())
 
     @classmethod
@@ -99,7 +100,6 @@ class PRReviewInitializationService:
                 )
                 local_repo = initialisation_manager.get_local_repo()
                 chunkable_files_and_hashes = await local_repo.get_chunkable_files_and_commit_hashes()
-                await SharedChunksManager.update_chunks(repo_path, chunkable_files_and_hashes)
                 weaviate_client = await weaviate_connection()
 
                 if weaviate_client:

@@ -37,7 +37,7 @@
                 "sha256:1142fa8e80dbae46bb6339573ad4c8c0841358f79c6eb50a493dceca14621bad",
                 "sha256:9107f1ca0b2a5553987a94a3c9959fe5b491fdf731389aa5b7b1bd0733e32de6"
             ],
-            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "markers": "python_version >= '3.7' and python_version < '4'",
             "version": "==22.1.0"
         },
         "aiohappyeyeballs": {
@@ -838,7 +838,7 @@
                 "sha256:0dbf33f26c8d5305befd61b39d2b3414e8a407bedc2834dea9b8d642666fb40a",
                 "sha256:b6b3e528266ea45b9535223bc53ca645f5208833c29229e847b3f26a1cc55fc0"
             ],
-            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "markers": "python_version >= '3.7' and python_version < '4'",
             "version": "==0.6.7"
         },
         "deprecation": {
@@ -888,7 +888,7 @@
                 "sha256:538beabd0af1e2db0146b6bd3caa526c35a34d61af9fd2887f3a8a27a739aa6e",
                 "sha256:bf0a1387354d3691d102edef7ec124f219ef639982d096e26e3b60aeffa90637"
             ],
-            "markers": "python_version >= '3.6' and python_version < '4.0'",
+            "markers": "python_version >= '3.6' and python_version < '4'",
             "version": "==0.16"
         },
         "dparse": {
@@ -923,7 +923,7 @@
                 "sha256:e17906dbb47037f77491d7ea0ea0c05a53cccbe55234c349c3e597e4a113c590",
                 "sha256:e7ebd3f62efda6d38e5b4d8a86c1cca3488a0566d6cd2b47bf067715e8787920"
             ],
-            "markers": "python_version >= '3.6' and python_version < '4.0'",
+            "markers": "python_version >= '3.6' and python_version < '4'",
             "version": "==6.7.1"
         },
         "eradicate": {
@@ -946,7 +946,7 @@
                 "sha256:6d1dc2417921b7ce56a80877afa390d6335a3154146f201a86e3a14417bdc79e",
                 "sha256:fb3186cbbe4c549f922b0f08eb84b09c0e51ecf8efbed3572d20544254f93a97"
             ],
-            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "markers": "python_version >= '3.7' and python_version < '4'",
             "version": "==2.0.0"
         },
         "frozenlist": {
@@ -1226,7 +1226,7 @@
                 "sha256:712e5018acc00d93cfc6d7bfddc3114eb3c420ab03b945757a8ba38c5fc3caa8",
                 "sha256:a9ced242b16c6d6bedc43bca21bbefea1ba5fb35fcdaad7d529342099d3b1767"
             ],
-            "markers": "python_version >= '3.9' and python_version < '4.0'",
+            "markers": "python_version >= '3.9' and python_version < '4'",
             "version": "==2.11.4"
         },
         "grpc-google-iam-v1": {
@@ -1488,7 +1488,7 @@
                 "sha256:32811e7b81deee2063ea6d2e94f8819a86d1f3811e49d23623a41fa832bef03f",
                 "sha256:8400e90141bf792bce2634df533dc57e3bee19ea120a87bebcd3da89a58ad73f"
             ],
-            "markers": "python_full_version >= '3.6.2' and python_version < '4.0'",
+            "markers": "python_full_version >= '3.6.2' and python_version < '4'",
             "version": "==1.1.0"
         },
         "isodate": {
@@ -1552,7 +1552,7 @@
                 "sha256:0c81adee6b3ef00f1677d01c22afb876b011fc6ebca7770cae05647b26e94875",
                 "sha256:7208bc195559336fae91dbd3d9b4b78e52d5cbc4166411f24b03845832d4c329"
             ],
-            "markers": "python_full_version >= '3.8.1' and python_version < '4.0'",
+            "markers": "python_full_version >= '3.8.1' and python_version < '4'",
             "version": "==0.0.11"
         },
         "langsmith": {
@@ -1560,7 +1560,7 @@
                 "sha256:61a3a502222bdd221b7f592b6fc14756d74c4fc088aa6bd8834b92adfe9ee583",
                 "sha256:ddcf65e3b5ca11893ae8ef9816ce2a11a089d051be491886e43a2c4556b88fd0"
             ],
-            "markers": "python_full_version >= '3.8.1' and python_version < '4.0'",
+            "markers": "python_full_version >= '3.8.1' and python_version < '4'",
             "version": "==0.0.92"
         },
         "lazy-object-proxy": {
@@ -2167,7 +2167,7 @@
                 "sha256:03a7e638962454d10bb712c35e63a8a4bc452917917a4e9eb7427bd5b3c6c485",
                 "sha256:28a70f03bf3a975aa865a10487b1ce09b7195f56453f7c318a70d3117a3d323c"
             ],
-            "markers": "python_version >= '3.9' and python_version < '4.0'",
+            "markers": "python_version >= '3.9' and python_version < '4'",
             "version": "==0.19.3"
         },
         "prompt-toolkit": {
@@ -2661,7 +2661,7 @@
                 "sha256:2d68bbb7e377673743cff42aa1059f3a80228d411fbcae591e4465e173109fd8",
                 "sha256:d802868f479a708e3263724c7b5719a26ad79399b2a70cea065f4a4cadbebf36"
             ],
-            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "markers": "python_version >= '3.7' and python_version < '4'",
             "version": "==0.1.6"
         },
         "pytest": {
@@ -2928,7 +2928,7 @@
                 "sha256:68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762",
                 "sha256:e7bdbfdb5497da4c07dfd35530e1a902659db6ff241e39d9953cad06ebd0ae75"
             ],
-            "markers": "python_version >= '3.6' and python_version < '4.0'",
+            "markers": "python_version >= '3.6' and python_version < '4'",
             "version": "==4.9.1"
         },
         "ruamel.yaml": {
@@ -3219,7 +3219,7 @@
                 "sha256:090c42152217d5d39bd94af3ddeb60c8982f3a283dcd90b53d058f2db33e6007",
                 "sha256:883637132aad36d9d92b7c497a8a56dff7c51f15faf2ff7acbccefbbd5e97347"
             ],
-            "markers": "python_version >= '3.9' and python_version < '4.0'",
+            "markers": "python_version >= '3.9' and python_version < '4'",
             "version": "==0.11.3"
         },
         "strenum": {
@@ -3243,7 +3243,7 @@
                 "sha256:2b34a794fb7930953150a434cdb93c24a04cf526b2f51a9e60b2be0b86d44fb2",
                 "sha256:68824a9a7bcccf5ab1e038cda632ba47cba27f2a7dc606014206b56f5a071de2"
             ],
-            "markers": "python_version >= '3.9' and python_version < '4.0'",
+            "markers": "python_version >= '3.9' and python_version < '4'",
             "version": "==0.9.4"
         },
         "tabulate": {

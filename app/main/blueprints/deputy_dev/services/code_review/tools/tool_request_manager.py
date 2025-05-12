@@ -37,6 +37,8 @@ from app.main.blueprints.deputy_dev.services.code_review.tools.related_code_sear
 from app.main.blueprints.deputy_dev.services.code_review.tools.tool_handlers import (
     ToolHandlers,
 )
+import json
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
 
 
 class ToolRequestManager:
@@ -79,11 +81,8 @@ class ToolRequestManager:
         Returns:
             The tool use response data if a tool was used, None otherwise.
         """
-        if not hasattr(llm_response, "parsed_content") or not llm_response.parsed_content:
-            return None
 
         for content_block in llm_response.parsed_content:
-            # if content_block.get("type") == "TOOL_USE_REQUEST_BLOCK":
             if hasattr(content_block, "type") and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
                 tool_use_request = content_block
                 if not isinstance(tool_use_request, ToolUseRequestData):
@@ -95,19 +94,22 @@ class ToolRequestManager:
 
                 # Process the tool request based on the tool name
                 print("*****************Tool Call*****************")
-                print(tool_input)
-                tool_response = await self._process_tool_request(tool_name, tool_input)
+                print(tool_input, tool_name)
+                try:
+                    tool_response = await self._process_tool_request(tool_name, tool_input)
+                except Exception as e:
+                    AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
+                    tool_response = EXCEPTION_RAISED_FALLBACK.format(tool_name = tool_name, tool_input = json.dumps(tool_input, indent=2), error_message = str(e))
+                print("*****************Tool Response*****************")
+                print(tool_response)
 
-                if tool_response is not None:
-                    return ToolUseResponseData(
-                        content=ToolUseResponseContent(
-                            tool_name=tool_name,
-                            tool_use_id=tool_use_id,
-                            response=tool_response,
-                        )
+                return ToolUseResponseData(
+                    content=ToolUseResponseContent(
+                        tool_name=tool_name,
+                        tool_use_id=tool_use_id,
+                        response=tool_response,
                     )
-                else:
-                    AppLogger.log_error(f"Empty response returned for  tool {tool_name}: tool_use_id {tool_use_id} tool_input: {tool_input} tool_response: {tool_response}")
+                )
 
 
         return None
@@ -115,11 +117,8 @@ class ToolRequestManager:
     async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         handler = self._tool_handlers.get(tool_name)
         if handler:
-            try:
-                return await handler(tool_input)
-            except Exception as e:
-                AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
-        return None
+            return await handler(tool_input)
+        raise Exception (f"No such Tool Exists: tool_name: {tool_name}")
 
     def is_final_response(self, llm_response: Any) -> bool:
         """

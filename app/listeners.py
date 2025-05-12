@@ -37,9 +37,15 @@ async def initialize_kafka_subscriber(_app, loop):
         session_event_subscriber = PixelEventSubscriber(_app.config)
         _app.add_task(session_event_subscriber.consume())
 
+async def close_weaviate_server(_app, loop):
+    if hasattr(_app.ctx, "weaviate_client"):
+        await _app.ctx.weaviate_client.async_client.close()
+        _app.ctx.weaviate_client.sync_client.close()
+
 
 # Initializing listeners with background task only if it the background worker flag is enabled.
 listeners = [
+    (close_weaviate_server, ListenerEventTypes.BEFORE_SERVER_STOP.value),
     (initialize_kafka_subscriber, ListenerEventTypes.AFTER_SERVER_START.value),
     (initialize_message_queue_subscribers, ListenerEventTypes.AFTER_SERVER_START.value),
 ]
