@@ -36,17 +36,17 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             
             Pull Request Title:
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             Pull Request Description:
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             Pull Request Diff:
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             2. Next, please review the pull request focusing on the following aspects. Consider each of them as a bucket:
@@ -73,7 +73,7 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             3. For each bucket (Documentation, Docstrings, and Logging), provide your comments to be made on PR for improvements.
             Use the following format for your review comments:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)}            
+            {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"], self.agent_focus_area)}            
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

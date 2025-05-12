@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Optional
 
 from deputydev_core.utils.app_logger import AppLogger
-from google.genai import types
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,

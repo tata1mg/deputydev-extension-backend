@@ -52,7 +52,7 @@ class PRService:
                 return PullRequestDTO(**pr_info)
         except Exception as ex:
             logger.error(
-                "error occurred while fetching pr details from db for " "pr filters : {}, ex: {}".format(filters, ex)
+                "error occurred while fetching pr details from db for pr filters : {}, ex: {}".format(filters, ex)
             )
 
     @classmethod

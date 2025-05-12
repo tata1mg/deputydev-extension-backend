@@ -186,8 +186,7 @@ class SingleAgentPRReviewManager:
 
         if confluence_data:
             pr_review_context += (
-                f"\n Following is the additional user story "
-                f"description primarily present in tags - {confluence_data}\n"
+                f"\n Following is the additional user story description primarily present in tags - {confluence_data}\n"
             )
 
         pr_review_context += (

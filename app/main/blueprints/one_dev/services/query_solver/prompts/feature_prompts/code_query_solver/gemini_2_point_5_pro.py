@@ -385,7 +385,7 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
             """
 
         if self.params.get("write_mode"):
-            user_message += f"""
+            user_message += """
                     Please respond in act mode. In this mode:
                     1. You will directly generate code changes that can be applied to the codebase.
                     2. The changes will be presented in a format that can be automatically applied.
@@ -445,7 +445,6 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
-
         final_content: List[Dict[str, Any]] = []
 
         final_content = cls.get_parsed_response_blocks(llm_response.content)
@@ -522,7 +521,6 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
 
     @classmethod
     def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool, int]]:
-
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
         file_path_pattern = r"<file_path>(.*?)</file_path>"
