@@ -33,9 +33,9 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.pr_config_selection import
 class ChatScreen(BaseScreenHandler):
     def __init__(self, app_context: AppContext) -> None:
         super().__init__(app_context)
-        self.session: PromptSession[
-            Union[str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]]
-        ] = PromptSession()
+        self.session: PromptSession[Union[str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]]] = (
+            PromptSession()
+        )
 
     @property
     def screen_type(self) -> ScreenType:

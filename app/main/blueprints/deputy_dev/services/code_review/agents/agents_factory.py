@@ -85,7 +85,6 @@ class AgentFactory:
     def get_valid_agents_and_init_params_for_review(
         cls,
     ) -> List[AgentAndInitParams]:
-
         valid_agents: List[AgentAndInitParams] = []
 
         # add predefined and custom code commenter agents

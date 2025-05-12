@@ -41,6 +41,7 @@ class OpenAI(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(
             tools=True, system_message=True, conversation=True
         ),  # by default, OpenAI uses caching, we cannot configure it
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for OpenAI's GPT model.
@@ -105,12 +106,14 @@ class OpenAI(BaseLLMProvider):
 
         return NonStreamingResponse(
             content=non_streaming_content_blocks,
-            usage=LLMUsage(
-                input=response.usage.prompt_tokens,
-                output=response.usage.completion_tokens,
-            )
-            if response.usage
-            else LLMUsage(input=0, output=0),
+            usage=(
+                LLMUsage(
+                    input=response.usage.prompt_tokens,
+                    output=response.usage.completion_tokens,
+                )
+                if response.usage
+                else LLMUsage(input=0, output=0)
+            ),
         )
 
     async def call_service_client(

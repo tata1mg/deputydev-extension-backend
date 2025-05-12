@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 
 import jwt
-from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.jwt_handler import JWTHandler
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
@@ -38,7 +37,6 @@ class SupabaseAuth:
     async def verify_auth_token(
         cls, access_token: str, use_grace_period: bool = False, enable_grace_period: bool = False
     ) -> Dict[str, Any]:
-
         """
         Validate a Supabase access token and check if it's expired.
 

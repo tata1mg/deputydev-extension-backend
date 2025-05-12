@@ -36,31 +36,31 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt(BaseClau
             First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
             <data>
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             <contextually_related_code_snippets>
-            {self.params['CONTEXTUALLY_RELATED_CODE_SNIPPETS']}
+            {self.params["CONTEXTUALLY_RELATED_CODE_SNIPPETS"]}
             </contextually_related_code_snippets>
             
             <user_story>
-            {self.params['USER_STORY']}
+            {self.params["USER_STORY"]}
             </user_story>
         
             <product_research_document>
-            {self.params['PRODUCT_RESEARCH_DOCUMENT']}
+            {self.params["PRODUCT_RESEARCH_DOCUMENT"]}
             </product_research_document>
             
             <junior_developer_comments>
-            {self.params['REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER']}
+            {self.params["REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER"]}
             </junior_developer_comments>
             
             </data>
@@ -112,7 +112,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass2Prompt(BaseClau
             
             Next, format comments from previous step in the following XML format:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
+            {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

@@ -64,19 +64,19 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
 
                 1. Review the following information about the pull request:
 
-                <pull_request_title>
-                {self.params['PULL_REQUEST_TITLE']}
-                </pull_request_title>
+            <pull_request_title>
+            {self.params["PULL_REQUEST_TITLE"]}
+            </pull_request_title>
 
-                <pull_request_description>
-                {self.params['PULL_REQUEST_DESCRIPTION']}
-                </pull_request_description>
+            <pull_request_description>
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
+            </pull_request_description>
 
                 2. Carefully examine the code diff provided:
 
-                <pull_request_diff>
-                {self.params['PULL_REQUEST_DIFF']}
-                </pull_request_diff>
+            <pull_request_diff>
+            {self.params["PULL_REQUEST_DIFF"]}
+            </pull_request_diff>
 
                 3. Conduct a comprehensive security review of the code changes, focusing on the following aspects:
                 a. Input validation and sanitization

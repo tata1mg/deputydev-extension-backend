@@ -153,7 +153,6 @@ class PRReviewManager(BasePRReviewManager):
         prompt_version,
         pr_diff_handler: PRDiffHandler,
     ):
-
         is_agentic_review_enabled = CONFIG.config["PR_REVIEW_SETTINGS"]["MULTI_AGENT_ENABLED"]
         _review_klass = MultiAgentPRReviewManager if is_agentic_review_enabled else SingleAgentPRReviewManager
         llm_response, pr_summary, tokens_data, meta_info_to_save, _is_large_pr = await _review_klass(

@@ -162,7 +162,8 @@ class GitlabRepoClient(BaseSCMClient):
         path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/commits"
 
         response = await self.get(
-            path, params={"per_page": 100, "order_by": "created_at", "sort": "desc"}  # Get max 100 commits
+            path,
+            params={"per_page": 100, "order_by": "created_at", "sort": "desc"},  # Get max 100 commits
         )
 
         if response and response.status_code == 200:
