@@ -73,7 +73,6 @@ class SuggestionCodeGenerationManager:
 
     @classmethod
     async def initialize_repo(cls, comment_payload: ChatRequest, vcs_type) -> BaseRepo:
-
         auth_handler = await get_vcs_auth_handler(comment_payload.repo.workspace_id, vcs_type)
         return await PRFactory.pr(
             vcs_type=vcs_type,

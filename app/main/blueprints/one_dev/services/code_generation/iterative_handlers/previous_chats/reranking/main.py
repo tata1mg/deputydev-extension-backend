@@ -24,7 +24,6 @@ class LLMBasedChatFiltration:
         query: str,
         session_id: int,
     ) -> List[int]:
-
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
         llm_response = await llm_handler.start_llm_query(

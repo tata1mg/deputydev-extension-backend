@@ -127,7 +127,6 @@ class DocsGenerationHandler(BaseFeatureHandler):
         )
 
     async def handle_feature(self) -> FeatureHandlingResult:
-
         if not self.final_payload:
             await self.validate_and_set_final_payload()
         headers = {"Authorization": f"Bearer {self.auth_token}"}

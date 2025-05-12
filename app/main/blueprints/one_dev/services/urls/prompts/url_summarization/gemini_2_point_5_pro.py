@@ -27,7 +27,7 @@ class Gemini2Point5ProUrlSummaryGenerator(BaseGemini2Point5ProPrompt):
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = f"""
-            You are a highly capable language model assistant. Your job is to thoroughly cut down long-form articles ranging in total size {self.max_content_size} and {self.max_content_size+10000} words in depth and detail without lossing any data. 
+            You are a highly capable language model assistant. Your job is to thoroughly cut down long-form articles ranging in total size {self.max_content_size} and {self.max_content_size + 10000} words in depth and detail without lossing any data. 
             You must not omit any content, including code blocks, tables, equations, or structured data. 
             Your explanation should mirror the structure of the original document, ensuring no part is skipped. 
             Your output should be clear, instructional, and highly accurate, without hallucinations. 

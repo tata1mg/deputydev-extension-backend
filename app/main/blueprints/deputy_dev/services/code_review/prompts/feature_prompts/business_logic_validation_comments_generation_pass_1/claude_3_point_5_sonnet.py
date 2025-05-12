@@ -36,28 +36,28 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             
             1. Review the pull request information:
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             <contextually_related_code_snippets>
-            {self.params['CONTEXTUALLY_RELATED_CODE_SNIPPETS']}
+            {self.params["CONTEXTUALLY_RELATED_CODE_SNIPPETS"]}
             </contextually_related_code_snippets>
             
             2. Understand the requirements:
             <user_story>
-            {self.params['USER_STORY']}
+            {self.params["USER_STORY"]}
             </user_story>
             
             <product_research_document>
-            {self.params['PRODUCT_RESEARCH_DOCUMENT']}
+            {self.params["PRODUCT_RESEARCH_DOCUMENT"]}
             </product_research_document>
             
             3. Analyze the changes:
@@ -76,7 +76,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             
             For each issue you identify, create a comment using the following format:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
+            {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"], self.agent_focus_area)} 
 
             Repeat the <comment> block for each issue you find regarding business logic validation.
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
