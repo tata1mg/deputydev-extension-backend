@@ -37,6 +37,7 @@ class OpenAI(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(
             tools=True, system_message=True, conversation=True
         ),  # by default, OpenAI uses caching, we cannot configure it

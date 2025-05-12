@@ -96,11 +96,12 @@ class PRReviewPreProcessor:
 
         await self.insert_pr_record(repo_dto)
         await self.run_validations()
-        await PRReviewInitializationService.initialization()
-        await PRReviewInitializationService.create_embedding(self.repo_path, self.repo_service)
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
+        if self.is_reviewable_request:
+            await PRReviewInitializationService.initialization()
+            await PRReviewInitializationService.create_embedding(self.repo_path, self.repo_service)
 
     @staticmethod
     def is_reviewable_based_on_settings(setting: dict) -> bool:

@@ -4,13 +4,7 @@ from typing import Any, Dict
 from deputydev_core.services.initialization.vector_store.weaviate.weaviate_initializer import (
     WeaviateInitializer,
 )
-from deputydev_core.services.repository.dataclasses.main import WeaviateSyncAndAsyncClients
-from deputydev_core.services.shared_chunks.shared_chunks_manager import (
-    SharedChunksManager,
-)
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.constants.enums import ContextValueKeys
-from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
@@ -142,12 +136,7 @@ class PRReviewManager(BasePRReviewManager):
             raise ex
         finally:
             repo_service.delete_local_repo()
-            SharedChunksManager.cleanup_shared_memory()
-            weaviate_client: WeaviateSyncAndAsyncClients = ContextValue.get(ContextValueKeys.WEAVIATE_CLIENT.value)
             await WeaviateInitializer().clean_weaviate_collections()
-            weaviate_client.sync_client.close()
-            await weaviate_client.async_client.close()
-            ContextValue.set(ContextValueKeys.WEAVIATE_CLIENT.value, None)
 
 
     @classmethod
