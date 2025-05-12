@@ -65,7 +65,7 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
             - Consider the PR diff and comments closely while providing summary.
             
             ### Input Comments that needs to be summarized: 
-            {self.params['COMMENTS']}
+            {self.params["COMMENTS"]}
         
             Below is a sample input structure for the comments you will receive:
             
@@ -169,7 +169,7 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
             ```
             
             PR Diff on which comments needs to be validated:
-            {self.params['PR_DIFF']}
+            {self.params["PR_DIFF"]}
         
         
             ### Additional Guardrails

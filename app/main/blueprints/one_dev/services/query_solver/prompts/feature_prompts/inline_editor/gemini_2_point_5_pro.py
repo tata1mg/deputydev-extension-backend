@@ -172,7 +172,6 @@ class Gemini2Point5ProInlineEditorPrompt(BaseGemini2Point5ProPrompt):
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
-
         final_content: List[Dict[str, Any]] = []
 
         for content_block in llm_response.content:

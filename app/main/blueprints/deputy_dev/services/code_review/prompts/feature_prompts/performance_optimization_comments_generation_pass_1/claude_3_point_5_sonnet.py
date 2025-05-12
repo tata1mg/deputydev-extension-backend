@@ -37,25 +37,25 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
             Pull Request Title:
             
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             Pull Request Description:
             
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             2. Now, examine the pull request diff:
             
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             3. Additionally, consider the contextually related code snippets:
             
             <contextually_related_code_snippets>
-            {self.params['CONTEXTUALLY_RELATED_CODE_SNIPPETS']}
+            {self.params["CONTEXTUALLY_RELATED_CODE_SNIPPETS"]}
             </contextually_related_code_snippets>
             
             4. Analyze the code for issues in the following categories:
@@ -84,7 +84,7 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
             
             5. For each category, provide your analysis in the following format:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
+            {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

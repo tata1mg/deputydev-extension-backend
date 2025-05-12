@@ -1,5 +1,4 @@
-import asyncio
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -11,7 +10,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.models.dao.postgres.urls import Url
 from app.main.blueprints.one_dev.models.dto.url import UrlDto
 from app.main.blueprints.one_dev.repository.url_repository import UrlRepository
 from app.main.blueprints.one_dev.services.urls.prompts.dataclasses.main import (

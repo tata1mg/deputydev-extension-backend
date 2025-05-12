@@ -4,7 +4,6 @@ from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 
-from app.main.blueprints.one_dev.models.dto.url import UrlDto
 from app.main.blueprints.one_dev.services.web_search.web_search_service import (
     WebSearchService,
 )
