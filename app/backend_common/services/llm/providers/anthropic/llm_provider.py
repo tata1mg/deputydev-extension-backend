@@ -131,8 +131,8 @@ class Anthropic(BaseLLMProvider):
         tools: Optional[List[ConversationTool]] = None,
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        **kwargs,
     ) -> Dict[str, Any]:
-
         model_config = self._get_model_config(llm_model)
         # create conversation array
         messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)

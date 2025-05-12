@@ -10,6 +10,7 @@ from .history.history_blueprint import history_v1_bp
 from .repos.repos_blueprint import repos_v1_bp
 from .ui_data.ui_data_blueprint import ui_data_v1_bp
 from .urls.urls_blueprint import urls_v1_bp
+from .web_search.web_search import websearch_v1_bp
 from .websocket_connection.websocket_connection_blueprint import (
     websocket_connection_v1_bp,
 )
@@ -25,6 +26,7 @@ blueprints = [
     websocket_connection_v1_bp,
     feedbacks_v1_bp,
     urls_v1_bp,
+    websearch_v1_bp,
     extension_settings_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")

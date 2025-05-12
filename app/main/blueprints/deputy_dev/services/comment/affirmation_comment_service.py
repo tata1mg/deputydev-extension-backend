@@ -12,7 +12,6 @@ config = CONFIG.config
 
 class AffirmationService:
     def __init__(self, data: dict, comment_service: BaseComment):
-
         self.comment_service = comment_service
         self.cache_key = (
             f"AFFIRMATION_COMMENT_{data['workspace']}_{data['repo_name']}_{data['pr_id']}_{data['request_id']}"

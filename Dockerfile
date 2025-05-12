@@ -1,5 +1,5 @@
 ARG cloud
-FROM --platform=linux/amd64 ${cloud:+"831059512818.dkr.ecr.ap-south-1.amazonaws.com/utility/docker/library/"}python:3.9.16-slim
+FROM --platform=linux/amd64 ${cloud:+"831059512818.dkr.ecr.ap-south-1.amazonaws.com/utility/docker/library/"}python:3.11.9-slim
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -12,18 +12,38 @@ ARG SSH_PRIVATE_KEY
 ARG SSH_PUBLIC_KEY
 ARG SERVICE_NAME
 
-RUN apt-get update && \
-    apt-get install -y \
-        git \
-        gcc \
+RUN apt-get update && apt-get install -y \
         openssh-server \
+        gcc \
+        wget \
+        ca-certificates \
+        build-essential \
+        libssl-dev \
+        libcurl4-gnutls-dev \
+        libexpat1-dev \
+        gettext \
+        unzip \
+        zlib1g-dev \
+        procps \
         curl
 
-RUN echo "Y" | apt-get install procps
+# Define Git version
+ARG GIT_VERSION=2.42.0
+
+# Download and compile Git
+RUN wget https://github.com/git/git/archive/refs/tags/v$GIT_VERSION.zip -O git.zip && \
+    unzip git.zip && \
+    cd git-$GIT_VERSION && \
+    make prefix=/usr/local all && \
+    make prefix=/usr/local install && \
+    cd .. && \
+    rm -rf git-$GIT_VERSION git.zip
+
+# Verify Git installation
+RUN git --version
 
 RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 && chmod +x /usr/local/bin/dbmate
-# For Dexter service
-# For hr_digitisation service
+RUN apt-get remove -y libaom3 && apt-get autoremove -y
 
 # Authorize SSH Host
 RUN mkdir -p /root/.ssh && \
@@ -38,8 +58,11 @@ RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
     chmod 600 /root/.ssh/id_ed25519.pub
 
 
-RUN pip install --user pipenv==2023.12.1
-RUN pip install --upgrade pip
+RUN pip install uv
+
+COPY uv.lock pyproject.toml ./
+
+RUN uv sync
 
 # Create home ubuntu service hydra
 RUN mkdir -p /home/ubuntu/1mg/$SERVICE_NAME/logs
@@ -48,8 +71,7 @@ RUN mkdir -p /home/ubuntu/1mg/$SERVICE_NAME/logs
 WORKDIR /home/ubuntu/1mg/$SERVICE_NAME
 
 # Copy and install requirements
-COPY Pipfile Pipfile.lock /home/ubuntu/1mg/$SERVICE_NAME/
-RUN /root/.local/bin/pipenv sync --system
+ENV PATH="/.venv/bin:$PATH"
 RUN pip install click==8.1.3
 
 # Copy code folder

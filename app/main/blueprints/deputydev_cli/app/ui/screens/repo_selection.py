@@ -57,7 +57,6 @@ class RepoPathCompleter(Completer):
             for dir in dirs:
                 abs_current_file_path = os.path.join(root, dir)
                 if abs_current_file_path.startswith(abs_text_path + last_path_component):
-
                     if current_yields >= 7:
                         return
                     yield Completion(
@@ -169,7 +168,10 @@ class RepoSelection(BaseScreenHandler):
 
         # if local repo is a git repo, get the branch to use
         if isinstance(self.app_context.local_repo, GitRepo):
-            (branch_name, _is_existing_arg_valid,) = await validate_existing_text_arg_or_get_input(
+            (
+                branch_name,
+                _is_existing_arg_valid,
+            ) = await validate_existing_text_arg_or_get_input(
                 session=self.session,
                 arg_name="working_branch",
                 prompt_message="Branch to checkout and use: ",
@@ -185,11 +187,11 @@ class RepoSelection(BaseScreenHandler):
                     payload={
                         "repo_name": self.app_context.local_repo.get_repo_name(),
                         "vcs_type": self.app_context.local_repo.get_vcs_type(),
-                        "workspace_slug": self.app_context.local_repo.get_origin_remote_url()
-                        .split(":")[-1]
-                        .split("/")[0]
-                        if "https://" not in self.app_context.local_repo.get_origin_remote_url()
-                        else self.app_context.local_repo.get_origin_remote_url().split("/")[-2],
+                        "workspace_slug": (
+                            self.app_context.local_repo.get_origin_remote_url().split(":")[-1].split("/")[0]
+                            if "https://" not in self.app_context.local_repo.get_origin_remote_url()
+                            else self.app_context.local_repo.get_origin_remote_url().split("/")[-2]
+                        ),
                     },
                     headers={"Authorization": f"Bearer {self.app_context.auth_token}"},
                 )

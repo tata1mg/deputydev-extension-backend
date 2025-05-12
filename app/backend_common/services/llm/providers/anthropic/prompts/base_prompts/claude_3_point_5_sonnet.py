@@ -98,7 +98,6 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                 ) and not all_parsers_checked_for_start_tag:
                     # for each parser, we try to find the start tag in the text buffer which is closest to the start of the buffer
                     for xml_tag, parser in xml_tags_to_paraser_map.items():
-
                         # case 1: entire start tag is present in the text buffer
                         if parser.start_tag in text_buffer and (
                             xml_wrapped_text_position is None
@@ -213,10 +212,12 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                         TextBlockDelta(
                             content=TextBlockDeltaContent(text=text_buffer[yieldable_text_start:yieldable_text_end])
                         ),
-                        last_event=True
-                        if xml_wrapped_text_position.end is not None
-                        and xml_wrapped_text_position.end.end_pos is not None
-                        else False,
+                        last_event=(
+                            True
+                            if xml_wrapped_text_position.end is not None
+                            and xml_wrapped_text_position.end.end_pos is not None
+                            else False
+                        ),
                     )
                     for event in events_to_yield:
                         yield event
