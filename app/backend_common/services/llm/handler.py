@@ -194,6 +194,48 @@ class LLMHandler(Generic[PromptFeatures]):
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
+    async def store_user_feedback_in_db(
+        self,
+        session_id: int,
+        previous_responses: List[MessageThreadDTO],
+        prompt_type: str,
+        prompt_category: str,
+        llm_model: LLModels,
+        feedback: str,
+        call_chain_category: MessageCallChainCategory,
+    ) -> MessageThreadDTO:
+        """
+        Store LLM query in DB
+
+        Parameters:
+            :param prompt: User and system messages
+            :param session_id: Session id
+            :param previous_responses: List of previous conversation messages
+
+        Returns:
+            :return: Message thread
+        """
+        data_hash = xxhash.xxh64(feedback).hexdigest()
+        message_thread = MessageThreadData(
+            session_id=session_id,
+            actor=MessageThreadActor.USER,
+            query_id=None,
+            message_type=MessageType.RESPONSE,
+            conversation_chain=[message.id for message in previous_responses],
+            message_data=[
+                TextBlockData(
+                    type=ContentBlockCategory.TEXT_BLOCK,
+                    content=TextBlockContent(text=feedback),
+                )
+            ],
+            data_hash=data_hash,
+            prompt_type=prompt_type,
+            prompt_category=prompt_category,
+            llm_model=llm_model,
+            call_chain_category=call_chain_category,
+        )
+        return await MessageThreadsRepository.create_message_thread(message_thread)
+
     async def parse_llm_response_data(
         self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt, query_id: int
     ) -> ParsedLLMCallResponse:
@@ -237,6 +279,7 @@ class LLMHandler(Generic[PromptFeatures]):
         user_and_system_messages: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
+        feedback: str = None,
         max_retry: int = 2,
         stream: bool = False,
         response_type: Optional[str] = None,
@@ -272,6 +315,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     previous_responses=previous_responses,
                     tools=tools,
                     cache_config=self.cache_config,
+                    feedback=feedback,
                 )
 
                 llm_response = await client.call_service_client(
@@ -642,3 +686,58 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=2,
             stream=stream,
         )
+
+    async def submit_feedback_response(
+        self,
+        session_id: int,
+        feedback: str,
+        tools: Optional[List[ConversationTool]] = None,
+        stream: bool = False,
+        call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
+        prompt_type=None,
+    ) -> ParsedLLMCallResponse:
+
+        session_messages = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+        )
+        session_messages.sort(key=lambda x: x.id)
+
+        detected_llm = session_messages[0].llm_model
+        detected_prompt_handler = self.prompt_handler_map.get_prompt(
+            model_name=detected_llm, feature=self.prompt_features(prompt_type)
+        )({})
+
+        if not detected_prompt_handler:
+            raise ValueError("Prompt handler not found for prompt type")
+
+        conversation_chain_messages = session_messages
+        # Feedback for last message of that session
+        main_query_id = session_messages[-1].id
+
+        await self.store_user_feedback_in_db(
+            session_id=session_id,
+            previous_responses=conversation_chain_messages,
+            prompt_type=prompt_type,
+            prompt_category=detected_prompt_handler.prompt_category,
+            llm_model=detected_prompt_handler.model_name,
+            feedback=feedback,
+            call_chain_category=call_chain_category,
+        )
+
+        client = self.model_to_provider_class_map[detected_llm]()
+
+        return await self.fetch_and_parse_llm_response(
+            client=client,
+            session_id=session_id,
+            prompt_type=detected_prompt_handler.prompt_type,
+            llm_model=detected_llm,
+            query_id=main_query_id,
+            prompt_handler=detected_prompt_handler,
+            call_chain_category=call_chain_category,
+            feedback=feedback,
+            tools=tools,
+            previous_responses=conversation_chain_messages,
+            max_retry=2,
+            stream=stream,
+        )
+

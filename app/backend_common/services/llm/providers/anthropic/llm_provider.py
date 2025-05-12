@@ -129,6 +129,7 @@ class Anthropic(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
     ) -> Dict[str, Any]:
 
@@ -156,6 +157,11 @@ class Anthropic(BaseLLMProvider):
                 ],
             )
             messages.append(tool_message)
+        if feedback:
+            feedback_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": feedback}]
+            )
+            messages.append(feedback_message)
 
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []

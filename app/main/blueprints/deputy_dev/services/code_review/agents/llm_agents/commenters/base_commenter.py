@@ -34,6 +34,7 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import NO_TOOL_USE_FALLBACK_PROMPT
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):
@@ -165,26 +166,31 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     last_pass_result = final_response
                     break
 
-                # Iterative tool use
-                tool_use_response = await self.tool_request_manager.process_tool_use_request(
-                    current_response, session_id
-                )
+                if not hasattr(llm_response, "parsed_content") or not llm_response.parsed_content:
+                    # No tool use request block received
+                    current_response = await self.llm_handler.submit_feedback_response(
+                        session_id=session_id,
+                        feedback=NO_TOOL_USE_FALLBACK_PROMPT,
+                        tools=tools_to_use,
+                        prompt_type=prompt_handler.prompt_type,
+                    )
+                    iteration_count += 1
 
-                if tool_use_response is None:
-                    print(current_response.parsed_content)
-                    last_pass_result = {}
-                    AppLogger.log_error(f"No tools were used for agent {self.agent_name}")
-                    break
+                else:
+                    # Iterative tool use
+                    tool_use_response = await self.tool_request_manager.process_tool_use_request(
+                        current_response, session_id
+                    )
 
-                # Submit the tool use response to the LLM
-                current_response = await self.llm_handler.submit_tool_use_response(
-                    session_id=session_id,
-                    tool_use_response=tool_use_response,
-                    tools=tools_to_use,
-                    prompt_type=prompt_handler.prompt_type,
-                )
+                    # Submit the tool use response to the LLM
+                    current_response = await self.llm_handler.submit_tool_use_response(
+                        session_id=session_id,
+                        tool_use_response=tool_use_response,
+                        tools=tools_to_use,
+                        prompt_type=prompt_handler.prompt_type,
+                    )
 
-                iteration_count += 1
+                    iteration_count += 1
 
             if iteration_count >= max_iterations:
                 AppLogger.log_error(
