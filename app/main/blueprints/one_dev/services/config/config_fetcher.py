@@ -4,7 +4,6 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
 
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
-    OS,
     ConfigParams,
     ConfigType,
 )

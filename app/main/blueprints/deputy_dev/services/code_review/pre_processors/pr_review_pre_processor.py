@@ -344,7 +344,6 @@ class PRReviewPreProcessor:
         return experiment_set
 
     async def update_pr_status(self, pr_dto):
-
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
         await PRService.db_update(

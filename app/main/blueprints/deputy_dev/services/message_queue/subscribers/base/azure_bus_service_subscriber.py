@@ -52,7 +52,7 @@ class AzureBusServiceSubscriber(BaseSubscriber):
             except (ServiceRequestTimeoutError, ServiceResponseTimeoutError) as error:
                 self.log_error(ErrorMessages.QUEUE_TIMEOUT_ERROR.value, error)
                 logger.info("Message Queue subscribe event failed with read timeout error")
-            except ServiceRequestError as error:
+            except ServiceRequestError:
                 logger.info("Message Queue subscribe event failed with read timeout error")
             except Exception as e:
                 self.log_error(ErrorMessages.QUEUE_SUBSCRIBE_ERROR.value, e)

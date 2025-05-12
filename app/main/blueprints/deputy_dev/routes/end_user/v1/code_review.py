@@ -114,4 +114,4 @@ async def test_chunking(_request: Request, **kwargs):
     path = payload["path"]
     chunks = FileChunkCreator.create_chunks(path, root_dir, use_new_chunking=True)
     rendered_chunks = render_snippet_array(chunks)
-    return send_response(f"Processing Started with Request ID : {dict({'result':rendered_chunks})}")
+    return send_response(f"Processing Started with Request ID : {dict({'result': rendered_chunks})}")
