@@ -64,25 +64,25 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             
             1. Review the pull request information:
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             
             2. Understand the requirements:
             <user_story>
-            {self.params['USER_STORY']}
+            {self.params["USER_STORY"]}
             </user_story>
             
             <product_research_document>
-            {self.params['PRODUCT_RESEARCH_DOCUMENT']}
+            {self.params["PRODUCT_RESEARCH_DOCUMENT"]}
             </product_research_document>
             
             3. Analyze the changes:

@@ -134,7 +134,6 @@ async def run_new_feature_session(
 
 
 async def render_home(app_context: AppContext) -> AppContext:
-
     app_context, redirect_after_home = await Home(app_context).render()
     if redirect_after_home == ScreenType.EXIT:
         return app_context

@@ -31,7 +31,7 @@ class Claude3Point5IterativeCodeChatPrompt(BaseClaude3Point5SonnetPrompt):
             """
 
         user_message = f"""
-            Please handle the user query on your last response : {self.params.get('query')}
+            Please handle the user query on your last response : {self.params.get("query")}
 
             Relevant Code Context from the repository for the asked question:
             {self.params.get("relevant_chunks")}

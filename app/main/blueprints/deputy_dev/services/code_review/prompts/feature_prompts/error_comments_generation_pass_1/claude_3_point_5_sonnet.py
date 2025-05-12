@@ -63,19 +63,19 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
         user_message = f"""
                 Here's the information about the pull request:
 
-                <pull_request_title>
-                {self.params['PULL_REQUEST_TITLE']}
-                </pull_request_title>
+            <pull_request_title>
+            {self.params["PULL_REQUEST_TITLE"]}
+            </pull_request_title>
 
-                <pull_request_description>
-                {self.params['PULL_REQUEST_DESCRIPTION']}
-                </pull_request_description>
+            <pull_request_description>
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
+            </pull_request_description>
 
                 Now, examine the following diff and related code snippets:
 
-                <pull_request_diff>
-                {self.params['PULL_REQUEST_DIFF']}
-                </pull_request_diff>
+            <pull_request_diff>
+            {self.params["PULL_REQUEST_DIFF"]}
+            </pull_request_diff>
 
                 Focus on identifying the following types of errors:
 

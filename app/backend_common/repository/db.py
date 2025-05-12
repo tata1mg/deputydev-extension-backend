@@ -22,8 +22,7 @@ class DB(ORMWrapper):
         order_by: Union[list, str] = None,
         fetch_one: bool = True,
         only: Union[list, str] = None,
-    ) -> Dict[str, Any]:
-        ...
+    ) -> Dict[str, Any]: ...
 
     @overload
     async def by_filters(
@@ -35,8 +34,7 @@ class DB(ORMWrapper):
         order_by: Union[list, str] = None,
         fetch_one: bool = False,
         only: Union[list, str] = None,
-    ) -> List[Dict[str, Any]]:
-        ...
+    ) -> List[Dict[str, Any]]: ...
 
     @classmethod
     async def by_filters(
