@@ -66,7 +66,7 @@ class DocsGenerationHandler(BaseCodeGenFeature[CodeDocsGenerationInput]):
             raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
         # TODO: Move this to a separate function
-        code_lines = get_response_code_lines(llm_response.parsed_content[0]["response"])
+        _code_lines = get_response_code_lines(llm_response.parsed_content[0]["response"])
 
         final_resp = {
             "display_response": llm_response.parsed_content[0]["response"],

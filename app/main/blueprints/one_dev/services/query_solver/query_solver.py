@@ -158,7 +158,6 @@ class QuerySolver:
     async def get_final_stream_iterator(
         self, llm_response: ParsedLLMCallResponse, session_id: int
     ) -> AsyncIterator[BaseModel]:
-
         query_summary: Optional[str] = None
 
         async def _streaming_content_block_generator():

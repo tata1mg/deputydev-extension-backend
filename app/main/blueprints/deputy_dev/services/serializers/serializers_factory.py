@@ -15,7 +15,6 @@ from app.main.blueprints.deputy_dev.services.serializers.shadcn.shadcn_factory i
 
 
 class SerializersFactory:
-
     FACTORIES = {
         SerializerTypes.SHADCN.value: ShadcnFactory,
     }

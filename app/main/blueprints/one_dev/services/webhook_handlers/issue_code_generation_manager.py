@@ -42,7 +42,6 @@ class IssueCodeGenerationManager:
         repo_service = await cls.initialize_repo(issue_comment_payload, comment, command_type)
 
         try:
-
             _, is_repo_cloned = await repo_service.clone_repo()
             if not is_repo_cloned:
                 logger.error("Failed to clone repository")
