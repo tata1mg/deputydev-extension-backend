@@ -69,7 +69,7 @@ class StatsCollectionBase(ABC):
         )
         if not self.repo_dto:
             raise RetryException(
-                f"{self.stats_type} webhook failed for repo {payload['repo_name']} due to" f"repo not registered"
+                f"{self.stats_type} webhook failed for repo {payload['repo_name']} due torepo not registered"
             )
 
         self.pr_dto = await PRService.find(

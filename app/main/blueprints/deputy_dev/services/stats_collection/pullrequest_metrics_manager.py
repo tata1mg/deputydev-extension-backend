@@ -74,7 +74,6 @@ class PullRequestMetricsManager(StatsCollectionBase):
         await self.post_pr_close_processing(close_cycle_time)
 
     async def post_pr_close_processing(self, close_cycle_time):
-
         await PRService.db_update(
             payload={
                 "scm_close_time": self.payload["pr_closed_at"],

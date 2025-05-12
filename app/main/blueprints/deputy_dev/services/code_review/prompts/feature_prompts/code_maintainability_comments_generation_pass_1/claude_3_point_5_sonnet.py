@@ -42,23 +42,23 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
             
             Pull Request Title: 
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             Pull Request Description:
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             Pull Request Diff:
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             Contextually Related Code Snippets corresponding to PR diff:
             Additional code snippets that contain related files, dependent code but are not PR diff.
             <contextually_related_code_snippets>
-            {self.params['CONTEXTUALLY_RELATED_CODE_SNIPPETS']}
+            {self.params["CONTEXTUALLY_RELATED_CODE_SNIPPETS"]}
             </contextually_related_code_snippets>
             
             Review the code carefully, focusing on the following guidelines for each category:
@@ -115,7 +115,7 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
             
             Analyze the code thoroughly and provide your feedback in the following XML format:
             
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
+            {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

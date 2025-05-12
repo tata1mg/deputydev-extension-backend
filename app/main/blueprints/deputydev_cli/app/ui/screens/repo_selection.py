@@ -57,7 +57,6 @@ class RepoPathCompleter(Completer):
             for dir in dirs:
                 abs_current_file_path = os.path.join(root, dir)
                 if abs_current_file_path.startswith(abs_text_path + last_path_component):
-
                     if current_yields >= 7:
                         return
                     yield Completion(
