@@ -17,7 +17,6 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import (
     ClientData,
-    Clients,
 )
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
