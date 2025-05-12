@@ -166,6 +166,8 @@ class ToolRequestManager:
             ):
                 comments: List[LLMCommentData] = []
                 llm_comments = content_block.content.tool_input.get("comments")
+                print("**************LLM Comments**************")
+                print(llm_comments)
                 for comment in llm_comments:
                     corrective_code_element = comment.get("corrective_code")
                     description_element = comment.get("description")
