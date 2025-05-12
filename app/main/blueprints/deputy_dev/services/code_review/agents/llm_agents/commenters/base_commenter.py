@@ -166,7 +166,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     last_pass_result = final_response
                     break
 
-                if not hasattr(current_response, "parsed_content") or not llm_response.parsed_content:
+                if not hasattr(current_response, "parsed_content") or not current_response.parsed_content:
                     # No tool use request block received
                     current_response = await self.llm_handler.submit_feedback_response(
                         session_id=session_id,
