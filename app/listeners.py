@@ -1,4 +1,7 @@
+from redis_wrapper.registry import cache_registry
+from sanic import Sanic
 from torpedo.constants import ListenerEventTypes
+from tortoise_wrapper import TortoiseWrapper
 
 from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
     MessageQueueFactory,
@@ -43,9 +46,25 @@ async def close_weaviate_server(_app, loop):
         _app.ctx.weaviate_client.sync_client.close()
 
 
+async def setup_caches(app: Sanic):
+    cache_config = app.config["REDIS_CACHE_HOSTS"]
+    cache_registry.from_config(cache_config)
+
+
+async def setup_tortoise(app: Sanic):
+    await TortoiseWrapper.setup(config=app.config, orm_config=app.config["DB_CONNECTIONS"])
+
+
+async def teardown_tortoise(app: Sanic):
+    await TortoiseWrapper.teardown()
+
+
 # Initializing listeners with background task only if it the background worker flag is enabled.
 listeners = [
     (close_weaviate_server, ListenerEventTypes.BEFORE_SERVER_STOP.value),
+    (setup_caches, ListenerEventTypes.BEFORE_SERVER_START.value),
     (initialize_kafka_subscriber, ListenerEventTypes.AFTER_SERVER_START.value),
     (initialize_message_queue_subscribers, ListenerEventTypes.AFTER_SERVER_START.value),
+    (setup_tortoise, ListenerEventTypes.BEFORE_SERVER_START.value),
+    (teardown_tortoise, ListenerEventTypes.AFTER_SERVER_STOP.value),
 ]

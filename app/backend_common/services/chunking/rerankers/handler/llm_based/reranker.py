@@ -39,7 +39,6 @@ class LLMBasedChunkReranker(BaseChunkReranker):
         related_codebase_chunks: List[ChunkInfo],
         query: str,
     ) -> List[ChunkInfo]:
-
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
 
         start_time = time.perf_counter()  # Record the start time

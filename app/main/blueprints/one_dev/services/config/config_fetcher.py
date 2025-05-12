@@ -33,6 +33,7 @@ class ConfigFetcher:
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
             "POLLING_MAX_ATTEMPTS": ConfigManager.configs["POLLING_MAX_ATTEMPTS"],
+            "LLM_MODELS": ConfigManager.configs["CODE_GEN_LLM_MODELS"],
         },
     }
 

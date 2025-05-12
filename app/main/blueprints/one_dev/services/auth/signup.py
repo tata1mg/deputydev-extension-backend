@@ -68,6 +68,11 @@ class SignUp:
                         "team_id": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["team_id"],
                         "org_name": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["org_name"],
                     }
+                elif domain == CONFIG.config["ORG_INFO"]["ROZANA"]["domain"]:
+                    return {
+                        "team_id": CONFIG.config["ORG_INFO"]["ROZANA"]["team_id"],
+                        "org_name": CONFIG.config["ORG_INFO"]["ROZANA"]["org_name"],
+                    }
                 else:
                     if email in CONFIG.config["ALLOWED_EMAILS"]:
                         return {
@@ -105,6 +110,11 @@ class SignUp:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["team_id"],
                 "org_name": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["org_name"],
+            }
+        elif domain == CONFIG.config["ORG_INFO"]["ROZANA"]["domain"]:
+            return {
+                "team_id": CONFIG.config["ORG_INFO"]["ROZANA"]["team_id"],
+                "org_name": CONFIG.config["ORG_INFO"]["ROZANA"]["org_name"],
             }
         else:
             if email in CONFIG.config["ALLOWED_EMAILS"]:

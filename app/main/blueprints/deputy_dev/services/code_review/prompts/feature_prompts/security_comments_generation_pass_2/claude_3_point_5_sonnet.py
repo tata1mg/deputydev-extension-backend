@@ -34,19 +34,19 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             First, review the pr for provided data and guidelines and keep your response in <thinking> tag.
             <data>
             <pull_request_title>
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
             </pull_request_title>
             
             <pull_request_description>
-            {self.params['PULL_REQUEST_DESCRIPTION']}
+            {self.params["PULL_REQUEST_DESCRIPTION"]}
             </pull_request_description>
             
             <pull_request_diff>
-            {self.params['PULL_REQUEST_DIFF']}
+            {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
             <junior_developer_comments>
-            {self.params['REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER']}
+            {self.params["REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER"]}
             </junior_developer_comments>
             </data>
             
@@ -93,7 +93,6 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
             13.  comment should not be duplicated for similar issues across different locations.
             14.  Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
             15.  Do not change the provided bucket name.
-            16.  Use all the required tools if you need to fetch some piece of code based on it. 
 
             </guidelines>
 
@@ -108,7 +107,6 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
 
            Once you have gathered all necessary context and are confident in your findings, call the
             "parse_final_response" tool with your review in XML format:
-            {self.get_xml_review_comments_format(self.params['BUCKET'], self.params['AGENT_NAME'], self.agent_focus_area)} 
 
             If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
             Example:

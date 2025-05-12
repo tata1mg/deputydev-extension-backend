@@ -37,8 +37,9 @@ class ExperimentService:
                 return ExperimentsDTO(**experiments)
         except Exception as ex:
             logger.error(
-                "error occurred while fetching Experiments details from db for "
-                "experiment filters : {}, ex: {}".format(filters, ex)
+                "error occurred while fetching Experiments details from db for experiment filters : {}, ex: {}".format(
+                    filters, ex
+                )
             )
             raise ex
 
@@ -104,8 +105,9 @@ class ExperimentService:
             return experiments_count
         except Exception as ex:
             logger.error(
-                "error occurred while fetching Experiments counts from db for "
-                "experiment filters : {}, ex: {}".format(filters, ex)
+                "error occurred while fetching Experiments counts from db for experiment filters : {}, ex: {}".format(
+                    filters, ex
+                )
             )
             raise ex
 

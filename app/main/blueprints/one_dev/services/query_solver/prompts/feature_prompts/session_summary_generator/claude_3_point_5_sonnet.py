@@ -60,9 +60,11 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
         """
 
         return UserAndSystemMessages(
-            user_message=(user_message + focus_chunks_message + summarization_prompt)
-            if focus_chunks_message
-            else (user_message + summarization_prompt),
+            user_message=(
+                (user_message + focus_chunks_message + summarization_prompt)
+                if focus_chunks_message
+                else (user_message + summarization_prompt)
+            ),
             system_message=system_message,
         )
 
@@ -78,7 +80,6 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
-
         final_content: List[Dict[str, Any]] = []
 
         for content_block in llm_response.content:
