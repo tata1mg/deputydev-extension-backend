@@ -1,5 +1,3 @@
-import logging
-
 import botocore.exceptions
 from aiobotocore.client import AioBaseClient
 from sanic.log import logger
@@ -62,8 +60,9 @@ class SQSManager(MessageQueueManager):
         :return: True or False
         """
         messages, attributes, payload = messages or [], attributes or {}, payload or ""
-        message_group_id, message_deduplication_id = kwargs.get("message_group_id"), kwargs.get(
-            "message_deduplication_id"
+        message_group_id, message_deduplication_id = (
+            kwargs.get("message_group_id"),
+            kwargs.get("message_deduplication_id"),
         )
         delay_seconds = kwargs.get("delay_seconds", DelayQueueTime.MINIMUM_TIME.value)
         queue_type = self._get_queue_type()

@@ -35,7 +35,6 @@ class IterativeChatHandler(BaseCodeGenIterativeHandler[IterativeChatInput]):
 
     @classmethod
     async def _feature_task(cls, payload: IterativeChatInput, job_id: int, llm_meta: List[LLMMeta]) -> Dict[str, Any]:
-
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
         previous_responses = await cls._get_previous_responses(payload)
