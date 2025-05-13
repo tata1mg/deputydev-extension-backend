@@ -164,18 +164,8 @@
 ### Locally
 
 ```bash
+uv venv --python 3.11
 source .venv/bin/activate
-python app/service.py
+uv sync
+python -m app.service
 ```
-
-Check logs for the running host and port.
-
-### With Docker
-
-To view logs:
-
-```bash
-docker logs deputydev-backend-container
-```
-
-Access the app at `localhost:<host_port>`.
