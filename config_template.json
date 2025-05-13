@@ -512,6 +512,24 @@
             "service_path": ""
           }
         }
+      },
+      "3.0.2": {
+        "darwin": {
+          "arm64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        }
+      },
+      "3.0.1": {
+        "darwin": {
+          "arm64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        }
       }
     },
     "PASSWORD": "",
