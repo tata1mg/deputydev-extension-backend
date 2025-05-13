@@ -530,6 +530,15 @@
             "service_path": ""
           }
         }
+      },
+      "3.0.3": {
+        "darwin": {
+          "arm64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        }
       }
     },
     "PASSWORD": "",
