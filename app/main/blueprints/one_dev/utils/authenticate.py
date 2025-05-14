@@ -1,4 +1,5 @@
 import json
+import traceback
 from functools import wraps
 from typing import Any, Dict, Tuple
 
@@ -57,6 +58,7 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
     encrypted_session_data = authorization_header.split(" ")[1].strip()
     try:
         # first decrypt the token using session encryption service
+        print(encrypted_session_data)
         session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
         # convert back to json object
         session_data = json.loads(session_data_string)
@@ -74,7 +76,8 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
         response_headers = {"new_session_data": refresh_session_data[0]}
     except InvalidTokenError:
         raise BadRequestException("Invalid token")
-    except Exception:
+    except Exception as ex:
+        print(traceback.format_exc())
         raise BadRequestException(AuthStatus.NOT_VERIFIED.value)
 
     # Extract the email from the user response
