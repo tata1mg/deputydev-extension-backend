@@ -194,8 +194,10 @@ class Anthropic(BaseLLMProvider):
 
         # Todo Uncomment this later when bedrock provide support of prompt caching
 
-        # if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
-        #     llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+        if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
+            for idx in range(min(2, len(llm_payload["messages"]))):
+                llm_payload["messages"][idx]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+
 
         return llm_payload
 
