@@ -14,8 +14,7 @@ class WorkspaceService:
                 return WorkspaceDTO(**workspace_data)
         except Exception as ex:
             logger.error(
-                "error occurred while fetching workspace details from db for "
-                "workspace : {}, ex: {}".format(filters, ex)
+                "error occurred while fetching workspace details from db for workspace : {}, ex: {}".format(filters, ex)
             )
 
     @classmethod

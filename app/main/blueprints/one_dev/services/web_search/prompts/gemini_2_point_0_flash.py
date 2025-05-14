@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import AsyncIterator, Dict, List
 
 from pydantic import BaseModel
 
@@ -13,7 +13,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_0_flash import (
     BaseGemini2Point0FlashPrompt,
 )
@@ -24,7 +23,7 @@ class Gemini2Point0FlashWebSearch(BaseGemini2Point0FlashPrompt):
     prompt_category = PromptCategories.CODE_GENERATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:
-        system_message = f"""
+        system_message = """
             You are a developer assistant tasked with performing a real-time, AI-powered web search. 
             You will receive a rich, descriptive query that may include code, error messages, technology names, and user goals.
             Use this query to find updated documentation, solutions, or best practices from reliable sources such as official docs, GitHub issues, Stack Overflow, or trusted blogs.

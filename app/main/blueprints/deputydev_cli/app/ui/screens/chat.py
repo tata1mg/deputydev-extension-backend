@@ -147,12 +147,12 @@ class ChatScreen(BaseScreenHandler):
         if CLIFeatures.ITERATIVE_CHAT.value not in ConfigManager.configs["ENABLED_FEATURES"]:
             return await Exit(app_context=self.app_context).render()
         with patch_stdout():
-            message: Union[str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]] = (
-                await self.session.prompt_async(
-                    "You: ",
-                    bottom_toolbar=self.bottom_toolbar,
-                    key_bindings=await self.get_bindings(),
-                )
+            message: Union[
+                str, Coroutine[Any, Any, Tuple[FeatureNextAction, Optional[str]]]
+            ] = await self.session.prompt_async(
+                "You: ",
+                bottom_toolbar=self.bottom_toolbar,
+                key_bindings=await self.get_bindings(),
             )
 
             next_action: Optional[FeatureNextAction] = None
