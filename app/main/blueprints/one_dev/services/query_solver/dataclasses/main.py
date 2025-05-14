@@ -43,6 +43,7 @@ class Url(BaseModel):
 class LLMModel(Enum):
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
+    GPT_4_POINT_1 = "GPT_4_POINT_1"
 
 
 class QuerySolverInput(BaseModel):
