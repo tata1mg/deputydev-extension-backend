@@ -1,9 +1,20 @@
 from tortoise import fields
 
-from .......backend_common.models.dao.postgres.base import Base
+from .base import Base
 
 
 class SubscriptionPeriods(Base):
+    serializable_keys = {
+        "id",
+        "subscription_id",
+        "period_start",
+        "period_end",
+        "period_status",
+        "billing_status",
+        "created_at",
+        "updated_at",
+    }
+
     id = fields.BigIntField(primary_key=True)
     subscription_id = fields.BigIntField()
     period_start = fields.DatetimeField()
