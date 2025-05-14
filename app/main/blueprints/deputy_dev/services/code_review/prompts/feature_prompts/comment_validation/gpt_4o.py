@@ -42,7 +42,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
             - If the `corrective_code` and the comment description provided in the comment is already implemented or closely resembles the existing code in the PR diff, mark the comment as invalid.
 
             ### Input Comments that needs to be validated: 
-            ${self.params['COMMENTS']}
+            ${self.params["COMMENTS"]}
 
             Below is a sample input structure for the comments you will receive:
 

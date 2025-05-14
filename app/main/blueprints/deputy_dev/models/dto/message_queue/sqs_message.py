@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 from app.main.blueprints.deputy_dev.models.dto.message_queue.base_queue_message import (
     BaseQueueMessage,

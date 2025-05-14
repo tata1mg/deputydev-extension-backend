@@ -34,10 +34,10 @@ class GPT4OPRSummarizationPrompt(BaseGPT4OPrompt):
         user_message = f"""
             What does the following PR do ?
             Pull Request Title
-            {self.params['PULL_REQUEST_TITLE']}
+            {self.params["PULL_REQUEST_TITLE"]}
 
             Pull Request Diff:
-            {self.params['PR_DIFF_WITHOUT_LINE_NUMBER']}
+            {self.params["PR_DIFF_WITHOUT_LINE_NUMBER"]}
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)

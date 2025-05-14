@@ -1,7 +1,6 @@
 from typing import List, Union
 
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
@@ -86,7 +85,6 @@ class AgentFactory:
     def get_valid_agents_and_init_params_for_review(
         cls,
     ) -> List[AgentAndInitParams]:
-
         valid_agents: List[AgentAndInitParams] = []
 
         # add predefined and custom code commenter agents

@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
@@ -74,7 +73,7 @@ class AzureServiceBusManager(MessageQueueManager):
         message_id = kwargs.get("message_id")  # message_deduplication_id
         self._validate_publish_to_service_bus(session_id, message_id)
 
-        _send, _retry_count, sent_response_data = False, 0, {}
+        _send, _retry_count, _sent_response_data = False, 0, {}
         _max_retries = kwargs.get("max_retries") or 3
 
         while not _send and _retry_count < _max_retries:
@@ -92,7 +91,7 @@ class AzureServiceBusManager(MessageQueueManager):
                         payload, session_id=session_id, message_id=message_id, attributes=attributes, batch=batch
                     )
                     _send = True
-            except MessageSizeExceededError as err:
+            except MessageSizeExceededError:
                 raise Exception(AzureErrorMessages.AzureServiceBusPayloadSize.value.format())
             except ServiceBusError as err:
                 logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count))

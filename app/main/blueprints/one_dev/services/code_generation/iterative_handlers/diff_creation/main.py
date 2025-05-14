@@ -74,7 +74,6 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
 
     @classmethod
     async def _feature_task(cls, payload: DiffCreationInput, job_id: int, llm_meta: List[LLMMeta]) -> Dict[str, Any]:
-
         previous_responses = await cls._get_previous_responses(payload)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
@@ -93,7 +92,7 @@ class DiffCreationHandler(BaseCodeGenIterativeHandler[DiffCreationInput]):
             raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
         # TODO: Move this to a separate function
-        code_lines = get_chunks_by_file_total_lines(llm_response.parsed_content[0]["chunks_by_file"])
+        _code_lines = get_chunks_by_file_total_lines(llm_response.parsed_content[0]["chunks_by_file"])
 
         if not llm_response.parsed_content[0]["chunks_by_file"]:
             raise ValueError("Failed to generate diff")
