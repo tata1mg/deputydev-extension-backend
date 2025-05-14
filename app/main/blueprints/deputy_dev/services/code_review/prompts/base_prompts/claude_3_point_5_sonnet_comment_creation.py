@@ -7,7 +7,6 @@ from deputydev_core.utils.context_vars import get_context_value
 from app.backend_common.exception.exception import ParseException
 from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
-    TextBlockData,
     ToolUseRequestData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
