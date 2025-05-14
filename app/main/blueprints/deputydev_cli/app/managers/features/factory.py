@@ -55,7 +55,6 @@ from app.main.blueprints.deputydev_cli.app.managers.features.handlers.test_case_
 
 
 class FeatureFactory:
-
     feature_handler_map: Dict[CLIFeatures, Type[BaseFeatureHandler]] = {
         CLIFeatures.CODE_GENERATION: CodeGenerationHandler,
         CLIFeatures.TEST_GENERATION: TestCaseGenerationHandler,

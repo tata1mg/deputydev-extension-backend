@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 
 import jwt
-from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.jwt_handler import JWTHandler
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod

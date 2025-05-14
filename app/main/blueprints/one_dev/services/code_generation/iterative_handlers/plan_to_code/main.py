@@ -30,7 +30,6 @@ class PlanCodeGenerationHandler(BaseCodeGenIterativeHandler[PlanCodeGenerationIn
     async def _feature_task(
         cls, payload: PlanCodeGenerationInput, job_id: int, llm_meta: List[LLMMeta]
     ) -> Dict[str, Any]:
-
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
         previous_responses = await cls._get_previous_responses(payload)
@@ -47,7 +46,7 @@ class PlanCodeGenerationHandler(BaseCodeGenIterativeHandler[PlanCodeGenerationIn
             raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
         # TODO: Move this to a separate function
-        code_lines = get_response_code_lines(llm_response.parsed_content[0]["response"])
+        _code_lines = get_response_code_lines(llm_response.parsed_content[0]["response"])
 
         return {
             "session_id": payload.session_id,

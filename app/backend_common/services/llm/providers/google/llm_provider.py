@@ -1,7 +1,7 @@
 import asyncio
 import json
 import uuid
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from google.genai import types
 from torpedo.exceptions import BadRequestException
@@ -239,7 +239,7 @@ class Google(BaseLLMProvider):
         candidate = response.candidates[0]
 
         # Check finish reason (e.g., STOP, MAX_TOKENS, SAFETY, RECITATION, TOOL_CALL)
-        finish_reason = candidate.finish_reason.name
+        _finish_reason = candidate.finish_reason.name
         # You might log or handle different finish reasons specifically
         # print(f"Model finish reason: {finish_reason}")
 
