@@ -196,7 +196,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 AppLogger.log_error(
                     f"Maximum number of iterations ({max_iterations}) reached for agent {self.agent_name}"
                 )
-                last_pass_result = {}
+                last_pass_result = {"comments": []}
 
         return AgentRunResult(
             agent_result=last_pass_result,

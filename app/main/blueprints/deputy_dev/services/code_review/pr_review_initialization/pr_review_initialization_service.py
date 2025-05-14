@@ -63,21 +63,13 @@ class PRReviewInitializationService:
         class ReviewWeaviateSyncAndAsyncClients(WeaviateSyncAndAsyncClients):
             async def ensure_connected(self):
                 if not await self.is_ready():
-                    (
-                        weaviate_client,
-                        _new_weaviate_process,
-                        _schema_cleaned,
-                    ) = await ReviewInitialisationManager().initialize_vector_db()
+                    _weaviate_client= await ReviewInitialisationManager().initialize_vector_db()
                     self.sync_client = weaviate_client.sync_client
                     self.async_client = weaviate_client.async_client
 
         app = Sanic.get_app()
         if not hasattr(app.ctx, "weaviate_client"):
-            (
-                weaviate_client,
-                _new_weaviate_process,
-                _schema_cleaned,
-            ) = await ReviewInitialisationManager().initialize_vector_db()
+            weaviate_client= await ReviewInitialisationManager().initialize_vector_db()
 
             app.ctx.weaviate_client = ReviewWeaviateSyncAndAsyncClients(
                 async_client=weaviate_client.async_client,

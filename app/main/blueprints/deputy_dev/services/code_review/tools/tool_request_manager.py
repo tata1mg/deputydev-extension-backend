@@ -48,7 +48,7 @@ class ToolRequestManager:
 
     def __init__(self):
         self.tools = [
-            # RELATED_CODE_SEARCHER,
+            RELATED_CODE_SEARCHER,
             GREP_SEARCH,
             ITERATIVE_FILE_READER,
             FOCUSED_SNIPPETS_SEARCHER,
