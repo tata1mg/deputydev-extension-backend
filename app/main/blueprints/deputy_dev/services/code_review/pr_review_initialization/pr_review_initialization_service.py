@@ -13,7 +13,10 @@ from deputydev_core.utils.weaviate import weaviate_connection
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )
+from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import ReviewWeaviateSyncAndAsyncClients
 from sanic import Sanic
+from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import get_weaviate_connection
+
 
 
 class PRReviewInitializationService:
@@ -53,20 +56,20 @@ class PRReviewInitializationService:
                     )
                     await existing_client.async_client.close()
                     existing_client.sync_client.close()
-                    await existing_client.ensure_connected()
+                    new_weaviate_client = await ReviewInitialisationManager().initialize_vector_db()
+
+                    app.ctx.weaviate_client = ReviewWeaviateSyncAndAsyncClients(
+                        async_client=new_weaviate_client.async_client,
+                        sync_client=new_weaviate_client.sync_client,
+                    )
+
+                    await new_weaviate_client.ensure_connected()
             except Exception as ex:
                 AppLogger.log_error(f"Failed to maintain weaviate heartbeat: {ex}")
             await asyncio.sleep(3)
 
     @classmethod
     async def initialization(cls):
-        class ReviewWeaviateSyncAndAsyncClients(WeaviateSyncAndAsyncClients):
-            async def ensure_connected(self):
-                if not await self.is_ready():
-                    _weaviate_client= await ReviewInitialisationManager().initialize_vector_db()
-                    self.sync_client = weaviate_client.sync_client
-                    self.async_client = weaviate_client.async_client
-
         app = Sanic.get_app()
         if not hasattr(app.ctx, "weaviate_client"):
             weaviate_client= await ReviewInitialisationManager().initialize_vector_db()
@@ -78,7 +81,7 @@ class PRReviewInitializationService:
             asyncio.create_task(cls.maintain_weaviate_heartbeat())
 
     @classmethod
-    async def create_embedding(cls, repo_path, repo_service):
+    async def create_embedding(cls, repo_path):
         try:
             print(f"Embedding started for repo {repo_path} started")
 
@@ -92,12 +95,12 @@ class PRReviewInitializationService:
                 )
                 local_repo = initialisation_manager.get_local_repo()
                 chunkable_files_and_hashes = await local_repo.get_chunkable_files_and_commit_hashes()
-                weaviate_client = await weaviate_connection()
+                weaviate_client = await get_weaviate_connection()
 
                 if weaviate_client:
                     initialisation_manager.weaviate_client = weaviate_client
-                else:
-                    await initialisation_manager.initialize_vector_db()
+                await initialisation_manager.initialize_vector_db()
+
 
                 await initialisation_manager.prefill_vector_store(
                     chunkable_files_and_hashes=chunkable_files_and_hashes,

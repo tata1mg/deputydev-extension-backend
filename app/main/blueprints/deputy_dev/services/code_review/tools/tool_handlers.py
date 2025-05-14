@@ -42,6 +42,7 @@ from deputydev_core.utils.weaviate import weaviate_connection
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )
+from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import get_weaviate_connection
 
 
 class ToolHandlers:
@@ -72,8 +73,9 @@ class ToolHandlers:
             auth_token_key=ContextValueKeys.PR_REVIEW_TOKEN.value, one_dev_client=one_dev_review_client
         )
         with ProcessPoolExecutor(max_workers=ConfigManager.configs["NUMBER_OF_WORKERS"]) as executor:
+            weaviate_client = await get_weaviate_connection()
             initialisation_manager = ReviewInitialisationManager(
-                repo_path=payload.repo_path, process_executor=executor, one_dev_client=one_dev_review_client
+                repo_path=payload.repo_path, process_executor=executor, one_dev_client=one_dev_review_client, weaviate_client=weaviate_client
             )
 
             chunks = await RelevantChunks(payload.repo_path).get_relevant_chunks(
@@ -156,7 +158,7 @@ class ToolHandlers:
         """
         tool_input["repo_path"] = get_context_value("repo_path")
         payload = FocussedSnippetSearchParams(**tool_input)
-        weaviate_client = await weaviate_connection()
+        weaviate_client = await get_weaviate_connection()
         one_dev_client = OneDevReviewClient()
         with ProcessPoolExecutor(max_workers=ConfigManager.configs["NUMBER_OF_WORKERS"]) as executor:
             initialisation_manager = ReviewInitialisationManager(

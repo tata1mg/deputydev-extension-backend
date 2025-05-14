@@ -497,7 +497,7 @@ requires-dist = [
     { name = "azure-servicebus", specifier = "==7.14.1" },
     { name = "botocore", specifier = "==1.34.34" },
     { name = "cache-wrapper", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git?rev=4.1.0" },
-    { name = "deputydev-core", git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=pr_review_final" },
+    { name = "deputydev-core", directory = "../deputydev-core" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
     { name = "langchain", specifier = "==0.3.24" },
@@ -523,8 +523,8 @@ dev = [{ name = "ruff", specifier = ">=0.11.9" }]
 
 [[package]]
 name = "deputydev-core"
-version = "3.0.4"
-source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=pr_review_final#380da92ad7334be3eacc572c5483d3b647a248b6" }
+version = "3.0.5"
+source = { directory = "../deputydev-core" }
 dependencies = [
     { name = "aiohttp" },
     { name = "diff-match-patch" },
@@ -541,6 +541,27 @@ dependencies = [
     { name = "weaviate-client" },
     { name = "xxhash" },
 ]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.11.12" },
+    { name = "diff-match-patch", specifier = "==20241021" },
+    { name = "gitpython", specifier = "==3.1.27" },
+    { name = "giturlparse", specifier = "==0.12.0" },
+    { name = "numpy", specifier = "==1.26.2" },
+    { name = "prompt-toolkit", specifier = "==3.0.48" },
+    { name = "pydantic", specifier = "==2.10.3" },
+    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "tiktoken", specifier = "==0.7.0" },
+    { name = "tree-sitter", specifier = "==0.21.0" },
+    { name = "tree-sitter-javascript", specifier = "==0.21.0" },
+    { name = "tree-sitter-languages", specifier = "==1.10.2" },
+    { name = "weaviate-client", specifier = "==4.10.3" },
+    { name = "xxhash", specifier = "==3.5.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = ">=0.11.9" }]
 
 [[package]]
 name = "diff-match-patch"
