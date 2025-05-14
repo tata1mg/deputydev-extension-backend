@@ -60,7 +60,6 @@ class BackfillManager:
                 pr_detail = await self.bitbucket_client.get_pr_details()
                 if row.scm_close_time is None and row.close_time_in_sec is None:
                     if pr_detail["state"] == "MERGED" or pr_detail["state"] == "DECLINED":
-
                         all_comments = await self.bitbucket_client.get_pr_comments()
                         llm_comment_count, human_comment_count = count_bot_and_human_comments_bitbucket(all_comments)
 

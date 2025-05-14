@@ -1,4 +1,4 @@
-from redis_wrapper.registry import DEFAULT_CACHE_LABEL, cache_registry
+from redis_wrapper.registry import cache_registry
 from sanic import Sanic
 from torpedo.constants import ListenerEventTypes
 from tortoise_wrapper import TortoiseWrapper

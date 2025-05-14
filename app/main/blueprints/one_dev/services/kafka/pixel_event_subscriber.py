@@ -35,7 +35,6 @@ class PixelEventSubscriber(BaseKafkaSubscriber):
         await PixelEventsRepository.db_insert(pixel_event_data)
 
     def parse_event_data(self, event_data: Dict[str, Any]) -> dict[str, Optional[Any]]:
-
         event_id = event_data["anonymous_id"]
         event_type = event_data["event"]
         session_id = event_data["properties"]["session_id"]
