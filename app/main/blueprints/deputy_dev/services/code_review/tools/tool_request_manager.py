@@ -110,9 +110,6 @@ class ToolRequestManager:
                         response=tool_response,
                     )
                 )
-
-        print("********** No Tool Found ********")
-        print(llm_response)
         return None
 
     async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[Dict[str, Any]]:
