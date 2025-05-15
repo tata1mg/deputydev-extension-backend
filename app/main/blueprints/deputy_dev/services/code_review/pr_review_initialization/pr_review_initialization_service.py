@@ -8,7 +8,6 @@ from deputydev_core.services.initialization.review_initialization_manager import
 )
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import ContextValueKeys
-from deputydev_core.utils.weaviate import weaviate_connection
 
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,

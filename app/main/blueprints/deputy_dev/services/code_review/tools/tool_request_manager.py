@@ -93,15 +93,11 @@ class ToolRequestManager:
                 tool_use_id = tool_use_request.content.tool_use_id
 
                 # Process the tool request based on the tool name
-                print("*****************Tool Call*****************")
-                print(tool_input, tool_name)
                 try:
                     tool_response = await self._process_tool_request(tool_name, tool_input)
                 except Exception as e:
                     AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
                     tool_response = EXCEPTION_RAISED_FALLBACK.format(tool_name = tool_name, tool_input = json.dumps(tool_input, indent=2), error_message = str(e))
-                print("*****************Tool Response*****************")
-                print(tool_response)
 
                 return ToolUseResponseData(
                     content=ToolUseResponseContent(
@@ -164,8 +160,6 @@ class ToolRequestManager:
             ):
                 comments: List[LLMCommentData] = []
                 llm_comments = content_block.content.tool_input.get("comments")
-                print("**************LLM Comments**************")
-                print(llm_comments)
                 for comment in llm_comments:
                     corrective_code_element = comment.get("corrective_code")
                     description_element = comment.get("description")
