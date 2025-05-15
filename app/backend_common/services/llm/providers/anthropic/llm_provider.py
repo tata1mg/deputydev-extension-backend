@@ -129,6 +129,7 @@ class Anthropic(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         **kwargs,
     ) -> Dict[str, Any]:
@@ -156,6 +157,11 @@ class Anthropic(BaseLLMProvider):
                 ],
             )
             messages.append(tool_message)
+        if feedback:
+            feedback_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": feedback}]
+            )
+            messages.append(feedback_message)
 
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []
@@ -186,8 +192,12 @@ class Anthropic(BaseLLMProvider):
                 }
             ]
 
+        # Todo Uncomment this later when bedrock provide support of prompt caching
+
         if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
-            llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+            for idx in range(min(2, len(llm_payload["messages"]))):
+                llm_payload["messages"][idx]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+
 
         return llm_payload
 
@@ -227,7 +237,12 @@ class Anthropic(BaseLLMProvider):
 
         return NonStreamingResponse(
             content=non_streaming_content_blocks,
-            usage=LLMUsage(input=llm_response["usage"]["input_tokens"], output=llm_response["usage"]["output_tokens"]),
+            usage=LLMUsage(
+                input=llm_response["usage"]["input_tokens"],
+                output=llm_response["usage"]["output_tokens"],
+                cache_read=llm_response["usage"].get("cache_read_input_tokens"),
+                cache_write=llm_response["usage"].get("cache_creation_input_tokens"),
+            ),
             type=LLMCallResponseTypes.NON_STREAMING,
         )
 
