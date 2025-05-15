@@ -16,27 +16,9 @@ class ReferralsRepository:
                 }
             )
             if existing_referral:
-                return ReferralDTO.model_validate_json(
-                        **dict(
-                            id=existing_referral.id,
-                            referral_code_id=existing_referral.referral_code_id,
-                            referree_id=existing_referral.referree_id,
-                            created_at=existing_referral.created_at,
-                            updated_at=existing_referral.updated_at,
-                        )
-                )
+                return ReferralDTO(**existing_referral)
             referral = await DB.insert_row(Referrals, referral_data.model_dump(mode="json"))
-            return ReferralDTO.model_validate_json(
-                json_data=json.dumps(
-                    dict(
-                        id=referral.id,
-                        referral_code_id=referral.referral_code_id,
-                        referree_id=referral.referree_id,
-                        created_at=referral.created_at.isoformat(),
-                        updated_at=referral.updated_at.isoformat(),
-                    )
-                )
-            )
+            return ReferralDTO(**referral)
         except Exception as ex:
             logger.error(f"Error occurred while inserting referral in DB, ex: {ex}")
             raise ex
