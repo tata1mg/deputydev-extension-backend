@@ -160,6 +160,8 @@ class ToolRequestManager:
             ):
                 comments: List[LLMCommentData] = []
                 llm_comments = content_block.content.tool_input.get("comments")
+                if llm_comments is None:
+                    raise ValueError(f"The parse_final_tool_response does not contain any comments array: tool_input: {json.dumps(content_block.content.tool_input, indent=2)}")
                 for comment in llm_comments:
                     corrective_code_element = comment.get("corrective_code")
                     description_element = comment.get("description")
