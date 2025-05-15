@@ -27,20 +27,7 @@ class SubscriptionsRepository:
     async def db_insert(cls, subscription_data: SubscriptionData) -> SubscriptionDTO:
         try:
             subscription = await DB.insert_row(Subscriptions, subscription_data.model_dump(mode="json"))
-            return SubscriptionDTO.model_validate_json(
-                json.dumps(
-                    dict(
-                        id=subscription.id,
-                        plan_id=subscription.plan_id,
-                        user_team_id=subscription.user_team_id,
-                        current_status=subscription.current_status,
-                        start_date=subscription.start_date.isoformat(),
-                        end_date=subscription.end_date.isoformat(),
-                        created_at=subscription.created_at.isoformat(),
-                        updated_at=subscription.updated_at.isoformat(),
-                    )
-                )
-            )
+            return SubscriptionDTO(**subscription)
         except Exception as ex:
             logger.error(f"Error occurred while inserting subscription {subscription_data} in DB, ex: {ex}")
             raise ex
