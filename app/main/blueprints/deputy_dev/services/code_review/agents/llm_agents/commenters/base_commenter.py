@@ -35,6 +35,11 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import NO_TOOL_USE_FALLBACK_PROMPT
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
+from app.backend_common.models.dto.message_thread_dto import (
+    ToolUseResponseContent,
+    ToolUseResponseData,
+)
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):
@@ -162,9 +167,34 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             while iteration_count < max_iterations:
                 # Check if parse_final_response tool is used
                 if self.tool_request_manager.is_final_response(current_response):
-                    final_response = self.tool_request_manager.extract_final_response(current_response)
-                    last_pass_result = final_response
-                    break
+                    try:
+                        final_response = self.tool_request_manager.extract_final_response(current_response)
+                        last_pass_result = final_response
+                        break
+                    except Exception as e:
+                        AppLogger.log_error(f"Error processing parse_final_response Retrying with LLM : {e}")
+                        # Create a tool use response with error feedback
+                        tool_use_response = ToolUseResponseData(
+                            content=ToolUseResponseContent(
+                                tool_name="parse_final_response",
+                                tool_use_id=current_response.parsed_content[0].content.tool_use_id,
+                                response=EXCEPTION_RAISED_FALLBACK.format(
+                                    tool_name="parse_final_response",
+                                    tool_input=json.dumps(current_response.parsed_content[0].content.tool_input,
+                                                          indent=2),
+                                    error_message=str(e)
+                                )
+                            )
+                        )
+                        # Submit the error feedback to the LLM
+                        current_response = await self.llm_handler.submit_tool_use_response(
+                            session_id=session_id,
+                            tool_use_response=tool_use_response,
+                            tools=tools_to_use,
+                            prompt_type=prompt_handler.prompt_type,
+                        )
+                        iteration_count += 1
+                        continue
 
                 if not hasattr(current_response, "parsed_content") or not current_response.parsed_content:
                     # No tool use request block received
