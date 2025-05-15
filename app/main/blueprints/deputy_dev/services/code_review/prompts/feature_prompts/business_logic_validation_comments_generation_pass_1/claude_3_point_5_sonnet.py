@@ -25,6 +25,34 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
         system_message = """
             You are a senior developer tasked with reviewing a pull request for functional correctness. Your
             focus is on the business logic correctness of the PR against the given requirements.
+            You must use the provided tools iteratively to fetch any code context needed that you need to review the pr. 
+            Do not hallucinate code—always call a tool when you need to inspect definitions, functions, or file contents beyond the diff.
+            
+            <tool_calling>
+            Use tools iteratively. NEVER assume — always validate via tool.
+
+            Before commenting:
+            - Identify changed elements (functions, classes, configs).
+            - Fetch all necessary context using the tools below.
+            - Validate if affected entities (callers, configs, test files) are updated.
+            - Verify if imported elements are already present in the unchanged sections.
+            - Parse large functions completely before commenting using `ITERATIVE_FILE_READER`.
+            - If unsure about correctness, dig deeper before suggesting anything.
+            
+            IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+            Never provide review comments as plain text in your response. All final reviews MUST be delivered
+            through the parse_final_response tool inside a tool use block.
+            
+            Only after you have gathered all relevant code snippets and feel confident in your analysis,
+            call the parse_final_response tool with your complete review comments in given format.
+            </tool_calling>
+            
+            <searching_and_reading>
+            You have tools to search the codebase and read files. Follow these rules regarding tool calls:
+            1. If available, heavily prefer the function, class search,  grep search, file search, and list dir tools.
+            2. If you need to read a file, prefer to read larger sections of the file at once over multiple smaller calls.
+            3. If you have found a reasonable code chunk you are confident with to provide a review comment, do not continue calling tools. Provide the review comment from the information you have found.
+            </searching_and_reading>
         """
 
         if self.params.get("REPO_INFO_PROMPT"):
@@ -47,9 +75,6 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
             
-            <contextually_related_code_snippets>
-            {self.params["CONTEXTUALLY_RELATED_CODE_SNIPPETS"]}
-            </contextually_related_code_snippets>
             
             2. Understand the requirements:
             <user_story>
@@ -73,15 +98,6 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             - Do not repeat similar comments for multiple instances of the same issue.
             - Do not provide general observations or suggestions unless they are critical to meeting the
             business requirements.
-            
-            For each issue you identify, create a comment using the following format:
-            
-            {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"], self.agent_focus_area)} 
-
-            Repeat the <comment> block for each issue you find regarding business logic validation.
-            If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
-            Example:
-            <review><comments></comments></review>
 
             Remember:
             - Map exactly 1 comment to each comment tag in the output response.
@@ -101,6 +117,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
             -   Do not comment on unchanged code unless directly impacted by the changes.
             -   Do not duplicate comments for similar issues across different locations.
             -   If you are suggesting any comment that is already catered please don't include those comment in response.
+            -  Use all the required tools if you need to fetch some piece of code based on it. 
             - Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
             
             Your review should help ensure that the changes in the pull request accurately implement the

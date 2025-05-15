@@ -30,6 +30,7 @@ class BaseLLMProvider(ABC):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         **kwargs,
     ) -> Dict[str, Any]:
