@@ -42,7 +42,7 @@ class SignUp:
                     await cls.signup_and_subscribe(signup_payload, referral_code_data=referral_code_data)
                     return {"success": True}
                 else:
-                    return {"success": False, "error": "Invalid referral code"}
+                    return {"success": False, "error": "Invalid/Expired referral code"}
             else:
                 email_verification = await cls.get_team_info_from_email(email, external_auth_client)
                 if "error" in email_verification:
@@ -113,7 +113,7 @@ class SignUp:
 
                 end_date = None
                 if referral_code_data:
-                    end_date = datetime.now() + timedelta(hours=referral_code_data.benefits["subscription_expiry"])
+                    end_date = datetime.now() + timedelta(hours=referral_code_data.benefits.subscription_expiry_timedelta)
 
                 subscription = Subscriptions(
                     plan_id=subscription_plan.id,
@@ -128,7 +128,7 @@ class SignUp:
                 if referral_code_data:
                     await ReferralCodes.update_or_create(
                         defaults={
-                            "usage_limit": referral_code_data.usage_limit - 1
+                            "current_limit_left": referral_code_data.current_limit_left - 1
                         },
                         id=referral_code_data.id
                     )
@@ -213,7 +213,7 @@ class SignUp:
     @classmethod
     async def validate_referral_code(cls, referral_code: str) -> Tuple[bool, Optional[ReferralCodeDTO]]:
         referral_code_data: Optional[ReferralCodeDTO] = await ReferralCodesRepository.get_by_code(referral_code)
-        if not referral_code_data or referral_code_data.expiration_date < datetime.now(tz=timezone.utc) or referral_code_data.usage_limit == 0:
+        if not referral_code_data or referral_code_data.expiration_date < datetime.now(tz=timezone.utc) or referral_code_data.current_limit_left == 0:
             return False, None
         return True, referral_code_data
 

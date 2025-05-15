@@ -8,7 +8,8 @@ class ReferralCodes(Base):
         "referrer_id",
         "referral_code",
         "benefits",
-        "usage_limit",
+        "current_limit_left",
+        "max_usage_limit",
         "expiration_date",
         "created_at",
         "updated_at",
@@ -17,7 +18,8 @@ class ReferralCodes(Base):
     referrer_id = fields.BigIntField()
     referral_code = fields.CharField(max_length=100)
     benefits = fields.JSONField()
-    usage_limit = fields.IntField()
+    current_limit_left = fields.IntField()
+    max_usage_limit = fields.IntField()
     expiration_date = fields.DatetimeField()
 
     class Meta:
