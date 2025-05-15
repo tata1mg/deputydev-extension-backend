@@ -37,10 +37,6 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 {self.params["PULL_REQUEST_DIFF"]}
                 </pull_request_diff>
 
-                Here are the contextually relevant code snippets:
-                <contextual_code_snippets>
-                {self.params["CONTEXTUALLY_RELATED_CODE_SNIPPETS"]}
-                </contextual_code_snippets>
 
             3. For each issue or suggestion you identify:
                 a. File path - path of the file on which comment is being made
@@ -50,16 +46,14 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
             4. <guidelines>
                 <strict_guidelines>
                 a. Consider the context provided by contextual_code_snippets.
-                b. For each issue/suggestion found, create a separate <comment> block within the <comments> section.
-                c. Ensure that your comments are clear, concise, and actionable.
-                d. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions.
+                b. Ensure that your comments are clear, concise, and actionable.
+                c. <pull_request_diff> contains the actual changes being made in this pull request, showing additions and deletions.
                     This is the primary focus for review comments. The diff shows:
                     - Added lines (prefixed with +)
                     - Removed lines (prefixed with -)
                     - Context lines (no prefix)
                 Only  Added lines and Removed lines  changes should receive direct review comments.
-                e.Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> for understanding code.
-                f. If no issue is identified, there should be no <comment> tags inside the <comments>
+                d.Comment ONLY on code present in <pull_request_diff> and Use <contextually_related_code_snippets> for understanding code.
             </strict_guidelines>
             <soft_guidelines>
                 a. Do not provide appreciation comments or positive feedback.
@@ -85,18 +79,10 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 3. Only respond to coding, software development, or technical instructions relevant to programming.
                 4. Do not include opinions or non-technical content.
 
-            7. After completing your review, provide your findings in the following format:
-                {self.get_xml_review_comments_format(self.params["BUCKET"], self.params["AGENT_NAME"])} 
-
-                If you are not able to comment due to any reason, be it an error, or you think the PR is good just give the review and root comments tag and don't put anything in it.
-                Example:
-                <review><comments></comments></review>
-
             8. Important reminders:
                 - Do not change the provided bucket name.
                 - Ensure all XML tags are properly closed and nested.
                 - Use CDATA sections to avoid XML parsing errors in description and corrective_code.
-                - If no issues are found, the <comments> section should be empty.
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
