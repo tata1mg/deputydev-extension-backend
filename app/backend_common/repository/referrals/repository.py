@@ -17,15 +17,13 @@ class ReferralsRepository:
             )
             if existing_referral:
                 return ReferralDTO.model_validate_json(
-                    json_data=json.dumps(
-                        dict(
+                        **dict(
                             id=existing_referral.id,
                             referral_code_id=existing_referral.referral_code_id,
                             referree_id=existing_referral.referree_id,
-                            created_at=existing_referral.created_at.isoformat(),
-                            updated_at=existing_referral.updated_at.isoformat(),
+                            created_at=existing_referral.created_at,
+                            updated_at=existing_referral.updated_at,
                         )
-                    )
                 )
             referral = await DB.insert_row(Referrals, referral_data.model_dump(mode="json"))
             return ReferralDTO.model_validate_json(
