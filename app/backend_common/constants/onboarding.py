@@ -5,7 +5,7 @@ class UserRoles(str, Enum):
     ADMIN = "admin"
     MEMBER = "member"
 
-class SubscriptionStatus(str, Enum):
+class SubscriptionStatus(Enum):
     ACTIVE = "ACTIVE"
-    INACTIVE = "INACTIVE"
+    PAUSED = "PAUSED"
     CANCELLED = "CANCELLED"

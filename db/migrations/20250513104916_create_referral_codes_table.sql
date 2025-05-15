@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS referral_codes (
     referrer_id BIGINT NOT NULL,
     referral_code VARCHAR NOT NULL,
     benefits JSON NOT NULL,
-    usage_limit INT NOT NULL,
+    current_limit_left INT NOT NULL,
+    max_usage_limit INT NOT NULL,
     expiration_date timestamp with time zone NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
