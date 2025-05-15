@@ -57,8 +57,6 @@ class SignUp:
         except SignUpError:
             # user already exists
             return {"success": True, "is_user_exist": True}
-        except Exception as e:
-            raise Exception(str(e))
 
     @classmethod
     async def signup_and_subscribe(cls, signup_payload: SignUpRequest, referral_code_data: Optional[ReferralCodeDTO] = None, email_verification: Optional[Dict[str, Any]] = None):
