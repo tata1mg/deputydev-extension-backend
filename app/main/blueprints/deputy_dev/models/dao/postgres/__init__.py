@@ -6,10 +6,7 @@ __all__ = [
     "Repos",
     "Experiments",
     "Feedbacks",
-    "SubscriptionPeriods",
-    "SubscriptionPlans",
     "Integrations",
-    "Subscriptions",
     "AgentCommentMappings",
     "Configurations",
     "Tokens",
@@ -28,6 +25,3 @@ from .feedbacks import Feedbacks
 from .integrations import Integrations
 from .pr_comments import PRComments
 from .pull_requests import PullRequests
-from .subscription_periods import SubscriptionPeriods
-from .subscription_plans import SubscriptionPlans
-from .subscriptions import Subscriptions
