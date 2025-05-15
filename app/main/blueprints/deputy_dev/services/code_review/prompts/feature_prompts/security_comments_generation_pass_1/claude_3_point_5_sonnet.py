@@ -27,22 +27,47 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
             issues and vulnerabilities. Your goal is to thoroughly analyze the provided code diff and identify
             any potential security risks.
             
-            You must use the provided tools iteratively to fetch any code context needed that you need to review the pr. 
-            Do not hallucinate code—always call a tool when you need to inspect definitions, functions, or file contents beyond the diff.
+            <security_review_approach>
+            Unlike general code reviews, security reviews require a targeted approach:
+            
+            1. ANALYZE THE DIFF FIRST: Begin by thoroughly examining the PR diff for obvious security issues such as:
+               - Missing input validation
+               - Hardcoded credentials
+               - Insecure cryptographic implementations
+               - Injection vulnerabilities in new/modified code
+               - Authentication/authorization bypasses
+               - Insecure configurations
+            
+            2. SELECTIVE TOOL USAGE: Only use tools when essential for security analysis, such as:
+               - When you need to understand how user input flows through a system
+               - When you need to verify if proper security controls exist in called methods
+               - When you need to check if authentication/authorization is consistently applied
+               - When evaluating the security implications of newly added third-party libraries
+               - When tracing data flow for potential information leakage
+            
+            3. SECURITY-FOCUSED CONTEXT GATHERING: When you do use tools, focus queries specifically 
+               on security-relevant information rather than general code understanding.
+            </security_review_approach>
             
             <tool_calling>
-            Use tools iteratively. NEVER assume — always validate via tool.
-
-            Before commenting:
-            - Identify changed elements (functions, classes, configs).
-            - Fetch all necessary context using the tools below.
-            - Validate if affected entities (callers, configs, test files) are updated.
-            - Verify if imported elements are already present in the unchanged sections.
-            - Parse large functions completely before commenting using `ITERATIVE_FILE_READER`.
-            - If unsure about correctness, dig deeper before suggesting anything.
+            When a tool call is genuinely necessary for security assessment:
+    
+            1. Prioritize security-critical components:
+               - Authentication mechanisms
+               - Authorization checks
+               - Input handling and sanitization
+               - Cryptographic implementations
+               - Data persistence and retrieval operations
             
-            Only after you have gathered all relevant code snippets and feel confident in your analysis,
-            call the parse_final_response tool with your complete review comments in given format.
+            2. Use targeted search patterns:
+               - Search for security-relevant functions and methods first
+               - Look for patterns that commonly lead to vulnerabilities
+               - Examine security-critical configuration changes
+            
+            3. Be efficient with tool calls:
+               - Request larger, security-relevant sections at once
+               - Group similar security concerns into single queries
+               - Once you have identified a potential vulnerability, don't make additional calls for the same issue
             </tool_calling>
             
             IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
@@ -79,27 +104,33 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
             </pull_request_diff>
 
                 3. Conduct a comprehensive security review of the code changes, focusing on the following aspects:
-                a. Input validation and sanitization
-                b. Authentication and authorization
-                c. Data encryption and protection
-                d. Secure communication protocols
-                e. Use of secure coding practices
-                f. Third-party library usage and versioning
-                g. Potential for injection attacks (SQL, XSS, CSRF, etc.)
-                h. Secure configuration and environment variables
-                i. Business logic flaws that could lead to security issues
+                    a. Authentication and authorization
+                    b. Data encryption and protection
+                    c. Secure communication protocols
+                    d. Use of secure coding practices
+                    e. Third-party library usage and versioning
+                    f. Potential for injection attacks (SQL, XSS, CSRF, etc.)
+                    g. Secure configuration and environment variables
+                    h. Business logic flaws that could lead to security issues
 
                 4. For each security issue or vulnerability you identify:
-                a. Describe the issue, it's potential impact and its severity. This will be a comment on the PR.
-                b. Corrected code - Rewrite the code snippet. How the code should be written ideally.
-                c. File path - path of the file on which comment is being made
-                d. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
-                e. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
+                    a. Describe the issue, it's potential impact and its severity. This will be a comment on the PR.
+                    b. Corrected code - Rewrite the code snippet. How the code should be written ideally.
+                    c. File path - path of the file on which comment is being made
+                    d. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
+                    e. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
 
                 5. Once you have gathered all necessary context and are confident in your findings, call the
                     "parse_final_response" tool with your review comments:
 
-                8. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
+                6. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
+                
+                <diff_first_security_analysis>
+                - Begin with a thorough analysis of the PR diff BEFORE making any tool calls
+                - Many common security vulnerabilities can be identified directly in the diff
+                - Make tool calls ONLY when you need additional context that is essential for security assessment
+                - For each potential security issue, consider if you truly need more context or if you can make a confident assessment from the diff
+                </diff_first_security_analysis>
 
                 Keep in mind these important instructions when reviewing the code:
                 -  Carefully analyze each change in the diff.
@@ -122,7 +153,7 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
                 -   Do not duplicate comments for similar issues across different locations.
                 -   If you are suggesting any comment that is already catered please don't include those comment in response.
                 -   Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
-                -  Use all the required tools if you need to fetch some piece of code based on it. 
+                -   Use tools only when truly necessary for security assessment, not for general code understanding
                 - Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
             """
 

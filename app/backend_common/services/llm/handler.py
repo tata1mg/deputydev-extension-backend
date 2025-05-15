@@ -49,8 +49,11 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from deputydev_core.utils.config_manager import ConfigManager
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
+
+MAX_LLM_RETRIES = int(ConfigManager.configs["LLM_MAX_RETRY"])
 
 
 class LLMHandler(Generic[PromptFeatures]):
@@ -280,7 +283,7 @@ class LLMHandler(Generic[PromptFeatures]):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         feedback: str = None,
-        max_retry: int = 2,
+        max_retry: int = MAX_LLM_RETRIES,
         stream: bool = False,
         response_type: Optional[str] = None,
         **kwargs,
@@ -552,7 +555,7 @@ class LLMHandler(Generic[PromptFeatures]):
             tools=tools,
             user_and_system_messages=user_and_system_messages,
             previous_responses=conversation_chain_messages,
-            max_retry=2,
+            max_retry=MAX_LLM_RETRIES,
             stream=stream,
             response_type=prompt_handler.response_type,
             **kwargs,
@@ -686,7 +689,7 @@ class LLMHandler(Generic[PromptFeatures]):
             tools=tools,
             tool_use_response=tool_use_response,
             previous_responses=conversation_chain_messages,
-            max_retry=2,
+            max_retry=MAX_LLM_RETRIES,
             stream=stream,
         )
 
@@ -740,7 +743,7 @@ class LLMHandler(Generic[PromptFeatures]):
             feedback=feedback,
             tools=tools,
             previous_responses=conversation_chain_messages,
-            max_retry=2,
+            max_retry=MAX_LLM_RETRIES,
             stream=stream,
         )
 

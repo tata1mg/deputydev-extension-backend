@@ -1,4 +1,3 @@
-from pydantic import BaseModel, ConfigDict
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.services.initialization.review_initialization_manager import ReviewInitialisationManager
 from deputydev_core.utils.weaviate import weaviate_connection
