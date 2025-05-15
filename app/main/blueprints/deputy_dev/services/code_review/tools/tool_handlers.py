@@ -37,7 +37,6 @@ from deputydev_core.services.tools.relevant_chunks.relevant_chunk import Relevan
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ContextValueKeys
 from deputydev_core.utils.context_vars import get_context_value
-from deputydev_core.utils.weaviate import weaviate_connection
 
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,

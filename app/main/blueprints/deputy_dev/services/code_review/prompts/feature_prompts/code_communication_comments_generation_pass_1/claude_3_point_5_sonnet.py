@@ -30,20 +30,20 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             You must use the provided tools iteratively to fetch any code context needed that you need to review the pr. 
             Do not hallucinate code—always call a tool when you need to inspect definitions, functions, or file contents beyond the diff.
             
-            <tool_calling>
-            Use tools iteratively. NEVER assume — always validate via tool.
-
-            Before commenting:
-            - Identify changed elements (functions, classes, configs).
-            - Fetch all necessary context using the tools below.
-            - Validate if affected entities (callers, configs, test files) are updated.
-            - Verify if imported elements are already present in the unchanged sections.
-            - Parse large functions completely before commenting using `ITERATIVE_FILE_READER`.
-            - If unsure about correctness, dig deeper before suggesting anything.
+            <tool_usage_guidelines>
+            Unlike other agents that need extensive context, your primary focus should be analyzing what's directly visible in the diff. Only use code search tools when absolutely necessary, following these principles:
             
-            Only after you have gathered all relevant code snippets and feel confident in your analysis,
-            call the parse_final_response tool with your complete review comments in given format.
-            </tool_calling>
+            1. ANALYZE THE DIFF FIRST: Most documentation, docstring, and logging issues can be identified directly in the PR diff without additional context.
+            
+            2. MINIMIZE TOOL CALLS: Only call tools when you cannot make a confident assessment based on the diff alone, such as:
+               - When you need to verify if documentation exists in parent classes
+               - When you need to check consistency with existing documentation patterns
+               - When you need to understand broader context that might affect logging requirements
+               - Verify if you are not sure about imported elements are already present in the unchanged sections
+            
+            3. BATCH YOUR QUERIES: If you must use a tool, gather all similar questions and make a single comprehensive query rather than multiple small ones.
+            4. No matter what If you provide final comments always call parse_final_response and provide comments in format provided in tool. 
+            </tool_usage_guidelines>
             
             IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
             Never provide review comments as plain text in your response. All final reviews MUST be delivered
@@ -98,11 +98,18 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             - Check for generic logging and examine if the log messages include sufficient information for
             understanding the context of the logged events.
             </logging_guidelines>
-            
 
+        
             3. Remember to focus solely on code communication aspects as outlined above. Do not comment on code
             functionality, performance, or other aspects outside the scope of documentation, docstrings, and
             logging.
+            
+            <diff_first_approach>
+            - Begin by thoroughly analyzing only the PR diff without making any tool calls
+            - Most documentation, docstring, and logging issues can be identified directly from the diff
+            - Only after completing your diff analysis, determine if any tool calls are genuinely needed
+            - Make tool calls only for specific uncertainties you cannot resolve from the diff alone
+            </diff_first_approach>
             
             Keep in mind these important instructions when reviewing the code:
             - Focus solely on major code communication issues as outlined above.

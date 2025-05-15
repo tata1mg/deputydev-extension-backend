@@ -88,7 +88,6 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, List[LLMCommentData]]]:
-        print(llm_response.content)
         final_content = cls.get_parsed_response_blocks(llm_response.content)
 
         return final_content
