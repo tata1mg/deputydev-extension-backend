@@ -1,6 +1,5 @@
 import asyncio
 import sys
-import traceback
 from typing import Dict, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
@@ -76,7 +75,6 @@ async def initialize_cli_ui():
         auth_token = await authentication_manager.authenticate_and_get_auth_token()
         print(auth_token)
     except Exception:
-        print(traceback.format_exc())
         print("Failed to authenticate user")
         await close_session_and_exit()
 

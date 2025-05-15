@@ -1,40 +1,40 @@
 {
-  "APM": {
-    "ENABLED": false,
-    "ENVIRONMENT": "",
-    "SECRET_TOKEN": "",
-    "SERVER_TIMEOUT": "30s",
-    "SERVER_URL": "",
-    "SPAN_FRAMES_MIN_DURATION": "5ms",
-    "TRANSACTION_SAMPLE_RATE": 1
-  },
-  "DD_BROWSER_HOST": "https://deputydev.ai",
-  "SUPABASE": {
-    "URL": "",
-    "KEY": ""
-  },
-  "SESSION_ENCRYPTION_PASSWORD": "",
-  "ORG_INFO": {
-    "TATA_1MG": {
-      "domain": "1mg.com",
-      "team_id": 1,
-      "org_name": "TATA 1mg"
+    "APM": {
+        "ENABLED": false,
+        "ENVIRONMENT": "",
+        "SECRET_TOKEN": "",
+        "SERVER_TIMEOUT": "30s",
+        "SERVER_URL": "",
+        "SPAN_FRAMES_MIN_DURATION": "5ms",
+        "TRANSACTION_SAMPLE_RATE": 1
     },
-    "TRAYA": {
-      "domain": "traya.com",
-      "team_id": 3,
-      "org_name": "Traya"
+    "DD_BROWSER_HOST": "https://deputydev.ai",
+    "SUPABASE": {
+        "URL": "",
+        "KEY": ""
     },
-    "5CNETWORK": {
-      "domain": "5cnetwork.com",
-      "team_id": 4,
-      "org_name": "5c Network"
-    },
-    "TBO": {
-      "domain": "tbo.com",
-      "team_id": 5,
-      "org_name": "TBO"
-    },
+    "SESSION_ENCRYPTION_PASSWORD": "",
+    "ORG_INFO": {
+        "TATA_1MG": {
+            "domain": "1mg.com",
+            "team_id": 1,
+            "org_name": "TATA 1mg"
+        },
+        "TRAYA": {
+            "domain": "traya.com",
+            "team_id": 3,
+            "org_name": "Traya"
+        },
+        "5CNETWORK": {
+            "domain": "5cnetwork.com",
+            "team_id": 4,
+            "org_name": "5c Network"
+        },
+      "TBO": {
+        "domain": "tbo.com",
+        "team_id": 5,
+        "org_name": "TBO"
+      },
     "DEPUTYDEV_PRIVATE": {
       "team_id": 6,
       "org_name": "DeputyDev Private"
@@ -593,6 +593,28 @@
     "universe_domain": "",
     "location": ""
   },
+  "MAX_REVIEW_TOOL_ITERATIONS": 25,
+    "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
+    "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
+    "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
+    "WEAVIATE_EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
+    "WEAVIATE_HOST": "127.0.0.1",
+    "WEAVIATE_HTTP_PORT": 8079,
+    "WEAVIATE_GRPC_PORT": 50050,
+    "WEAVIATE_BASE_DIR": "~/.deputydev/weaviate",
+    "WEAVIATE_VERSION": "v1.27.22",
+    "WEAVIATE_STARTUP_TIMEOUT": 30,
+    "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": 30,
+    "WEAVIATE_ENV_VARIABLES": {
+        "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
+        "LIMIT_RESOURCES": true,
+        "LOG_LEVEL": "debug"
+    },
+    "WEAVIATE_CLIENT_TIMEOUTS": {
+            "INIT": 30,
+            "QUERY": 60,
+            "INSERT": 120
+    },
   "DEFAULT_EXTENSION_SETTINGS": {
     "default_mode": "ask",
     "terminal_settings": {
@@ -602,6 +624,10 @@
       ]
     }
   },
+  "RELEVANT_CHUNKS": {
+      "CHUNKING_ENABLED": true
+  },
+  "NUMBER_OF_WORKERS": 1,
   "CODE_GEN_LLM_MODELS": [
     {
       "id": 1,
@@ -613,5 +639,6 @@
       "display_name": "Gemini 2.5 Pro",
       "name": "GEMINI_2_POINT_5_PRO"
     }
-  ]
+  ],
+   "LLM_MAX_RETRY": 2
 }
