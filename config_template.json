@@ -539,6 +539,15 @@
             "service_path": ""
           }
         }
+      },
+      "3.1.0": {
+        "darwin": {
+          "arm64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        }
       }
     },
     "PASSWORD": "",
