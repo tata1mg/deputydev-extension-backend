@@ -523,8 +523,8 @@ dev = [{ name = "ruff", specifier = ">=0.11.9" }]
 
 [[package]]
 name = "deputydev-core"
-version = "3.0.4"
-source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=pr_review_final#283951ff39917b59a11a8452a66571c9e54995c3" }
+version = "3.0.5"
+source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=pr_review_final#1696fb8fa229f47510de099ea0910efd15432940" }
 dependencies = [
     { name = "aiohttp" },
     { name = "diff-match-patch" },
