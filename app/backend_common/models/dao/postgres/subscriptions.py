@@ -20,7 +20,6 @@ class Subscriptions(Base):
     current_status = fields.CharField(max_length=100)  # active/paused/cancelled
     start_date = fields.DatetimeField()
     end_date = fields.DatetimeField(null=True)
-    # billable_type = fields.CharField(max_length=100)  # PR/Users – useful for applying restrictions
 
     class Meta:
         table = "subscriptions"
