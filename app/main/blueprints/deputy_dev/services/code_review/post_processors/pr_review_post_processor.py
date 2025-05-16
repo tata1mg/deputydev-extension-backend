@@ -191,6 +191,7 @@ class PRReviewPostProcessor:
                     "file_path": comment["file_path"],
                     "commit_id": pr_dto.commit_id,
                     "is_valid": comment["is_valid"],
+                    "comment": comment["comment"],
                 },
             }
             comments_to_save.append(PRComments(**comment_info))
