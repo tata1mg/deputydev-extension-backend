@@ -285,7 +285,9 @@ class QuerySolver:
                         ),
                     }
 
-            if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="):
+            if compare_version(
+                client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="
+            ):
                 if payload.tool_use_failed:
                     error_response = tool_response
                     tool_response = EXCEPTION_RAISED_FALLBACK.format(
