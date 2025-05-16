@@ -198,7 +198,6 @@ class Anthropic(BaseLLMProvider):
             for idx in range(min(2, len(llm_payload["messages"]))):
                 llm_payload["messages"][idx]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
-
         return llm_payload
 
     async def _get_service_client(self):

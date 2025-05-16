@@ -138,7 +138,6 @@ class PRReviewManager(BasePRReviewManager):
             initialisation_manager = ReviewInitialisationManager()
             await clean_weaviate_collections(initialisation_manager)
 
-
     @classmethod
     def check_no_pr_comments(cls, llm_response):
         return not llm_response
