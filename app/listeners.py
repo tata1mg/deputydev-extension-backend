@@ -40,6 +40,7 @@ async def initialize_kafka_subscriber(_app, loop):
         session_event_subscriber = PixelEventSubscriber(_app.config)
         _app.add_task(session_event_subscriber.consume())
 
+
 async def close_weaviate_server(_app, loop):
     if hasattr(_app.ctx, "weaviate_client"):
         await _app.ctx.weaviate_client.async_client.close()

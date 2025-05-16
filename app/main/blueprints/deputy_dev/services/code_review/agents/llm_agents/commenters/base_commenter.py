@@ -34,7 +34,9 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
-from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import NO_TOOL_USE_FALLBACK_PROMPT
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import (
+    NO_TOOL_USE_FALLBACK_PROMPT,
+)
 from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
 from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseContent,
@@ -180,10 +182,11 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                                 tool_use_id=current_response.parsed_content[0].content.tool_use_id,
                                 response=EXCEPTION_RAISED_FALLBACK.format(
                                     tool_name="parse_final_response",
-                                    tool_input=json.dumps(current_response.parsed_content[0].content.tool_input,
-                                                          indent=2),
-                                    error_message=str(e)
-                                )
+                                    tool_input=json.dumps(
+                                        current_response.parsed_content[0].content.tool_input, indent=2
+                                    ),
+                                    error_message=str(e),
+                                ),
                             )
                         )
                         # Submit the error feedback to the LLM
