@@ -37,20 +37,20 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass2Prompt(BaseClau
                     Pull Request Title:
 
                     <pull_request_title>
-                    {self.params['PULL_REQUEST_TITLE']}
+                    {self.params["PULL_REQUEST_TITLE"]}
                     </pull_request_title>
 
                     Pull Request Description:
                     <pull_request_description>
-                    {self.params['PULL_REQUEST_DESCRIPTION']}
+                    {self.params["PULL_REQUEST_DESCRIPTION"]}
                     </pull_request_description>
 
                     <pull_request_diff>
-                    {self.params['PULL_REQUEST_DIFF']}
+                    {self.params["PULL_REQUEST_DIFF"]}
                     </pull_request_diff>
 
                     <junior_developer_comments>
-                    {self.params['REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER']}
+                    {self.params["REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER"]}
                     </junior_developer_comments>
                     </data>
 

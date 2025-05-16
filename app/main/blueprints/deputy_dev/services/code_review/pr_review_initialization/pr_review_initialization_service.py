@@ -17,7 +17,6 @@ from sanic import Sanic
 from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import get_weaviate_connection
 
 
-
 class PRReviewInitializationService:
     @classmethod
     async def _monitor_embedding_progress(cls, progress_bar, progress_callback):
@@ -40,7 +39,6 @@ class PRReviewInitializationService:
         existing_client: WeaviateSyncAndAsyncClients = app.ctx.weaviate_client
         return await existing_client.is_ready()
 
-
     @classmethod
     async def maintain_weaviate_heartbeat(cls):
         while True:
@@ -50,9 +48,7 @@ class PRReviewInitializationService:
                     AppLogger.log_info(f"Is Weaviate reachable: {is_reachable}")
 
                     app = Sanic.get_app()
-                    existing_client: WeaviateSyncAndAsyncClients = (
-                        app.ctx.weaviate_client
-                    )
+                    existing_client: WeaviateSyncAndAsyncClients = app.ctx.weaviate_client
                     await existing_client.async_client.close()
                     existing_client.sync_client.close()
                     new_weaviate_client = await ReviewInitialisationManager().initialize_vector_db()
@@ -71,7 +67,7 @@ class PRReviewInitializationService:
     async def initialization(cls):
         app = Sanic.get_app()
         if not hasattr(app.ctx, "weaviate_client"):
-            weaviate_client= await ReviewInitialisationManager().initialize_vector_db()
+            weaviate_client = await ReviewInitialisationManager().initialize_vector_db()
 
             app.ctx.weaviate_client = ReviewWeaviateSyncAndAsyncClients(
                 async_client=weaviate_client.async_client,
@@ -99,7 +95,6 @@ class PRReviewInitializationService:
                 if weaviate_client:
                     initialisation_manager.weaviate_client = weaviate_client
                 await initialisation_manager.initialize_vector_db()
-
 
                 await initialisation_manager.prefill_vector_store(
                     chunkable_files_and_hashes=chunkable_files_and_hashes,

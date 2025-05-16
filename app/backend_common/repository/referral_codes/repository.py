@@ -5,8 +5,8 @@ from sanic.log import logger
 from app.backend_common.models.dao.postgres.referral_codes import ReferralCodes
 from app.backend_common.models.dto.referral_codes_dto import ReferralCodeDTO
 
-class ReferralCodesRepository:
 
+class ReferralCodesRepository:
     @classmethod
     async def get_by_code(cls, referral_code: str) -> Optional[ReferralCodeDTO]:
         try:
@@ -28,10 +28,8 @@ class ReferralCodesRepository:
             referral_code = await DB.update_by_filters(
                 row=None,
                 model_name=ReferralCodes,
-                payload={
-                    "usage_limit": referral_code_payload.usage_limit
-                },
-                where_clause={"id": referral_code_payload.id}
+                payload={"usage_limit": referral_code_payload.usage_limit},
+                where_clause={"id": referral_code_payload.id},
             )
             if not referral_code:
                 return None
@@ -39,4 +37,3 @@ class ReferralCodesRepository:
         except Exception as ex:
             logger.error(f"Not able to update referral code details in db {referral_code_payload} exception {ex}")
             raise ex
-
