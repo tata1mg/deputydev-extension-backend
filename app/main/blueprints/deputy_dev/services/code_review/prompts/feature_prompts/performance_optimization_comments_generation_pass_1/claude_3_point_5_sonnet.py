@@ -66,19 +66,19 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
                 Pull Request Title:
 
                 <pull_request_title>
-                {self.params['PULL_REQUEST_TITLE']}
+                {self.params["PULL_REQUEST_TITLE"]}
                 </pull_request_title>
 
                 Pull Request Description:
 
                 <pull_request_description>
-                {self.params['PULL_REQUEST_DESCRIPTION']}
+                {self.params["PULL_REQUEST_DESCRIPTION"]}
                 </pull_request_description>
 
                 2. Now, examine the pull request diff:
 
                 <pull_request_diff>
-                {self.params['PULL_REQUEST_DIFF']}
+                {self.params["PULL_REQUEST_DIFF"]}
                 </pull_request_diff>
 
                 4. Analyze the code for issues in the following categories:

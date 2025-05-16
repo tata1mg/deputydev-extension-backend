@@ -13,7 +13,7 @@ __all__ = [
     "ReferralCodes",
     "Referrals",
     "Subscriptions",
-    "SubscriptionPlans"
+    "SubscriptionPlans",
 ]
 from .extension_sessions import ExtensionSession
 from .failed_operations import FailedOperations

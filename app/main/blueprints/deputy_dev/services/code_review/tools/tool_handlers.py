@@ -74,7 +74,10 @@ class ToolHandlers:
         with ProcessPoolExecutor(max_workers=ConfigManager.configs["NUMBER_OF_WORKERS"]) as executor:
             weaviate_client = await get_weaviate_connection()
             initialisation_manager = ReviewInitialisationManager(
-                repo_path=payload.repo_path, process_executor=executor, one_dev_client=one_dev_review_client, weaviate_client=weaviate_client
+                repo_path=payload.repo_path,
+                process_executor=executor,
+                one_dev_client=one_dev_review_client,
+                weaviate_client=weaviate_client,
             )
 
             chunks = await RelevantChunks(payload.repo_path).get_relevant_chunks(
