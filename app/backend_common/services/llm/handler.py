@@ -702,7 +702,6 @@ class LLMHandler(Generic[PromptFeatures]):
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         prompt_type=None,
     ) -> ParsedLLMCallResponse:
-
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
             session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
         )
@@ -746,4 +745,3 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
         )
-
