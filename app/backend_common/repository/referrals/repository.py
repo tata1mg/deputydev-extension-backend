@@ -1,8 +1,8 @@
-import json
 from app.backend_common.models.dto.referrals_dto import ReferralData, ReferralDTO
 from app.backend_common.repository.db import DB
 from app.backend_common.models.dao.postgres.referrals import Referrals
 from sanic.log import logger
+
 
 class ReferralsRepository:
     @classmethod
@@ -12,8 +12,8 @@ class ReferralsRepository:
                 model_name=Referrals,
                 where_clause={
                     "referral_code_id": referral_data.referral_code_id,
-                    "referree_id": referral_data.referree_id
-                }
+                    "referree_id": referral_data.referree_id,
+                },
             )
             if existing_referral:
                 return ReferralDTO(**existing_referral)

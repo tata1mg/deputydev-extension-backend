@@ -117,6 +117,7 @@ class Google(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),

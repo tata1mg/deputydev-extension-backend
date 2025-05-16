@@ -71,17 +71,17 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
 
                 Pull Request Title: 
                 <pull_request_title>
-                {self.params['PULL_REQUEST_TITLE']}
+                {self.params["PULL_REQUEST_TITLE"]}
                 </pull_request_title>
 
                 Pull Request Description:
                 <pull_request_description>
-                {self.params['PULL_REQUEST_DESCRIPTION']}
+                {self.params["PULL_REQUEST_DESCRIPTION"]}
                 </pull_request_description>
 
                 Pull Request Diff:
                 <pull_request_diff>
-                {self.params['PULL_REQUEST_DIFF']}
+                {self.params["PULL_REQUEST_DIFF"]}
                 </pull_request_diff>
 
                 Review the code carefully, focusing on the following guidelines for each category:
