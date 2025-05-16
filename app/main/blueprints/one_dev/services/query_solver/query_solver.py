@@ -24,6 +24,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     DetailedFocusItem,
@@ -80,6 +81,7 @@ MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
+MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING = "4.0.0"
 
 
 class QuerySolver:
@@ -282,6 +284,17 @@ class QuerySolver:
                             ]
                         ),
                     }
+
+            if compare_version(
+                client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="
+            ):
+                if payload.tool_use_failed:
+                    error_response = tool_response
+                    tool_response = EXCEPTION_RAISED_FALLBACK.format(
+                        tool_name=payload.tool_use_response.tool_name,
+                        error_type=error_response["error_type"],
+                        error_message=error_response["error_message"],
+                    )
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
