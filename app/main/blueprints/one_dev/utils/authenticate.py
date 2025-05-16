@@ -117,7 +117,10 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
         raise BadRequestException("Subscription not found")
 
     # Check subscription expiry
-    if subscription.end_date is not None and (subscription.end_date < datetime.now(timezone.utc) or SubscriptionStatus(subscription.current_status) != SubscriptionStatus.ACTIVE):
+    if subscription.end_date is not None and (
+        subscription.end_date < datetime.now(timezone.utc)
+        or SubscriptionStatus(subscription.current_status) != SubscriptionStatus.ACTIVE
+    ):
         raise BadRequestException("Subscription expired")
 
     # prepare the auth data
