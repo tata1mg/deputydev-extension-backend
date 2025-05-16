@@ -2,6 +2,7 @@ from tortoise import fields
 
 from .base import Base
 
+
 class Referrals(Base):
     serializable_keys = {
         "id",

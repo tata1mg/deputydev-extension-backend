@@ -7,7 +7,7 @@ from torpedo import CONFIG
 from tortoise.transactions import in_transaction
 from tortoise.exceptions import DoesNotExist
 
-from app.backend_common.models.dao.postgres import Teams, Users, UserTeams
+from app.backend_common.models.dao.postgres import Teams, Users
 from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.constants.onboarding import SubscriptionStatus, UserRoles
 from app.backend_common.exception.exception import SignUpError
@@ -17,7 +17,6 @@ from app.backend_common.models.dao.postgres.subscription_plans import Subscripti
 from app.backend_common.models.dao.postgres.subscriptions import Subscriptions
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.dto.referral_codes_dto import ReferralCodeDTO
-from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.repository.referral_codes.repository import ReferralCodesRepository
 from app.backend_common.repository.user_teams.user_team_repository import UserTeamRepository
 from app.backend_common.repository.users.user_repository import UserRepository
@@ -35,9 +34,7 @@ class SignUp:
                 is_valid, referral_code_data = await cls.validate_referral_code(referral_code)
                 if is_valid:
                     signup_payload = SignUpRequest(
-                        username=username,
-                        email=email,
-                        org_name=f"{username}'s Organisation"
+                        username=username, email=email, org_name=f"{username}'s Organisation"
                     )
                     await cls.signup_and_subscribe(signup_payload, referral_code_data=referral_code_data)
                     return {"success": True}
@@ -47,11 +44,7 @@ class SignUp:
                 email_verification = await cls.get_team_info_from_email(email, external_auth_client)
                 if "error" in email_verification:
                     return {"success": False, "error": email_verification["error"]}
-                signup_payload = SignUpRequest(
-                    username=username,
-                    email=email,
-                    org_name=email_verification["org_name"]
-                )
+                signup_payload = SignUpRequest(username=username, email=email, org_name=email_verification["org_name"])
                 await cls.signup_and_subscribe(signup_payload, email_verification=email_verification)
                 return {"success": True}
         except SignUpError:
@@ -59,7 +52,12 @@ class SignUp:
             return {"success": True, "is_user_exist": True}
 
     @classmethod
-    async def signup_and_subscribe(cls, signup_payload: SignUpRequest, referral_code_data: Optional[ReferralCodeDTO] = None, email_verification: Optional[Dict[str, Any]] = None):
+    async def signup_and_subscribe(
+        cls,
+        signup_payload: SignUpRequest,
+        referral_code_data: Optional[ReferralCodeDTO] = None,
+        email_verification: Optional[Dict[str, Any]] = None,
+    ):
         async with in_transaction(connection_name="default"):
             try:
                 user = await Users.get(email=signup_payload.email)
@@ -99,42 +97,36 @@ class SignUp:
                 if referral_code_data:
                     # create referral
                     await Referrals.get_or_create(
-                        defaults={
-                            "referral_code_id": referral_code_data.id,
-                            "referree_id": personal_user_team.id
-                        },
+                        defaults={"referral_code_id": referral_code_data.id, "referree_id": personal_user_team.id},
                         referral_code_id=referral_code_data.id,
-                        referree_id=personal_user_team.id
+                        referree_id=personal_user_team.id,
                     )
 
-                subscription_plan = await SubscriptionPlans.get(
-                    plan_type="PRO"
-                )
+                subscription_plan = await SubscriptionPlans.get(plan_type="PRO")
 
                 end_date = None
                 if referral_code_data:
-                    end_date = datetime.now() + timedelta(hours=referral_code_data.benefits.subscription_expiry_timedelta)
+                    end_date = datetime.now() + timedelta(
+                        hours=referral_code_data.benefits.subscription_expiry_timedelta
+                    )
 
                 subscription = Subscriptions(
                     plan_id=subscription_plan.id,
                     user_team_id=user_team_id,
                     current_status=SubscriptionStatus.ACTIVE.value,
                     start_date=datetime.now(),
-                    end_date=end_date
+                    end_date=end_date,
                 )
 
                 await subscription.save()
 
                 if referral_code_data:
                     await ReferralCodes.update_or_create(
-                        defaults={
-                            "current_limit_left": referral_code_data.current_limit_left - 1
-                        },
-                        id=referral_code_data.id
+                        defaults={"current_limit_left": referral_code_data.current_limit_left - 1},
+                        id=referral_code_data.id,
                     )
             else:
                 raise SignUpError("User already exists")
-
 
     @classmethod
     async def get_team_info_from_email(cls, email: str, external_auth_client: Optional[str] = None) -> Dict[str, Any]:
@@ -213,7 +205,11 @@ class SignUp:
     @classmethod
     async def validate_referral_code(cls, referral_code: str) -> Tuple[bool, Optional[ReferralCodeDTO]]:
         referral_code_data: Optional[ReferralCodeDTO] = await ReferralCodesRepository.get_by_code(referral_code)
-        if not referral_code_data or referral_code_data.expiration_date < datetime.now(tz=timezone.utc) or referral_code_data.current_limit_left == 0:
+        if (
+            not referral_code_data
+            or referral_code_data.expiration_date < datetime.now(tz=timezone.utc)
+            or referral_code_data.current_limit_left == 0
+        ):
             return False, None
         return True, referral_code_data
 
@@ -222,7 +218,9 @@ class SignUp:
         user_info = await UserRepository.db_get({"email": email}, fetch_one=True)
         if not user_info:
             return {"team_id": None, "org_name": None, "error": "User not found"}
-        user_team_info = await UserTeamRepository.db_get({"user_id": user_info.id, "role": UserRoles.ADMIN.value}, fetch_one=True)
+        user_team_info = await UserTeamRepository.db_get(
+            {"user_id": user_info.id, "role": UserRoles.ADMIN.value}, fetch_one=True
+        )
         if not user_team_info:
             return {"team_id": None, "org_name": None, "error": "User personal team not found"}
         return {"team_id": user_team_info.team_id, "org_name": user_info.org_name}
@@ -230,4 +228,3 @@ class SignUp:
     @staticmethod
     def __generate_personal_team_name(username: str) -> str:
         return f"{username.lower()}-team-{uuid.uuid4().hex}"
-

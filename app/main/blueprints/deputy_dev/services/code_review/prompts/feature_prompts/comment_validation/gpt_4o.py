@@ -135,7 +135,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
                     - Prioritize correctness over verbosity
 
                     ### Input Comments that needs to be validated: 
-                    ${self.params['COMMENTS']}
+                    ${self.params["COMMENTS"]}
 
                     Below is a sample input structure for the comments you will receive:
 

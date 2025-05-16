@@ -31,9 +31,6 @@ from app.main.blueprints.deputy_dev.services.code_review.tools.iterative_file_re
 from app.main.blueprints.deputy_dev.services.code_review.tools.parse_final_response import (
     PARSE_FINAL_RESPONSE,
 )
-from app.main.blueprints.deputy_dev.services.code_review.tools.related_code_searcher import (
-    RELATED_CODE_SEARCHER,
-)
 from app.main.blueprints.deputy_dev.services.code_review.tools.tool_handlers import (
     ToolHandlers,
 )
@@ -97,7 +94,9 @@ class ToolRequestManager:
                     tool_response = await self._process_tool_request(tool_name, tool_input)
                 except Exception as e:
                     AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
-                    tool_response = EXCEPTION_RAISED_FALLBACK.format(tool_name = tool_name, tool_input = json.dumps(tool_input, indent=2), error_message = str(e))
+                    tool_response = EXCEPTION_RAISED_FALLBACK.format(
+                        tool_name=tool_name, tool_input=json.dumps(tool_input, indent=2), error_message=str(e)
+                    )
 
                 return ToolUseResponseData(
                     content=ToolUseResponseContent(
@@ -112,7 +111,7 @@ class ToolRequestManager:
         handler = self._tool_handlers.get(tool_name)
         if handler:
             return await handler(tool_input)
-        raise Exception (f"No such Tool Exists: tool_name: {tool_name}")
+        raise Exception(f"No such Tool Exists: tool_name: {tool_name}")
 
     def is_final_response(self, llm_response: Any) -> bool:
         """
@@ -161,7 +160,9 @@ class ToolRequestManager:
                 comments: List[LLMCommentData] = []
                 llm_comments = content_block.content.tool_input.get("comments")
                 if llm_comments is None:
-                    raise ValueError(f"The parse_final_tool_response does not contain any comments array: tool_input: {json.dumps(content_block.content.tool_input, indent=2)}")
+                    raise ValueError(
+                        f"The parse_final_tool_response does not contain any comments array: tool_input: {json.dumps(content_block.content.tool_input, indent=2)}"
+                    )
                 for comment in llm_comments:
                     corrective_code_element = comment.get("corrective_code")
                     description_element = comment.get("description")
