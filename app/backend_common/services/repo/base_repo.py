@@ -106,7 +106,7 @@ class BaseRepo(ABC):
         logger.error(f"Issue in fetching default branch for {repo_url}")
         return None
 
-    async def clone_branch(self, branch_name: str, repo_dir_prefix: str) -> Tuple[GitRepo, bool]:
+    async def clone_branch(self, branch_name: str, repo_dir_prefix: str) -> Tuple[GitRepo, bool, str]:
         """
         This is a private method to clone the repository if it doesn't exist locally or pull updates if it does.
         """
@@ -153,10 +153,10 @@ class BaseRepo(ABC):
                 raise RuntimeError(f"Git clone failed: {error_message}")
             # we return False, if we were unable to clone repo
             AppLogger.log_error(f"Error while cloning - return code: {return_code}. Error: {error_message}")
-            return None, False
+            return None, False, None
 
         self.local_repo = GitRepo(repo_dir)
-        return self.local_repo, True
+        return self.local_repo, True, repo_dir
 
     def scm_workspace_id(self) -> str:
         return self.workspace_id

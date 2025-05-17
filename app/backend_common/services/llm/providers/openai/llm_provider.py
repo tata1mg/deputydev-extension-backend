@@ -60,6 +60,7 @@ class OpenAI(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        feedback: Optional[str] = None,
         cache_config=None,
         **kwargs,
     ) -> Dict[str, Any]:

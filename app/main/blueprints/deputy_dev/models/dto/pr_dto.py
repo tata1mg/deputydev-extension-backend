@@ -33,5 +33,6 @@ class PullRequestDTO(BaseModel):
     pr_state: str = PRStatus.OPEN.value
     scm_approval_time: Optional[datetime] = None
     session_id: Optional[int] = None
+    session_ids: Optional[list[int]] = None
 
     model_config = ConfigDict(from_attributes=True)
