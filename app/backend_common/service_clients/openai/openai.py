@@ -44,6 +44,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         response_format_name=None,
         response_format_description=None,
         instructions: str = None,
+        max_output_tokens: str = None,
     ) -> Response:
         response_type = self._get_response_type(
             response_type=response_type,
@@ -60,7 +61,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             text=response_type,
             parallel_tool_calls=False,
             instructions=instructions,
-            temperature=0.5,
+            max_output_tokens=max_output_tokens,
         )
         # we need both message and output token now to returning full completion message
         return response
@@ -73,7 +74,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         tools: Optional[List[Dict[str, Any]]] = None,
         response_type: Literal["text", "json_object"] = "json_object",
     ) -> ChatCompletion:
-        # THIS IS DEPRECATED DO NOT USE THIS.
+        # THIS WILL BE DEPRECATED DO NOT USE THIS.
         if response_type == "text":
             response_format = ResponseFormatText(type=response_type)
         else:
@@ -105,6 +106,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         response_format_name=None,
         response_format_description=None,
         instructions: str = None,
+        max_output_tokens: int = None,
     ) -> AsyncIterator[ResponseStreamEvent]:
         response_type = self._get_response_type(
             response_type=response_type,
@@ -121,6 +123,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             text=response_type,
             parallel_tool_calls=False,
             instructions=instructions,
+            max_output_tokens=max_output_tokens,
         )
         return stream_manager.__stream__()
 
