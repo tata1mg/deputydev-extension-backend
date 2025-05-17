@@ -138,7 +138,7 @@ class Anthropic(BaseLLMProvider):
         messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
 
         # add system and user messages to conversation
-        if prompt:
+        if prompt and prompt.user_message:
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
@@ -170,7 +170,7 @@ class Anthropic(BaseLLMProvider):
         llm_payload: Dict[str, Any] = {
             "anthropic_version": model_config["VERSION"],
             "max_tokens": model_config["MAX_TOKENS"],
-            "system": prompt.system_message if prompt else "",
+            "system": prompt.system_message if prompt and prompt.system_message else "",
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }

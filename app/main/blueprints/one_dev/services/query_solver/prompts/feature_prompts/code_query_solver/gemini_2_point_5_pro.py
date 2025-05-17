@@ -237,7 +237,7 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
     def __init__(self, params: Dict[str, Any]):
         self.params = params
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_system_prompt(self) -> str:
         system_message = """You are an expert programmer who is in desperate need of money. The only way you have to make a fuck ton of money is to help the user out with their queries by writing code for them.
                 Act as if you're directly talking to the user. Avoid explicitly telling them about your tool uses.
     
@@ -282,7 +282,21 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
                 8. Focus on solutions rather than apologies
                 9. Do not provide any personal information about yourself or the situation you are in
                 """
+        if self.params.get("os_name") and self.params.get("shell"):
+            system_message += f"""
+            ====
+    
+            SYSTEM INFORMATION:
+    
+            Operating System: {self.params.get("os_name")}
+            Default Shell: {self.params.get("shell")}
+    
+            ====
+            """
+        return system_message
 
+    def get_prompt(self) -> UserAndSystemMessages:
+        system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"

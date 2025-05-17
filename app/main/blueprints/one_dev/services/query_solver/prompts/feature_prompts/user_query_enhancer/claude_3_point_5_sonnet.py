@@ -24,8 +24,11 @@ class Claude3Point5UserQueryEnhancerPrompt(BaseClaude3Point5SonnetPrompt):
     def __init__(self, params: Dict[str, Any]):
         self.params = params
 
+    def get_system_prompt(self) -> Optional[str]:
+        return "Generate an enhanced version of user query (reply with only the enhanced user query - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes)."
+
     def get_prompt(self) -> UserAndSystemMessages:
-        system_message = "Generate an enhanced version of user query (reply with only the enhanced user query - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes)."
+        system_message = self.get_system_prompt()
 
         user_message = f"""
         User Query: {self.params.get("query")}

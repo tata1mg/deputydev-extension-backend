@@ -23,7 +23,7 @@ class LLMMeta(BaseModel):
 
 
 class UserAndSystemMessages(BaseModel):
-    user_message: str
+    user_message: Optional[str] = None
     system_message: Optional[str] = None
 
 
