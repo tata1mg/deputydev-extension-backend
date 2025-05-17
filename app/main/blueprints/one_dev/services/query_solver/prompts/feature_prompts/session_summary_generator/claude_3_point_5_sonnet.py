@@ -27,10 +27,13 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
     def __init__(self, params: Dict[str, Any]):
         self.params = params
 
-    def get_prompt(self) -> UserAndSystemMessages:
-        system_message = """
+    def get_system_prompt(self) -> str:
+        return """
             You are tasked with generating a session summary based on a query asked on some repository by the user. If you do it well, you will be rewarded handsomely.
-            """
+        """
+
+    def get_prompt(self) -> UserAndSystemMessages:
+        system_message = self.get_system_prompt()
 
         focus_chunks_message = ""
         if self.params.get("focus_items"):

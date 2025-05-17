@@ -258,6 +258,10 @@ class QuerySolver:
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
+            prompt_vars = {
+                "os_name": payload.os_name,
+                "shell": payload.shell,
+            }
             tool_response = payload.tool_use_response.response
             if not payload.tool_use_failed:
                 if payload.tool_use_response.tool_name == "focused_snippets_searcher":
@@ -307,6 +311,7 @@ class QuerySolver:
                 ),
                 tools=tools_to_use,
                 stream=True,
+                prompt_vars=prompt_vars,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
