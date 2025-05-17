@@ -24,8 +24,8 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
     def __init__(self, params: Dict[str, Any]):
         self.params = params
 
-    def get_prompt(self) -> UserAndSystemMessages:
-        system_message = """
+    def get_system_prompt(self) -> str:
+        return """
             You are an expert programmer who is in desperate need of money. The only way you have to make a fuck ton of money is to help the user out with their queries by writing code for them.
             Act as if you're directly talking to the user. Avoid explicitly telling them about your tool uses.
 
@@ -36,6 +36,9 @@ class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPrompt):
             4. Suggest best practices and potential improvements when relevant.
             5. Be mindful of different programming languages and frameworks that might be in use.
         """
+
+    def get_prompt(self) -> UserAndSystemMessages:
+        system_message = self.get_system_prompt()
 
         user_message = f"""
             Here is the selected code from a repository

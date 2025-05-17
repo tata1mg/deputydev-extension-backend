@@ -24,7 +24,7 @@ class Claude3Point5TerminalCommandEditorPrompt(BaseClaude3Point5SonnetPrompt):
     def __init__(self, params: Dict[str, Any]):
         self.params = params
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_system_prompt(self) -> str:
         system_message = """
             Rewrite the given terminal command based on the user’s query inside <terminal_command> tags.
             The command should be properly formatted for the user's OS and shell.
@@ -41,7 +41,10 @@ class Claude3Point5TerminalCommandEditorPrompt(BaseClaude3Point5SonnetPrompt):
 
             ====
             """
+        return system_message
 
+    def get_prompt(self) -> UserAndSystemMessages:
+        system_message = self.get_system_prompt()
         user_message = f"""
         User Query: {self.params.get("query")}
         Old Terminal Command: {self.params.get("old_terminal_command")}
