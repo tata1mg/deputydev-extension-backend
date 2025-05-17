@@ -87,10 +87,9 @@ class LLMHandler(Generic[PromptFeatures]):
 
         for event in await llm_response.accumulated_events:
             if event.type == StreamingEventType.TEXT_BLOCK_START:
-                message_id = event.content.message_id if event.content else None
                 current_content_block = TextBlockData(
                     type=ContentBlockCategory.TEXT_BLOCK,
-                    content=TextBlockContent(text="", message_id=message_id),
+                    content=TextBlockContent(text=""),
                 )
             elif event.type == StreamingEventType.TEXT_BLOCK_DELTA:
                 if current_content_block and isinstance(current_content_block, TextBlockData):

@@ -177,9 +177,7 @@ class OpenAI(BaseLLMProvider):
         # response.choices[0].message
         for block in response.output:
             if block.type == "message":
-                non_streaming_content_blocks.append(
-                    TextBlockData(content=TextBlockContent(text=response.output_text))
-                )
+                non_streaming_content_blocks.append(TextBlockData(content=TextBlockContent(text=response.output_text)))
             if block.type == "function_call":
                 non_streaming_content_blocks.append(
                     ToolUseRequestData(
@@ -197,7 +195,7 @@ class OpenAI(BaseLLMProvider):
                 LLMUsage(
                     input=response.usage.input_tokens,
                     output=response.usage.output_tokens,
-                    cache_read=response.usage.input_tokens_details.cached_tokens
+                    cache_read=response.usage.input_tokens_details.cached_tokens,
                 )
                 if response.usage
                 else LLMUsage(input=0, output=0)
@@ -230,7 +228,7 @@ class OpenAI(BaseLLMProvider):
                 response_type=response_type,
                 tools=llm_payload["tools"],
                 instructions=llm_payload["system_message"],
-                tool_choice="auto"
+                tool_choice="auto",
             )
             return await self._parse_streaming_response(response)
         else:
@@ -240,7 +238,7 @@ class OpenAI(BaseLLMProvider):
                 response_type=response_type,
                 tools=llm_payload["tools"],
                 instructions=llm_payload["system_message"],
-                tool_choice="auto"
+                tool_choice="auto",
             )
             return self._parse_non_streaming_response(response)
 
@@ -328,9 +326,7 @@ class OpenAI(BaseLLMProvider):
             )
         if event.type == "response.output_item.added" and event.item.type == "message":
             return (
-                TextBlockStart(
-                    type=StreamingEventType.TEXT_BLOCK_START, content=TextBlockStartContent(message_id=event.item.id)
-                ),
+                TextBlockStart(type=StreamingEventType.TEXT_BLOCK_START),
                 ContentBlockCategory.TEXT_BLOCK,
                 None,
             )

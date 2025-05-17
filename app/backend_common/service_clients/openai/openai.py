@@ -60,18 +60,18 @@ class OpenAIServiceClient(metaclass=Singleton):
             text=response_type,
             parallel_tool_calls=False,
             instructions=instructions,
-            temperature=0.5
+            temperature=0.5,
         )
         # we need both message and output token now to returning full completion message
         return response
 
     async def get_llm_non_stream_response_chat_api(
-            self,
-            conversation_messages: List[Dict[str, Any]],
-            model: str,
-            tool_choice: Optional[str] = None,
-            tools: Optional[List[Dict[str, Any]]] = None,
-            response_type: Literal["text", "json_object"] = "json_object",
+        self,
+        conversation_messages: List[Dict[str, Any]],
+        model: str,
+        tool_choice: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        response_type: Literal["text", "json_object"] = "json_object",
     ) -> ChatCompletion:
         # THIS IS DEPRECATED DO NOT USE THIS.
         if response_type == "text":
@@ -87,7 +87,6 @@ class OpenAIServiceClient(metaclass=Singleton):
 
         # we need both message and output token now to returning full completion message
         return completion
-
 
     async def create_embedding(self, input, model: str, encoding_format: Literal["float", "base64"]):
         embeddings = await self.__client.embeddings.create(
