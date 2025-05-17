@@ -129,7 +129,9 @@ class AgentFactory:
 
         for agent_type_and_init_params in valid_agents_and_init_params:
             if not include_agent_types or agent_type_and_init_params.agent_type in include_agent_types:
-                if not exclude_agent_types or agent_type_and_init_params.agent_type not in exclude_agent_types:
+                if cls.code_review_agents.get(agent_type_and_init_params.agent_type) and (
+                    not exclude_agent_types or agent_type_and_init_params.agent_type not in exclude_agent_types
+                ):
                     initialized_agents.append(
                         cls.code_review_agents[agent_type_and_init_params.agent_type](
                             context_service=context_service,

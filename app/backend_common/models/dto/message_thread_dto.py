@@ -36,7 +36,7 @@ class ToolUseRequestContent(BaseModel):
 class ToolUseResponseContent(BaseModel):
     tool_name: str
     tool_use_id: str
-    response: Dict[str, Any]
+    response: Union[str, Dict[str, Any]]
 
 
 class TextBlockData(BaseModel):
