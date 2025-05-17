@@ -89,8 +89,13 @@ class TextBlockDeltaContent(BaseModel):
 
 
 # TEXT BLOCKS
+class TextBlockStartContent(BaseModel):
+    message_id: Optional[str] = ""
+
+
 class TextBlockStart(BaseModel):
     type: Literal[StreamingEventType.TEXT_BLOCK_START] = StreamingEventType.TEXT_BLOCK_START
+    content: Optional[TextBlockStartContent] = None
 
 
 class TextBlockDelta(BaseModel):

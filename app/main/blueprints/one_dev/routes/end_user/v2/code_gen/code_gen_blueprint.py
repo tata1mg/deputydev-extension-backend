@@ -178,6 +178,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             # push data to stream
             async for data_block in data:
                 last_block = data_block
+                print(data_block)
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
 
             # TODO: Sugar code this part
