@@ -24,6 +24,7 @@ class ContentBlockCategory(str, Enum):
 
 class TextBlockContent(BaseModel):
     text: str
+    message_id: Optional[str] = ""
 
 
 class ToolUseRequestContent(BaseModel):

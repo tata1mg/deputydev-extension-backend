@@ -70,6 +70,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         response_schema=None,
         response_format_name=None,
         response_format_description=None,
+        instructions: str = None,
     ) -> AsyncIterator[ResponseStreamEvent]:
         response_type = self._get_response_type(
             response_type=response_type,
@@ -84,6 +85,8 @@ class OpenAIServiceClient(metaclass=Singleton):
             tools=tools,
             stream=True,
             text=response_type,
+            parallel_tool_calls=False,
+            instructions=instructions,
         )
         return stream_manager.__stream__()
 

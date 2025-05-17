@@ -1,4 +1,4 @@
-import re
+import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
@@ -12,33 +12,14 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
-    TextBlockDelta,
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1 import (
     BaseGpt4Point1Prompt,
 )
-from app.backend_common.services.llm.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
-    BaseGoogleTextDeltaParser,
-)
+
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
-    CodeBlockDelta,
-    CodeBlockDeltaContent,
-    CodeBlockEnd,
-    CodeBlockEndContent,
-    CodeBlockStart,
-    CodeBlockStartContent,
-    SummaryBlockDelta,
-    SummaryBlockDeltaContent,
-    SummaryBlockEnd,
-    SummaryBlockStart,
-    ThinkingBlockDelta,
-    ThinkingBlockDeltaContent,
-    ThinkingBlockEnd,
-    ThinkingBlockStart,
 )
 
 
@@ -263,7 +244,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
-
         final_content: List[Dict[str, Any]] = []
 
         final_content = cls.get_parsed_response_blocks(llm_response.content)
@@ -277,91 +257,24 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     @classmethod
     def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
         result: List[Dict[str, Any]] = []
-
-        # Define the patterns
-        thinking_pattern = r"<thinking>(.*?)</thinking>"
-        code_block_pattern = r"<code_block>(.*?)</code_block>"
-        summary_pattern = r"<summary>(.*?)</summary>"
-
-        # edge case, check if there is <code_block> tag in the input_string, and if it is not inside any other tag, and there
-        # is not ending tag for it, then we append the ending tag for it
-        # this is very rare, but can happen if the last block is not closed properly
-        last_code_block_tag = input_string.rfind("<code_block>")
-        if last_code_block_tag != -1 and input_string[last_code_block_tag:].rfind("</code_block>") == -1:
-            input_string += "</code_block>"
-
-        last_summary_tag = input_string.rfind("<summary>")
-        if last_summary_tag != -1 and input_string[last_summary_tag:].rfind("</summary>") == -1:
-            input_string += "</summary>"
-
-        # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
-        last_thinking_tag = input_string.rfind("<thinking>")
-        if last_thinking_tag != -1 and input_string[last_thinking_tag:].rfind("</thinking>") == -1:
-            # remove the last thinking tag
-            input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
-
-        # Find all occurrences of either pattern
-        matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
-        matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
-        matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
-
-        # Combine matches and sort by start position
-        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
-        matches.sort(key=lambda match: match.start())
-
-        last_end = 0
-        for match in matches:
-            start_index = match.start()
-            end_index = match.end()
-
-            if start_index > last_end:
-                text_before = input_string[last_end:start_index]
-                if text_before.strip():  # Only append if not empty
-                    result.append({"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}})
-
-            if match.re.pattern == code_block_pattern:
-                code_block_string = match.group(1).strip()
-                code_block_info = cls.extract_code_block_info(code_block_string)
+        response = json.loads(input_string)
+        result.append({"type": "THINKING_BLOCK", "content": {"text": response["thinking"]}})
+        for part in response["response_parts"]:
+            if part["type"] == "text":
+                result.append({"type": "TEXT_BLOCK", "content": {"text": part["content"]}})
+            elif part["type"] == "code_block":
+                code_block_info = cls.extract_code_block_info(part)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
-            elif match.re.pattern == thinking_pattern:
-                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
-
-            last_end = end_index
-
-        # Append any remaining text
-        if last_end < len(input_string):
-            remaining_text = input_string[last_end:]
-            if remaining_text.strip():  # Only append if not empty
-                result.append({"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}})
 
         return result
 
     @classmethod
-    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool, int]]:
-
+    def extract_code_block_info(cls, code_block: dict) -> Dict[str, Union[str, bool, int]]:
         # Define the patterns
-        language_pattern = r"<programming_language>(.*?)</programming_language>"
-        file_path_pattern = r"<file_path>(.*?)</file_path>"
-        is_diff_pattern = r"<is_diff>(.*?)</is_diff>"
-
-        # Extract language and file path
-        language_match = re.search(language_pattern, code_block_string)
-        file_path_match = re.search(file_path_pattern, code_block_string)
-        is_diff_match = re.search(is_diff_pattern, code_block_string)
-
-        is_diff = is_diff_match.group(1).strip() == "true"
-
-        language = language_match.group(1) if language_match else ""
-        file_path = file_path_match.group(1) if file_path_match else ""
-
-        # Extract code
-        code = (
-            code_block_string.replace(language_match.group(0), "")
-            .replace(file_path_match.group(0), "")
-            .replace(is_diff_match.group(0), "")
-            .lstrip("\n\r")
-        )
-
+        is_diff = code_block["is_diff"]
+        code = code_block["code"]
+        language = code_block["language"]
+        file_path = code_block["file_path"]
         diff = ""
         added_lines = 0
         removed_lines = 0

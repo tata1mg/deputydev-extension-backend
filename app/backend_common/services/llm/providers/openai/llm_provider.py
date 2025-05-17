@@ -1,15 +1,13 @@
 import asyncio
+import json
 from typing import Any, Dict, List, Optional, Literal, AsyncIterator
 from openai.types.responses.response_stream_event import ResponseStreamEvent
-from deputydev_core.utils.config_manager import ConfigManager
 from openai.types.chat import ChatCompletion
+from openai.types import responses
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationRole,
-    ConversationTool,
     ConversationTurn,
     LLMCallResponseTypes,
-    NonStreamingResponse,
-    PromptCacheConfig,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
@@ -22,8 +20,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
     ToolUseRequestStartContent,
-    UnparsedLLMCallResponse,
-    UserAndSystemMessages,
+    TextBlockStartContent,
 )
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
@@ -37,13 +34,15 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseData,
     ContentBlockCategory,
+    MessageThreadActor,
+    MessageType,
+    ToolUseResponseContent,
 )
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     NonStreamingResponse,
-    PromptCacheConfig,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
@@ -61,9 +60,7 @@ class OpenAI(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
-        cache_config: PromptCacheConfig = PromptCacheConfig(
-            tools=True, system_message=True, conversation=True
-        ),  # by default, OpenAI uses caching, we cannot configure it
+        cache_config=None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -76,22 +73,93 @@ class OpenAI(BaseLLMProvider):
         Returns:
             List[Dict[str, str]]: A formatted list of message dictionaries.
         """
-        if tools or tool_use_response:
-            pass
+        model_config = self._get_model_config(llm_model)
+        formatted_tools = []
+        messages = []
+        for tool in tools:
+            tool = responses.FunctionToolParam(
+                name=tool.name,
+                parameters=tool.input_schema,
+                description=tool.description,
+                type="function",
+                strict=False,
+            )
+            formatted_tools.append(tool)
+        formatted_tools = sorted(formatted_tools, key=lambda x: x["name"]) if tools else []
 
         if previous_responses:
-            pass
+            messages = self.get_conversation_turns(previous_responses)
 
-        if prompt is None:
-            raise ValueError("Prompt is required for OpenAI")
+        if prompt:
+            user_message = {"role": "user", "content": prompt.user_message}
+            messages.append(user_message)
 
-        conversation_messages = [
-            {"role": "system", "content": prompt.system_message},
-            {"role": "user", "content": prompt.user_message},
-        ]
+        if tool_use_response:
+            tool_response = {
+                "type": "function_call_output",
+                "call_id": tool_use_response.content.tool_use_id,
+                "output": json.dumps(tool_use_response.content.response),
+            }
+            messages.append(tool_response)
+
         return {
-            "conversation_messages": conversation_messages,
+            "max_tokens": model_config["MAX_TOKENS"],
+            "system_message": prompt.system_message if prompt else "",
+            "conversation_messages": messages,
+            "tools": formatted_tools,
         }
+
+    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[dict]:
+        """
+        Formats the conversation as required by the specific LLM.
+        Args:
+            previous_responses (List[MessageThreadDTO]): The previous conversation turns.
+        Returns:
+            List[ConversationTurn]: The formatted conversation turns.
+        """
+        conversation_turns = []
+        last_tool_use_request: bool = False
+        for message in previous_responses:
+            if last_tool_use_request and not (
+                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
+            ):
+                # remove the tool use request if the user has not responded to it
+                conversation_turns.pop()
+                last_tool_use_request = False
+            role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
+            # sort message datas, keep text block first and tool use request last
+            message_datas = list(message.message_data)
+            message_datas.sort(key=lambda x: 0 if isinstance(x, TextBlockData) else 1)
+            for message_data in message_datas:
+                content_data = message_data.content
+                if isinstance(content_data, TextBlockContent):
+                    conversation_turns.append({"role": role.value, "content": content_data.text})
+                    last_tool_use_request = False
+                elif isinstance(content_data, ToolUseResponseContent):
+                    if (
+                        last_tool_use_request
+                        and conversation_turns
+                        and conversation_turns[-1].get("call_id") == content_data.tool_use_id
+                    ):
+                        conversation_turns.append(
+                            {
+                                "call_id": content_data.tool_use_id,
+                                "output": json.dumps(content_data.response),
+                                "type": "function_call_output",
+                            }
+                        )
+                        last_tool_use_request = False
+                else:
+                    conversation_turns.append(
+                        {
+                            "call_id": content_data.tool_use_id,
+                            "arguments": json.dumps(content_data.tool_input),
+                            "name": content_data.tool_name,
+                            "type": "function_call",
+                        }
+                    )
+                    last_tool_use_request = True
+        return conversation_turns
 
     def _parse_non_streaming_response(self, response: ChatCompletion) -> NonStreamingResponse:
         """
@@ -110,8 +178,6 @@ class OpenAI(BaseLLMProvider):
                 TextBlockData(content=TextBlockContent(text=response.choices[0].message.content))
             )
 
-        # though tool use is not supported for now, parser is implemented for tool response
-        # TODO: Test this
         if response.choices[0].message.tool_calls:
             for tool_call in response.choices[0].message.tool_calls:
                 if tool_call.type != "function":
@@ -163,8 +229,10 @@ class OpenAI(BaseLLMProvider):
                 conversation_messages=llm_payload["conversation_messages"],
                 model=model_config["NAME"],
                 response_type=response_type,
+                tools=llm_payload["tools"],
+                instructions=llm_payload["system_message"],
             )
-            return self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response)
         else:
             response = await OpenAIServiceClient().get_llm_non_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
@@ -209,14 +277,6 @@ class OpenAI(BaseLLMProvider):
             while not streaming_completed:
                 await asyncio.sleep(0.1)
             return accumulated_events
-
-        async def close_client():
-            nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-            # TODO: close client
-
-        asyncio.create_task(close_client())
 
         return StreamingResponse(
             content=stream_content(),
@@ -266,12 +326,12 @@ class OpenAI(BaseLLMProvider):
         if event.type == "response.output_item.added" and event.item.type == "message":
             return (
                 TextBlockStart(
-                    type=StreamingEventType.TEXT_BLOCK_START,
+                    type=StreamingEventType.TEXT_BLOCK_START, content=TextBlockStartContent(message_id=event.item.id)
                 ),
                 ContentBlockCategory.TEXT_BLOCK,
                 None,
             )
-        if event.type == "response.text.delta":
+        if event.type == "response.output_text.delta":
             return (
                 TextBlockDelta(
                     type=StreamingEventType.TEXT_BLOCK_DELTA,
@@ -282,7 +342,7 @@ class OpenAI(BaseLLMProvider):
                 ContentBlockCategory.TEXT_BLOCK,
                 None,
             )
-        if event.type == "response.text.done":
+        if event.type == "response.output_text.done":
             return (
                 TextBlockEnd(
                     type=StreamingEventType.TEXT_BLOCK_END,
