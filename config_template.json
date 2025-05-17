@@ -646,13 +646,18 @@
   "CODE_GEN_LLM_MODELS": [
     {
       "id": 1,
-      "display_name": "Claude 3.5 Sonnet",
-      "name": "CLAUDE_3_POINT_5_SONNET"
+      "display_name": "Gpt 4.1",
+      "name": "GPT_4_POINT_1"
     },
     {
       "id": 2,
       "display_name": "Gemini 2.5 Pro",
       "name": "GEMINI_2_POINT_5_PRO"
+    },
+    {
+      "id": 3,
+      "display_name": "Claude 3.5 Sonnet",
+      "name": "CLAUDE_3_POINT_5_SONNET"
     }
   ],
    "LLM_MAX_RETRY": 2
