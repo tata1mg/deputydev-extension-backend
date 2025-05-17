@@ -50,7 +50,7 @@ class OpenAILLMService:
         if self.client_type != "openai":
             raise ValueError("Unsupported client type. Only OpenAI is supported as of now.")
 
-        response = await OpenAIServiceClient().get_llm_non_stream_response(
+        response = await OpenAIServiceClient().get_llm_non_stream_response_chat_api(
             conversation_messages=conversation_message, model=model, response_type=response_type
         )
         return response.choices[0].message, response.usage

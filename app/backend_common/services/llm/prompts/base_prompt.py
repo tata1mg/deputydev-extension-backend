@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -23,6 +23,9 @@ class BasePrompt(ABC):
     @abstractmethod
     def get_prompt(self) -> UserAndSystemMessages:
         raise NotImplementedError("This method must be implemented in the child class")
+
+    def get_system_prompt(self) -> Optional[str]:
+        return None
 
     @classmethod
     @abstractmethod

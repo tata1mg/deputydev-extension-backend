@@ -64,6 +64,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GPT_40_MINI: OpenAI,
         LLModels.GEMINI_2_POINT_5_PRO: Google,
         LLModels.GEMINI_2_POINT_0_FLASH: Google,
+        LLModels.GPT_4_POINT_1: OpenAI,
     }
 
     def __init__(
@@ -310,6 +311,8 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Parsed LLM response
         """
+        if not user_and_system_messages:
+            user_and_system_messages = UserAndSystemMessages(system_message=prompt_handler.get_system_prompt())
         for i in range(0, max_retry):
             try:
                 llm_payload = client.build_llm_payload(
@@ -600,6 +603,7 @@ class LLMHandler(Generic[PromptFeatures]):
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         prompt_type=None,
+        prompt_vars: dict = None,
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -614,7 +618,8 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             ParsedLLMCallResponse: Parsed LLM response
         """
-
+        if not prompt_vars:
+            prompt_vars = {}
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
             session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
         )
@@ -644,7 +649,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     detected_llm = message.llm_model
                     detected_prompt_handler = self.prompt_handler_map.get_prompt(
                         model_name=detected_llm, feature=self.prompt_features(message.prompt_type)
-                    )({})
+                    )(prompt_vars)
                     break
 
         if not tool_use_request_message_id or not detected_llm:
