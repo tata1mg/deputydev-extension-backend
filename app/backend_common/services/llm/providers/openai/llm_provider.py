@@ -173,23 +173,20 @@ class OpenAI(BaseLLMProvider):
             NonStreamingResponse: Parsed response
         """
         non_streaming_content_blocks: List[ResponseData] = []
-
-        if response.choices[0].message.content:
-            non_streaming_content_blocks.append(
-                TextBlockData(content=TextBlockContent(text=response.choices[0].message.content))
-            )
-
-        if response.choices[0].message.tool_calls:
-            for tool_call in response.choices[0].message.tool_calls:
-                if tool_call.type != "function":
-                    continue
-
+        # response.choices[0].message.content = response.output_text
+        # response.choices[0].message
+        for block in response.output:
+            if block.type == "message":
+                non_streaming_content_blocks.append(
+                    TextBlockData(content=TextBlockContent(text=response.output_text))
+                )
+            if block.type == "function_call":
                 non_streaming_content_blocks.append(
                     ToolUseRequestData(
                         content=ToolUseRequestContent(
-                            tool_input=tool_call.function.arguments,
-                            tool_name=tool_call.function.name,
-                            tool_use_id=tool_call.id,
+                            tool_input=json.loads(block.arguments),
+                            tool_name=block.name,
+                            tool_use_id=block.call_id,
                         )
                     )
                 )
@@ -198,8 +195,9 @@ class OpenAI(BaseLLMProvider):
             content=non_streaming_content_blocks,
             usage=(
                 LLMUsage(
-                    input=response.usage.prompt_tokens,
-                    output=response.usage.completion_tokens,
+                    input=response.usage.input_tokens,
+                    output=response.usage.output_tokens,
+                    cache_read=response.usage.input_tokens_details.cached_tokens
                 )
                 if response.usage
                 else LLMUsage(input=0, output=0)
@@ -232,6 +230,7 @@ class OpenAI(BaseLLMProvider):
                 response_type=response_type,
                 tools=llm_payload["tools"],
                 instructions=llm_payload["system_message"],
+                tool_choice="auto"
             )
             return await self._parse_streaming_response(response)
         else:
@@ -239,6 +238,9 @@ class OpenAI(BaseLLMProvider):
                 conversation_messages=llm_payload["conversation_messages"],
                 model=model_config["NAME"],
                 response_type=response_type,
+                tools=llm_payload["tools"],
+                instructions=llm_payload["system_message"],
+                tool_choice="auto"
             )
             return self._parse_non_streaming_response(response)
 
