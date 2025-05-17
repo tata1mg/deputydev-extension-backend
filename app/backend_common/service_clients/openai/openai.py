@@ -13,6 +13,7 @@ from openai.types.responses import (
 from openai.types.shared_params.response_format_text import ResponseFormatText
 from openai.types.shared_params.response_format_json_object import ResponseFormatJSONObject
 from openai.types.responses.response_stream_event import ResponseStreamEvent
+from openai.types.responses import Response
 
 config = CONFIG.config
 
@@ -36,10 +37,43 @@ class OpenAIServiceClient(metaclass=Singleton):
         self,
         conversation_messages: List[Dict[str, Any]],
         model: str,
-        tool_choice: Optional[str] = None,
+        tool_choice: Literal["none", "auto", "required"] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         response_type: Literal["text", "json_object"] = "json_object",
+        response_schema=None,
+        response_format_name=None,
+        response_format_description=None,
+        instructions: str = None,
+    ) -> Response:
+        response_type = self._get_response_type(
+            response_type=response_type,
+            response_schema=response_schema,
+            schema_name=response_format_name,
+            schema_description=response_format_description,
+        )
+        response = await self.__client.responses.create(
+            input=conversation_messages,
+            model=model,
+            tool_choice=tool_choice,
+            tools=tools,
+            stream=False,
+            text=response_type,
+            parallel_tool_calls=False,
+            instructions=instructions,
+            temperature=0.5
+        )
+        # we need both message and output token now to returning full completion message
+        return response
+
+    async def get_llm_non_stream_response_chat_api(
+            self,
+            conversation_messages: List[Dict[str, Any]],
+            model: str,
+            tool_choice: Optional[str] = None,
+            tools: Optional[List[Dict[str, Any]]] = None,
+            response_type: Literal["text", "json_object"] = "json_object",
     ) -> ChatCompletion:
+        # THIS IS DEPRECATED DO NOT USE THIS.
         if response_type == "text":
             response_format = ResponseFormatText(type=response_type)
         else:
@@ -53,6 +87,7 @@ class OpenAIServiceClient(metaclass=Singleton):
 
         # we need both message and output token now to returning full completion message
         return completion
+
 
     async def create_embedding(self, input, model: str, encoding_format: Literal["float", "base64"]):
         embeddings = await self.__client.embeddings.create(
