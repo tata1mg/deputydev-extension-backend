@@ -20,7 +20,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
     ToolUseRequestStartContent,
-    TextBlockStartContent,
 )
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
@@ -91,7 +90,7 @@ class OpenAI(BaseLLMProvider):
         if previous_responses:
             messages = self.get_conversation_turns(previous_responses)
 
-        if prompt:
+        if prompt and prompt.user_message:
             user_message = {"role": "user", "content": prompt.user_message}
             messages.append(user_message)
 
@@ -105,7 +104,7 @@ class OpenAI(BaseLLMProvider):
 
         return {
             "max_tokens": model_config["MAX_TOKENS"],
-            "system_message": prompt.system_message if prompt else "",
+            "system_message": prompt.system_message if prompt and prompt.system_message else "",
             "conversation_messages": messages,
             "tools": formatted_tools,
         }
@@ -229,6 +228,7 @@ class OpenAI(BaseLLMProvider):
                 tools=llm_payload["tools"],
                 instructions=llm_payload["system_message"],
                 tool_choice="auto",
+                max_output_tokens=model_config["MAX_TOKENS"],
             )
             return await self._parse_streaming_response(response)
         else:
@@ -239,6 +239,7 @@ class OpenAI(BaseLLMProvider):
                 tools=llm_payload["tools"],
                 instructions=llm_payload["system_message"],
                 tool_choice="auto",
+                max_output_tokens=model_config["MAX_TOKENS"],
             )
             return self._parse_non_streaming_response(response)
 
@@ -288,8 +289,8 @@ class OpenAI(BaseLLMProvider):
 
     async def _get_parsed_stream_event(self, event: ResponseStreamEvent):
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        if event.type == "response.done":
-            usage.input = event.response.usage.input_token_details.text_tokens
+        if event.type == "response.completed":
+            usage.input = event.response.usage.input_tokens
             usage.output = event.response.usage.output_tokens
             usage.cache_read = event.response.usage.input_tokens_details.cached_tokens
             return None, None, usage
