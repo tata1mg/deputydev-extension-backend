@@ -1,6 +1,7 @@
 from typing import Any
 
 from sanic import Blueprint
+from sanic.exceptions import ServerError
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 
@@ -24,8 +25,10 @@ websearch_v1_bp = Blueprint("websearch_bp", url_prefix="/websearch")
 @ensure_session_id(auto_create=True)
 async def websearch(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
     payload = _request.json
+    if not payload.get("descriptive_query"):
+        raise BadRequestException("Missing descriptive query")
     try:
         response = await WebSearchService.web_search(session_id=session_id, query=payload.get("descriptive_query"))
+        return send_response(response, headers=kwargs.get("response_headers"))
     except Exception as e:
-        raise BadRequestException(f"Failed to search from web: {str(e)}")
-    return send_response(response, headers=kwargs.get("response_headers"))
+        raise ServerError(f"Failed to search from web: {str(e)}")

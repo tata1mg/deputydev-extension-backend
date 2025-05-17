@@ -1,6 +1,7 @@
 from typing import Optional
 
-from deputydev_core.utils.constants.enums import Clients
+from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
+from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.context_vars import set_context_values
 from torpedo import CONFIG
 
@@ -18,6 +19,9 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import get_token_count
+from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
+    OneDevReviewClient,
+)
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     PR_SIZE_TOO_BIG_MESSAGE,
@@ -28,6 +32,9 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
+from app.main.blueprints.deputy_dev.services.code_review.pr_review_initialization.pr_review_initialization_service import (
+    PRReviewInitializationService,
+)
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
@@ -41,6 +48,7 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 )
 
 config = CONFIG.config
+one_dev_review_client = OneDevReviewClient()
 
 
 class PRReviewPreProcessor:
@@ -69,6 +77,8 @@ class PRReviewPreProcessor:
         self.pr_diff_handler = pr_diff_handler
         self.is_reviewable_request = None
         self.session_id: Optional[int] = None
+        self.auth_token = None
+        self.repo_path = None
 
     async def pre_process_pr(self) -> (str, PullRequestDTO):
         repo_dto = await self.fetch_repo()
@@ -76,6 +86,7 @@ class PRReviewPreProcessor:
         set_context_values(
             is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
         )
+        ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
 
         if not self.is_reviewable_based_on_settings(setting):
             self.is_valid = False
@@ -88,6 +99,9 @@ class PRReviewPreProcessor:
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
+        if self.is_reviewable_request:
+            await PRReviewInitializationService.initialization()
+            await PRReviewInitializationService.create_embedding(self.repo_path)
 
     @staticmethod
     def is_reviewable_based_on_settings(setting: dict) -> bool:
@@ -144,7 +158,7 @@ class PRReviewPreProcessor:
         if reviewed_pr_dto and reviewed_pr_dto.session_id:
             self.session_id = reviewed_pr_dto.session_id
 
-        # Handle already reviewed PRx
+        # Handle already reviewed PRs
         if reviewed_pr_dto and reviewed_pr_dto.commit_id == self.pr_model.commit_id():
             # Will be used to post affirmation message
             self.is_valid = False
@@ -172,6 +186,15 @@ class PRReviewPreProcessor:
         self.pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
         self.meta_info["tokens"] = self.pr_diff_token_count
         self.loc_changed = await self.pr_service.get_loc_changed_count()
+        session = await MessageSessionsRepository.create_message_session(
+            message_session_data=MessageSessionData(
+                user_team_id=user_team_dto.id,
+                client=Clients.BACKEND,
+                client_version="1.0.0",
+                session_type="PR_REVIEW",
+            )
+        )
+        self.session_id = session.id
 
         # Check for failed PR
         failed_pr_filters = {
@@ -182,18 +205,6 @@ class PRReviewPreProcessor:
         failed_pr_dto = await PRService.find(filters=failed_pr_filters)
 
         if failed_pr_dto:
-            if failed_pr_dto.session_id:
-                self.session_id = failed_pr_dto.session_id
-            else:
-                session = await MessageSessionsRepository.create_message_session(
-                    message_session_data=MessageSessionData(
-                        user_team_id=user_team_dto.id,
-                        client=Clients.BACKEND,
-                        client_version="1.0.0",
-                        session_type="PR_REVIEW",
-                    )
-                )
-                self.session_id = session.id
             # Update failed PR
             update_data = {
                 "commit_id": self.pr_model.commit_id(),
@@ -203,20 +214,11 @@ class PRReviewPreProcessor:
                 "loc_changed": self.loc_changed,
                 "meta_info": self.meta_info,
                 "session_id": self.session_id,
+                "session_ids": failed_pr_dto.session_ids + [self.session_id],
             }
             return await PRService.db_update(filters={"id": failed_pr_dto.id}, payload=update_data)
 
         else:
-            if self.session_id is None:
-                session = await MessageSessionsRepository.create_message_session(
-                    message_session_data=MessageSessionData(
-                        user_team_id=user_team_dto.id,
-                        client=Clients.BACKEND,
-                        client_version="1.0.0",
-                        session_type="PR_REVIEW",
-                    )
-                )
-                self.session_id = session.id
             self.pr_model.meta_info = {
                 "review_status": PrStatusTypes.IN_PROGRESS.value,
                 "team_id": repo_dto.team_id,
@@ -229,6 +231,7 @@ class PRReviewPreProcessor:
                 "pr_state": self.pr_model.scm_state(),
                 "loc_changed": self.loc_changed,
                 "session_id": self.session_id,
+                "session_ids": [self.session_id],
             }
             pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
             if not pr_dto:  # Handle integrity error case
@@ -363,9 +366,10 @@ class PRReviewPreProcessor:
         )
 
     async def validate_repo_clone(self):
-        _, is_repo_cloned = await self.repo_service.clone_branch(
+        _, is_repo_cloned, self.repo_path = await self.repo_service.clone_branch(
             self.pr_service.branch_name, "code_review"
         )  # return code 128 signifies bad request to github
+        set_context_values(repo_path=self.repo_path)
         if not is_repo_cloned:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value
