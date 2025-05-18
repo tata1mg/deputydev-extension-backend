@@ -45,6 +45,10 @@ PARSE_FINAL_RESPONSE = ConversationTool(
                             "type": "string",
                             "description": "Bucket name or label provided by LLM.",
                         },
+                        "rationale": {
+                            "type": "string",
+                            "description": "Reason or justification for raising the comment. This should explain why this is important or how it impacts the code quality or behavior.",
+                        },
                     },
                     "required": [
                         "description",
@@ -53,6 +57,7 @@ PARSE_FINAL_RESPONSE = ConversationTool(
                         "line_number",
                         "confidence_score",
                         "bucket",
+                        "rationale",
                     ],
                 },
             }

@@ -76,16 +76,18 @@ class OpenAI(BaseLLMProvider):
         model_config = self._get_model_config(llm_model)
         formatted_tools = []
         messages = []
-        for tool in tools:
-            tool = responses.FunctionToolParam(
-                name=tool.name,
-                parameters=tool.input_schema,
-                description=tool.description,
-                type="function",
-                strict=False,
-            )
-            formatted_tools.append(tool)
-        formatted_tools = sorted(formatted_tools, key=lambda x: x["name"]) if tools else []
+        if tools:
+            for tool in tools:
+                tool = responses.FunctionToolParam(
+                    name=tool.name,
+                    parameters=tool.input_schema,
+                    description=tool.description,
+                    type="function",
+                    strict=False,
+                )
+                formatted_tools.append(tool)
+
+            formatted_tools = sorted(formatted_tools, key=lambda x: x["name"])
 
         if previous_responses:
             messages = self.get_conversation_turns(previous_responses)

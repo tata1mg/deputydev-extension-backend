@@ -10,6 +10,12 @@ ITERATIVE_FILE_READER = ConversationTool(
         It will let you know if the end of the file is reached.
         To use this, a valid file path is required.
         If you are not confident about import statements, then you can use this tool to read initial lines of the file to check imports.
+        
+        EFFICIENT USAGE:
+        - Calculate precisely which line ranges you need before calling
+        - Request 50-100 lines at once when appropriate
+        - Read entire functions/methods in a single call when possible
+        - Track where you left off to continue reading larger files
 
         Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
         The response will EXPLICITLY mention if the end of the file is reached or not.
