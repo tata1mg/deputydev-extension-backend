@@ -99,9 +99,9 @@ class PRReviewPreProcessor:
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
-        if self.is_reviewable_request:
-            await PRReviewInitializationService.initialization()
-            await PRReviewInitializationService.create_embedding(self.repo_path)
+        # if self.is_reviewable_request:
+        #     await PRReviewInitializationService.initialization()
+        #     await PRReviewInitializationService.create_embedding(self.repo_path)
 
     @staticmethod
     def is_reviewable_based_on_settings(setting: dict) -> bool:

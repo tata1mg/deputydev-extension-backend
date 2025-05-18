@@ -13,6 +13,7 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
+from app.main.blueprints.deputy_dev.services.code_review.context.context_service import ContextService
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
@@ -31,6 +32,7 @@ from app.main.blueprints.deputy_dev.services.code_review.tools.iterative_file_re
 from app.main.blueprints.deputy_dev.services.code_review.tools.parse_final_response import (
     PARSE_FINAL_RESPONSE,
 )
+from app.main.blueprints.deputy_dev.services.code_review.tools.pr_review_planner import PR_REVIEW_PLANNER
 from app.main.blueprints.deputy_dev.services.code_review.tools.tool_handlers import (
     ToolHandlers,
 )
@@ -43,14 +45,16 @@ class ToolRequestManager:
     Manages tool requests and responses for the code review flow.
     """
 
-    def __init__(self):
+    def __init__(self, context_service: ContextService):
+        self.context_service = context_service
         self.tools = [
             # RELATED_CODE_SEARCHER,
             GREP_SEARCH,
             ITERATIVE_FILE_READER,
-            FOCUSED_SNIPPETS_SEARCHER,
+            # FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
             PARSE_FINAL_RESPONSE,
+            PR_REVIEW_PLANNER,
         ]
         self._tool_handlers: Dict[str, Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]]] = {
             "related_code_searcher": ToolHandlers.handle_related_code_searcher,
@@ -59,6 +63,7 @@ class ToolRequestManager:
             "focused_snippets_searcher": ToolHandlers.handle_focused_snippets_searcher,
             "file_path_searcher": ToolHandlers.handle_file_path_searcher,
             "parse_final_response": ToolHandlers.handle_parse_final_response,
+            "pr_review_planner": ToolHandlers.handle_pr_review_planner,
         }
 
     def get_tools(self) -> List[ConversationTool]:
@@ -110,7 +115,7 @@ class ToolRequestManager:
     async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         handler = self._tool_handlers.get(tool_name)
         if handler:
-            return await handler(tool_input)
+            return await handler(tool_input, self.context_service)
         raise Exception(f"No such Tool Exists: tool_name: {tool_name}")
 
     def is_final_response(self, llm_response: Any) -> bool:
@@ -170,6 +175,7 @@ class ToolRequestManager:
                     line_number_element = comment.get("line_number")
                     confidence_score_element = comment.get("confidence_score")
                     bucket_element = comment.get("bucket")
+                    rationale = comment.get("rationale")
 
                     if (
                         description_element is None
@@ -177,6 +183,7 @@ class ToolRequestManager:
                         or line_number_element is None
                         or confidence_score_element is None
                         or bucket_element is None
+                        or rationale is None
                     ):
                         raise ValueError("The Response does not contain the expected comment elements.")
 
@@ -188,6 +195,7 @@ class ToolRequestManager:
                             line_number=line_number_element,
                             confidence_score=float(confidence_score_element),
                             bucket=format_comment_bucket_name(bucket_element),
+                            rationale=rationale
                         )
                     )
                 return {"comments": comments}
