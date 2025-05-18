@@ -60,7 +60,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
         self.agent_id = self.agent_setting.get("agent_id")
         self.display_name = self.agent_setting.get("display_name")
-        self.tool_request_manager = ToolRequestManager()
+        self.tool_request_manager = ToolRequestManager(context_service=self.context_service)
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
         relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
