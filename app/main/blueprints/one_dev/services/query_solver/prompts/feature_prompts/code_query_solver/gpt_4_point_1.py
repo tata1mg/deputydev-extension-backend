@@ -12,7 +12,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 import json
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
+from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
 from pydantic import BaseModel
 
@@ -205,7 +205,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         """
 
         if self.params.get("write_mode"):
-            user_message += f"""
+            user_message += """
                     Please respond in act mode. In this mode:
                     1. You will directly generate code changes that can be applied to the codebase.
                     2. The changes will be presented in a format that can be automatically applied.
