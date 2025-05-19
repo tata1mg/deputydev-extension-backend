@@ -26,10 +26,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     ThinkingBlockEnd,
     ThinkingBlockStart,
 )
+from time import time
 
 from partial_json_parser import loads
 from typing import AsyncIterator, List, Optional, Tuple, Union
-
+from sanic.log import logger
 from pydantic import BaseModel
 
 
@@ -335,6 +336,9 @@ class StreamingTextEventProcessor:
         async for event in events:
             for parser in self.parsers:
                 if parser.can_parse(event):
+                    start_time = time()
                     async for parsed_event in parser.parse(event):
                         yield parsed_event
+                    end_time = time()
+                    logger.info(f"Time taken in parsing f{type(parser)} type block: {end_time - start_time} seconds.")
                     break
