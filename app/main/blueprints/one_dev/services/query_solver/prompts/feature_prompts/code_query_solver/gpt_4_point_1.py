@@ -332,14 +332,17 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     async def parse_streaming_text_block_events(
         cls, events: AsyncIterator[StreamingEvent]
     ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
+        text_block_parser = TextBlockEventParser()
+        tool_use_event_parser = ToolUseEventParser()
         processor = StreamingTextEventProcessor(
             [
-                ToolUseEventParser(),
-                TextBlockEventParser(),
+                tool_use_event_parser,
+                text_block_parser
             ]
         )
         start = time()
         async for output_event in processor.parse(events):
             yield output_event
         end = time()
+        logger.info(f"Time Breakdown:\n String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time}")
         logger.info(f"Time taken in complete parsing: {end-start} seconds.")
