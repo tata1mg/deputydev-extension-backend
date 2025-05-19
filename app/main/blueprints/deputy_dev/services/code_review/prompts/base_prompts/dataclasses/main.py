@@ -10,3 +10,4 @@ class LLMCommentData(BaseModel):
     line_number: str
     confidence_score: float
     bucket: str
+    rationale: str
