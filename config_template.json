@@ -559,6 +559,15 @@
             "service_path": ""
           }
         }
+      },
+      "4.0.1": {
+        "darwin": {
+          "arm64": {
+            "download_link": "",
+            "directory": "",
+            "service_path": ""
+          }
+        }
       }
     },
     "PASSWORD": "",
