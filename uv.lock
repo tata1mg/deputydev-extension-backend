@@ -498,7 +498,7 @@ requires-dist = [
     { name = "azure-servicebus", specifier = "==7.14.1" },
     { name = "botocore", specifier = "==1.34.34" },
     { name = "cache-wrapper", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git?rev=4.1.0" },
-    { name = "deputydev-core", git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=pr_review_final" },
+    { name = "deputydev-core", git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=main" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
     { name = "langchain", specifier = "==0.3.24" },
@@ -525,8 +525,8 @@ dev = [{ name = "ruff", specifier = ">=0.11.9" }]
 
 [[package]]
 name = "deputydev-core"
-version = "3.0.6"
-source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=pr_review_final#43e6f52653ce2d9bd240c5745c88772a9900adef" }
+version = "4.0.0"
+source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=main#04ac58a90344772a038b0d9d170324655ed61259" }
 dependencies = [
     { name = "aiohttp" },
     { name = "diff-match-patch" },
