@@ -22,6 +22,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     TextBlockData,
     ToolUseRequestData,
 )
+from time import time
 
 from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1 import (
     BaseGpt4Point1Prompt,
@@ -30,7 +31,7 @@ from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
-
+from sanic.log import logger
 
 class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     prompt_type = "CODE_QUERY_SOLVER"
@@ -337,5 +338,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 TextBlockEventParser(),
             ]
         )
+        start = time()
         async for output_event in processor.parse(events):
             yield output_event
+        end = time()
+        logger.info(f"Time taken in complete parsing: {end-start} seconds.")
