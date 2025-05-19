@@ -85,10 +85,12 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
         6. Read larger sections of files at once (50-100 lines) to reduce calls
         </tool_usage_efficiency>
         
-        IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+        IMPORTANT: 
+        - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
         Never provide review comments as plain text in your response. All final reviews MUST be delivered
         through the parse_final_response tool inside a tool use block.
-                """
+        - If any change has impacting change in other files, function, class where it was used. Provide the exact impacting areas in comment description.
+        ="""
         if self.params.get("REPO_INFO_PROMPT"):
             system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
 
