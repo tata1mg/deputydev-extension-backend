@@ -340,5 +340,7 @@ class StreamingTextEventProcessor:
                     async for parsed_event in parser.parse(event):
                         yield parsed_event
                     end_time = time()
-                    logger.info(f"Time taken in parsing f{type(parser)} type block: {end_time - start_time} seconds.")
+                    time_taken_in_ms = (end_time-start_time) * 1000
+                    if time_taken_in_ms > 1:
+                        logger.info(f"Time taken in parsing {event} event: {time_taken_in_ms} ms.")
                     break
