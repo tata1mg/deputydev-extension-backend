@@ -248,6 +248,7 @@ class QuerySolver:
                     "os_name": payload.os_name,
                     "shell": payload.shell,
                 },
+                file_vars=payload.s3_reference,
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
                 ),
