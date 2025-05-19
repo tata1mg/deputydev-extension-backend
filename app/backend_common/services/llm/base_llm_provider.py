@@ -14,7 +14,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
 
 class BaseLLMProvider(ABC):
     """Abstract LLM interface"""
@@ -23,7 +23,7 @@ class BaseLLMProvider(ABC):
         self.llm_type = llm_type
 
     @abstractmethod
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
@@ -32,6 +32,7 @@ class BaseLLMProvider(ABC):
         tools: Optional[List[ConversationTool]] = None,
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        file_vars: Optional[S3Reference] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
