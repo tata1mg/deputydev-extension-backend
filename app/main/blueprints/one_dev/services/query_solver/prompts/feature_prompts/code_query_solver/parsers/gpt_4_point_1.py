@@ -202,6 +202,8 @@ class TextBlockEventParser:
         self.response_parser = ResponsePartParser()
         self.thinking_parser = ThinkingBlockParser()
         self.summary_parser = SummaryBlockParser()
+        self.json_parsing_time = 0
+        self.string_concatination_time = 0
 
     def can_parse(self, event: StreamingEvent) -> bool:
         return isinstance(event, (TextBlockStart, TextBlockDelta, TextBlockEnd))
@@ -222,8 +224,14 @@ class TextBlockEventParser:
                     yield e
             return
 
+        start = time()
         self.buffer += event.content.text
+        end = time()
+        self.string_concatination_time += end-start
+        start = time()
         parsed_response = loads(self.buffer)
+        end = time()
+        self.json_parsing_time += (end-start)
         keys = list(parsed_response.keys())
         if keys:
             self.current_block = keys[-1]
