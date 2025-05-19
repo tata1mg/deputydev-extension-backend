@@ -107,10 +107,11 @@ def format_comment(data):
     # Check if corrective_code exists and is a dictionary
     if isinstance(data, dict):
         comment = data.get("comment", "")
+        rationale = data.get("rationale", "")
         corrective_code = get_corrective_code(data)
         bucket_name = get_bucket_name(data)
         if bucket_name:
-            return f"**{bucket_name}**: {comment}\n{corrective_code} "
+            return f"**{bucket_name}**: {comment} \n {rationale}\n{corrective_code} "
         else:
             return f"{comment}\n{corrective_code} "
     elif isinstance(data, str):

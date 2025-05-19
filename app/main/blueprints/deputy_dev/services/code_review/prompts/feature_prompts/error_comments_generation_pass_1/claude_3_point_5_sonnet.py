@@ -65,6 +65,12 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
                     5. Check if related tests exist and if they need updates
                     6. Only after gathering sufficient context, formulate precise review comments
                     </investigation_process>
+                    
+                    IMPORTANT: 
+                    - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+                    Never provide review comments as plain text in your response. All final reviews MUST be delivered
+                    through the parse_final_response tool inside a tool use block.
+                    - If any change has impacting change in other files, function, class where it was used. Provide the exact impacting areas in comment description.
              """
 
         if self.params.get("REPO_INFO_PROMPT"):

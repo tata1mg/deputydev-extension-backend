@@ -73,6 +73,7 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
         - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
         Never provide review comments as plain text in your response. All final reviews MUST be delivered
         through the parse_final_response tool inside a tool use block.
+        - ** If any change has impacting change in other files, function, class where it was used. Provide the exact impacting areas in comment description**.
         - Call Tools in most optimized way
     """
 
