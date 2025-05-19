@@ -1,9 +1,11 @@
+from math import e
 from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadDTO,
     MessageType,
     TextBlockData,
+    FileBlockData
 )
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
@@ -20,10 +22,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.prompts.factory import (
     PromptFeatureFactory,
 )
+from app.backend_common.service_clients.aws_s3.aws_s3_service_client import AWSS3ServiceClient
 
 
 class PastChatsSerializer(BaseSerializer):
-    def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
+    async def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
         tool_use_map: Dict[str, Any] = {}
         formatted_data: List[Dict[str, Any]] = []
         current_query_write_mode: bool = False
@@ -46,7 +49,7 @@ class PastChatsSerializer(BaseSerializer):
                     or not text_data.content_vars
                     or not isinstance((text_data.content_vars or {}).get("query"), str)
                 ):
-                    continue
+                    continue                
 
                 focus_objects: List[Dict[str, Any]] = []
                 if text_data.content_vars.get("focus_items"):
@@ -87,7 +90,15 @@ class PastChatsSerializer(BaseSerializer):
                 if focus_objects:
                     content["focus_items"] = focus_objects
 
-                formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
+                if len(item.message_data) > 1 and item.message_data[1]:
+                    file_data = item.message_data[1]
+                    if isinstance(file_data, FileBlockData):
+                        s3_key = file_data.content.s3_key
+                        presigned_url = await AWSS3ServiceClient().create_presigned_get_url(s3_key)
+                    formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3Reference": {"get_url": presigned_url,"file_type": file_data.content.type}, "actor": actor})
+                else:
+                    formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
+
             elif message_type == MessageType.TOOL_RESPONSE:
                 tool_use_id = response_block[0].content.tool_use_id
                 if tool_use_id not in tool_use_map:

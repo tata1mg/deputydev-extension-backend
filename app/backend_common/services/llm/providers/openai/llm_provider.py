@@ -21,6 +21,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
     ToolUseRequestStartContent,
 )
+from sanic import file
+
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -45,6 +47,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
+from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
+
 
 
 class OpenAI(BaseLLMProvider):
@@ -52,7 +57,7 @@ class OpenAI(BaseLLMProvider):
         super().__init__(LLMProviders.OPENAI.value)
         self.anthropic_client = None
 
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
@@ -61,6 +66,7 @@ class OpenAI(BaseLLMProvider):
         tools: Optional[List[ConversationTool]] = None,
         feedback: Optional[str] = None,
         cache_config=None,
+        file_vars: Optional[S3Reference] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -91,7 +97,20 @@ class OpenAI(BaseLLMProvider):
             messages = self.get_conversation_turns(previous_responses)
 
         if prompt and prompt.user_message:
-            user_message = {"role": "user", "content": prompt.user_message}
+            user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
+            if file_vars and file_vars.key and file_vars.file_type and file_vars.file_type.startswith("image/"):
+                try:
+                    file = await FileProcessor().process_file(file_vars.key)
+                    if file:
+                        file_vars.file_data_base64 = file.get("content_base64")
+                except Exception as e:
+                    raise ValueError(f"Failed to process image: {str(e)}")
+                user_message["content"].append(
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:{file_vars.file_type};base64,{file_vars.file_data_base64}"
+                    }
+                )
             messages.append(user_message)
 
         if tool_use_response:
@@ -149,7 +168,7 @@ class OpenAI(BaseLLMProvider):
                             }
                         )
                         last_tool_use_request = False
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     conversation_turns.append(
                         {
                             "call_id": content_data.tool_use_id,

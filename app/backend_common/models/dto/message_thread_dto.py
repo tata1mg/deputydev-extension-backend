@@ -20,11 +20,15 @@ class ContentBlockCategory(str, Enum):
     TEXT_BLOCK = "TEXT_BLOCK"
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
+    FILE_S3_KEY = "FILE_S3_KEY"
 
 
 class TextBlockContent(BaseModel):
     text: str
 
+class FileContent(BaseModel):
+    type: str
+    s3_key: str
 
 class ToolUseRequestContent(BaseModel):
     tool_input: Dict[str, Any]
@@ -43,6 +47,9 @@ class TextBlockData(BaseModel):
     content: TextBlockContent
     content_vars: Optional[Dict[str, Any]] = None
 
+class FileBlockData(BaseModel):
+    type: Literal[ContentBlockCategory.FILE_S3_KEY] = ContentBlockCategory.FILE_S3_KEY
+    content: FileContent
 
 class ToolUseRequestData(BaseModel):
     type: Literal[ContentBlockCategory.TOOL_USE_REQUEST] = ContentBlockCategory.TOOL_USE_REQUEST
@@ -54,7 +61,7 @@ class ToolUseResponseData(BaseModel):
     content: ToolUseResponseContent
 
 
-ResponseData = Annotated[Union[TextBlockData, ToolUseRequestData], Field(discriminator="type")]
+ResponseData = Annotated[Union[TextBlockData, FileBlockData, ToolUseRequestData], Field(discriminator="type")]
 
 MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discriminator="type")]
 

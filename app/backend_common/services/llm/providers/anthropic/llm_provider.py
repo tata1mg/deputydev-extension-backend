@@ -1,8 +1,10 @@
 import asyncio
+from email.mime import image
 import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
+from numpy import imag
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
@@ -24,6 +26,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
+    FileContent
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -52,6 +55,8 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
+from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
 
 
 class Anthropic(BaseLLMProvider):
@@ -106,7 +111,7 @@ class Anthropic(BaseLLMProvider):
                             }
                         )
                         last_tool_use_request = False
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     content.append(
                         {
                             "type": "tool_use",
@@ -122,7 +127,7 @@ class Anthropic(BaseLLMProvider):
 
         return conversation_turns
 
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model,
         prompt: Optional[UserAndSystemMessages] = None,
@@ -131,6 +136,7 @@ class Anthropic(BaseLLMProvider):
         tools: Optional[List[ConversationTool]] = None,
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        file_vars: Optional[S3Reference] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
@@ -142,6 +148,23 @@ class Anthropic(BaseLLMProvider):
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
+            if file_vars and file_vars.key and file_vars.file_type and file_vars.file_type.startswith("image/"):
+                try:
+                    file = await FileProcessor().process_file(file_vars.key)
+                    if file:
+                        file_vars.file_data_base64 = file.get("content_base64")
+                except Exception as e:
+                    raise ValueError(f"Failed to process image: {str(e)}")
+                user_message.content.append(
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": file_vars.file_type,
+                            "data": file_vars.file_data_base64,
+                        }
+                    }
+                )
             messages.append(user_message)
 
         # add tool result to conversation
