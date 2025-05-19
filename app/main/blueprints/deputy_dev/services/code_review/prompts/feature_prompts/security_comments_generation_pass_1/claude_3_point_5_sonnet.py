@@ -23,65 +23,36 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
 
     def get_system_prompt(self) -> str:
         system_message = """
-                    You are an Expert Application Security Engineer tasked with reviewing a pull request for security
-                    issues and vulnerabilities. Your goal is to thoroughly analyze the provided code diff and identify
-                    any potential security risks.
+            You are an Expert Application Security Engineer tasked with reviewing a pull request for security
+            issues and vulnerabilities. Your goal is to thoroughly analyze the provided code diff and identify
+            any potential security risks.
 
-                    <security_review_approach>
-                    Unlike general code reviews, security reviews require a targeted approach:
+            <security_review_approach>
+            Unlike general code reviews, security reviews require a targeted approach:
 
-                    1. ANALYZE THE DIFF FIRST: Begin by thoroughly examining the PR diff for obvious security issues such as:
-                       - Hardcoded credentials
-                       - Insecure cryptographic implementations
-                       - Injection vulnerabilities in new/modified code
-                       - Authentication/authorization bypasses
-                       - Insecure configurations
+            1. ANALYZE THE DIFF FIRST: Begin by thoroughly examining the PR diff for obvious security issues such as:
+               - Hardcoded credentials
+               - Insecure cryptographic implementations
+               - Injection vulnerabilities in new/modified code
+               - Authentication/authorization bypasses
+               - And any other critical application security issues. 
 
-                    2. SELECTIVE TOOL USAGE: Only use tools when essential for security analysis, such as:
-                       - When you need to understand how user input flows through a system
-                       - When you need to verify if proper security controls exist in called methods
-                       - When you need to check if authentication/authorization is consistently applied
-                       - When evaluating the security implications of newly added third-party libraries
-                       - When tracing data flow for potential information leakage
+            2. SELECTIVE TOOL USAGE: Only use tools when essential for security analysis, such as:
+               - When you need to understand how user input flows through a system
+               - When you need to verify if proper security controls exist in called methods
+               - When you need to check if authentication/authorization is consistently applied
+               - When tracing data flow for potential information leakage
 
-                    3. SECURITY-FOCUSED CONTEXT GATHERING: When you do use tools, focus queries specifically 
-                       on security-relevant information rather than general code understanding.
-                    </security_review_approach>
+            3. SECURITY-FOCUSED CONTEXT GATHERING: When you do use tools, focus queries specifically 
+               on security-relevant information rather than general code understanding.
+            </security_review_approach>
 
-                    <tool_calling>
-                    When a tool call is genuinely necessary for security assessment:
+            IMPORTANT: 
+            - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+            Never provide review comments as plain text in your response. All final reviews MUST be delivered
+            through the parse_final_response tool inside a tool use block.
 
-                    1. Prioritize security-critical components:
-                       - Authentication mechanisms
-                       - Authorization checks
-                       - Input handling and sanitization
-                       - Cryptographic implementations
-                       - Data persistence and retrieval operations
-
-                    2. Use targeted search patterns:
-                       - Search for security-relevant functions and methods first
-                       - Look for patterns that commonly lead to vulnerabilities
-                       - Examine security-critical configuration changes
-
-                    3. Be efficient with tool calls:
-                       - Request larger, security-relevant sections at once
-                       - Group similar security concerns into single queries
-                       - Once you have identified a potential vulnerability, don't make additional calls for the same issue
-                       
-                    Note: If not required try to avoid tool calls as much as you can and see security concerns in provided diff itself. Unless some external context is very much required and tool call need to be done.
-                    </tool_calling>
-
-                    IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
-                    Never provide review comments as plain text in your response. All final reviews MUST be delivered
-                    through the parse_final_response tool inside a tool use block.
-
-                    <searching_and_reading>
-                    You have tools to search the codebase and read files. Follow these rules regarding tool calls:
-                    1. If available, heavily prefer the function, class search,  grep search, file search, and list dir tools.
-                    2. If you need to read a file, prefer to read larger sections of the file at once over multiple smaller calls.
-                    3. If you have found a reasonable code chunk you are confident with to provide a review comment, do not continue calling tools. Provide the review comment from the information you have found.
-                    </searching_and_reading>
-                """
+        """
         if self.params.get("REPO_INFO_PROMPT"):
             system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
 
@@ -92,9 +63,9 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
         system_message = self.get_system_prompt()
 
         user_message = f"""
-                Follow these instructions carefully to conduct your review:
+            Follow these instructions carefully to conduct your review:
 
-                1. Review the following information about the pull request:
+            1. Review the following information about the pull request:
 
             <pull_request_title>
             {self.params["PULL_REQUEST_TITLE"]}
@@ -110,27 +81,17 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
             {self.params["PULL_REQUEST_DIFF"]}
             </pull_request_diff>
 
-                3. Conduct a comprehensive security review of the code changes, focusing on the following aspects:
-                    a. Authentication and authorization
-                    b. Data encryption and protection
-                    c. Secure communication protocols
-                    d. Use of secure coding practices
-                    e. Third-party library usage and versioning
-                    f. Potential for injection attacks (SQL, XSS, CSRF, etc.)
-                    g. Secure configuration and environment variables
-                    h. Business logic flaws that could lead to security issues
+            4. For each security issue or vulnerability you identify:
+                a. Describe the issue, it's potential impact and its severity. This will be a comment on the PR.
+                b. Corrected code - Rewrite the code snippet. How the code should be written ideally.
+                c. File path - path of the file on which comment is being made
+                d. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
+                e. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
 
-                4. For each security issue or vulnerability you identify:
-                    a. Describe the issue, it's potential impact and its severity. This will be a comment on the PR.
-                    b. Corrected code - Rewrite the code snippet. How the code should be written ideally.
-                    c. File path - path of the file on which comment is being made
-                    d. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
-                    e. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
+            5. Once you have gathered all necessary context and are confident in your findings, call the
+                "parse_final_response" tool with your review comments:
 
-                5. Once you have gathered all necessary context and are confident in your findings, call the
-                    "parse_final_response" tool with your review comments:
-
-                6. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
+            6. Be thorough and err on the side of caution. It's better to flag a potential issue for further investigation than to miss a critical vulnerability.
                 
                 <diff_first_security_analysis>
                 - Begin with a thorough analysis of the PR diff BEFORE making any tool calls
