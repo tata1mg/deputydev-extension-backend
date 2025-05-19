@@ -192,6 +192,7 @@ class PRReviewPostProcessor:
                     "commit_id": pr_dto.commit_id,
                     "is_valid": comment["is_valid"],
                     "comment": comment["comment"],
+                    "rationale": comment.get("rationale")
                 },
             }
             comments_to_save.append(PRComments(**comment_info))

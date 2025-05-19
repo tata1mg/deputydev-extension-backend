@@ -18,6 +18,7 @@ class ParsedCommentData(BaseModel):
     model: str
     is_valid: Optional[bool] = None
     is_summarized: bool = False
+    rationale: str
 
 
 class ParsedAggregatedCommentData(BaseModel):
@@ -31,3 +32,4 @@ class ParsedAggregatedCommentData(BaseModel):
     confidence_score: float
     model: str
     is_valid: Optional[bool] = None
+    rationales: List[str]
