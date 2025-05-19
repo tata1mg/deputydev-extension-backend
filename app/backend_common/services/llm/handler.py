@@ -1,9 +1,12 @@
 import asyncio
+from email import message
 import json
+from tkinter import Image
 import traceback
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar, Union
 
+from sanic import file
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -22,6 +25,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
     ToolUseResponseData,
+    FileBlockData,
+    FileContent,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
@@ -50,6 +55,8 @@ from app.backend_common.services.llm.providers.anthropic.llm_provider import Ant
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from deputydev_core.utils.config_manager import ConfigManager
+from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -165,6 +172,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_rendered_messages: UserAndSystemMessages,
         prompt_vars: Dict[str, Any],
         call_chain_category: MessageCallChainCategory,
+        file_vars: Optional[S3Reference],
     ) -> MessageThreadDTO:
         """
         Store LLM query in DB
@@ -178,19 +186,31 @@ class LLMHandler(Generic[PromptFeatures]):
             :return: Message thread
         """
         data_hash = xxhash.xxh64(prompt_rendered_messages.user_message).hexdigest()
+        message_data=[
+            TextBlockData(
+                type=ContentBlockCategory.TEXT_BLOCK,
+                content=TextBlockContent(text=prompt_rendered_messages.user_message),
+                content_vars=prompt_vars if prompt_vars else None,
+            )
+        ]
+        if file_vars and file_vars.key:
+            message_data.append(
+                FileBlockData(
+                    type=ContentBlockCategory.FILE_S3_KEY,
+                    content=FileContent(
+                        type=file_vars.file_type,
+                        s3_key=file_vars.key,
+                    ),
+                )
+            )
+
         message_thread = MessageThreadData(
             session_id=session_id,
             actor=MessageThreadActor.USER,
             query_id=None,
             message_type=MessageType.QUERY,
             conversation_chain=[message.id for message in previous_responses],
-            message_data=[
-                TextBlockData(
-                    type=ContentBlockCategory.TEXT_BLOCK,
-                    content=TextBlockContent(text=prompt_rendered_messages.user_message),
-                    content_vars=prompt_vars if prompt_vars else None,
-                )
-            ],
+            message_data=message_data,
             data_hash=data_hash,
             prompt_type=prompt_type,
             prompt_category=prompt_category,
@@ -287,6 +307,7 @@ class LLMHandler(Generic[PromptFeatures]):
         max_retry: int = MAX_LLM_RETRIES,
         stream: bool = False,
         response_type: Optional[str] = None,
+        file_vars: Optional[S3Reference] = None,
         **kwargs,
     ) -> ParsedLLMCallResponse:
         """
@@ -315,7 +336,7 @@ class LLMHandler(Generic[PromptFeatures]):
             user_and_system_messages = UserAndSystemMessages(system_message=prompt_handler.get_system_prompt())
         for i in range(0, max_retry):
             try:
-                llm_payload = client.build_llm_payload(
+                llm_payload = await client.build_llm_payload(
                     llm_model,
                     prompt=user_and_system_messages,
                     tool_use_response=tool_use_response,
@@ -323,6 +344,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     tools=tools,
                     cache_config=self.cache_config,
                     feedback=feedback,
+                    file_vars=file_vars,
                     **kwargs,
                 )
 
@@ -503,6 +525,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_feature: PromptFeatures,
         llm_model: LLModels,
         prompt_vars: Dict[str, Any],
+        file_vars: Optional[S3Reference] = None,
         tools: Optional[List[ConversationTool]] = None,
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
@@ -521,6 +544,19 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Parsed LLM response
         """
+
+        # if file_vars and file_vars.key:
+        #     try:
+        #         file = await FileProcessor().process_file(file_vars.key)
+        #         if file:
+        #             file_vars.file_data = file.get("content")
+        #             file_vars.file_type = file.get("type")
+        #             file_vars.file_data_base64 = file.get("content_base64")
+        #     except Exception as e:
+        #         raise ValueError(f"Failed to process file: {str(e)}")
+
+        if file_vars and file_vars.key:
+            file_vars.file_type = await FileProcessor().get_file_mimetype(file_vars.key)
 
         prompt_handler = self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
 
@@ -545,6 +581,7 @@ class LLMHandler(Generic[PromptFeatures]):
             llm_model=prompt_handler.model_name,
             prompt_rendered_messages=user_and_system_messages,
             prompt_vars=prompt_vars,
+            file_vars=file_vars,
             call_chain_category=call_chain_category,
         )
         return await self.fetch_and_parse_llm_response(
@@ -557,6 +594,7 @@ class LLMHandler(Generic[PromptFeatures]):
             call_chain_category=call_chain_category,
             tools=tools,
             user_and_system_messages=user_and_system_messages,
+            file_vars=file_vars,
             previous_responses=conversation_chain_messages,
             max_retry=MAX_LLM_RETRIES,
             stream=stream,

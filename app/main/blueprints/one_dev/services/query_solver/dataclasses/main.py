@@ -45,6 +45,12 @@ class LLMModel(Enum):
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
 
+class S3Reference(BaseModel):
+    key: Optional[str] = None
+    get_url: Optional[str] = None
+    file_type: Optional[str] = None
+    file_data: Optional[bytes] = None
+    file_data_base64: Optional[str] = None
 
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
@@ -62,6 +68,7 @@ class QuerySolverInput(BaseModel):
     shell: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    s3_reference: Optional[S3Reference] = None
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):

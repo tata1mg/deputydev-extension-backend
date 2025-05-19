@@ -1,5 +1,6 @@
 import asyncio
 import json
+import mimetypes
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
@@ -45,6 +46,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
+from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
 
 
 class Google(BaseLLMProvider):
@@ -98,7 +101,7 @@ class Google(BaseLLMProvider):
                         parts.append(tool_response)
                         last_tool_use_request = False
 
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     function_call = types.Part.from_function_call(
                         name=content_data.tool_name, args=content_data.tool_input
                     )
@@ -110,7 +113,7 @@ class Google(BaseLLMProvider):
 
         return conversation_turns
 
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model: LLModels,
         prompt: Optional[UserAndSystemMessages] = None,
@@ -121,6 +124,7 @@ class Google(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),
+        file_vars: Optional[S3Reference] = None,
         search_web: Optional[bool] = False,
     ) -> Dict[str, Any]:
         """
@@ -152,10 +156,27 @@ class Google(BaseLLMProvider):
         contents: List[types.Content] = self.get_conversation_turns(previous_responses)
 
         # 3. Handle Current User Prompt
+        user_parts = []
+
         if prompt and prompt.user_message:
+            user_parts.append(types.Part.from_text(text=prompt.user_message))
+
+        if file_vars and file_vars.key and file_vars.file_type and file_vars.file_type.startswith("image/"):
+            try:
+                file = await FileProcessor().process_file(file_vars.key)
+                if file:
+                    file_vars.file_data = file.get("content")
+                    file_vars.file_data_base64 = file.get("content_base64")
+            except Exception as e:
+                raise ValueError(f"Failed to process image: {str(e)}")
+            image_obj = file_vars.file_data
+            user_parts.append(types.Part.from_bytes(data = image_obj, mime_type = file_vars.file_type))
+
+        if user_parts:
             contents.append(
                 types.Content(
-                    role=ConversationRoleGemini.USER.value, parts=[types.Part.from_text(text=prompt.user_message)]
+                    role=ConversationRoleGemini.USER.value,
+                    parts=user_parts
                 )
             )
 
