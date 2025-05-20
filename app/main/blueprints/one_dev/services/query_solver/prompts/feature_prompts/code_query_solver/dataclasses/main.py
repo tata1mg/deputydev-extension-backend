@@ -56,6 +56,11 @@ class ThinkingBlockDelta(BaseModel):
     type: Literal[StreamingContentBlockType.THINKING_BLOCK_DELTA] = StreamingContentBlockType.THINKING_BLOCK_DELTA
     content: ThinkingBlockDeltaContent
 
+    def __add__(self, other: "ThinkingBlockDelta"):
+        return ThinkingBlockDelta(
+            content=ThinkingBlockDeltaContent(thinking_delta=self.content.thinking_delta + other.content.thinking_delta)
+        )
+
 
 class ThinkingBlockEnd(BaseModel):
     type: Literal[StreamingContentBlockType.THINKING_BLOCK_END] = StreamingContentBlockType.THINKING_BLOCK_END
@@ -70,6 +75,11 @@ class CodeBlockStart(BaseModel):
 class CodeBlockDelta(BaseModel):
     type: Literal[StreamingContentBlockType.CODE_BLOCK_DELTA] = StreamingContentBlockType.CODE_BLOCK_DELTA
     content: CodeBlockDeltaContent
+
+    def __add__(self, other: "CodeBlockDelta"):
+        return CodeBlockDelta(
+            content=CodeBlockDeltaContent(code_delta=self.content.code_delta + other.content.code_delta)
+        )
 
 
 class CodeBlockEnd(BaseModel):
@@ -91,6 +101,11 @@ class SummaryBlockStart(BaseModel):
 class SummaryBlockDelta(BaseModel):
     type: Literal[StreamingContentBlockType.SUMMARY_BLOCK_DELTA] = StreamingContentBlockType.SUMMARY_BLOCK_DELTA
     content: SummaryBlockDeltaContent
+
+    def __add__(self, other: "SummaryBlockDelta"):
+        return SummaryBlockDelta(
+            content=SummaryBlockDeltaContent(summary_delta=self.content.summary_delta + other.content.summary_delta)
+        )
 
 
 class SummaryBlockEnd(BaseModel):
