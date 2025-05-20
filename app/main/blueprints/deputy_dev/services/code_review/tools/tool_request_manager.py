@@ -195,7 +195,7 @@ class ToolRequestManager:
                             line_number=line_number_element,
                             confidence_score=float(confidence_score_element),
                             bucket=format_comment_bucket_name(bucket_element),
-                            rationale=rationale
+                            rationale=rationale,
                         )
                     )
                 return {"comments": comments}
