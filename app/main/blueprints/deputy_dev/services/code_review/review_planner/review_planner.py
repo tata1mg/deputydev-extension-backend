@@ -23,7 +23,6 @@ class ReviewPlanner:
         self.session_id = session_id
         self.prompt_vars = prompt_vars
 
-
     async def get_review_plan(self):
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
 
@@ -46,6 +45,5 @@ class ReviewPlanner:
             except Exception as e:
                 AppLogger.log_warn(f"LLM reranking call Attempt {attempt + 1} failed: {e}")
                 await asyncio.sleep(1)  # Optional: add a delay before retrying
-
 
         return response

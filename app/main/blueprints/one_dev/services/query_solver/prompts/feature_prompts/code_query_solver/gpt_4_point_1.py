@@ -33,6 +33,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 )
 from sanic.log import logger
 
+
 class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
@@ -335,20 +336,31 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
         text_block_parser = TextBlockEventParser()
         tool_use_event_parser = ToolUseEventParser()
-        processor = StreamingTextEventProcessor(
-            [
-                tool_use_event_parser,
-                text_block_parser
-            ]
-        )
+        processor = StreamingTextEventProcessor([tool_use_event_parser, text_block_parser])
         time_outside_function = []
         total_time_outside_function = 0
         parsed_events = processor.parse(events)
+        last_event = None
+        count = 0
         async for output_event in parsed_events:
-            t1 = time()
-            yield output_event
-            t2 = time()
-            time_taken = (t2-t1)*1000
-            total_time_outside_function += time_taken
-            time_outside_function.append(time_taken)
-        logger.info(f"Time Breakdown:\n Time outside function: {time_outside_function}, total time outside function {total_time_outside_function}")
+            if last_event:
+                if type(last_event) == type(output_event):
+                    last_event = last_event + output_event
+                    count += 1
+                    if count == 10:
+                        yield last_event
+                        last_event = None
+                        count = 0
+
+                else:
+                    yield last_event
+                    count = 0
+                    last_event = output_event
+            else:
+                count = 0
+                last_event = output_event
+        if last_event:
+            yield last_event
+        logger.info(
+            f"Time Breakdown:\n Time outside function: {time_outside_function}, total time outside function {total_time_outside_function}"
+        )
