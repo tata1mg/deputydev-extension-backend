@@ -49,7 +49,8 @@ class TextBlockParser:
         if self.status == "NOT_STARTED":
             events.append(TextBlockStart())
             self.status = "STARTED"
-        events.append(TextBlockDelta(content=TextBlockDeltaContent(text=content[last_index:])))
+        if content[last_index:]:
+            events.append(TextBlockDelta(content=TextBlockDeltaContent(text=content[last_index:])))
         return events, len(content)
 
     def end(self):
@@ -106,7 +107,8 @@ class CodeBlockParser:
         delta = part["code"][last_index:]
         self.is_diff = part.get("is_diff")
         if not self.is_diff:
-            events.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=delta)))
+            if delta:
+                events.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=delta)))
         else:
             self.diff_line_buffer += delta
             self.diff_buffer += delta
