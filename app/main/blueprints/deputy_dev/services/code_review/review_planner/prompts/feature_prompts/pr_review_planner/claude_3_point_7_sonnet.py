@@ -56,11 +56,9 @@ class Claude3Point7ReviewPlannerPrompt(BaseClaude3Point5SonnetPrompt):
         
         Your output should be a precise, step-by-step plan that another AI can follow to conduct an efficient and thorough code review, even with incomplete information.
         """
-        return  system_message
-
+        return system_message
 
     def get_prompt(self) -> UserAndSystemMessages:
-
         system_message = self.get_system_prompt()
 
         user_message = f"""
@@ -124,7 +122,6 @@ class Claude3Point7ReviewPlannerPrompt(BaseClaude3Point5SonnetPrompt):
 
         return UserAndSystemMessages(system_message=system_message, user_message=user_message)
 
-
     @classmethod
     def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
         final_content: List[Dict[str, Any]] = []
@@ -136,4 +133,3 @@ class Claude3Point7ReviewPlannerPrompt(BaseClaude3Point5SonnetPrompt):
                 final_content.append(content_block.content.text)
 
         return final_content
-
