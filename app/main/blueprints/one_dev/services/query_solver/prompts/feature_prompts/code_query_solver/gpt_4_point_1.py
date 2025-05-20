@@ -342,9 +342,13 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             ]
         )
         time_outside_function = []
-        async for output_event in processor.parse(events):
+        total_time_outside_function = 0
+        parsed_events = processor.parse(events)
+        async for output_event in parsed_events:
             t1 = time()
             yield output_event
             t2 = time()
-            time_outside_function.append((t2-t1)*1000)
-        logger.info(f"Time Breakdown:\n Time outside function: {time_outside_function} String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time} string slicing: {text_block_parser.string_slicing_time}")
+            time_taken = (t2-t1)*1000
+            total_time_outside_function += time_taken
+            time_outside_function.append(time_taken)
+        logger.info(f"Time Breakdown:\n Time outside function: {time_outside_function} String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time} string slicing: {text_block_parser.string_slicing_time}, total time outside function {total_time_outside_function}")
