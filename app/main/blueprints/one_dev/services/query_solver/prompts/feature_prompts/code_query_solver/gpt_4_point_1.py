@@ -344,5 +344,5 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         async for output_event in processor.parse(events):
             yield output_event
         end = time()
-        logger.info(f"Time Breakdown:\n String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time}")
+        logger.info(f"Time Breakdown:\n String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time} string slicing: {text_block_parser.string_slicing_time}")
         logger.info(f"Time taken in complete parsing: {end-start} seconds.")
