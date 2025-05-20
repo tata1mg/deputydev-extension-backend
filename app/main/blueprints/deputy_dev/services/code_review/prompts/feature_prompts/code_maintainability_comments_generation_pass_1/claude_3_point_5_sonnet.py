@@ -82,7 +82,6 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
 
         return system_message
 
-
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = self.get_system_prompt()
 

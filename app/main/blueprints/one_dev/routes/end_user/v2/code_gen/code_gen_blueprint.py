@@ -23,7 +23,8 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
     TerminalCommandEditInput,
-    UserQueryEnhancerInput, LLMModel,
+    UserQueryEnhancerInput,
+    LLMModel,
 )
 from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
@@ -179,16 +180,20 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             last_block = None
             streaming_total_time = 0
             streaming_time = []
+            data_blocks = []
             # push data to stream
             async for data_block in data:
                 last_block = data_block
                 t1 = time()
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
                 t2 = time()
-                total_time = (t2-t1)*1000
+                total_time = (t2 - t1) * 1000
                 streaming_time.append(total_time)
                 streaming_total_time += total_time
-            logger.info(f"Streaming Time for model: {payload.llm_model}: Total Time {streaming_total_time}. broken time: {streaming_time}")
+                data_blocks.append(data_block)
+            logger.info(
+                f"Streaming Time for model: {payload.llm_model}: Total Time {streaming_total_time}. broken time: {streaming_time}"
+            )
 
             # TODO: Sugar code this part
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
@@ -199,7 +204,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             end_data = {"type": "STREAM_END"}
             await push_to_connection_stream(end_data)
             end = time()
-            logger.info(f"Time taken in solving query: {end-start} seconds")
+            logger.info(f"Time taken in solving query: {end - start} seconds")
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
 
