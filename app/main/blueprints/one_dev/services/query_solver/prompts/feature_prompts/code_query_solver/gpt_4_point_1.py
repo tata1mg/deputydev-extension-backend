@@ -10,7 +10,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     ToolUseEventParser,
     TextBlockEventParser,
 )
-
+from app.backend_common.models.dto.message_thread_dto import LLModels
 import json
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
@@ -31,7 +31,7 @@ from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
-from sanic.log import logger
+from torpedo import CONFIG
 
 
 class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
@@ -334,33 +334,36 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     async def parse_streaming_text_block_events(
         cls, events: AsyncIterator[StreamingEvent]
     ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
+        """
+        Parses a stream of events using a processor composed of multiple parsers.
+        Merges consecutive events of the same type and yields after a threshold.
+        """
+
+        # Initialize parsers and processor
         text_block_parser = TextBlockEventParser()
         tool_use_event_parser = ToolUseEventParser()
         processor = StreamingTextEventProcessor([tool_use_event_parser, text_block_parser])
-        time_outside_function = []
-        total_time_outside_function = 0
-        parsed_events = processor.parse(events)
-        last_event = None
-        count = 0
-        async for output_event in parsed_events:
-            if last_event:
-                if type(last_event) == type(output_event):
-                    last_event = last_event + output_event
-                    count += 1
-                    if count == 10:
-                        yield last_event
-                        last_event = None
-                        count = 0
 
-                else:
-                    yield last_event
-                    count = 0
-                    last_event = output_event
+        parsed_events = processor.parse(events)
+        buffered_event = None
+        same_type_count = 0
+
+        max_batch_size = CONFIG.config["LLM_MODELS"][LLModels.GPT_4_POINT_1.value]["STREAM_BATCH_SIZE"]
+
+        async for event in parsed_events:
+            if buffered_event and type(buffered_event) == type(event):
+                buffered_event += event
+                same_type_count += 1
+
+                if same_type_count == max_batch_size:
+                    yield buffered_event
+                    buffered_event = None
+                    same_type_count = 0
             else:
-                count = 0
-                last_event = output_event
-        if last_event:
-            yield last_event
-        logger.info(
-            f"Time Breakdown:\n Time outside function: {time_outside_function}, total time outside function {total_time_outside_function}"
-        )
+                if buffered_event:
+                    yield buffered_event
+                buffered_event = event
+                same_type_count = 1
+
+        if buffered_event:
+            yield buffered_event
