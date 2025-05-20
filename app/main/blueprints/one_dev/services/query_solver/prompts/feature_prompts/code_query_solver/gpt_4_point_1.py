@@ -351,4 +351,4 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             time_taken = (t2-t1)*1000
             total_time_outside_function += time_taken
             time_outside_function.append(time_taken)
-        logger.info(f"Time Breakdown:\n Time outside function: {time_outside_function} String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time} string slicing: {text_block_parser.string_slicing_time}, total time outside function {total_time_outside_function}")
+        logger.info(f"Time Breakdown:\n Time outside function: {time_outside_function}, total time outside function {total_time_outside_function}")
