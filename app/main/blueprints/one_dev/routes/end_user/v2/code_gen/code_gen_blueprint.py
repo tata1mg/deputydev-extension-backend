@@ -23,7 +23,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
     TerminalCommandEditInput,
-    UserQueryEnhancerInput,
+    UserQueryEnhancerInput, LLMModel,
 )
 from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
@@ -177,10 +177,19 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
 
             last_block = None
+            streaming_total_time = 0
+            streaming_time = []
             # push data to stream
             async for data_block in data:
                 last_block = data_block
+                t1 = time()
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
+                t2 = time()
+                total_time = (t2-t1)*1000
+                streaming_time.append(total_time)
+                streaming_total_time += total_time
+            if payload.llm_model == LLMModel.GPT_4_POINT_1:
+                logger.info(f"Streaming Time: Total Time {streaming_total_time}. broken time: {streaming_time}")
 
             # TODO: Sugar code this part
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
