@@ -204,6 +204,7 @@ class TextBlockEventParser:
         self.summary_parser = SummaryBlockParser()
         self.json_parsing_time = 0
         self.string_concatination_time = 0
+        self.string_slicing_time = 0
 
     def can_parse(self, event: StreamingEvent) -> bool:
         return isinstance(event, (TextBlockStart, TextBlockDelta, TextBlockEnd))
@@ -224,14 +225,18 @@ class TextBlockEventParser:
                     yield e
             return
 
-        start = time()
+        start_concat = time()
         self.buffer += event.content.text
-        end = time()
-        self.string_concatination_time += end-start
-        start = time()
+        end_concat = time()
+        concat_time = (end_concat-start_concat)*1000
+        self.string_concatination_time += concat_time
+        print(f"Time Taken in single concat: {concat_time} ms")
+        start_parse = time()
         parsed_response = loads(self.buffer)
-        end = time()
-        self.json_parsing_time += (end-start)
+        end_parse = time()
+        parse_time = (end_parse-start_parse) * 1000
+        self.json_parsing_time += parse_time
+        print(f"Time Taken in single parsing: {parse_time} ms")
         keys = list(parsed_response.keys())
         if keys:
             self.current_block = keys[-1]
@@ -239,43 +244,63 @@ class TextBlockEventParser:
                 self.prev_block = self.current_block
 
         if self.current_block != self.prev_block:
+            print(f"Block changed from {self.prev_block} to {self.current_block}")
+            start_handle = time()
             async for event in self._handle_previous_block(parsed_response):
                 yield event
+            end_handle = time()
+            handle_time = (end_handle-start_handle) * 1000
+            print(f"Time Taken in handling previous block is {handle_time} ms")
             self.prev_block = self.current_block
             self.parsed_index = 0
 
         block_data = parsed_response.get(self.current_block, "")
 
         if self.current_block == "thinking":
+            start_thinking = time()
             delta = block_data[self.parsed_index :]
+            self.string_slicing_time += (time() - start_thinking) * 1000
             for e in self.thinking_parser.parse(delta):
                 yield e
+            end_thinking = time()
+            thinking_time = (end_thinking-start_thinking)*1000
+            logger.info(f"Time Taken in thinking {thinking_time} ms")
             self.parsed_index = len(block_data)
 
         elif self.current_block == "summary":
+            start_summary = time()
             delta = block_data[self.parsed_index :]
+            self.string_slicing_time += (time() - start_summary) * 1000
             for e in self.summary_parser.parse(delta):
                 yield e
             self.parsed_index = len(block_data)
 
         elif self.current_block == "response_parts":
+            start_response_part = time()
             events, self.parsed_index, self.last_processed_response_block = self.response_parser.parse(
                 parsed_response[self.current_block], self.parsed_index, self.last_processed_response_block
             )
             for e in events:
                 yield e
+            end_response_part = time()
+            response_part_time = (end_response_part-start_response_part)*1000
+            logger.info(f"Time taken in response_part parsing: {response_part_time} ms")
 
     async def _handle_previous_block(self, parsed_response):
         block_data = parsed_response.get(self.prev_block, "")
         if self.prev_block == "thinking":
+            st_time = time()
             delta = block_data[self.parsed_index :]
+            self.string_slicing_time += (time() - st_time) * 1000
             for e in self.thinking_parser.parse(delta):
                 yield e
             for e in self.thinking_parser.close():
                 yield e
 
         elif self.prev_block == "summary":
+            st_time = time()
             delta = block_data[self.parsed_index :]
+            self.string_slicing_time += (time() - st_time) * 1000
             for e in self.summary_parser.parse(delta):
                 yield e
             for e in self.summary_parser.close():
