@@ -272,7 +272,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
-        return cls.parse_streaming_text_block_events(events=llm_response.content)
+        events = cls.parse_streaming_text_block_events(events=llm_response.content)
+        return events
 
     @classmethod
     def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
@@ -340,9 +341,14 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 text_block_parser
             ]
         )
-        start = time()
-        async for output_event in processor.parse(events):
+        time_outside_function = []
+        total_time_outside_function = 0
+        parsed_events = processor.parse(events)
+        async for output_event in parsed_events:
+            t1 = time()
             yield output_event
-        end = time()
-        logger.info(f"Time Breakdown:\n String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time} string slicing: {text_block_parser.string_slicing_time}")
-        logger.info(f"Time taken in complete parsing: {end-start} seconds.")
+            t2 = time()
+            time_taken = (t2-t1)*1000
+            total_time_outside_function += time_taken
+            time_outside_function.append(time_taken)
+        logger.info(f"Time Breakdown:\n Time outside function: {time_outside_function} String Concatination: {text_block_parser.string_concatination_time} \njson parsing: {text_block_parser.json_parsing_time} string slicing: {text_block_parser.string_slicing_time}, total time outside function {total_time_outside_function}")
