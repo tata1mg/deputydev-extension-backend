@@ -257,14 +257,20 @@ class TextBlockEventParser:
         block_data = parsed_response.get(self.current_block, "")
 
         if self.current_block == "thinking":
-            start_thinking = time()
+            t1 = time()
             delta = block_data[self.parsed_index :]
-            self.string_slicing_time += (time() - start_thinking) * 1000
-            for e in self.thinking_parser.parse(delta):
+            t2 = time()
+            self.string_slicing_time += (t2 - t1) * 1000
+            parsed_events = list(self.thinking_parser.parse(delta))
+            t3 = time()
+            time_outside_function = []
+            for e in parsed_events:
+                t4 = time()
                 yield e
-            end_thinking = time()
-            thinking_time = (end_thinking-start_thinking)*1000
-            logger.info(f"Time Taken in thinking {thinking_time} ms")
+                t5 = time()
+                time_outside_function.append((t5-t4)*1000)
+            t6 = time()
+            logger.info(f"Time Taken in thinking:  Slicing Time: {(t2-t1)*1000} ms, Parsing Time: {(t3-t2)*1000}, Time outside function: {time_outside_function}, total_yield_time = {(t6-t3)*1000}, total time: {(t6-t1)*1000} ms")
             self.parsed_index = len(block_data)
 
         elif self.current_block == "summary":
