@@ -102,7 +102,7 @@ class CommentBlendingEngine:
                             confidence_score=comment.confidence_score,
                             corrective_code=comment.corrective_code,
                             model=data.model.value,
-                            rationale=comment.rationale
+                            rationale=comment.rationale,
                         )
                     )
 
@@ -199,7 +199,7 @@ class CommentBlendingEngine:
                     model=comment.model,
                     is_valid=comment.is_valid,
                     confidence_score=comment.confidence_score,
-                    rationales=[]
+                    rationales=[],
                 )
 
             # Add the single comment's data to the lists
@@ -292,7 +292,7 @@ class CommentBlendingEngine:
                         model=comment.get("model"),
                         is_valid=comment.get("is_valid"),
                         is_summarized=True,
-                        rationale=comment.get("rationale")
+                        rationale=comment.get("rationale"),
                     )
                 )
             self.filtered_comments = processed_comments
