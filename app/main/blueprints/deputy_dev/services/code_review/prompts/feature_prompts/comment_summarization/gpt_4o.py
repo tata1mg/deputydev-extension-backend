@@ -28,7 +28,6 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
             You are an expert code reviewer responsible for summarizing and consolidating multiple code review comments on the same line of code into clear, actionable feedback.
         """
 
-
         user_message = f"""
             You are acting as an Comments Reviewer for a Pull Request (PR). You will be given with a list of comments that are made on single line in a file, your job is to validate, filter, and summarize the feedback comments provided by multiple specialized agents. Your task involves:
 
