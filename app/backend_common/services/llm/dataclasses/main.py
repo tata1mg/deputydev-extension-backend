@@ -98,11 +98,7 @@ class TextBlockDelta(BaseModel):
     content: TextBlockDeltaContent
 
     def __add__(self, other: "TextBlockDelta"):
-        return TextBlockDelta(
-            content=TextBlockDeltaContent(
-                text=self.content.text + other.content.text
-            )
-        )
+        return TextBlockDelta(content=TextBlockDeltaContent(text=self.content.text + other.content.text))
 
 
 class TextBlockEnd(BaseModel):
@@ -122,9 +118,10 @@ class ToolUseRequestDelta(BaseModel):
     def __add__(self, other: "ToolUseRequestDelta"):
         return ToolUseRequestDelta(
             content=ToolUseRequestDeltaContent(
-                input_params_json_delta = self.content.input_params_json_delta + other.content.input_params_json_delta
+                input_params_json_delta=self.content.input_params_json_delta + other.content.input_params_json_delta
             )
         )
+
 
 class ToolUseRequestEnd(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_END] = StreamingEventType.TOOL_USE_REQUEST_END
