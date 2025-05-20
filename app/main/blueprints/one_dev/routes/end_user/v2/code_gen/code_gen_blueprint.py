@@ -188,8 +188,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                 total_time = (t2-t1)*1000
                 streaming_time.append(total_time)
                 streaming_total_time += total_time
-            if payload.llm_model == LLMModel.GPT_4_POINT_1:
-                logger.info(f"Streaming Time: Total Time {streaming_total_time}. broken time: {streaming_time}")
+            logger.info(f"Streaming Time: Total Time {streaming_total_time}. broken time: {streaming_time}")
 
             # TODO: Sugar code this part
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
