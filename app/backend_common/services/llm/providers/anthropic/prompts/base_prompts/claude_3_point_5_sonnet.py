@@ -140,7 +140,8 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     for on_hold_event in on_hold_events:
                         yield on_hold_event
                     on_hold_events = []
-                    yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
+                    if text_buffer.strip():  # only yield if non-empty after stripping
+                        yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
                     # we clear the buffer
                     text_buffer = ""
 
