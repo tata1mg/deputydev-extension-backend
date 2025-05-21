@@ -73,5 +73,6 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
             }
         },
         "required": ["search_terms"],
+        "additionalProperties": False,
     },
 )
