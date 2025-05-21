@@ -1,5 +1,4 @@
 import asyncio
-import time
 from typing import Optional
 
 from deputydev_core.utils.app_logger import AppLogger
