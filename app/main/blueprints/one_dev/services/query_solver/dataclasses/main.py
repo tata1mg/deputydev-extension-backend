@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
@@ -46,6 +46,23 @@ class LLMModel(Enum):
     GPT_4_POINT_1 = "GPT_4_POINT_1"
 
 
+class ToolMetadataTypes(Enum):
+    MCP = "MCP"
+
+
+class MCPToolMetadata(BaseModel):
+    type: Literal[ToolMetadataTypes.MCP]
+    server_id: str
+    tool_name: str
+
+
+class ClientTool(BaseModel):
+    name: str
+    description: str
+    input_schema: Dict[str, Any]
+    tool_metadata: MCPToolMetadata
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
@@ -62,6 +79,7 @@ class QuerySolverInput(BaseModel):
     shell: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    client_tools: List[ClientTool] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
