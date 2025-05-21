@@ -1,35 +1,35 @@
 {
-    "APM": {
-        "ENABLED": false,
-        "ENVIRONMENT": "",
-        "SECRET_TOKEN": "",
-        "SERVER_TIMEOUT": "30s",
-        "SERVER_URL": "",
-        "SPAN_FRAMES_MIN_DURATION": "5ms",
-        "TRANSACTION_SAMPLE_RATE": 1
+  "APM": {
+    "ENABLED": false,
+    "ENVIRONMENT": "",
+    "SECRET_TOKEN": "",
+    "SERVER_TIMEOUT": "30s",
+    "SERVER_URL": "",
+    "SPAN_FRAMES_MIN_DURATION": "5ms",
+    "TRANSACTION_SAMPLE_RATE": 1
+  },
+  "DD_BROWSER_HOST": "https://deputydev.ai",
+  "SUPABASE": {
+    "URL": "",
+    "KEY": ""
+  },
+  "SESSION_ENCRYPTION_PASSWORD": "",
+  "ORG_INFO": {
+    "TATA_1MG": {
+      "domain": "1mg.com",
+      "team_id": 1,
+      "org_name": "TATA 1mg"
     },
-    "DD_BROWSER_HOST": "https://deputydev.ai",
-    "SUPABASE": {
-        "URL": "",
-        "KEY": ""
+    "TRAYA": {
+      "domain": "traya.com",
+      "team_id": 3,
+      "org_name": "Traya"
     },
-    "SESSION_ENCRYPTION_PASSWORD": "",
-    "ORG_INFO": {
-        "TATA_1MG": {
-            "domain": "1mg.com",
-            "team_id": 1,
-            "org_name": "TATA 1mg"
-        },
-        "TRAYA": {
-            "domain": "traya.com",
-            "team_id": 3,
-            "org_name": "Traya"
-        },
-      "TBO": {
-        "domain": "tbo.com",
-        "team_id": 5,
-        "org_name": "TBO"
-      },
+    "TBO": {
+      "domain": "tbo.com",
+      "team_id": 5,
+      "org_name": "TBO"
+    },
     "DEPUTYDEV_PRIVATE": {
       "team_id": 6,
       "org_name": "DeputyDev Private"
@@ -506,78 +506,6 @@
             "service_path": ""
           }
         }
-      },
-      "3.0.0": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.0.2": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.0.1": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.0.3": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.1.0": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "4.0.0": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "4.0.1": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "4.0.2": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
       }
     },
     "PASSWORD": "",
@@ -624,27 +552,27 @@
     "location": ""
   },
   "MAX_REVIEW_TOOL_ITERATIONS": 25,
-    "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
-    "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
-    "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
-    "WEAVIATE_EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
-    "WEAVIATE_HOST": "127.0.0.1",
-    "WEAVIATE_HTTP_PORT": 8079,
-    "WEAVIATE_GRPC_PORT": 50050,
-    "WEAVIATE_BASE_DIR": "~/.deputydev/weaviate",
-    "WEAVIATE_VERSION": "v1.27.22",
-    "WEAVIATE_STARTUP_TIMEOUT": 30,
-    "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": 30,
-    "WEAVIATE_ENV_VARIABLES": {
-        "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
-        "LIMIT_RESOURCES": true,
-        "LOG_LEVEL": "debug"
-    },
-    "WEAVIATE_CLIENT_TIMEOUTS": {
-            "INIT": 30,
-            "QUERY": 60,
-            "INSERT": 120
-    },
+  "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
+  "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
+  "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
+  "WEAVIATE_EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
+  "WEAVIATE_HOST": "127.0.0.1",
+  "WEAVIATE_HTTP_PORT": 8079,
+  "WEAVIATE_GRPC_PORT": 50050,
+  "WEAVIATE_BASE_DIR": "~/.deputydev/weaviate",
+  "WEAVIATE_VERSION": "v1.27.22",
+  "WEAVIATE_STARTUP_TIMEOUT": 30,
+  "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": 30,
+  "WEAVIATE_ENV_VARIABLES": {
+    "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
+    "LIMIT_RESOURCES": true,
+    "LOG_LEVEL": "debug"
+  },
+  "WEAVIATE_CLIENT_TIMEOUTS": {
+    "INIT": 30,
+    "QUERY": 60,
+    "INSERT": 120
+  },
   "DEFAULT_EXTENSION_SETTINGS": {
     "default_mode": "ask",
     "terminal_settings": {
@@ -655,7 +583,7 @@
     }
   },
   "RELEVANT_CHUNKS": {
-      "CHUNKING_ENABLED": true
+    "CHUNKING_ENABLED": true
   },
   "NUMBER_OF_WORKERS": 1,
   "CODE_GEN_LLM_MODELS": [
@@ -675,5 +603,5 @@
       "name": "CLAUDE_3_POINT_5_SONNET"
     }
   ],
-   "LLM_MAX_RETRY": 2
+  "LLM_MAX_RETRY": 2
 }
