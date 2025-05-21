@@ -14,14 +14,14 @@ TASK_COMPLETION = ConversationTool(
             "status": {
                 "type": "string",
                 "description": "Overall result of the task",
-                "enum": ["completed", "failed", "partial"]
+                "enum": ["completed", "failed", "partial"],
             },
             "message": {
                 "type": "string",
                 "description": "Short human-readable summary (e.g., what was done or why it failed).",
-            }
+            },
         },
         "required": ["status", "message"],
-        "additionalProperties": False
-    }
+        "additionalProperties": False,
+    },
 )
