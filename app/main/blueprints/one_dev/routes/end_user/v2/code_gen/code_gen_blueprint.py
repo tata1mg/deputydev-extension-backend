@@ -285,7 +285,6 @@ async def sse_websocket(request: Request, ws: Any):
                     while True:
                         if local_testing_stream_buffer.get(connection_id):
                             data = local_testing_stream_buffer[connection_id].pop(0)
-                            # Print chunk data for debugging
                             await ws.send(data)
                             if data == json.dumps({"type": "STREAM_END"}):
                                 # remove the connectionid from stream buffer
