@@ -19,9 +19,8 @@ WRITE_TO_FILE = ConversationTool(
             },
             "diff": {
                 "type": "string",
-                "description":  "The content to write to the file. ALWAYS provide the COMPLETE intended content of the file, without any truncation or omissions. You MUST include ALL parts of the file, even if they haven't been modified.",
+                "description": "The content to write to the file. ALWAYS provide the COMPLETE intended content of the file, without any truncation or omissions. You MUST include ALL parts of the file, even if they haven't been modified.",
             },
-
         },
         "required": ["path", "diff"],
     },

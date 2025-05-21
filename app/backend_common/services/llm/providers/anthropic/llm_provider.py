@@ -116,11 +116,8 @@ class Anthropic(BaseLLMProvider):
                         }
                     )
                     last_tool_use_request = True
-            
-            content = [
-                block for block in content
-                if block["type"] != "text" or block["text"].strip()
-            ]
+
+            content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
 
@@ -133,7 +130,7 @@ class Anthropic(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
-        tool_choice: Literal["none", "auto", "required"] = 'auto',
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         **kwargs,

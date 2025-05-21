@@ -24,6 +24,6 @@ RELATED_CODE_SEARCHER = ConversationTool(
             },
         },
         "required": ["search_query"],
-        "additionalProperties": False
+        "additionalProperties": False,
     },
 )
