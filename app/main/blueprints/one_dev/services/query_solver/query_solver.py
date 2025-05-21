@@ -70,7 +70,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
 
-# from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
@@ -86,7 +85,7 @@ MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
 MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING = "4.0.0"
-MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "4.0.0"
+MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "4.1.0"
 
 
 class QuerySolver:
