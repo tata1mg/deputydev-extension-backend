@@ -18,6 +18,7 @@ from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
 from app.backend_common.services.llm.dataclasses.main import (
+    ConversationTool,
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
@@ -217,6 +218,15 @@ class QuerySolver:
             client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH, ">="
         ):
             tools_to_use.append(WEB_SEARCH)
+
+        for client_tool in payload.client_tools:
+            tools_to_use.append(
+                ConversationTool(
+                    name=client_tool.name,
+                    description=client_tool.description,
+                    input_schema=client_tool.input_schema,
+                )
+            )
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
