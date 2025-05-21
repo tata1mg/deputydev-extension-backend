@@ -21,8 +21,7 @@ If tool fails, first try reading the file using other tools like iterative file 
             },
             "diff": {
                 "type": "string",
-                "description":
-                """
+                "description": """
 One or more SEARCH/REPLACE blocks following this exact format:
 
 <<<<<<< SEARCH
@@ -47,11 +46,10 @@ Critical rules:
 4. Special operations:
     * To move code: Use two SEARCH/REPLACE blocks (one to delete from original + one to insert at new location)
     * To delete code: Use empty REPLACE section
-                """
+                """,
             },
-
         },
         "required": ["path", "diff"],
-        "additionalProperties": False
+        "additionalProperties": False,
     },
 )

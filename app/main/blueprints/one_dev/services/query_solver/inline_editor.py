@@ -22,9 +22,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import (
-    REPLACE_IN_FILE
-)
+from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import ITERATIVE_FILE_READER
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
@@ -76,7 +74,7 @@ class InlineEditGenerator:
                     )
                 ),
                 tools=tools_to_use,
-                tool_choice='required',
+                tool_choice="required",
                 stream=False,
             )
 
@@ -99,7 +97,7 @@ class InlineEditGenerator:
                 },
                 previous_responses=[],
                 tools=tools_to_use,
-                tool_choice='required',
+                tool_choice="required",
                 stream=False,
                 session_id=payload.session_id,
             )

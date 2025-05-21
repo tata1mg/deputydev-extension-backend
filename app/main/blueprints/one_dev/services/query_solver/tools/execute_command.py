@@ -61,6 +61,6 @@ EXECUTE_COMMAND = ConversationTool(
             },
         },
         "required": ["command", "requires_approval", "is_long_running"],
-        "additionalProperties": False
+        "additionalProperties": False,
     },
 )

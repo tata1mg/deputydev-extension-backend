@@ -58,7 +58,7 @@ class OpenAI(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
-        tool_choice: Literal["none", "auto", "required"] = 'auto',
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config=None,
         **kwargs,

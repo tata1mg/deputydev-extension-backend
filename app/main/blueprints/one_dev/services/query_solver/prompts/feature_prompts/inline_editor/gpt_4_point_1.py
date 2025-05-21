@@ -198,7 +198,6 @@ Follow these guidelines while using user provided rules or information:
 
     @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Optional[Dict[str, Any]]:
-       
         text = text_block.content.text
         if not text or not text.strip():
             print("LLM response was empty.")
@@ -207,11 +206,7 @@ Follow these guidelines while using user provided rules or information:
             response = json.loads(text)
         except json.JSONDecodeError as e:
             print(f"Failed to parse LLM response as JSON: {e}")
-            return {
-                "error": "Failed to parse LLM response as JSON.",
-                "details": str(e),
-                "raw": text
-            }
+            return {"error": "Failed to parse LLM response as JSON.", "details": str(e), "raw": text}
         code_snippets = []
         for code_block in response["response_parts"]:
             code_snippets.append(
