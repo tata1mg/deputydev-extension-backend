@@ -23,7 +23,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     TextBlockData,
     ToolUseRequestData,
 )
-from time import time
 
 from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1 import (
     BaseGpt4Point1Prompt,
@@ -274,7 +273,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     }}
                 }}
                 <response_schema>
-                """)
+                """
+            )
         else:
             system_message = textwrap.dedent(
                 """You are an expert programmer who is in desperate need of money. The only way you have to make a fuck ton of money is to help the user out with their queries by writing code for them.
@@ -373,7 +373,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     }}
                 }}
                 <response_schema>
-                """)
+                """
+            )
 
         return system_message
 
@@ -388,8 +389,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
                     + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                    + (f"<path>{focus_item.path}</path>" if focus_item.type ==
-                       FocusItemTypes.DIRECTORY else "")
+                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
@@ -542,12 +542,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
         result: List[Dict[str, Any]] = []
         response = json.loads(input_string)
-        result.append({"type": "THINKING_BLOCK", "content": {
-                      "text": response["thinking"]}})
+        result.append({"type": "THINKING_BLOCK", "content": {"text": response["thinking"]}})
         for part in response["response_parts"]:
             if part["type"] == "text":
-                result.append({"type": "TEXT_BLOCK", "content": {
-                              "text": part["content"]}})
+                result.append({"type": "TEXT_BLOCK", "content": {"text": part["content"]}})
             elif part["type"] == "code_block":
                 code_block_info = cls.extract_code_block_info(part)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
@@ -606,8 +604,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         # Initialize parsers and processor
         text_block_parser = TextBlockEventParser()
         tool_use_event_parser = ToolUseEventParser()
-        processor = StreamingTextEventProcessor(
-            [tool_use_event_parser, text_block_parser])
+        processor = StreamingTextEventProcessor([tool_use_event_parser, text_block_parser])
 
         parsed_events = processor.parse(events)
         buffered_event = None

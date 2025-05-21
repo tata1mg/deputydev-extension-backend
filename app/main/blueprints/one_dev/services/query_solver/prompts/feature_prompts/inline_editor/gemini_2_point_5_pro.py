@@ -183,7 +183,6 @@ Here is the user's query for editing - {self.params.get("query")}
                 </user_rules_or_info>
                 """)
 
-
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod

@@ -24,7 +24,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     TerminalCommandEditInput,
     UserQueryEnhancerInput,
-    LLMModel,
 )
 from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
