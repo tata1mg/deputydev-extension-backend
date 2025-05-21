@@ -36,8 +36,8 @@ from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
 
-MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "4.1.0"
-MIN_SUPPORT_CLIENT_VERSION_FOR_TASK_COMPLETION = "4.1.0"
+MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "5.0.0"
+MIN_SUPPORT_CLIENT_VERSION_FOR_TASK_COMPLETION = "5.0.0"
 class InlineEditGenerator:
     def _get_response_from_parsed_llm_response(self, parsed_llm_response: List[Dict[str, Any]]) -> Dict[str, Any]:
         code_snippets: List[Dict[str, Any]] = []
