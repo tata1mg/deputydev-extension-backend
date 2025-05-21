@@ -207,7 +207,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 ## ACT MODE: You are in act mode.
                 Please respond in act mode. In this mode:
                 1. You think a lot before doing anything.
-                2. You need to explain user first a lilttle bit before modifying the file. (important)
+                2. You need to explain user first a lilttle bit before modifying the file. (IMPORTANT)
                 3. The diff you send in replace_in_file or write_to_file tool use should be cleanly applicable to the current code.
                 4. The changes will be automatically applied to the codebase.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
@@ -404,10 +404,22 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             If you are thinking something, please provide that with thinking key.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
 
-            <important>
+            <file_editing_guidelines>
+            First explain the changes you are going to make in the file to user in text blocks.
             If you need to edit a file, please please use the tool replace_in_file.
             If you need to create a new file, please use the tool write_to_file.
-            </important>
+            If you need to run a command, please use the tool execute_command. 
+            Do not use execute_command tool reading files, instead use the file_path_searcher, grep_search and iterative_file_reader tools.
+            Do not use execute_command tool for creating or modifying files, instead use the replace_in_file or write_to_file tool.                                                                        
+            </file_editing_guidelines>
+                                           
+            <extra_important>
+            Do not send the diff in code block for replacing in file.
+            Do not send is_diff true code blocks after modying the file with replace_in_file or write_to_file. NEVER.
+            only normal code blocks with is_diff false are allowed.
+            User doesn't want to see the diff or the code you updated so no need to show them in code_block, editing via tool is enough.
+            </extra_important>
+                                           
 
             Also, please use the tools provided to you to help you with the task.
 
