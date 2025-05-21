@@ -42,7 +42,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         self.params = params
 
     def get_system_prompt(self) -> str:
-        if self.params.get("write_mode"):
+        if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
                 """You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
                 # Communication guidelines:
@@ -219,11 +219,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     "response_parts": [
                         {
                             "type": "code_block",
-                            "content": "programming Language name",
-                            "language": "(always false)",
+                            "language": "code language here",
                             "file_path": "file path here",
-                            "is_diff": false,
-                            "code": "content"
+                            "is_diff": (always false),
+                            "code": "code snippet here"
                         }
                     ]
                 }
