@@ -26,6 +26,8 @@ EXECUTE_COMMAND = ConversationTool(
 
         Also ensure that the command does not require any user input or interaction if possible. (not strictly enforced)
 
+        Do not use this tool for tasks like writing code, or creating or updating files.  (IMPORTANT)
+        
         The tool will return the terminal output in response.
         
     """,
@@ -44,7 +46,7 @@ EXECUTE_COMMAND = ConversationTool(
                 "type": "boolean",
                 "description": (
                     "Whether this command requires explicit user approval. "
-                    "Set to true for operations like installing packages, modifying files, deleting data, "
+                    "Set to true for operations like installing packages, deleting data, "
                     "network actions, or anything with potential side effects. "
                     "Set to false for safe operations like reading files, listing contents, or starting a dev server, etc"
                 ),
@@ -59,5 +61,6 @@ EXECUTE_COMMAND = ConversationTool(
             },
         },
         "required": ["command", "requires_approval", "is_long_running"],
+        "additionalProperties": False
     },
 )
