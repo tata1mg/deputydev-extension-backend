@@ -239,7 +239,7 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
         self.params = params
 
     def get_system_prompt(self) -> str:
-        if self.params.get("write_mode"):
+        if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
                 """You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
                 # Communication guidelines:
