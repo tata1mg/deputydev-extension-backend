@@ -22,18 +22,20 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import (
+    REPLACE_IN_FILE
+)
+from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import ITERATIVE_FILE_READER
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.task_completed import TASK_COMPLETION
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-
-MIN_TOOL_USE_SUPPORTED_VERSION = "1.2.0"
 
 
 class InlineEditGenerator:
@@ -56,11 +58,12 @@ class InlineEditGenerator:
     ) -> Dict[str, Any]:
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
 
-        tools_to_use = []
-        if compare_version(client_data.client_version, MIN_TOOL_USE_SUPPORTED_VERSION, ">="):
-            tools_to_use = [FOCUSED_SNIPPETS_SEARCHER]
-            if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
-                tools_to_use.append(RELATED_CODE_SEARCHER)
+        tools_to_use = [FOCUSED_SNIPPETS_SEARCHER, REPLACE_IN_FILE, ITERATIVE_FILE_READER]
+        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+            tools_to_use.append(RELATED_CODE_SEARCHER)
+        if payload.llm_model and payload.llm_model.value == LLModels.GPT_4_POINT_1.value:
+            tools_to_use.append(TASK_COMPLETION)
+            payload.tool_choice = "required"
 
         if payload.tool_use_response:
             llm_response = await llm_handler.submit_tool_use_response(
@@ -73,6 +76,7 @@ class InlineEditGenerator:
                     )
                 ),
                 tools=tools_to_use,
+                tool_choice='required',
                 stream=False,
             )
 
@@ -95,6 +99,7 @@ class InlineEditGenerator:
                 },
                 previous_responses=[],
                 tools=tools_to_use,
+                tool_choice='required',
                 stream=False,
                 session_id=payload.session_id,
             )
@@ -127,7 +132,7 @@ class InlineEditGenerator:
                 },
                 {
                     "status": "FAILED",
-                    "final_output": str(ex),
+                    "final_output": {"error": str(ex)},
                 },
             )
 
