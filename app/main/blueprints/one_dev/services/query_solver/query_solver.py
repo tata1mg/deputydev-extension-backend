@@ -304,11 +304,19 @@ class QuerySolver:
             ):
                 if payload.tool_use_failed:
                     error_response = tool_response
-                    tool_response = EXCEPTION_RAISED_FALLBACK.format(
-                        tool_name=payload.tool_use_response.tool_name,
-                        error_type=error_response["error_type"],
-                        error_message=error_response["error_message"],
-                    )
+                    tool_name = payload.tool_use_response.tool_name
+                    error_message = error_response.get("error_message", "Unknown error")
+                    error_type = error_response.get("error_type", "UnknownError")
+
+                    if tool_name in {"replace_in_file", "write_to_file"}:
+                        tool_response = error_message
+                    else:
+                        tool_response = EXCEPTION_RAISED_FALLBACK.format(
+                            tool_name=tool_name,
+                            error_type=error_type,
+                            error_message=error_message,
+                        )
+
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
