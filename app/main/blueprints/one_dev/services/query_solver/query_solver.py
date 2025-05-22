@@ -257,7 +257,7 @@ class QuerySolver:
                     "shell": payload.shell,
                     "vscode_env": payload.vscode_env,
                 },
-                file_vars=payload.s3_reference,
+                attachments=payload.attachments,
                 previous_responses=await self.get_previous_message_thread_ids(
                     payload.session_id, payload.previous_query_ids
                 ),
@@ -316,7 +316,6 @@ class QuerySolver:
                             error_type=error_type,
                             error_message=error_message,
                         )
-
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,

@@ -1,12 +1,8 @@
-from math import e
 from typing import Any, Dict, List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import (
-    MessageThreadDTO,
-    MessageType,
-    TextBlockData,
-    FileBlockData
-)
+from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO, MessageType, TextBlockData, FileBlockData
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
 )
@@ -22,7 +18,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.prompts.factory import (
     PromptFeatureFactory,
 )
-from app.backend_common.service_clients.aws_s3.aws_s3_service_client import AWSS3ServiceClient
 
 
 class PastChatsSerializer(BaseSerializer):
@@ -49,7 +44,7 @@ class PastChatsSerializer(BaseSerializer):
                     or not text_data.content_vars
                     or not isinstance((text_data.content_vars or {}).get("query"), str)
                 ):
-                    continue                
+                    continue
 
                 focus_objects: List[Dict[str, Any]] = []
                 if text_data.content_vars.get("focus_items"):
@@ -90,13 +85,21 @@ class PastChatsSerializer(BaseSerializer):
                 if focus_objects:
                     content["focus_items"] = focus_objects
 
-                if len(item.message_data) > 1 and item.message_data[1]:
-                    file_data = item.message_data[1]
-                    if isinstance(file_data, FileBlockData):
-                        for file in file_data.content:
-                            presigned_url = await AWSS3ServiceClient().create_presigned_get_url(file.s3_key)
-                            result = {"get_url": presigned_url, "file_type": file.file_type}
-                    formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3Reference": result, "actor": actor})
+                if len(item.message_data) > 1:
+                    # TODO: This will need to be changed if multi file upload is supported
+                    for message_data_obj in item.message_data[1:]:
+                        if isinstance(message_data_obj, FileBlockData):
+                            attachment_id = message_data_obj.content.attachment_id
+                            attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id)
+                            if not attachment_data:
+                                continue
+                            presigned_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
+                                attachment_data.s3_key
+                            )
+                            result = {"get_url": presigned_url, "file_type": attachment_data.file_type}
+                    formatted_data.append(
+                        {"type": "TEXT_BLOCK", "content": content, "s3Reference": result, "actor": actor}
+                    )
                 else:
                     formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
 
