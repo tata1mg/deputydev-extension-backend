@@ -52,7 +52,7 @@ class ChatFileUpload:
         download_url = upload_and_download_urls[1]
 
         # save chat attachment to database
-        await ChatAttachmentsRepository.store_new_attachment(
+        new_attachment = await ChatAttachmentsRepository.store_new_attachment(
             ChatAttachmentsData(
                 s3_key=s3_key,
                 file_name=file_name,
@@ -61,7 +61,7 @@ class ChatFileUpload:
         )
 
         # Wait for the tasks to complete and assign to return value
-        return PresignedDownloadUrls(upload_url=upload_url, download_url=download_url, s3_key=s3_key)
+        return PresignedDownloadUrls(upload_url=upload_url, download_url=download_url, attachment_id=new_attachment.id)
 
     @classmethod
     async def get_presigned_url_for_fetch_by_s3_key(cls, s3_key: str) -> str:

@@ -14,7 +14,6 @@ class ChatAttachments(Base):
     }
 
     id = fields.IntField(primary_key=True)
-    query_id = fields.IntField()
     s3_key = fields.TextField()
     file_name = fields.TextField()
     file_type = fields.TextField()

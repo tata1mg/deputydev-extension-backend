@@ -613,6 +613,6 @@
             "image/png",
             "image/webp"
         ],
-        "FOLDER_PATH": "chat_images/"
+        "FOLDER_PATH": "chat_images"
     }
 }
