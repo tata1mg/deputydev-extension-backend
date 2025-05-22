@@ -3,8 +3,8 @@ from pydantic import BaseModel
 
 
 class AWSConnectionParams(BaseModel):
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
     endpoint_url: Optional[str] = None
 
 
