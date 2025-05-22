@@ -93,9 +93,10 @@ class PastChatsSerializer(BaseSerializer):
                 if len(item.message_data) > 1 and item.message_data[1]:
                     file_data = item.message_data[1]
                     if isinstance(file_data, FileBlockData):
-                        s3_key = file_data.content.s3_key
-                        presigned_url = await AWSS3ServiceClient().create_presigned_get_url(s3_key)
-                    formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3Reference": {"get_url": presigned_url,"file_type": file_data.content.type}, "actor": actor})
+                        for file in file_data.content:
+                            presigned_url = await AWSS3ServiceClient().create_presigned_get_url(file.s3_key)
+                            result = {"get_url": presigned_url, "file_type": file.file_type}
+                    formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3Reference": result, "actor": actor})
                 else:
                     formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
 

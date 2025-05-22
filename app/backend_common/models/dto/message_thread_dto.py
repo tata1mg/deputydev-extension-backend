@@ -20,14 +20,14 @@ class ContentBlockCategory(str, Enum):
     TEXT_BLOCK = "TEXT_BLOCK"
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
-    FILE_S3_KEY = "FILE_S3_KEY"
+    FILE = "FILE"
 
 
 class TextBlockContent(BaseModel):
     text: str
 
 class FileContent(BaseModel):
-    type: str
+    file_type: str
     s3_key: str
 
 class ToolUseRequestContent(BaseModel):
@@ -48,8 +48,8 @@ class TextBlockData(BaseModel):
     content_vars: Optional[Dict[str, Any]] = None
 
 class FileBlockData(BaseModel):
-    type: Literal[ContentBlockCategory.FILE_S3_KEY] = ContentBlockCategory.FILE_S3_KEY
-    content: FileContent
+    type: Literal[ContentBlockCategory.FILE] = ContentBlockCategory.FILE
+    content: List[FileContent]
 
 class ToolUseRequestData(BaseModel):
     type: Literal[ContentBlockCategory.TOOL_USE_REQUEST] = ContentBlockCategory.TOOL_USE_REQUEST
