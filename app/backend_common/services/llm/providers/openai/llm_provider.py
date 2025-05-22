@@ -261,6 +261,8 @@ class OpenAI(BaseLLMProvider):
         if not response_type:
             response_type = "text"
         model_config = self._get_model_config(model)
+        print(f"Calling OpenAI with model: {model_config['NAME']}, stream: {stream}, response_type: {response_type}")
+        print(f"LLM Payload: {json.dumps(llm_payload, indent=2)}")
         if stream:
             response = await OpenAIServiceClient().get_llm_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
