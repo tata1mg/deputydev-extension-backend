@@ -18,7 +18,6 @@ file_upload_v1_bp = Blueprint("file_upload_v1_bp", url_prefix="/file-upload")
 @authenticate
 async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwargs: Any):
     payload = FileUploadPostInput(**_request.custom_json())
-    print(f"Received payload: {payload}")
     try:
         presigned_urls = await ChatFileUpload.get_presigned_urls_for_upload(
             file_name=payload.file_name,
