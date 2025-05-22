@@ -23,10 +23,12 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
+    FileContent
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    AttachmentsType,
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
@@ -46,7 +48,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
 from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
 
 
@@ -54,7 +55,7 @@ class Google(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.GOOGLE.value)
 
-    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[types.Content]:
+    async def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[types.Content]:
         """
         Formats the conversation history for Google's Gemini model.
 
@@ -108,6 +109,14 @@ class Google(BaseLLMProvider):
                     parts.append(function_call)
                     last_tool_use_request = True
 
+
+                elif isinstance(content_data, list) and content_data and all(isinstance(f, FileContent) for f in content_data):
+                    for file in content_data:
+                        if file.file_type.startswith("image/"):
+                            data = await FileProcessor().process_file(file.s3_key)
+                            parts.append(types.Part.from_bytes(data = data.get("content"), mime_type = file.file_type))
+                        last_tool_use_request = False
+
             if parts:
                 conversation_turns.append(types.Content(role=role, parts=parts))
 
@@ -124,7 +133,7 @@ class Google(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),
-        file_vars: Optional[S3Reference] = None,
+        file_vars: List[AttachmentsType] = [],
         search_web: Optional[bool] = False,
     ) -> Dict[str, Any]:
         """
@@ -153,7 +162,7 @@ class Google(BaseLLMProvider):
             system_instruction = types.Part.from_text(text=prompt.system_message)
 
         # 2. Process Conversation History (previous_responses)
-        contents: List[types.Content] = self.get_conversation_turns(previous_responses)
+        contents: List[types.Content] = await self.get_conversation_turns(previous_responses)
 
         # 3. Handle Current User Prompt
         user_parts = []
@@ -161,16 +170,14 @@ class Google(BaseLLMProvider):
         if prompt and prompt.user_message:
             user_parts.append(types.Part.from_text(text=prompt.user_message))
 
-        if file_vars and file_vars.key and file_vars.file_type and file_vars.file_type.startswith("image/"):
-            try:
-                file = await FileProcessor().process_file(file_vars.key)
-                if file:
-                    file_vars.file_data = file.get("content")
-                    file_vars.file_data_base64 = file.get("content_base64")
-            except Exception as e:
-                raise ValueError(f"Failed to process image: {str(e)}")
-            image_obj = file_vars.file_data
-            user_parts.append(types.Part.from_bytes(data = image_obj, mime_type = file_vars.file_type))
+        if file_vars:
+            for file in file_vars:
+                if file.file_type.startswith("image/"):
+                    try:
+                        data = await FileProcessor().process_file(file.s3_key)
+                    except Exception as e:
+                        raise ValueError(f"Failed to process image: {str(e)}")
+                    user_parts.append(types.Part.from_bytes(data = data.get("content"), mime_type = file.file_type))
 
         if user_parts:
             contents.append(

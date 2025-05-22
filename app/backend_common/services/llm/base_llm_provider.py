@@ -9,12 +9,12 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
+    AttachmentsType,
     ConversationTool,
     PromptCacheConfig,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
 
 class BaseLLMProvider(ABC):
     """Abstract LLM interface"""
@@ -32,7 +32,7 @@ class BaseLLMProvider(ABC):
         tools: Optional[List[ConversationTool]] = None,
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        file_vars: Optional[S3Reference] = None,
+        file_vars: List[AttachmentsType] = [],
         **kwargs,
     ) -> Dict[str, Any]:
         """
