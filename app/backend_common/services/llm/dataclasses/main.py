@@ -9,6 +9,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     ResponseData,
 )
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 
 
 class LLMCallResponseTypes(Enum):
@@ -187,6 +188,7 @@ ParsedLLMCallResponse = Annotated[
     Field(discriminator="type"),
 ]
 
-class AttachmentsType(BaseModel):
-    s3_key: str
-    file_type: str
+
+class ChatAttachmentDataWithObjectBytes(BaseModel):
+    attachment_metadata: ChatAttachmentsDTO
+    object_bytes: bytes

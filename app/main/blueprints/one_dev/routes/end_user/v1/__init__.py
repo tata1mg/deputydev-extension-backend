@@ -29,6 +29,6 @@ blueprints = [
     urls_v1_bp,
     websearch_v1_bp,
     extension_settings_v1_bp,
-    file_upload_v1_bp
+    file_upload_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")

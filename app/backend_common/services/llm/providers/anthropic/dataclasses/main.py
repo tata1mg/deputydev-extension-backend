@@ -1,8 +1,5 @@
-from email.mime import base
 from enum import Enum
 from typing import Any, Dict, Literal, TypedDict, Union
-
-from pydantic import BaseModel
 
 
 class AnthropicResponseTypes(Enum):
