@@ -24,9 +24,19 @@ class ChatAttachmentsRepository:
             raise ex
 
     @classmethod
-    async def store_new_attachment(cls, chat_attachment_data: ChatAttachmentsData):
+    async def store_new_attachment(cls, chat_attachment_data: ChatAttachmentsData) -> ChatAttachmentsDTO:
         try:
-            await DB.create(model=ChatAttachments, payload=chat_attachment_data.model_dump(mode="json"))
+            new_data = await DB.create(model=ChatAttachments, payload=chat_attachment_data.model_dump(mode="json"))
+            if not new_data:
+                raise Exception("Failed to create new chat_attachment in db")
+            return ChatAttachmentsDTO(
+                id=new_data.id,
+                s3_key=new_data.s3_key,
+                file_name=new_data.file_name,
+                file_type=new_data.file_type,
+                created_at=new_data.created_at,
+                updated_at=new_data.updated_at,
+            )
         except Exception as ex:
             logger.error(
                 f"error occurred while creating/updating chat_attachment in db for data : {chat_attachment_data.model_dump(mode='json')}, ex: {ex}"
