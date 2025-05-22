@@ -32,7 +32,7 @@ class ReviewPlanner:
                 llm_response = await llm_handler.start_llm_query(
                     session_id=self.session_id,
                     prompt_feature=PromptFeatures.PR_REVIEW_PLANNER,
-                    llm_model=LLModels.CLAUDE_3_POINT_7_SONNET,
+                    llm_model=LLModels.GPT_O3_MINI,
                     prompt_vars=self.prompt_vars,
                     call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
                 )
@@ -42,7 +42,7 @@ class ReviewPlanner:
                     response = llm_response.parsed_content[0]
                     break
             except Exception as e:
-                AppLogger.log_warn(f"LLM reranking call Attempt {attempt + 1} failed: {e}")
+                AppLogger.log_warn(f"Review Planner call Attempt {attempt + 1} failed: {e}")
                 await asyncio.sleep(1)  # Optional: add a delay before retrying
 
         return response

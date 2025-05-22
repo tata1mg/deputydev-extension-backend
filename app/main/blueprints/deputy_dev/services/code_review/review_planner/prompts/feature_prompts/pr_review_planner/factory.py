@@ -3,12 +3,13 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 
-from .claude_3_point_7_sonnet import Claude3Point7ReviewPlannerPrompt
+from .gpt_o3_mini import GptO3MiniReviewPlannerPrompt
+
 
 
 class PRReviewPromptFeatureFactory(BaseFeaturePromptFactory):
     pr_review_planner_prompts = {
-        LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7ReviewPlannerPrompt,
+        LLModels.GPT_O3_MINI: GptO3MiniReviewPlannerPrompt,
     }
 
     @classmethod
