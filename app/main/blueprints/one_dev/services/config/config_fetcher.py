@@ -135,6 +135,10 @@ class ConfigFetcher:
             },
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
             "VSCODE_LOGS_RETENTION_DAYS": 7,
+            "CHAT_IMAGE_UPLOAD": {
+                "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+            },
         },
     }
 
