@@ -16,11 +16,6 @@ class AWSS3ServiceClient:
         self.aws_client_manager = AWSClientManager(
             aws_service_name=self.aws_service_name,
             region_name=self.region_name,
-            aws_connection_params=AWSConnectionParams(
-                endpoint_url="http://localhost:4566",
-                aws_access_key_id="DUMMY_ACCESS_KEY_ID",
-                aws_secret_access_key="DUMMY_SECRET_ACCESS_KEY",
-            ),
         )
 
     async def create_presigned_post_url(
