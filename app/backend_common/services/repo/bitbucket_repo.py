@@ -39,16 +39,9 @@ class BitbucketRepo(BaseRepo):
     def get_remote_host():
         return "bitbucket.org"
 
-    # async def get_repo_url(self):
-    #     self.token = await self.auth_handler.access_token()
-    #     return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
-
-    #TODO Hacky sol'n for 1mg, need to update later to cater with and without ssh
     async def get_repo_url(self):
         self.token = await self.auth_handler.access_token()
-        # HTTPS URL: git clone https://ankitrana11@bitbucket.org/tata1mg/merch_service.git
-        # SSH URL:   git clone git@bitbucket.org:tata1mg/merch_service.git
-        return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
+        return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
 
     def get_remote_url_without_token(self):
         return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
