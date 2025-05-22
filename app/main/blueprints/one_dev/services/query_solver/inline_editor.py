@@ -38,6 +38,8 @@ from .prompts.factory import PromptFeatureFactory
 
 MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "5.0.0"
 MIN_SUPPORT_CLIENT_VERSION_FOR_TASK_COMPLETION = "5.0.0"
+
+
 class InlineEditGenerator:
     def _get_response_from_parsed_llm_response(self, parsed_llm_response: List[Dict[str, Any]]) -> Dict[str, Any]:
         code_snippets: List[Dict[str, Any]] = []
@@ -66,7 +68,7 @@ class InlineEditGenerator:
             if payload.llm_model and LLModels(payload.llm_model.value) == LLModels.GPT_4_POINT_1:
                 tools_to_use.append(TASK_COMPLETION)
                 payload.tool_choice = "required"
-            
+
         if compare_version(client_data.client_version, MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR, ">="):
             tools_to_use.append(REPLACE_IN_FILE)
 

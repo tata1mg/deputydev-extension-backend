@@ -1,6 +1,5 @@
 import asyncio
 import json
-import mimetypes
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
@@ -23,12 +22,11 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    FileContent
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    AttachmentsType,
+    ChatAttachmentDataWithObjectBytes,
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
@@ -48,14 +46,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 
 class Google(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.GOOGLE.value)
 
-    async def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[types.Content]:
+    async def get_conversation_turns(
+        self,
+        previous_responses: List[MessageThreadDTO],
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
+    ) -> List[types.Content]:
         """
         Formats the conversation history for Google's Gemini model.
 
@@ -109,13 +111,17 @@ class Google(BaseLLMProvider):
                     parts.append(function_call)
                     last_tool_use_request = True
 
-
-                elif isinstance(content_data, list) and content_data and all(isinstance(f, FileContent) for f in content_data):
-                    for file in content_data:
-                        if file.file_type.startswith("image/"):
-                            data = await FileProcessor().process_file(file.s3_key)
-                            parts.append(types.Part.from_bytes(data = data.get("content"), mime_type = file.file_type))
-                        last_tool_use_request = False
+                else:
+                    attachment_id = content_data.attachment_id
+                    attachment_data = await attachment_data_task_map[attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        parts.append(
+                            types.Part.from_bytes(
+                                data=attachment_data.object_bytes,
+                                mime_type=attachment_data.attachment_metadata.file_type,
+                            )
+                        )
+                    last_tool_use_request = False
 
             if parts:
                 conversation_turns.append(types.Content(role=role, parts=parts))
@@ -125,7 +131,9 @@ class Google(BaseLLMProvider):
     async def build_llm_payload(
         self,
         llm_model: LLModels,
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
         prompt: Optional[UserAndSystemMessages] = None,
+        attachments: List[Attachment] = [],
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
@@ -134,8 +142,7 @@ class Google(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),
-        file_vars: List[AttachmentsType] = [],
-        search_web: Optional[bool] = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -153,6 +160,8 @@ class Google(BaseLLMProvider):
         Returns:
             Dict[str, Any]: Payload containing 'contents', 'tools', 'system_instruction', 'tool_config'.
         """
+
+        search_web = kwargs.get("search_web", False)
         if tools and search_web:
             raise BadRequestException("Functional tools and Web search tool can not be used together")
         model_config = self._get_model_config(llm_model)
@@ -164,30 +173,26 @@ class Google(BaseLLMProvider):
             system_instruction = types.Part.from_text(text=prompt.system_message)
 
         # 2. Process Conversation History (previous_responses)
-        contents: List[types.Content] = await self.get_conversation_turns(previous_responses)
+        contents: List[types.Content] = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
 
         # 3. Handle Current User Prompt
-        user_parts = []
+        user_parts: List[types.Part] = []
 
         if prompt and prompt.user_message:
             user_parts.append(types.Part.from_text(text=prompt.user_message))
 
-        if file_vars:
-            for file in file_vars:
-                if file.file_type.startswith("image/"):
-                    try:
-                        data = await FileProcessor().process_file(file.s3_key)
-                    except Exception as e:
-                        raise ValueError(f"Failed to process image: {str(e)}")
-                    user_parts.append(types.Part.from_bytes(data = data.get("content"), mime_type = file.file_type))
+        if attachments:
+            for attachment in attachments:
+                attachment_data = await attachment_data_task_map[attachment.attachment_id]
+                if attachment_data:
+                    user_parts.append(
+                        types.Part.from_bytes(
+                            data=attachment_data.object_bytes, mime_type=attachment_data.attachment_metadata.file_type
+                        )
+                    )
 
         if user_parts:
-            contents.append(
-                types.Content(
-                    role=ConversationRoleGemini.USER.value,
-                    parts=user_parts
-                )
-            )
+            contents.append(types.Content(role=ConversationRoleGemini.USER.value, parts=user_parts))
 
         # 4. Handle Tool Use Response (if provided for this specific call)
         if tool_use_response:

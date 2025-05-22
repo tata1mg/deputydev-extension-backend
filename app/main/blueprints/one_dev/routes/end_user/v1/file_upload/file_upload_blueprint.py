@@ -1,55 +1,24 @@
-from sanic import Blueprint, response
+from sanic import Blueprint
 from torpedo import Request, send_response
-from sanic.request import File
-import uuid
-import io
-import tempfile
-import aiofiles
-import urllib.parse
-from app.main.blueprints.one_dev.models.dto.file_upload_input import FileUploadPostInput, FileUploadGetInput
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.one_dev.utils.client.client_validator import (
-    validate_client_version,
-)
-from app.main.blueprints.one_dev.utils.session import ensure_session_id
-from app.backend_common.service_clients.aws_s3.aws_s3_service_client import AWSS3ServiceClient
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.main.blueprints.one_dev.models.dto.file_upload_input import FileUploadPostInput
+from typing import Any
+from torpedo.exceptions import HTTPRequestException
 
 
 file_upload_v1_bp = Blueprint("file_upload_v1_bp", url_prefix="/file-upload")
 
-    
+
 @file_upload_v1_bp.route("/get-presigned-post-url", methods=["POST"])
-async def get_presigned_post_url(_request: Request, **kwargs):
-
-    payload = _request.custom_json()
-    payload = FileUploadPostInput(**payload)
-
-    file_extension = payload.file_name.split(".")[-1] if payload.file_name else None
-
-    s3_key = f"{uuid.uuid4()}.{file_extension}"
-
+async def get_presigned_post_url(_request: Request, **kwargs: Any):
+    payload = FileUploadPostInput(**_request.custom_json())
     try:
-        presigned_url = await AWSS3ServiceClient().create_presigned_post_url(s3_key, payload.file_type)
-    except Exception as e:
-        raise Exception(e)
-    return send_response(presigned_url)
-
-
-
-@file_upload_v1_bp.route("/get-presigned-get-url", methods=["POST"])
-async def get_presigned_get_url(_request: Request, **kwargs):
-
-    payload = _request.custom_json()
-    payload = FileUploadGetInput(**payload)
-
-    try:
-        s3_key = payload.file_name
-        presigned_url = await AWSS3ServiceClient().create_presigned_get_url(
-            object_name=s3_key,
-            expiration=600
+        presigned_urls = await ChatFileUpload.get_presigned_urls_for_upload(
+            file_name=payload.file_name,
+            file_type=payload.file_type,
         )
-    except Exception as e:
-        raise Exception(e)
-
-    return send_response(presigned_url)
-
+        return send_response(presigned_urls.model_dump(mode="json"))
+    except Exception as _ex:
+        raise HTTPRequestException(
+            f"Error generating presigned URL: {_ex}",
+        )

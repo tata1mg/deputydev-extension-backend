@@ -1,12 +1,9 @@
 import asyncio
-from email import message
 import json
-from tkinter import Image
 import traceback
 from enum import Enum
 from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union
 
-from sanic import file
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -31,8 +28,10 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -46,7 +45,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
-    AttachmentsType
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
@@ -56,8 +54,8 @@ from app.backend_common.services.llm.providers.anthropic.llm_provider import Ant
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from deputydev_core.utils.config_manager import ConfigManager
-from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachments
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -173,7 +171,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_rendered_messages: UserAndSystemMessages,
         prompt_vars: Dict[str, Any],
         call_chain_category: MessageCallChainCategory,
-        file_vars: Optional[List[AttachmentsType]],
+        attachmnts: Optional[List[Attachment]],
     ) -> MessageThreadDTO:
         """
         Store LLM query in DB
@@ -187,28 +185,21 @@ class LLMHandler(Generic[PromptFeatures]):
             :return: Message thread
         """
         data_hash = xxhash.xxh64(prompt_rendered_messages.user_message).hexdigest()
-        message_data=[
+        message_data: List[Union[FileBlockData, TextBlockData]] = [
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
                 content=TextBlockContent(text=prompt_rendered_messages.user_message),
                 content_vars=prompt_vars if prompt_vars else None,
             )
         ]
-        if file_vars:
-            attachments = []
-            for file in file_vars:
-                attachments.append(
-                    FileContent(
-                        file_type=file.file_type,
-                        s3_key=file.s3_key
+        if attachmnts:
+            for file in attachmnts:
+                message_data.append(
+                    FileBlockData(
+                        type=ContentBlockCategory.FILE,
+                        content=FileContent(attachment_id=file.attachment_id),
                     )
                 )
-            message_data.append(
-                FileBlockData(
-                    type=ContentBlockCategory.FILE,
-                    content=attachments,
-                )
-            )
 
         message_thread = MessageThreadData(
             session_id=session_id,
@@ -296,6 +287,53 @@ class LLMHandler(Generic[PromptFeatures]):
                 query_id=query_id,
             )
 
+    async def _get_attachment_data_and_metadata(
+        self,
+        attachment_id: int,
+    ) -> ChatAttachmentDataWithObjectBytes:
+        """
+        Get attachment data and metadata
+        """
+
+        attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
+        if not attachment_data:
+            raise ValueError(f"Attachment with id {attachment_id} not found")
+
+        s3_key = attachment_data.s3_key
+        object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
+
+        return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
+
+    def _get_attachment_data_task_map(
+        self,
+        previous_responses: List[MessageThreadDTO],
+        current_attachments: List[Attachment],
+    ) -> Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]]:
+        """
+        map attachment id to attachment data fetch task
+        """
+
+        previous_attachments: List[Attachment] = []
+        for message in previous_responses:
+            for data in message.message_data:
+                if data.type == ContentBlockCategory.FILE:
+                    previous_attachments.append(
+                        Attachment(
+                            attachment_id=data.content.attachment_id,
+                        )
+                    )
+
+        all_attachments = previous_attachments + current_attachments
+
+        attachment_data_task_map: Dict[int, Any] = {}
+        for attachment in all_attachments:
+            if attachment.attachment_id not in attachment_data_task_map:
+                attachment_data_task_map[attachment.attachment_id] = asyncio.create_task(
+                    self._get_attachment_data_and_metadata(attachment_id=attachment.attachment_id)
+                )
+
+        return attachment_data_task_map
+
     async def fetch_and_parse_llm_response(
         self,
         client: BaseLLMProvider,
@@ -314,8 +352,8 @@ class LLMHandler(Generic[PromptFeatures]):
         max_retry: int = MAX_LLM_RETRIES,
         stream: bool = False,
         response_type: Optional[str] = None,
-        file_vars: List[AttachmentsType] = [],
-        **kwargs,
+        attachments: List[Attachment] = [],
+        **kwargs: Any,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -339,6 +377,12 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Parsed LLM response
         """
+        # check and get attachment data task map
+        attachment_data_task_map = self._get_attachment_data_task_map(
+            previous_responses=previous_responses,
+            current_attachments=attachments,
+        )
+
         if not user_and_system_messages:
             user_and_system_messages = UserAndSystemMessages(system_message=prompt_handler.get_system_prompt())
         for i in range(0, max_retry):
@@ -346,13 +390,14 @@ class LLMHandler(Generic[PromptFeatures]):
                 llm_payload = await client.build_llm_payload(
                     llm_model,
                     prompt=user_and_system_messages,
+                    attachments=attachments,
                     tool_use_response=tool_use_response,
                     previous_responses=previous_responses,
                     tools=tools,
                     tool_choice=tool_choice,
                     cache_config=self.cache_config,
                     feedback=feedback,
-                    file_vars=file_vars,
+                    attachment_data_task_map=attachment_data_task_map,
                     **kwargs,
                 )
 
@@ -533,7 +578,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_feature: PromptFeatures,
         llm_model: LLModels,
         prompt_vars: Dict[str, Any],
-        file_vars: List[Attachments] = [],
+        attachments: List[Attachment] = [],
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
@@ -553,13 +598,6 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Parsed LLM response
         """
-
-        attachments_data:List[AttachmentsType] = []
-        if file_vars:
-            for file in file_vars:
-                file_type = await FileProcessor().get_file_mimetype(file.s3_key)
-                attachment = AttachmentsType(s3_key=file.s3_key, file_type=file_type)
-                attachments_data.append(attachment)
 
         prompt_handler = self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
 
@@ -584,7 +622,7 @@ class LLMHandler(Generic[PromptFeatures]):
             llm_model=prompt_handler.model_name,
             prompt_rendered_messages=user_and_system_messages,
             prompt_vars=prompt_vars,
-            file_vars=attachments_data,
+            attachmnts=attachments,
             call_chain_category=call_chain_category,
         )
         return await self.fetch_and_parse_llm_response(
@@ -598,7 +636,7 @@ class LLMHandler(Generic[PromptFeatures]):
             tools=tools,
             tool_choice=tool_choice,
             user_and_system_messages=user_and_system_messages,
-            file_vars=attachments_data,
+            attachments=attachments,
             previous_responses=conversation_chain_messages,
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
