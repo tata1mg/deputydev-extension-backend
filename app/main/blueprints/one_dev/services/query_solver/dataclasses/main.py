@@ -45,8 +45,10 @@ class LLMModel(Enum):
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
 
-class Attachments(BaseModel):
-    s3_key: str
+
+class Attachment(BaseModel):
+    attachment_id: int
+
 
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
@@ -65,7 +67,7 @@ class QuerySolverInput(BaseModel):
     vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
-    s3_reference: Optional[List[Attachments]] = []
+    attachments: List[Attachment] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):

@@ -12,7 +12,6 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
-    FileContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -29,7 +28,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    AttachmentsType,
+    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -54,14 +53,20 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
-from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+
 
 class Anthropic(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.ANTHROPIC.value)
         self.anthropic_client = None
 
-    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[ConversationTurn]:
+    async def get_conversation_turns(
+        self,
+        previous_responses: List[MessageThreadDTO],
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
+    ) -> List[ConversationTurn]:
         """
         Formats the conversation as required by the specific LLM.
         Args:
@@ -119,20 +124,22 @@ class Anthropic(BaseLLMProvider):
                     )
                     last_tool_use_request = True
 
-                elif isinstance(content_data, list) and content_data and all(isinstance(f, FileContent) for f in content_data):
-                    for file in content_data:
-                        if file.file_type.startswith("image/"):
-                            content.append(
-                                {
-                                    "type": "image",
-                                    "source": {
-                                        "type": "base64",
-                                        "media_type": file.file_type,
-                                        "data": file.s3_key
-                                    }
-                                }
-                            )
-                        last_tool_use_request = False
+                # handle file attachments
+                else:
+                    attachment_id = content_data.attachment_id
+                    attachment_data = await attachment_data_task_map[attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        content.append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": attachment_data.attachment_metadata.file_type,
+                                    "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
+                                },
+                            }
+                        )
+                    last_tool_use_request = False
 
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
@@ -143,40 +150,40 @@ class Anthropic(BaseLLMProvider):
     async def build_llm_payload(
         self,
         llm_model: LLModels,
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
         prompt: Optional[UserAndSystemMessages] = None,
+        attachments: List[Attachment] = [],
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
-        feedback: str = None,
+        feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        file_vars: List[AttachmentsType] = [],
-        **kwargs,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
-        messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
+        messages: List[ConversationTurn] = await self.get_conversation_turns(
+            previous_responses, attachment_data_task_map
+        )
 
         # add system and user messages to conversation
         if prompt and prompt.user_message:
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
-            if file_vars:
-                for file in file_vars:
-                    if file.file_type.startswith("image/"):
-                        # try:
-                        #     data = await FileProcessor().process_file(file.s3_key)
-                        # except Exception as e:
-                        #     raise ValueError(f"Failed to process image: {str(e)}")
-                        user_message.content.append(
+            if attachments:
+                for attachment in attachments:
+                    attachment_data = await attachment_data_task_map[attachment.attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        user_message.content.append(  # type: ignore
                             {
                                 "type": "image",
                                 "source": {
                                     "type": "base64",
-                                    "media_type": file.file_type,
-                                    "data": file.s3_key
-                                }
+                                    "media_type": attachment_data.attachment_metadata.file_type,
+                                    "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
+                                },
                             }
                         )
             messages.append(user_message)
@@ -200,25 +207,6 @@ class Anthropic(BaseLLMProvider):
             )
             messages.append(feedback_message)
 
-        image_tasks = []
-        image_contents = []
-
-        for message in messages:
-            for content in message.content:
-                if isinstance(content, dict) and content.get("type") == "image":
-                    s3_key = content["source"]["data"]
-                    task = asyncio.create_task(FileProcessor().process_file(s3_key))
-                    image_tasks.append(task)
-                    image_contents.append(content)
-                
-
-        if image_tasks:
-            results = await asyncio.gather(*image_tasks, return_exceptions=True)
-            for content, result in zip(image_contents, results):
-                if isinstance(result, Exception):
-                    raise ValueError(f"Failed to process image: {str(result)}")
-                content["source"]["data"] = result.get("content_base64")
-        
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []
 

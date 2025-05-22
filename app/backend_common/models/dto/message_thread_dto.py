@@ -26,9 +26,10 @@ class ContentBlockCategory(str, Enum):
 class TextBlockContent(BaseModel):
     text: str
 
+
 class FileContent(BaseModel):
-    file_type: str
-    s3_key: str
+    attachment_id: int
+
 
 class ToolUseRequestContent(BaseModel):
     tool_input: Dict[str, Any]
@@ -47,9 +48,11 @@ class TextBlockData(BaseModel):
     content: TextBlockContent
     content_vars: Optional[Dict[str, Any]] = None
 
+
 class FileBlockData(BaseModel):
     type: Literal[ContentBlockCategory.FILE] = ContentBlockCategory.FILE
-    content: List[FileContent]
+    content: FileContent
+
 
 class ToolUseRequestData(BaseModel):
     type: Literal[ContentBlockCategory.TOOL_USE_REQUEST] = ContentBlockCategory.TOOL_USE_REQUEST

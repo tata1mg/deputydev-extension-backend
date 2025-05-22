@@ -325,11 +325,9 @@
         }
     },
     "AWS": {
-        "AWS_ACCESS_KEY_ID": "",
-        "AWS_SECRET_ACCESS_KEY": "",
-        "AWS_REGION": "ap-south-1",
-        "BEDROCK_SERVICE_NAME": "bedrock-runtime",
-        "BEDROCK_READ_TIMEOUT": 1000
+        "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
+        "SECRET_ACCESS_KEY": "DUMMY_SECRET_ACCESS_KEY",
+        "SESSION_TOKEN": ""
     },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
@@ -603,5 +601,18 @@
             "name": "CLAUDE_3_POINT_5_SONNET"
         }
     ],
-    "LLM_MAX_RETRY": 2
+    "LLM_MAX_RETRY": 2,
+    "CHAT_IMAGE_UPLOAD": {
+        "AWS_BUCKET_NAME": "deputydev",
+        "AWS_REGION": "ap-south-1",
+        "PRESIGNED_URL_EXPIRY": 600,
+        "MAX_BYTES": 5242880,
+        "SUPPORTED_MIMETYPES": [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+        ],
+        "FOLDER_PATH": "chat_images/"
+    }
 }
