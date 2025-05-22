@@ -27,7 +27,7 @@ class BaseSerializer(ABC):
         self.raw_data = raw_data
         self.type = type
 
-    def get_processed_data(self) -> List[Dict[str, Any]]:
+    async def get_processed_data(self) -> List[Dict[str, Any]]:
         """
         Processes the raw data and returns the serialized output.
 
@@ -35,10 +35,10 @@ class BaseSerializer(ABC):
            List[Dict[str, Any]]: The processed data.
         """
 
-        return self.process_raw_data(self.raw_data, self.type)
+        return await self.process_raw_data(self.raw_data, self.type)
 
     @abstractmethod
-    def process_raw_data(self, raw_data: List[Dict[str, Any]], type: SerializerTypes) -> List[Dict[str, Any]]:
+    async def process_raw_data(self, raw_data: List[Dict[str, Any]], type: SerializerTypes) -> List[Dict[str, Any]]:
         """
         Abstract method to process raw data. Must be implemented by subclasses.
 
