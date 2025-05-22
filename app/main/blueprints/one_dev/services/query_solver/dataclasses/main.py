@@ -46,6 +46,10 @@ class LLMModel(Enum):
     GPT_4_POINT_1 = "GPT_4_POINT_1"
 
 
+class Attachment(BaseModel):
+    attachment_id: int
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
@@ -63,6 +67,7 @@ class QuerySolverInput(BaseModel):
     vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    attachments: List[Attachment] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
