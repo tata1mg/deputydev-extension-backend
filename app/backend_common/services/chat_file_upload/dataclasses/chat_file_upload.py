@@ -1,7 +1,8 @@
+from typing import Dict, Any
 from pydantic import BaseModel
 
 
 class PresignedDownloadUrls(BaseModel):
-    upload_url: str
+    upload_url: Dict[str, Any]
     download_url: str
-    s3_key: str
+    attachment_id: int

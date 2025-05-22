@@ -3,6 +3,8 @@ from typing import Any
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
 from types_aiobotocore_s3.client import S3Client
 
+from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams
+
 
 class AWSS3ServiceClient:
     # constructor
@@ -14,6 +16,11 @@ class AWSS3ServiceClient:
         self.aws_client_manager = AWSClientManager(
             aws_service_name=self.aws_service_name,
             region_name=self.region_name,
+            aws_connection_params=AWSConnectionParams(
+                endpoint_url="http://localhost:4566",
+                aws_access_key_id="DUMMY_ACCESS_KEY_ID",
+                aws_secret_access_key="DUMMY_SECRET_ACCESS_KEY",
+            ),
         )
 
     async def create_presigned_post_url(
@@ -26,13 +33,13 @@ class AWSS3ServiceClient:
         fields = {"Content-Type": content_type, "acl": "private", "key": s3_key}
         response = await s3_client.generate_presigned_post(
             Bucket=self.bucket_name,
-            Key=object_name,
+            Key=s3_key,
             Fields=fields,
             Conditions=[
                 {"Content-Type": content_type},
                 ["content-length-range", min_bytes, max_bytes],
                 {"acl": "private"},
-                ["starts-with", "$key", object_name],
+                ["starts-with", "$key", s3_key],
             ],
             ExpiresIn=expiry,
         )
