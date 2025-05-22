@@ -65,6 +65,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GEMINI_2_POINT_5_PRO: Google,
         LLModels.GEMINI_2_POINT_0_FLASH: Google,
         LLModels.GPT_4_POINT_1: OpenAI,
+        LLModels.GPT_O3_MINI: OpenAI,
     }
 
     def __init__(
