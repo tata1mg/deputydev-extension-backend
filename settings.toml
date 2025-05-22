@@ -37,7 +37,7 @@ inclusions = []
 confidence_score = 0.9              # Threshold of confidence_score for a comment to qualify to be made on PR
 objective = "Responsibility of this agent is checking security issues"
 is_custom_agent = false
-is_corrective_code_enabled = false
+is_corrective_code_enabled = true
 
 [code_review_agent.agents.code_communication]
 agent_id = "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"
@@ -51,7 +51,7 @@ inclusions = []
 confidence_score = 0.98
 objective = "Responsibility of this agent is checking code_communication issues"
 is_custom_agent = false
-is_corrective_code_enabled = false
+is_corrective_code_enabled = true
 
 [code_review_agent.agents.performance_optimisation]
 agent_id = "5932a405-96cb-4508-bfd4-443397583f95"
@@ -65,7 +65,7 @@ inclusions = []
 confidence_score = 0.9
 objective = "Responsibility of this agent is checking performance issues"
 is_custom_agent = false
-is_corrective_code_enabled = false
+is_corrective_code_enabled = true
 
 [code_review_agent.agents.code_maintainability]
 agent_id = "ccfe1b06-f5f2-42b1-a209-4d560edbd5f4"
@@ -79,7 +79,7 @@ inclusions = []
 confidence_score = 0.9
 objective = "Responsibility of this agent is checking code maintainability issues"
 is_custom_agent = false
-is_corrective_code_enabled = false
+is_corrective_code_enabled = true
 
 [code_review_agent.agents.error]
 agent_id = "4a3f593d-73cd-41d6-85a0-dc96c17ce9bb"
@@ -93,7 +93,7 @@ inclusions = []
 confidence_score = 0.9
 objective = "Responsibility of this agent is checking errors in code"
 is_custom_agent = false
-is_corrective_code_enabled = false
+is_corrective_code_enabled = true
 
 [code_review_agent.agents.business_logic_validation]
 agent_id = "9fa43db8-4a3d-43e8-95c0-de96ed58e606"
@@ -107,7 +107,7 @@ inclusions = []
 confidence_score = 0.9
 objective = "Responsibility of this agent is checking business logic validation"
 is_custom_agent = false
-is_corrective_code_enabled = false
+is_corrective_code_enabled = true
 
 [chat]
 enable = true

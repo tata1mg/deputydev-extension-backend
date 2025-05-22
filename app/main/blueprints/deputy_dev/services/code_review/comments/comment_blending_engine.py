@@ -102,6 +102,7 @@ class CommentBlendingEngine:
                             confidence_score=comment.confidence_score,
                             corrective_code=comment.corrective_code,
                             model=data.model.value,
+                            rationale=comment.rationale,
                         )
                     )
 
@@ -198,6 +199,7 @@ class CommentBlendingEngine:
                     model=comment.model,
                     is_valid=comment.is_valid,
                     confidence_score=comment.confidence_score,
+                    rationales=[],
                 )
 
             # Add the single comment's data to the lists
@@ -208,6 +210,7 @@ class CommentBlendingEngine:
                 corrective_code.strip() if corrective_code else ""
             )
             aggregated_comments[file_path][line_number].confidence_scores.append(comment.confidence_score)
+            aggregated_comments[file_path][line_number].rationales.append(comment.rationale)
 
         return aggregated_comments
 
@@ -232,6 +235,7 @@ class CommentBlendingEngine:
                             confidence_score=data.confidence_scores[0],
                             model=data.model,
                             is_valid=data.is_valid,
+                            rationale=data.rationales[0],
                         )
                     )
                 else:
@@ -288,6 +292,7 @@ class CommentBlendingEngine:
                         model=comment.get("model"),
                         is_valid=comment.get("is_valid"),
                         is_summarized=True,
+                        rationale=comment.get("rationale"),
                     )
                 )
             self.filtered_comments = processed_comments

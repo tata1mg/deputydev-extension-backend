@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
 
@@ -25,11 +25,12 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     async def build_llm_payload(
         self,
-        llm_model,
+        llm_model: LLModels,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         file_vars: List[AttachmentsType] = [],

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
@@ -133,8 +133,8 @@ class Anthropic(BaseLLMProvider):
                                 }
                             )
                         last_tool_use_request = False
-                
 
+            content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
 
@@ -142,11 +142,12 @@ class Anthropic(BaseLLMProvider):
 
     async def build_llm_payload(
         self,
-        llm_model,
+        llm_model: LLModels,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         file_vars: List[AttachmentsType] = [],
@@ -323,7 +324,6 @@ class Anthropic(BaseLLMProvider):
                 usage.output = invocation_metrics.get("outputTokenCount")
 
             return None, None, usage
-
         # parsers for tool use request blocks
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "tool_use":
             return (

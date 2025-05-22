@@ -1,6 +1,6 @@
 import os
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from deputydev_core.services.embedding.pr_review_embedding_manager import (
     PRReviewEmbeddingManager,
@@ -41,6 +41,8 @@ from deputydev_core.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )
+from app.main.blueprints.deputy_dev.services.code_review.context.context_service import ContextService
+from app.main.blueprints.deputy_dev.services.code_review.review_planner.review_planner import ReviewPlanner
 from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import get_weaviate_connection
 
 
@@ -50,7 +52,9 @@ class ToolHandlers:
     """
 
     @staticmethod
-    async def handle_related_code_searcher(tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_related_code_searcher(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
         """
         Handle the related_code_searcher tool request.
 
@@ -91,7 +95,9 @@ class ToolHandlers:
         return chunks
 
     @staticmethod
-    async def handle_grep_search(tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_grep_search(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
         """
         Handle the grep_search tool request.
 
@@ -122,7 +128,9 @@ class ToolHandlers:
         return response
 
     @staticmethod
-    async def handle_iterative_file_reader(tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_iterative_file_reader(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
         """
         Handle the iterative_file_reader tool request.
 
@@ -147,7 +155,9 @@ class ToolHandlers:
         return response
 
     @staticmethod
-    async def handle_focused_snippets_searcher(tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_focused_snippets_searcher(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
         """
         Handle the focused_snippets_searcher tool request.
 
@@ -170,7 +180,9 @@ class ToolHandlers:
         return chunks
 
     @staticmethod
-    async def handle_file_path_searcher(tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_file_path_searcher(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
         """
         Handle the file_path_searcher tool request.
 
@@ -192,7 +204,9 @@ class ToolHandlers:
         return response
 
     @staticmethod
-    async def handle_parse_final_response(tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_parse_final_response(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
         """
         Handle the parse_final_response tool request.
 
@@ -209,3 +223,29 @@ class ToolHandlers:
             "comments": comments,
             "summary": summary,
         }
+
+    @staticmethod
+    async def handle_pr_review_planner(
+        tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
+    ) -> Dict[str, Any]:
+        """
+        Handle the pr_review_planner tool request.
+
+        Args:
+            tool_input: The input for the tool.
+            context_service: The context service instance.
+
+        Returns:
+            The tool response.
+        """
+        prompt_vars = {
+            "PULL_REQUEST_TITLE": context_service.get_pr_title(),
+            "PULL_REQUEST_DESCRIPTION": context_service.get_pr_description(),
+            "PULL_REQUEST_DIFF": await context_service.get_pr_diff(append_line_no_info=True),
+            "FOCUS_AREA": tool_input.get("review_focus", ""),
+        }
+
+        review_planner = ReviewPlanner(session_id=get_context_value("session_id"), prompt_vars=prompt_vars)
+
+        review_plan = await review_planner.get_review_plan()
+        return review_plan
