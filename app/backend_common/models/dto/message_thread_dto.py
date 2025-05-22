@@ -68,6 +68,7 @@ class LLModels(Enum):
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GEMINI_2_POINT_0_FLASH = "GEMINI_2_POINT_0_FLASH"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
+    GPT_O3_MINI = "GPT_O3_MINI"
 
 
 class LLMUsage(BaseModel):
