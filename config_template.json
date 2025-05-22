@@ -25,585 +25,533 @@
             "team_id": 3,
             "org_name": "Traya"
         },
-      "TBO": {
-        "domain": "tbo.com",
-        "team_id": 5,
-        "org_name": "TBO"
-      },
-    "DEPUTYDEV_PRIVATE": {
-      "team_id": 6,
-      "org_name": "DeputyDev Private"
-    },
-    "CARATLANE": {
-      "domain": "caratlane.com",
-      "team_id": 5,
-      "org_name": "Caratlane"
-    },
-    "HSV_DIGITAL": {
-      "domain": "hsv.digital",
-      "team_id": 329,
-      "org_name": "HSV digital"
-    },
-    "ROZANA": {
-      "domain": "rozana.in",
-      "team_id": 332,
-      "org_name": "Rozana"
-    }
-  },
-  "DEBUG": false,
-  "ACCESS_LOG": true,
-  "ENABLE_WORKER": false,
-  "ENVIRONMENT": "local",
-  "HOST": "0.0.0.0",
-  "HTTP_VERSION": "1.0.0",
-  "INTERSERVICE_TIMEOUT": 50,
-  "NAME": "genai",
-  "PORT": 8081,
-  "SEARCH": {
-    "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
-    "TIMEOUT": 10
-  },
-  "SENTRY": {
-    "DSN": "",
-    "EM": ""
-  },
-  "WORKERS": 1,
-  "CONCURRENCY_LIMIT": 500,
-  "DB_CONNECTION": {
-    "CONNECTION_STRING": "",
-    "LABS_COLLECTION": "labs"
-  },
-  "OPENAI_KEY": "",
-  "GOOGLE_API_KEY": "",
-  "LABS": {
-    "HOST": "https://api.1mg.com/api/labs/",
-    "TIMEOUT": 10
-  },
-  "EXPERIMENT": {},
-  "ENCRYPTION_PASSWORD": "",
-  "WEBHOOK_JWT_SIGNING_KEY": "",
-  "WEBHOOKS_PAYLOAD": [
-    {
-      "NAME": "DeputyDev Review",
-      "DESCRIPTION": "DeputyDev Review",
-      "URL": "https://api.1mg.com/api/v1/scrit/init",
-      "EVENTS": {
-        "BITBUCKET": [
-          "pullrequest:created"
-        ],
-        "GITHUB": [
-          "pull_request"
-        ],
-        "GITLAB": [
-          "pull_requests"
-        ]
-      },
-      "SECRET_TOKEN": ""
-    },
-    {
-      "NAME": "DeputyDev Chat",
-      "DESCRIPTION": "DeputyDev Chat",
-      "URL": "https://api.1mg.com/api/v1/scrit/chat",
-      "EVENTS": {
-        "BITBUCKET": [
-          "pullrequest:comment_created"
-        ],
-        "GITHUB": [
-          "pull_request_review_comment"
-        ],
-        "GITLAB": [
-          "comments"
-        ]
-      },
-      "SECRET_TOKEN": ""
-    },
-    {
-      "NAME": "DeputyDev Stats Collection",
-      "DESCRIPTION": "DeputyDev Stats Collection",
-      "URL": "https://api.1mg.com/api/v1/scrit/stats-collection",
-      "EVENTS": {
-        "BITBUCKET": [
-          "pullrequest:approved",
-          "pullrequest:fulfilled",
-          "pullrequest:rejected"
-        ],
-        "GITHUB": [
-          "pull_request"
-        ],
-        "GITLAB": [
-          "pull_requests"
-        ]
-      },
-      "SECRET_TOKEN": ""
-    }
-  ],
-  "BITBUCKET": {
-    "KEY": "",
-    "URL": "https://api.bitbucket.org",
-    "OAUTH2_ENDPOINT": "https://bitbucket.org/site/oauth2/access_token",
-    "CLIENT_ID": "",
-    "CLIENT_SECRET": ""
-  },
-  "OPENAPI_API": "gpt3",
-  "ASSISTANT_ID": "",
-  "REDIS_CACHE_HOSTS": {
-    "genai": {
-      "LABEL": "",
-      "REDIS_HOST": "localhost",
-      "REDIS_PORT": 6379
-    }
-  },
-  "REPO_BASE_DIR": "",
-  "REPO_SETTINGS_FILE": "deputydev.toml",
-  "CLOUD_PROVIDER": "AWS",
-  "SQS": {
-    "SUBSCRIBE": {
-      "GENAI": {
-        "ENABLED": true,
-        "MAX_MESSAGES": 1,
-        "QUEUE_NAME": "{{env_name}}-content_service-dependant_entities.fifo",
-        "WAIT_TIME_IN_SECONDS": 2
-      },
-      "METASYNC": {
-        "ENABLED": true,
-        "MAX_MESSAGES": 2,
-        "QUEUE_NAME": "{{env_name}}-deputydev-dependant_entities.fifo",
-        "WAIT_TIME_IN_SECONDS": 2
-      }
-    },
-    "MESSAGE_RETENTION_TIME_SEC": 86400
-  },
-  "AZURE_BUS_SERVICE": {
-    "NAMESPACE_FQDN": "deputydevreviewnamespacev2.servicebus.windows.net",
-    "LOCK_ENABLE_TIME": 60,
-    "SUBSCRIPTION_ID": "uuid",
-    "NAMESPACE": "deputydevreviewnamespacev2",
-    "RESOURCE_GROUP": "deputyDev",
-    "SUBSCRIBE": {
-      "GENAI": {
-        "ENABLED": true,
-        "QUEUE_NAME": "code-review-dummy",
-        "MAX_MESSAGES": 1,
-        "WAIT_TIME_IN_SECONDS": 5
-      },
-      "METASYNC": {
-        "ENABLED": true,
-        "MAX_MESSAGES": 2,
-        "QUEUE_NAME": "code-review-dummy",
-        "WAIT_TIME_IN_SECONDS": 2
-      }
-    }
-  },
-  "FINETUNED_SCRIT_MODEL": {
-    "MODEL": "",
-    "CONFIDENCE_SCORE": 1,
-    "BITBUCKET_TOKEN": "",
-    "ENABLED": true
-  },
-  "SCRIT_MODEL": {
-    "MODEL": "",
-    "CONFIDENCE_SCORE": 1,
-    "BITBUCKET_TOKEN": "",
-    "ENABLED": true
-  },
-  "BLOCKED_REPOS": [],
-  "CHUNKING": {
-    "CHARACTER_SIZE": 2000,
-    "NUMBER_OF_CHUNKS": 20,
-    "MAX_CHUNKS_CODE_GENERATION": 100,
-    "DEFAULT_MAX_CHUNKS_CODE_GENERATION": 20,
-    "IS_LLM_RERANKING_ENABLED": false
-  },
-  "MAX_PR_DIFF_TOKEN_LIMIT": 150000,
-  "EMBEDDING": {
-    "MODEL": "text-embedding-3-small",
-    "TOKEN_LIMIT": 8192,
-    "MAX_PARALLEL_TASKS": 60
-  },
-  "IGNORE_FILES": [
-    "Pipfile",
-    "Pipfile.lock",
-    "bitbucket-pipelines.yml",
-    "package-lock.json"
-  ],
-  "ATLASSIAN": {
-    "CLIENT_ID": "",
-    "CLIENT_SECRET": ""
-  },
-  "JIRA": {
-    "HOST": "https://1mgtech.atlassian.net",
-    "V3_PATH": "/rest/api/3",
-    "AUTH_TOKEN": "",
-    "USERNAME": "",
-    "TIMEOUT": 0.1
-  },
-  "BATCH_SIZE": 24,
-  "EXECUTOR_MAX_WORKERS": 1,
-  "CONFLUENCE": {
-    "HOST": "https://1mgtech.atlassian.net/wiki",
-    "PATH": "/rest/api/content/{page_id}",
-    "AUTH_TOKEN": "",
-    "USERNAME": "",
-    "TIMEOUT": 0.1
-  },
-  "GITHUB": {
-    "BEARER_TOKEN": "github_pat_11AXHYWTA",
-    "HOST": "https://api.github.com",
-    "CLIENT_ID": "",
-    "SIGNING_KEY": ""
-  },
-  "GITLAB": {
-    "OAUTH2_ENDPOINT": "https://gitlab.com/oauth/token",
-    "CLIENT_ID": "",
-    "CLIENT_SECRET": ""
-  },
-  "DB_CONNECTIONS": {
-    "connections": {
-      "deputy_dev_replica": {
-        "credentials": {
-          "host": "localhost",
-          "port": 5432,
-          "user": "",
-          "password": "",
-          "database": "deputy_dev1"
+        "TBO": {
+            "domain": "tbo.com",
+            "team_id": 5,
+            "org_name": "TBO"
         },
-        "engine": "tortoise.backends.asyncpg"
-      },
-      "default": {
-        "engine": "tortoise.backends.asyncpg",
-        "credentials": {
-          "host": "localhost",
-          "port": 5432,
-          "user": "",
-          "password": "",
-          "database": "scrit"
-        }
-      }
-    },
-    "apps": {
-      "dao": {
-        "models": [
-          "app.main.blueprints.deputy_dev.models.dao.postgres",
-          "app.main.blueprints.one_dev.models.dao.postgres",
-          "app.backend_common.models.dao.postgres"
-        ],
-        "default_connection": "default"
-      }
-    }
-  },
-  "REVIEW_PR_EXPERIMENT": [
-    "TestSet",
-    "ControlSet1",
-    "ControlSet2"
-  ],
-  "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00",
-  "PR_REVIEW_SETTINGS": {
-    "MULTI_AGENT_ENABLED": true,
-    "REFLECTION_ENABLED": true
-  },
-  "AGENT_SETTINGS": {
-    "security": {
-      "confidence_score_limit": 0.9
-    },
-    "code_communication": {
-      "confidence_score_limit": 0.95
-    },
-    "performance_optimisation": {
-      "confidence_score_limit": 0.9
-    },
-    "code_maintainability": {
-      "confidence_score_limit": 0.9
-    },
-    "error": {
-      "confidence_score_limit": 0.9
-    },
-    "business_logic_validation": {
-      "confidence_score_limit": 0.9
-    },
-    "pr_description": {
-      "confidence_score_limit": 0.9
-    }
-  },
-  "AWS": {
-    "AWS_ACCESS_KEY_ID": "",
-    "AWS_SECRET_ACCESS_KEY": "",
-    "AWS_REGION": "ap-south-1",
-    "BEDROCK_SERVICE_NAME": "bedrock-runtime",
-    "BEDROCK_READ_TIMEOUT": 1000
-  },
-  "LLM_MODELS": {
-    "CLAUDE_3_POINT_5_SONNET": {
-      "NAME": "",
-      "PROVIDER": "ANTHROPIC",
-      "ACCESS_KEY": "",
-      "BITBUCKET_TOKEN": "",
-      "MAX_TOKENS": 8192,
-      "VERSION": "bedrock-2023-05-31",
-      "INPUT_TOKENS_LIMIT": 130000,
-      "PROMPT_CACHING_SUPPORTED": false
-    },
-    "GEMINI_2_POINT_5_PRO": {
-      "NAME": "gemini-2.5-pro-preview-03-25",
-      "PROVIDER": "GOOGLE",
-      "MAX_TOKENS": 20000,
-      "INPUT_TOKENS_LIMIT": 200000
-    },
-    "GPT_4_POINT_1": {
-      "NAME": "gpt-4.1",
-      "PROVIDER": "GOOGLE",
-      "MAX_TOKENS": 20000,
-      "INPUT_TOKENS_LIMIT": 200000
-    },
-    "GPT_4O": {
-      "NAME": "gpt-4o-mini",
-      "PROVIDER": "OPENAI",
-      "ACCESS_KEY": "",
-      "BITBUCKET_TOKEN": "",
-      "INPUT_TOKENS_LIMIT": 130000,
-      "PROMPT_CACHING_SUPPORTED": false
-    },
-    "CLAUDE_3_POINT_7_SONNET": {
-      "NAME": "",
-      "PROVIDER": "ANTHROPIC",
-      "ACCESS_KEY": "",
-      "MAX_TOKENS": 8000,
-      "VERSION": "",
-      "INPUT_TOKENS_LIMIT": 130000,
-      "THINKING_BUDGET_TOKENS": 5000,
-      "PROMPT_CACHING_SUPPORTED": false
-    },
-    "GEMINI_2_POINT_0_FLASH": {
-      "NAME": "gemini-2.0-flash",
-      "PROVIDER": "GOOGLE",
-      "MAX_TOKENS": 8192,
-      "INPUT_TOKENS_LIMIT": 100000
-    }
-  },
-  "GIT_ACTORS": {
-    "BITBUCKET": {
-      "NAME": "DeputyDev",
-      "EMAIL": "bot-email@bot.bot"
-    }
-  },
-  "FEATURE_MODELS": {
-    "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
-    "PR_SUMMARY": "GPT_4O",
-    "PR_CHAT": "GPT_4O",
-    "CODE_GENERATION": "CLAUDE_3_POINT_5_SONNET",
-    "CHUNK_DESCRIPTION": "CLAUDE_3_POINT_5_SONNET",
-    "COMMENT_VALIDATION": "GPT_4O",
-    "COMMENT_SUMMARIZATION": "GPT_4O",
-    "RE_RANKING": "CLAUDE_3_POINT_5_SONNET"
-  },
-  "ONE_DEV": {
-    "HOST": "http://localhost:8084",
-    "TIMEOUT": 10000,
-    "LIMIT": 0,
-    "LIMIT_PER_HOST": 0,
-    "TTL_DNS_CACHE": 10
-  },
-  "OPENAI_TIMEOUT": 1000,
-  "TEAMS_ENABLED_FOR_EXPERIMENT": [
-    123456,
-    23456
-  ],
-  "JWT_SECRET_KEY": "XXXXXXXXXXXXXXXX",
-  "TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING": [
-    1,
-    2
-  ],
-  "AIOHTTP": {
-    "LIMIT": 0,
-    "LIMIT_PER_HOST": 0,
-    "TTL_DNS_CACHE": 10
-  },
-  "VALID_ADVOCACY_IDS": [
-    1,
-    2,
-    3,
-    4
-  ],
-  "AUTH_TOKEN_GRACE_PERIOD": 1800,
-  "RUDDER": {
-    "WRITE_KEY": "",
-    "DATA_PLANE_URL": "https://rudderapi.1mg.com"
-  },
-  "AWS_API_GATEWAY": {
-    "HOST": "https://sample.com",
-    "AWS_REGION": "ap-south-1",
-    "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
-  },
-  "BINARY": {
-    "WEAVIATE": {
-      "VERSION": "v1.27.22",
-      "HTTP_PORT": 8079,
-      "GRPC_PORT": 50050,
-      "EMBEDDED_DB_PATH": "~/.deputydev/indexes",
-      "EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
-      "STARTUP_TIMEOUT": 30,
-      "STARTUP_HEALTHCHECK_INTERVAL": 2,
-      "BASE_DIR": "~/.deputydev/weaviate",
-      "CLIENT_TIMEOUTS": {
-        "INIT": 30,
-        "QUERY": 60,
-        "INSERT": 120
-      },
-      "ENV_VARIABLES": {
-        "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
-        "LIMIT_RESOURCES": true,
-        "LOG_LEVEL": "debug",
-        "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes"
-      }
-    },
-    "EMBEDDING": {
-      "NUMBER_OF_WORKERS": 1,
-      "MODEL": "text-embedding-3-small",
-      "TOKEN_LIMIT": 8192,
-      "MAX_PARALLEL_TASKS": 60,
-      "MAX_BACKOFF": 15
-    },
-    "CHUNKING": {
-      "CHARACTER_SIZE": 2000,
-      "MAX_CHUNKS_CODE_GENERATION": 100,
-      "IS_LLM_RERANKING_ENABLED": true,
-      "DEFAULT_MAX_CHUNKS_CODE_GENERATION": 20
-    },
-    "AUTOCOMPLETE_SEARCH": {
-      "PRE_FILTER_LIMIT": 2000,
-      "MAX_RECORDS_TO_RETURN": 20
-    },
-    "RELEVANT_CHUNKS": {
-      "CHUNKING_ENABLED": true
-    },
-    "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
-    "FILE": {
-      "latest": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          },
-          "x64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
+        "DEPUTYDEV_PRIVATE": {
+            "team_id": 6,
+            "org_name": "DeputyDev Private"
         },
-        "linux": {
-          "x64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
+        "CARATLANE": {
+            "domain": "caratlane.com",
+            "team_id": 5,
+            "org_name": "Caratlane"
         },
-        "win32": {
-          "x64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
+        "HSV_DIGITAL": {
+            "domain": "hsv.digital",
+            "team_id": 329,
+            "org_name": "HSV digital"
+        },
+        "ROZANA": {
+            "domain": "rozana.in",
+            "team_id": 332,
+            "org_name": "Rozana"
         }
-      },
-      "3.0.0": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.0.2": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.0.1": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.0.3": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "3.1.0": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      },
-      "4.0.0": {
-        "darwin": {
-          "arm64": {
-            "download_link": "",
-            "directory": "",
-            "service_path": ""
-          }
-        }
-      }
     },
-    "PASSWORD": "",
-    "PORT_RANGE": [
-      63000,
-      63500
+    "DEBUG": false,
+    "ACCESS_LOG": true,
+    "ENABLE_WORKER": false,
+    "ENVIRONMENT": "local",
+    "HOST": "0.0.0.0",
+    "HTTP_VERSION": "1.0.0",
+    "INTERSERVICE_TIMEOUT": 50,
+    "NAME": "genai",
+    "PORT": 8081,
+    "SEARCH": {
+        "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
+        "TIMEOUT": 10
+    },
+    "SENTRY": {
+        "DSN": "",
+        "EM": ""
+    },
+    "WORKERS": 1,
+    "CONCURRENCY_LIMIT": 500,
+    "DB_CONNECTION": {
+        "CONNECTION_STRING": "",
+        "LABS_COLLECTION": "labs"
+    },
+    "OPENAI_KEY": "",
+    "GOOGLE_API_KEY": "",
+    "LABS": {
+        "HOST": "https://api.1mg.com/api/labs/",
+        "TIMEOUT": 10
+    },
+    "EXPERIMENT": {},
+    "ENCRYPTION_PASSWORD": "",
+    "WEBHOOK_JWT_SIGNING_KEY": "",
+    "WEBHOOKS_PAYLOAD": [
+        {
+            "NAME": "DeputyDev Review",
+            "DESCRIPTION": "DeputyDev Review",
+            "URL": "https://api.1mg.com/api/v1/scrit/init",
+            "EVENTS": {
+                "BITBUCKET": [
+                    "pullrequest:created"
+                ],
+                "GITHUB": [
+                    "pull_request"
+                ],
+                "GITLAB": [
+                    "pull_requests"
+                ]
+            },
+            "SECRET_TOKEN": ""
+        },
+        {
+            "NAME": "DeputyDev Chat",
+            "DESCRIPTION": "DeputyDev Chat",
+            "URL": "https://api.1mg.com/api/v1/scrit/chat",
+            "EVENTS": {
+                "BITBUCKET": [
+                    "pullrequest:comment_created"
+                ],
+                "GITHUB": [
+                    "pull_request_review_comment"
+                ],
+                "GITLAB": [
+                    "comments"
+                ]
+            },
+            "SECRET_TOKEN": ""
+        },
+        {
+            "NAME": "DeputyDev Stats Collection",
+            "DESCRIPTION": "DeputyDev Stats Collection",
+            "URL": "https://api.1mg.com/api/v1/scrit/stats-collection",
+            "EVENTS": {
+                "BITBUCKET": [
+                    "pullrequest:approved",
+                    "pullrequest:fulfilled",
+                    "pullrequest:rejected"
+                ],
+                "GITHUB": [
+                    "pull_request"
+                ],
+                "GITLAB": [
+                    "pull_requests"
+                ]
+            },
+            "SECRET_TOKEN": ""
+        }
     ],
-    "MAX_INIT_RETRY": 600,
-    "MAX_ALIVE_RETRY": 5,
-    "URL_CONTENT_READER": {
-      "MAX_CONTENT_SIZE": 80000,
-      "SUMMARIZE_LARGE_CONTENT": true,
-      "VALIDATE_CONTENT_UPDATION": true,
-      "BATCH_SIZE": 3
-    }
-  },
-  "CLIENT_DOWNLOAD_LINKS": {
-    "VSCODE_EXT": "https://marketplace.visualstudio.com/items?itemName=Tata1mg.deputydev"
-  },
-  "MAX_DEPUTY_DEV_RULES_LENGTH": 8000,
-  "KAFKA": {
-    "HOST": "",
-    "GROUP_ID": "",
-    "SESSION_QUEUE_NAME": "",
-    "ENABLED": true
-  },
-  "IS_RELATED_CODE_SEARCHER_ENABLED": true,
-  "DD_HOST_WS": "ws://localhost:8084",
-  "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
-  "POLLING_MAX_ATTEMPTS": 3000,
-  "ALLOWED_EMAILS": [],
-  "VERTEX": {
-    "type": "",
-    "project_id": "",
-    "private_key_id": "",
-    "private_key": "",
-    "client_email": "",
-    "client_id": "",
-    "auth_uri": "",
-    "token_uri": "",
-    "auth_provider_x509_cert_url": "",
-    "client_x509_cert_url": "",
-    "universe_domain": "",
-    "location": ""
-  },
-  "MAX_REVIEW_TOOL_ITERATIONS": 25,
+    "BITBUCKET": {
+        "KEY": "",
+        "URL": "https://api.bitbucket.org",
+        "OAUTH2_ENDPOINT": "https://bitbucket.org/site/oauth2/access_token",
+        "CLIENT_ID": "",
+        "CLIENT_SECRET": ""
+    },
+    "OPENAPI_API": "gpt3",
+    "ASSISTANT_ID": "",
+    "REDIS_CACHE_HOSTS": {
+        "genai": {
+            "LABEL": "",
+            "REDIS_HOST": "localhost",
+            "REDIS_PORT": 6379
+        }
+    },
+    "REPO_BASE_DIR": "",
+    "REPO_SETTINGS_FILE": "deputydev.toml",
+    "CLOUD_PROVIDER": "AWS",
+    "SQS": {
+        "SUBSCRIBE": {
+            "GENAI": {
+                "ENABLED": true,
+                "MAX_MESSAGES": 1,
+                "QUEUE_NAME": "{{env_name}}-content_service-dependant_entities.fifo",
+                "WAIT_TIME_IN_SECONDS": 2
+            },
+            "METASYNC": {
+                "ENABLED": true,
+                "MAX_MESSAGES": 2,
+                "QUEUE_NAME": "{{env_name}}-deputydev-dependant_entities.fifo",
+                "WAIT_TIME_IN_SECONDS": 2
+            }
+        },
+        "MESSAGE_RETENTION_TIME_SEC": 86400
+    },
+    "AZURE_BUS_SERVICE": {
+        "NAMESPACE_FQDN": "deputydevreviewnamespacev2.servicebus.windows.net",
+        "LOCK_ENABLE_TIME": 60,
+        "SUBSCRIPTION_ID": "uuid",
+        "NAMESPACE": "deputydevreviewnamespacev2",
+        "RESOURCE_GROUP": "deputyDev",
+        "SUBSCRIBE": {
+            "GENAI": {
+                "ENABLED": true,
+                "QUEUE_NAME": "code-review-dummy",
+                "MAX_MESSAGES": 1,
+                "WAIT_TIME_IN_SECONDS": 5
+            },
+            "METASYNC": {
+                "ENABLED": true,
+                "MAX_MESSAGES": 2,
+                "QUEUE_NAME": "code-review-dummy",
+                "WAIT_TIME_IN_SECONDS": 2
+            }
+        }
+    },
+    "FINETUNED_SCRIT_MODEL": {
+        "MODEL": "",
+        "CONFIDENCE_SCORE": 1,
+        "BITBUCKET_TOKEN": "",
+        "ENABLED": true
+    },
+    "SCRIT_MODEL": {
+        "MODEL": "",
+        "CONFIDENCE_SCORE": 1,
+        "BITBUCKET_TOKEN": "",
+        "ENABLED": true
+    },
+    "BLOCKED_REPOS": [],
+    "CHUNKING": {
+        "CHARACTER_SIZE": 2000,
+        "NUMBER_OF_CHUNKS": 20,
+        "MAX_CHUNKS_CODE_GENERATION": 100,
+        "DEFAULT_MAX_CHUNKS_CODE_GENERATION": 20,
+        "IS_LLM_RERANKING_ENABLED": false
+    },
+    "MAX_PR_DIFF_TOKEN_LIMIT": 150000,
+    "EMBEDDING": {
+        "MODEL": "text-embedding-3-small",
+        "TOKEN_LIMIT": 8192,
+        "MAX_PARALLEL_TASKS": 60
+    },
+    "IGNORE_FILES": [
+        "Pipfile",
+        "Pipfile.lock",
+        "bitbucket-pipelines.yml",
+        "package-lock.json"
+    ],
+    "ATLASSIAN": {
+        "CLIENT_ID": "",
+        "CLIENT_SECRET": ""
+    },
+    "JIRA": {
+        "HOST": "https://1mgtech.atlassian.net",
+        "V3_PATH": "/rest/api/3",
+        "AUTH_TOKEN": "",
+        "USERNAME": "",
+        "TIMEOUT": 0.1
+    },
+    "BATCH_SIZE": 24,
+    "EXECUTOR_MAX_WORKERS": 1,
+    "CONFLUENCE": {
+        "HOST": "https://1mgtech.atlassian.net/wiki",
+        "PATH": "/rest/api/content/{page_id}",
+        "AUTH_TOKEN": "",
+        "USERNAME": "",
+        "TIMEOUT": 0.1
+    },
+    "GITHUB": {
+        "BEARER_TOKEN": "github_pat_11AXHYWTA",
+        "HOST": "https://api.github.com",
+        "CLIENT_ID": "",
+        "SIGNING_KEY": ""
+    },
+    "GITLAB": {
+        "OAUTH2_ENDPOINT": "https://gitlab.com/oauth/token",
+        "CLIENT_ID": "",
+        "CLIENT_SECRET": ""
+    },
+    "DB_CONNECTIONS": {
+        "connections": {
+            "deputy_dev_replica": {
+                "credentials": {
+                    "host": "localhost",
+                    "port": 5432,
+                    "user": "",
+                    "password": "",
+                    "database": "deputy_dev1"
+                },
+                "engine": "tortoise.backends.asyncpg"
+            },
+            "default": {
+                "engine": "tortoise.backends.asyncpg",
+                "credentials": {
+                    "host": "localhost",
+                    "port": 5432,
+                    "user": "",
+                    "password": "",
+                    "database": "scrit"
+                }
+            }
+        },
+        "apps": {
+            "dao": {
+                "models": [
+                    "app.main.blueprints.deputy_dev.models.dao.postgres",
+                    "app.main.blueprints.one_dev.models.dao.postgres",
+                    "app.backend_common.models.dao.postgres"
+                ],
+                "default_connection": "default"
+            }
+        }
+    },
+    "REVIEW_PR_EXPERIMENT": [
+        "TestSet",
+        "ControlSet1",
+        "ControlSet2"
+    ],
+    "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00",
+    "PR_REVIEW_SETTINGS": {
+        "MULTI_AGENT_ENABLED": true,
+        "REFLECTION_ENABLED": true
+    },
+    "AGENT_SETTINGS": {
+        "security": {
+            "confidence_score_limit": 0.9
+        },
+        "code_communication": {
+            "confidence_score_limit": 0.95
+        },
+        "performance_optimisation": {
+            "confidence_score_limit": 0.9
+        },
+        "code_maintainability": {
+            "confidence_score_limit": 0.9
+        },
+        "error": {
+            "confidence_score_limit": 0.9
+        },
+        "business_logic_validation": {
+            "confidence_score_limit": 0.9
+        },
+        "pr_description": {
+            "confidence_score_limit": 0.9
+        }
+    },
+    "AWS": {
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_REGION": "ap-south-1",
+        "BEDROCK_SERVICE_NAME": "bedrock-runtime",
+        "BEDROCK_READ_TIMEOUT": 1000
+    },
+    "LLM_MODELS": {
+        "CLAUDE_3_POINT_5_SONNET": {
+            "NAME": "",
+            "PROVIDER": "ANTHROPIC",
+            "ACCESS_KEY": "",
+            "BITBUCKET_TOKEN": "",
+            "MAX_TOKENS": 8192,
+            "VERSION": "bedrock-2023-05-31",
+            "INPUT_TOKENS_LIMIT": 130000,
+            "PROMPT_CACHING_SUPPORTED": false
+        },
+        "GEMINI_2_POINT_5_PRO": {
+            "NAME": "gemini-2.5-pro-preview-03-25",
+            "PROVIDER": "GOOGLE",
+            "MAX_TOKENS": 20000,
+            "INPUT_TOKENS_LIMIT": 200000
+        },
+        "GPT_4_POINT_1": {
+            "NAME": "gpt-4.1",
+            "PROVIDER": "GOOGLE",
+            "MAX_TOKENS": 20000,
+            "INPUT_TOKENS_LIMIT": 200000,
+            "STREAM_BATCH_SIZE": 10
+        },
+        "GPT_4O": {
+            "NAME": "gpt-4o-mini",
+            "PROVIDER": "OPENAI",
+            "ACCESS_KEY": "",
+            "BITBUCKET_TOKEN": "",
+            "INPUT_TOKENS_LIMIT": 130000,
+            "PROMPT_CACHING_SUPPORTED": false
+        },
+        "CLAUDE_3_POINT_7_SONNET": {
+            "NAME": "",
+            "PROVIDER": "ANTHROPIC",
+            "ACCESS_KEY": "",
+            "MAX_TOKENS": 8000,
+            "VERSION": "",
+            "INPUT_TOKENS_LIMIT": 130000,
+            "THINKING_BUDGET_TOKENS": 5000,
+            "PROMPT_CACHING_SUPPORTED": false
+        },
+        "GEMINI_2_POINT_0_FLASH": {
+            "NAME": "gemini-2.0-flash",
+            "PROVIDER": "GOOGLE",
+            "MAX_TOKENS": 8192,
+            "INPUT_TOKENS_LIMIT": 100000
+        }
+    },
+    "GIT_ACTORS": {
+        "BITBUCKET": {
+            "NAME": "DeputyDev",
+            "EMAIL": "bot-email@bot.bot"
+        }
+    },
+    "FEATURE_MODELS": {
+        "PR_REVIEW": "CLAUDE_3_POINT_5_SONNET",
+        "PR_SUMMARY": "GPT_4O",
+        "PR_CHAT": "GPT_4O",
+        "CODE_GENERATION": "CLAUDE_3_POINT_5_SONNET",
+        "CHUNK_DESCRIPTION": "CLAUDE_3_POINT_5_SONNET",
+        "COMMENT_VALIDATION": "GPT_4O",
+        "COMMENT_SUMMARIZATION": "GPT_4O",
+        "RE_RANKING": "CLAUDE_3_POINT_5_SONNET",
+        "PR_REVIEW_PLANNER": "CLAUDE_3_POINT_7_SONNET"
+    },
+    "ONE_DEV": {
+        "HOST": "http://localhost:8084",
+        "TIMEOUT": 10000,
+        "LIMIT": 0,
+        "LIMIT_PER_HOST": 0,
+        "TTL_DNS_CACHE": 10
+    },
+    "OPENAI_TIMEOUT": 1000,
+    "TEAMS_ENABLED_FOR_EXPERIMENT": [
+        123456,
+        23456
+    ],
+    "JWT_SECRET_KEY": "XXXXXXXXXXXXXXXX",
+    "TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING": [
+        1,
+        2
+    ],
+    "AIOHTTP": {
+        "LIMIT": 0,
+        "LIMIT_PER_HOST": 0,
+        "TTL_DNS_CACHE": 10
+    },
+    "VALID_ADVOCACY_IDS": [
+        1,
+        2,
+        3,
+        4
+    ],
+    "AUTH_TOKEN_GRACE_PERIOD": 1800,
+    "RUDDER": {
+        "WRITE_KEY": "",
+        "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+    },
+    "AWS_API_GATEWAY": {
+        "HOST": "https://sample.com",
+        "AWS_REGION": "ap-south-1",
+        "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
+    },
+    "BINARY": {
+        "WEAVIATE": {
+            "VERSION": "v1.27.22",
+            "HTTP_PORT": 8079,
+            "GRPC_PORT": 50050,
+            "EMBEDDED_DB_PATH": "~/.deputydev/indexes",
+            "EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
+            "STARTUP_TIMEOUT": 30,
+            "STARTUP_HEALTHCHECK_INTERVAL": 2,
+            "BASE_DIR": "~/.deputydev/weaviate",
+            "CLIENT_TIMEOUTS": {
+                "INIT": 30,
+                "QUERY": 60,
+                "INSERT": 120
+            },
+            "ENV_VARIABLES": {
+                "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
+                "LIMIT_RESOURCES": true,
+                "LOG_LEVEL": "debug",
+                "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes"
+            }
+        },
+        "EMBEDDING": {
+            "NUMBER_OF_WORKERS": 1,
+            "MODEL": "text-embedding-3-small",
+            "TOKEN_LIMIT": 8192,
+            "MAX_PARALLEL_TASKS": 60,
+            "MAX_BACKOFF": 15
+        },
+        "CHUNKING": {
+            "CHARACTER_SIZE": 2000,
+            "MAX_CHUNKS_CODE_GENERATION": 100,
+            "IS_LLM_RERANKING_ENABLED": true,
+            "DEFAULT_MAX_CHUNKS_CODE_GENERATION": 20
+        },
+        "AUTOCOMPLETE_SEARCH": {
+            "PRE_FILTER_LIMIT": 2000,
+            "MAX_RECORDS_TO_RETURN": 20
+        },
+        "RELEVANT_CHUNKS": {
+            "CHUNKING_ENABLED": true
+        },
+        "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
+        "FILE": {
+            "latest": {
+                "darwin": {
+                    "arm64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    },
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                },
+                "linux": {
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                },
+                "win32": {
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                }
+            }
+        },
+        "PASSWORD": "",
+        "PORT_RANGE": [
+            63000,
+            63500
+        ],
+        "MAX_INIT_RETRY": 600,
+        "MAX_ALIVE_RETRY": 5,
+        "URL_CONTENT_READER": {
+            "MAX_CONTENT_SIZE": 80000,
+            "SUMMARIZE_LARGE_CONTENT": true,
+            "VALIDATE_CONTENT_UPDATION": true,
+            "BATCH_SIZE": 3
+        }
+    },
+    "CLIENT_DOWNLOAD_LINKS": {
+        "VSCODE_EXT": "https://marketplace.visualstudio.com/items?itemName=Tata1mg.deputydev"
+    },
+    "MAX_DEPUTY_DEV_RULES_LENGTH": 8000,
+    "KAFKA": {
+        "HOST": "",
+        "GROUP_ID": "",
+        "SESSION_QUEUE_NAME": "",
+        "ENABLED": true
+    },
+    "IS_RELATED_CODE_SEARCHER_ENABLED": true,
+    "DD_HOST_WS": "ws://localhost:8084",
+    "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
+    "POLLING_MAX_ATTEMPTS": 3000,
+    "ALLOWED_EMAILS": [],
+    "VERTEX": {
+        "type": "",
+        "project_id": "",
+        "private_key_id": "",
+        "private_key": "",
+        "client_email": "",
+        "client_id": "",
+        "auth_uri": "",
+        "token_uri": "",
+        "auth_provider_x509_cert_url": "",
+        "client_x509_cert_url": "",
+        "universe_domain": "",
+        "location": ""
+    },
+    "MAX_REVIEW_TOOL_ITERATIONS": 25,
     "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
     "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
@@ -621,39 +569,39 @@
         "LOG_LEVEL": "debug"
     },
     "WEAVIATE_CLIENT_TIMEOUTS": {
-            "INIT": 30,
-            "QUERY": 60,
-            "INSERT": 120
+        "INIT": 30,
+        "QUERY": 60,
+        "INSERT": 120
     },
-  "DEFAULT_EXTENSION_SETTINGS": {
-    "default_mode": "ask",
-    "terminal_settings": {
-      "enable_yolo_mode": false,
-      "command_deny_list": [
-        "rm"
-      ]
-    }
-  },
-  "RELEVANT_CHUNKS": {
-      "CHUNKING_ENABLED": true
-  },
-  "NUMBER_OF_WORKERS": 1,
-  "CODE_GEN_LLM_MODELS": [
-    {
-      "id": 1,
-      "display_name": "Gpt 4.1",
-      "name": "GPT_4_POINT_1"
+    "DEFAULT_EXTENSION_SETTINGS": {
+        "default_mode": "ask",
+        "terminal_settings": {
+            "enable_yolo_mode": false,
+            "command_deny_list": [
+                "rm"
+            ]
+        }
     },
-    {
-      "id": 2,
-      "display_name": "Gemini 2.5 Pro",
-      "name": "GEMINI_2_POINT_5_PRO"
+    "RELEVANT_CHUNKS": {
+        "CHUNKING_ENABLED": true
     },
-    {
-      "id": 3,
-      "display_name": "Claude 3.5 Sonnet",
-      "name": "CLAUDE_3_POINT_5_SONNET"
-    }
-  ],
-   "LLM_MAX_RETRY": 2
+    "NUMBER_OF_WORKERS": 1,
+    "CODE_GEN_LLM_MODELS": [
+        {
+            "id": 1,
+            "display_name": "Gpt 4.1",
+            "name": "GPT_4_POINT_1"
+        },
+        {
+            "id": 2,
+            "display_name": "Gemini 2.5 Pro",
+            "name": "GEMINI_2_POINT_5_PRO"
+        },
+        {
+            "id": 3,
+            "display_name": "Claude 3.5 Sonnet",
+            "name": "CLAUDE_3_POINT_5_SONNET"
+        }
+    ],
+    "LLM_MAX_RETRY": 2
 }

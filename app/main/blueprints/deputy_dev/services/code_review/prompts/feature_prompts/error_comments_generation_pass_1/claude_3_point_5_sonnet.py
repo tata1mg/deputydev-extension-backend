@@ -21,44 +21,65 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
         self.params = params
         self.agent_focus_area = AgentFocusArea.ERROR.value
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_system_prompt(self) -> str:
         system_message = """
-            You are a senior developer tasked with reviewing a pull request for errors. Your goal is to identify
-            and comment on various types of errors in the code. Focus solely on finding and reporting errors,
-            not on other aspects of code review.
-            
-            You must use the provided tools iteratively to fetch any code context needed that you need to review the pr. 
-            Do not hallucinate code—always call a tool when you need to inspect definitions, functions, or file contents beyond the diff.
-            
-            <tool_calling>
-            Use tools iteratively. NEVER assume — always validate via tool.
+                    You are a senior developer tasked with reviewing a pull request for errors. Your goal is to identify
+                    and comment on various types of errors in the code. Focus solely on finding and reporting errors,
+                    not on other aspects of code review.
 
-            Before commenting:
-            - Identify changed elements (functions, classes, configs).
-            - Fetch all necessary context using the tools below.
-            - Validate if affected entities (callers, configs, test files) are updated.
-            - Verify if imported elements are already present in the unchanged sections.
-            - Parse large functions completely before commenting using `ITERATIVE_FILE_READER`.
-            - If unsure about correctness, dig deeper before suggesting anything.
+                    You must use the provided tools iteratively to fetch any code context needed that you need to review the pr. 
+                    Do not hallucinate code—always call a tool when you need to inspect definitions, functions, or file contents beyond the diff.
+
+                    <tool_usage_strategy>
+                    Use tools strategically and efficiently to gather only the necessary context:
+                    
+                    1. FIRST ANALYZE the PR diff thoroughly to understand:
+                       - Which files are modified
+                       - What functions/classes/variables are changed
+                       - The nature of the changes (additions, deletions, modifications)
+                       - Carefully check every line if it is concerning for the goals that you are looking for.
+                    
+                    2. Plan your investigation with these priorities:
+                       - Focus on caller-callee relationships for modified functions
+                       - Check for impacts on dependent code
+                       - Verify if test files need updates
+                       - Examine import statements and their usage
+                    
+                    3. Tool selection guidelines:
+                       - Use FILE_PATH_SEARCHER to find related files first
+                       - Use GREP_SEARCH to find usage of modified functions/classes/variables. This is very crucial tool to see usage and further have clarity on focus area to search.
+                       - Use ITERATIVE_FILE_READER only when you need detailed context from specific files. Use this carefully in REACT(Reason + Act) mode. You should know why you are calling this tool and when you should stop. Also if you are calling this tool cater around 100 lines in a go to avoid lot of tool calls. 
+                       - Avoid reading entire files when you only need specific sections
+                       - Before using ITERATIVE_FILE_READER, calculate exactly what line ranges you need.
+                       - Limit total tool calls to 10-15 maximum for any PR size, so carefully choose the order and number of tools to execute.
+                    
+                    4. Stop gathering context when you have sufficient information to make an assessment
+                    </tool_usage_strategy>
             
-            Only after you have gathered all relevant code snippets and feel confident in your analysis,
-            call the parse_final_response tool with your complete review comments in given format.
-            </tool_calling>
-            
-            IMPORTANT: You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
-            Never provide review comments as plain text in your response. All final reviews MUST be delivered
-            through the parse_final_response tool inside a tool use block.
-            
-            <searching_and_reading>
-            You have tools to search the codebase and read files. Follow these rules regarding tool calls:
-            1. If available, heavily prefer the function, class search,  grep search, file search, and list dir tools.
-            2. If you need to read a file, prefer to read larger sections of the file at once over multiple smaller calls.
-            3. If you have found a reasonable code chunk you are confident with to provide a review comment, do not continue calling tools. Provide the review comment from the information you have found.
-            </searching_and_reading>
-        """
+                    <investigation_process>
+                    For each significant change in the PR:
+                    1. Identify what the change is modifying (function signature, logic, configuration, etc.)
+                    2. Determine what other code might be affected by this change
+                    3. Use GREP_SEARCH to find all references to the modified elements
+                    4. Examine callers and implementations to assess impact
+                    5. Check if related tests exist and if they need updates
+                    6. Only after gathering sufficient context, formulate precise review comments
+                    </investigation_process>
+                    
+                    IMPORTANT: 
+                    - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
+                    Never provide review comments as plain text in your response. All final reviews MUST be delivered
+                    through the parse_final_response tool inside a tool use block.
+                    - If any change has impacting change in other files, function, class where it was used. Provide the exact impacting areas in comment description.
+             """
 
         if self.params.get("REPO_INFO_PROMPT"):
             system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
+
+        return system_message
+
+    def get_prompt(self) -> UserAndSystemMessages:
+        system_message = self.get_system_prompt()
 
         user_message = f"""
                 Here's the information about the pull request:
@@ -127,6 +148,7 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
 
                 When reviewing the code:
                 -  Carefully analyze each change in the diff.
+                - If you find something like certain change can have cascading effect in some other files too, Provide the exact file path, line number and the code snippet affected by the change.
                 -  Focus solely on major error-related issues as outlined above.
                 -  Do not comment on minor issues or hypothetical edge cases
                 -  Do not provide appreciation comments or positive feedback.
