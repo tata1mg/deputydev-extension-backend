@@ -327,7 +327,11 @@
     "AWS": {
         "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
         "SECRET_ACCESS_KEY": "DUMMY_SECRET_ACCESS_KEY",
-        "SESSION_TOKEN": ""
+        "SESSION_TOKEN": "",
+        "AWS_REGION": "us-west-2",
+        "BEDROCK_SERVICE_NAME": "bedrock-runtime",
+        "BEDROCK_READ_TIMEOUT": 1000,
+        "ENDPOINT_URL": null
     },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
