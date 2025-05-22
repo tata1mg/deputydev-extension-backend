@@ -2,7 +2,7 @@ import asyncio
 import json
 import mimetypes
 import uuid
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
 from google.genai import types
 from torpedo.exceptions import BadRequestException
@@ -129,6 +129,7 @@ class Google(BaseLLMProvider):
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
@@ -145,6 +146,7 @@ class Google(BaseLLMProvider):
             tool_use_response: The result from a previous tool execution.
             previous_responses: History of the conversation.
             tools: Available tools for the model.
+            tool_choice: How to handle tool selection (none, auto, required).
             cache_config: Caching configuration (mostly informational for Gemini).
             search_web: Add a tool to search web
 
