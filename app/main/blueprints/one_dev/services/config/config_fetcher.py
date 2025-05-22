@@ -135,6 +135,8 @@ class ConfigFetcher:
             },
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
             "VSCODE_LOGS_RETENTION_DAYS": 7,
+            "IMAGE_MAX_SIZE": ConfigManager.configs["IMAGE_MAX_SIZE"],
+            "IMAGE_TYPES": ConfigManager.configs["IMAGE_TYPES"],
         },
     }
 

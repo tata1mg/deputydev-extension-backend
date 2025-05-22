@@ -5,6 +5,7 @@ from openai.types.responses.response_stream_event import ResponseStreamEvent
 from openai.types.chat import ChatCompletion
 from openai.types import responses
 from app.backend_common.services.llm.dataclasses.main import (
+    AttachmentsType,
     ConversationRole,
     ConversationTurn,
     LLMCallResponseTypes,
@@ -38,6 +39,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadActor,
     MessageType,
     ToolUseResponseContent,
+    FileContent
 )
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -47,7 +49,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
 from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
 
 
@@ -66,7 +67,7 @@ class OpenAI(BaseLLMProvider):
         tools: Optional[List[ConversationTool]] = None,
         feedback: Optional[str] = None,
         cache_config=None,
-        file_vars: Optional[S3Reference] = None,
+        file_vars: List[AttachmentsType] = [],
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -98,19 +99,15 @@ class OpenAI(BaseLLMProvider):
 
         if prompt and prompt.user_message:
             user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
-            if file_vars and file_vars.key and file_vars.file_type and file_vars.file_type.startswith("image/"):
-                try:
-                    file = await FileProcessor().process_file(file_vars.key)
-                    if file:
-                        file_vars.file_data_base64 = file.get("content_base64")
-                except Exception as e:
-                    raise ValueError(f"Failed to process image: {str(e)}")
-                user_message["content"].append(
-                    {
-                        "type": "input_image",
-                        "image_url": f"data:{file_vars.file_type};base64,{file_vars.file_data_base64}"
-                    }
-                )
+            if file_vars:
+                for file in file_vars:
+                    if file.file_type.startswith("image/"):
+                        user_message["content"].append(
+                            {
+                                "type": "input_image",
+                                "s3_key": file.s3_key,
+                            }
+                        )
             messages.append(user_message)
 
         if tool_use_response:
@@ -120,6 +117,26 @@ class OpenAI(BaseLLMProvider):
                 "output": json.dumps(tool_use_response.content.response),
             }
             messages.append(tool_response)
+        
+
+        image_tasks = []
+        image_message_refs = []
+        for message in messages:
+            if "content" in message:
+                for content in message["content"]:
+                    if isinstance(content, dict) and content.get("type") == "input_image":
+                        s3_key = content["s3_key"]
+                        task = asyncio.create_task(FileProcessor().process_file(s3_key))
+                        image_tasks.append(task)
+                        image_message_refs.append(content)
+
+        if image_tasks:
+            results = await asyncio.gather(*image_tasks, return_exceptions=True)
+            for content, result in zip(image_message_refs, results):
+                if isinstance(result, Exception):
+                    raise ValueError(f"Failed to process image: {str(result)}")
+                content["image_url"] = f"data:{result.get('type')};base64,{result.get('content_base64')}"
+                content.pop("s3_key", None)
 
         return {
             "max_tokens": model_config["MAX_TOKENS"],
@@ -178,6 +195,14 @@ class OpenAI(BaseLLMProvider):
                         }
                     )
                     last_tool_use_request = True
+                elif isinstance(content_data, FileContent):
+                    for file in content_data:
+                        if file.file_type.startswith("image/"):
+                            conversation_turns.append(
+
+                            {"role": "user", "content": [{"type": "input_image", "s3_key": file.s3_key}]}
+                        )
+                        last_tool_use_request = False
         return conversation_turns
 
     def _parse_non_streaming_response(self, response: ChatCompletion) -> NonStreamingResponse:

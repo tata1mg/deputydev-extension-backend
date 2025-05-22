@@ -1,10 +1,8 @@
 import asyncio
-from email.mime import image
 import json
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
-from numpy import imag
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
@@ -14,6 +12,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    FileContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -26,11 +25,11 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    FileContent
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    AttachmentsType,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -56,8 +55,6 @@ from app.backend_common.services.llm.providers.anthropic.dataclasses.main import
     AnthropicResponseTypes,
 )
 from app.main.blueprints.one_dev.services.file_processor.file_processor import FileProcessor
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import S3Reference
-
 
 class Anthropic(BaseLLMProvider):
     def __init__(self):
@@ -122,6 +119,22 @@ class Anthropic(BaseLLMProvider):
                     )
                     last_tool_use_request = True
 
+                elif isinstance(content_data, list) and content_data and all(isinstance(f, FileContent) for f in content_data):
+                    for file in content_data:
+                        if file.file_type.startswith("image/"):
+                            content.append(
+                                {
+                                    "type": "image",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": file.file_type,
+                                        "data": file.s3_key
+                                    }
+                                }
+                            )
+                        last_tool_use_request = False
+                
+
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
 
@@ -136,7 +149,7 @@ class Anthropic(BaseLLMProvider):
         tools: Optional[List[ConversationTool]] = None,
         feedback: str = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        file_vars: Optional[S3Reference] = None,
+        file_vars: List[AttachmentsType] = [],
         **kwargs,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
@@ -148,23 +161,23 @@ class Anthropic(BaseLLMProvider):
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
-            if file_vars and file_vars.key and file_vars.file_type and file_vars.file_type.startswith("image/"):
-                try:
-                    file = await FileProcessor().process_file(file_vars.key)
-                    if file:
-                        file_vars.file_data_base64 = file.get("content_base64")
-                except Exception as e:
-                    raise ValueError(f"Failed to process image: {str(e)}")
-                user_message.content.append(
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": file_vars.file_type,
-                            "data": file_vars.file_data_base64,
-                        }
-                    }
-                )
+            if file_vars:
+                for file in file_vars:
+                    if file.file_type.startswith("image/"):
+                        # try:
+                        #     data = await FileProcessor().process_file(file.s3_key)
+                        # except Exception as e:
+                        #     raise ValueError(f"Failed to process image: {str(e)}")
+                        user_message.content.append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": file.file_type,
+                                    "data": file.s3_key
+                                }
+                            }
+                        )
             messages.append(user_message)
 
         # add tool result to conversation
@@ -186,6 +199,25 @@ class Anthropic(BaseLLMProvider):
             )
             messages.append(feedback_message)
 
+        image_tasks = []
+        image_contents = []
+
+        for message in messages:
+            for content in message.content:
+                if isinstance(content, dict) and content.get("type") == "image":
+                    s3_key = content["source"]["data"]
+                    task = asyncio.create_task(FileProcessor().process_file(s3_key))
+                    image_tasks.append(task)
+                    image_contents.append(content)
+                
+
+        if image_tasks:
+            results = await asyncio.gather(*image_tasks, return_exceptions=True)
+            for content, result in zip(image_contents, results):
+                if isinstance(result, Exception):
+                    raise ValueError(f"Failed to process image: {str(result)}")
+                content["source"]["data"] = result.get("content_base64")
+        
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []
 

@@ -1,20 +1,36 @@
-import asyncio
 from typing import Optional
 from app.backend_common.service_clients.aws.aws_client import AWSClient
 from deputydev_core.utils.config_manager import ConfigManager
+from aiobotocore.session import get_session 
 
 class AWSS3ServiceClient:
     def __init__(self):
+        self.aws_service_name = ConfigManager.configs['AWS_S3_BUCKET']['AWS_SERVICE_NAME']
         self.region_name = ConfigManager.configs['AWS_S3_BUCKET']['AWS_REGION']
         self.bucket_name = ConfigManager.configs['AWS_S3_BUCKET']['AWS_BUCKET_NAME']
         self.aws_secret_access_key = ConfigManager.configs['AWS_S3_BUCKET']['AWS_SECRET_ACCESS_KEY']
         self.aws_access_key_id = ConfigManager.configs['AWS_S3_BUCKET']['AWS_ACCESS_KEY_ID']
+        self.expiration = ConfigManager.configs['AWS_S3_BUCKET']['EXPIRATION']
+        self.file_min_size = ConfigManager.configs['AWS_S3_BUCKET']['FILE_MIN_SIZE']
+        self.file_max_size = ConfigManager.configs['AWS_S3_BUCKET']['FILE_MAX_SIZE']
 
+    async def create_client(self):
+        session = get_session()
+        try:
+            client = session.create_client(
+                self.aws_service_name,
+                region_name=self.region_name,
+                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=self.aws_access_key_id,
+            )
+            return client
+        except Exception as e:
+                raise Exception(f"Failed to create S3 client: {e}")
 
     async def create_presigned_post_url(self, object_name: str, content_type: str, expiration: int = 600) -> str:
 
-        if content_type not in ["image/jpeg", "image/jpg", "image/png"]:
-            raise ValueError("Invalid content type. Allowed: jpeg, jpg, png")
+        if content_type not in ["image/jpeg", "image/jpg", "image/png", "image/webp"]:
+            raise ValueError("Invalid content type. Allowed: jpeg, jpg, png, webp")
         
         region_name = "ap-south-1"
         aws_access_key_id="test"
@@ -23,7 +39,7 @@ class AWSS3ServiceClient:
 
 
         try:
-            # s3_client = await AWSClient.create_client('s3', self.region_name, aws_secret_access_key=self.aws_access_key_id, aws_access_key_id=self.aws_access_key_id)
+            s3_client = await self.create_client()
             s3_client = await AWSClient.create_client(
                 aws_service_name="s3",
                 region_name=region_name,
@@ -35,7 +51,7 @@ class AWSS3ServiceClient:
             async with s3_client as s3:
                 conditions = [
                 {"Content-Type": content_type},
-                ["content-length-range", 0, 5 * 1024 * 1024],  # Max 5MB
+                ["content-length-range", self.file_min_size, self.file_max_size],  # Max 5MB
                 {"acl": "private"},
                 ["starts-with", "$key", object_name]
                 ]
@@ -76,7 +92,7 @@ class AWSS3ServiceClient:
     async def create_presigned_get_url(
         self,
         object_name: str,
-        expiration: int = 600  
+        expiration: int = 600
     ) -> str:
         region_name = "ap-south-1"
         aws_access_key_id="test"
@@ -84,7 +100,7 @@ class AWSS3ServiceClient:
         endpoint_url="http://localhost:4566"
 
         try:
-            # s3_client = await AWSClient.create_client('s3', self.region_name, aws_secret_access_key=self.aws_access_key_id, aws_access_key_id=self.aws_access_key_id)
+            # s3_client = await self.create_client()
             s3_client = await AWSClient.create_client(aws_service_name="s3",
                                                       region_name=region_name,
                                                       aws_secret_access_key=aws_secret_access_key,
@@ -112,7 +128,7 @@ class AWSS3ServiceClient:
         endpoint_url="http://localhost:4566"
 
         try:
-            # s3_client = await AWSClient.create_client('s3', self.region_name, aws_secret_access_key=self.aws_access_key_id, aws_access_key_id=self.aws_access_key_id)
+            # s3_client = await self.create_client()
             s3_client = await AWSClient.create_client(aws_service_name="s3",
                                                       region_name=region_name,
                                                       aws_secret_access_key=aws_secret_access_key,
