@@ -4,7 +4,7 @@ import json
 from tkinter import Image
 import traceback
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union
 
 from sanic import file
 import xxhash
@@ -306,6 +306,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_handler: BasePrompt,
         call_chain_category: MessageCallChainCategory,
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         user_and_system_messages: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
@@ -348,6 +349,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     tool_use_response=tool_use_response,
                     previous_responses=previous_responses,
                     tools=tools,
+                    tool_choice=tool_choice,
                     cache_config=self.cache_config,
                     feedback=feedback,
                     file_vars=file_vars,
@@ -533,6 +535,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_vars: Dict[str, Any],
         file_vars: List[Attachments] = [],
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
@@ -593,6 +596,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_handler=prompt_handler,
             call_chain_category=call_chain_category,
             tools=tools,
+            tool_choice=tool_choice,
             user_and_system_messages=user_and_system_messages,
             file_vars=attachments_data,
             previous_responses=conversation_chain_messages,
@@ -638,6 +642,7 @@ class LLMHandler(Generic[PromptFeatures]):
         session_id: int,
         tool_use_response: ToolUseResponseData,
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         prompt_type=None,
@@ -730,6 +735,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_handler=detected_prompt_handler,
             call_chain_category=call_chain_category,
             tools=tools,
+            tool_choice=tool_choice,
             tool_use_response=tool_use_response,
             previous_responses=conversation_chain_messages,
             max_retry=MAX_LLM_RETRIES,

@@ -97,6 +97,9 @@ class TextBlockDelta(BaseModel):
     type: Literal[StreamingEventType.TEXT_BLOCK_DELTA] = StreamingEventType.TEXT_BLOCK_DELTA
     content: TextBlockDeltaContent
 
+    def __add__(self, other: "TextBlockDelta"):
+        return TextBlockDelta(content=TextBlockDeltaContent(text=self.content.text + other.content.text))
+
 
 class TextBlockEnd(BaseModel):
     type: Literal[StreamingEventType.TEXT_BLOCK_END] = StreamingEventType.TEXT_BLOCK_END
@@ -111,6 +114,13 @@ class ToolUseRequestStart(BaseModel):
 class ToolUseRequestDelta(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_DELTA] = StreamingEventType.TOOL_USE_REQUEST_DELTA
     content: ToolUseRequestDeltaContent
+
+    def __add__(self, other: "ToolUseRequestDelta"):
+        return ToolUseRequestDelta(
+            content=ToolUseRequestDeltaContent(
+                input_params_json_delta=self.content.input_params_json_delta + other.content.input_params_json_delta
+            )
+        )
 
 
 class ToolUseRequestEnd(BaseModel):

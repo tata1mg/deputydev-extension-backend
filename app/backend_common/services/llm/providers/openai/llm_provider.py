@@ -7,7 +7,6 @@ from openai.types import responses
 from app.backend_common.services.llm.dataclasses.main import (
     AttachmentsType,
     ConversationRole,
-    ConversationTurn,
     LLMCallResponseTypes,
     StreamingEvent,
     StreamingEventType,
@@ -60,11 +59,12 @@ class OpenAI(BaseLLMProvider):
 
     async def build_llm_payload(
         self,
-        llm_model,
+        llm_model: LLModels,
         prompt: Optional[UserAndSystemMessages] = None,
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config=None,
         file_vars: List[AttachmentsType] = [],
@@ -83,16 +83,19 @@ class OpenAI(BaseLLMProvider):
         model_config = self._get_model_config(llm_model)
         formatted_tools = []
         messages = []
-        for tool in tools:
-            tool = responses.FunctionToolParam(
-                name=tool.name,
-                parameters=tool.input_schema,
-                description=tool.description,
-                type="function",
-                strict=False,
-            )
-            formatted_tools.append(tool)
-        formatted_tools = sorted(formatted_tools, key=lambda x: x["name"]) if tools else []
+        if tools:
+            for tool in tools:
+                tool = responses.FunctionToolParam(
+                    name=tool.name,
+                    parameters=tool.input_schema,
+                    description=tool.description,
+                    type="function",
+                    strict=False,
+                )
+                formatted_tools.append(tool)
+
+            formatted_tools = sorted(formatted_tools, key=lambda x: x["name"])
+            tool_choice = tool_choice if tool_choice else "auto"
 
         if previous_responses:
             messages = self.get_conversation_turns(previous_responses)
@@ -143,6 +146,7 @@ class OpenAI(BaseLLMProvider):
             "system_message": prompt.system_message if prompt and prompt.system_message else "",
             "conversation_messages": messages,
             "tools": formatted_tools,
+            "tool_choice": tool_choice,
         }
 
     def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[dict]:
@@ -282,7 +286,7 @@ class OpenAI(BaseLLMProvider):
                 response_type=response_type,
                 tools=llm_payload["tools"],
                 instructions=llm_payload["system_message"],
-                tool_choice="auto",
+                tool_choice=llm_payload["tool_choice"],
                 max_output_tokens=model_config["MAX_TOKENS"],
             )
             return self._parse_non_streaming_response(response)

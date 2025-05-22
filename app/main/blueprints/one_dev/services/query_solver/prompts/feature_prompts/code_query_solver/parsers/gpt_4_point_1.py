@@ -29,7 +29,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 
 from partial_json_parser import loads
 from typing import AsyncIterator, List, Optional, Tuple, Union
-
 from pydantic import BaseModel
 
 
@@ -50,7 +49,8 @@ class TextBlockParser:
         if self.status == "NOT_STARTED":
             events.append(TextBlockStart())
             self.status = "STARTED"
-        events.append(TextBlockDelta(content=TextBlockDeltaContent(text=content[last_index:])))
+        if content[last_index:]:
+            events.append(TextBlockDelta(content=TextBlockDeltaContent(text=content[last_index:])))
         return events, len(content)
 
     def end(self):
@@ -107,7 +107,8 @@ class CodeBlockParser:
         delta = part["code"][last_index:]
         self.is_diff = part.get("is_diff")
         if not self.is_diff:
-            events.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=delta)))
+            if delta:
+                events.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=delta)))
         else:
             self.diff_line_buffer += delta
             self.diff_buffer += delta
@@ -239,7 +240,8 @@ class TextBlockEventParser:
 
         if self.current_block == "thinking":
             delta = block_data[self.parsed_index :]
-            for e in self.thinking_parser.parse(delta):
+            parsed_events = list(self.thinking_parser.parse(delta))
+            for e in parsed_events:
                 yield e
             self.parsed_index = len(block_data)
 

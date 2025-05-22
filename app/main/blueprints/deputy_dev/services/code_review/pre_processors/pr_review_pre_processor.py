@@ -32,9 +32,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
-from app.main.blueprints.deputy_dev.services.code_review.pr_review_initialization.pr_review_initialization_service import (
-    PRReviewInitializationService,
-)
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
@@ -99,9 +96,9 @@ class PRReviewPreProcessor:
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
-        if self.is_reviewable_request:
-            await PRReviewInitializationService.initialization()
-            await PRReviewInitializationService.create_embedding(self.repo_path)
+        # if self.is_reviewable_request:
+        #     await PRReviewInitializationService.initialization()
+        #     await PRReviewInitializationService.create_embedding(self.repo_path)
 
     @staticmethod
     def is_reviewable_based_on_settings(setting: dict) -> bool:
