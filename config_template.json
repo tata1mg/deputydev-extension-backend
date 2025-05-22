@@ -378,6 +378,13 @@
             "PROVIDER": "GOOGLE",
             "MAX_TOKENS": 8192,
             "INPUT_TOKENS_LIMIT": 100000
+        },
+        "GPT_O3_MINI": {
+          "NAME": "o3-mini",
+          "PROVIDER": "OPENAI",
+          "MAX_TOKENS": 8000,
+          "ACCESS_KEY": "",
+          "INPUT_TOKENS_LIMIT": 120000
         }
     },
     "GIT_ACTORS": {
