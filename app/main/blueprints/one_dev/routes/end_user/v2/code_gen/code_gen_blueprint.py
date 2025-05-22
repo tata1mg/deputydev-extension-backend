@@ -92,7 +92,6 @@ async def solve_user_query_non_stream(
 
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
 async def solve_user_query(_request: Request, **kwargs: Any):
-    print(_request.json)
     connection_id: str = _request.headers["connectionid"]  # type: ignore
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
