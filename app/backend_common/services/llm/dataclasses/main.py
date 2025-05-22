@@ -176,3 +176,7 @@ ParsedLLMCallResponse = Annotated[
     ],
     Field(discriminator="type"),
 ]
+
+class AttachmentsType(BaseModel):
+    s3_key: str
+    file_type: str
