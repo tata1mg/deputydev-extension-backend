@@ -5,12 +5,18 @@ from app.main.blueprints.one_dev.models.dto.file_upload_input import FileUploadP
 from typing import Any
 from torpedo.exceptions import HTTPRequestException
 
+from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.client.client_validator import validate_client_version
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+
 
 file_upload_v1_bp = Blueprint("file_upload_v1_bp", url_prefix="/file-upload")
 
 
 @file_upload_v1_bp.route("/get-presigned-post-url", methods=["POST"])
-async def get_presigned_post_url(_request: Request, **kwargs: Any):
+@validate_client_version
+@authenticate
+async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwargs: Any):
     payload = FileUploadPostInput(**_request.custom_json())
     print(f"Received payload: {payload}")
     try:
