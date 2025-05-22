@@ -28,6 +28,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -52,6 +53,8 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 
 class Anthropic(BaseLLMProvider):
@@ -59,7 +62,11 @@ class Anthropic(BaseLLMProvider):
         super().__init__(LLMProviders.ANTHROPIC.value)
         self.anthropic_client = None
 
-    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[ConversationTurn]:
+    async def get_conversation_turns(
+        self,
+        previous_responses: List[MessageThreadDTO],
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
+    ) -> List[ConversationTurn]:
         """
         Formats the conversation as required by the specific LLM.
         Args:
@@ -106,7 +113,7 @@ class Anthropic(BaseLLMProvider):
                             }
                         )
                         last_tool_use_request = False
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     content.append(
                         {
                             "type": "tool_use",
@@ -117,33 +124,70 @@ class Anthropic(BaseLLMProvider):
                     )
                     last_tool_use_request = True
 
+                # handle file attachments
+                else:
+                    attachment_id = content_data.attachment_id
+                    attachment_data = await attachment_data_task_map[attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        content.append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": attachment_data.attachment_metadata.file_type,
+                                    "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
+                                },
+                            }
+                        )
+                    last_tool_use_request = False
+
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
 
         return conversation_turns
 
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model: LLModels,
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
         prompt: Optional[UserAndSystemMessages] = None,
+        attachments: List[Attachment] = [],
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
-        feedback: str = None,
+        feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
-        messages: List[ConversationTurn] = self.get_conversation_turns(previous_responses)
+        messages: List[ConversationTurn] = await self.get_conversation_turns(
+            previous_responses, attachment_data_task_map
+        )
 
         # add system and user messages to conversation
         if prompt and prompt.user_message:
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
+            if attachments:
+                for attachment in attachments:
+                    attachment_data = await attachment_data_task_map[attachment.attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        # append at the beginning of the user message
+                        user_message.content.insert(  # type: ignore
+                            0,
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": attachment_data.attachment_metadata.file_type,
+                                    "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
+                                },
+                            }
+                        )
             messages.append(user_message)
 
         # add tool result to conversation

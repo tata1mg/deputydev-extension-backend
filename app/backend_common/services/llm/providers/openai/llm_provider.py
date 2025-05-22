@@ -5,8 +5,10 @@ from openai.types.responses.response_stream_event import ResponseStreamEvent
 from openai.types.chat import ChatCompletion
 from openai.types import responses
 from app.backend_common.services.llm.dataclasses.main import (
+    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     LLMCallResponseTypes,
+    PromptCacheConfig,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
@@ -20,6 +22,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
     ToolUseRequestStartContent,
 )
+
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -44,6 +47,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 
 class OpenAI(BaseLLMProvider):
@@ -51,17 +56,19 @@ class OpenAI(BaseLLMProvider):
         super().__init__(LLMProviders.OPENAI.value)
         self.anthropic_client = None
 
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model: LLModels,
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
         prompt: Optional[UserAndSystemMessages] = None,
+        attachments: List[Attachment] = [],
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
-        cache_config=None,
-        **kwargs,
+        cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for OpenAI's GPT model.
@@ -91,10 +98,20 @@ class OpenAI(BaseLLMProvider):
             tool_choice = tool_choice if tool_choice else "auto"
 
         if previous_responses:
-            messages = self.get_conversation_turns(previous_responses)
+            messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
 
         if prompt and prompt.user_message:
-            user_message = {"role": "user", "content": prompt.user_message}
+            user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
+            if attachments:
+                for attachment in attachments:
+                    attachment_data = await attachment_data_task_map[attachment.attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        user_message["content"].append(
+                            {
+                                "type": "input_image",
+                                "image_url": f"data:{attachment_data.attachment_metadata.file_type};base64,{FileProcessor.get_base64_file_content(attachment_data.object_bytes)}",
+                            }
+                        )
             messages.append(user_message)
 
         if tool_use_response:
@@ -113,7 +130,11 @@ class OpenAI(BaseLLMProvider):
             "tool_choice": tool_choice,
         }
 
-    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[dict]:
+    async def get_conversation_turns(
+        self,
+        previous_responses: List[MessageThreadDTO],
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
+    ) -> List[Dict[str, Any]]:
         """
         Formats the conversation as required by the specific LLM.
         Args:
@@ -153,7 +174,7 @@ class OpenAI(BaseLLMProvider):
                             }
                         )
                         last_tool_use_request = False
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     conversation_turns.append(
                         {
                             "call_id": content_data.tool_use_id,
@@ -163,6 +184,22 @@ class OpenAI(BaseLLMProvider):
                         }
                     )
                     last_tool_use_request = True
+                else:
+                    attachment_id = content_data.attachment_id
+                    attachment_data = await attachment_data_task_map[attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        conversation_turns.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "input_image",
+                                        "image_url": f"data:{attachment_data.attachment_metadata.file_type};base64,{FileProcessor.get_base64_file_content(attachment_data.object_bytes)}",
+                                    }
+                                ],
+                            }
+                        )
+                    last_tool_use_request = False
         return conversation_turns
 
     def _parse_non_streaming_response(self, response: ChatCompletion) -> NonStreamingResponse:
