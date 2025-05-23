@@ -20,6 +20,7 @@ class ContentBlockCategory(str, Enum):
     TEXT_BLOCK = "TEXT_BLOCK"
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
+    EXTENDED_THINKING = "EXTENDED_THINKING"
 
 
 class TextBlockContent(BaseModel):
@@ -38,6 +39,17 @@ class ToolUseResponseContent(BaseModel):
     response: Union[str, Dict[str, Any]]
 
 
+class ExtendedThinkingContent(BaseModel):
+    type: Literal["thinking", "redacted_thinking"] = "thinking"
+    thinking: str
+    signature: Optional[str] = ""
+
+
+class ExtendedThinkingData(BaseModel):
+    type: Literal[ContentBlockCategory.EXTENDED_THINKING] = ContentBlockCategory.EXTENDED_THINKING
+    content: ExtendedThinkingContent
+
+
 class TextBlockData(BaseModel):
     type: Literal[ContentBlockCategory.TEXT_BLOCK] = ContentBlockCategory.TEXT_BLOCK
     content: TextBlockContent
@@ -54,7 +66,7 @@ class ToolUseResponseData(BaseModel):
     content: ToolUseResponseContent
 
 
-ResponseData = Annotated[Union[TextBlockData, ToolUseRequestData], Field(discriminator="type")]
+ResponseData = Annotated[Union[ExtendedThinkingData, TextBlockData, ToolUseRequestData], Field(discriminator="type")]
 
 MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discriminator="type")]
 

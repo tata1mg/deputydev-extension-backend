@@ -174,7 +174,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             start_data["new_session_data"] = auth_data.session_refresh_token
         await push_to_connection_stream(start_data)
         try:
-            start = time()
             data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
 
             last_block = None
@@ -191,8 +190,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             # push stream end message
             end_data = {"type": "STREAM_END"}
             await push_to_connection_stream(end_data)
-            end = time()
-            logger.info(f"Time taken in solving query: {end - start} seconds")
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
 
