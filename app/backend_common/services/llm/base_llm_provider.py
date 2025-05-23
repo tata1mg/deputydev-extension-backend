@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+import asyncio
+from typing import Any, Dict, List, Literal, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
 
@@ -9,11 +10,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
+    ChatAttachmentDataWithObjectBytes,
     ConversationTool,
     PromptCacheConfig,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 
 class BaseLLMProvider(ABC):
@@ -23,16 +26,19 @@ class BaseLLMProvider(ABC):
         self.llm_type = llm_type
 
     @abstractmethod
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
-        llm_model,
+        llm_model: LLModels,
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
         prompt: Optional[UserAndSystemMessages] = None,
+        attachments: List[Attachment] = [],
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
-        feedback: str = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
+        feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.

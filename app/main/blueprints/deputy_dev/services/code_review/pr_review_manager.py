@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict
 
-from deputydev_core.services.initialization.review_initialization_manager import ReviewInitialisationManager
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
@@ -38,7 +37,6 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from deputydev_core.utils.weaviate import clean_weaviate_collections
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config

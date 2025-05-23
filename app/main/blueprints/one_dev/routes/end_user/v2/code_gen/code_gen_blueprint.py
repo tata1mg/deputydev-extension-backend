@@ -24,7 +24,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     TerminalCommandEditInput,
     UserQueryEnhancerInput,
-    LLMModel,
 )
 from app.main.blueprints.one_dev.services.query_solver.inline_editor import (
     InlineEditGenerator,
@@ -96,6 +95,8 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]  # type: ignore
 
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
+    if connection_data is None:
+        raise ValueError(f"No connection data found for connection ID: {connection_id}")
     client_data = ClientData(**connection_data["client_data"])
 
     session_id: Optional[int] = None

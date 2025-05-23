@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
@@ -48,6 +48,10 @@ class LLMModel(Enum):
     CLAUDE_3_POINT_7_SONNET_EXTENDED_THINKING = "CLAUDE_3_POINT_7_SONNET_EXTENDED_THINKING"
 
 
+class Attachment(BaseModel):
+    attachment_id: int
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
@@ -62,8 +66,10 @@ class QuerySolverInput(BaseModel):
     urls: Optional[List[Url]] = []
     os_name: Optional[str] = None
     shell: Optional[str] = None
+    vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    attachments: List[Attachment] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
@@ -83,6 +89,7 @@ class InlineEditInput(BaseModel):
     session_id: int
     query: Optional[str] = None
     tool_use_response: Optional[ToolUseResponseInput] = None
+    tool_choice: Literal["none", "auto", "required"] = "auto"
     code_selection: Optional[CodeSelectionInput] = None
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
