@@ -68,6 +68,8 @@ class LLMHandler(Generic[PromptFeatures]):
     model_to_provider_class_map = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
         LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
+        LLModels.CLAUDE_4_SONNET: Anthropic,
+        LLModels.CLAUDE_4_SONNET_THINKING: Anthropic,
         LLModels.GPT_4O: OpenAI,
         LLModels.GPT_40_MINI: OpenAI,
         LLModels.GEMINI_2_POINT_5_PRO: Google,

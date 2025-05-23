@@ -239,8 +239,8 @@ class Anthropic(BaseLLMProvider):
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
-        if llm_model == LLModels.CLAUDE_3_POINT_7_SONNET:
-            llm_payload["thinking"] = {"type": "enabled", "budget_tokens": 5000}
+        if model_config.get("THINKING") and model_config["THINKING"]["ENABLED"]:
+            llm_payload["thinking"] = {"type": "enabled", "budget_tokens": model_config["THINKING"]["BUDGET_TOKENS"]}
         if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
 
