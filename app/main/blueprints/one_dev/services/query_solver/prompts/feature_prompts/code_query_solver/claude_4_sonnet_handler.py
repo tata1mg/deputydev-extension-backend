@@ -10,27 +10,27 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_7_sonnet_prompt_handler import (
-    BaseClaude3Point7SonnetPromptHandler,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
+    BaseClaude4SonnetPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_3_point_7_sonnet_code_query_solver_prompt import (
     Claude3Point7CodeQuerySolverPrompt,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.code_block.claude_3_point_7_code_block_parser import (
-    Claude3Point7CodeBlockParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.code_block.claude_4_code_block_parser import (
+    Claude4CodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.summary.claude_3_point_7_summary_parser import (
-    Claude3Point7SummaryParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.summary.claude_4_summary_parser import (
+    Claude4SummaryParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_3_point_7_thinking_parser import (
-    Claude3Point7ThinkingParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_4_thinking_parser import (
+    Claude4ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.extended_thinking.claude_3_point_7_extended_thinking_parser import (
-    Claude3Point7ExtendedThinkingParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.extended_thinking.claude_4_extended_thinking_parser import (
+    Claude4ExtendedThinkingParser,
 )
 
 
-class Claude3Point7CodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPromptHandler):
+class Claude4CodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Claude3Point7CodeQuerySolverPrompt
@@ -57,10 +57,10 @@ class Claude3Point7CodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPromptHan
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
-        handlers = {"extended_thinking_handler": Claude3Point7ExtendedThinkingParser()}
+        handlers = {"extended_thinking_handler": Claude4ExtendedThinkingParser()}
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Claude3Point7ThinkingParser(), Claude3Point7CodeBlockParser(), Claude3Point7SummaryParser()],
+            parsers=[Claude4ThinkingParser(), Claude4CodeBlockParser(), Claude4SummaryParser()],
             handlers=handlers,
         )
 
