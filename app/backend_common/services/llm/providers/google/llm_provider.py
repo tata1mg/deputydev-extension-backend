@@ -98,7 +98,7 @@ class Google(BaseLLMProvider):
                         parts.append(tool_response)
                         last_tool_use_request = False
 
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     function_call = types.Part.from_function_call(
                         name=content_data.tool_name, args=content_data.tool_input
                     )
