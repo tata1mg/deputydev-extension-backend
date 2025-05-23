@@ -74,7 +74,7 @@ class PastWorkflows:
             has_more = len(raw_data) > limit
             raw_data = raw_data[:limit]
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
-        processed_data = serializer_service.get_processed_data()
+        processed_data = await serializer_service.get_processed_data()
         if compare_version(client_data.client_version, "2.0.1", "<="):
             return processed_data
         return {
@@ -99,7 +99,7 @@ class PastWorkflows:
             session_id, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN")
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
-        processed_data = serializer_service.get_processed_data()
+        processed_data = await serializer_service.get_processed_data()
         return processed_data
 
     @classmethod

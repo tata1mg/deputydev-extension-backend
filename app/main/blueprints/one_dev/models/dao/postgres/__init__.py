@@ -1,4 +1,12 @@
-__all__ = ["SessionChats", "Job", "JobFeedback", "QuerySummaries", "ExtensionFeedback", "Url", "ExtensionSetting"]
+__all__ = [
+    "SessionChats",
+    "Job",
+    "JobFeedback",
+    "QuerySummaries",
+    "ExtensionFeedback",
+    "Url",
+    "ExtensionSetting",
+]
 
 from .extension_feedbacks import ExtensionFeedback
 from .extension_settings import ExtensionSetting

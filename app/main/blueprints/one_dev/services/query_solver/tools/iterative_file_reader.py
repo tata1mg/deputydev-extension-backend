@@ -30,5 +30,6 @@ ITERATIVE_FILE_READER = ConversationTool(
             },
         },
         "required": ["file_path", "start_line", "end_line"],
+        "additionalProperties": False,
     },
 )
