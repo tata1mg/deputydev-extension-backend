@@ -129,9 +129,7 @@ class OpenAI(BaseLLMProvider):
                 conversation_turns.pop()
                 last_tool_use_request = False
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
-            # sort message datas, keep text block first and tool use request last
             message_datas = list(message.message_data)
-            message_datas.sort(key=lambda x: 0 if isinstance(x, TextBlockData) else 1)
             for message_data in message_datas:
                 content_data = message_data.content
                 if isinstance(content_data, TextBlockContent):
@@ -151,7 +149,7 @@ class OpenAI(BaseLLMProvider):
                             }
                         )
                         last_tool_use_request = False
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     conversation_turns.append(
                         {
                             "call_id": content_data.tool_use_id,
