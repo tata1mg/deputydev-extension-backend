@@ -344,6 +344,28 @@
             "INPUT_TOKENS_LIMIT": 130000,
             "PROMPT_CACHING_SUPPORTED": false
         },
+        "CLAUDE_4_SONNET": {
+            "ACCESS_KEY": "",
+            "INPUT_TOKENS_LIMIT": 150000,
+            "MAX_TOKENS": 8192,
+            "NAME": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+            "PROMPT_CACHING_SUPPORTED": true,
+            "PROVIDER": "ANTHROPIC",
+            "VERSION": "bedrock-2023-05-31"
+        },
+        "CLAUDE_4_SONNET_THINKING": {
+            "ACCESS_KEY": "",
+            "INPUT_TOKENS_LIMIT": 150000,
+            "MAX_TOKENS": 8192,
+            "NAME": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+            "PROMPT_CACHING_SUPPORTED": true,
+            "PROVIDER": "ANTHROPIC",
+            "THINKING": {
+              "ENABLED": true,
+              "BUDGET_TOKENS": 5000
+            },
+            "VERSION": "bedrock-2023-05-31"
+        },
         "GEMINI_2_POINT_5_PRO": {
             "NAME": "gemini-2.5-pro-preview-03-25",
             "PROVIDER": "GOOGLE",
@@ -596,34 +618,39 @@
     },
     "NUMBER_OF_WORKERS": 1,
     "CODE_GEN_LLM_MODELS": [
-        {
-            "id": 1,
-            "display_name": "Gpt 4.1",
-            "name": "GPT_4_POINT_1"
-        },
-        {
-            "id": 2,
-            "display_name": "Gemini 2.5 Pro",
-            "name": "GEMINI_2_POINT_5_PRO"
-        },
-        {
-            "id": 3,
-            "display_name": "Claude 3.5 Sonnet",
-            "name": "CLAUDE_3_POINT_5_SONNET"
-        }
+      {
+        "id": 1,
+        "display_name": "Claude 3.7 Sonnet",
+        "name": "CLAUDE_3_POINT_7_SONNET"
+      },
+      {
+        "id": 2,
+        "display_name": "Gpt 4.1",
+        "name": "GPT_4_POINT_1"
+      },
+      {
+        "id": 3,
+        "display_name": "Gemini 2.5 Pro",
+        "name": "GEMINI_2_POINT_5_PRO"
+      },
+      {
+        "id": 4,
+        "display_name": "Claude 3.5 Sonnet",
+        "name": "CLAUDE_3_POINT_5_SONNET"
+      }
+  ],
+  "LLM_MAX_RETRY": 2,
+  "CHAT_IMAGE_UPLOAD": {
+    "AWS_BUCKET_NAME": "deputydev",
+    "AWS_REGION": "ap-south-1",
+    "PRESIGNED_URL_EXPIRY": 600,
+    "MAX_BYTES": 5242880,
+    "SUPPORTED_MIMETYPES": [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp"
     ],
-    "LLM_MAX_RETRY": 2,
-    "CHAT_IMAGE_UPLOAD": {
-        "AWS_BUCKET_NAME": "deputydev",
-        "AWS_REGION": "ap-south-1",
-        "PRESIGNED_URL_EXPIRY": 600,
-        "MAX_BYTES": 5242880,
-        "SUPPORTED_MIMETYPES": [
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/webp"
-        ],
-        "FOLDER_PATH": "chat_images"
-    }
+    "FOLDER_PATH": "chat_images"
+  }
 }
