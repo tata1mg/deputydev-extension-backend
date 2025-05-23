@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, AsyncIterator
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
@@ -6,18 +6,20 @@ from app.backend_common.models.dto.message_thread_dto import (
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
+    StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
-    BaseClaude3Point5SonnetPrompt,
-)
+from app.backend_common.models.dto.message_thread_dto import MessageData
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from app.backend_common.models.dto.message_thread_dto import LLModels
 
 from app.main.blueprints.deputy_dev.services.code_review.review_planner.prompts.dataclasses.main import PromptFeatures
 
 
-class Claude3Point7ReviewPlannerPrompt(BaseClaude3Point5SonnetPrompt):
+class GptO3MiniReviewPlannerPrompt(BasePrompt):
     prompt_type = PromptFeatures.PR_REVIEW_PLANNER.value
     prompt_category = PromptCategories.CODE_REVIEW.value
+    model_name = LLModels.GPT_O3_MINI
 
     def get_system_prompt(self) -> str:
         system_message = """
@@ -133,3 +135,11 @@ class Claude3Point7ReviewPlannerPrompt(BaseClaude3Point5SonnetPrompt):
                 final_content.append(content_block.content.text)
 
         return final_content
+
+    @classmethod
+    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[Any]:
+        raise NotImplementedError("Streaming events not supported for this prompt")
+
+    @classmethod
+    def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
+        raise NotImplementedError("This method must be implemented in the child class")
