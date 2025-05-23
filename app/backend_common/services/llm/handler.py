@@ -24,6 +24,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
     FileBlockData,
     FileContent,
+    ExtendedThinkingData,
+    ExtendedThinkingContent,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
@@ -66,6 +68,8 @@ class LLMHandler(Generic[PromptFeatures]):
     model_to_provider_class_map = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
         LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
+        LLModels.CLAUDE_4_SONNET: Anthropic,
+        LLModels.CLAUDE_4_SONNET_THINKING: Anthropic,
         LLModels.GPT_4O: OpenAI,
         LLModels.GPT_40_MINI: OpenAI,
         LLModels.GEMINI_2_POINT_5_PRO: Google,
@@ -93,7 +97,27 @@ class LLMHandler(Generic[PromptFeatures]):
         text_buffer: str = ""
 
         for event in await llm_response.accumulated_events:
-            if event.type == StreamingEventType.TEXT_BLOCK_START:
+            if event.type == StreamingEventType.EXTENDED_THINKING_BLOCK_START:
+                current_content_block = ExtendedThinkingData(
+                    type=ContentBlockCategory.EXTENDED_THINKING, content=ExtendedThinkingContent(thinking="")
+                )
+            elif event.type == StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA:
+                if current_content_block and isinstance(current_content_block, ExtendedThinkingData):
+                    current_content_block.content.thinking += event.content.thinking_delta
+            elif event.type == StreamingEventType.EXTENDED_THINKING_BLOCK_END:
+                if current_content_block and isinstance(current_content_block, ExtendedThinkingData):
+                    current_content_block.content.signature = event.content.signature
+                    non_streaming_content_blocks.append(current_content_block)
+                    current_content_block = None
+            elif event.type == StreamingEventType.REDACTED_THINKING:
+                current_content_block = ExtendedThinkingData(
+                    type=ContentBlockCategory.EXTENDED_THINKING,
+                    content=ExtendedThinkingContent(type="redacted_thinking", thinking=event.data),
+                )
+                non_streaming_content_blocks.append(current_content_block)
+                current_content_block = None
+
+            elif event.type == StreamingEventType.TEXT_BLOCK_START:
                 current_content_block = TextBlockData(
                     type=ContentBlockCategory.TEXT_BLOCK, content=TextBlockContent(text="")
                 )
@@ -143,7 +167,6 @@ class LLMHandler(Generic[PromptFeatures]):
         else:
             response_to_use = llm_response
 
-        response_to_use.content.sort(key=lambda x: x.type.value)
         data_to_store: Sequence[ResponseData] = response_to_use.content
         data_hash = xxhash.xxh64(json.dumps([data.model_dump(mode="json") for data in data_to_store])).hexdigest()
         message_thread = MessageThreadData(
