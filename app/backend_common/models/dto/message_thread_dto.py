@@ -21,10 +21,15 @@ class ContentBlockCategory(str, Enum):
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
     EXTENDED_THINKING = "EXTENDED_THINKING"
+    FILE = "FILE"
 
 
 class TextBlockContent(BaseModel):
     text: str
+
+
+class FileContent(BaseModel):
+    attachment_id: int
 
 
 class ToolUseRequestContent(BaseModel):
@@ -56,6 +61,11 @@ class TextBlockData(BaseModel):
     content_vars: Optional[Dict[str, Any]] = None
 
 
+class FileBlockData(BaseModel):
+    type: Literal[ContentBlockCategory.FILE] = ContentBlockCategory.FILE
+    content: FileContent
+
+
 class ToolUseRequestData(BaseModel):
     type: Literal[ContentBlockCategory.TOOL_USE_REQUEST] = ContentBlockCategory.TOOL_USE_REQUEST
     content: ToolUseRequestContent
@@ -66,7 +76,7 @@ class ToolUseResponseData(BaseModel):
     content: ToolUseResponseContent
 
 
-ResponseData = Annotated[Union[ExtendedThinkingData, TextBlockData, ToolUseRequestData], Field(discriminator="type")]
+ResponseData = Annotated[Union[ExtendedThinkingData, TextBlockData, FileBlockData, ToolUseRequestData], Field(discriminator="type")]
 
 MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discriminator="type")]
 
@@ -80,6 +90,7 @@ class LLModels(Enum):
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GEMINI_2_POINT_0_FLASH = "GEMINI_2_POINT_0_FLASH"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
+    GPT_O3_MINI = "GPT_O3_MINI"
 
 
 class LLMUsage(BaseModel):

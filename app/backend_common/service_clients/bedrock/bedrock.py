@@ -20,9 +20,9 @@ class BedrockServiceClient:
         config = AioConfig(read_timeout=CONFIG.config["AWS"]["BEDROCK_READ_TIMEOUT"])  # type: ignore
         self.client = session.create_client(  # type: ignore
             service_name=CONFIG.config["AWS"]["BEDROCK_SERVICE_NAME"],  # type: ignore
-            aws_access_key_id=CONFIG.config["AWS"].get("AWS_ACCESS_KEY_ID"),  # type: ignore
-            aws_secret_access_key=CONFIG.config["AWS"].get("AWS_SECRET_ACCESS_KEY"),  # type: ignore
-            aws_session_token=CONFIG.config["AWS"].get("AWS_SESSION_TOKEN"),  # type: ignore
+            aws_access_key_id=CONFIG.config["AWS"].get("ACCESS_KEY_ID"),  # type: ignore
+            aws_secret_access_key=CONFIG.config["AWS"].get("SECRET_ACCESS_KEY"),  # type: ignore
+            aws_session_token=CONFIG.config["AWS"].get("SESSION_TOKEN"),  # type: ignore
             region_name=CONFIG.config["AWS"]["AWS_REGION"],  # type: ignore
             config=config,  # type: ignore
         )
