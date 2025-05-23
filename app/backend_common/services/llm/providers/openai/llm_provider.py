@@ -38,6 +38,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadActor,
     MessageType,
     ToolUseResponseContent,
+    ExtendedThinkingContent
 )
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -182,6 +183,9 @@ class OpenAI(BaseLLMProvider):
                         }
                     )
                     last_tool_use_request = True
+                elif isinstance(content_data, ExtendedThinkingContent):
+                    continue
+
                 else:
                     attachment_id = content_data.attachment_id
                     attachment_data = await attachment_data_task_map[attachment_id]
