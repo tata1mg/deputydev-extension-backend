@@ -17,7 +17,9 @@ class PastSessionsSerializer(BaseSerializer):
     Inherits from BaseSerializer and implements the method to format raw message session data.
     """
 
-    def process_raw_data(self, raw_data: List[ExtensionSessionDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
+    async def process_raw_data(
+        self, raw_data: List[ExtensionSessionDTO], type: SerializerTypes
+    ) -> List[Dict[str, Any]]:
         """
         Processes raw message session data and formats it for output.
 

@@ -61,6 +61,8 @@ class ClientTool(BaseModel):
     description: str
     input_schema: Dict[str, Any]
     tool_metadata: MCPToolMetadata
+class Attachment(BaseModel):
+    attachment_id: int
 
 
 class QuerySolverInput(BaseModel):
@@ -77,9 +79,11 @@ class QuerySolverInput(BaseModel):
     urls: Optional[List[Url]] = []
     os_name: Optional[str] = None
     shell: Optional[str] = None
+    vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
     client_tools: List[ClientTool] = []
+    attachments: List[Attachment] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
@@ -99,6 +103,7 @@ class InlineEditInput(BaseModel):
     session_id: int
     query: Optional[str] = None
     tool_use_response: Optional[ToolUseResponseInput] = None
+    tool_choice: Literal["none", "auto", "required"] = "auto"
     code_selection: Optional[CodeSelectionInput] = None
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
