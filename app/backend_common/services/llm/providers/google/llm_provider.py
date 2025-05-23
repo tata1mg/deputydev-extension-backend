@@ -22,6 +22,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
+    ExtendedThinkingContent
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -110,6 +111,9 @@ class Google(BaseLLMProvider):
                     )
                     parts.append(function_call)
                     last_tool_use_request = True
+
+                elif isinstance(content_data, ExtendedThinkingContent):
+                    continue
 
                 else:
                     attachment_id = content_data.attachment_id
