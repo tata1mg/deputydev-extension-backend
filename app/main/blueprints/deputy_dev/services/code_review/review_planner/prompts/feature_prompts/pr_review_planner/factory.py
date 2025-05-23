@@ -6,7 +6,6 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 from .gpt_o3_mini import GptO3MiniReviewPlannerPrompt
 
 
-
 class PRReviewPromptFeatureFactory(BaseFeaturePromptFactory):
     pr_review_planner_prompts = {
         LLModels.GPT_O3_MINI: GptO3MiniReviewPlannerPrompt,
