@@ -120,7 +120,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(
                 model_name=self.model, feature=prompt_feature
             )(prompt_vars)
-            # prompt_handler = CommentValidationPromptFactory
             user_and_system_messages = prompt_handler.get_prompt()
             current_tokens_data = self.get_tokens_data(user_and_system_messages)
             token_limit_exceeded = self.has_exceeded_token_limit(user_and_system_messages)
