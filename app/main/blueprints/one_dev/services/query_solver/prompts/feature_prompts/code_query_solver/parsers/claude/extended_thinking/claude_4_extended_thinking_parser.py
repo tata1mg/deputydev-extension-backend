@@ -11,7 +11,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 
 
-class Claude3Point7ExtendedThinkingParser:
+class Claude4ExtendedThinkingParser:
     def parse(self, event):
         if isinstance(event, ExtendedThinkingBlockStart):
             return ThinkingBlockStart()
