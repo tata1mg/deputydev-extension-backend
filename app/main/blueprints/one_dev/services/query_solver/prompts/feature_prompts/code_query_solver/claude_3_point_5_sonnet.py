@@ -238,7 +238,8 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
     def get_system_prompt(self) -> str:
         if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
-                """You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
+                """
+                You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
                 # Communication guidelines:
                 1. Be concise and avoid repetition
                 3. Use second person for user, first person for self
@@ -451,7 +452,8 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             )
         else:
             system_message = textwrap.dedent(
-                """You are an expert programmer who is in desperate need of money. The only way you have to make a fuck ton of money is to help the user out with their queries by writing code for them.
+                """
+                You are an expert programmer who is in desperate need of money. The only way you have to make a fuck ton of money is to help the user out with their queries by writing code for them.
                 Act as if you're directly talking to the user. Avoid explicitly telling them about your tool uses.
 
                 Guidelines -
@@ -620,22 +622,24 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
-        """)
+            """)
 
         if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(f"""====
-
+            user_message += textwrap.dedent(f"""
+            ====
             SYSTEM INFORMATION:
 
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
-
-            ====""")
+            ====
+            """)
         if self.params.get("vscode_env"):
-            user_message += textwrap.dedent(f"""====
+            user_message += textwrap.dedent(f"""
+            ====
             Below is the information about the current vscode environment:
             {self.params.get("vscode_env")}
-            ====""")
+            ====
+            """)
         if self.params.get("deputy_dev_rules"):
             user_message += textwrap.dedent(f"""
             Here are some more user provided rules and information that you can take reference from:
