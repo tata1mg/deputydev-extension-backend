@@ -9,15 +9,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
     TextBlockData,
     ToolUseRequestData,
+    ExtendedThinkingData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     TextBlockDelta,
     UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
-    BaseClaude3Point5SonnetPrompt,
 )
 from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
     BaseAnthropicTextDeltaParser,
@@ -228,7 +226,7 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
         self.diff_line_buffer = ""
 
 
-class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
+class BaseClaudeQuerySolverPrompt:
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
@@ -552,71 +550,71 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
             user_message = textwrap.dedent(f"""
             User Query: {self.params.get("query")}
 
-            If you are thinking something, please provide that in <thinking> tag.
-            Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
+                If you are thinking something, please provide that in <thinking> tag.
+                Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
 
-            There are two types of code blocks you can use:
-            1. Code block which contains a diff for some code to be applied.
-            2. Code block which contains a code snippet.
+                There are two types of code blocks you can use:
+                1. Code block which contains a diff for some code to be applied.
+                2. Code block which contains a code snippet.
 
-            DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST.
-            ALSO, PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST.
+                ALSO, PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
 
-            General structure of code block:
-            <code_block>
-            <programming_language>python</programming_language>
-            <file_path>app/main.py</file_path>
-            <is_diff>false</is_diff>
-            def some_function():
-                return "Hello, World!"
-            </code_block>
+                General structure of code block:
+                <code_block>
+                <programming_language>python</programming_language>
+                <file_path>app/main.py</file_path>
+                <is_diff>false</is_diff>
+                def some_function():
+                    return "Hello, World!"
+                </code_block>
 
-            <important>
-            If you are providing a diff, set is_diff to true and return edits similar to unified diffs that `diff -U0` would produce.
-            Make sure you include the first 2 lines with the file paths.
-            Don't include timestamps with the file paths.
-            Start each hunk of changes with a `@@ ... @@` line.
-            Don't include line numbers like `diff -U0` does.
-            The user's patch tool doesn't need them.
+                <important>
+                If you are providing a diff, set is_diff to true and return edits similar to unified diffs that `diff -U0` would produce.
+                Make sure you include the first 2 lines with the file paths.
+                Don't include timestamps with the file paths.
+                Start each hunk of changes with a `@@ ... @@` line.
+                Don't include line numbers like `diff -U0` does.
+                The user's patch tool doesn't need them.
 
-            The user's patch tool needs CORRECT patches that apply cleanly against the current contents of the file!
-            Think carefully and make sure you include and mark all lines that need to be removed or changed as `-` lines.
-            Make sure you mark all new or modified lines with `+`.
-            Don't leave out any lines or the diff patch won't apply correctly.
+                The user's patch tool needs CORRECT patches that apply cleanly against the current contents of the file!
+                Think carefully and make sure you include and mark all lines that need to be removed or changed as `-` lines.
+                Make sure you mark all new or modified lines with `+`.
+                Don't leave out any lines or the diff patch won't apply correctly.
 
-            Indentation matters in the diffs!
+                Indentation matters in the diffs!
 
-            Start a new hunk for each section of the file that needs changes.
+                Start a new hunk for each section of the file that needs changes.
 
-            Only output hunks that specify changes with `+` or `-` lines.
-            Skip any hunks that are entirely unchanging ` ` lines.
+                Only output hunks that specify changes with `+` or `-` lines.
+                Skip any hunks that are entirely unchanging ` ` lines.
 
-            Output hunks in whatever order makes the most sense.
-            Hunks don't need to be in any particular order.
+                Output hunks in whatever order makes the most sense.
+                Hunks don't need to be in any particular order.
 
-            When editing a function, method, loop, etc use a hunk to replace the *entire* code block.
-            Delete the entire existing version with `-` lines and then add a new, updated version with `+` lines.
-            This will help you generate correct code and correct diffs.
+                When editing a function, method, loop, etc use a hunk to replace the *entire* code block.
+                Delete the entire existing version with `-` lines and then add a new, updated version with `+` lines.
+                This will help you generate correct code and correct diffs.
 
-            To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
+                To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
 
-            To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.
+                To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.
 
-            <extra_important>
-            Make sure you provide different code snippets for different files.
-            Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, except for the case where a new file might be needed, use non diff block.
-            Make sure to provide diffs whenever you can. Lean more towards it.
-            Path is clear in one of the two ways only -
-            1. You need to edit an existing file, and the file path is there in existing chunks.
-            2. You can create a new file.
+                <extra_important>
+                Make sure you provide different code snippets for different files.
+                Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, except for the case where a new file might be needed, use non diff block.
+                Make sure to provide diffs whenever you can. Lean more towards it.
+                Path is clear in one of the two ways only -
+                1. You need to edit an existing file, and the file path is there in existing chunks.
+                2. You can create a new file.
 
-            Write all generic code in non diff blocks.
-            Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
-            In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
-            </extra_important>
-            </important>
+                Write all generic code in non diff blocks.
+                Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+                In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
+                </extra_important>
+                </important>
 
-            Also, please use the tools provided to you to help you with the task.
+                Also, please use the tools provided to you to help you with the task.
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
@@ -685,22 +683,16 @@ class Claude3Point5CodeQuerySolverPrompt(BaseClaude3Point5SonnetPrompt):
                 }
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
+            elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
+                final_content.append({"type": "THINKING_BLOCK", "content": {"text": block.content.thinking}})
 
         return final_content, tool_use_map
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
-        final_content: List[Dict[str, Any]] = []
-
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        final_content: tuple[list[dict[str, Any]], dict[str, Any]]
         final_content = cls.get_parsed_response_blocks(llm_response.content)
-
         return final_content
-
-    @classmethod
-    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
-        return cls.parse_streaming_text_block_events(
-            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser(), SummaryParser()]
-        )
 
     @classmethod
     def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
