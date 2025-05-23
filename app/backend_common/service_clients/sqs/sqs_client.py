@@ -1,6 +1,6 @@
 from aiobotocore.session import ClientCreatorContext
 
-from app.backend_common.service_clients.aws.aws_client import AWSClient
+from app.backend_common.service_clients.aws.sqs_aws_client import AWSClient
 
 
 class SQSClient(AWSClient):

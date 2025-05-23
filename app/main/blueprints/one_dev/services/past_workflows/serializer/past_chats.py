@@ -1,10 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import (
-    MessageThreadDTO,
-    MessageType,
-    TextBlockData,
-)
+from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO, MessageType, TextBlockData, FileBlockData
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
     SerializerTypes,
 )
@@ -23,7 +21,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.factory import (
 
 
 class PastChatsSerializer(BaseSerializer):
-    def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
+    async def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes) -> List[Dict[str, Any]]:
         tool_use_map: Dict[str, Any] = {}
         formatted_data: List[Dict[str, Any]] = []
         current_query_write_mode: bool = False
@@ -87,7 +85,24 @@ class PastChatsSerializer(BaseSerializer):
                 if focus_objects:
                     content["focus_items"] = focus_objects
 
-                formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
+                if len(item.message_data) > 1:
+                    # TODO: This will need to be changed if multi file upload is supported
+                    for message_data_obj in item.message_data[1:]:
+                        if isinstance(message_data_obj, FileBlockData):
+                            attachment_id = message_data_obj.content.attachment_id
+                            attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id)
+                            if not attachment_data:
+                                continue
+                            presigned_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
+                                attachment_data.s3_key
+                            )
+                            result = {"get_url": presigned_url, "file_type": attachment_data.file_type}
+                    formatted_data.append(
+                        {"type": "TEXT_BLOCK", "content": content, "s3Reference": result, "actor": actor}
+                    )
+                else:
+                    formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
+
             elif message_type == MessageType.TOOL_RESPONSE:
                 tool_use_id = response_block[0].content.tool_use_id
                 if tool_use_id not in tool_use_map:

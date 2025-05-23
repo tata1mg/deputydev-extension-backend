@@ -1,7 +1,7 @@
 import asyncio
 import json
 import uuid
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
 from google.genai import types
 from torpedo.exceptions import BadRequestException
@@ -26,6 +26,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
+    ChatAttachmentDataWithObjectBytes,
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
@@ -45,13 +46,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 
 class Google(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.GOOGLE.value)
 
-    def get_conversation_turns(self, previous_responses: List[MessageThreadDTO]) -> List[types.Content]:
+    async def get_conversation_turns(
+        self,
+        previous_responses: List[MessageThreadDTO],
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
+    ) -> List[types.Content]:
         """
         Formats the conversation history for Google's Gemini model.
 
@@ -98,30 +104,45 @@ class Google(BaseLLMProvider):
                         parts.append(tool_response)
                         last_tool_use_request = False
 
-                else:
+                elif isinstance(content_data, ToolUseRequestContent):
                     function_call = types.Part.from_function_call(
                         name=content_data.tool_name, args=content_data.tool_input
                     )
                     parts.append(function_call)
                     last_tool_use_request = True
 
+                else:
+                    attachment_id = content_data.attachment_id
+                    attachment_data = await attachment_data_task_map[attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        parts.append(
+                            types.Part.from_bytes(
+                                data=attachment_data.object_bytes,
+                                mime_type=attachment_data.attachment_metadata.file_type,
+                            )
+                        )
+                    last_tool_use_request = False
+
             if parts:
                 conversation_turns.append(types.Content(role=role, parts=parts))
 
         return conversation_turns
 
-    def build_llm_payload(
+    async def build_llm_payload(
         self,
         llm_model: LLModels,
+        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
         prompt: Optional[UserAndSystemMessages] = None,
+        attachments: List[Attachment] = [],
         tool_use_response: Optional[ToolUseResponseData] = None,
         previous_responses: List[MessageThreadDTO] = [],
         tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),
-        search_web: Optional[bool] = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -132,12 +153,15 @@ class Google(BaseLLMProvider):
             tool_use_response: The result from a previous tool execution.
             previous_responses: History of the conversation.
             tools: Available tools for the model.
+            tool_choice: How to handle tool selection (none, auto, required).
             cache_config: Caching configuration (mostly informational for Gemini).
             search_web: Add a tool to search web
 
         Returns:
             Dict[str, Any]: Payload containing 'contents', 'tools', 'system_instruction', 'tool_config'.
         """
+
+        search_web = kwargs.get("search_web", False)
         if tools and search_web:
             raise BadRequestException("Functional tools and Web search tool can not be used together")
         model_config = self._get_model_config(llm_model)
@@ -149,15 +173,26 @@ class Google(BaseLLMProvider):
             system_instruction = types.Part.from_text(text=prompt.system_message)
 
         # 2. Process Conversation History (previous_responses)
-        contents: List[types.Content] = self.get_conversation_turns(previous_responses)
+        contents: List[types.Content] = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
 
         # 3. Handle Current User Prompt
+        user_parts: List[types.Part] = []
+
         if prompt and prompt.user_message:
-            contents.append(
-                types.Content(
-                    role=ConversationRoleGemini.USER.value, parts=[types.Part.from_text(text=prompt.user_message)]
-                )
-            )
+            user_parts.append(types.Part.from_text(text=prompt.user_message))
+
+        if attachments:
+            for attachment in attachments:
+                attachment_data = await attachment_data_task_map[attachment.attachment_id]
+                if attachment_data:
+                    user_parts.append(
+                        types.Part.from_bytes(
+                            data=attachment_data.object_bytes, mime_type=attachment_data.attachment_metadata.file_type
+                        )
+                    )
+
+        if user_parts:
+            contents.append(types.Content(role=ConversationRoleGemini.USER.value, parts=user_parts))
 
         # 4. Handle Tool Use Response (if provided for this specific call)
         if tool_use_response:
