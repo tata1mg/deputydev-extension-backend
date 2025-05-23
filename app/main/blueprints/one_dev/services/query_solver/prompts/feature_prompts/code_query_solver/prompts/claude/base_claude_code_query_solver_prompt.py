@@ -9,6 +9,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
     TextBlockData,
     ToolUseRequestData,
+    ExtendedThinkingData
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
@@ -678,6 +679,8 @@ class BaseClaudeQuerySolverPrompt:
                 }
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
+            elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
+                final_content.append({"type": "THINKING_BLOCK", "content": {"text": block.content.thinking}})
 
         return final_content, tool_use_map
 
