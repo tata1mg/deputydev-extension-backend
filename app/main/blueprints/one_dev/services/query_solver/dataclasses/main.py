@@ -51,7 +51,7 @@ class ToolMetadataTypes(Enum):
 
 
 class MCPToolMetadata(BaseModel):
-    type: Literal[ToolMetadataTypes.MCP]
+    type: ToolMetadataTypes = ToolMetadataTypes.MCP
     server_id: str
     tool_name: str
 
