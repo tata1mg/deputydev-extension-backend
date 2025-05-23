@@ -20,9 +20,6 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 from app.main.blueprints.deputy_dev.services.code_review.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
-from app.main.blueprints.deputy_dev.services.code_review.tools.focussed_snippets_searcher import (
-    FOCUSED_SNIPPETS_SEARCHER,
-)
 from app.main.blueprints.deputy_dev.services.code_review.tools.grep_search import (
     GREP_SEARCH,
 )
