@@ -76,7 +76,9 @@ class ToolUseResponseData(BaseModel):
     content: ToolUseResponseContent
 
 
-ResponseData = Annotated[Union[ExtendedThinkingData, TextBlockData, FileBlockData, ToolUseRequestData], Field(discriminator="type")]
+ResponseData = Annotated[
+    Union[ExtendedThinkingData, TextBlockData, FileBlockData, ToolUseRequestData], Field(discriminator="type")
+]
 
 MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discriminator="type")]
 

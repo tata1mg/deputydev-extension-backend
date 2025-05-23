@@ -205,7 +205,7 @@ class Anthropic(BaseLLMProvider):
                                     "media_type": attachment_data.attachment_metadata.file_type,
                                     "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
                                 },
-                            }
+                            },
                         )
             messages.append(user_message)
 

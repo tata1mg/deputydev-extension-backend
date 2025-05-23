@@ -28,7 +28,7 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.GEMINI_2_POINT_5_PRO: Gemini2Point5Pro,
         LLModels.GPT_4_POINT_1: Gpt4Point1Prompt,
         LLModels.CLAUDE_4_SONNET: Claude4CodeQuerySolverPromptHandler,
-        LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCodeQuerySolverPromptHandler
+        LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCodeQuerySolverPromptHandler,
     }
 
     @classmethod
