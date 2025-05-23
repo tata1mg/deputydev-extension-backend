@@ -68,6 +68,10 @@ class StreamingEventType(Enum):
     CODE_BLOCK_START = "CODE_BLOCK_START"
     CODE_BLOCK_DELTA = "CODE_BLOCK_DELTA"
     CODE_BLOCK_END = "CODE_BLOCK_END"
+    REDACTED_THINKING = "REDACTED_THINKING"
+    EXTENDED_THINKING_BLOCK_START = "EXTENDED_THINKING_BLOCK_START"
+    EXTENDED_THINKING_BLOCK_END = "EXTENDED_THINKING_BLOCK_END"
+    EXTENDED_THINKING_BLOCK_DELTA = "EXTENDED_THINKING_BLOCK_DELTA"
 
 
 # TOOL_USE_REQUEST BLOCK CONTENTS
@@ -125,6 +129,33 @@ class ToolUseRequestDelta(BaseModel):
 
 class ToolUseRequestEnd(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_END] = StreamingEventType.TOOL_USE_REQUEST_END
+
+
+class ExtendedThinkingBlockStart(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_START] = StreamingEventType.EXTENDED_THINKING_BLOCK_START
+
+
+class RedactedThinking(BaseModel):
+    type: Literal[StreamingEventType.REDACTED_THINKING] = StreamingEventType.REDACTED_THINKING
+    data: str
+
+
+class ExtendedThinkingBlockDeltaContent(BaseModel):
+    thinking_delta: str
+
+
+class ExtendedThinkingBlockEndContent(BaseModel):
+    signature: str
+
+
+class ExtendedThinkingBlockDelta(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA] = StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA
+    content: ExtendedThinkingBlockDeltaContent
+
+
+class ExtendedThinkingBlockEnd(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_END] = StreamingEventType.EXTENDED_THINKING_BLOCK_END
+    content: ExtendedThinkingBlockEndContent
 
 
 TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd], Field(discriminator="type")]
