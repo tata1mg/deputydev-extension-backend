@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 PUBLIC_URL_CONTENT_READER = ConversationTool(
     name="public_url_content_reader",
@@ -15,16 +15,18 @@ PUBLIC_URL_CONTENT_READER = ConversationTool(
 
         Tip: For best performance, process 3-5 URLs at a time.
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "urls": {
-                "type": "array",
-                "items": {"type": "string", "format": "uri", "pattern": "^https?://"},
-                "description": "A list of publicly accessible HTTP/HTTPS URLs (maximum: 5).",
-                "maxItems": 5,
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "array",
+                    "items": {"type": "string", "format": "uri", "pattern": "^https?://"},
+                    "description": "A list of publicly accessible HTTP/HTTPS URLs (maximum: 5).",
+                    "maxItems": 5,
+                },
             },
-        },
-        "required": ["urls"],
-    },
+            "required": ["urls"],
+        }
+    ),
 )
