@@ -3,7 +3,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
+from app.backend_common.models.dto.message_thread_dto import MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     StreamingEvent,
     StreamingEventType,
@@ -18,7 +18,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ExtendedThinkingBlockDelta,
     ExtendedThinkingBlockStart,
     ExtendedThinkingBlockEnd,
-    RedactedThinking,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.dataclasses.main import (

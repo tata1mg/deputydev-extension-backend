@@ -1,6 +1,6 @@
 import re
 import textwrap
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
@@ -13,7 +13,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
-    StreamingResponse,
     TextBlockDelta,
     UserAndSystemMessages,
 )
