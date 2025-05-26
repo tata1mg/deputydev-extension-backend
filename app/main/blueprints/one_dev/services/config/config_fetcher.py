@@ -78,6 +78,12 @@ class ConfigFetcher:
                     "DEFAULT_MAX_CHUNKS_CODE_GENERATION"
                 ],
             },
+            "MCP": {
+                    "MAX_TOOLS": ConfigManager.configs["BINARY"]["MCP"]["MAX_TOOLS"],
+                    "SERVER_CONNECTION_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["SERVER_CONNECTION_TIMEOUT"],
+                    "TOOL_RESPONSE_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["TOOL_RESPONSE_TIMEOUT"],
+                    "BUFFER_SIZE": ConfigManager.configs["BINARY"]["MCP"]["BUFFER_SIZE"]
+            },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["BINARY"]["EMBEDDING"]["MODEL"],
                 "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"]["TOKEN_LIMIT"],
