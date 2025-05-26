@@ -4,7 +4,6 @@ from app.backend_common.service_clients.aws.aws_client_manager import AWSClientM
 from types_aiobotocore_s3.client import S3Client
 
 
-
 class AWSS3ServiceClient:
     # constructor
     def __init__(self, bucket_name: str, region_name: str):

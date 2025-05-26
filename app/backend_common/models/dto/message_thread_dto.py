@@ -41,7 +41,7 @@ class ToolUseRequestContent(BaseModel):
 class ToolUseResponseContent(BaseModel):
     tool_name: str
     tool_use_id: str
-    response: Union[str, Dict[str, Any]]
+    response: Dict[str, Any]
 
 
 class ExtendedThinkingContent(BaseModel):

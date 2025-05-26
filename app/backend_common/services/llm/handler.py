@@ -2,7 +2,7 @@ import asyncio
 import json
 import traceback
 from enum import Enum
-from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union, cast
 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
@@ -584,15 +584,17 @@ class LLMHandler(Generic[PromptFeatures]):
         if not previous_responses:
             return []
 
-        # determine the type of previous_responses
-        if isinstance(previous_responses[0], ConversationTurn):
+        # determine the type of previous_responses, if it is list of conversation turns or list of message ids
+        if all(isinstance(item, ConversationTurn) for item in previous_responses):
             return await self.fetch_message_threads_from_conversation_turns(
-                conversation_turns=previous_responses,
+                conversation_turns=cast(List[ConversationTurn], previous_responses),
                 session_id=session_id,
                 prompt_handler=prompt_handler,
                 call_chain_category=call_chain_category,
             )
-        data = await self.get_message_threads_from_message_thread_ids(message_thread_ids=previous_responses)
+        data = await self.get_message_threads_from_message_thread_ids(
+            message_thread_ids=cast(List[int], previous_responses)
+        )
         data.sort(key=lambda x: x.id)
         return data
 
@@ -608,7 +610,6 @@ class LLMHandler(Generic[PromptFeatures]):
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
-        **kwargs,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -665,7 +666,6 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
             response_type=prompt_handler.response_type,
-            **kwargs,
         )
 
     async def store_tool_use_ressponse_in_db(
@@ -707,8 +707,8 @@ class LLMHandler(Generic[PromptFeatures]):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
-        prompt_type=None,
-        prompt_vars: dict = None,
+        prompt_type: Optional[str] = None,
+        prompt_vars: Optional[Dict[str, Any]] = None,
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
