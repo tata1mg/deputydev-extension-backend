@@ -3,7 +3,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
+from app.backend_common.models.dto.message_thread_dto import MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     StreamingEvent,
     StreamingEventType,
@@ -15,6 +15,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestDelta,
     ToolUseRequestEnd,
     ToolUseRequestStart,
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockStart,
+    ExtendedThinkingBlockEnd,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.dataclasses.main import (
@@ -26,9 +29,7 @@ from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_b
 )
 
 
-class BaseClaude3Point5SonnetPrompt(BasePrompt):
-    model_name = LLModels.CLAUDE_3_POINT_5_SONNET
-
+class BaseClaudePromptHandler(BasePrompt):
     """
     This is a helper method to parse streaming text block events via xml tags. It accumulates text until it finds a full xml tag, then parses it via parsers implemented by the user.
     This is a non-blocking method, and it yields the events as soon as they are parsed and ready to be yielded. The method is designed to be used in an async generator function.
@@ -43,7 +44,10 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
 
     @classmethod
     async def parse_streaming_text_block_events(
-        cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseAnthropicTextDeltaParser]
+        cls,
+        events: AsyncIterator[StreamingEvent],
+        parsers: List[BaseAnthropicTextDeltaParser],
+        handlers: Dict[str, Any] = {},
     ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
         xml_tags_to_paraser_map = {parser.xml_tag: parser for parser in parsers}
 
@@ -69,6 +73,13 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                 yield event
                 continue
 
+            if (
+                isinstance(event, ExtendedThinkingBlockStart)
+                or isinstance(event, ExtendedThinkingBlockDelta)
+                or isinstance(event, ExtendedThinkingBlockEnd)
+            ):
+                yield handlers.get("extended_thinking_handler").parse(event)
+                continue
             # if event is text block start, we add to on hold events
             if event.type == StreamingEventType.TEXT_BLOCK_START:
                 on_hold_events.append(event)

@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 RELATED_CODE_SEARCHER = ConversationTool(
     name="related_code_searcher",
@@ -8,21 +8,23 @@ RELATED_CODE_SEARCHER = ConversationTool(
         This tool also optionally takes a list of paths to limit the scope of the search.
         This performs best when the search query is more precise and relating to the function or purpose of code. Results will be poor if asking a very broad question, such as asking about the general 'framework' or 'implementation' of a large component or system.
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "search_query": {
-                "type": "string",
-                "description": "The search query to search the codebase for. Include relevant keywords and code snippets for best results",
-            },
-            "paths": {
-                "type": "array",
-                "items": {
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "search_query": {
                     "type": "string",
+                    "description": "The search query to search the codebase for. Include relevant keywords and code snippets for best results",
                 },
-                "description": "The paths to limit the search to. If not provided, the search will be done on the entire codebase",
+                "paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                    },
+                    "description": "The paths to limit the search to. If not provided, the search will be done on the entire codebase",
+                },
             },
-        },
-        "required": ["search_query"],
-    },
+            "required": ["search_query"],
+        }
+    ),
 )

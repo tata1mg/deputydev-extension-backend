@@ -1,4 +1,5 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from sqlalchemy import JSON
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 GREP_SEARCH = ConversationTool(
     name="grep_search",
@@ -24,19 +25,21 @@ GREP_SEARCH = ConversationTool(
     Note: For accurate results, always use exact syntax from the source code (e.g., function or variable names). Avoid adding or removing underscores, changing casing, or converting identifiers into plain English phrases.
 
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "directory_path": {
-                "type": "string",
-                "description": "The complete path of the directory to search in",
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "directory_path": {
+                    "type": "string",
+                    "description": "The complete path of the directory to search in",
+                },
+                "search_terms": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of search terms to match against file names. ",
+                },
             },
-            "search_terms": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "List of search terms to match against file names. ",
-            },
-        },
-        "required": ["directory_path", "search_terms"],
-    },
+            "required": ["directory_path", "search_terms"],
+        }
+    ),
 )
