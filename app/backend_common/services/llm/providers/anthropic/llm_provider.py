@@ -431,7 +431,7 @@ class Anthropic(BaseLLMProvider):
         return None, None, None
 
     async def _parse_streaming_response(
-        self, response: InvokeModelWithResponseStreamResponseTypeDef, async_bedrock_client: BedrockRuntimeClient
+        self, response: InvokeModelWithResponseStreamResponseTypeDef, async_bedrock_client: BedrockRuntimeClient, model_config: Dict
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
@@ -441,6 +441,8 @@ class Anthropic(BaseLLMProvider):
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
+            buffer: list[StreamingEvent] = []
+            current_type: Optional[type] = None
             current_running_block_type: Optional[ContentBlockCategory] = None
             async for event in response["body"]:
                 chunk = json.loads(event["chunk"]["bytes"])
@@ -450,15 +452,30 @@ class Anthropic(BaseLLMProvider):
                     event_block, event_block_category, event_usage = self._get_parsed_stream_event(
                         chunk, current_running_block_type
                     )
+                    block_type = type(event_block)
+                    if current_type is None:
+                        current_type = block_type
+                    if block_type != current_type or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1):
+                        combined_event = buffer[0]
+                        # Flush buffer before switching type
+                        for buffered_event in buffer[1:]:
+                            combined_event += buffered_event
+                        yield combined_event
+                        buffer.clear()
+                        current_type = block_type
                     if event_usage:
                         usage += event_usage
                     if event_block:
                         current_running_block_type = event_block_category
                         accumulated_events.append(event_block)
-                        yield event_block
                 except Exception as error:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
+            if buffer:
+                combined_event = buffer[0]
+                for buffered_event in buffer[1:]:
+                    combined_event += buffered_event
+                yield combined_event
 
             streaming_completed = True
 
@@ -508,4 +525,4 @@ class Anthropic(BaseLLMProvider):
             response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
-            return await self._parse_streaming_response(response, async_bedrock_client)
+            return await self._parse_streaming_response(response, async_bedrock_client, model_config)
