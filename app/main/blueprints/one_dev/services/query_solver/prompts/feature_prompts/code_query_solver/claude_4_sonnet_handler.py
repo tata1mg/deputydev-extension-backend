@@ -13,8 +13,8 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
     BaseClaude4SonnetPromptHandler,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_3_point_7_sonnet_code_query_solver_prompt import (
-    Claude3Point7CodeQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_4_sonnet_code_query_solver_prompt import (
+    Claude4CodeQuerySolverPrompt,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.code_block.claude_4_code_block_parser import (
     Claude4CodeBlockParser,
@@ -33,7 +33,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 class Claude4CodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Claude3Point7CodeQuerySolverPrompt
+    prompt_class = Claude4CodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
