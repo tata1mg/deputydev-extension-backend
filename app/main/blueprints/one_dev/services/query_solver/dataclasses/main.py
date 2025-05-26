@@ -5,6 +5,7 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel, field_validator
 
+from app.backend_common.services.llm.dataclasses.main import JSONSchema
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 MAX_DEPUTY_DEV_RULES_LENGTH = ConfigManager.configs["MAX_DEPUTY_DEV_RULES_LENGTH"]
@@ -44,6 +45,8 @@ class LLMModel(Enum):
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
+    CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
+    CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
 
 
 class ToolMetadataTypes(Enum):
@@ -59,8 +62,10 @@ class MCPToolMetadata(BaseModel):
 class ClientTool(BaseModel):
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: JSONSchema
     tool_metadata: MCPToolMetadata
+
+
 class Attachment(BaseModel):
     attachment_id: int
 

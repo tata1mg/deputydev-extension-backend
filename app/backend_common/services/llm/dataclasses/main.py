@@ -43,10 +43,42 @@ class ConversationTurn(BaseModel):
     content: Union[str, List[Dict[str, Any]]]
 
 
+class JSONSchemaType(Enum):
+    NULL = "null"
+    BOOLEAN = "boolean"
+    OBJECT = "object"
+    ARRAY = "array"
+    NUMBER = "number"
+    INTEGER = "integer"
+    STRING = "string"
+
+
+class JSONSchema(BaseModel):
+    type: Optional[Union[JSONSchemaType, list[JSONSchemaType]]] = None
+    format: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    default: Optional[Any] = None
+    items: Optional["JSONSchema"] = None
+    min_items: Optional[int] = None
+    max_items: Optional[int] = None
+    enum: Optional[list[Any]] = None
+    properties: Optional[dict[str, "JSONSchema"]] = None
+    required: Optional[list[str]] = None
+    min_properties: Optional[int] = None
+    max_properties: Optional[int] = None
+    minimum: Optional[float] = None
+    maximum: Optional[float] = None
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    pattern: Optional[str] = None
+    any_of: Optional[list["JSONSchema"]] = None
+
+
 class ConversationTool(BaseModel):
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: JSONSchema
 
 
 class PromptCacheConfig(BaseModel):
@@ -69,6 +101,10 @@ class StreamingEventType(Enum):
     CODE_BLOCK_START = "CODE_BLOCK_START"
     CODE_BLOCK_DELTA = "CODE_BLOCK_DELTA"
     CODE_BLOCK_END = "CODE_BLOCK_END"
+    REDACTED_THINKING = "REDACTED_THINKING"
+    EXTENDED_THINKING_BLOCK_START = "EXTENDED_THINKING_BLOCK_START"
+    EXTENDED_THINKING_BLOCK_END = "EXTENDED_THINKING_BLOCK_END"
+    EXTENDED_THINKING_BLOCK_DELTA = "EXTENDED_THINKING_BLOCK_DELTA"
 
 
 # TOOL_USE_REQUEST BLOCK CONTENTS
@@ -128,16 +164,49 @@ class ToolUseRequestEnd(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_END] = StreamingEventType.TOOL_USE_REQUEST_END
 
 
+class ExtendedThinkingBlockStart(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_START] = StreamingEventType.EXTENDED_THINKING_BLOCK_START
+
+
+class RedactedThinking(BaseModel):
+    type: Literal[StreamingEventType.REDACTED_THINKING] = StreamingEventType.REDACTED_THINKING
+    data: str
+
+
+class ExtendedThinkingBlockDeltaContent(BaseModel):
+    thinking_delta: str
+
+
+class ExtendedThinkingBlockEndContent(BaseModel):
+    signature: str
+
+
+class ExtendedThinkingBlockDelta(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA] = StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA
+    content: ExtendedThinkingBlockDeltaContent
+
+
+class ExtendedThinkingBlockEnd(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_END] = StreamingEventType.EXTENDED_THINKING_BLOCK_END
+    content: ExtendedThinkingBlockEndContent
+
+
 TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd], Field(discriminator="type")]
 ToolUseRequestEvents = Annotated[
     Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd], Field(discriminator="type")
 ]
+ExtendedThinkingEvents = Annotated[
+    Union[ExtendedThinkingBlockStart, ExtendedThinkingBlockDelta, ExtendedThinkingBlockEnd], Field(discriminator="type")
+]
+RedactedThinkingEvent = Annotated[RedactedThinking, Field(discriminator="type")]
 
 
 StreamingEvent = Annotated[
     Union[
         TextBlockEvents,
         ToolUseRequestEvents,
+        ExtendedThinkingEvents,
+        RedactedThinkingEvent,
     ],
     Field(discriminator="type"),
 ]

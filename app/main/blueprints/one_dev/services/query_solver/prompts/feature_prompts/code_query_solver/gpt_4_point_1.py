@@ -473,14 +473,14 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(f"""====
-
+            user_message += textwrap.dedent(f"""
+            ====
             SYSTEM INFORMATION:
 
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
-
-            ====""")
+            ====
+            """)
 
         if self.params.get("vscode_env"):
             user_message += textwrap.dedent(f"""====

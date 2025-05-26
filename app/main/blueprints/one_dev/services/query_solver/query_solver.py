@@ -28,7 +28,9 @@ from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClientTool,
     DetailedFocusItem,
+    MCPToolMetadata,
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
@@ -197,6 +199,19 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
+    def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
+        # check if tool is MCP type tool
+        if isinstance(client_tool.tool_metadata, MCPToolMetadata):
+            description_extra = f"This tool is provided by a third party MCP server - {client_tool.tool_metadata.server_id}. Please ensure that any data passed to this tool is exactly what is required to be sent to this tool to function properly. Do not supply any sensitive data to this tool which can be misused by the MCP server. In case of ambiguity, ask the user for clarification."
+            return ConversationTool(
+                name=client_tool.name,
+                description=description_extra + "\n" + client_tool.description,
+                input_schema=client_tool.input_schema,
+            )
+        raise ValueError(
+            f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
+        )
+
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
@@ -229,11 +244,7 @@ class QuerySolver:
 
         for client_tool in payload.client_tools:
             tools_to_use.append(
-                ConversationTool(
-                    name=client_tool.name,
-                    description=client_tool.description,
-                    input_schema=client_tool.input_schema,
-                )
+                self.generate_conversation_tool_from_client_tool(client_tool)
             )
 
         llm_handler = LLMHandler(
@@ -281,6 +292,9 @@ class QuerySolver:
             prompt_vars = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
+                "vscode_env": payload.vscode_env,
+                "write_mode": payload.write_mode,
+                "deputy_dev_rules": payload.deputy_dev_rules,
             }
             tool_response = payload.tool_use_response.response
             if not payload.tool_use_failed:
