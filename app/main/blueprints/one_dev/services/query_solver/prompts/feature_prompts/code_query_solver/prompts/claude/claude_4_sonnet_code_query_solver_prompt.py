@@ -3,5 +3,5 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class Claude3Point7CodeQuerySolverPrompt(BaseClaudeQuerySolverPrompt):
+class Claude4CodeQuerySolverPrompt(BaseClaudeQuerySolverPrompt):
     pass
