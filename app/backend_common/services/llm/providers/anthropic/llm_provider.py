@@ -476,7 +476,6 @@ class Anthropic(BaseLLMProvider):
                         )
                     ):
                         combined_event = sum(buffer[1:], start=buffer[0])
-                        print(combined_event)
                         yield combined_event
                         buffer.clear()
                         current_type = block_type
