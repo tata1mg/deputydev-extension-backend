@@ -1,5 +1,5 @@
 import textwrap
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 CREATE_NEW_WORKSPACE = ConversationTool(
     name="create_new_workspace",
@@ -19,18 +19,20 @@ CREATE_NEW_WORKSPACE = ConversationTool(
         - If file-creation steps are needed in a follow-up, use the `replace_in_file` tool or send code snippets with diffs.
         - Freely use other tools to complete the task.
         """),
-    input_schema={
-        "type": "object",
-        "properties": {
-            "query": {
-                "type": "string",
-                "description": textwrap.dedent(
-                    "A clear and concise description of the workspace or project the user wants to create. "
-                    "This is a natural language request like 'Create a Next.js blog with TypeScript' or "
-                    "'Start a Vite React project for a dashboard UI'."
-                ),
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": textwrap.dedent(
+                        "A clear and concise description of the workspace or project the user wants to create. "
+                        "This is a natural language request like 'Create a Next.js blog with TypeScript' or "
+                        "'Start a Vite React project for a dashboard UI'."
+                    ),
+                },
             },
-        },
-        "required": ["query"],
-    },
+            "required": ["query"],
+        }
+    ),
 )
