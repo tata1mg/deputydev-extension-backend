@@ -43,10 +43,42 @@ class ConversationTurn(BaseModel):
     content: Union[str, List[Dict[str, Any]]]
 
 
+class JSONSchemaType(Enum):
+    NULL = "null"
+    BOOLEAN = "boolean"
+    OBJECT = "object"
+    ARRAY = "array"
+    NUMBER = "number"
+    INTEGER = "integer"
+    STRING = "string"
+
+
+class JSONSchema(BaseModel):
+    type: Optional[Union[JSONSchemaType, list[JSONSchemaType]]] = None
+    format: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    default: Optional[Any] = None
+    items: Optional["JSONSchema"] = None
+    min_items: Optional[int] = None
+    max_items: Optional[int] = None
+    enum: Optional[list[Any]] = None
+    properties: Optional[dict[str, "JSONSchema"]] = None
+    required: Optional[list[str]] = None
+    min_properties: Optional[int] = None
+    max_properties: Optional[int] = None
+    minimum: Optional[float] = None
+    maximum: Optional[float] = None
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    pattern: Optional[str] = None
+    any_of: Optional[list["JSONSchema"]] = None
+
+
 class ConversationTool(BaseModel):
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: JSONSchema
 
 
 class PromptCacheConfig(BaseModel):
@@ -163,12 +195,18 @@ TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd],
 ToolUseRequestEvents = Annotated[
     Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd], Field(discriminator="type")
 ]
+ExtendedThinkingEvents = Annotated[
+    Union[ExtendedThinkingBlockStart, ExtendedThinkingBlockDelta, ExtendedThinkingBlockEnd], Field(discriminator="type")
+]
+RedactedThinkingEvent = Annotated[RedactedThinking, Field(discriminator="type")]
 
 
 StreamingEvent = Annotated[
     Union[
         TextBlockEvents,
         ToolUseRequestEvents,
+        ExtendedThinkingEvents,
+        RedactedThinkingEvent,
     ],
     Field(discriminator="type"),
 ]
