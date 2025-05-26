@@ -3,8 +3,6 @@ from typing import Any
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
 from types_aiobotocore_s3.client import S3Client
 
-from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams
-
 
 class AWSS3ServiceClient:
     # constructor

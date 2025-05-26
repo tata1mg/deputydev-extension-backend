@@ -9,12 +9,12 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
-    BaseClaude3Point5SonnetPrompt,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
+    BaseClaude3Point5SonnetPromptHandler,
 )
 
 
-class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPrompt):
+class Claude3Point5TaskPlanGenerationPrompt(BaseClaude3Point5SonnetPromptHandler):
     prompt_type = "TASK_PLANNER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 

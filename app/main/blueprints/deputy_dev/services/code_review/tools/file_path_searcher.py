@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 FILE_PATH_SEARCHER = ConversationTool(
     name="file_path_searcher",
@@ -9,21 +9,23 @@ FILE_PATH_SEARCHER = ConversationTool(
         This can also be used to list down files in a given directory if no search terms are provided.
         This gives at max 100 files.
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "directory": {
-                "type": "string",
-                "description": "The complete path of the directory",
-            },
-            "search_terms": {
-                "type": "array",
-                "items": {
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "directory": {
                     "type": "string",
+                    "description": "The complete path of the directory",
                 },
-                "description": "The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
+                "search_terms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                    },
+                    "description": "The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
+                },
             },
-        },
-        "required": ["directory"],
-    },
+            "required": ["directory"],
+        }
+    ),
 )

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
+from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, cast
 
 from deputydev_core.utils.app_logger import AppLogger
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
@@ -24,6 +24,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
+    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -49,6 +50,12 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStartContent,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
+    ExtendedThinkingBlockStart,
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockDeltaContent,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockEndContent,
+    RedactedThinking,
 )
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
@@ -87,10 +94,21 @@ class Anthropic(BaseLLMProvider):
             content: List[Dict[str, Any]] = []
             # sort message datas, keep text block first and tool use request last
             message_datas = list(message.message_data)
-            message_datas.sort(key=lambda x: 0 if isinstance(x, TextBlockData) else 1)
             for message_data in message_datas:
                 content_data = message_data.content
-                if isinstance(content_data, TextBlockContent):
+                if isinstance(content_data, ExtendedThinkingContent):
+                    if content_data.type == "thinking":
+                        content.append(
+                            {"type": "thinking", "thinking": content_data.thinking, "signature": content_data.signature}
+                        )
+                    else:
+                        content.append(
+                            {
+                                "type": "redacted_thinking",
+                                "data": content_data.thinking,
+                            }
+                        )
+                elif isinstance(content_data, TextBlockContent):
                     content.append(
                         {
                             "type": "text",
@@ -159,7 +177,6 @@ class Anthropic(BaseLLMProvider):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs: Any,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
@@ -186,7 +203,7 @@ class Anthropic(BaseLLMProvider):
                                     "media_type": attachment_data.attachment_metadata.file_type,
                                     "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
                                 },
-                            }
+                            },
                         )
             messages.append(user_message)
 
@@ -220,7 +237,8 @@ class Anthropic(BaseLLMProvider):
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json") for tool in tools],
         }
-
+        if model_config.get("THINKING") and model_config["THINKING"]["ENABLED"]:
+            llm_payload["thinking"] = {"type": "enabled", "budget_tokens": model_config["THINKING"]["BUDGET_TOKENS"]}
         if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
 
@@ -314,6 +332,31 @@ class Anthropic(BaseLLMProvider):
                 usage.output = invocation_metrics.get("outputTokenCount")
 
             return None, None, usage
+
+        if event["type"] == "content_block_start" and event["content_block"]["type"] == "thinking":
+            return ExtendedThinkingBlockStart(), ContentBlockCategory.EXTENDED_THINKING, None
+
+        if event["type"] == "content_block_start" and event["content_block"]["type"] == "redacted_thinking":
+            return RedactedThinking(data=event["content_block"]["data"]), ContentBlockCategory.EXTENDED_THINKING, None
+
+        if event["type"] == "content_block_delta" and event["delta"]["type"] == "thinking_delta":
+            return (
+                ExtendedThinkingBlockDelta(
+                    content=ExtendedThinkingBlockDeltaContent(thinking_delta=event["delta"]["thinking"])
+                ),
+                ContentBlockCategory.EXTENDED_THINKING,
+                None,
+            )
+
+        if event["type"] == "content_block_delta" and event["delta"]["type"] == "signature_delta":
+            return (
+                ExtendedThinkingBlockEnd(
+                    content=ExtendedThinkingBlockEndContent(signature=event["delta"]["signature"])
+                ),
+                ContentBlockCategory.EXTENDED_THINKING,
+                None,
+            )
+
         # parsers for tool use request blocks
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "tool_use":
             return (
@@ -397,7 +440,8 @@ class Anthropic(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             current_running_block_type: Optional[ContentBlockCategory] = None
-            async for event in response["body"]:
+            response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
+            async for event in response_body:
                 chunk = json.loads(event["chunk"]["bytes"])
                 # yield content block delta
 
