@@ -281,6 +281,9 @@ class QuerySolver:
             prompt_vars = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
+                "vscode_env": payload.vscode_env,
+                "write_mode": payload.write_mode,
+                "deputy_dev_rules": payload.deputy_dev_rules,
             }
             tool_response = payload.tool_use_response.response
             if not payload.tool_use_failed:
