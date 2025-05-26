@@ -65,7 +65,7 @@ MAX_LLM_RETRIES = int(ConfigManager.configs["LLM_MAX_RETRY"])
 
 
 class LLMHandler(Generic[PromptFeatures]):
-    model_to_provider_class_map = {
+    model_to_provider_class_map: Dict[LLModels, Type[BaseLLMProvider]] = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Anthropic,
         LLModels.CLAUDE_3_POINT_7_SONNET: Anthropic,
         LLModels.CLAUDE_4_SONNET: Anthropic,
