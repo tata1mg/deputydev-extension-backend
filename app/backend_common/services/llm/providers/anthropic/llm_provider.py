@@ -447,34 +447,29 @@ class Anthropic(BaseLLMProvider):
             async for event in response["body"]:
                 chunk = json.loads(event["chunk"]["bytes"])
                 # yield content block delta
-
                 try:
                     event_block, event_block_category, event_usage = self._get_parsed_stream_event(
                         chunk, current_running_block_type
                     )
                     block_type = type(event_block)
-                    if current_type is None:
+                    if event_block and current_type is None:
                         current_type = block_type
-                    if block_type != current_type or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1):
-                        combined_event = buffer[0]
-                        # Flush buffer before switching type
-                        for buffered_event in buffer[1:]:
-                            combined_event += buffered_event
+                    if event_block and block_type != current_type or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1):
+                        combined_event = sum(buffer[1:], start=buffer[0])
                         yield combined_event
                         buffer.clear()
                         current_type = block_type
                     if event_usage:
                         usage += event_usage
                     if event_block:
+                        buffer.append(event_block)
                         current_running_block_type = event_block_category
                         accumulated_events.append(event_block)
                 except Exception as error:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
             if buffer:
-                combined_event = buffer[0]
-                for buffered_event in buffer[1:]:
-                    combined_event += buffered_event
+                combined_event = sum(buffer[1:], start=buffer[0])
                 yield combined_event
 
             streaming_completed = True
