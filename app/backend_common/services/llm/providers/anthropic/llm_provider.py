@@ -431,7 +431,10 @@ class Anthropic(BaseLLMProvider):
         return None, None, None
 
     async def _parse_streaming_response(
-        self, response: InvokeModelWithResponseStreamResponseTypeDef, async_bedrock_client: BedrockRuntimeClient, model_config: Dict
+        self,
+        response: InvokeModelWithResponseStreamResponseTypeDef,
+        async_bedrock_client: BedrockRuntimeClient,
+        model_config: Dict,
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
@@ -441,6 +444,15 @@ class Anthropic(BaseLLMProvider):
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
+            non_combinable_events = [
+                RedactedThinking,
+                TextBlockStart,
+                TextBlockEnd,
+                ToolUseRequestStart,
+                ToolUseRequestEnd,
+                ExtendedThinkingBlockStart,
+                ExtendedThinkingBlockEnd,
+            ]
             buffer: list[StreamingEvent] = []
             current_type: Optional[type] = None
             current_running_block_type: Optional[ContentBlockCategory] = None
@@ -454,8 +466,17 @@ class Anthropic(BaseLLMProvider):
                     block_type = type(event_block)
                     if event_block and current_type is None:
                         current_type = block_type
-                    if event_block and block_type != current_type or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1):
+                    if (
+                        event_block
+                        and buffer
+                        and (
+                            current_type in non_combinable_events
+                            or block_type != current_type
+                            or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
+                        )
+                    ):
                         combined_event = sum(buffer[1:], start=buffer[0])
+                        print(combined_event)
                         yield combined_event
                         buffer.clear()
                         current_type = block_type
