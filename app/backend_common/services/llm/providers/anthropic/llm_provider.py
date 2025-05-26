@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
+from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, cast
 
 from deputydev_core.utils.app_logger import AppLogger
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
@@ -177,7 +177,6 @@ class Anthropic(BaseLLMProvider):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs: Any,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
@@ -441,7 +440,8 @@ class Anthropic(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             current_running_block_type: Optional[ContentBlockCategory] = None
-            async for event in response["body"]:
+            response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
+            async for event in response_body:
                 chunk = json.loads(event["chunk"]["bytes"])
                 # yield content block delta
 

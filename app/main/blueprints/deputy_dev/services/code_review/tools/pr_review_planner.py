@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 PR_REVIEW_PLANNER = ConversationTool(
     name="pr_review_planner",
@@ -17,14 +17,16 @@ PR_REVIEW_PLANNER = ConversationTool(
     3. Areas requiring special focus based on change patterns
     4. Heuristic-based identification of potentially affected areas
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "review_focus": {
-                "type": "string",
-                "description": "Optional. Specific aspect to focus review on (security, performance, etc.), What all you want to look for in PR.",
-            }
-        },
-        "required": ["review_focus"],
-    },
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "review_focus": {
+                    "type": "string",
+                    "description": "Optional. Specific aspect to focus review on (security, performance, etc.), What all you want to look for in PR.",
+                }
+            },
+            "required": ["review_focus"],
+        }
+    ),
 )
