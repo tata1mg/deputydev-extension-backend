@@ -38,7 +38,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadActor,
     MessageType,
     ToolUseResponseContent,
-    ExtendedThinkingContent
+    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
