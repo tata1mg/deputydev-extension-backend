@@ -153,6 +153,13 @@ class ExtendedThinkingBlockDelta(BaseModel):
     type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA] = StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA
     content: ExtendedThinkingBlockDeltaContent
 
+    def __add__(self, other):
+        return ExtendedThinkingBlockDelta(
+            content=ExtendedThinkingBlockDeltaContent(
+                thinking_delta=self.content.thinking_delta + other.content.thinking_delta
+            )
+        )
+
 
 class ExtendedThinkingBlockEnd(BaseModel):
     type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_END] = StreamingEventType.EXTENDED_THINKING_BLOCK_END
