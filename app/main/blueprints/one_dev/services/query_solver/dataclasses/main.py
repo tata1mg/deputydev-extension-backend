@@ -63,6 +63,8 @@ class ClientTool(BaseModel):
     description: str
     input_schema: Dict[str, Any]
     tool_metadata: MCPToolMetadata
+
+
 class Attachment(BaseModel):
     attachment_id: int
 

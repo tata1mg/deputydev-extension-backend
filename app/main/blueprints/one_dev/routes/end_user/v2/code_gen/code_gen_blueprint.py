@@ -2,8 +2,6 @@ import asyncio
 import json
 import uuid
 from typing import Any, Dict, List, Optional
-from sanic.log import logger
-from time import time
 import httpx
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager

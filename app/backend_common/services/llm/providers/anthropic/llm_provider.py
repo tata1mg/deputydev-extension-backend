@@ -24,7 +24,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingData,
     ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
@@ -456,7 +455,7 @@ class Anthropic(BaseLLMProvider):
                         current_running_block_type = event_block_category
                         accumulated_events.append(event_block)
                         yield event_block
-                except Exception as error:
+                except Exception:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
 
