@@ -54,25 +54,33 @@ class JSONSchemaType(Enum):
 
 
 class JSONSchema(BaseModel):
-    type: Optional[Union[JSONSchemaType, list[JSONSchemaType]]] = None
-    format: Optional[str] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
-    default: Optional[Any] = None
-    items: Optional["JSONSchema"] = None
-    min_items: Optional[int] = None
-    max_items: Optional[int] = None
-    enum: Optional[list[Any]] = None
-    properties: Optional[dict[str, "JSONSchema"]] = None
-    required: Optional[list[str]] = None
-    min_properties: Optional[int] = None
-    max_properties: Optional[int] = None
-    minimum: Optional[float] = None
-    maximum: Optional[float] = None
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    pattern: Optional[str] = None
-    any_of: Optional[list["JSONSchema"]] = None
+    type: Optional[Union[str, list[str]]] = Field(default=None, alias="type")
+    format: Optional[str] = Field(default=None, alias="format")
+    title: Optional[str] = Field(default=None, alias="title")
+    description: Optional[str] = Field(default=None, alias="description")
+    default: Optional[Any] = Field(default=None, alias="default")
+
+    items: Optional["JSONSchema"] = Field(default=None, alias="items")
+    min_items: Optional[int] = Field(default=None, alias="minItems")
+    max_items: Optional[int] = Field(default=None, alias="maxItems")
+    enum: Optional[list[Any]] = Field(default=None, alias="enum")
+
+    properties: Optional[dict[str, "JSONSchema"]] = Field(default=None, alias="properties")
+    required: Optional[list[str]] = Field(default=None, alias="required")
+    min_properties: Optional[int] = Field(default=None, alias="minProperties")
+    max_properties: Optional[int] = Field(default=None, alias="maxProperties")
+
+    minimum: Optional[float] = Field(default=None, alias="minimum")
+    maximum: Optional[float] = Field(default=None, alias="maximum")
+    min_length: Optional[int] = Field(default=None, alias="minLength")
+    max_length: Optional[int] = Field(default=None, alias="maxLength")
+    pattern: Optional[str] = Field(default=None, alias="pattern")
+
+    any_of: Optional[list["JSONSchema"]] = Field(default=None, alias="anyOf")
+
+    class Config:
+        populate_by_name = True  # Allows snake_case or camelCase during input
+        allow_population_by_field_name = True  # Backward compatibility
 
 
 class ConversationTool(BaseModel):
