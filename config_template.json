@@ -406,6 +406,12 @@
             "MAX_TOKENS": 8192,
             "INPUT_TOKENS_LIMIT": 100000
         },
+        "GEMINI_2_POINT_5_FLASH": {
+          "NAME": "gemini-2.5-flash-preview-05-20",
+          "PROVIDER": "GOOGLE",
+          "MAX_TOKENS": 8192,
+          "INPUT_TOKENS_LIMIT": 200000
+        },
         "GPT_O3_MINI": {
           "NAME": "o3-mini",
           "PROVIDER": "OPENAI",
