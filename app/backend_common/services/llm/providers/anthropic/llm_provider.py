@@ -235,8 +235,9 @@ class Anthropic(BaseLLMProvider):
             "max_tokens": model_config["MAX_TOKENS"],
             "system": prompt.system_message if prompt and prompt.system_message else "",
             "messages": [message.model_dump(mode="json") for message in messages],
-            "tools": [tool.model_dump(mode="json") for tool in tools],
+            "tools": [tool.model_dump(mode="json", by_alias=True, exclude_defaults=True) for tool in tools],
         }
+
         if model_config.get("THINKING") and model_config["THINKING"]["ENABLED"]:
             llm_payload["thinking"] = {"type": "enabled", "budget_tokens": model_config["THINKING"]["BUDGET_TOKENS"]}
         if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
