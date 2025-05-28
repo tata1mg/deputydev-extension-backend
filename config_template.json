@@ -546,6 +546,34 @@
                         "service_path": ""
                     }
                 }
+            },
+            "5.2.0": {
+                "darwin": {
+                    "arm64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    },
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                },
+                "linux": {
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                },
+                "win32": {
+                    "x64": {
+                        "download_link": "",
+                        "directory": "",
+                        "service_path": ""
+                    }
+                }
             }
         },
         "PASSWORD": "",
