@@ -1,4 +1,5 @@
 import asyncio
+from os import error
 from typing import AsyncIterator, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
@@ -213,6 +214,7 @@ class QuerySolver:
         )
 
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
+        print(payload.model_dump(mode="json"))
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
@@ -327,19 +329,13 @@ class QuerySolver:
                 client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="
             ):
                 if payload.tool_use_failed:
-                    error_response = tool_response
-                    tool_name = payload.tool_use_response.tool_name
-                    error_message = error_response.get("error_message", "Unknown error")
-                    error_type = error_response.get("error_type", "UnknownError")
-
-                    if tool_name in {"replace_in_file", "write_to_file"}:
-                        tool_response = error_message
-                    else:
-                        tool_response = EXCEPTION_RAISED_FALLBACK.format(
-                            tool_name=tool_name,
-                            error_type=error_type,
-                            error_message=error_message,
-                        )
+                    if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
+                        error_response = { "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                            tool_name=payload.tool_use_response.tool_name,
+                            error_type=tool_response.get("error_type", "Unknown"),
+                            error_message=tool_response.get("error_message", "An error occurred while using the tool."),
+                        )}
+                        tool_response = error_response
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
