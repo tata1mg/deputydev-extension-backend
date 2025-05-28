@@ -9,7 +9,7 @@ from app.main.blueprints.deputy_dev.services.message_queue.factories.message_que
 from app.main.blueprints.deputy_dev.services.message_queue.message_queue_helper import (
     MessageQueueHelper,
 )
-from app.main.blueprints.one_dev.services.kafka.analytics_event_subscriber import (
+from app.main.blueprints.one_dev.services.kafka.analytics_events.analytics_event_subscriber import (
     AnalyticsEventSubscriber,
 )
 
