@@ -11,10 +11,9 @@ class AnalyticsEvents(Base):
         "event_type",
         "event_data",
         "source",
+        "user_team_id",
         "client_version",
         "client",
-        "user_id",
-        "team_id",
         "timestamp",
         "created_at",
         "updated_at",
@@ -27,8 +26,7 @@ class AnalyticsEvents(Base):
     source = fields.TextField(null=True)
     client_version = fields.TextField()
     client = fields.TextField()
-    user_id = fields.IntField(null=False)
-    team_id = fields.IntField(null=False)
+    user_team_id = fields.IntField(null=False)
     timestamp = NaiveDatetimeField(null=True)
 
     class Meta:

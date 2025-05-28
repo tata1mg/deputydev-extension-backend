@@ -1,4 +1,3 @@
-from sqlalchemy import JSON
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 PARSE_FINAL_RESPONSE = ConversationTool(
