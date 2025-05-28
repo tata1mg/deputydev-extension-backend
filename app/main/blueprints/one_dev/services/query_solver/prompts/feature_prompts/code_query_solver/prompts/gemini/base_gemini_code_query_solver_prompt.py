@@ -1,9 +1,6 @@
 import re
 import textwrap
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
-
-from pydantic import BaseModel
-
+from typing import Any, Dict, List, Tuple, Union
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
@@ -12,226 +9,14 @@ from app.backend_common.models.dto.message_thread_dto import (
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
-    StreamingResponse,
-    TextBlockDelta,
     UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro import (
-    BaseGemini2Point5ProPrompt,
-)
-from app.backend_common.services.llm.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
-    BaseGoogleTextDeltaParser,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
-    CodeBlockDelta,
-    CodeBlockDeltaContent,
-    CodeBlockEnd,
-    CodeBlockEndContent,
-    CodeBlockStart,
-    CodeBlockStartContent,
-    SummaryBlockDelta,
-    SummaryBlockDeltaContent,
-    SummaryBlockEnd,
-    SummaryBlockStart,
-    ThinkingBlockDelta,
-    ThinkingBlockDeltaContent,
-    ThinkingBlockEnd,
-    ThinkingBlockStart,
-)
 
 
-class ThinkingParser(BaseGoogleTextDeltaParser):
-    def __init__(self):
-        super().__init__(xml_tag="thinking")
-
-    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
-        if not self.start_event_completed:
-            self.event_buffer.append(ThinkingBlockStart())
-            self.start_event_completed = True
-
-        if event.content.text:
-            self.event_buffer.append(
-                ThinkingBlockDelta(content=ThinkingBlockDeltaContent(thinking_delta=event.content.text))
-            )
-
-        if last_event:
-            self.event_buffer.append(ThinkingBlockEnd())
-
-        values_to_return = self.event_buffer
-        self.event_buffer = []
-        return values_to_return
-
-
-class SummaryParser(BaseGoogleTextDeltaParser):
-    def __init__(self):
-        super().__init__(xml_tag="summary")
-
-    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
-        if not self.start_event_completed:
-            self.event_buffer.append(SummaryBlockStart())
-            self.start_event_completed = True
-
-        if event.content.text:
-            self.event_buffer.append(
-                SummaryBlockDelta(content=SummaryBlockDeltaContent(summary_delta=event.content.text))
-            )
-
-        if last_event:
-            self.event_buffer.append(SummaryBlockEnd())
-
-        values_to_return = self.event_buffer
-        self.event_buffer = []
-        return values_to_return
-
-
-class CodeBlockParser(BaseGoogleTextDeltaParser):
-    def __init__(self):
-        super().__init__(xml_tag="code_block")
-        self.diff_buffer = ""
-        self.udiff_line_start: Optional[str] = None
-        self.is_diff: Optional[bool] = None
-        self.diff_line_buffer = ""
-        self.added_lines = 0
-        self.removed_lines = 0
-        self.first_data_block_sent = False
-
-    def find_newline_instances(self, input_string: str) -> List[Tuple[int, int]]:
-        # Regular expression to match either \n or \r\n
-        pattern = r"\r?\n"
-
-        # Find all matches
-        matches = [(m.start(), m.end()) for m in re.finditer(pattern, input_string)]
-
-        return matches
-
-    async def _get_udiff_line_start(self, line_data: str) -> Optional[str]:
-        if line_data.startswith("@@"):
-            return "@@"
-        if line_data.startswith("---"):
-            return "---"
-        if line_data.startswith("+++"):
-            return "+++"
-        if line_data.startswith(" "):
-            return " "
-        if line_data.startswith("+"):
-            return "+"
-        if line_data.startswith("-"):
-            return "-"
-        return None
-
-    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
-        event.content.text = event.content.text.replace("```diff", "").replace("```", "")
-        if self.is_diff is None:
-            self.text_buffer += event.content.text
-        elif self.is_diff:
-            self.diff_line_buffer += event.content.text
-            self.diff_buffer += event.content.text
-            if self.udiff_line_start:
-                # end current udiff line if we have reached the end of the line
-                # in case the line buffer contains a newline character
-                newline_instances = self.find_newline_instances(self.diff_line_buffer)
-                while newline_instances:
-                    start, end = newline_instances.pop(0)
-                    pre_line_part = self.diff_line_buffer[:start]
-                    self.diff_line_buffer = self.diff_line_buffer[end:]
-                    newline_instances = self.find_newline_instances(self.diff_line_buffer)
-                    if self.udiff_line_start in [" ", "+"]:
-                        self.text_buffer += (
-                            pre_line_part.replace(f"{self.udiff_line_start}", "", 1) + "\n"
-                        )  # replace only the first instance of the udiff line start
-                        if self.udiff_line_start == "+":
-                            self.added_lines += 1
-                    # if self.udiff_line_start == "@@":
-                    #     # skip till the last @@ in the line and add the line to the text buffer
-                    #     last_index = pre_line_part.rfind("@@")
-                    #     addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
-                    #     self.text_buffer += addable_part + "\n" if addable_part else ""
-                    if self.udiff_line_start == "-":
-                        self.removed_lines += 1
-                    self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))
-            self.udiff_line_start = await self._get_udiff_line_start(
-                self.diff_line_buffer.replace("```", "").lstrip("\n\r")
-            )
-        else:
-            self.text_buffer += event.content.text
-
-        if last_event and self.diff_line_buffer and self.udiff_line_start in [" ", "+"]:
-            self.text_buffer += self.diff_line_buffer
-
-        programming_language_block = re.search(r"<programming_language>(.*?)</programming_language>", self.text_buffer)
-        file_path_block = re.search(r"<file_path>(.*?)</file_path>", self.text_buffer)
-        is_diff_block = re.search(r"<is_diff>(.*?)</is_diff>", self.text_buffer)
-        if programming_language_block and file_path_block and is_diff_block:
-            self.is_diff = is_diff_block.group(1) == "true"
-            self.event_buffer.append(
-                CodeBlockStart(
-                    content=CodeBlockStartContent(
-                        language=programming_language_block.group(1),
-                        filepath=file_path_block.group(1),
-                        is_diff=self.is_diff,  # type: ignore
-                    )
-                )
-            )
-
-            if not self.is_diff:
-                self.text_buffer = (
-                    self.text_buffer.replace(programming_language_block.group(0), "")
-                    .replace(file_path_block.group(0), "")
-                    .replace(is_diff_block.group(0), "")
-                ).lstrip("\n\r")
-            else:
-                diff_part = (
-                    self.text_buffer.replace(programming_language_block.group(0), "")
-                    .replace(file_path_block.group(0), "")
-                    .replace(is_diff_block.group(0), "")
-                )
-                self.diff_line_buffer = diff_part
-                self.diff_buffer = diff_part
-                self.text_buffer = ""
-            self.start_event_completed = True
-
-        if self.start_event_completed and self.text_buffer:
-            if self.first_data_block_sent:
-                self.event_buffer.append(CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer)))
-            else:
-                self.first_data_block_sent = True
-                self.event_buffer.append(
-                    CodeBlockDelta(content=CodeBlockDeltaContent(code_delta=self.text_buffer.lstrip("\n\r")))
-                )
-            self.text_buffer = ""
-
-        if last_event:
-            if self.diff_buffer:
-                self.event_buffer.append(
-                    CodeBlockEnd(
-                        content=CodeBlockEndContent(
-                            diff=self.diff_buffer, added_lines=self.added_lines, removed_lines=self.removed_lines
-                        )
-                    )
-                )
-                self.diff_buffer = ""
-            else:
-                self.event_buffer.append(CodeBlockEnd(content=CodeBlockEndContent()))
-
-        values_to_return = self.event_buffer
-        self.event_buffer = []
-        return values_to_return
-
-    async def cleanup(self) -> None:
-        await super().cleanup()
-        self.diff_buffer = ""
-        self.udiff_line_start = None
-        self.is_diff = None
-        self.added_lines = 0
-        self.removed_lines = 0
-        self.first_data_block_sent = False
-        self.diff_line_buffer = ""
-
-
-class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
+class BaseGeminiCodeQuerySolverPrompt:
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
@@ -478,7 +263,7 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
                 15. This is very important - If a class or function you have searched and not found in tool response plz don't assume they exist in codebase.
                 16. Use as much as tool use to go deep into solution for complex query. We want the solution to be complete.
                 17. If you think you can use a tool, use it without asking.
-    
+
                 Debugging Guidelines
                 1. Address root causes, not symptoms
                 2. Add descriptive logging and error messages
@@ -527,7 +312,7 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
             user_message = textwrap.dedent(f"""
             Here is the user's query for editing - {self.params.get("query")}
 
-            
+
             If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
 
@@ -639,7 +424,7 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
 
         if self.params.get("vscode_env"):
             user_message += textwrap.dedent(f"""====
-                                            
+
             Below is the information about the current vscode environment:
             {self.params.get("vscode_env")}
 
@@ -694,18 +479,10 @@ class Gemini2Point5Pro(BaseGemini2Point5ProPrompt):
         return final_content, tool_use_map
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
-        final_content: List[Dict[str, Any]] = []
-
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        final_content: tuple[list[dict[str, Any]], dict[str, Any]]
         final_content = cls.get_parsed_response_blocks(llm_response.content)
-
         return final_content
-
-    @classmethod
-    async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
-        return cls.parse_streaming_text_block_events(
-            events=llm_response.content, parsers=[ThinkingParser(), CodeBlockParser(), SummaryParser()]
-        )
 
     @classmethod
     def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
