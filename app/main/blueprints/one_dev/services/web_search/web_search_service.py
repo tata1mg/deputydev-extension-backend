@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -18,7 +18,7 @@ from app.main.blueprints.one_dev.services.web_search.factory import PromptFeatur
 
 class WebSearchService:
     @classmethod
-    async def web_search(cls, session_id, query):
+    async def web_search(cls, session_id: int, query: str) -> Dict[str, Any]:
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
         response: Optional[NonStreamingParsedLLMCallResponse] = None
         try:
@@ -38,6 +38,6 @@ class WebSearchService:
             AppLogger.log_warn(f"Web search call failed: {e}")
 
         if response:
-            generated_explanation: dict = response.parsed_content
+            generated_explanation: Dict[str, Any] = response.parsed_content
             return generated_explanation
         return {}

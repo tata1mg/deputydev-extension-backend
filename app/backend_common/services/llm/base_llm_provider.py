@@ -38,6 +38,7 @@ class BaseLLMProvider(ABC):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.

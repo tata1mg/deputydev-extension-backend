@@ -1,5 +1,6 @@
 import asyncio
 import json
+from re import search
 import traceback
 from enum import Enum
 from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union, cast
@@ -378,7 +379,7 @@ class LLMHandler(Generic[PromptFeatures]):
         stream: bool = False,
         response_type: Optional[str] = None,
         attachments: List[Attachment] = [],
-        **kwargs: Any,
+        search_web: bool = False,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -423,7 +424,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     cache_config=self.cache_config,
                     feedback=feedback,
                     attachment_data_task_map=attachment_data_task_map,
-                    **kwargs,
+                    search_web=search_web,
                 )
 
                 llm_response = await client.call_service_client(
@@ -611,6 +612,7 @@ class LLMHandler(Generic[PromptFeatures]):
         previous_responses: Union[List[int], List[ConversationTurn]] = [],
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
+        search_web: bool = False,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -667,6 +669,7 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
             response_type=prompt_handler.response_type,
+            search_web=search_web,
         )
 
     async def store_tool_use_ressponse_in_db(
