@@ -26,9 +26,7 @@ from app.backend_common.services.llm.providers.google.prompts.parsers.event_base
 )
 
 
-class BaseGemini2Point5ProPrompt(BasePrompt):
-    model_name = LLModels.GEMINI_2_POINT_5_PRO
-
+class BaseGeminiPromptHandler(BasePrompt):
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
         raise NotImplementedError("This method must be implemented in the child class")

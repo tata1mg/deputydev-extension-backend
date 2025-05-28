@@ -4,36 +4,32 @@ from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import MessageData
-
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
-    BaseClaude4SonnetPromptHandler,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_2_point_5_flash_code_query_solver_prompt import (
+    Gemini2Point5FlashCodeQuerySolverPrompt,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_4_sonnet_code_query_solver_prompt import (
-    Claude4CodeQuerySolverPrompt,
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
+    BaseGemini2Point5FlashPromptHandler,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.code_block.claude_4_code_block_parser import (
-    Claude4CodeBlockParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.code_block.gemini_2_point_5_pro_code_block_parser import (
+    Gemini2Point5ProCodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.summary.claude_4_summary_parser import (
-    Claude4SummaryParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.summary.gemini_2_point_5_pro_summary_parser import (
+    Gemini2Point5ProSummaryParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_4_thinking_parser import (
-    Claude4ThinkingParser,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.extended_thinking.claude_4_extended_thinking_parser import (
-    Claude4ExtendedThinkingParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.thinking.gemini_2_point_5_pro_thinking_parser import (
+    Gemini2Point5ProThinkingParser,
 )
 
 
-class Claude4CodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
+class Gemini2Point5FlashCodeQuerySolverPromptHandler(BaseGemini2Point5FlashPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Claude4CodeQuerySolverPrompt
+    prompt_class = Gemini2Point5FlashCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -52,16 +48,18 @@ class Claude4CodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
         return cls.prompt_class.get_parsed_response_blocks(response_block)
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
         return cls.prompt_class.get_parsed_result(llm_response)
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
-        handlers = {"extended_thinking_handler": Claude4ExtendedThinkingParser()}
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Claude4ThinkingParser(), Claude4CodeBlockParser(), Claude4SummaryParser()],
-            handlers=handlers,
+            parsers=[
+                Gemini2Point5ProThinkingParser(),
+                Gemini2Point5ProCodeBlockParser(),
+                Gemini2Point5ProSummaryParser(),
+            ],
         )
 
     @classmethod
