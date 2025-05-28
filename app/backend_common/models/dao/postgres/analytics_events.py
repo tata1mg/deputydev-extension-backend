@@ -32,4 +32,5 @@ class AnalyticsEvents(Base):
         indexes = (
             ("session_id",),
             ("user_team_id",),
+            ("event_type",),
         )
