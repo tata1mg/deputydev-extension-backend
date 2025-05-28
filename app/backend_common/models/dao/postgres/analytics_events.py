@@ -10,7 +10,6 @@ class AnalyticsEvents(Base):
         "session_id",
         "event_type",
         "event_data",
-        "source",
         "user_team_id",
         "client_version",
         "client",
@@ -23,7 +22,6 @@ class AnalyticsEvents(Base):
     session_id = fields.IntField()
     event_type = fields.TextField()
     event_data = fields.JSONField(null=False)
-    source = fields.TextField(null=True)
     client_version = fields.TextField()
     client = fields.TextField()
     user_team_id = fields.IntField(null=False)
@@ -31,4 +29,7 @@ class AnalyticsEvents(Base):
 
     class Meta:
         table = "analytics_events"
-        indexes = (("session_id",), ("user_id",), ("team_id",))
+        indexes = (
+            ("session_id",),
+            ("user_team_id",),
+        )
