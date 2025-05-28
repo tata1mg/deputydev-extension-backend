@@ -13,12 +13,12 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro import (
-    BaseGemini2Point5ProPrompt,
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro_prompt_handler import (
+    BaseGemini2Point5ProPromptHandler,
 )
 
 
-class Gemini2Point5ProInlineEditorPrompt(BaseGemini2Point5ProPrompt):
+class Gemini2Point5ProInlineEditorPrompt(BaseGemini2Point5ProPromptHandler):
     prompt_type = "INLINE_EDITOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 

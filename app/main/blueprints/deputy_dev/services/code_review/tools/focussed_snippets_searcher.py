@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
     name="focused_snippets_searcher",
@@ -47,32 +47,34 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
 
         Use this tool whenever you need precise code snippets related to specific elements in the codebase.
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "search_terms": {
-                "type": "array",
-                "description": "A list of search terms, each containing a keyword, its type, and an optional file path.",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "keyword": {
-                            "type": "string",
-                            "description": "The search keyword, which can be a class, function, or file name whose content needs to be searched.",
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "search_terms": {
+                    "type": "array",
+                    "description": "A list of search terms, each containing a keyword, its type, and an optional file path.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "keyword": {
+                                "type": "string",
+                                "description": "The search keyword, which can be a class, function, or file name whose content needs to be searched.",
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'.",
+                            },
+                            "file_path": {
+                                "type": "string",
+                                "description": "The file path where the search term is located (optional).",
+                            },
                         },
-                        "type": {
-                            "type": "string",
-                            "description": "Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'.",
-                        },
-                        "file_path": {
-                            "type": "string",
-                            "description": "The file path where the search term is located (optional).",
-                        },
+                        "required": ["keyword", "type"],
                     },
-                    "required": ["keyword", "type"],
-                },
-            }
-        },
-        "required": ["search_terms"],
-    },
+                }
+            },
+            "required": ["search_terms"],
+        }
+    ),
 )

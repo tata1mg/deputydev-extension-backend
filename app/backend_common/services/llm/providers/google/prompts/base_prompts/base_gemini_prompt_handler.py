@@ -3,7 +3,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
+from app.backend_common.models.dto.message_thread_dto import MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     StreamingEvent,
     StreamingEventType,
@@ -17,33 +17,23 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.dataclasses.main import (
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.dataclasses.main import (
     XMLWrappedContentPosition,
     XMLWrappedContentTagPosition,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
-    BaseAnthropicTextDeltaParser,
+from app.backend_common.services.llm.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
+    BaseGoogleTextDeltaParser,
 )
 
 
-class BaseClaude3Point5SonnetPrompt(BasePrompt):
-    model_name = LLModels.CLAUDE_3_POINT_5_SONNET
-
-    """
-    This is a helper method to parse streaming text block events via xml tags. It accumulates text until it finds a full xml tag, then parses it via parsers implemented by the user.
-    This is a non-blocking method, and it yields the events as soon as they are parsed and ready to be yielded. The method is designed to be used in an async generator function.
-
-    WARNING: Although this is documented and comments are present wherever necessary, this is a complex method and should be used with caution. It is not recommended to modify this method unless you are sure about the changes you are making.
-    SUGGESTION FROM AUTHOR: At time of writing, God and I knew how this method works. Now, probably when you are reading this, only God would know how this method works.
-    """
-
+class BaseGeminiPromptHandler(BasePrompt):
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:
         raise NotImplementedError("This method must be implemented in the child class")
 
     @classmethod
     async def parse_streaming_text_block_events(
-        cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseAnthropicTextDeltaParser]
+        cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseGoogleTextDeltaParser]
     ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
         xml_tags_to_paraser_map = {parser.xml_tag: parser for parser in parsers}
 
@@ -84,7 +74,7 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
             # Handling TextBlockDelta events
             ################################################################################################################
             # accumulate text from TextBlockDelta events
-            text_buffer += event.content.text
+            text_buffer += event.content.text.replace("```diff", "").replace("```", "")
 
             # if there is no ongoing tag, we try to find a new tag in the text, otherwise we keep yielding text
             # we use regex to find the tag, because partial tags are possible
@@ -140,8 +130,7 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     for on_hold_event in on_hold_events:
                         yield on_hold_event
                     on_hold_events = []
-                    if text_buffer.strip():  # only yield if non-empty after stripping
-                        yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
+                    yield TextBlockDelta(content=TextBlockDeltaContent(text=text_buffer))
                     # we clear the buffer
                     text_buffer = ""
 
@@ -222,7 +211,6 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     )
                     for event in events_to_yield:
                         yield event
-
                     # now, we update the text buffer to the text after the end tag
                     text_buffer = text_buffer[yieldable_text_end:]
                     xml_wrapped_text_position.start.start_pos = 0
@@ -240,7 +228,7 @@ class BaseClaude3Point5SonnetPrompt(BasePrompt):
                     if xml_wrapped_text_position.end is not None and xml_wrapped_text_position.end.end_pos is not None:
                         # we clear the buffer upto end pos and then insert a text block start event in on hold events if not already present
                         if xml_wrapped_text_position.end.end_pos > 0:
-                            text_buffer = text_buffer[xml_wrapped_text_position.end.end_pos :]
+                            text_buffer = text_buffer.replace(ongoing_tag_parser.end_tag, "")
                             if len(on_hold_events) == 0:
                                 on_hold_events.append(TextBlockStart())
                             else:
