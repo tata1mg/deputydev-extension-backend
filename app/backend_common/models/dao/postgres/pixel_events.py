@@ -4,37 +4,33 @@ from tortoise_wrapper.db import NaiveDatetimeField
 from .base import Base
 
 
-class PixelEvents(Base):
+class AnalyticsEvents(Base):
     serializable_keys = {
         "id",
-        "event_id",
         "session_id",
         "event_type",
-        "lines",
-        "file_path",
-        "user_id",
-        "team_id",
+        "event_data",
+        "source",
         "client_version",
         "client",
+        "user_id",
+        "team_id",
         "timestamp",
-        "source",
         "created_at",
         "updated_at",
     }
 
     id = fields.IntField(primary_key=True)
-    event_id = fields.UUIDField()
     session_id = fields.IntField()
     event_type = fields.TextField()
-    lines = fields.IntField()
-    file_path = fields.TextField(null=True)
-    user_id = fields.IntField()
-    team_id = fields.IntField()
+    event_data = fields.JSONField(null=False)
     source = fields.TextField(null=True)
     client_version = fields.TextField()
     client = fields.TextField()
+    user_id = fields.IntField(null=False)
+    team_id = fields.IntField(null=False)
     timestamp = NaiveDatetimeField(null=True)
 
     class Meta:
-        table = "pixel_events"
+        table = "analytics_events"
         indexes = (("session_id",), ("user_id",), ("team_id",))
