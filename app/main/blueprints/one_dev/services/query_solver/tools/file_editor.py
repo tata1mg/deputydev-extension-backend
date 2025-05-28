@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 REPLACE_IN_FILE = ConversationTool(
     name="replace_in_file",
@@ -9,19 +9,20 @@ The tool response will tell you if the changes were successful or not.
 If tool fails, first try reading the file using other tools like iterative file reader to check latest file content and then re-run the tool with the latest file content.
 
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "path": {
-                "type": "string",
-                "description": (
-                    "The path of the file to modify (relative to the current working directory of the project). Only one file can be modified at a time. "
-                    "If you need to modify multiple files, invoke this tool multiple times, once for each file. "
-                ),
-            },
-            "diff": {
-                "type": "string",
-                "description": """
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": (
+                        "The path of the file to modify (relative to the current working directory of the project). Only one file can be modified at a time. "
+                        "If you need to modify multiple files, invoke this tool multiple times, once for each file. "
+                    ),
+                },
+                "diff": {
+                    "type": "string",
+                    "description": """
 One or more SEARCH/REPLACE blocks following this exact format:
 
 <<<<<<< SEARCH
@@ -47,9 +48,10 @@ Critical rules:
     * To move code: Use two SEARCH/REPLACE blocks (one to delete from original + one to insert at new location)
     * To delete code: Use empty REPLACE section
                 """,
+                },
             },
-        },
-        "required": ["path", "diff"],
-        "additionalProperties": False,
-    },
+            "required": ["path", "diff"],
+            "additionalProperties": False,
+        }
+    ),
 )

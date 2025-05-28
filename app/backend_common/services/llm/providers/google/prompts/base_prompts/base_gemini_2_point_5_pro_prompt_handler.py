@@ -1,4 +1,4 @@
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_prompt_handler import (
     BaseGeminiPromptHandler,
 )

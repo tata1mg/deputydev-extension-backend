@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 WEB_SEARCH = ConversationTool(
     name="web_search",
@@ -31,14 +31,16 @@ WEB_SEARCH = ConversationTool(
         Example Input:
         "I'm getting 'psycopg2.OperationalError: could not connect to server' when running Django with Postgres in Docker Compose. I suspect it's due to race condition on startup. Please find a 2024-recommended solution or wait-for-it script alternatives."
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "descriptive_query": {
-                "type": "string",
-                "description": "Full, natural language prompt including user intent, code, errors, and context for the search.",
-            }
-        },
-        "required": ["descriptive_query"],
-    },
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "descriptive_query": {
+                    "type": "string",
+                    "description": "Full, natural language prompt including user intent, code, errors, and context for the search.",
+                }
+            },
+            "required": ["descriptive_query"],
+        }
+    ),
 )
