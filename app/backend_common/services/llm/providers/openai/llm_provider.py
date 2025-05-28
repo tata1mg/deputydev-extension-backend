@@ -69,7 +69,7 @@ class OpenAI(BaseLLMProvider):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs: Any,
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for OpenAI's GPT model.
@@ -88,7 +88,9 @@ class OpenAI(BaseLLMProvider):
             for tool in tools:
                 tool = responses.FunctionToolParam(
                     name=tool.name,
-                    parameters=tool.input_schema,
+                    parameters=tool.input_schema.model_dump(mode="json", exclude_unset=True, by_alias=True)
+                    if tool.input_schema.properties
+                    else None,
                     description=tool.description,
                     type="function",
                     strict=False,

@@ -32,9 +32,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
-from app.main.blueprints.deputy_dev.services.code_review.pr_review_initialization.pr_review_initialization_service import (
-    PRReviewInitializationService,
-)
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )

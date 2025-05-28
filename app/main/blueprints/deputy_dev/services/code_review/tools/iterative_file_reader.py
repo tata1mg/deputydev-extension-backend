@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
@@ -20,22 +20,24 @@ ITERATIVE_FILE_READER = ConversationTool(
         Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
         The response will EXPLICITLY mention if the end of the file is reached or not.
     """,
-    input_schema={
-        "type": "object",
-        "properties": {
-            "file_path": {
-                "type": "string",
-                "description": "The complete path of the file relative to the repo root",
+    input_schema=JSONSchema(
+        **{
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "The complete path of the file relative to the repo root",
+                },
+                "start_line": {
+                    "type": "number",
+                    "description": "Start line to read from. It is 1 indexed.",
+                },
+                "end_line": {
+                    "type": "number",
+                    "description": "End line to read until. It is 1 indexed.",
+                },
             },
-            "start_line": {
-                "type": "number",
-                "description": "Start line to read from. It is 1 indexed.",
-            },
-            "end_line": {
-                "type": "number",
-                "description": "End line to read until. It is 1 indexed.",
-            },
-        },
-        "required": ["file_path", "start_line", "end_line"],
-    },
+            "required": ["file_path", "start_line", "end_line"],
+        }
+    ),
 )
