@@ -88,7 +88,9 @@ class OpenAI(BaseLLMProvider):
             for tool in tools:
                 tool = responses.FunctionToolParam(
                     name=tool.name,
-                    parameters=tool.input_schema.model_dump(mode="json", exclude_unset=True, by_alias=True) if tool.input_schema.properties else None,
+                    parameters=tool.input_schema.model_dump(mode="json", exclude_unset=True, by_alias=True)
+                    if tool.input_schema.properties
+                    else None,
                     description=tool.description,
                     type="function",
                     strict=False,
