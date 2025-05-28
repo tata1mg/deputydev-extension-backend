@@ -18,6 +18,7 @@ from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
 from app.backend_common.services.llm.dataclasses.main import (
+    ConversationTool,
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
@@ -27,7 +28,9 @@ from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClientTool,
     DetailedFocusItem,
+    MCPToolMetadata,
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
@@ -196,7 +199,21 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
+    def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
+        # check if tool is MCP type tool
+        if isinstance(client_tool.tool_metadata, MCPToolMetadata):
+            description_extra = f"This tool is provided by a third party MCP server - {client_tool.tool_metadata.server_id}. Please ensure that any data passed to this tool is exactly what is required to be sent to this tool to function properly. Do not supply any sensitive data to this tool which can be misused by the MCP server. In case of ambiguity, ask the user for clarification."
+            return ConversationTool(
+                name=client_tool.name,
+                description=description_extra + "\n" + client_tool.description,
+                input_schema=client_tool.input_schema,
+            )
+        raise ValueError(
+            f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
+        )
+
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
+        print(payload.model_dump(mode="json"))
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
@@ -225,6 +242,9 @@ class QuerySolver:
             if payload.write_mode:
                 tools_to_use.append(REPLACE_IN_FILE)
                 tools_to_use.append(WRITE_TO_FILE)
+
+        for client_tool in payload.client_tools:
+            tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
@@ -306,19 +326,17 @@ class QuerySolver:
                 client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="
             ):
                 if payload.tool_use_failed:
-                    error_response = tool_response
-                    tool_name = payload.tool_use_response.tool_name
-                    error_message = error_response.get("error_message", "Unknown error")
-                    error_type = error_response.get("error_type", "UnknownError")
-
-                    if tool_name in {"replace_in_file", "write_to_file"}:
-                        tool_response = error_message
-                    else:
-                        tool_response = EXCEPTION_RAISED_FALLBACK.format(
-                            tool_name=tool_name,
-                            error_type=error_type,
-                            error_message=error_message,
-                        )
+                    if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
+                        error_response = {
+                            "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                                tool_name=payload.tool_use_response.tool_name,
+                                error_type=tool_response.get("error_type", "Unknown"),
+                                error_message=tool_response.get(
+                                    "error_message", "An error occurred while using the tool."
+                                ),
+                            )
+                        }
+                        tool_response = error_response
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,

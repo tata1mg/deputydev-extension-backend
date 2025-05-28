@@ -22,7 +22,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 class BaseLLMProvider(ABC):
     """Abstract LLM interface"""
 
-    def __init__(self, llm_type):
+    def __init__(self, llm_type: str):
         self.llm_type = llm_type
 
     @abstractmethod
@@ -38,7 +38,7 @@ class BaseLLMProvider(ABC):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs: Any,
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.

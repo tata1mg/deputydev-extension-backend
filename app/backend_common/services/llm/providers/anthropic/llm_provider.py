@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
+from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, cast
 
 from deputydev_core.utils.app_logger import AppLogger
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
@@ -24,7 +24,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingData,
     ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
@@ -178,7 +177,7 @@ class Anthropic(BaseLLMProvider):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
-        **kwargs: Any,
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
@@ -237,8 +236,9 @@ class Anthropic(BaseLLMProvider):
             "max_tokens": model_config["MAX_TOKENS"],
             "system": prompt.system_message if prompt and prompt.system_message else "",
             "messages": [message.model_dump(mode="json") for message in messages],
-            "tools": [tool.model_dump(mode="json") for tool in tools],
+            "tools": [tool.model_dump(mode="json", by_alias=True, exclude_defaults=True) for tool in tools],
         }
+
         if model_config.get("THINKING") and model_config["THINKING"]["ENABLED"]:
             llm_payload["thinking"] = {"type": "enabled", "budget_tokens": model_config["THINKING"]["BUDGET_TOKENS"]}
         if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
@@ -453,10 +453,11 @@ class Anthropic(BaseLLMProvider):
                 ExtendedThinkingBlockStart,
                 ExtendedThinkingBlockEnd,
             ]
-            buffer: list[StreamingEvent] = []
+            buffer: List[StreamingEvent] = []
             current_type: Optional[type] = None
             current_running_block_type: Optional[ContentBlockCategory] = None
-            async for event in response["body"]:
+            response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
+            async for event in response_body:
                 chunk = json.loads(event["chunk"]["bytes"])
                 # yield content block delta
                 try:
@@ -485,7 +486,7 @@ class Anthropic(BaseLLMProvider):
                         buffer.append(event_block)
                         current_running_block_type = event_block_category
                         accumulated_events.append(event_block)
-                except Exception as error:
+                except Exception:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
             if buffer:

@@ -296,12 +296,12 @@ class BaseGeminiCodeQuerySolverPrompt:
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
                 focus_chunks_message += (
-                        "<item>"
-                        + f"<type>{focus_item.type.value}</type>"
-                        + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                        + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
-                        + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                        + "</item>"
+                    "<item>"
+                    + f"<type>{focus_item.type.value}</type>"
+                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
+                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                    + "</item>"
                 )
         urls_message = ""
         if self.params.get("urls"):
@@ -457,7 +457,7 @@ class BaseGeminiCodeQuerySolverPrompt:
 
     @classmethod
     def get_parsed_response_blocks(
-            cls, response_block: List[MessageData]
+        cls, response_block: List[MessageData]
     ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         final_content: List[Dict[str, Any]] = []
         tool_use_map: Dict[str, Any] = {}
@@ -483,7 +483,6 @@ class BaseGeminiCodeQuerySolverPrompt:
         final_content: tuple[list[dict[str, Any]], dict[str, Any]]
         final_content = cls.get_parsed_response_blocks(llm_response.content)
         return final_content
-
 
     @classmethod
     def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:

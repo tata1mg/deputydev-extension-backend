@@ -560,6 +560,12 @@
             "SUMMARIZE_LARGE_CONTENT": true,
             "VALIDATE_CONTENT_UPDATION": true,
             "BATCH_SIZE": 3
+        },
+        "MCP": {
+            "MAX_TOOLS": 200,
+            "SERVER_CONNECTION_TIMEOUT": 10000,
+            "TOOL_RESPONSE_TIMEOUT": 5,
+            "BUFFER_SIZE": 10000
         }
     },
     "CLIENT_DOWNLOAD_LINKS": {

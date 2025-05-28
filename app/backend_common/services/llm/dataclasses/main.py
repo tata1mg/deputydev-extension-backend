@@ -43,10 +43,50 @@ class ConversationTurn(BaseModel):
     content: Union[str, List[Dict[str, Any]]]
 
 
+class JSONSchemaType(Enum):
+    NULL = "null"
+    BOOLEAN = "boolean"
+    OBJECT = "object"
+    ARRAY = "array"
+    NUMBER = "number"
+    INTEGER = "integer"
+    STRING = "string"
+
+
+class JSONSchema(BaseModel):
+    type: Optional[Union[str, list[str]]] = Field(default=None, alias="type")
+    format: Optional[str] = Field(default=None, alias="format")
+    title: Optional[str] = Field(default=None, alias="title")
+    description: Optional[str] = Field(default=None, alias="description")
+    default: Optional[Any] = Field(default=None, alias="default")
+
+    items: Optional["JSONSchema"] = Field(default=None, alias="items")
+    min_items: Optional[int] = Field(default=None, alias="minItems")
+    max_items: Optional[int] = Field(default=None, alias="maxItems")
+    enum: Optional[list[Any]] = Field(default=None, alias="enum")
+
+    properties: Optional[dict[str, "JSONSchema"]] = Field(default=None, alias="properties")
+    required: Optional[list[str]] = Field(default=None, alias="required")
+    min_properties: Optional[int] = Field(default=None, alias="minProperties")
+    max_properties: Optional[int] = Field(default=None, alias="maxProperties")
+
+    minimum: Optional[float] = Field(default=None, alias="minimum")
+    maximum: Optional[float] = Field(default=None, alias="maximum")
+    min_length: Optional[int] = Field(default=None, alias="minLength")
+    max_length: Optional[int] = Field(default=None, alias="maxLength")
+    pattern: Optional[str] = Field(default=None, alias="pattern")
+
+    any_of: Optional[list["JSONSchema"]] = Field(default=None, alias="anyOf")
+
+    class Config:
+        populate_by_name = True  # Allows snake_case or camelCase during input
+        allow_population_by_field_name = True  # Backward compatibility
+
+
 class ConversationTool(BaseModel):
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: JSONSchema
 
 
 class PromptCacheConfig(BaseModel):
@@ -170,12 +210,18 @@ TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd],
 ToolUseRequestEvents = Annotated[
     Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd], Field(discriminator="type")
 ]
+ExtendedThinkingEvents = Annotated[
+    Union[ExtendedThinkingBlockStart, ExtendedThinkingBlockDelta, ExtendedThinkingBlockEnd], Field(discriminator="type")
+]
+RedactedThinkingEvent = Annotated[RedactedThinking, Field(discriminator="type")]
 
 
 StreamingEvent = Annotated[
     Union[
         TextBlockEvents,
         ToolUseRequestEvents,
+        ExtendedThinkingEvents,
+        RedactedThinkingEvent,
     ],
     Field(discriminator="type"),
 ]
