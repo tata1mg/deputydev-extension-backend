@@ -1,6 +1,5 @@
 import asyncio
 import json
-from re import search
 import traceback
 from enum import Enum
 from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union, cast
