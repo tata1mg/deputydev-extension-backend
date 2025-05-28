@@ -1,5 +1,4 @@
 import asyncio
-from os import error
 from typing import AsyncIterator, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
