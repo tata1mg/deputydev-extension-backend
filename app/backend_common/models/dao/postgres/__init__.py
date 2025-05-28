@@ -7,7 +7,7 @@ __all__ = [
     "Teams",
     "MessageThread",
     "MessageSession",
-    "PixelEvents",
+    "AnalyticsEvents",
     "FailedOperations",
     "ExtensionSession",
     "ReferralCodes",
@@ -20,7 +20,7 @@ from .extension_sessions import ExtensionSession
 from .failed_operations import FailedOperations
 from .message_sessions import MessageSession
 from .message_threads import MessageThread
-from .pixel_events import PixelEvents
+from .pixel_events import AnalyticsEvents
 from .repos import Repos
 from .teams import Teams
 from .tokens import Tokens
