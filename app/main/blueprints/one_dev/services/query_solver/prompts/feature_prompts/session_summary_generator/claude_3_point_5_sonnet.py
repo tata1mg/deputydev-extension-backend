@@ -12,15 +12,15 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
-    BaseClaude3Point5SonnetPrompt,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
+    BaseClaude3Point5SonnetPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
 
 
-class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPrompt):
+class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPromptHandler):
     prompt_type = "SESSION_SUMMARY_GENERATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
