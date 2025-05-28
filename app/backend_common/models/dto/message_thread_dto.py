@@ -20,6 +20,7 @@ class ContentBlockCategory(str, Enum):
     TEXT_BLOCK = "TEXT_BLOCK"
     TOOL_USE_REQUEST = "TOOL_USE_REQUEST"
     TOOL_USE_RESPONSE = "TOOL_USE_RESPONSE"
+    EXTENDED_THINKING = "EXTENDED_THINKING"
     FILE = "FILE"
 
 
@@ -40,7 +41,18 @@ class ToolUseRequestContent(BaseModel):
 class ToolUseResponseContent(BaseModel):
     tool_name: str
     tool_use_id: str
-    response: Union[str, Dict[str, Any]]
+    response: Dict[str, Any]
+
+
+class ExtendedThinkingContent(BaseModel):
+    type: Literal["thinking", "redacted_thinking"] = "thinking"
+    thinking: str
+    signature: Optional[str] = ""
+
+
+class ExtendedThinkingData(BaseModel):
+    type: Literal[ContentBlockCategory.EXTENDED_THINKING] = ContentBlockCategory.EXTENDED_THINKING
+    content: ExtendedThinkingContent
 
 
 class TextBlockData(BaseModel):
@@ -64,7 +76,9 @@ class ToolUseResponseData(BaseModel):
     content: ToolUseResponseContent
 
 
-ResponseData = Annotated[Union[TextBlockData, FileBlockData, ToolUseRequestData], Field(discriminator="type")]
+ResponseData = Annotated[
+    Union[ExtendedThinkingData, TextBlockData, FileBlockData, ToolUseRequestData], Field(discriminator="type")
+]
 
 MessageData = Annotated[Union[ResponseData, ToolUseResponseData], Field(discriminator="type")]
 
@@ -73,10 +87,13 @@ class LLModels(Enum):
     GPT_4O = "GPT_4O"
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
     CLAUDE_3_POINT_7_SONNET = "CLAUDE_3_POINT_7_SONNET"
+    CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
+    CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
     GPT_40_MINI = "GPT_40_MINI"
     GPT_O1_MINI = "GPT_O1_MINI"
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GEMINI_2_POINT_0_FLASH = "GEMINI_2_POINT_0_FLASH"
+    GEMINI_2_POINT_5_FLASH = "GEMINI_2_POINT_5_FLASH"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
     GPT_O3_MINI = "GPT_O3_MINI"
 

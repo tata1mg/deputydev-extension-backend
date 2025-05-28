@@ -43,10 +43,50 @@ class ConversationTurn(BaseModel):
     content: Union[str, List[Dict[str, Any]]]
 
 
+class JSONSchemaType(Enum):
+    NULL = "null"
+    BOOLEAN = "boolean"
+    OBJECT = "object"
+    ARRAY = "array"
+    NUMBER = "number"
+    INTEGER = "integer"
+    STRING = "string"
+
+
+class JSONSchema(BaseModel):
+    type: Optional[Union[str, list[str]]] = Field(default=None, alias="type")
+    format: Optional[str] = Field(default=None, alias="format")
+    title: Optional[str] = Field(default=None, alias="title")
+    description: Optional[str] = Field(default=None, alias="description")
+    default: Optional[Any] = Field(default=None, alias="default")
+
+    items: Optional["JSONSchema"] = Field(default=None, alias="items")
+    min_items: Optional[int] = Field(default=None, alias="minItems")
+    max_items: Optional[int] = Field(default=None, alias="maxItems")
+    enum: Optional[list[Any]] = Field(default=None, alias="enum")
+
+    properties: Optional[dict[str, "JSONSchema"]] = Field(default=None, alias="properties")
+    required: Optional[list[str]] = Field(default=None, alias="required")
+    min_properties: Optional[int] = Field(default=None, alias="minProperties")
+    max_properties: Optional[int] = Field(default=None, alias="maxProperties")
+
+    minimum: Optional[float] = Field(default=None, alias="minimum")
+    maximum: Optional[float] = Field(default=None, alias="maximum")
+    min_length: Optional[int] = Field(default=None, alias="minLength")
+    max_length: Optional[int] = Field(default=None, alias="maxLength")
+    pattern: Optional[str] = Field(default=None, alias="pattern")
+
+    any_of: Optional[list["JSONSchema"]] = Field(default=None, alias="anyOf")
+
+    class Config:
+        populate_by_name = True  # Allows snake_case or camelCase during input
+        allow_population_by_field_name = True  # Backward compatibility
+
+
 class ConversationTool(BaseModel):
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: JSONSchema
 
 
 class PromptCacheConfig(BaseModel):
@@ -69,6 +109,10 @@ class StreamingEventType(Enum):
     CODE_BLOCK_START = "CODE_BLOCK_START"
     CODE_BLOCK_DELTA = "CODE_BLOCK_DELTA"
     CODE_BLOCK_END = "CODE_BLOCK_END"
+    REDACTED_THINKING = "REDACTED_THINKING"
+    EXTENDED_THINKING_BLOCK_START = "EXTENDED_THINKING_BLOCK_START"
+    EXTENDED_THINKING_BLOCK_END = "EXTENDED_THINKING_BLOCK_END"
+    EXTENDED_THINKING_BLOCK_DELTA = "EXTENDED_THINKING_BLOCK_DELTA"
 
 
 # TOOL_USE_REQUEST BLOCK CONTENTS
@@ -128,16 +172,56 @@ class ToolUseRequestEnd(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_END] = StreamingEventType.TOOL_USE_REQUEST_END
 
 
+class ExtendedThinkingBlockStart(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_START] = StreamingEventType.EXTENDED_THINKING_BLOCK_START
+
+
+class RedactedThinking(BaseModel):
+    type: Literal[StreamingEventType.REDACTED_THINKING] = StreamingEventType.REDACTED_THINKING
+    data: str
+
+
+class ExtendedThinkingBlockDeltaContent(BaseModel):
+    thinking_delta: str
+
+
+class ExtendedThinkingBlockEndContent(BaseModel):
+    signature: str
+
+
+class ExtendedThinkingBlockDelta(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA] = StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA
+    content: ExtendedThinkingBlockDeltaContent
+
+    def __add__(self, other):
+        return ExtendedThinkingBlockDelta(
+            content=ExtendedThinkingBlockDeltaContent(
+                thinking_delta=self.content.thinking_delta + other.content.thinking_delta
+            )
+        )
+
+
+class ExtendedThinkingBlockEnd(BaseModel):
+    type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_END] = StreamingEventType.EXTENDED_THINKING_BLOCK_END
+    content: ExtendedThinkingBlockEndContent
+
+
 TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd], Field(discriminator="type")]
 ToolUseRequestEvents = Annotated[
     Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd], Field(discriminator="type")
 ]
+ExtendedThinkingEvents = Annotated[
+    Union[ExtendedThinkingBlockStart, ExtendedThinkingBlockDelta, ExtendedThinkingBlockEnd], Field(discriminator="type")
+]
+RedactedThinkingEvent = Annotated[RedactedThinking, Field(discriminator="type")]
 
 
 StreamingEvent = Annotated[
     Union[
         TextBlockEvents,
         ToolUseRequestEvents,
+        ExtendedThinkingEvents,
+        RedactedThinkingEvent,
     ],
     Field(discriminator="type"),
 ]

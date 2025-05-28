@@ -38,7 +38,7 @@ class MessageThreadsRepository:
         session_id: int,
         call_chain_category: MessageCallChainCategory,
         content_hashes: List[str] = [],
-        prompt_type=None,
+        prompt_type: Optional[str] = None,
     ) -> List[MessageThreadDTO]:
         try:
             filters: Dict[str, Union[List[str], int, str]] = {

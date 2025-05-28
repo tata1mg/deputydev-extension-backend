@@ -473,14 +473,14 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(f"""====
-
+            user_message += textwrap.dedent(f"""
+            ====
             SYSTEM INFORMATION:
 
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
-
-            ====""")
+            ====
+            """)
 
         if self.params.get("vscode_env"):
             user_message += textwrap.dedent(f"""====
@@ -624,7 +624,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         max_batch_size = CONFIG.config["LLM_MODELS"][LLModels.GPT_4_POINT_1.value]["STREAM_BATCH_SIZE"]
 
         async for event in parsed_events:
-            if buffered_event and type(buffered_event) == type(event):
+            if buffered_event and type(buffered_event) is type(event):
                 buffered_event += event
                 same_type_count += 1
 

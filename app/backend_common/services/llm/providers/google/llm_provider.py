@@ -3,7 +3,7 @@ import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
-from google.genai import types
+from google.genai import types as google_genai_types
 from torpedo.exceptions import BadRequestException
 
 # Your existing DTOs and base class
@@ -22,6 +22,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
+    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -57,7 +58,7 @@ class Google(BaseLLMProvider):
         self,
         previous_responses: List[MessageThreadDTO],
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
-    ) -> List[types.Content]:
+    ) -> List[google_genai_types.Content]:
         """
         Formats the conversation history for Google's Gemini model.
 
@@ -67,7 +68,7 @@ class Google(BaseLLMProvider):
         Returns:
             List[Content]: The formatted conversation history for Gemini.
         """
-        conversation_turns: List[types.Content] = []
+        conversation_turns: List[google_genai_types.Content] = []
         last_tool_use_request: bool = False
 
         for message in previous_responses:
@@ -83,7 +84,7 @@ class Google(BaseLLMProvider):
                 if message.actor == MessageThreadActor.USER
                 else ConversationRoleGemini.MODEL.value
             )
-            parts: List[types.Part] = []
+            parts: List[google_genai_types.Part] = []
 
             # Sort: TextBlockData first, then tool-related
             message_datas = list(message.message_data)
@@ -93,30 +94,33 @@ class Google(BaseLLMProvider):
                 content_data = message_data.content
 
                 if isinstance(content_data, TextBlockContent):
-                    parts.append(types.Part.from_text(text=content_data.text))
+                    parts.append(google_genai_types.Part.from_text(text=content_data.text))
                     last_tool_use_request = False
 
                 elif isinstance(content_data, ToolUseResponseContent):
                     if last_tool_use_request and conversation_turns and conversation_turns[-1].parts[-1].function_call:
-                        tool_response = types.Part.from_function_response(
+                        tool_response = google_genai_types.Part.from_function_response(
                             name=content_data.tool_name, response=content_data.response
                         )
                         parts.append(tool_response)
                         last_tool_use_request = False
 
                 elif isinstance(content_data, ToolUseRequestContent):
-                    function_call = types.Part.from_function_call(
+                    function_call = google_genai_types.Part.from_function_call(
                         name=content_data.tool_name, args=content_data.tool_input
                     )
                     parts.append(function_call)
                     last_tool_use_request = True
+
+                elif isinstance(content_data, ExtendedThinkingContent):
+                    continue
 
                 else:
                     attachment_id = content_data.attachment_id
                     attachment_data = await attachment_data_task_map[attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
                         parts.append(
-                            types.Part.from_bytes(
+                            google_genai_types.Part.from_bytes(
                                 data=attachment_data.object_bytes,
                                 mime_type=attachment_data.attachment_metadata.file_type,
                             )
@@ -124,7 +128,7 @@ class Google(BaseLLMProvider):
                     last_tool_use_request = False
 
             if parts:
-                conversation_turns.append(types.Content(role=role, parts=parts))
+                conversation_turns.append(google_genai_types.Content(role=role, parts=parts))
 
         return conversation_turns
 
@@ -142,7 +146,7 @@ class Google(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),
-        **kwargs: Any,
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -161,61 +165,64 @@ class Google(BaseLLMProvider):
             Dict[str, Any]: Payload containing 'contents', 'tools', 'system_instruction', 'tool_config'.
         """
 
-        search_web = kwargs.get("search_web", False)
         if tools and search_web:
             raise BadRequestException("Functional tools and Web search tool can not be used together")
         model_config = self._get_model_config(llm_model)
-        system_instruction: Optional[types.Part] = None
-        tool_config: Optional[types.ToolConfig] = None
+        system_instruction: Optional[google_genai_types.Part] = None
+        tool_config: Optional[google_genai_types.ToolConfig] = None
 
         # 1. Handle System Prompt
         if prompt and prompt.system_message:
-            system_instruction = types.Part.from_text(text=prompt.system_message)
+            system_instruction = google_genai_types.Part.from_text(text=prompt.system_message)
 
         # 2. Process Conversation History (previous_responses)
-        contents: List[types.Content] = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
+        contents: List[google_genai_types.Content] = await self.get_conversation_turns(
+            previous_responses, attachment_data_task_map
+        )
 
         # 3. Handle Current User Prompt
-        user_parts: List[types.Part] = []
+        user_parts: List[google_genai_types.Part] = []
 
         if prompt and prompt.user_message:
-            user_parts.append(types.Part.from_text(text=prompt.user_message))
+            user_parts.append(google_genai_types.Part.from_text(text=prompt.user_message))
 
         if attachments:
             for attachment in attachments:
                 attachment_data = await attachment_data_task_map[attachment.attachment_id]
                 if attachment_data:
                     user_parts.append(
-                        types.Part.from_bytes(
+                        google_genai_types.Part.from_bytes(
                             data=attachment_data.object_bytes, mime_type=attachment_data.attachment_metadata.file_type
                         )
                     )
 
         if user_parts:
-            contents.append(types.Content(role=ConversationRoleGemini.USER.value, parts=user_parts))
+            contents.append(google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=user_parts))
 
         # 4. Handle Tool Use Response (if provided for this specific call)
         if tool_use_response:
-            tool_response = types.Part.from_function_response(
+            tool_response = google_genai_types.Part.from_function_response(
                 name=tool_use_response.content.tool_name,
                 response=tool_use_response.content.response,
             )
-            contents.append(types.Content(parts=[tool_response], role=ConversationRoleGemini.USER.value))
+            contents.append(google_genai_types.Content(parts=[tool_response], role=ConversationRoleGemini.USER.value))
 
         # 5. Handle Tools Definition
         tools = sorted(tools, key=lambda x: x.name) if tools else []
         formatted_tools = []
         for tool in tools:
-            formatted_tool = types.Tool(
+            formatted_tool = google_genai_types.Tool(
                 function_declarations=[
-                    types.FunctionDeclaration(
-                        description=tool.description, name=tool.name, parameters=self.format_schema(tool.input_schema)
+                    google_genai_types.FunctionDeclaration(
+                        description=tool.description,
+                        name=tool.name,
+                        parameters=google_genai_types.Schema(**tool.input_schema.model_dump(mode="json")),
                     )
                 ]
             )
             formatted_tools.append(formatted_tool)
         if search_web:
-            formatted_tools = [types.Tool(google_search=types.GoogleSearch())]
+            formatted_tools = [google_genai_types.Tool(google_search=google_genai_types.GoogleSearch())]
         # Basic safety settings (optional, configure as needed)
         safety_settings = {}
         return {
@@ -227,24 +234,9 @@ class Google(BaseLLMProvider):
             "safety_settings": safety_settings,
         }
 
-    def format_schema(self, schema_dict: Dict):
-        schema_type = schema_dict["type"].upper()
-
-        properties = None
-        if "properties" in schema_dict:
-            properties = {}
-            for prop_name, prop_schema in schema_dict["properties"].items():
-                properties[prop_name] = self.format_schema(prop_schema)
-
-        schema = types.Schema(
-            type=schema_type,
-            properties=properties,
-            description=schema_dict.get("description"),
-            required=schema_dict.get("required", []),
-        )
-        return schema
-
-    def _parse_non_streaming_response(self, response: types.GenerateContentResponse) -> NonStreamingResponse:
+    def _parse_non_streaming_response(
+        self, response: google_genai_types.GenerateContentResponse
+    ) -> NonStreamingResponse:
         """
         Parses the non-streaming response from Vertex AI's Gemini model.
 
@@ -309,7 +301,7 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[types.GenerateContentResponse]
+        self, response: AsyncIterator[google_genai_types.GenerateContentResponse]
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed = False
@@ -369,12 +361,14 @@ class Google(BaseLLMProvider):
         )
 
     async def _get_parsed_stream_event(
-        self, chunk: types.GenerateContentResponse, current_running_block_type: Optional[ContentBlockCategory] = None
+        self,
+        chunk: google_genai_types.GenerateContentResponse,
+        current_running_block_type: Optional[ContentBlockCategory] = None,
     ) -> Tuple[List[Optional[StreamingEvent]], Optional[ContentBlockCategory], Optional[LLMUsage]]:
         event_blocks: List[StreamingEvent] = []
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         candidate = chunk.candidates[0]
-        part: types.Part = candidate.content.parts[0]
+        part: google_genai_types.Part = candidate.content.parts[0]
         # Block type is changing, so mark current running block end and start new block.
         if current_running_block_type != ContentBlockCategory.TEXT_BLOCK and part.text:
             if current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
@@ -387,7 +381,7 @@ class Google(BaseLLMProvider):
             if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
                 event_block = TextBlockEnd()
                 event_blocks.append(event_block)
-            function_call: types.FunctionCall = part.function_call
+            function_call: google_genai_types.FunctionCall = part.function_call
             event_block = ToolUseRequestStart(
                 content=ToolUseRequestStartContent(
                     tool_name=function_call.name, tool_use_id=function_call.id or str(uuid.uuid4())

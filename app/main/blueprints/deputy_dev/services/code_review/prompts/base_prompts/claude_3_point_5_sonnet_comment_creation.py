@@ -13,8 +13,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.claude_3_point_5_sonnet import (
-    BaseClaude3Point5SonnetPrompt,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
+    BaseClaude3Point5SonnetPromptHandler,
 )
 from app.backend_common.utils.formatting import (
     format_code_blocks,
@@ -25,7 +25,7 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 )
 
 
-class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt):
+class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPromptHandler):
     @classmethod
     def _parse_text_blocks(cls, text: str) -> Dict[str, List[LLMCommentData]]:
         review_content = None
