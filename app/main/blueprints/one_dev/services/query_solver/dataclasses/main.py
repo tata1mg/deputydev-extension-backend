@@ -5,6 +5,7 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel, field_validator
 
+from app.backend_common.services.llm.dataclasses.main import JSONSchema
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 MAX_DEPUTY_DEV_RULES_LENGTH = ConfigManager.configs["MAX_DEPUTY_DEV_RULES_LENGTH"]
@@ -43,7 +44,27 @@ class Url(BaseModel):
 class LLMModel(Enum):
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
+    GEMINI_2_POINT_5_FLASH = "GEMINI_2_POINT_5_FLASH"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
+    CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
+    CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
+
+
+class ToolMetadataTypes(Enum):
+    MCP = "MCP"
+
+
+class MCPToolMetadata(BaseModel):
+    type: ToolMetadataTypes = ToolMetadataTypes.MCP
+    server_id: str
+    tool_name: str
+
+
+class ClientTool(BaseModel):
+    name: str
+    description: str
+    input_schema: JSONSchema
+    tool_metadata: MCPToolMetadata
 
 
 class Attachment(BaseModel):
@@ -67,6 +88,7 @@ class QuerySolverInput(BaseModel):
     vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
 
     @field_validator("deputy_dev_rules")
