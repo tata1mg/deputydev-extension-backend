@@ -342,7 +342,8 @@
             "MAX_TOKENS": 8192,
             "VERSION": "bedrock-2023-05-31",
             "INPUT_TOKENS_LIMIT": 130000,
-            "PROMPT_CACHING_SUPPORTED": false
+            "PROMPT_CACHING_SUPPORTED": false,
+            "STREAM_BATCH_SIZE": 10
         },
         "CLAUDE_4_SONNET": {
             "ACCESS_KEY": "",
@@ -351,7 +352,8 @@
             "NAME": "us.anthropic.claude-sonnet-4-20250514-v1:0",
             "PROMPT_CACHING_SUPPORTED": true,
             "PROVIDER": "ANTHROPIC",
-            "VERSION": "bedrock-2023-05-31"
+            "VERSION": "bedrock-2023-05-31",
+            "STREAM_BATCH_SIZE": 10
         },
         "CLAUDE_4_SONNET_THINKING": {
             "ACCESS_KEY": "",
@@ -364,7 +366,8 @@
               "ENABLED": true,
               "BUDGET_TOKENS": 5000
             },
-            "VERSION": "bedrock-2023-05-31"
+            "VERSION": "bedrock-2023-05-31",
+            "STREAM_BATCH_SIZE": 10
         },
         "GEMINI_2_POINT_5_PRO": {
             "NAME": "gemini-2.5-pro-preview-03-25",
@@ -402,6 +405,12 @@
             "PROVIDER": "GOOGLE",
             "MAX_TOKENS": 8192,
             "INPUT_TOKENS_LIMIT": 100000
+        },
+        "GEMINI_2_POINT_5_FLASH": {
+          "NAME": "gemini-2.5-flash-preview-05-20",
+          "PROVIDER": "GOOGLE",
+          "MAX_TOKENS": 8192,
+          "INPUT_TOKENS_LIMIT": 200000
         },
         "GPT_O3_MINI": {
           "NAME": "o3-mini",
