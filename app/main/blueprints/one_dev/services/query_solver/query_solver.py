@@ -244,9 +244,7 @@ class QuerySolver:
                 tools_to_use.append(WRITE_TO_FILE)
 
         for client_tool in payload.client_tools:
-            tools_to_use.append(
-                self.generate_conversation_tool_from_client_tool(client_tool)
-            )
+            tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
@@ -329,11 +327,15 @@ class QuerySolver:
             ):
                 if payload.tool_use_failed:
                     if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
-                        error_response = { "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                            tool_name=payload.tool_use_response.tool_name,
-                            error_type=tool_response.get("error_type", "Unknown"),
-                            error_message=tool_response.get("error_message", "An error occurred while using the tool."),
-                        )}
+                        error_response = {
+                            "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                                tool_name=payload.tool_use_response.tool_name,
+                                error_type=tool_response.get("error_type", "Unknown"),
+                                error_message=tool_response.get(
+                                    "error_message", "An error occurred while using the tool."
+                                ),
+                            )
+                        }
                         tool_response = error_response
 
             llm_response = await llm_handler.submit_tool_use_response(

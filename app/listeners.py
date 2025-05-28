@@ -9,8 +9,8 @@ from app.main.blueprints.deputy_dev.services.message_queue.factories.message_que
 from app.main.blueprints.deputy_dev.services.message_queue.message_queue_helper import (
     MessageQueueHelper,
 )
-from app.main.blueprints.one_dev.services.kafka.pixel_event_subscriber import (
-    PixelEventSubscriber,
+from app.main.blueprints.one_dev.services.kafka.analytics_event_subscriber import (
+    AnalyticsEventSubscriber,
 )
 
 
@@ -37,7 +37,7 @@ async def initialize_kafka_subscriber(_app, loop):
     :return:
     """
     if _app.config.get("KAFKA", {}).get("ENABLED", False):
-        session_event_subscriber = PixelEventSubscriber(_app.config)
+        session_event_subscriber = AnalyticsEventSubscriber(_app.config)
         _app.add_task(session_event_subscriber.consume())
 
 
