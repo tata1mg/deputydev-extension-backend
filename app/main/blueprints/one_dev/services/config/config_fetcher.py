@@ -79,10 +79,10 @@ class ConfigFetcher:
                 ],
             },
             "MCP": {
-                    "MAX_TOOLS": ConfigManager.configs["BINARY"]["MCP"]["MAX_TOOLS"],
-                    "SERVER_CONNECTION_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["SERVER_CONNECTION_TIMEOUT"],
-                    "TOOL_RESPONSE_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["TOOL_RESPONSE_TIMEOUT"],
-                    "BUFFER_SIZE": ConfigManager.configs["BINARY"]["MCP"]["BUFFER_SIZE"]
+                "MAX_TOOLS": ConfigManager.configs["BINARY"]["MCP"]["MAX_TOOLS"],
+                "SERVER_CONNECTION_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["SERVER_CONNECTION_TIMEOUT"],
+                "TOOL_RESPONSE_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["TOOL_RESPONSE_TIMEOUT"],
+                "BUFFER_SIZE": ConfigManager.configs["BINARY"]["MCP"]["BUFFER_SIZE"],
             },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["BINARY"]["EMBEDDING"]["MODEL"],
