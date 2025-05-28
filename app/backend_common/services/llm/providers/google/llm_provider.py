@@ -146,6 +146,7 @@ class Google(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(  # Gemini caching is generally automatic
             tools=True, system_message=True, conversation=True
         ),
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -164,8 +165,6 @@ class Google(BaseLLMProvider):
             Dict[str, Any]: Payload containing 'contents', 'tools', 'system_instruction', 'tool_config'.
         """
 
-        # search_web = kwargs.get("search_web", False)
-        search_web = False  # Gemini does not support web search tool, so we set it to False
         if tools and search_web:
             raise BadRequestException("Functional tools and Web search tool can not be used together")
         model_config = self._get_model_config(llm_model)

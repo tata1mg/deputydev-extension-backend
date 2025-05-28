@@ -177,6 +177,7 @@ class Anthropic(BaseLLMProvider):
         tool_choice: Literal["none", "auto", "required"] = "auto",
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
+        search_web: bool = False,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
