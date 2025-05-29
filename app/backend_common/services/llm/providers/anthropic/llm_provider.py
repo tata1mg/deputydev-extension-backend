@@ -312,8 +312,11 @@ class Anthropic(BaseLLMProvider):
         )
 
     def _get_parsed_stream_event(
-        self, event: Dict[str, Any], current_running_block_type: Optional[ContentBlockCategory] = None
-    ) -> Tuple[Optional[StreamingEvent], Optional[ContentBlockCategory], Optional[LLMUsage]]:
+        self,
+        event: Dict[str, Any],
+        current_content_block_delta: str,
+        current_running_block_type: Optional[ContentBlockCategory] = None,
+    ) -> Tuple[List[StreamingEvent], Optional[ContentBlockCategory], Optional[str], Optional[LLMUsage]]:
         """
         Parses the streaming event and returns the corresponding content block and usage.
 
@@ -325,6 +328,7 @@ class Anthropic(BaseLLMProvider):
             Tuple[Optional[StreamingContentBlock], Optional[LLMUsage]]: The content block and usage.
         """
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
+        print(event)
 
         if event["type"] == "message_stop":
             invocation_metrics = event["amazon-bedrock-invocationMetrics"]
@@ -333,7 +337,7 @@ class Anthropic(BaseLLMProvider):
             if "outputTokenCount" in invocation_metrics:
                 usage.output = invocation_metrics.get("outputTokenCount")
 
-            return None, None, usage
+            return [], None, None, usage
 
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "thinking":
             return ExtendedThinkingBlockStart(), ContentBlockCategory.EXTENDED_THINKING, None
@@ -343,45 +347,58 @@ class Anthropic(BaseLLMProvider):
 
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "thinking_delta":
             return (
-                ExtendedThinkingBlockDelta(
-                    content=ExtendedThinkingBlockDeltaContent(thinking_delta=event["delta"]["thinking"])
-                ),
+                [
+                    ExtendedThinkingBlockDelta(
+                        content=ExtendedThinkingBlockDeltaContent(thinking_delta=event["delta"]["thinking"])
+                    )
+                ],
                 ContentBlockCategory.EXTENDED_THINKING,
+                None,
                 None,
             )
 
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "signature_delta":
             return (
-                ExtendedThinkingBlockEnd(
-                    content=ExtendedThinkingBlockEndContent(signature=event["delta"]["signature"])
-                ),
+                [
+                    ExtendedThinkingBlockEnd(
+                        content=ExtendedThinkingBlockEndContent(signature=event["delta"]["signature"])
+                    )
+                ],
                 ContentBlockCategory.EXTENDED_THINKING,
+                None,
                 None,
             )
 
         # parsers for tool use request blocks
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "tool_use":
             return (
-                ToolUseRequestStart(
-                    type=StreamingEventType.TOOL_USE_REQUEST_START,
-                    content=ToolUseRequestStartContent(
-                        tool_name=event["content_block"]["name"],
-                        tool_use_id=event["content_block"]["id"],
-                    ),
-                ),
+                [
+                    ToolUseRequestStart(
+                        type=StreamingEventType.TOOL_USE_REQUEST_START,
+                        content=ToolUseRequestStartContent(
+                            tool_name=event["content_block"]["name"],
+                            tool_use_id=event["content_block"]["id"],
+                        ),
+                    )
+                ],
                 ContentBlockCategory.TOOL_USE_REQUEST,
+                None,
                 None,
             )
 
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "input_json_delta":
+            current_content_block_delta += event["delta"]["partial_json"]
             return (
-                ToolUseRequestDelta(
-                    type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
-                    content=ToolUseRequestDeltaContent(
-                        input_params_json_delta=event["delta"]["partial_json"],
-                    ),
-                ),
+                [
+                    ToolUseRequestDelta(
+                        type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
+                        content=ToolUseRequestDeltaContent(
+                            input_params_json_delta=event["delta"]["partial_json"],
+                        ),
+                    )
+                ],
                 ContentBlockCategory.TOOL_USE_REQUEST,
+                current_content_block_delta,
                 None,
             )
 
@@ -389,52 +406,80 @@ class Anthropic(BaseLLMProvider):
             event["type"] == "content_block_stop"
             and current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST
         ):
-            return (
+            events_to_return: List[StreamingEvent] = []
+            # claude does not return the final delta for tool use request in case of no params, so we need to add an empty delta
+            if not current_content_block_delta:
+                events_to_return.append(
+                    ToolUseRequestDelta(
+                        type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
+                        content=ToolUseRequestDeltaContent(
+                            input_params_json_delta="{}",
+                        ),
+                    )
+                )
+
+            events_to_return.append(
                 ToolUseRequestEnd(
                     type=StreamingEventType.TOOL_USE_REQUEST_END,
-                ),
+                )
+            )
+
+            current_content_block_delta = ""
+
+            return (
+                events_to_return,
                 ContentBlockCategory.TOOL_USE_REQUEST,
+                current_content_block_delta,
                 None,
             )
 
         # parsers for text blocks
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "text":
             return (
-                TextBlockStart(
-                    type=StreamingEventType.TEXT_BLOCK_START,
-                ),
+                [
+                    TextBlockStart(
+                        type=StreamingEventType.TEXT_BLOCK_START,
+                    )
+                ],
                 ContentBlockCategory.TEXT_BLOCK,
+                None,
                 None,
             )
 
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "text_delta":
             return (
-                TextBlockDelta(
-                    type=StreamingEventType.TEXT_BLOCK_DELTA,
-                    content=TextBlockDeltaContent(
-                        text=event["delta"]["text"],
-                    ),
-                ),
+                [
+                    TextBlockDelta(
+                        type=StreamingEventType.TEXT_BLOCK_DELTA,
+                        content=TextBlockDeltaContent(
+                            text=event["delta"]["text"],
+                        ),
+                    )
+                ],
                 ContentBlockCategory.TEXT_BLOCK,
+                None,
                 None,
             )
 
         if event["type"] == "content_block_stop" and current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
             return (
-                TextBlockEnd(
-                    type=StreamingEventType.TEXT_BLOCK_END,
-                ),
+                [
+                    TextBlockEnd(
+                        type=StreamingEventType.TEXT_BLOCK_END,
+                    )
+                ],
                 ContentBlockCategory.TEXT_BLOCK,
+                None,
                 None,
             )
 
-        return None, None, None
+        return [], None, None, None
 
     async def _parse_streaming_response(
         self,
         response: InvokeModelWithResponseStreamResponseTypeDef,
         async_bedrock_client: BedrockRuntimeClient,
-        model_config: Dict,
+        model_config: Dict[str, Any],
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
@@ -456,36 +501,40 @@ class Anthropic(BaseLLMProvider):
             buffer: List[StreamingEvent] = []
             current_type: Optional[type] = None
             current_running_block_type: Optional[ContentBlockCategory] = None
+            current_content_block_delta: str = ""
             response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
             async for event in response_body:
                 chunk = json.loads(event["chunk"]["bytes"])
                 # yield content block delta
                 try:
-                    event_block, event_block_category, event_usage = self._get_parsed_stream_event(
-                        chunk, current_running_block_type
+                    event_blocks, event_block_category, content_block_delta, event_usage = (
+                        self._get_parsed_stream_event(chunk, current_content_block_delta, current_running_block_type)
                     )
-                    block_type = type(event_block)
-                    if event_block and current_type is None:
-                        current_type = block_type
-                    if (
-                        event_block
-                        and buffer
-                        and (
-                            current_type in non_combinable_events
-                            or block_type != current_type
-                            or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
-                        )
-                    ):
-                        combined_event = sum(buffer[1:], start=buffer[0])
-                        yield combined_event
-                        buffer.clear()
-                        current_type = block_type
                     if event_usage:
                         usage += event_usage
-                    if event_block:
+
+                    for event_block in event_blocks:
+                        last_block_type = type(event_block)
+                        if current_type is None:
+                            current_type = last_block_type
+                        if buffer and (
+                            current_type in non_combinable_events
+                            or last_block_type != current_type
+                            or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
+                        ):
+                            combined_event = sum(buffer[1:], start=buffer[0])
+                            yield combined_event
+                            buffer.clear()
+                            current_type = last_block_type
+
                         buffer.append(event_block)
+
+                    if event_blocks:
                         current_running_block_type = event_block_category
-                        accumulated_events.append(event_block)
+                        accumulated_events.extend(event_blocks)
+
+                    if content_block_delta is not None:
+                        current_content_block_delta = content_block_delta
                 except Exception:
                     # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                     pass
