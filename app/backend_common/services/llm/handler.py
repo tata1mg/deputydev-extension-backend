@@ -141,7 +141,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     text_buffer += event.content.input_params_json_delta
             elif event.type == StreamingEventType.TOOL_USE_REQUEST_END:
                 if current_content_block and isinstance(current_content_block, ToolUseRequestData):
-                    current_content_block.content.tool_input = json.loads(text_buffer)
+                    current_content_block.content.tool_input = json.loads(text_buffer if text_buffer else "{}")
                     non_streaming_content_blocks.append(current_content_block)
                     current_content_block = None
                     text_buffer = ""
