@@ -35,8 +35,10 @@ class AWSAPIGatewayServiceClient:
         )  # type: ignore
         en = time()
         logger.info(f"Time taken in creating connection: {(en-st)*1000} ms")
-
+        st_1 = time()
+        count = 0
         async with client as apigateway_client:
+            count += 1
             try:
                 st=time()
                 await apigateway_client.post_to_connection(ConnectionId=connection_id, Data=message.encode("utf-8"))
@@ -48,3 +50,5 @@ class AWSAPIGatewayServiceClient:
                     f"Error occurred while sending message to connection_id: {connection_id} for endpoint {endpoint}, ex: {_ex}"
                 )
                 raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
+        en_1 = time()
+        logger.info(f"Time taken in loop: {(en_1-st_1)*1000} and count: {count}")
