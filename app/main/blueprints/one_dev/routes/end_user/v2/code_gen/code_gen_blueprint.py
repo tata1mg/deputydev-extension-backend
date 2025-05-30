@@ -8,7 +8,6 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import Clients
 from sanic import Blueprint
 from torpedo import Request, send_response
-
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
@@ -44,6 +43,7 @@ from app.main.blueprints.one_dev.utils.session import (
     get_valid_session_data,
 )
 from app.main.blueprints.one_dev.utils.version import compare_version
+from time import time
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -127,19 +127,23 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
+    aws_client = AWSAPIGatewayServiceClient()
+    await aws_client.init_client(
+        endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+    )
 
     async def push_to_connection_stream(data: Dict[str, Any]):
         nonlocal connection_id
         nonlocal is_local
         nonlocal connection_id_gone
+        nonlocal aws_client
 
         if not connection_id_gone:
             if is_local:
                 local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data))
             else:
                 try:
-                    await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
-                        f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+                    await aws_client.post_to_connection(
                         connection_id=connection_id,
                         message=json.dumps(data),
                     )
@@ -177,9 +181,16 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
             last_block = None
             # push data to stream
+            chunk_times = []
+            st_1 = time()
             async for data_block in data:
                 last_block = data_block
+                st = time()
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
+                en = time()
+                chunk_times.append((en-st)*1000)
+            en_1 = time()
+            AppLogger.log_info(f"Total Time: {(en_1-st_1)*1000} ms. Time taken in each chunk in ms: {chunk_times}")
 
             # TODO: Sugar code this part
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
@@ -191,10 +202,11 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             await push_to_connection_stream(end_data)
         except Exception as ex:
             AppLogger.log_error(f"Error in solving query: {ex}")
-
             # push error message to stream
             error_data = {"type": "STREAM_ERROR", "message": str(ex)}
             await push_to_connection_stream(error_data)
+        finally:
+            await aws_client.close()
 
     asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})

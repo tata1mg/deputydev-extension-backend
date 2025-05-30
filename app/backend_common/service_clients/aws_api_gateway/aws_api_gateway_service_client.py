@@ -15,31 +15,34 @@ class AWSAPIGatewayServiceClient:
 
     def __init__(self, host: Optional[str] = None):
         self.host: str = host or ConfigManager.configs["AWS_API_GATEWAY"]["HOST"]
+        self._client: ApiGatewayManagementApiClient | None = None
 
-    async def post_to_endpoint_connection(self, endpoint: str, connection_id: str, message: str):
-        """
-        Send message to the connection_id for the given endpoint
-        :param endpoint: str
-        :param connection_id: str
-        :param message: str
-
-        :return: None
-        """
-
+    async def init_client(self, endpoint: str):
+        if self._client is not None:
+            return
         session = AioSession()
+        self._client = await session.create_client(
+            service_name=self.API_GATEWAY_MANAGEMENT_API_NAME,
+            region_name=ConfigManager.configs["AWS_API_GATEWAY"]["AWS_REGION"],
+            endpoint_url=ConfigManager.configs["AWS_API_GATEWAY"]["HOST"] + endpoint,
+        ).__aenter__()
 
-        client: ApiGatewayManagementApiClient = session.create_client(  # type: ignore
-            self.API_GATEWAY_MANAGEMENT_API_NAME,  # type: ignore
-            region_name=ConfigManager.configs["AWS_API_GATEWAY"]["AWS_REGION"],  # type: ignore
-            endpoint_url=self.host + endpoint,  # type: ignore
-        )  # type: ignore
+    async def post_to_connection(self, connection_id: str, message: str):
+        if self._client is None:
+            raise RuntimeError("API Gateway client is not initialized. Call `init_client` first.")
 
-        async with client as apigateway_client:
-            try:
-                await apigateway_client.post_to_connection(ConnectionId=connection_id, Data=message.encode("utf-8"))
-            # except client.exceptions.GoneException as _ex: , ideally this should be the exception to catch, but seems like it's not available in the aiobotocore
-            except Exception as _ex:
-                AppLogger.log_error(
-                    f"Error occurred while sending message to connection_id: {connection_id} for endpoint {endpoint}, ex: {_ex}"
-                )
-                raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
+        try:
+            await self._client.post_to_connection(
+                ConnectionId=connection_id,
+                Data=message.encode("utf-8"),
+            )
+        except Exception as _ex:
+            AppLogger.log_error(
+                f"Error occurred while sending message to connection_id: {connection_id} ex: {_ex}"
+            )
+            raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
+
+    async def close(self):
+        if self._client:
+            await self._client.__aexit__(None, None, None)
+            self._client = None
