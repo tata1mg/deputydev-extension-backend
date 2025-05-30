@@ -1,10 +1,10 @@
 from typing import Optional
-
+from sanic.log import logger
 from aiobotocore.session import AioSession
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
-
+from time import time
 
 class SocketClosedException(Exception):
     pass
@@ -27,12 +27,14 @@ class AWSAPIGatewayServiceClient:
         """
 
         session = AioSession()
-
+        st=time()
         client: ApiGatewayManagementApiClient = session.create_client(  # type: ignore
             self.API_GATEWAY_MANAGEMENT_API_NAME,  # type: ignore
             region_name=ConfigManager.configs["AWS_API_GATEWAY"]["AWS_REGION"],  # type: ignore
             endpoint_url=self.host + endpoint,  # type: ignore
         )  # type: ignore
+        en = time()
+        logger.info(f"Time taken in creating connection: {(en-st)*1000} ms")
 
         async with client as apigateway_client:
             try:
