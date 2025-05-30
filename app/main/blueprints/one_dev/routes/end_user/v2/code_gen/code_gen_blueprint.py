@@ -8,7 +8,6 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import Clients
 from sanic import Blueprint
 from torpedo import Request, send_response
-from time import time
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
@@ -44,7 +43,6 @@ from app.main.blueprints.one_dev.utils.session import (
     get_valid_session_data,
 )
 from app.main.blueprints.one_dev.utils.version import compare_version
-from sanic.log import logger
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
