@@ -1,5 +1,7 @@
 from typing import Optional
+
 from aiobotocore.session import AioSession
+from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
 
@@ -35,8 +37,8 @@ class AWSAPIGatewayServiceClient:
                 Data=message.encode("utf-8"),
             )
         except Exception as _ex:
-            logger.error(
-                f"[GatewayMessenger] Error sending message to {connection_id}: {_ex}"
+            AppLogger.log_error(
+                f"Error occurred while sending message to connection_id: {connection_id} ex: {_ex}"
             )
             raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
 
@@ -44,4 +46,3 @@ class AWSAPIGatewayServiceClient:
         if self._client:
             await self._client.__aexit__(None, None, None)
             self._client = None
-            logger.info("[GatewayMessenger] API Gateway client closed")
