@@ -1,10 +1,8 @@
 from typing import Optional
-from sanic.log import logger
 from aiobotocore.session import AioSession
-from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
-from time import time
+
 
 class SocketClosedException(Exception):
     pass
