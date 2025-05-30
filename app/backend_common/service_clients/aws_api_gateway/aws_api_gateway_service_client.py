@@ -38,7 +38,10 @@ class AWSAPIGatewayServiceClient:
 
         async with client as apigateway_client:
             try:
+                st=time()
                 await apigateway_client.post_to_connection(ConnectionId=connection_id, Data=message.encode("utf-8"))
+                en = time()
+                logger.info(f"Time taken in pushing message: {(en-st)*1000} ms")
             # except client.exceptions.GoneException as _ex: , ideally this should be the exception to catch, but seems like it's not available in the aiobotocore
             except Exception as _ex:
                 AppLogger.log_error(
