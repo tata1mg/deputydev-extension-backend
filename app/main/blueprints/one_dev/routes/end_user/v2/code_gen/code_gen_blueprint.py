@@ -8,7 +8,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import Clients
 from sanic import Blueprint
 from torpedo import Request, send_response
-
+from time import time
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
@@ -44,6 +44,7 @@ from app.main.blueprints.one_dev.utils.session import (
     get_valid_session_data,
 )
 from app.main.blueprints.one_dev.utils.version import compare_version
+from sanic.log import logger
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -138,11 +139,14 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                 local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data))
             else:
                 try:
+                    st = time()
                     await AWSAPIGatewayServiceClient().post_to_endpoint_connection(
                         f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
                         connection_id=connection_id,
                         message=json.dumps(data),
                     )
+                    en = time()
+                    logger.info(f"Total time taken in one chunk: {(en-st)*1000}")
                 except SocketClosedException:
                     connection_id_gone = True
 
