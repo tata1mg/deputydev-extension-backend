@@ -15,40 +15,35 @@ class AWSAPIGatewayServiceClient:
 
     def __init__(self, host: Optional[str] = None):
         self.host: str = host or ConfigManager.configs["AWS_API_GATEWAY"]["HOST"]
+        self._client: ApiGatewayManagementApiClient | None = None
 
-    async def post_to_endpoint_connection(self, endpoint: str, connection_id: str, message: str):
-        """
-        Send message to the connection_id for the given endpoint
-        :param endpoint: str
-        :param connection_id: str
-        :param message: str
-
-        :return: None
-        """
-
+    async def init_client(self, endpoint: str):
+        if self._client is not None:
+            return
         session = AioSession()
-        st=time()
-        client: ApiGatewayManagementApiClient = session.create_client(  # type: ignore
-            self.API_GATEWAY_MANAGEMENT_API_NAME,  # type: ignore
-            region_name=ConfigManager.configs["AWS_API_GATEWAY"]["AWS_REGION"],  # type: ignore
-            endpoint_url=self.host + endpoint,  # type: ignore
-        )  # type: ignore
-        en = time()
-        logger.info(f"Time taken in creating connection: {(en-st)*1000} ms")
-        st_1 = time()
-        count = 0
-        async with client as apigateway_client:
-            count += 1
-            try:
-                st=time()
-                await apigateway_client.post_to_connection(ConnectionId=connection_id, Data=message.encode("utf-8"))
-                en = time()
-                logger.info(f"Time taken in pushing message: {(en-st)*1000} ms")
-            # except client.exceptions.GoneException as _ex: , ideally this should be the exception to catch, but seems like it's not available in the aiobotocore
-            except Exception as _ex:
-                AppLogger.log_error(
-                    f"Error occurred while sending message to connection_id: {connection_id} for endpoint {endpoint}, ex: {_ex}"
-                )
-                raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
-        en_1 = time()
-        logger.info(f"Time taken in loop: {(en_1-st_1)*1000} and count: {count}")
+        self._client = await session.create_client(
+            service_name=self.API_GATEWAY_MANAGEMENT_API_NAME,
+            region_name=ConfigManager.configs["AWS_API_GATEWAY"]["AWS_REGION"],
+            endpoint_url=ConfigManager.configs["AWS_API_GATEWAY"]["HOST"] + endpoint,
+        ).__aenter__()
+
+    async def post_to_connection(self, connection_id: str, message: str):
+        if self._client is None:
+            raise RuntimeError("API Gateway client is not initialized. Call `init_client` first.")
+
+        try:
+            await self._client.post_to_connection(
+                ConnectionId=connection_id,
+                Data=message.encode("utf-8"),
+            )
+        except Exception as _ex:
+            logger.error(
+                f"[GatewayMessenger] Error sending message to {connection_id}: {_ex}"
+            )
+            raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
+
+    async def close(self):
+        if self._client:
+            await self._client.__aexit__(None, None, None)
+            self._client = None
+            logger.info("[GatewayMessenger] API Gateway client closed")
