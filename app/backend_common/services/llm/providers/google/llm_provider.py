@@ -117,6 +117,8 @@ class Google(BaseLLMProvider):
 
                 else:
                     attachment_id = content_data.attachment_id
+                    if attachment_id not in attachment_data_task_map:
+                        continue
                     attachment_data = await attachment_data_task_map[attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
                         parts.append(
@@ -188,6 +190,8 @@ class Google(BaseLLMProvider):
 
         if attachments:
             for attachment in attachments:
+                if attachment.attachment_id not in attachment_data_task_map:
+                    continue
                 attachment_data = await attachment_data_task_map[attachment.attachment_id]
                 if attachment_data:
                     user_parts.append(
