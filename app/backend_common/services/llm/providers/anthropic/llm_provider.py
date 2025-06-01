@@ -145,6 +145,8 @@ class Anthropic(BaseLLMProvider):
                 # handle file attachments
                 else:
                     attachment_id = content_data.attachment_id
+                    if attachment_id not in attachment_data_task_map:
+                        continue
                     attachment_data = await attachment_data_task_map[attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
                         content.append(
@@ -192,6 +194,8 @@ class Anthropic(BaseLLMProvider):
             )
             if attachments:
                 for attachment in attachments:
+                    if attachment.attachment_id not in attachment_data_task_map:
+                        continue
                     attachment_data = await attachment_data_task_map[attachment.attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
                         # append at the beginning of the user message
