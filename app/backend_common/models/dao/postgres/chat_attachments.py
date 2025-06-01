@@ -9,6 +9,7 @@ class ChatAttachments(Base):
         "s3_key",
         "file_name",
         "file_type",
+        "status",
         "created_at",
         "updated_at",
     }
@@ -17,6 +18,7 @@ class ChatAttachments(Base):
     s3_key = fields.TextField()
     file_name = fields.TextField()
     file_type = fields.TextField()
+    status = fields.TextField(null=True)
 
     class Meta:
         table = "chat_attachments"
