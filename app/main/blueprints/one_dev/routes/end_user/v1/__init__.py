@@ -15,6 +15,7 @@ from .websocket_connection.websocket_connection_blueprint import (
     websocket_connection_v1_bp,
 )
 from .file_upload.file_upload_blueprint import file_upload_v1_bp
+from .binary_upload.binary_upload_blueprint import binary_upload_v1_bp
 
 blueprints = [
     auth_v1_bp,
@@ -30,5 +31,6 @@ blueprints = [
     websearch_v1_bp,
     extension_settings_v1_bp,
     file_upload_v1_bp,
+    binary_upload_v1_bp
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
