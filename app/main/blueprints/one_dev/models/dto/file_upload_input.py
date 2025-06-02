@@ -9,4 +9,7 @@ class FileUploadPostInput(BaseModel):
 
 
 class FileUploadGetInput(BaseModel):
-    s3_key: str
+    attachment_id: int
+
+class FileDeleteInput(BaseModel):
+    attachment_id: int
