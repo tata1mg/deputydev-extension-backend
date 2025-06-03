@@ -751,5 +751,6 @@
             "image/webp"
         ],
         "FOLDER_PATH": "chat_images"
-    }
+    },
+    "ALLOWED_PR_REVIEW_RETRIES": 3
 }
