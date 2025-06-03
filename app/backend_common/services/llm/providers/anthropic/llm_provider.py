@@ -331,7 +331,6 @@ class Anthropic(BaseLLMProvider):
             Tuple[Optional[StreamingContentBlock], Optional[LLMUsage]]: The content block and usage.
         """
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        print(event)
 
         if event["type"] == "message_stop":
             invocation_metrics = event["amazon-bedrock-invocationMetrics"]
