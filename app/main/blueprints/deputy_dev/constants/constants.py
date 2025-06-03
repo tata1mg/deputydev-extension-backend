@@ -44,6 +44,7 @@ class PrStatusTypes(Enum):
     REJECTED_CLONING_FAILED_WITH_128 = "REJECTED_CLONING_FAILED_WITH_128"
     REJECTED_INVALID_REQUEST = "REJECTED_INVALID_REQUEST"
     FAILED = "FAILED"
+    EXHAUSTED_RETRIES_LIMIT = "EXHAUSTED_RETRIES_LIMIT"
     ALREADY_REVIEWED = "ALREADY_REVIEWED"  # This is not representing db state, used to post affirmation reply msg
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
     SUMMARY_DISABLED = "SUMMARY_DISABLED"  # This is not representing db state, used to post affirmation reply msg
@@ -80,6 +81,8 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.ALREADY_REVIEWED.value: "DeputyDev has already reviewed this PR on commit {commit_id}",
     PrStatusTypes.FEATURES_DISABLED.value: "Code review and PR summary features are currently disabled in your repository/organization settings. To enable these features, please update your settings.",
     PrStatusTypes.SUMMARY_DISABLED.value: "PR summary is currently disabled in your repository/organization settings. To enable these features, please update your settings.",
+    PrStatusTypes.EXHAUSTED_RETRIES_LIMIT.value: "Maximum number of review retries has been exceeded for this PR. Please contact support if you need further assistance.",
+    PrStatusTypes.REJECTED_ALREADY_DECLINED.value: "This PR is declined. If you still want to review it, review using our #review feature by commenting #review on PR",
 }
 
 
