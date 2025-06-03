@@ -251,7 +251,7 @@ class BaseClaudePromptHandler(BasePrompt):
                     if xml_wrapped_text_position.end is not None and xml_wrapped_text_position.end.end_pos is not None:
                         # we clear the buffer upto end pos and then insert a text block start event in on hold events if not already present
                         if xml_wrapped_text_position.end.end_pos > 0:
-                            text_buffer = text_buffer[xml_wrapped_text_position.end.end_pos :]
+                            text_buffer = text_buffer.replace(ongoing_tag_parser.end_tag, "")
                             if len(on_hold_events) == 0:
                                 on_hold_events.append(TextBlockStart())
                             else:
