@@ -2,7 +2,7 @@ from typing import Optional
 
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values
+from deputydev_core.utils.context_vars import set_context_values, get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
@@ -84,10 +84,16 @@ class PRReviewPreProcessor:
             is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
         )
         ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
+        pr_state =  self.pr_model.scm_state()
+        # Declined and not raised by #review
+        already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
 
-        if not self.is_reviewable_based_on_settings(setting):
+        if already_declined or not self.is_reviewable_based_on_settings(setting):
             self.is_valid = False
-            self.review_status = PrStatusTypes.FEATURES_DISABLED.value
+            if already_declined:
+                self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
+            else:
+                self.review_status = PrStatusTypes.FEATURES_DISABLED.value
             await self.run_validations()
             return False, self.pr_dto
 
@@ -201,6 +207,12 @@ class PRReviewPreProcessor:
         }
         failed_pr_dto = await PRService.find(filters=failed_pr_filters)
 
+        # Check for retries limit
+        if failed_pr_dto and len(failed_pr_dto.session_ids) > config.get("ALLOWED_PR_REVIEW_RETRIES"):
+            self.is_valid = False
+            self.review_status = PrStatusTypes.EXHAUSTED_RETRIES_LIMIT.value
+            return failed_pr_dto
+
         if failed_pr_dto:
             # Update failed PR
             update_data = {
@@ -250,6 +262,7 @@ class PRReviewPreProcessor:
                 PrStatusTypes.REJECTED_NO_DIFF.value,
                 PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value,
                 PrStatusTypes.REJECTED_INVALID_REQUEST.value,
+                PrStatusTypes.EXHAUSTED_RETRIES_LIMIT.value,
             ],
         }
         return await PRService.find(filters=reviewed_pr_filters, order_by=["-iteration"])
