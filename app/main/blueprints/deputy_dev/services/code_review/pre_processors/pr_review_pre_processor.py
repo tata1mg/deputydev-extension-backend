@@ -43,6 +43,8 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from deputydev_core.utils.app_logger import AppLogger
+
 
 config = CONFIG.config
 one_dev_review_client = OneDevReviewClient()
@@ -85,6 +87,7 @@ class PRReviewPreProcessor:
         )
         ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
         pr_state =  self.pr_model.scm_state()
+        AppLogger.log_info(f"PR state: {pr_state}")
         # Declined and not raised by #review
         already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
 
