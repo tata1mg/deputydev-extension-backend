@@ -43,7 +43,6 @@ from app.main.blueprints.one_dev.utils.session import (
     get_valid_session_data,
 )
 from app.main.blueprints.one_dev.utils.version import compare_version
-from time import time
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -181,16 +180,9 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 
             last_block = None
             # push data to stream
-            chunk_times = []
-            st_1 = time()
             async for data_block in data:
                 last_block = data_block
-                st = time()
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
-                en = time()
-                chunk_times.append((en-st)*1000)
-            en_1 = time()
-            AppLogger.log_info(f"Total Time: {(en_1-st_1)*1000} ms. Time taken in each chunk in ms: {chunk_times}")
 
             # TODO: Sugar code this part
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
