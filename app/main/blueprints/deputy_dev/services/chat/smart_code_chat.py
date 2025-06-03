@@ -71,6 +71,7 @@ class SmartCodeChatManager:
         if comment.startswith(f"#{CommentTypes.SUMMARY.value}"):
             return CommentTypes.SUMMARY.value
         elif comment == f"#{CommentTypes.REVIEW.value}":
+            set_context_values(manually_triggered_review=True)
             return CommentTypes.REVIEW.value
         return CommentTypes.CHAT.value
 
