@@ -469,7 +469,7 @@
     "RUDDER": {
         "WRITE_KEY": "",
         "WRITE_KEY_ERROR_TRACKING": "",
-        "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+        "DATA_PLANE_URL": "https://rudderapi.1mg.com/v1/track"
     },
     "AWS_API_GATEWAY": {
         "HOST": "https://sample.com",
