@@ -518,6 +518,35 @@
             "CHUNKING_ENABLED": true
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
+        "BINARY_DOWNLOAD": {
+            "AWS_BUCKET_NAME": "deputydev",
+            "AWS_REGION": "ap-south-1",
+            "PRESIGNED_URL_EXPIRY": 1800,
+            "FILE": {
+                "0.0.1": {
+                    "darwin": {
+                        "arm64": {
+                            "s3_key": "binaries/7.0.0/darwin/macos-arm64-7.0.0.enc"
+                        },
+                        "x64": {
+                            "s3_key":""
+                        }
+                    },
+                    "linux": {}
+                },
+                "latest": {
+                    "darwin": {
+                        "arm64": {
+                            "s3_key": "binaries/7.2.1/darwin/macos-arm64-7.2.1.enc"
+                        },
+                        "x64": {
+                            "s3_key": "binaries/4.0.0/darwin/macos-x64-4.0.0.enc"
+                        }
+                    },
+                    "linux": {}
+                }
+            }
+        },
         "FILE": {
             "latest": {
                 "darwin": {
