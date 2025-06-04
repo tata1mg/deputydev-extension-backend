@@ -14,7 +14,7 @@ from ..base_kafka_subscriber import BaseKafkaSubscriber
 
 class ErrorAnalyticsEventSubscriber(BaseKafkaSubscriber):
     def __init__(self, config: Dict[str, Any]) -> None:
-        super().__init__(config, config["KAFKA"]["ERROR_QUEUE_NAME"])
+        super().__init__(config, config["KAFKA"]["ERROR_QUEUE"]["NAME"])
 
     async def _get_analytics_event_data_from_message(self, message: Dict[str, Any]) -> ErrorAnalyticsEventsData:
         """Extract and return ErrorAnalyticsEventsData from the message."""

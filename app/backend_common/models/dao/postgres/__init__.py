@@ -8,6 +8,7 @@ __all__ = [
     "MessageThread",
     "MessageSession",
     "AnalyticsEvents",
+    "ErrorAnalyticsEvents",
     "FailedOperations",
     "ExtensionSession",
     "ReferralCodes",
@@ -21,6 +22,7 @@ from .failed_operations import FailedOperations
 from .message_sessions import MessageSession
 from .message_threads import MessageThread
 from .analytics_events import AnalyticsEvents
+from .error_analytics_events import ErrorAnalyticsEvents
 from .repos import Repos
 from .teams import Teams
 from .tokens import Tokens

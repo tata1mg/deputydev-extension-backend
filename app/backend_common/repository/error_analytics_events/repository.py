@@ -11,12 +11,11 @@ from app.backend_common.repository.db import DB
 class ErrorAnalyticsEventsRepository:
     @classmethod
     async def save_error_analytics_event(
-        cls, analytics_events_dto: ErrorAnalyticsEventsData
+        cls, error_analytics_events_dto: ErrorAnalyticsEventsData
     ) -> ErrorAnalyticsEventsDTO:
-        analytics_events_dto.timestamp = analytics_events_dto.timestamp.replace(
-            tzinfo=pytz.UTC)
-        payload = analytics_events_dto.model_dump(mode="json")
-        row: ErrorAnalyticsEvents = await DB.insert_row(ErrorAnalyticsEvents, payload)
+        error_analytics_events_dto.timestamp = error_analytics_events_dto.timestamp.replace(tzinfo=pytz.UTC)
+        payload = error_analytics_events_dto.model_dump(mode="json")
+        row = await DB.insert_row(ErrorAnalyticsEvents, payload)
         return ErrorAnalyticsEventsDTO(
             id=row.id,
             user_email=row.user_email,
