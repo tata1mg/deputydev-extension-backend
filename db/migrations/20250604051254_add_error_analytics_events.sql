@@ -15,16 +15,10 @@ CREATE TABLE IF NOT EXISTS error_analytics_events (
 );
 
 -- Single-column indexes for filtering
-CREATE INDEX IF NOT EXISTS idx_error_analytics_user_email_not_null
-    ON error_analytics_events(user_email)
-    WHERE user_email IS NOT NULL;
-
-
 CREATE INDEX IF NOT EXISTS idx_error_analytics_timestamp
     ON error_analytics_events(timestamp DESC);
 
 -- Composite index for dashboard queries (email + timestamp)
-
 CREATE INDEX idx_error_analytics_useremail_time_not_null
     ON error_analytics_events(user_email, timestamp DESC)
     WHERE user_email IS NOT NULL;
