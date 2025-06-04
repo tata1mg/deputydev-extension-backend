@@ -18,7 +18,7 @@ class ErrorAnalyticsEvents(Base):
         "updated_at",
     }
 
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     user_email = fields.TextField(null=True)
     error_type = fields.TextField()
     error_data = fields.JSONField(null=False)
@@ -28,8 +28,6 @@ class ErrorAnalyticsEvents(Base):
     timestamp = NaiveDatetimeField(null=False)
     user_team_id = fields.BigIntField(null=True)
     session_id = fields.BigIntField(null=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = "error_analytics_events"
