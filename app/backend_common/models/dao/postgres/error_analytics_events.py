@@ -34,7 +34,6 @@ class ErrorAnalyticsEvents(Base):
     class Meta:
         table = "error_analytics_events"
         indexes = (
-            ("user_email",),
             ("timestamp",),
             ("user_email", "timestamp"),
         )
