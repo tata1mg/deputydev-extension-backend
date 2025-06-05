@@ -12,6 +12,7 @@ from app.main.blueprints.deputy_dev.services.message_queue.message_queue_helper 
 from app.main.blueprints.one_dev.services.kafka.analytics_events.analytics_event_subscriber import (
     AnalyticsEventSubscriber,
 )
+from app.main.blueprints.one_dev.services.kafka.error_analytics_events.error_analytics_event_subscriber import ErrorAnalyticsEventSubscriber
 
 
 async def initialize_message_queue_subscribers(_app, loop):
@@ -31,14 +32,20 @@ async def initialize_message_queue_subscribers(_app, loop):
 
 async def initialize_kafka_subscriber(_app, loop):
     """
-    Initialize Kafka subscriber for session events
-    :param _app:
-    :param loop:
-    :return:
+    Initialize Kafka subscribers for session and error events,
+    depending on their individual ENABLED flags.
     """
-    if _app.config.get("KAFKA", {}).get("ENABLED", False):
+    kafka_config = _app.config.get("KAFKA", {})
+
+    # Session event subscriber
+    if kafka_config.get("SESSION_QUEUE", {}).get("ENABLED", False):
         session_event_subscriber = AnalyticsEventSubscriber(_app.config)
         _app.add_task(session_event_subscriber.consume())
+
+    # Error event subscriber
+    if kafka_config.get("ERROR_QUEUE", {}).get("ENABLED", False):
+        error_event_subscriber = ErrorAnalyticsEventSubscriber(_app.config)
+        _app.add_task(error_event_subscriber.consume())
 
 
 async def close_weaviate_server(_app, loop):
