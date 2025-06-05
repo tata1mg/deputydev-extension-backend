@@ -334,7 +334,6 @@
         "ENDPOINT_URL": null
     },
     "AWS_S3_BUCKET": {
-        "AWS_SERVICE_NAME": "s3",
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
