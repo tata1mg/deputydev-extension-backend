@@ -174,11 +174,14 @@ class ConfigFetcher:
         arch = params.arch.value
         os = params.os.value
         if config_type == ConfigType.ESSENTIAL:
-            file_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]
-            s3_key = ConfigManager.configs["BINARY"]["BINARY_DOWNLOAD"]["FILE"]["latest"][os][arch]["s3_key"]
+            original_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]
+            s3_key = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]["s3_key"]
             if client_version in ConfigManager.configs["BINARY"]["FILE"]:
-                file_config = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]
-                s3_key = ConfigManager.configs["BINARY"]["BINARY_DOWNLOAD"]["FILE"][client_version][os][arch]["s3_key"]
+                original_config = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]
+                s3_key = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]["s3_key"]
+
+            file_config = original_config.copy()
+            file_config.pop("s3_key", None)
 
             file_config["download_link"] = await cls._generate_presigned_url_for_binary(s3_key)
             base_config["BINARY"] = {
@@ -194,9 +197,9 @@ class ConfigFetcher:
         """
         Generate presigned URL for binary download from S3
         """
-        bucket_name = ConfigManager.configs["BINARY"]["BINARY_DOWNLOAD"]["AWS_BUCKET_NAME"]
-        region = ConfigManager.configs["BINARY"]["BINARY_DOWNLOAD"]["AWS_REGION"]
-        expiry = ConfigManager.configs["BINARY"]["BINARY_DOWNLOAD"]["PRESIGNED_URL_EXPIRY"]
+        bucket_name = ConfigManager.configs["AWS_S3_BUCKET"]["AWS_BUCKET_NAME"]
+        region = ConfigManager.configs["AWS_S3_BUCKET"]["AWS_REGION"]
+        expiry = ConfigManager.configs["BINARY"]["PRESIGNED_URL_EXPIRY"]
 
         s3_client = AWSS3ServiceClient(bucket_name=bucket_name, region_name=region)
         presigned_url = await s3_client.create_presigned_get_url(s3_key=s3_key, expiry=expiry)
