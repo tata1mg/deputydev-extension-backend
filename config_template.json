@@ -660,13 +660,6 @@
     "KAFKA": {
         "HOST": "",
         "GROUP_ID": "",
-        "SESSION_QUEUE_NAME": "",
-        "ERROR_QUEUE_NAME": "",
-        "ENABLED": true
-    },
-    "KAFKA": {
-        "HOST": "",
-        "GROUP_ID": "",
         "SESSION_QUEUE": {
             "NAME": "",
             "ENABLED": true
