@@ -1,20 +1,30 @@
-from typing import Dict
+from typing import ClassVar, Dict
 from typing import Any
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
 from types_aiobotocore_s3.client import S3Client
 
 
 class AWSS3ServiceClient:
+
+    _client_managers: ClassVar[Dict[str, AWSClientManager]] = {}
+    
     # constructor
     def __init__(self, bucket_name: str, region_name: str):
         self.region_name = region_name
         self.bucket_name = bucket_name
         self.aws_service_name = "s3"
 
-        self.aws_client_manager = AWSClientManager(
-            aws_service_name=self.aws_service_name,
-            region_name=self.region_name,
-        )
+        client_key = f"{self.bucket_name}_{self.region_name}"
+        
+        # Check if we already have a client manager for this configuration
+        if client_key not in self._client_managers:
+            self._client_managers[client_key] = AWSClientManager(
+                aws_service_name=self.aws_service_name,
+                region_name=self.region_name,
+            )
+        
+        # Use the shared client manager
+        self.aws_client_manager = self._client_managers[client_key]
 
     async def create_presigned_post_url(
         self, object_name: str, content_type: str, expiry: int, s3_key: str, min_bytes: int, max_bytes: int

@@ -10,8 +10,8 @@ from app.backend_common.repository.chat_attachments.repository import ChatAttach
 
 class ChatFileUpload:
     s3_client = AWSS3ServiceClient(
-        bucket_name=ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["AWS_BUCKET_NAME"],
-        region_name=ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["AWS_REGION"],
+        bucket_name=ConfigManager.configs["AWS_S3_BUCKET"]["AWS_BUCKET_NAME"],
+        region_name=ConfigManager.configs["AWS_S3_BUCKET"]["AWS_REGION"],
     )
 
     @classmethod
