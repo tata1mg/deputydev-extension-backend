@@ -468,7 +468,8 @@
     "AUTH_TOKEN_GRACE_PERIOD": 1800,
     "RUDDER": {
         "WRITE_KEY": "",
-        "DATA_PLANE_URL": "https://rudderapi.1mg.com"
+        "WRITE_KEY_ERROR_TRACKING": "",
+        "DATA_PLANE_URL": "https://rudderapi.1mg.com/v1/track"
     },
     "AWS_API_GATEWAY": {
         "HOST": "https://sample.com",
@@ -659,8 +660,14 @@
     "KAFKA": {
         "HOST": "",
         "GROUP_ID": "",
-        "SESSION_QUEUE_NAME": "",
-        "ENABLED": true
+        "SESSION_QUEUE": {
+            "NAME": "",
+            "ENABLED": true
+        },
+        "ERROR_QUEUE": {
+            "NAME": "",
+            "ENABLED": true
+        }
     },
     "IS_RELATED_CODE_SEARCHER_ENABLED": true,
     "DD_HOST_WS": "ws://localhost:8084",
