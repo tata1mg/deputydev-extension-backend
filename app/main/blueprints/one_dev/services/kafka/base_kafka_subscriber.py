@@ -13,6 +13,7 @@ def safe_json_deserializer(x):
     try:
         return loads(x.decode("utf-8"))
     except Exception as e:
+        logger.error(f"Failed to deserialize message: {str(e)}")
         return None
 
 class BaseKafkaSubscriber(ABC):
