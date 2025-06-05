@@ -333,6 +333,11 @@
         "BEDROCK_READ_TIMEOUT": 1000,
         "ENDPOINT_URL": null
     },
+    "AWS_S3_BUCKET": {
+        "AWS_SERVICE_NAME": "s3",
+        "AWS_BUCKET_NAME": "deputydev",
+        "AWS_REGION": "ap-south-1"
+    },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
             "NAME": "",
@@ -518,61 +523,37 @@
             "CHUNKING_ENABLED": true
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
-        "BINARY_DOWNLOAD": {
-            "AWS_BUCKET_NAME": "deputydev",
-            "AWS_REGION": "ap-south-1",
-            "PRESIGNED_URL_EXPIRY": 1800,
-            "FILE": {
-                "0.0.1": {
-                    "darwin": {
-                        "arm64": {
-                            "s3_key": "binaries/7.0.0/darwin/macos-arm64-7.0.0.enc"
-                        },
-                        "x64": {
-                            "s3_key":""
-                        }
-                    },
-                    "linux": {}
-                },
-                "latest": {
-                    "darwin": {
-                        "arm64": {
-                            "s3_key": "binaries/7.2.1/darwin/macos-arm64-7.2.1.enc"
-                        },
-                        "x64": {
-                            "s3_key": "binaries/4.0.0/darwin/macos-x64-4.0.0.enc"
-                        }
-                    },
-                    "linux": {}
-                }
-            }
-        },
+        "PRESIGNED_URL_EXPIRY": 1800,
         "FILE": {
             "latest": {
                 "darwin": {
                     "arm64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": ""
                     },
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": ""
                     }
                 },
                 "linux": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": ""
                     }
                 },
                 "win32": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 }
             },
@@ -581,26 +562,30 @@
                     "arm64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     },
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 },
                 "linux": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 },
                 "win32": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 }
             },
@@ -609,26 +594,30 @@
                     "arm64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     },
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 },
                 "linux": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 },
                 "win32": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 }
             },
@@ -637,26 +626,30 @@
                     "arm64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     },
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 },
                 "linux": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 },
                 "win32": {
                     "x64": {
                         "download_link": "",
                         "directory": "",
-                        "service_path": ""
+                        "service_path": "",
+                        "s3_key": "" 
                     }
                 }
             }
@@ -769,8 +762,6 @@
     ],
     "LLM_MAX_RETRY": 2,
     "CHAT_IMAGE_UPLOAD": {
-        "AWS_BUCKET_NAME": "deputydev",
-        "AWS_REGION": "ap-south-1",
         "PRESIGNED_URL_EXPIRY": 600,
         "MAX_BYTES": 5242880,
         "SUPPORTED_MIMETYPES": [
