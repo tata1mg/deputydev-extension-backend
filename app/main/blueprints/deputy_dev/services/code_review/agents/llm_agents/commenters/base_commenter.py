@@ -9,7 +9,7 @@ from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
+    NonStreamingParsedLLMCallResponse, ConversationTool,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
@@ -27,6 +27,7 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.deputy_dev.services.code_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.tools.tool_request_manager import (
     ToolRequestManager,
 )
@@ -138,7 +139,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 )
 
             # Get the tools to use for PR review flow
-            tools_to_use = self.tool_request_manager.get_tools()
+            tools_to_use = self.get_tools_for_review(prompt_handler)
 
             # Initial query to the LLM
             llm_response = await self.llm_handler.start_llm_query(
@@ -240,3 +241,18 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             tokens_data=tokens_data,
             display_name=self.get_display_name(),
         )
+
+    def get_tools_for_review(self, prompt_handler) -> List[ConversationTool]:
+        """
+        Get the appropriate tools for the review based on whether tools are disabled.
+
+        Args:
+            prompt_handler: The prompt handler instance
+
+        Returns:
+            List of tools to use for the review
+        """
+        if getattr(prompt_handler, 'disable_tools', False):
+            # When tools are disabled, only use the parse_final_response tool
+            return [PARSE_FINAL_RESPONSE]
+        return self.tool_request_manager.get_tools()
