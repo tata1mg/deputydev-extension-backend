@@ -16,6 +16,7 @@ from ...dataclasses.main import PromptFeatures
 class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCommentCreationPrompt):
     prompt_type = PromptFeatures.SECURITY_COMMENTS_GENERATION_PASS_1.value
     prompt_category = PromptCategories.CODE_REVIEW.value
+    disable_tools = True
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -23,36 +24,43 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
 
     def get_system_prompt(self) -> str:
         system_message = """
-            You are an Expert Application Security Engineer tasked with reviewing a pull request for security
-            issues and vulnerabilities. Your goal is to thoroughly analyze the provided code diff and identify
-            any potential security risks.
 
-            <security_review_approach>
-            Unlike general code reviews, security reviews require a targeted approach:
+           You are an Expert Application Security Engineer tasked with reviewing a pull request for security
+           issues and vulnerabilities. Your goal is to thoroughly analyze the provided code diff and identify
+           any potential security risks.
 
-            1. ANALYZE THE DIFF FIRST: Begin by thoroughly examining the PR diff for obvious security issues such as:
-               - Hardcoded credentials
-               - Insecure cryptographic implementations
-               - Injection vulnerabilities in new/modified code
-               - Authentication/authorization bypasses
-               - And any other critical application security issues. 
+           <security_review_approach>
+           Unlike general code reviews, security reviews require a targeted approach:
 
-            2. SELECTIVE TOOL USAGE: Only use tools when essential for security analysis, such as:
-               - When you need to understand how user input flows through a system
-               - When you need to verify if proper security controls exist in called methods
-               - When you need to check if authentication/authorization is consistently applied
-               - When tracing data flow for potential information leakage
+           1. ANALYZE THE DIFF FIRST: Begin by thoroughly examining the PR diff for obvious security issues such as:
+              - Hardcoded credentials
+              - Insecure cryptographic implementations
+              - Injection vulnerabilities in new/modified code
+              - Authentication/authorization bypasses
+              - And any other critical application security issues. 
+           </security_review_approach>
+        """
+        if not self.disable_tools:
+            # Tools instruction
+            system_message += """
+                2. SELECTIVE TOOL USAGE: Only use tools when essential for security analysis, such as:
+                   - When you need to understand how user input flows through a system
+                   - When you need to verify if proper security controls exist in called methods
+                   - When you need to check if authentication/authorization is consistently applied
+                   - When tracing data flow for potential information leakage
 
-            3. SECURITY-FOCUSED CONTEXT GATHERING: When you do use tools, focus queries specifically 
-               on security-relevant information rather than general code understanding.
-            </security_review_approach>
+                3. SECURITY-FOCUSED CONTEXT GATHERING: When you do use tools, focus queries specifically 
+                   on security-relevant information rather than general code understanding.
+            """
 
+        system_message += """
             IMPORTANT: 
             - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
             Never provide review comments as plain text in your response. All final reviews MUST be delivered
             through the parse_final_response tool inside a tool use block.
-
+            - If any change has impacting change in other files, function, or class where it was used, provide the exact impacting areas in the comment description.
         """
+
         if self.params.get("REPO_INFO_PROMPT"):
             system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
 
@@ -121,7 +129,6 @@ class Claude3Point5SecurityCommentsGenerationPass1Prompt(BaseClaude3Point5Sonnet
                 -   Do not duplicate comments for similar issues across different locations.
                 -   If you are suggesting any comment that is already catered please don't include those comment in response.
                 -   Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
-                -   Use tools only when truly necessary for security assessment, not for general code understanding
                 - Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
             """
 
