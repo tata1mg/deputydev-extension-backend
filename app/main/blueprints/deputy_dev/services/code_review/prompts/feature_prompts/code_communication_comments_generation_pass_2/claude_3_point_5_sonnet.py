@@ -16,6 +16,7 @@ from ...dataclasses.main import PromptFeatures
 class Claude3Point5CodeCommunicationCommentsGenerationPass2Prompt(BaseClaude3Point5SonnetCommentCreationPrompt):
     prompt_type = PromptFeatures.CODE_COMMUNICATION_COMMENTS_GENERATION_PASS_2.value
     prompt_category = PromptCategories.CODE_REVIEW.value
+    disable_tools = True
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
