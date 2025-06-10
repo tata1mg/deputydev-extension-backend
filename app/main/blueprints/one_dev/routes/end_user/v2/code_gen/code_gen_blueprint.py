@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 import httpx
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.utils.constants.enums import Clients
 from sanic import Blueprint
 from torpedo import Request, send_response
 from app.backend_common.caches.websocket_connections_cache import (
@@ -44,7 +43,6 @@ from app.main.blueprints.one_dev.utils.session import (
     ensure_session_id,
     get_valid_session_data,
 )
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -98,8 +96,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         raise ValueError(f"No connection data found for connection ID: {connection_id}")
     client_data = ClientData(**connection_data["client_data"])
 
-    session_id: Optional[int] = None
-    session_type: Optional[str] = None
     auth_error: bool
     auth_data: Optional[AuthData] = None
     _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
