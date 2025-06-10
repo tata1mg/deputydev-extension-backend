@@ -36,27 +36,9 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
                 user_team_id=message_session_dto.user_team_id,
             )
 
-        except Exception:
-            # TODO: This is for backward compatibility with old messages, can be removed once min supported extension version is 6.0.0
-            # if parsing fails, the message can be in old format
-            # in that case, we will extract the data manually
-            message_session_dto = await MessageSessionsRepository.get_by_id(message["properties"]["session_id"])
-            if not message_session_dto:
-                raise ValueError(f"Session with ID {message['session_id']} not found.")
-
-            return AnalyticsEventsData(
-                session_id=message["properties"]["session_id"],
-                event_type=cast(str, message["event"]).upper(),
-                client_version=message_session_dto.client_version or "UNKNOWN",
-                client=message_session_dto.client,
-                timestamp=message["properties"]["timestamp"],
-                user_team_id=message_session_dto.user_team_id,
-                event_data={
-                    "lines": message["properties"]["lines"],
-                    "source": message["properties"].get("source", "UNKNOWN"),
-                    "file_path": message["properties"]["file_path"],
-                },
-            )
+        except Exception as ex:
+            raise ValueError(
+                f"Error processing error analytics event message: {str(ex)}")
 
     async def _process_message(self, message: Any) -> None:
         """Process and store session event messages in DB."""
