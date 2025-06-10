@@ -429,6 +429,10 @@ class LLMHandler(Generic[PromptFeatures]):
                     search_web=search_web,
                 )
 
+                # Check if task is cancelled before making LLM call
+                if asyncio.current_task() and asyncio.current_task().cancelled():
+                    raise asyncio.CancelledError("LLM task cancelled before service call")
+                
                 llm_response = await client.call_service_client(
                     llm_payload, llm_model, stream=stream, response_type=response_type
                 )
@@ -469,7 +473,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 raise  # Re-raise to properly propagate the exception
             except asyncio.CancelledError:
                 AppLogger.log_warn("LLM response task was cancelled")
-                raise  # Re-raise to properly propagate the exception
+                break
             except json.JSONDecodeError as e:
                 AppLogger.log_debug(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry} JSON decode error: {e}")

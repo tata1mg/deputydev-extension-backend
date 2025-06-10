@@ -181,6 +181,10 @@ class QuerySolver:
             )
 
             async for data_block in llm_response.parsed_content:
+                # Check if the current task is cancelled
+                if asyncio.current_task() and asyncio.current_task().cancelled():
+                    break
+                    
                 if data_block.type in [
                     StreamingContentBlockType.SUMMARY_BLOCK_START,
                     StreamingContentBlockType.SUMMARY_BLOCK_DELTA,
