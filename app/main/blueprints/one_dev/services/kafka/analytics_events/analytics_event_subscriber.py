@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 from app.backend_common.models.dto.analytics_events_dto import AnalyticsEventsData
 from app.backend_common.repository.analytics_events.repository import AnalyticsEventsRepository
