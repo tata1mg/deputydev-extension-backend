@@ -671,6 +671,7 @@
         }
     ],
     "LLM_MAX_RETRY": 2,
+    "CHAT_PAYLOAD_MAX_SIZE": 100,
     "CHAT_FILE_UPLOAD": {
         "PRESIGNED_URL_EXPIRY": 600,
         "MAX_BYTES": 5242880,
