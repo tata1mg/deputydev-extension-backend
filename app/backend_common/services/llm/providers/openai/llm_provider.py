@@ -1,5 +1,6 @@
 import asyncio
 import json
+import uuid
 from typing import Any, Dict, List, Optional, Literal, AsyncIterator
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 from openai.types.chat import ChatCompletion
@@ -55,6 +56,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 class OpenAI(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.OPENAI.value)
+        self._active_streams: Dict[str, AsyncIterator] = {}
         self.anthropic_client = None
 
     async def build_llm_payload(
@@ -269,6 +271,7 @@ class OpenAI(BaseLLMProvider):
         if not response_type:
             response_type = "text"
         model_config = self._get_model_config(model)
+        stream_id = str(uuid.uuid4())
         if stream:
             response = await OpenAIServiceClient().get_llm_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
@@ -279,7 +282,7 @@ class OpenAI(BaseLLMProvider):
                 tool_choice="auto",
                 max_output_tokens=model_config["MAX_TOKENS"],
             )
-            return await self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response, stream_id)
         else:
             response = await OpenAIServiceClient().get_llm_non_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
@@ -292,7 +295,11 @@ class OpenAI(BaseLLMProvider):
             )
             return self._parse_non_streaming_response(response)
 
-    async def _parse_streaming_response(self, response: AsyncIterator[ResponseStreamEvent]) -> StreamingResponse:
+    async def _parse_streaming_response(
+        self, response: AsyncIterator[ResponseStreamEvent], stream_id: str = None
+    ) -> StreamingResponse:
+        stream_id = stream_id or str(uuid.uuid4())
+        self._active_streams[stream_id] = response
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed = False
         accumulated_events = []
@@ -301,19 +308,45 @@ class OpenAI(BaseLLMProvider):
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
-            async for event in response:
-                try:
-                    event_block, event_block_category, event_usage = await self._get_parsed_stream_event(event)
-                    if event_usage:
-                        usage += event_usage
-                    if event_block:
-                        accumulated_events.append(event_block)
-                        yield event_block
-                except Exception:
-                    pass
+            try:
+                async for event in response:
+                    # Check for task cancellation
+                    if asyncio.current_task() and asyncio.current_task().cancelled():
+                        break
 
+                    try:
+                        event_block, event_block_category, event_usage = await self._get_parsed_stream_event(event)
+                        if event_usage:
+                            usage += event_usage
+                        if event_block:
+                            accumulated_events.append(event_block)
+                            yield event_block
+                    except Exception as e:
+                        # Depending on the error, you might want to break or continue
+                        pass
+            except asyncio.CancelledError:
+                streaming_completed = True
+                await close_client()
+            except Exception as e:
+                streaming_completed = True
+                await close_client()
+            finally:
+                streaming_completed = True
+                await close_client()
+
+        async def close_client():
+            nonlocal streaming_completed
             streaming_completed = True
-
+            if stream_id in self._active_streams and streaming_completed:
+                    
+                try:
+                    stream_iter = self._active_streams.pop(stream_id)
+                    if hasattr(stream_iter, 'aclose'):
+                        await stream_iter.aclose()
+                except Exception as e:
+                    print("OpenAI Cancel Error")
+                if stream_id in self._active_streams:
+                    del self._active_streams[stream_id]
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed

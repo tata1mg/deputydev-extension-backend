@@ -505,44 +505,53 @@ class Anthropic(BaseLLMProvider):
             current_running_block_type: Optional[ContentBlockCategory] = None
             current_content_block_delta: str = ""
             response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
-            async for event in response_body:
-                chunk = json.loads(event["chunk"]["bytes"])
-                # yield content block delta
-                try:
-                    event_blocks, event_block_category, content_block_delta, event_usage = (
-                        self._get_parsed_stream_event(chunk, current_content_block_delta, current_running_block_type)
-                    )
-                    if event_usage:
-                        usage += event_usage
+            try:
+                async for event in response_body:
+                    # Check for task cancellation
+                    if asyncio.current_task() and asyncio.current_task().cancelled():
+                        print('cancelled')
+                        break
+                        
+                    chunk = json.loads(event["chunk"]["bytes"])
+                    # yield content block delta
+                    try:
+                        event_blocks, event_block_category, content_block_delta, event_usage = (
+                            self._get_parsed_stream_event(chunk, current_content_block_delta, current_running_block_type)
+                        )
+                        if event_usage:
+                            usage += event_usage
 
-                    for event_block in event_blocks:
-                        last_block_type = type(event_block)
-                        if current_type is None:
-                            current_type = last_block_type
-                        if buffer and (
-                            current_type in non_combinable_events
-                            or last_block_type != current_type
-                            or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
-                        ):
-                            combined_event = sum(buffer[1:], start=buffer[0])
-                            yield combined_event
-                            buffer.clear()
-                            current_type = last_block_type
+                        for event_block in event_blocks:
+                            last_block_type = type(event_block)
+                            if current_type is None:
+                                current_type = last_block_type
+                            if buffer and (
+                                current_type in non_combinable_events
+                                or last_block_type != current_type
+                                or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
+                            ):
+                                combined_event = sum(buffer[1:], start=buffer[0])
+                                yield combined_event
+                                buffer.clear()
+                                current_type = last_block_type
 
-                        buffer.append(event_block)
+                            buffer.append(event_block)
 
-                    if event_blocks:
-                        current_running_block_type = event_block_category
-                        accumulated_events.extend(event_blocks)
+                        if event_blocks:
+                            current_running_block_type = event_block_category
+                            accumulated_events.extend(event_blocks)
 
-                    if content_block_delta is not None:
-                        current_content_block_delta = content_block_delta
-                except Exception:
-                    # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
-                    pass
-            if buffer:
-                combined_event = sum(buffer[1:], start=buffer[0])
-                yield combined_event
+                        if content_block_delta is not None:
+                            current_content_block_delta = content_block_delta
+                    except Exception:
+                        # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
+                        pass
+                if buffer:
+                    combined_event = sum(buffer[1:], start=buffer[0])
+                    yield combined_event
+            except asyncio.CancelledError:
+                streaming_completed = True
+                await close_client()
 
             streaming_completed = True
 

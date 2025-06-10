@@ -53,6 +53,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 class Google(BaseLLMProvider):
     def __init__(self):
         super().__init__(LLMProviders.GOOGLE.value)
+        self._active_streams: Dict[str, AsyncIterator] = {}
 
     async def get_conversation_turns(
         self,
@@ -305,8 +306,9 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse]
+        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str = None
     ) -> StreamingResponse:
+        stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed = False
         accumulated_events = []
@@ -315,24 +317,42 @@ class Google(BaseLLMProvider):
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
+            
+            # Store the stream for potential cleanup
+            self._active_streams[stream_id] = response
             current_running_block_type: Optional[ContentBlockCategory] = None
-            async for chunk in response:
-                try:
-                    event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
-                        chunk, current_running_block_type
-                    )
-                    if event_usage:
-                        usage += event_usage
-                    if event_blocks:
-                        current_running_block_type = event_block_category
-                        for event_block in event_blocks:
-                            accumulated_events.append(event_block)
-                            yield event_block
-                except Exception:
-                    # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
-                    pass
-
-            streaming_completed = True
+            try:
+                async for chunk in response:
+                    # Check for task cancellation
+                    if asyncio.current_task() and asyncio.current_task().cancelled():
+                        break
+                        
+                    try:
+                        event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
+                            chunk, current_running_block_type
+                        )
+                        if event_usage:
+                            usage += event_usage
+                        if event_blocks:
+                            current_running_block_type = event_block_category
+                            for event_block in event_blocks:
+                                accumulated_events.append(event_block)
+                                yield event_block
+                    except Exception:
+                        # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
+                        pass
+            except asyncio.CancelledError:
+                streaming_completed = True
+                await close_client(stream_id)
+            except Exception as e:
+                streaming_completed = True
+                await close_client()
+            finally:
+                streaming_completed = True
+                # Remove from active streams
+                await close_client()
+                if stream_id in self._active_streams:
+                    del self._active_streams[stream_id]
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
@@ -350,12 +370,18 @@ class Google(BaseLLMProvider):
             return accumulated_events
 
         async def close_client():
-            nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-            # TODO: close client
+            try:
+                if stream_id in self._active_streams and streaming_completed:
+                    stream_iter = self._active_streams[stream_id]
+                    if hasattr(stream_iter, 'aclose'):
+                        await stream_iter.aclose()
+                    elif hasattr(stream_iter, '__aenter__') and hasattr(stream_iter, '__aexit__'):
+                        await stream_iter.__aexit__(None, None, None)
 
-        asyncio.create_task(close_client())
+                    del self._active_streams[stream_id]
+            except Exception as e:
+                print(f"Error closing Google LLM client for stream {stream_id}: {e}")
+
 
         return StreamingResponse(
             content=stream_content(),
@@ -442,6 +468,7 @@ class Google(BaseLLMProvider):
         vertex_model_name = model_config.get("NAME")
         max_output_tokens = model_config.get("MAX_TOKENS") or 8192
         client = GeminiServiceClient()
+        stream_id = str(uuid.uuid4())
 
         if stream:
             response = await client.get_llm_stream_response(
@@ -452,7 +479,7 @@ class Google(BaseLLMProvider):
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
             )
-            return await self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response, stream_id)
         else:
             response = await client.get_llm_non_stream_response(
                 model_name=vertex_model_name,
