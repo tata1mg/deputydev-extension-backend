@@ -11,10 +11,12 @@ from torpedo import Request, send_response
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
     SocketClosedException,
 )
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
@@ -100,30 +102,19 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     session_type: Optional[str] = None
     auth_error: bool
     auth_data: Optional[AuthData] = None
-    # support older versions of the client
-    if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">="):
-        # TODO: Remove this when we have a proper way to handle this
-        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
-
-        auth_data: Optional[AuthData] = None
-        auth_error: bool = False
-        try:
-            auth_data, _ = await get_auth_data(_request)
-        except Exception:
-            auth_error = True
-            auth_data = None
-        if auth_data:
-            session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
-            _request.json["session_id"] = session_data.id
-
-    else:
-        session_id = connection_data["session_id"]
-        session_type = connection_data["session_type"]
-        auth_error: bool = connection_data["auth_error"]
-        auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
-
+    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+    auth_data: Optional[AuthData] = None
+    auth_error: bool = False
+    try:
+        auth_data, _ = await get_auth_data(_request)
+    except Exception:
+        auth_error = True
+        auth_data = None
+    if auth_data:
+        session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
+        _request.json["session_id"] = session_data.id
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
     aws_client = AWSAPIGatewayServiceClient()
@@ -155,14 +146,47 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         return send_response({"status": "SESSION_EXPIRED"})
 
     user_team_id = auth_data.user_team_id
+    payload_dict = _request.json
+    if payload_dict.get("type") == "PAYLOAD_ATTACHMENT" and payload_dict.get("attachment_id"):
+        attachment_id = payload_dict["attachment_id"]
+        # 1. Lookup attachment
+        attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
+
+        if not attachment_data or getattr(attachment_data, "status", None) == "deleted":
+            raise ValueError(f"Attachment with ID {attachment_id} not found or already deleted.")
+
+        s3_key = attachment_data.s3_key
+
+        # 2. Fetch & decode S3 payload
+        try:
+            object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
+            s3_payload = json.loads(object_bytes.decode("utf-8"))
+        except Exception as e:
+            raise ValueError(f"Failed to decode JSON payload from S3 for attachment {attachment_id}: {e}")
+
+        # 3. Merge session fields from envelope (envelope wins)
+        for field in ("session_id", "session_type", "auth_token"):
+            if field in payload_dict:
+                s3_payload[field] = payload_dict[field]
+        payload_dict = s3_payload
+
+        # 4. Delete S3 file and update DB (best effort; won't block downstream even if fails)
+        try:
+            await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
+        except Exception as e:
+            print(f"Warning: Failed to delete S3 payload file {s3_key}: {e}")
+
+        try:
+            await ChatAttachmentsRepository.update_attachment_status(
+                attachment_id=attachment_id,
+                status="deleted",
+            )
+        except Exception as e:
+            print(f"Warning: Failed to mark attachment_id={attachment_id} as deleted in DB: {e}")
+
     payload = QuerySolverInput(
-        **_request.json,
+        **payload_dict,
         user_team_id=user_team_id,
-        **(
-            {"session_id": session_id, "session_type": session_type}
-            if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", "<")
-            else {}
-        ),
     )
 
     async def solve_query():

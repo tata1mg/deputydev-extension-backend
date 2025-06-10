@@ -5,6 +5,7 @@ from .base import Base
 class ErrorAnalyticsEvents(Base):
     serializable_keys = {
         "id",
+        "error_id",
         "user_email",
         "error_type",
         "error_data",
@@ -19,6 +20,7 @@ class ErrorAnalyticsEvents(Base):
     }
 
     id = fields.IntField(primary_key=True)
+    error_id = fields.UUIDField(null=True)
     user_email = fields.TextField(null=True)
     error_type = fields.TextField()
     error_data = fields.JSONField(null=False)

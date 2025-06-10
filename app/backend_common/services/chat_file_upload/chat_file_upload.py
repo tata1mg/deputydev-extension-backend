@@ -15,23 +15,27 @@ class ChatFileUpload:
     )
 
     @classmethod
-    def _get_s3_key(cls, file_name: str) -> str:
+    def _get_s3_key(cls, file_name: str , folder: str = "image") -> str:
         """
         Generate a unique S3 key for the file
         """
         # Generate a unique S3 key for the file
         s3_object_name = f"{uuid.uuid4()}.{file_name.split('.')[-1]}"
-        s3_path = f"{ConfigManager.configs['CHAT_IMAGE_UPLOAD']['FOLDER_PATH']}"
+        if folder == "payload":
+            s3_path = f"{ConfigManager.configs['CHAT_FILE_UPLOAD']['PAYLOAD_FOLDER_PATH']}"
+        else:
+            s3_path = f"{ConfigManager.configs['CHAT_FILE_UPLOAD']['IMAGE_FOLDER_PATH']}"
         s3_key = f"{s3_path}/{s3_object_name}"
         return s3_key
 
     @classmethod
-    async def get_presigned_urls_for_upload(cls, file_name: str, file_type: str) -> PresignedDownloadUrls:
+    async def get_presigned_urls_for_upload(cls, file_name: str, file_type: str, folder: str = "image") -> PresignedDownloadUrls:
         """
         Generate presigned URLs for uploading and downloading a file, to be given to the client
         """
         # Generate a unique S3 key for the file
-        s3_key = cls._get_s3_key(file_name)
+        s3_key = cls._get_s3_key(file_name, folder)
+
 
         # create presigned URL tasks
 
@@ -79,3 +83,10 @@ class ChatFileUpload:
         """
         file_data = await cls.s3_client.get_object(object_name=s3_key)
         return file_data
+
+    @classmethod
+    async def delete_file_by_s3_key(cls, s3_key: str) -> None:
+        """
+        Delete a file from S3 by its key (no DB changes).
+        """
+        await cls.s3_client.delete_object(object_name=s3_key)
