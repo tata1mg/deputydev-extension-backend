@@ -142,9 +142,14 @@ class ConfigFetcher:
             },
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
             "VSCODE_LOGS_RETENTION_DAYS": 7,
+            # TODO: remove after 7.0.0 force upgrade
             "CHAT_IMAGE_UPLOAD": {
-                "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
-                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+            },
+            "CHAT_FILE_UPLOAD": {
+                "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
             },
         },
     }
