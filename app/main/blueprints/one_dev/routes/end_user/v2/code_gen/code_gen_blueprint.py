@@ -11,6 +11,12 @@ from torpedo import Request, send_response
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
@@ -74,10 +80,6 @@ code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
 
 local_testing_stream_buffer: Dict[str, List[str]] = {}
-active_query_tasks: Dict[str, asyncio.Task] = {}
-active_session_tasks: Dict[int, asyncio.Task] = {}
-active_session_queries: Dict[int, str] = {}  # Store original queries by session_id
-session_to_connection_map: Dict[int, str] = {}
 
 
 @code_gen_v2_bp.route("/generate-code-non-stream", methods=["POST"])
@@ -88,10 +90,13 @@ async def solve_user_query_non_stream(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     payload = QuerySolverInput(**_request.json, session_id=session_id)
+    await CodeGenTasksCache.prepare_new_query_session(session_id)
 
-    # Store the original query for potential cancellation
+    AppLogger.log_info(f"Starting new non-stream query for session {session_id}")
+
+    # Store the active query for potential cancellation
     if payload.query:
-        active_session_queries[session_id] = payload.query
+        await CodeGenTasksCache.set_session_query(session_id, payload.query)
 
     blocks = []
 
@@ -103,41 +108,46 @@ async def solve_user_query_non_stream(
 
     # Create a task for this non-streaming request too for potential cancellation
     async def solve_query_task():
+        checker = CancellationChecker(session_id)
         try:
-            data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
+            await checker.start_monitoring()
+            try:
+                data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
 
-            last_block = None
-            async for data_block in data:
-                # Check if task was cancelled by session_id
-                if session_id in active_session_tasks and active_session_tasks[session_id].cancelled():
-                    blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled by session"})
-                    return blocks
+                last_block = None
+                async for data_block in data:
+                    # Check if task was cancelled via Redis checker
+                    if checker.is_cancelled():
+                        blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled by session"})
+                        raise asyncio.CancelledError("Task cancelled by session")
 
-                last_block = data_block
-                blocks.append(data_block.model_dump(mode="json"))
+                    last_block = data_block
+                    blocks.append(data_block.model_dump(mode="json"))
 
-            if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
-                blocks.append({"type": "QUERY_COMPLETE"})
+                if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
+                    blocks.append({"type": "QUERY_COMPLETE"})
 
-            blocks.append({"type": "STREAM_END"})
+                blocks.append({"type": "STREAM_END"})
 
-        except asyncio.CancelledError:
-            blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled"})
-            raise
-        except Exception as ex:
-            AppLogger.log_error(f"Error in solving query: {ex}")
-            blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
+            except asyncio.CancelledError:
+                blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled"})
+                raise
+            except Exception as ex:
+                AppLogger.log_error(f"Error in solving query: {ex}")
+                blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
+            finally:
+                # Clean up session data
+                await CodeGenTasksCache.cleanup_session_data(session_id)
         finally:
-            # Clean up session tracking
-            if session_id in active_session_tasks:
-                del active_session_tasks[session_id]
-            if session_id in active_session_queries:
-                del active_session_queries[session_id]
+            # Always stop monitoring
+            try:
+                await checker.stop_monitoring()
+            except Exception:
+                pass  # Ignore cleanup errors
         return blocks
 
-    # Track the task for potential cancellation
+    # Create and execute task without global tracking
     task = asyncio.create_task(solve_query_task())
-    active_session_tasks[session_id] = task
 
     try:
         blocks = await task
@@ -150,7 +160,6 @@ async def solve_user_query_non_stream(
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
 async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]
-
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
         raise ValueError(f"No connection data found for connection ID: {connection_id}")
@@ -245,38 +254,48 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         user_team_id=user_team_id,
     )
 
-    # Store the original query for potential cancellation
+    await CodeGenTasksCache.prepare_new_query_session(payload.session_id)
+
+    AppLogger.log_info(f"Starting new stream query for session {payload.session_id}")
+
+    # Store the active query for potential cancellation
     if payload.query:
-        active_session_queries[payload.session_id] = payload.query
+        await CodeGenTasksCache.set_session_query(payload.session_id, payload.query)
 
     async def solve_query():
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
+
         current_session_id = payload.session_id if hasattr(payload, 'session_id') and payload.session_id else None
 
-        # push stream start message
-        start_data = {"type": "STREAM_START"}
-        if auth_data.session_refresh_token:
-            start_data["new_session_data"] = auth_data.session_refresh_token
-        await push_to_connection_stream(start_data)
-        try:
-            data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
+        # Use cancellation checker if we have a session_id
+        checker = CancellationChecker(current_session_id) if current_session_id else None
+        task_cancelled = False
+        
+        if checker:
+            await checker.start_monitoring()
 
+        try:
+            # Mark session as active if we have session_id
+            # push stream start message
+            start_data = {"type": "STREAM_START"}
+            if auth_data.session_refresh_token:
+                start_data["new_session_data"] = auth_data.session_refresh_token
+            await push_to_connection_stream(start_data)
+            data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
             last_block = None
             # push data to stream
             async for data_block in data:
-                # Check if task was cancelled by connection_id or session_id
-                connection_cancelled = connection_id in active_query_tasks and active_query_tasks[connection_id].cancelled()
-                session_cancelled = (current_session_id and 
-                                   current_session_id in active_session_tasks and 
-                                   active_session_tasks[current_session_id].cancelled())
-                
-                if connection_cancelled or session_cancelled:
-                    cancel_source = "session" if session_cancelled else "connection"
+                # Check if task was cancelled via Redis checker
+                if checker and checker.is_cancelled():
                     # Send cancellation message to frontend
-                    cancel_data = {"type": "STREAM_CANCELLED", "message": f"LLM processing cancelled by {cancel_source}"}
+                    cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled by session"}
                     await push_to_connection_stream(cancel_data)
+                    task_cancelled = True
+                    raise asyncio.CancelledError("Task cancelled by session")
+                    
+                if task_cancelled:
                     break
                     
                 last_block = data_block
@@ -290,6 +309,8 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             # push stream end message
             end_data = {"type": "STREAM_END"}
             await push_to_connection_stream(end_data)
+            
+                
         except asyncio.CancelledError:
             cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled "}
             await push_to_connection_stream(cancel_data)
@@ -299,30 +320,20 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             error_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(error_data)
         finally:
-            # Clean up task tracking
-            if connection_id in active_query_tasks:
-                del active_query_tasks[connection_id]
-            if current_session_id and current_session_id in active_session_queries:
-                del active_session_queries[current_session_id]
-                
-            
-            # Clean up session tracking if session_id exists
-            if current_session_id:
-                if current_session_id in active_session_tasks:
-                    del active_session_tasks[current_session_id]
-                if current_session_id in session_to_connection_map:
-                    del session_to_connection_map[current_session_id]
+            await CodeGenTasksCache.cleanup_session_data(payload.session_id)
+            # Stop the cancellation checker
+            try:
+                if checker:
+                    await checker.stop_monitoring()
+            except Exception:
+                pass  
             
             await aws_client.close()
 
     task = asyncio.create_task(solve_query())
-    active_query_tasks[connection_id] = task
     
-    # Track by session_id if available
+    # Store task data in Redis for session tracking
     current_session_id = payload.session_id if hasattr(payload, 'session_id') and payload.session_id else None
-    if current_session_id:
-        active_session_tasks[current_session_id] = task
-        session_to_connection_map[current_session_id] = connection_id
     
     return send_response({"status": "SUCCESS"})
 
@@ -377,7 +388,6 @@ async def create_cancelled_query_entry(session_id: int, original_query: str ) ->
             return None
 
         # Create the cancelled query message
-        print(original_query)
         cancelled_query = f"[CANCELLED] {original_query}"
 
         # Create message thread data for the cancelled query
@@ -433,68 +443,21 @@ async def create_cancelled_query_entry(session_id: int, original_query: str ) ->
 async def cancel_chat(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
-    cancelled = False
-    cancelled_connection_id = None
+    # Mark session as cancelled in Redis - the cancellation checker will detect this
+    await CodeGenTasksCache.cancel_session(session_id)
 
-    # Check if session has active task
-    if session_id in active_session_tasks:
-        task = active_session_tasks[session_id]
-        if not task.done():
-            task.cancel()
-
-            # Get the stored original query and create cancelled query entry
-            original_query = active_session_queries.get(session_id, "")
-            cancelled_query_id = None
-            if original_query:
-                cancelled_query_id = await create_cancelled_query_entry(session_id, original_query)
-
-            # Clean up stored query
-            active_session_queries.pop(session_id, None)
-
-            cancelled = True
-            cancelled_connection_id = session_to_connection_map.get(session_id)
-            
-            # Clean up all tracking
-            if session_id in active_session_tasks:
-                del active_session_tasks[session_id]
-            if session_id in session_to_connection_map:
-                connection_id = session_to_connection_map[session_id]
-                del session_to_connection_map[session_id]
-                # Also clean up connection tracking
-                if connection_id in active_query_tasks:
-                    del active_query_tasks[connection_id]     
-
-            return send_response({
-                "status": "SUCCESS", 
-                "message": "LLM processing cancelled successfully ⚡",
-                "cancelled_query_id": cancelled_query_id,
-                "cancelled_session_id": session_id,
-                "cancelled_connection_id": cancelled_connection_id,
-            })
-        else:
-            if session_id in active_query_tasks:
-                del active_session_tasks[session_id]
-            if session_id in session_to_connection_map:
-                del session_to_connection_map[session_id]
-            active_session_queries.pop(session_id, None)
-            return send_response({
-                "status": "INFO", 
-                "message": "LLM processing already completed",
-                "session_id": session_id
-            })
-    else:
-        if session_id in active_query_tasks:
-            del active_session_tasks[session_id]
-        if session_id in session_to_connection_map:
-            del session_to_connection_map[session_id]
-        if session_id in active_session_queries:
-            del active_session_queries[session_id]
-        return send_response({
-            "status": "INFO", 
-            "message": "No active LLM processing found for this session",
-            # Clean up any orphaned stored query
-            "session_id": session_id
-        })
+    # Get the stored active query and create cancelled query entry
+    original_query = await CodeGenTasksCache.get_session_query(session_id)
+    cancelled_query_id = None
+    if original_query:
+        cancelled_query_id = await create_cancelled_query_entry(session_id, original_query)
+    
+    return send_response({
+        "status": "SUCCESS", 
+        "message": "LLM processing cancelled successfully ⚡",
+        "cancelled_query_id": cancelled_query_id,
+        "cancelled_session_id": session_id,
+    })
 
 
 
