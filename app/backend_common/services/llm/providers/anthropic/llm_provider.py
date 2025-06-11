@@ -509,7 +509,6 @@ class Anthropic(BaseLLMProvider):
                 async for event in response_body:
                     # Check for task cancellation
                     if asyncio.current_task() and asyncio.current_task().cancelled():
-                        print('cancelled')
                         break
                         
                     chunk = json.loads(event["chunk"]["bytes"])
