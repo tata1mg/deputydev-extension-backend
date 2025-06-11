@@ -97,6 +97,18 @@ async def solve_user_query_non_stream(
     # Store the active query for potential cancellation
     if payload.query:
         await CodeGenTasksCache.set_session_query(session_id, payload.query)
+        # Store the LLM model for accurate message thread storage in case of cancellation
+        if payload.llm_model:
+            await CodeGenTasksCache.set_session_llm_model(session_id, payload.llm_model.value)
+
+    # Prepare session for new query by clearing any stale state
+    await CodeGenTasksCache.prepare_new_query_session(session_id)
+
+    AppLogger.log_info(f"Starting new non-stream query for session {session_id}")
+
+    # Store the active query for potential cancellation
+    if payload.query:
+        await CodeGenTasksCache.set_session_query(session_id, payload.query)
 
     blocks = []
 
@@ -254,6 +266,9 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         user_team_id=user_team_id,
     )
 
+
+    # Prepare session for new query by clearing any stale state
+
     await CodeGenTasksCache.prepare_new_query_session(payload.session_id)
 
     AppLogger.log_info(f"Starting new stream query for session {payload.session_id}")
@@ -261,6 +276,9 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     # Store the active query for potential cancellation
     if payload.query:
         await CodeGenTasksCache.set_session_query(payload.session_id, payload.query)
+        # Store the LLM model for accurate message thread storage in case of cancellation
+        if payload.llm_model:
+            await CodeGenTasksCache.set_session_llm_model(payload.session_id, payload.llm_model.value)
 
     async def solve_query():
         nonlocal payload
@@ -381,59 +399,6 @@ async def terminal_command_edit(
     return send_response(result)
 
 
-async def create_cancelled_query_entry(session_id: int, original_query: str ) -> Optional[int]:
-
-    try:
-        if not original_query:
-            return None
-
-        # Create the cancelled query message
-        cancelled_query = f"[CANCELLED] {original_query}"
-
-        # Create message thread data for the cancelled query
-        data_hash = xxhash.xxh64(cancelled_query).hexdigest()
-        message_data = [
-            TextBlockData(
-                type=ContentBlockCategory.TEXT_BLOCK,
-                content=TextBlockContent(text=cancelled_query),
-                content_vars={"query": cancelled_query},
-            )
-        ]
-
-        message_thread = MessageThreadData(
-            session_id=session_id,
-            actor=MessageThreadActor.USER,
-            query_id=None,
-            message_type=MessageType.QUERY,
-            conversation_chain=[],
-            message_data=message_data,
-            data_hash=data_hash,
-            prompt_type="CODE_QUERY_SOLVER",
-            prompt_category="CODE_GENERATION",
-            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,  # Default model
-            call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
-        )
-
-        # Create the message thread (this generates the query_id)
-        created_thread = await MessageThreadsRepository.create_message_thread(message_thread)
-        query_id = created_thread.id
-
-        # Create query summary for the cancelled query
-        await QuerySummarysRepository.create_query_summary(
-            QuerySummaryData(
-                session_id=session_id,
-                query_id=query_id,
-                summary=cancelled_query,
-            )
-        )
-
-        return query_id
-
-    except Exception as ex:
-        AppLogger.log_error(f"Error creating cancelled query entry: {ex}")
-        return None
-
-
 
 
 @code_gen_v2_bp.route("/cancel", methods=["POST"])
@@ -449,8 +414,54 @@ async def cancel_chat(
     # Get the stored active query and create cancelled query entry
     original_query = await CodeGenTasksCache.get_session_query(session_id)
     cancelled_query_id = None
+    
     if original_query:
-        cancelled_query_id = await create_cancelled_query_entry(session_id, original_query)
+        try:
+            # Get the stored LLM model for accurate message thread storage
+            stored_llm_model = await CodeGenTasksCache.get_session_llm_model(session_id)
+            llm_model = LLModels(stored_llm_model) if stored_llm_model else LLModels.CLAUDE_3_POINT_5_SONNET
+            # Create the cancelled query message
+            cancelled_query = f"[CANCELLED] {original_query}"
+
+            # Create message thread data for the cancelled query
+            data_hash = xxhash.xxh64(cancelled_query).hexdigest()
+            message_data = [
+                TextBlockData(
+                    type=ContentBlockCategory.TEXT_BLOCK,
+                    content=TextBlockContent(text=cancelled_query),
+                    content_vars={"query": cancelled_query},
+                )
+            ]
+
+            message_thread = MessageThreadData(
+                session_id=session_id,
+                actor=MessageThreadActor.USER,
+                query_id=None,
+                message_type=MessageType.QUERY,
+                conversation_chain=[],
+                message_data=message_data,
+                data_hash=data_hash,
+                prompt_type="CODE_QUERY_SOLVER",
+                prompt_category="CODE_GENERATION",
+                llm_model=llm_model,
+                call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
+            )
+
+            created_thread = await MessageThreadsRepository.create_message_thread(message_thread)
+            query_id = created_thread.id
+
+            await QuerySummarysRepository.create_query_summary(
+                QuerySummaryData(
+                    session_id=session_id,
+                    query_id=query_id,
+                    summary=cancelled_query,
+                )
+            )
+
+        except Exception as ex:
+            AppLogger.log_error(f"Error creating cancelled query entry: {ex}")
+            return None
+
     
     return send_response({
         "status": "SUCCESS", 
