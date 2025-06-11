@@ -23,6 +23,7 @@ async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwarg
         presigned_urls = await ChatFileUpload.get_presigned_urls_for_upload(
             file_name=payload.file_name,
             file_type=payload.file_type,
+            folder = payload.folder,
         )
         return send_response(presigned_urls.model_dump(mode="json"))
     except Exception as _ex:
