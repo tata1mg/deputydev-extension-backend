@@ -18,6 +18,7 @@ class ErrorAnalyticsEventsRepository:
         row = await DB.insert_row(ErrorAnalyticsEvents, payload)
         return ErrorAnalyticsEventsDTO(
             id=row.id,
+            error_id=row.error_id,
             user_email=row.user_email,
             error_type=row.error_type,
             error_data=row.error_data,
@@ -30,3 +31,11 @@ class ErrorAnalyticsEventsRepository:
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
+
+    @classmethod
+    async def error_id_exists(cls, error_id: str) -> bool:
+        count = await DB.count_by_filters(
+            model_name=ErrorAnalyticsEvents,
+            filters={"error_id": error_id}
+        )
+        return count > 0
