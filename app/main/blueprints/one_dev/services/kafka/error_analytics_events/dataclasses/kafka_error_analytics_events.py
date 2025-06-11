@@ -6,6 +6,7 @@ from pydantic import BaseModel, field_validator
 
 
 class KafkaErrorAnalyticsEventMessage(BaseModel):
+    error_id: Optional[str] = None
     user_email : Optional[str] = None
     error_type: str
     repo_name : Optional[str] = None
