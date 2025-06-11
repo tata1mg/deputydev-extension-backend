@@ -39,9 +39,23 @@ class CodeGenTasksCache(Base):
         await cls.delete(key)
 
     @classmethod
+    async def set_session_llm_model(cls, session_id: int, llm_model: str) -> None:
+        key = f"session:{session_id}:llm_model"
+        await cls.set(key, llm_model)
+
+    @classmethod
+    async def get_session_llm_model(cls, session_id: int) -> Optional[str]:
+        key = f"session:{session_id}:llm_model"
+        return await cls.get(key)
+    @classmethod
+    async def clear_session_llm_model(cls, session_id: int) -> None:
+        key = f"session:{session_id}:llm_model"
+        await cls.delete(key)      
+    @classmethod
     async def cleanup_session_data(cls, session_id: int) -> None:
         await cls.clear_session_cancellation(session_id)
         await cls.clear_session_query(session_id)
+        await cls.clear_session_llm_model(session_id)
 
     @classmethod
     async def prepare_new_query_session(cls, session_id: int) -> None:
