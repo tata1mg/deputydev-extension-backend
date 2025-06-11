@@ -65,3 +65,10 @@ class AWSS3ServiceClient:
         response = await s3_client.get_object(Bucket=self.bucket_name, Key=object_name)
         async with response["Body"] as stream:  # type: ignore
             return await stream.read()  # type: ignore
+
+    async def delete_object(self, object_name: str) -> None:
+        """
+        Delete an object from S3
+        """
+        s3_client: S3Client = await self.aws_client_manager.get_client()  # type: ignore
+        await s3_client.delete_object(Bucket=self.bucket_name, Key=object_name)
