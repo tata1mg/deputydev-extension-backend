@@ -680,7 +680,8 @@
             "image/png",
             "image/webp"
         ],
-        "FOLDER_PATH": "chat_images"
+        "FOLDER_PATH": "chat_images",
+        "MAX_FILES": 5
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }

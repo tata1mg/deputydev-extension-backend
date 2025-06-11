@@ -145,6 +145,7 @@ class ConfigFetcher:
             "CHAT_IMAGE_UPLOAD": {
                 "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
                 "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "MAX_FILES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_FILES"],
             },
         },
     }

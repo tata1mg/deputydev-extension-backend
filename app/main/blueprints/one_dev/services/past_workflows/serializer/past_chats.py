@@ -86,7 +86,7 @@ class PastChatsSerializer(BaseSerializer):
                     content["focus_items"] = focus_objects
 
                 if len(item.message_data) > 1:
-                    # TODO: This will need to be changed if multi file upload is supported
+                    image_urls: List[Dict[str, Any]] = []
                     for message_data_obj in item.message_data[1:]:
                         if isinstance(message_data_obj, FileBlockData):
                             attachment_id = message_data_obj.content.attachment_id
@@ -94,15 +94,16 @@ class PastChatsSerializer(BaseSerializer):
                             if not attachment_data:
                                 continue
                             elif attachment_data.status == "deleted":
-                                formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
                                 continue
                             presigned_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
                                 attachment_data.s3_key
                             )
-                            result = {"get_url": presigned_url, "file_type": attachment_data.file_type, "key": attachment_data.id}
-                            formatted_data.append(
-                                {"type": "TEXT_BLOCK", "content": content, "s3Reference": result, "actor": actor}
-                            )
+                            result:Dict[str, Any] = {"get_url": presigned_url, "file_type": attachment_data.file_type, "key": attachment_data.id}
+                            image_urls.append(result)
+                    if image_urls:
+                        formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3References": image_urls, "actor": actor})
+                    else:
+                        formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
                 else:
                     formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
 
