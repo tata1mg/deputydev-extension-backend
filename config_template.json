@@ -671,16 +671,20 @@
         }
     ],
     "LLM_MAX_RETRY": 2,
-    "CHAT_IMAGE_UPLOAD": {
+    "CHAT_PAYLOAD_MAX_SIZE": 100,
+    "CHAT_FILE_UPLOAD": {
         "PRESIGNED_URL_EXPIRY": 600,
         "MAX_BYTES": 5242880,
         "SUPPORTED_MIMETYPES": [
             "image/jpeg",
             "image/jpg",
             "image/png",
-            "image/webp"
+            "image/webp",
+            "application/json"
         ],
-        "FOLDER_PATH": "chat_images"
+        "IMAGE_FOLDER_PATH": "chat_images",
+        "PAYLOAD_FOLDER_PATH": "chat_payloads"
+
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }
