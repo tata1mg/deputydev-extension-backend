@@ -34,6 +34,7 @@ class ChatAttachmentsRepository:
                 s3_key=new_data.s3_key,
                 file_name=new_data.file_name,
                 file_type=new_data.file_type,
+                status=new_data.status,
                 created_at=new_data.created_at,
                 updated_at=new_data.updated_at,
             )
@@ -41,4 +42,17 @@ class ChatAttachmentsRepository:
             logger.error(
                 f"error occurred while creating/updating chat_attachment in db for data : {chat_attachment_data.model_dump(mode='json')}, ex: {ex}"
             )
+            raise ex
+        
+    @classmethod
+    async def update_attachment_status(cls, attachment_id: int, status: str) -> Optional[ChatAttachmentsDTO]:
+        try:
+            await DB.update_by_filters(
+                row=None,
+                model_name=ChatAttachments,
+                where_clause={"id": attachment_id},
+                payload={"status": status},
+            )
+        except Exception as ex:
+            logger.error(f"error occurred while updating chat_attachment status in db for id : {attachment_id}, ex: {ex}")
             raise ex

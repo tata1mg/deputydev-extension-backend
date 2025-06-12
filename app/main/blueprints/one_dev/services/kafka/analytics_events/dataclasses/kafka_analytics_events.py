@@ -1,12 +1,13 @@
 from datetime import datetime
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, field_validator
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
 
 
 class KafkaAnalyticsEventMessage(BaseModel):
+    event_id : Optional[str] = None
     session_id: int
     event_type: str
     client_version: str
