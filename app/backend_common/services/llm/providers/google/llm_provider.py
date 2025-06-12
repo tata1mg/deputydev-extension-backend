@@ -48,7 +48,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-
+from deputydev_core.utils.app_logger import AppLogger
 
 class Google(BaseLLMProvider):
     def __init__(self):
@@ -342,17 +342,12 @@ class Google(BaseLLMProvider):
                         # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                         pass
             except asyncio.CancelledError:
-                streaming_completed = True
-                await close_client(stream_id)
+                pass
             except Exception as e:
-                streaming_completed = True
-                await close_client()
+                AppLogger.log_error(f"Streaming Error in Goggle: {e}")
             finally:
                 streaming_completed = True
-                # Remove from active streams
                 await close_client()
-                if stream_id in self._active_streams:
-                    del self._active_streams[stream_id]
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
@@ -369,18 +364,16 @@ class Google(BaseLLMProvider):
                 await asyncio.sleep(0.1)
             return accumulated_events
 
-        async def close_client():
+        async def close_client() -> None:
             try:
                 if stream_id in self._active_streams and streaming_completed:
                     stream_iter = self._active_streams[stream_id]
-                    if hasattr(stream_iter, 'aclose'):
-                        await stream_iter.aclose()
-                    elif hasattr(stream_iter, '__aenter__') and hasattr(stream_iter, '__aexit__'):
-                        await stream_iter.__aexit__(None, None, None)
-
+                    await stream_iter.aclose()
                     del self._active_streams[stream_id]
             except Exception as e:
-                print(f"Error closing Google LLM client for stream {stream_id}: {e}")
+                AppLogger.log_error(f"Error closing Google LLM client for stream {stream_id}: {e}")
+            if stream_id in self._active_streams:
+                    del self._active_streams[stream_id]
 
 
         return StreamingResponse(

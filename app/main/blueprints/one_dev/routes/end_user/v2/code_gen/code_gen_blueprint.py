@@ -90,25 +90,20 @@ async def solve_user_query_non_stream(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
     payload = QuerySolverInput(**_request.json, session_id=session_id)
-    await CodeGenTasksCache.prepare_new_query_session(session_id)
 
     AppLogger.log_info(f"Starting new non-stream query for session {session_id}")
 
-    # Store the active query for potential cancellation
+    # Clear any existing session cancellation state
+    await CodeGenTasksCache.clear_session_cancellation(session_id)
+    
+    # Store the active query and LLM model for potential cancellation
+    session_data = {}
     if payload.query:
-        await CodeGenTasksCache.set_session_query(session_id, payload.query)
-        # Store the LLM model for accurate message thread storage in case of cancellation
-        if payload.llm_model:
-            await CodeGenTasksCache.set_session_llm_model(session_id, payload.llm_model.value)
-
-    # Prepare session for new query by clearing any stale state
-    await CodeGenTasksCache.prepare_new_query_session(session_id)
-
-    AppLogger.log_info(f"Starting new non-stream query for session {session_id}")
-
-    # Store the active query for potential cancellation
-    if payload.query:
-        await CodeGenTasksCache.set_session_query(session_id, payload.query)
+        session_data["query"] = payload.query
+    if payload.llm_model:
+        session_data["llm_model"] = payload.llm_model.value
+    if session_data:
+        await CodeGenTasksCache._set_session_data(session_id, session_data)
 
     blocks = []
 
@@ -195,9 +190,14 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
     aws_client = AWSAPIGatewayServiceClient()
-    await aws_client.init_client(
-        endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-    )
+    try:
+        await aws_client.init_client(
+            endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+        )
+    except asyncio.CancelledError:
+        pass
+    finally:
+        await aws_client.close()
 
     async def push_to_connection_stream(data: Dict[str, Any]):
         nonlocal connection_id
@@ -267,18 +267,19 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     )
 
 
-    # Prepare session for new query by clearing any stale state
-
-    await CodeGenTasksCache.prepare_new_query_session(payload.session_id)
+    # Clear any existing session cancellation state
+    await CodeGenTasksCache.clear_session_cancellation(payload.session_id)
 
     AppLogger.log_info(f"Starting new stream query for session {payload.session_id}")
 
-    # Store the active query for potential cancellation
+    # Store the active query and LLM model for potential cancellation
+    session_data = {}
     if payload.query:
-        await CodeGenTasksCache.set_session_query(payload.session_id, payload.query)
-        # Store the LLM model for accurate message thread storage in case of cancellation
-        if payload.llm_model:
-            await CodeGenTasksCache.set_session_llm_model(payload.session_id, payload.llm_model.value)
+        session_data["query"] = payload.query
+    if payload.llm_model:
+        session_data["llm_model"] = payload.llm_model.value
+    if session_data:
+        await CodeGenTasksCache._set_session_data(payload.session_id, session_data)
 
     async def solve_query():
         nonlocal payload
@@ -307,9 +308,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             async for data_block in data:
                 # Check if task was cancelled via Redis checker
                 if checker and checker.is_cancelled():
-                    # Send cancellation message to frontend
-                    cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled by session"}
-                    await push_to_connection_stream(cancel_data)
                     task_cancelled = True
                     raise asyncio.CancelledError("Task cancelled by session")
                     
@@ -411,15 +409,13 @@ async def cancel_chat(
     # Mark session as cancelled in Redis - the cancellation checker will detect this
     await CodeGenTasksCache.cancel_session(session_id)
 
-    # Get the stored active query and create cancelled query entry
-    original_query = await CodeGenTasksCache.get_session_query(session_id)
+    # Get the stored active query and LLM model in a single call
+    original_query, stored_llm_model = await CodeGenTasksCache.get_session_query_and_llm_model(session_id)
     cancelled_query_id = None
-    
+
     if original_query:
         try:
-            # Get the stored LLM model for accurate message thread storage
-            stored_llm_model = await CodeGenTasksCache.get_session_llm_model(session_id)
-            llm_model = LLModels(stored_llm_model) if stored_llm_model else LLModels.CLAUDE_3_POINT_5_SONNET
+            llm_model = LLModels(stored_llm_model)
             # Create the cancelled query message
             cancelled_query = f"[CANCELLED] {original_query}"
 
