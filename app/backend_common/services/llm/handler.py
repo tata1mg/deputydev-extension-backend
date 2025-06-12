@@ -329,7 +329,7 @@ class LLMHandler(Generic[PromptFeatures]):
 
         return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
 
-    def _get_attachment_data_task_map(
+    async def _get_attachment_data_task_map(
         self,
         previous_responses: List[MessageThreadDTO],
         current_attachments: List[Attachment],
@@ -342,6 +342,9 @@ class LLMHandler(Generic[PromptFeatures]):
         for message in previous_responses:
             for data in message.message_data:
                 if data.type == ContentBlockCategory.FILE:
+                    result = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=data.content.attachment_id)
+                    if result and result.status == "deleted":
+                        continue
                     previous_attachments.append(
                         Attachment(
                             attachment_id=data.content.attachment_id,
@@ -403,7 +406,7 @@ class LLMHandler(Generic[PromptFeatures]):
             :return: Parsed LLM response
         """
         # check and get attachment data task map
-        attachment_data_task_map = self._get_attachment_data_task_map(
+        attachment_data_task_map = await self._get_attachment_data_task_map(
             previous_responses=previous_responses,
             current_attachments=attachments,
         )

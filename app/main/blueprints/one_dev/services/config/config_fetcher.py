@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
-
+from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
     ConfigParams,
     ConfigType,
@@ -137,24 +137,31 @@ class ConfigFetcher:
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
                 "WRITE_KEY": ConfigManager.configs["RUDDER"]["WRITE_KEY"],
+                "WRITE_KEY_ERROR_TRACKING": ConfigManager.configs["RUDDER"]["WRITE_KEY_ERROR_TRACKING"],
                 "DATA_PLANE_URL": ConfigManager.configs["RUDDER"]["DATA_PLANE_URL"],
             },
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
             "VSCODE_LOGS_RETENTION_DAYS": 7,
+            "CHAT_PAYLOAD_MAX_SIZE": ConfigManager.configs["CHAT_PAYLOAD_MAX_SIZE"],
+            # TODO: remove after 7.0.0 force upgrade
             "CHAT_IMAGE_UPLOAD": {
-                "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
-                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+            },
+            "CHAT_FILE_UPLOAD": {
+                "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
             },
         },
     }
 
     @classmethod
-    def fetch_configs(cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData) -> Dict[str, Any]:
+    async def fetch_configs(cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
             if params.consumer in cls.essential_configs:
                 config = cls.essential_configs[params.consumer]
                 if params.consumer == ConfigConsumer.VSCODE_EXT:
-                    cls.add_vscode_ext_config(config, params=params, config_type=config_type, client_data=client_data)
+                    await cls.add_vscode_ext_config(config, params=params, config_type=config_type, client_data=client_data)
                 return config
             else:
                 raise ValueError(f"Essential configs not found for client {params.consumer}")
@@ -165,7 +172,7 @@ class ConfigFetcher:
             raise ValueError(f"Main configs not found for {params.consumer}")
 
     @classmethod
-    def add_vscode_ext_config(
+    async def add_vscode_ext_config(
         cls, base_config: Dict[str, Any], params: ConfigParams, config_type: ConfigType, client_data: ClientData
     ):
         if not params.os or not params.arch:
@@ -174,9 +181,16 @@ class ConfigFetcher:
         arch = params.arch.value
         os = params.os.value
         if config_type == ConfigType.ESSENTIAL:
-            file_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]
+            original_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]
+            s3_key = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]["s3_key"]
             if client_version in ConfigManager.configs["BINARY"]["FILE"]:
-                file_config = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]
+                original_config = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]
+                s3_key = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]["s3_key"]
+
+            file_config = original_config.copy()
+            file_config.pop("s3_key", None)
+
+            file_config["download_link"] = await cls._generate_presigned_url_for_binary(s3_key)
             base_config["BINARY"] = {
                 **file_config,
                 "password": ConfigManager.configs["BINARY"]["PASSWORD"],
@@ -184,3 +198,16 @@ class ConfigFetcher:
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
+    
+    @classmethod
+    async def _generate_presigned_url_for_binary(cls, s3_key: str):
+        """
+        Generate presigned URL for binary download from S3
+        """
+        bucket_name = ConfigManager.configs["AWS_S3_BUCKET"]["AWS_BUCKET_NAME"]
+        region = ConfigManager.configs["AWS_S3_BUCKET"]["AWS_REGION"]
+        expiry = ConfigManager.configs["BINARY"]["PRESIGNED_URL_EXPIRY"]
+
+        s3_client = AWSS3ServiceClient(bucket_name=bucket_name, region_name=region)
+        presigned_url = await s3_client.create_presigned_get_url(s3_key=s3_key, expiry=expiry)
+        return presigned_url
