@@ -16,6 +16,7 @@ class AnalyticsEventsRepository:
         row = await DB.insert_row(AnalyticsEvents, payload)
         return AnalyticsEventsDTO(
             id=row.id,
+            event_id=row.event_id,
             session_id=row.session_id,
             event_type=row.event_type,
             client_version=row.client_version,
@@ -26,3 +27,11 @@ class AnalyticsEventsRepository:
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
+    
+    @classmethod
+    async def event_id_exists(cls, event_id: str) -> bool:
+        count = await DB.count_by_filters(
+            model_name=AnalyticsEvents,
+            filters={"event_id": event_id}
+        )
+        return count > 0
