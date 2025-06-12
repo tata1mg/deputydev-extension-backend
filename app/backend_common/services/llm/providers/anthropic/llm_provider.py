@@ -549,10 +549,12 @@ class Anthropic(BaseLLMProvider):
                     combined_event = sum(buffer[1:], start=buffer[0])
                     yield combined_event
             except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                AppLogger.log_error(f"Streaming Error in Anthropic: {e}")
+            finally:
                 streaming_completed = True
                 await close_client()
-
-            streaming_completed = True
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
@@ -570,13 +572,12 @@ class Anthropic(BaseLLMProvider):
             return accumulated_events
 
         # close the async bedrock client
-        async def close_client():
+        async def close_client() -> None:
             nonlocal streaming_completed
             while not streaming_completed:
                 await asyncio.sleep(0.1)
             await async_bedrock_client.__aexit__(None, None, None)
 
-        asyncio.create_task(close_client())
 
         return StreamingResponse(
             content=stream_content(),
