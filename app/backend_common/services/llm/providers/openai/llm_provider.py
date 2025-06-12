@@ -51,6 +51,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class OpenAI(BaseLLMProvider):
@@ -325,26 +326,23 @@ class OpenAI(BaseLLMProvider):
                         # Depending on the error, you might want to break or continue
                         pass
             except asyncio.CancelledError:
-                streaming_completed = True
-                await close_client()
+                pass
             except Exception as e:
-                streaming_completed = True
-                await close_client()
+                AppLogger.log_error(f"Streaming Error in OpenAI: {e}")
             finally:
                 streaming_completed = True
                 await close_client()
 
-        async def close_client():
+        async def close_client() -> None:
             nonlocal streaming_completed
             streaming_completed = True
             if stream_id in self._active_streams and streaming_completed:
                     
                 try:
                     stream_iter = self._active_streams.pop(stream_id)
-                    if hasattr(stream_iter, 'aclose'):
-                        await stream_iter.aclose()
+                    await stream_iter.aclose()
                 except Exception as e:
-                    print("OpenAI Cancel Error")
+                    AppLogger.log_error("OpenAI Cancel Error")
                 if stream_id in self._active_streams:
                     del self._active_streams[stream_id]
         async def get_usage() -> LLMUsage:
