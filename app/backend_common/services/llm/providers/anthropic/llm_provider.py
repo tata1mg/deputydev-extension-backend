@@ -145,6 +145,8 @@ class Anthropic(BaseLLMProvider):
                 # handle file attachments
                 else:
                     attachment_id = content_data.attachment_id
+                    if attachment_id not in attachment_data_task_map:
+                        continue
                     attachment_data = await attachment_data_task_map[attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
                         content.append(
@@ -192,6 +194,8 @@ class Anthropic(BaseLLMProvider):
             )
             if attachments:
                 for attachment in attachments:
+                    if attachment.attachment_id not in attachment_data_task_map:
+                        continue
                     attachment_data = await attachment_data_task_map[attachment.attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
                         # append at the beginning of the user message
@@ -261,8 +265,7 @@ class Anthropic(BaseLLMProvider):
         # Todo Uncomment this later when bedrock provide support of prompt caching
 
         if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
-            for idx in range(min(2, len(llm_payload["messages"]))):
-                llm_payload["messages"][idx]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+            llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
         return llm_payload
 
@@ -328,7 +331,6 @@ class Anthropic(BaseLLMProvider):
             Tuple[Optional[StreamingContentBlock], Optional[LLMUsage]]: The content block and usage.
         """
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        print(event)
 
         if event["type"] == "message_stop":
             invocation_metrics = event["amazon-bedrock-invocationMetrics"]
