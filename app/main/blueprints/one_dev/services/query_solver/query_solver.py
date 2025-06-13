@@ -203,24 +203,22 @@ class QuerySolver:
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
-        print(payload.model_dump(mode="json"))
-        tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
+    def _get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        tools_to_use = [
+            ASK_USER_INPUT,
+            FOCUSED_SNIPPETS_SEARCHER,
+            FILE_PATH_SEARCHER,
+            ITERATIVE_FILE_READER,
+            GREP_SEARCH,
+            EXECUTE_COMMAND,
+            CREATE_NEW_WORKSPACE,
+            PUBLIC_URL_CONTENT_READER,
+        ]
+
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
-
-            tools_to_use.append(ITERATIVE_FILE_READER)
-
-            tools_to_use.append(GREP_SEARCH)
-
-            tools_to_use.append(EXECUTE_COMMAND)
-
-            tools_to_use.append(CREATE_NEW_WORKSPACE)
-
-            tools_to_use.append(PUBLIC_URL_CONTENT_READER)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
-
         if payload.write_mode:
             tools_to_use.append(REPLACE_IN_FILE)
             tools_to_use.append(WRITE_TO_FILE)
@@ -228,6 +226,10 @@ class QuerySolver:
         for client_tool in payload.client_tools:
             tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
 
+        return tools_to_use
+
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
+        tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
