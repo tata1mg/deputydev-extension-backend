@@ -15,7 +15,7 @@ class ChatFileUpload:
     )
 
     @classmethod
-    def _get_s3_key(cls, file_name: str , folder: str = "image") -> str:
+    def _get_s3_key(cls, file_name: str, folder: str = "image") -> str:
         """
         Generate a unique S3 key for the file
         """
@@ -29,13 +29,14 @@ class ChatFileUpload:
         return s3_key
 
     @classmethod
-    async def get_presigned_urls_for_upload(cls, file_name: str, file_type: str, folder: str = "image") -> PresignedDownloadUrls:
+    async def get_presigned_urls_for_upload(
+        cls, file_name: str, file_type: str, folder: str = "image"
+    ) -> PresignedDownloadUrls:
         """
         Generate presigned URLs for uploading and downloading a file, to be given to the client
         """
         # Generate a unique S3 key for the file
         s3_key = cls._get_s3_key(file_name, folder)
-
 
         # create presigned URL tasks
 
