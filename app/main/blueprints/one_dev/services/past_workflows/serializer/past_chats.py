@@ -99,7 +99,11 @@ class PastChatsSerializer(BaseSerializer):
                             presigned_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
                                 attachment_data.s3_key
                             )
-                            result = {"get_url": presigned_url, "file_type": attachment_data.file_type, "key": attachment_data.id}
+                            result = {
+                                "get_url": presigned_url,
+                                "file_type": attachment_data.file_type,
+                                "key": attachment_data.id,
+                            }
                             formatted_data.append(
                                 {"type": "TEXT_BLOCK", "content": content, "s3Reference": result, "actor": actor}
                             )

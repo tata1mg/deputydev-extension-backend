@@ -2,6 +2,7 @@ from tortoise import fields
 from tortoise_wrapper.db import NaiveDatetimeField
 from .base import Base
 
+
 class ErrorAnalyticsEvents(Base):
     serializable_keys = {
         "id",
