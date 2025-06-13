@@ -85,7 +85,7 @@ class PRReviewPreProcessor:
             is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
         )
         ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
-        pr_state =  self.pr_model.scm_state()
+        pr_state = self.pr_model.scm_state()
         # Declined and not raised by #review
         already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
 
