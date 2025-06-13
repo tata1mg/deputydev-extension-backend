@@ -24,7 +24,7 @@ class ChatFileUpload:
         if folder == "payload":
             s3_path = f"{ConfigManager.configs['CHAT_FILE_UPLOAD']['PAYLOAD_FOLDER_PATH']}"
         else:
-            s3_path = f"{ConfigManager.configs['CHAT_FILE_UPLOAD']['IMAGE_FOLDER_PATH']}"
+            s3_path = f"{ConfigManager.configs['CHAT_IMAGE_UPLOAD']['IMAGE_FOLDER_PATH']}"
         s3_key = f"{s3_path}/{s3_object_name}"
         return s3_key
 
