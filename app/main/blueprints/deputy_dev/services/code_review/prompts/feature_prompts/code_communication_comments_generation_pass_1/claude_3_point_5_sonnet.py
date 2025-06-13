@@ -23,67 +23,19 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
         self.agent_focus_area = AgentFocusArea.CODE_COMMUNICATION.value
 
     def get_system_prompt(self) -> str:
-        system_message = """
-        You are a code reviewer tasked with evaluating a pull request specifically for code communication
-        aspects. Your focus will be on documentation, docstrings, and logging. You will be provided with the
-        pull request title, description, and the PR's diff (Output of `git diff` command)
-
-        You must use the provided tools iteratively to fetch any code context needed that you need to review the pr. 
-        Do not hallucinate code—always call a tool when you need to inspect definitions, functions, or file contents beyond the diff.
-        """
-
-        if not self.disable_tools:
-            system_message += """"<tool_usage_guidelines>
-                Unlike other agents that need extensive context, your primary focus should be analyzing what's directly visible in the diff. Only use code search tools when absolutely necessary, following these principles:
-
-                1. ANALYZE THE DIFF FIRST: Most documentation, docstring, and logging issues can be identified directly in the PR diff without additional context.
-
-                2. MINIMIZE TOOL CALLS: Only call tools when you cannot make a confident assessment based on the diff alone, such as:
-                   - When you need to verify if documentation exists in parent classes
-                   - When you need to check consistency with existing documentation patterns
-                   - When you need to understand broader context that might affect logging requirements
-                   - Verify if you are not sure about imported elements are already present in the unchanged sections
-
-                3. BATCH YOUR QUERIES: If you must use a tool, gather all similar questions and make a single comprehensive query rather than multiple small ones.
-                4. No matter what If you provide final comments always call parse_final_response and provide comments in format provided in tool. 
-                </tool_usage_guidelines>
-            """
-
-        system_message += """
-            IMPORTANT: 
-            - You MUST ALWAYS use the parse_final_response tool to deliver your final review comments.
-            Never provide review comments as plain text in your response. All final reviews MUST be delivered
-            through the parse_final_response tool inside a tool use block.
-            - If any change has impacting change in other files, function, or class where it was used, provide the exact impacting areas in the comment description.
-        """
-
-        if self.params.get("REPO_INFO_PROMPT"):
-            system_message = f"{system_message}\n{self.params['REPO_INFO_PROMPT']}"
-
-        return system_message
+        return self.get_tools_configurable_system_message(self.params)
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = self.get_system_prompt()
 
-        user_message = f"""
-            1. Here's the information for the pull request you need to review:
-            
-            Pull Request Title:
-            <pull_request_title>
-            {self.params["PULL_REQUEST_TITLE"]}
-            </pull_request_title>
-            
-            Pull Request Description:
-            <pull_request_description>
-            {self.params["PULL_REQUEST_DESCRIPTION"]}
-            </pull_request_description>
-            
-            Pull Request Diff:
-            <pull_request_diff>
-            {self.params["PULL_REQUEST_DIFF"]}
-            </pull_request_diff>
-            
-            2. Next, please review the pull request focusing on the following aspects. Consider each of them as a bucket:
+        cached_message = self.get_user_cached_message_template(self.params)
+
+        user_message = """
+            You are specifically reviewing this pull request as a DOCUMENTATION & COMMUNICATION ENGINEER.
+            Your focus is on code communication aspects including documentation, docstrings, and logging.
+        
+            Instructions to Review: 
+            - Review the pull request focusing on the following aspects. Consider each of them as a bucket:
             
             <documentation_guidelines>
             - Evaluate the quality and presence of inline comments and annotations in the code.
@@ -103,18 +55,12 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
             - Check for generic logging and examine if the log messages include sufficient information for
             understanding the context of the logged events.
             </logging_guidelines>
-
+    
         
-            3. Remember to focus solely on code communication aspects as outlined above. Do not comment on code
+            - Remember to focus solely on code communication aspects as outlined above. Do not comment on code
             functionality, performance, or other aspects outside the scope of documentation, docstrings, and
             logging.
             
-            <diff_first_approach>
-            - Begin by thoroughly analyzing only the PR diff without making any tool calls
-            - Most documentation, docstring, and logging issues can be identified directly from the diff
-            - Only after completing your diff analysis, determine if any tool calls are genuinely needed
-            - Make tool calls only for specific uncertainties you cannot resolve from the diff alone
-            </diff_first_approach>
             
             Keep in mind these important instructions when reviewing the code:
             - Focus solely on major code communication issues as outlined above.
@@ -141,4 +87,4 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
         if self.params.get("CUSTOM_PROMPT"):
             user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message, cached_message=cached_message)

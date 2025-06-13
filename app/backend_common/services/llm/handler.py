@@ -415,6 +415,7 @@ class LLMHandler(Generic[PromptFeatures]):
             user_and_system_messages = UserAndSystemMessages(system_message=prompt_handler.get_system_prompt())
         for i in range(0, max_retry):
             try:
+                disable_caching = getattr(prompt_handler, 'disable_caching', False)
                 llm_payload = await client.build_llm_payload(
                     llm_model,
                     prompt=user_and_system_messages,
@@ -427,6 +428,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     feedback=feedback,
                     attachment_data_task_map=attachment_data_task_map,
                     search_web=search_web,
+                    disable_caching=disable_caching,
                 )
 
                 llm_response = await client.call_service_client(
