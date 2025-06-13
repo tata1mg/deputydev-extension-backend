@@ -2,7 +2,7 @@ import asyncio
 import json
 import uuid
 from typing import Any, Dict, List, Optional
-import httpx
+import aiohttp
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint
@@ -90,7 +90,6 @@ async def solve_user_query_non_stream(
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
 async def solve_user_query(_request: Request, **kwargs: Any):
     connection_id: str = _request.headers["connectionid"]  # type: ignore
-
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
         raise ValueError(f"No connection data found for connection ID: {connection_id}")
@@ -274,16 +273,18 @@ async def terminal_command_edit(
 @code_gen_v2_bp.websocket("/generate-code-local-connection")
 async def sse_websocket(request: Request, ws: Any):
     try:
-        async with httpx.AsyncClient() as client:
+        async with aiohttp.ClientSession() as session:
             # generate a random connectionid
             connection_id = uuid.uuid4().hex
             # first mock connecting to the server using /connect endpoint
             self_host_url = f"http://{ConfigManager.configs['HOST']}:{ConfigManager.configs['PORT']}"
-            connection_response = await client.post(
-                f"{self_host_url}/end_user/v1/websocket-connection/connect",
-                headers={**dict(request.headers), "connectionid": connection_id},
-            )
-            connection_data = connection_response.json()
+            url = f"{self_host_url}/end_user/v1/websocket-connection/connect"
+
+            # Convert starlette request headers to dict
+            headers: Dict[str, str] = {**dict(request.headers), "connectionid": connection_id}
+
+            connection_response = await session.post(url, headers=headers)
+            connection_data = await connection_response.json()
             if connection_data.get("status") != "SUCCESS":
                 raise Exception("Connection failed")
 
@@ -294,7 +295,7 @@ async def sse_websocket(request: Request, ws: Any):
                     payload = json.loads(raw_payload)
 
                     # then get a stream of data from the /generate-code endpoint
-                    await client.post(
+                    await session.post(
                         f"{self_host_url}/end_user/v2/code-gen/generate-code",
                         headers={"connectionid": connection_id, "X-Is-Local": "true"},
                         json=payload,
