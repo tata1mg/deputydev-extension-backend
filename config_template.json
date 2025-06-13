@@ -553,7 +553,7 @@
                         "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": "" 
+                        "s3_key": ""
                     }
                 }
             }
@@ -684,12 +684,10 @@
         ],
         "IMAGE_FOLDER_PATH": "chat_images",
         "PAYLOAD_FOLDER_PATH": "chat_payloads"
-
     },
     "BINARY_UPLOAD": {
-        "AWS_BUCKET_NAME": "deputydev",
-        "AWS_REGION": "ap-south-1",
-        "PRESIGNED_URL_EXPIRY": 3600
+        "PRESIGNED_URL_EXPIRY": 3600,
+        "AUTH_KEY": ""
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }
