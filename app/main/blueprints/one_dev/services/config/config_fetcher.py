@@ -145,8 +145,8 @@ class ConfigFetcher:
             "CHAT_PAYLOAD_MAX_SIZE": ConfigManager.configs["CHAT_PAYLOAD_MAX_SIZE"],
             # TODO: remove after 7.0.0 force upgrade
             "CHAT_IMAGE_UPLOAD": {
-                "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
-                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
                 "MAX_FILES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_FILES"],
             },
             "CHAT_FILE_UPLOAD": {
