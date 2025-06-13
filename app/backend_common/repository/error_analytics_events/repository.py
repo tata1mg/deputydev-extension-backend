@@ -34,8 +34,5 @@ class ErrorAnalyticsEventsRepository:
 
     @classmethod
     async def error_id_exists(cls, error_id: str) -> bool:
-        count = await DB.count_by_filters(
-            model_name=ErrorAnalyticsEvents,
-            filters={"error_id": error_id}
-        )
+        count = await DB.count_by_filters(model_name=ErrorAnalyticsEvents, filters={"error_id": error_id})
         return count > 0

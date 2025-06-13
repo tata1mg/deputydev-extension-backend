@@ -342,7 +342,9 @@ class LLMHandler(Generic[PromptFeatures]):
         for message in previous_responses:
             for data in message.message_data:
                 if data.type == ContentBlockCategory.FILE:
-                    result = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=data.content.attachment_id)
+                    result = await ChatAttachmentsRepository.get_attachment_by_id(
+                        attachment_id=data.content.attachment_id
+                    )
                     if result and result.status == "deleted":
                         continue
                     previous_attachments.append(
