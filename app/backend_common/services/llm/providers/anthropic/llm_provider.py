@@ -188,11 +188,11 @@ class Anthropic(BaseLLMProvider):
         )
 
         # remove last block from the messages if not tool response and last block is tool use request
-        if messages and messages[-1].role == ConversationRole.USER and messages[-1].content:
+        if not tool_use_response and (messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content):
             last_content = messages[-1].content[-1]
             if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
                 # remove the tool use request if the user has not responded to it
-                messages.pop()
+                messages[-1].content.pop()
 
         # add system and user messages to conversation
         if prompt and prompt.user_message:
@@ -249,6 +249,7 @@ class Anthropic(BaseLLMProvider):
             "messages": [message.model_dump(mode="json") for message in messages],
             "tools": [tool.model_dump(mode="json", by_alias=True, exclude_defaults=True) for tool in tools],
         }
+
 
         if model_config.get("THINKING") and model_config["THINKING"]["ENABLED"]:
             llm_payload["thinking"] = {"type": "enabled", "budget_tokens": model_config["THINKING"]["BUDGET_TOKENS"]}
