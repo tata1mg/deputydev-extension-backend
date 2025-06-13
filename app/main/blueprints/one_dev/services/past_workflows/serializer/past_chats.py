@@ -1,4 +1,3 @@
-from http import client
 from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO, MessageType, TextBlockData, FileBlockData
@@ -22,8 +21,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.factory import (
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
+
 class PastChatsSerializer(BaseSerializer):
-    async def process_raw_data(self, raw_data: List[MessageThreadDTO], type: SerializerTypes, client_data: Optional[ClientData] = None) -> List[Dict[str, Any]]:
+    async def process_raw_data(
+        self, raw_data: List[MessageThreadDTO], type: SerializerTypes, client_data: Optional[ClientData] = None
+    ) -> List[Dict[str, Any]]:
         tool_use_map: Dict[str, Any] = {}
         formatted_data: List[Dict[str, Any]] = []
         current_query_write_mode: bool = False
@@ -100,13 +102,26 @@ class PastChatsSerializer(BaseSerializer):
                             presigned_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
                                 attachment_data.s3_key
                             )
-                            result:Dict[str, Any] = {"get_url": presigned_url, "file_type": attachment_data.file_type, "key": attachment_data.id}
+                            result: Dict[str, Any] = {
+                                "get_url": presigned_url,
+                                "file_type": attachment_data.file_type,
+                                "key": attachment_data.id,
+                            }
                             image_urls.append(result)
                     if image_urls:
                         if client_data and compare_version(client_data.client_version, "7.1.0", "<"):
-                            formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3References": image_urls[0], "actor": actor})
+                            formatted_data.append(
+                                {
+                                    "type": "TEXT_BLOCK",
+                                    "content": content,
+                                    "s3References": image_urls[0],
+                                    "actor": actor,
+                                }
+                            )
                         else:
-                            formatted_data.append({"type": "TEXT_BLOCK", "content": content, "s3References": image_urls, "actor": actor})
+                            formatted_data.append(
+                                {"type": "TEXT_BLOCK", "content": content, "s3References": image_urls, "actor": actor}
+                            )
                     else:
                         formatted_data.append({"type": "TEXT_BLOCK", "content": content, "actor": actor})
                 else:

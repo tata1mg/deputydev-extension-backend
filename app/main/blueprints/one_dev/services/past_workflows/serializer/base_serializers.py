@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from http import client
 from typing import Any, Dict, List, Optional
 
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
@@ -40,7 +39,9 @@ class BaseSerializer(ABC):
         return await self.process_raw_data(self.raw_data, self.type, client_data=client_data)
 
     @abstractmethod
-    async def process_raw_data(self, raw_data: List[Dict[str, Any]], type: SerializerTypes, client_data: Optional[ClientData] = None) -> List[Dict[str, Any]]:
+    async def process_raw_data(
+        self, raw_data: List[Dict[str, Any]], type: SerializerTypes, client_data: Optional[ClientData] = None
+    ) -> List[Dict[str, Any]]:
         """
         Abstract method to process raw data. Must be implemented by subclasses.
 
