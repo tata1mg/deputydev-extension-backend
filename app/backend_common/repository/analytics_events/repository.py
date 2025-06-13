@@ -27,11 +27,8 @@ class AnalyticsEventsRepository:
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
-    
+
     @classmethod
     async def event_id_exists(cls, event_id: str) -> bool:
-        count = await DB.count_by_filters(
-            model_name=AnalyticsEvents,
-            filters={"event_id": event_id}
-        )
+        count = await DB.count_by_filters(model_name=AnalyticsEvents, filters={"event_id": event_id})
         return count > 0
