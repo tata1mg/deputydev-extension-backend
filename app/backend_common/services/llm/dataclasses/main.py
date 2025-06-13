@@ -1,4 +1,5 @@
 from asyncio import Task
+import asyncio
 from enum import Enum
 from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional, Union
 
@@ -257,6 +258,7 @@ class ParsedLLMCallResponseCommon(BaseModel):
 class StreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, StreamingResponse):
     parsed_content: AsyncIterator[Any]
     query_id: int
+    llm_response_storage_task: asyncio.Task[None]
 
 
 class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse):
