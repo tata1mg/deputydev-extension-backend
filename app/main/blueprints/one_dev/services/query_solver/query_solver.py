@@ -188,6 +188,9 @@ class QuerySolver:
                 else:
                     yield data_block
 
+            # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
+            await llm_response.llm_response_storage_task
+
         return _streaming_content_block_generator()
 
     def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
