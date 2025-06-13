@@ -26,6 +26,7 @@ class LLMMeta(BaseModel):
 class UserAndSystemMessages(BaseModel):
     user_message: Optional[str] = None
     system_message: Optional[str] = None
+    cached_message: Optional[str] = None
 
 
 class ConversationRole(Enum):
