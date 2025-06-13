@@ -93,9 +93,6 @@ async def solve_user_query_non_stream(
 
     AppLogger.log_info(f"Starting new non-stream query for session {session_id}")
 
-    # Clear any existing session cancellation state
-    await CodeGenTasksCache.clear_session_cancellation(session_id)
-    
     # Store the active query and LLM model for potential cancellation
     session_data = {}
     if payload.query:
@@ -125,6 +122,7 @@ async def solve_user_query_non_stream(
                 async for data_block in data:
                     # Check if task was cancelled via Redis checker
                     if checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
                         blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled by session"})
                         raise asyncio.CancelledError("Task cancelled by session")
 
@@ -142,9 +140,6 @@ async def solve_user_query_non_stream(
             except Exception as ex:
                 AppLogger.log_error(f"Error in solving query: {ex}")
                 blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
-            finally:
-                # Clean up session data
-                await CodeGenTasksCache.cleanup_session_data(session_id)
         finally:
             # Always stop monitoring
             try:
@@ -267,9 +262,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     )
 
 
-    # Clear any existing session cancellation state
-    await CodeGenTasksCache.clear_session_cancellation(payload.session_id)
-
     AppLogger.log_info(f"Starting new stream query for session {payload.session_id}")
 
     # Store the active query and LLM model for potential cancellation
@@ -336,7 +328,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             error_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(error_data)
         finally:
-            await CodeGenTasksCache.cleanup_session_data(payload.session_id)
             # Stop the cancellation checker
             try:
                 if checker:
@@ -406,12 +397,7 @@ async def terminal_command_edit(
 async def cancel_chat(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
-    # Mark session as cancelled in Redis - the cancellation checker will detect this
-    await CodeGenTasksCache.cancel_session(session_id)
-
-    # Get the stored active query and LLM model in a single call
-    original_query, stored_llm_model = await CodeGenTasksCache.get_session_query_and_llm_model(session_id)
-    cancelled_query_id = None
+    original_query, stored_llm_model, existing_query_id = await CodeGenTasksCache.get_session_data_for_db(session_id)
 
     if original_query:
         try:
@@ -419,50 +405,57 @@ async def cancel_chat(
             # Create the cancelled query message
             cancelled_query = f"[CANCELLED] {original_query}"
 
-            # Create message thread data for the cancelled query
-            data_hash = xxhash.xxh64(cancelled_query).hexdigest()
-            message_data = [
-                TextBlockData(
-                    type=ContentBlockCategory.TEXT_BLOCK,
-                    content=TextBlockContent(text=cancelled_query),
-                    content_vars={"query": cancelled_query},
+            # Check if query_id already exists in Redis
+            if existing_query_id is None:
+                # Create new message thread only if query_id doesn't exist
+                data_hash = xxhash.xxh64(cancelled_query).hexdigest()
+                message_data = [
+                    TextBlockData(
+                        type=ContentBlockCategory.TEXT_BLOCK,
+                        content=TextBlockContent(text=cancelled_query),
+                        content_vars={"query": cancelled_query},
+                    )
+                ]
+
+                message_thread = MessageThreadData(
+                    session_id=session_id,
+                    actor=MessageThreadActor.USER,
+                    query_id=None,
+                    message_type=MessageType.QUERY,
+                    conversation_chain=[],
+                    message_data=message_data,
+                    data_hash=data_hash,
+                    prompt_type="CODE_QUERY_SOLVER",
+                    prompt_category="CODE_GENERATION",
+                    llm_model=llm_model,
+                    call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
                 )
-            ]
 
-            message_thread = MessageThreadData(
-                session_id=session_id,
-                actor=MessageThreadActor.USER,
-                query_id=None,
-                message_type=MessageType.QUERY,
-                conversation_chain=[],
-                message_data=message_data,
-                data_hash=data_hash,
-                prompt_type="CODE_QUERY_SOLVER",
-                prompt_category="CODE_GENERATION",
-                llm_model=llm_model,
-                call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
-            )
+                created_thread = await MessageThreadsRepository.create_message_thread(message_thread)
+                cancelled_query_id = created_thread.id
+            else:
+                # Use existing query_id
+                cancelled_query_id = existing_query_id
 
-            created_thread = await MessageThreadsRepository.create_message_thread(message_thread)
-            query_id = created_thread.id
-
+            # Always create a summary during cancellation
             await QuerySummarysRepository.create_query_summary(
                 QuerySummaryData(
                     session_id=session_id,
-                    query_id=query_id,
+                    query_id=cancelled_query_id,
                     summary=cancelled_query,
                 )
             )
-
         except Exception as ex:
             AppLogger.log_error(f"Error creating cancelled query entry: {ex}")
             return None
+    await CodeGenTasksCache.cancel_session(session_id)
+    await CodeGenTasksCache.cleanup_session_data(session_id)
+    
 
     
     return send_response({
         "status": "SUCCESS", 
         "message": "LLM processing cancelled successfully ⚡",
-        "cancelled_query_id": cancelled_query_id,
         "cancelled_session_id": session_id,
     })
 
