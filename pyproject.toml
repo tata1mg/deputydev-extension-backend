@@ -1,6 +1,6 @@
 [project]
 name = "deputydev"
-version = "8.4.0"
+version = "8.5.1"
 description = ""
 authors = [{ name = "Deputy Dev", email = "deputydev@1mg.com" }]
 readme = "README.md"
@@ -18,6 +18,7 @@ dependencies = [
   "openai==1.78.0",
   "pypdf==4.0.1",
   "pillow==10.2.0",
+  "websockets==13.0",
   "pyjwt==2.9.0",
   "supabase==2.11.0",
   "types-aiobotocore-bedrock-runtime==2.11.2",
@@ -32,7 +33,6 @@ dependencies = [
   "aiokafka[zstd]==0.10.0",
   "mmh3==5.1.0",
   "toml==0.10.2",
-  "websockets==13.0",
   "google-genai==1.13.0",
   "partial-json-parser==0.2.1.1.post5"
 ]

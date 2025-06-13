@@ -284,7 +284,11 @@ class LLMHandler(Generic[PromptFeatures]):
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
     async def parse_llm_response_data(
-        self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt, query_id: int
+        self,
+        llm_response: UnparsedLLMCallResponse,
+        prompt_handler: BasePrompt,
+        query_id: int,
+        llm_response_storage_task: asyncio.Task[None],
     ) -> ParsedLLMCallResponse:
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             parsed_stream = await prompt_handler.get_parsed_streaming_events(llm_response)
@@ -298,6 +302,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 prompt_id=prompt_handler.prompt_type,
                 accumulated_events=llm_response.accumulated_events,
                 query_id=query_id,
+                llm_response_storage_task=llm_response_storage_task,
             )
         else:
             parsed_content = prompt_handler.get_parsed_result(llm_response)
@@ -342,7 +347,9 @@ class LLMHandler(Generic[PromptFeatures]):
         for message in previous_responses:
             for data in message.message_data:
                 if data.type == ContentBlockCategory.FILE:
-                    result = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=data.content.attachment_id)
+                    result = await ChatAttachmentsRepository.get_attachment_by_id(
+                        attachment_id=data.content.attachment_id
+                    )
                     if result and result.status == "deleted":
                         continue
                     previous_attachments.append(
@@ -438,20 +445,8 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 # start task for storing LLM message in DB
-                if stream:
-                    asyncio.create_task(
-                        self.store_llm_response_in_db(
-                            llm_response,
-                            session_id,
-                            prompt_type=prompt_type,
-                            prompt_category=prompt_handler.prompt_category,
-                            llm_model=llm_model,
-                            query_id=query_id,
-                            call_chain_category=call_chain_category,
-                        )
-                    )
-                else:
-                    await self.store_llm_response_in_db(
+                llm_response_storage_task = asyncio.create_task(
+                    self.store_llm_response_in_db(
                         llm_response,
                         session_id,
                         prompt_type=prompt_type,
@@ -460,10 +455,18 @@ class LLMHandler(Generic[PromptFeatures]):
                         query_id=query_id,
                         call_chain_category=call_chain_category,
                     )
+                )
+
+                # if not streaming, ensure storage is done before sending response
+                if not stream:
+                    await llm_response_storage_task
 
                 # Parse the LLM response
                 parsed_response = await self.parse_llm_response_data(
-                    llm_response=llm_response, prompt_handler=prompt_handler, query_id=query_id
+                    llm_response=llm_response,
+                    prompt_handler=prompt_handler,
+                    query_id=query_id,
+                    llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
 
