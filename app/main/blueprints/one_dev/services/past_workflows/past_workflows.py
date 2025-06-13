@@ -83,7 +83,7 @@ class PastWorkflows:
         }
 
     @classmethod
-    async def get_past_chats(cls, session_id: int, client_data: Optional[ClientData]= None) -> List[Dict[str, Any]]:
+    async def get_past_chats(cls, session_id: int, client_data: Optional[ClientData] = None) -> List[Dict[str, Any]]:
         """
         Fetch past chats.
 
