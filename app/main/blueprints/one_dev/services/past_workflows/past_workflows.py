@@ -83,7 +83,7 @@ class PastWorkflows:
         }
 
     @classmethod
-    async def get_past_chats(cls, session_id: int) -> List[Dict[str, Any]]:
+    async def get_past_chats(cls, session_id: int, client_data: Optional[ClientData]= None) -> List[Dict[str, Any]]:
         """
         Fetch past chats.
 
@@ -99,7 +99,7 @@ class PastWorkflows:
             session_id, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN")
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
-        processed_data = await serializer_service.get_processed_data()
+        processed_data = await serializer_service.get_processed_data(client_data=client_data)
         return processed_data
 
     @classmethod
