@@ -9,7 +9,8 @@ from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse, ConversationTool,
+    NonStreamingParsedLLMCallResponse,
+    ConversationTool,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
@@ -252,7 +253,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         Returns:
             List of tools to use for the review
         """
-        if getattr(prompt_handler, 'disable_tools', False):
+        if getattr(prompt_handler, "disable_tools", False):
             # When tools are disabled, only use the parse_final_response tool
             return [PARSE_FINAL_RESPONSE]
         return self.tool_request_manager.get_tools()

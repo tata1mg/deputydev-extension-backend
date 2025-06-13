@@ -37,8 +37,7 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
             )
 
         except Exception as ex:
-            raise ValueError(
-                f"Error processing error analytics event message: {str(ex)}")
+            raise ValueError(f"Error processing error analytics event message: {str(ex)}")
 
     async def _process_message(self, message: Any) -> None:
         """Process and store session event messages in DB."""
