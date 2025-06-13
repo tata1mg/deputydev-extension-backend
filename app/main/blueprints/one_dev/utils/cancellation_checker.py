@@ -17,8 +17,6 @@ class CancellationChecker:
     
     async def start_monitoring(self) -> None:
         """Start the periodic cancellation check"""
-        # Clear any stale cancellation state when starting monitoring for a new query
-        await CodeGenTasksCache.clear_session_cancellation(self.session_id)
         # Reset our local cancelled event
         self.cancelled_event.clear()
         self._checker_task = asyncio.create_task(self._check_cancellation())

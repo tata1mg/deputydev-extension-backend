@@ -62,7 +62,8 @@ from app.backend_common.services.llm.providers.anthropic.dataclasses.main import
 )
 from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.services.tiktoken import TikToken
 
 class Anthropic(BaseLLMProvider):
     def __init__(self):
@@ -485,12 +486,25 @@ class Anthropic(BaseLLMProvider):
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed: bool = False
+        
+        # Manual token counting for when final usage is not available
+        tiktoken_client = TikToken()
+        manual_output_tokens = 0
+        accumulated_text = ""
+        accumulated_tool_params = ""
+        accumulated_thinking = ""
+        final_usage_available = False
+        
         accumulated_events: List[StreamingEvent] = []
 
         async def stream_content() -> AsyncIterator[StreamingEvent]:
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
+            nonlocal accumulated_text
+            nonlocal accumulated_tool_params
+            nonlocal accumulated_thinking
+            nonlocal final_usage_available
             non_combinable_events = [
                 RedactedThinking,
                 TextBlockStart,
@@ -519,8 +533,19 @@ class Anthropic(BaseLLMProvider):
                         )
                         if event_usage:
                             usage += event_usage
+                            final_usage_available = True
 
                         for event_block in event_blocks:
+                            # Manual token counting for streaming content
+                            try:
+                                if event_block.type == StreamingEventType.TEXT_BLOCK_DELTA:
+                                    accumulated_text += event_block.content.text
+                                elif event_block.type == StreamingEventType.TOOL_USE_REQUEST_DELTA:
+                                    accumulated_tool_params += event_block.content.input_params_json_delta
+                                elif event_block.type == StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA:
+                                    accumulated_thinking += event_block.content.thinking_delta
+                            except Exception as e:
+                                AppLogger.log_error(f"Error in manual token counting: {e}")
                             last_block_type = type(event_block)
                             if current_type is None:
                                 current_type = last_block_type
@@ -559,10 +584,28 @@ class Anthropic(BaseLLMProvider):
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
+            nonlocal final_usage_available
+            nonlocal manual_output_tokens
+            nonlocal accumulated_text
+            nonlocal accumulated_tool_params
+            nonlocal accumulated_thinking
             while not streaming_completed:
                 await asyncio.sleep(0.1)
 
-            return usage
+            # Return final usage if available, otherwise return manual count
+            if final_usage_available and (usage.input > 0 or usage.output > 0):
+                return usage
+            else:
+                if accumulated_text:
+                    manual_output_tokens += tiktoken_client.count(accumulated_text, model="gpt-4")
+                    accumulated_text=""
+                if accumulated_events:
+                    manual_output_tokens += tiktoken_client.count(accumulated_tool_params, model="gpt-4")
+                    accumulated_tool_params=""
+                if accumulated_thinking:
+                    manual_output_tokens+= tiktoken_client.count(accumulated_thinking, model="gpt-4")
+                    accumulated_thinking=""
+                return LLMUsage(input=0, output=manual_output_tokens, cache_read=0, cache_write=0)
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events

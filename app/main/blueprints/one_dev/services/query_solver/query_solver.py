@@ -79,6 +79,7 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 
 from .prompts.factory import PromptFeatureFactory
 
@@ -289,6 +290,10 @@ class QuerySolver:
                 stream=True,
                 session_id=payload.session_id,
             )
+            
+            if isinstance(llm_response, StreamingParsedLLMCallResponse) and llm_response.query_id:
+                await CodeGenTasksCache.set_session_query_id(payload.session_id, llm_response.query_id)
+            
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
