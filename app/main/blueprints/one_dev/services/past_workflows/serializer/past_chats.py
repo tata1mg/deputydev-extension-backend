@@ -114,7 +114,7 @@ class PastChatsSerializer(BaseSerializer):
                                 {
                                     "type": "TEXT_BLOCK",
                                     "content": content,
-                                    "s3References": image_urls[0],
+                                    "s3Reference": image_urls[0],
                                     "actor": actor,
                                 }
                             )
