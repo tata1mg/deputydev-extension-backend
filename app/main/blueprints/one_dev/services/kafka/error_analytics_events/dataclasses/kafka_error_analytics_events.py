@@ -6,15 +6,15 @@ from pydantic import BaseModel, field_validator
 
 
 class KafkaErrorAnalyticsEventMessage(BaseModel):
-    user_email : Optional[str] = None
+    error_id: Optional[str] = None
+    user_email: Optional[str] = None
     error_type: str
-    repo_name : Optional[str] = None
-    error_source : Optional[str] = None
+    repo_name: Optional[str] = None
+    error_source: Optional[str] = None
     client_version: str
     timestamp: datetime
     error_data: Dict[str, Any]
     session_id: Optional[int] = None
-
 
     # add validation to only allow error_type values in SNAKE_CASE
     @field_validator("error_type")
