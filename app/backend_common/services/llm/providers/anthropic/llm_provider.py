@@ -187,6 +187,15 @@ class Anthropic(BaseLLMProvider):
             previous_responses, attachment_data_task_map
         )
 
+        # remove last block from the messages if not tool response and last block is tool use request
+        if not tool_use_response and (
+            messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content
+        ):
+            last_content = messages[-1].content[-1]
+            if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
+                # remove the tool use request if the user has not responded to it
+                messages[-1].content.pop()
+
         # add system and user messages to conversation
         if prompt and prompt.user_message:
             user_message = ConversationTurn(
