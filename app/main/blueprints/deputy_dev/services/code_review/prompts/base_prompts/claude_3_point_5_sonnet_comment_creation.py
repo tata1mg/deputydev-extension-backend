@@ -28,6 +28,7 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPromptHandler):
     disable_tools = False
     disable_caching = False
+
     @classmethod
     def _parse_text_blocks(cls, text: str) -> Dict[str, List[LLMCommentData]]:
         review_content = None
