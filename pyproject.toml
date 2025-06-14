@@ -1,6 +1,6 @@
 [project]
 name = "deputydev"
-version = "8.5.1"
+version = "8.5.2"
 description = ""
 authors = [{ name = "Deputy Dev", email = "deputydev@1mg.com" }]
 readme = "README.md"
@@ -39,6 +39,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.2.0",
     "ruff>=0.11.9",
 ]
 
