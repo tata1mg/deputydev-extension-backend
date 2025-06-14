@@ -308,7 +308,7 @@ async def sse_websocket(request: Request, ws: Any):
                             await ws.send(data)
                             if data == json.dumps({"type": "STREAM_END"}):
                                 # remove the connectionid from stream buffer
-                                # del local_testing_stream_buffer[connection_id]
+                                del local_testing_stream_buffer[connection_id]
                                 break
                         else:
                             await asyncio.sleep(0.2)
@@ -316,9 +316,5 @@ async def sse_websocket(request: Request, ws: Any):
                     AppLogger.log_error(f"Error in websocket connection: {e}")
                     break
 
-            # finally, disconnect from the server using /disconnect endpoint
-            # await client.post(
-            #     f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connectionid": connection_id}
-            # )
     except Exception as _ex:
         AppLogger.log_error(f"Error in websocket connection: {_ex}")
