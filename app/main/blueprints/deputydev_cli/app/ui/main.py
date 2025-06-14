@@ -44,7 +44,6 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.repo_selection import (
     RepoSelection,
 )
 
-
 warnings.filterwarnings("ignore")
 
 

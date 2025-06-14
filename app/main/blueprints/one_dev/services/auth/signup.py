@@ -1,22 +1,22 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
-import uuid
 
 from deputydev_core.utils.constants.enums import Clients
 from torpedo import CONFIG
-from tortoise.transactions import in_transaction
 from tortoise.exceptions import DoesNotExist
+from tortoise.transactions import in_transaction
 
-from app.backend_common.models.dao.postgres import Teams, Users
-from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.constants.onboarding import SubscriptionStatus, UserRoles
 from app.backend_common.exception.exception import SignUpError
+from app.backend_common.models.dao.postgres import Teams, Users
 from app.backend_common.models.dao.postgres.referral_codes import ReferralCodes
 from app.backend_common.models.dao.postgres.referrals import Referrals
 from app.backend_common.models.dao.postgres.subscription_plans import SubscriptionPlans
 from app.backend_common.models.dao.postgres.subscriptions import Subscriptions
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
 from app.backend_common.models.dto.referral_codes_dto import ReferralCodeDTO
+from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.repository.referral_codes.repository import ReferralCodesRepository
 from app.backend_common.repository.user_teams.user_team_repository import UserTeamRepository
 from app.backend_common.repository.users.user_repository import UserRepository

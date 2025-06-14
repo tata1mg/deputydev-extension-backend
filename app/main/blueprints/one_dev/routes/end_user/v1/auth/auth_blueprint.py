@@ -1,5 +1,6 @@
 from sanic import Blueprint
 from torpedo import Request, send_response
+from torpedo.exceptions import HTTPRequestException
 
 from app.backend_common.services.auth.supabase.session import SupabaseSession
 from app.main.blueprints.one_dev.services.auth.auth import Auth
@@ -7,7 +8,6 @@ from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from torpedo.exceptions import HTTPRequestException
 
 auth_v1_bp = Blueprint("auth_v1_bp", url_prefix="/auth")
 

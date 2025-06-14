@@ -1,13 +1,37 @@
 import asyncio
 import json
-from typing import Any, Dict, List, Optional, Literal, AsyncIterator
-from openai.types.responses.response_stream_event import ResponseStreamEvent
-from openai.types.chat import ChatCompletion
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional
+
 from openai.types import responses
+from openai.types.chat import ChatCompletion
+from openai.types.responses.response_stream_event import ResponseStreamEvent
+
+from app.backend_common.constants.constants import LLMProviders
+from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    ExtendedThinkingContent,
+    LLModels,
+    LLMUsage,
+    MessageThreadActor,
+    MessageThreadDTO,
+    MessageType,
+    ResponseData,
+    TextBlockContent,
+    TextBlockData,
+    ToolUseRequestContent,
+    ToolUseRequestData,
+    ToolUseResponseContent,
+    ToolUseResponseData,
+)
+from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
+from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRole,
+    ConversationTool,
     LLMCallResponseTypes,
+    NonStreamingResponse,
     PromptCacheConfig,
     StreamingEvent,
     StreamingEventType,
@@ -21,34 +45,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
     ToolUseRequestStartContent,
-)
-
-from app.backend_common.constants.constants import LLMProviders
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    LLMUsage,
-    MessageThreadDTO,
-    ResponseData,
-    TextBlockContent,
-    TextBlockData,
-    ToolUseRequestContent,
-    ToolUseRequestData,
-    ToolUseResponseData,
-    ContentBlockCategory,
-    MessageThreadActor,
-    MessageType,
-    ToolUseResponseContent,
-    ExtendedThinkingContent,
-)
-from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
-from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
-from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTool,
-    NonStreamingResponse,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 

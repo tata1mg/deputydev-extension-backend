@@ -10,6 +10,7 @@ from torpedo.exceptions import BadRequestException
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -22,7 +23,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider

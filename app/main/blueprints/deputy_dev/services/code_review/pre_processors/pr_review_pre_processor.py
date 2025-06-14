@@ -2,7 +2,7 @@ from typing import Optional
 
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values, get_context_value
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
@@ -43,7 +43,6 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-
 
 config = CONFIG.config
 one_dev_review_client = OneDevReviewClient()
