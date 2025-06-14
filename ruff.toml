@@ -4,6 +4,17 @@ indent-width = 4
 [lint]
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+select = [
+    "E4", 
+    "E7", 
+    "E9", 
+    "F", 
+    "ERA001",  # find out commented out code https://docs.astral.sh/ruff/rules/#eradicate-era
+    # "ANN001",  # find out missing function type arguments
+    # "ANN002",  # missing type annotation for *{name}
+    # "ANN003",  # missing type annotation for **{name}
+]
+ignore = []
 
 [format]
 quote-style = "double"
