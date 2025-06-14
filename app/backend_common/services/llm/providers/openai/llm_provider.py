@@ -221,8 +221,6 @@ class OpenAI(BaseLLMProvider):
             NonStreamingResponse: Parsed response
         """
         non_streaming_content_blocks: List[ResponseData] = []
-        # response.choices[0].message.content = response.output_text
-        # response.choices[0].message
         for block in response.output:
             if block.type == "message":
                 non_streaming_content_blocks.append(TextBlockData(content=TextBlockContent(text=response.output_text)))

@@ -37,14 +37,6 @@ class BitbucketWorkspaceClient(BaseSCMClient):
     ):
         url = f"{self.bitbucket_url}/2.0/workspaces/{workspace}/hooks"
 
-        # Example:
-        # data = {
-        #     "description": "Webhook Description",
-        #     "url": "https://example.com/",
-        #     "active": True,
-        #     "events": ["repo:push", "issue:created", "issue:updated"],
-        # }
-
         data = {
             "description": description,
             "url": webhook_url,

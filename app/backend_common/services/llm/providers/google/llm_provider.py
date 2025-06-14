@@ -273,7 +273,6 @@ class Google(BaseLLMProvider):
         # Check finish reason (e.g., STOP, MAX_TOKENS, SAFETY, RECITATION, TOOL_CALL)
         _finish_reason = candidate.finish_reason.name
         # You might log or handle different finish reasons specifically
-        # print(f"Model finish reason: {finish_reason}")
 
         # Check for safety ratings
         if candidate.safety_ratings:
