@@ -109,7 +109,7 @@ class BaseClaudePromptHandler(BasePrompt):
                 ) and not all_parsers_checked_for_start_tag:
                     # for each parser, we try to find the start tag in the text buffer which is closest to the start of the buffer
                     for xml_tag, parser in xml_tags_to_paraser_map.items():
-                        # case 1: entire start tag is present in the text buffer
+                        # entire start tag is present in the text buffer
                         if parser.start_tag in text_buffer and (
                             xml_wrapped_text_position is None
                             or text_buffer.index(parser.start_tag) <= xml_wrapped_text_position.start.start_pos
@@ -125,7 +125,7 @@ class BaseClaudePromptHandler(BasePrompt):
                             # continue to check for other tags
                             continue
 
-                        # case 2: partial start tag is present at the end of the text buffer
+                        # partial start tag is present at the end of the text buffer
                         ends_with_start_tag = re.search(parser.ends_with_start_tag_regex, text_buffer)
                         if bool(ends_with_start_tag) and xml_wrapped_text_position is None:
                             # We only update the xml_wrapped_text_position if its None

@@ -41,15 +41,6 @@ class GitlabOAuthClient:
 
         # parse for token
 
-        # e.g. resp
-        # {
-        #     "access_token": "***REMOVED***",
-        #     "token_type": "bearer",
-        #     "expires_in": 7200,
-        #     "refresh_token": "***REMOVED***",
-        #     "created_at": 1607635748,
-        # }
-
     @classmethod
     async def refresh_access_token(cls, refresh_token: str) -> str:
         """Get new access token using refresh token."""
@@ -67,12 +58,3 @@ class GitlabOAuthClient:
         async with session.post(url=url, json=data) as response:
             response.raise_for_status()
             return await response.json()
-
-        # e.g. resp
-        # {
-        #     "access_token": "***REMOVED***",
-        #     "token_type": "bearer",
-        #     "expires_in": 7200,
-        #     "refresh_token": "***REMOVED***",
-        #     "created_at": 1628711391,
-        # }
