@@ -12,6 +12,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -24,18 +25,24 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockDeltaContent,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockEndContent,
+    ExtendedThinkingBlockStart,
     LLMCallResponseTypes,
     NonStreamingResponse,
     PromptCacheConfig,
+    RedactedThinking,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
@@ -50,17 +57,10 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStartContent,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
-    ExtendedThinkingBlockStart,
-    ExtendedThinkingBlockDelta,
-    ExtendedThinkingBlockDeltaContent,
-    ExtendedThinkingBlockEnd,
-    ExtendedThinkingBlockEndContent,
-    RedactedThinking,
 )
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
-from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 

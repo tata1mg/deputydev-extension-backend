@@ -1,6 +1,8 @@
 import re
 from typing import List, Optional, Tuple
+
 from pydantic import BaseModel
+
 from app.backend_common.services.llm.dataclasses.main import TextBlockDelta
 from app.backend_common.services.llm.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
     BaseGoogleTextDeltaParser,

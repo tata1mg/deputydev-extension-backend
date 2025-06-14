@@ -1,5 +1,6 @@
 from tortoise import fields
 from tortoise_wrapper.db import NaiveDatetimeField
+
 from .base import Base
 
 

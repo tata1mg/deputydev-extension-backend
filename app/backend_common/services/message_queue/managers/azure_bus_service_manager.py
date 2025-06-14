@@ -10,9 +10,8 @@ from azure.servicebus import (
     ServiceBusMessageBatch,
     ServiceBusReceivedMessage,
 )
-from azure.servicebus.aio import AutoLockRenewer
+from azure.servicebus.aio import AutoLockRenewer, ServiceBusReceiver
 from azure.servicebus.aio import ServiceBusClient as AsyncServiceBusClient
-from azure.servicebus.aio import ServiceBusReceiver
 from azure.servicebus.exceptions import MessageSizeExceededError, ServiceBusError
 from sanic.log import logger
 
