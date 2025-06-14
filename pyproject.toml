@@ -42,10 +42,3 @@ dev = [
     "ruff>=0.11.9",
 ]
 
-[tool.ruff]
-line-length = 120
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-docstring-code-format = true
