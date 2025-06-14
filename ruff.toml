@@ -4,6 +4,8 @@ indent-width = 4
 [lint]
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Add rules from here - https://docs.astral.sh/ruff/rules/
 select = [
     "E4", 
     "E7", 
@@ -22,6 +24,7 @@ select = [
     "ANN206", # missing return type annotation for classmethod {name}
     "C901",  # cyclomatic complexity mccabe (C90) https://docs.astral.sh/ruff/rules/#mccabe-c90
     "N", # pep8 naming conventions https://docs.astral.sh/ruff/rules/#pep8-naming-n
+    "ASYNC" # flake8-async rules https://docs.astral.sh/ruff/rules/#flake8-async-async
 ]
 ignore = [
 ]
