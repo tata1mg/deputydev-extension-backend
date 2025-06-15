@@ -90,6 +90,7 @@ class QuerySolverInput(BaseModel):
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
+    is_embedding_done: Optional[bool] = True
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]):
