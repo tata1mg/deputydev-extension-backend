@@ -215,7 +215,7 @@ class QuerySolver:
     async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
         print(payload.model_dump(mode="json"))
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
             tools_to_use.append(RELATED_CODE_SEARCHER)
 
         if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
