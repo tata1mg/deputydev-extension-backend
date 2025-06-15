@@ -202,7 +202,7 @@ class Anthropic(BaseLLMProvider):
                 role=ConversationRole.USER,
                 content=[{"type": "text", "text": prompt.cached_message}]
             )
-            if not disable_caching and cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+            if cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
                 cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
             messages.append(cached_message)
 
@@ -264,12 +264,11 @@ class Anthropic(BaseLLMProvider):
 
         if model_config.get("THINKING") and model_config["THINKING"]["ENABLED"]:
             llm_payload["thinking"] = {"type": "enabled", "budget_tokens": model_config["THINKING"]["BUDGET_TOKENS"]}
-        if not disable_caching and cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+        if cache_config.tools and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["tools"][-1]["cache_control"] = {"type": "ephemeral"}
 
         if (
-            not disable_caching
-            and cache_config.system_message
+            cache_config.system_message
             and prompt
             and prompt.system_message
             and model_config["PROMPT_CACHING_SUPPORTED"]
