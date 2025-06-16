@@ -8,9 +8,9 @@ requires-python = ">=3.11.0,<3.12.0"
 
 dependencies = [
   "cache_wrapper @ git+ssh://git@bitbucket.org/tata1mg/cache_wrapper.git@4.1.0",
-  "torpedo @ git+ssh://git@bitbucket.org/tata1mg/torpedo.git@4.5.0-pre-release",
+  "torpedo @ git+ssh://git@bitbucket.org/tata1mg/torpedo.git@4.5.0-bump-rich",
   "tortoise_wrapper @ git+ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git@5.0.0-pre-release",
-  "deputydev-core @ git+ssh://git@github.com/DeputyDev-1mg/deputydev-core.git@4.2.0",
+  "deputydev-core @ git+ssh://git@github.com/DeputyDev-1mg/deputydev-core.git@4.3.4",
   "langchain==0.3.24",
   "psycopg2-binary==2.9.9",
   "pgvector==0.2.4",
@@ -18,7 +18,7 @@ dependencies = [
   "openai==1.78.0",
   "pypdf==4.0.1",
   "pillow==10.2.0",
-  "websockets==13.0",
+  "websockets==14.0",
   "pyjwt==2.9.0",
   "supabase==2.11.0",
   "types-aiobotocore-bedrock-runtime==2.11.2",
