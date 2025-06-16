@@ -9,9 +9,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_2_point_5_flash_code_query_solver_prompt import (
-    Gemini2Point5FlashCodeQuerySolverPrompt,
-)
 from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
     BaseGemini2Point5FlashPromptHandler,
 )
@@ -23,6 +20,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.thinking.gemini_2_point_5_pro_thinking_parser import (
     Gemini2Point5ProThinkingParser,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_2_point_5_flash_code_query_solver_prompt import (
+    Gemini2Point5FlashCodeQuerySolverPrompt,
 )
 
 

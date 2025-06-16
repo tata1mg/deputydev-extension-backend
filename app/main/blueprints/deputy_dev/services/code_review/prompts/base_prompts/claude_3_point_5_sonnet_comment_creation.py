@@ -234,7 +234,6 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
 
     @classmethod
     def get_tools_configurable_system_message(cls, params) -> str:
-
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.
