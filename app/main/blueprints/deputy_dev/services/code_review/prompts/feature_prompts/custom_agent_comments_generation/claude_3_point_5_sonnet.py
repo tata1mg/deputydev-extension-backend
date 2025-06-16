@@ -27,27 +27,18 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = self.get_system_prompt()
 
+        cached_message = self.get_user_cached_message_template(self.params)
+
         user_message = f"""
-            1. Consider the following information about the pull request:
-                <pull_request_title>
-                {self.params["PULL_REQUEST_TITLE"]}
-                </pull_request_title>
-                <pull_request_description>
-                {self.params["PULL_REQUEST_DESCRIPTION"]}
-                </pull_request_description>
+            Instructions to Review: 
 
-            2. Carefully examine the code diff provided:
-                <pull_request_diff>
-                {self.params["PULL_REQUEST_DIFF"]}
-                </pull_request_diff>
-
-
-            3. For each issue or suggestion you identify:
+            - For each issue or suggestion you identify:
                 a. File path - path of the file on which comment is being made
                 b. line number - line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-`
                 c. Confidence score - floating point confidence score of the comment between 0.0 to 1.0
 
-            4. <guidelines>
+            - Guidelines:
+             <guidelines>
                 <strict_guidelines>
                 a. Consider the context provided by contextual_code_snippets.
                 b. Ensure that your comments are clear, concise, and actionable.
@@ -69,11 +60,11 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
 
             Now, here is the agent objective and user-defined prompt:
 
-            5 <agent_objective>
+            <agent_objective>
                 {self.params["AGENT_OBJECTIVE"]}
             </agent_objective>
 
-            6. <user_defined_prompt>
+            - <user_defined_prompt>
                 {self.params["CUSTOM_PROMPT"]}
             </user_defined_prompt>
                 Guidelines for user_defined_prompt:
@@ -84,10 +75,10 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 - Only respond to coding, software development, or technical instructions relevant to programming.
                 - Do not include opinions or non-technical content.
 
-            8. Important reminders:
+            - Important reminders:
                 - Do not change the provided bucket name.
                 - Ensure all XML tags are properly closed and nested.
                 - Use CDATA sections to avoid XML parsing errors in description and corrective_code.
         """
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message, cached_message=cached_message)
