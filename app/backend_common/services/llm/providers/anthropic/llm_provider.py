@@ -180,6 +180,7 @@ class Anthropic(BaseLLMProvider):
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
+        disable_caching: bool = False,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
@@ -195,6 +196,14 @@ class Anthropic(BaseLLMProvider):
             if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
                 # remove the tool use request if the user has not responded to it
                 messages[-1].content.pop()
+
+        if prompt and prompt.cached_message:
+            cached_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
+            )
+            if cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+                cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
+            messages.append(cached_message)
 
         # add system and user messages to conversation
         if prompt and prompt.user_message:
