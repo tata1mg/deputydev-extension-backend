@@ -19,6 +19,4 @@ class TestDbConnection:
             limit=100,
             order_by=[],
         )
-        # rows = await Repos.all()
-        # rows = await Repos.all()
         return rows

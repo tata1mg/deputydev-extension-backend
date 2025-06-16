@@ -2,9 +2,9 @@ from typing import Optional
 
 from sanic.log import logger
 
-from app.backend_common.repository.db import DB
 from app.backend_common.models.dao.postgres.chat_attachments import ChatAttachments
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO, ChatAttachmentsData
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsData, ChatAttachmentsDTO
+from app.backend_common.repository.db import DB
 
 
 class ChatAttachmentsRepository:

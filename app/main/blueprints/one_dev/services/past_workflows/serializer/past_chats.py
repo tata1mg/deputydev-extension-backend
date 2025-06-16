@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO, MessageType, TextBlockData, FileBlockData
+from app.backend_common.models.dto.message_thread_dto import FileBlockData, MessageThreadDTO, MessageType, TextBlockData
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
