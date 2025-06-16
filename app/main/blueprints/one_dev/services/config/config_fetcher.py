@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
+
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
     ConfigParams,

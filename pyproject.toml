@@ -1,6 +1,6 @@
 [project]
 name = "deputydev"
-version = "8.5.1"
+version = "8.5.3"
 description = ""
 authors = [{ name = "Deputy Dev", email = "deputydev@1mg.com" }]
 readme = "README.md"
@@ -39,13 +39,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.2.0",
     "ruff>=0.11.9",
 ]
 
-[tool.ruff]
-line-length = 120
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-docstring-code-format = true

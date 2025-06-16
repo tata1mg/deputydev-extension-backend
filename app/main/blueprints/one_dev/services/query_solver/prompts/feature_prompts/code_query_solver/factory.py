@@ -14,11 +14,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_4_sonnet_thinking_handler import (
     Claude4ThinkingCodeQuerySolverPromptHandler,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_pro_handler import (
-    Gemini2Point5ProCodeQuerySolverPromptHandler,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_flash_handler import (
     Gemini2Point5FlashCodeQuerySolverPromptHandler,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_pro_handler import (
+    Gemini2Point5ProCodeQuerySolverPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_4_point_1 import (
     Gpt4Point1Prompt,

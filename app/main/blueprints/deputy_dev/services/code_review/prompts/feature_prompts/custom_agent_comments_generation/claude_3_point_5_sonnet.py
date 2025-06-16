@@ -81,4 +81,6 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
                 - Use CDATA sections to avoid XML parsing errors in description and corrective_code.
         """
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message, cached_message=cached_message)
+        return UserAndSystemMessages(
+            user_message=user_message, system_message=system_message, cached_message=cached_message
+        )

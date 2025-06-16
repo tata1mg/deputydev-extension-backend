@@ -1,5 +1,6 @@
-from supabase import Client, create_client
 from torpedo import CONFIG
+
+from supabase import Client, create_client
 
 
 class SupabaseClient:
