@@ -87,4 +87,6 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
         if self.params.get("CUSTOM_PROMPT"):
             user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message, cached_message=cached_message)
+        return UserAndSystemMessages(
+            user_message=user_message, system_message=system_message, cached_message=cached_message
+        )

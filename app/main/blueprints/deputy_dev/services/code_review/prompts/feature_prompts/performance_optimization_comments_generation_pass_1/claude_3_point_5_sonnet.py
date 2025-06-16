@@ -24,7 +24,6 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
     def get_system_prompt(self) -> str:
         return self.get_tools_specific_system_message(self.params)
 
-
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = self.get_system_prompt()
 
@@ -139,4 +138,6 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
         if self.params.get("CUSTOM_PROMPT"):
             user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 
-        return UserAndSystemMessages(user_message=user_message, system_message=system_message, cached_message=cached_message)
+        return UserAndSystemMessages(
+            user_message=user_message, system_message=system_message, cached_message=cached_message
+        )

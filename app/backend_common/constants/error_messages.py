@@ -15,5 +15,3 @@ class ErrorMessages(Enum):
     QUEUE_MESSAGE_RETRY_EVENT = "Message Queue {queue_name} | Retried with error "
     QUEUE_TIMEOUT_ERROR = "Message Queue {queue_name} | Read Timeout Error"
     VCS_RATE_LIMIT_EVENT = "Message Queue {queue_name} | VCS rate limit breached with error "
-    # RETRIEVAL_FAIL_MSG = "Oops! We couldn't process your Lab report. Please make sure it's a valid format and try again",
-    # RETRIEVAL_FAIL_MSG =  "Oops! We couldn't process your image. Please make sure it's a valid format and try again"
