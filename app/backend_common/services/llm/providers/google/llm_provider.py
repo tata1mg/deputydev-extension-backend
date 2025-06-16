@@ -149,6 +149,7 @@ class Google(BaseLLMProvider):
             tools=True, system_message=True, conversation=True
         ),
         search_web: bool = False,
+        disable_caching: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
