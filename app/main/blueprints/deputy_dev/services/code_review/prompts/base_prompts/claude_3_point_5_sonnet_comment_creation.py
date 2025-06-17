@@ -207,6 +207,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         
         4. Stop gathering context when you have sufficient information to make an assessment
         5. Limit total tool calls to 8-10 maximum for any PR size
+        6. Prioritize high-impact changes over minor style issues
         </tool_usage_strategy>
         
         <investigation_process>
