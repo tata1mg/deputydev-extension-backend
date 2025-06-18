@@ -1,4 +1,3 @@
-"""Extending Sanic Error Handler for Torpedo."""
 from __future__ import annotations
 from deputydev_core.utils.context_value import ContextValue
 
