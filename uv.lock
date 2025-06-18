@@ -474,7 +474,7 @@ wheels = [
 
 [[package]]
 name = "deputydev"
-version = "8.5.3"
+version = "8.5.6"
 source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
