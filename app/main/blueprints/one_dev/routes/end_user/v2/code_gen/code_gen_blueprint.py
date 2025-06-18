@@ -100,12 +100,37 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     session_type: Optional[str] = None
     auth_error: bool
     auth_data: Optional[AuthData] = None
+    # support older versions of the client
+    if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">="):
+        # TODO: Remove this when we have a proper way to handle this
+        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+
+        auth_data: Optional[AuthData] = None
+        auth_error: bool = False
+        try:
+            auth_data, _ = await get_auth_data(_request)
+        except Exception:
+            auth_error = True
+            auth_data = None
+        if auth_data:
+            session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
+            _request.json["session_id"] = session_data.id
+
+    else:
+        session_id = connection_data["session_id"]
+        session_type = connection_data["session_type"]
+        auth_error: bool = connection_data["auth_error"]
+        auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
+
+    is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
     aws_client = AWSAPIGatewayServiceClient()
-    is_local: bool = _request.headers.get("X-Is-Local") == "true"
     await aws_client.init_client(
         endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
     )
+
     async def push_to_connection_stream(data: Dict[str, Any]):
         nonlocal connection_id
         nonlocal is_local
@@ -123,38 +148,6 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                     )
                 except SocketClosedException:
                     connection_id_gone = True
-    # support older versions of the client
-    if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">="):
-        # TODO: Remove this when we have a proper way to handle this
-        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
-
-        auth_data: Optional[AuthData] = None
-        auth_error: bool = False
-        try:
-            auth_data, response_headers = await get_auth_data(_request)
-            if "new_session_data" in response_headers:
-                response_headers = {"type": "RESPONSE_HEADERS", "headers": response_headers}
-                await push_to_connection_stream(response_headers)
-        except Exception:
-            auth_error = True
-            auth_data = None
-        if auth_data:
-            session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
-            _request.json["session_id"] = session_data.id
-
-
-    else:
-        session_id = connection_data["session_id"]
-        session_type = connection_data["session_type"]
-        auth_error: bool = connection_data["auth_error"]
-        auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
-
-
-
-
-
 
     if auth_error or not auth_data:
         error_data = {"type": "STREAM_ERROR", "message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
@@ -256,6 +249,8 @@ async def terminal_command_edit(
 
 # This is for testing purposes only
 # This mocks the AWS api gateway connection
+
+
 @code_gen_v2_bp.websocket("/generate-code-local-connection")
 async def sse_websocket(request: Request, ws: Any):
     try:
