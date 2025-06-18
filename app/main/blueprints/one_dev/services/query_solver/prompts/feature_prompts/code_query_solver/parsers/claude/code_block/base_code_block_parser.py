@@ -4,11 +4,9 @@ from typing import List, Optional, Tuple
 from pydantic import BaseModel
 
 from app.backend_common.services.llm.dataclasses.main import TextBlockDelta
-
 from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
     BaseAnthropicTextDeltaParser,
 )
-
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockDeltaContent,
@@ -75,11 +73,6 @@ class CodeBlockParser(BaseAnthropicTextDeltaParser):
                         )  # replace only the first instance of the udiff line start
                         if self.udiff_line_start == "+":
                             self.added_lines += 1
-                    # if self.udiff_line_start == "@@":
-                    #     # skip till the last @@ in the line and add the line to the text buffer
-                    #     last_index = pre_line_part.rfind("@@")
-                    #     addable_part = pre_line_part[last_index + 3 :]  # to handle last '@@ '
-                    #     self.text_buffer += addable_part + "\n" if addable_part else ""
                     if self.udiff_line_start == "-":
                         self.removed_lines += 1
                     self.udiff_line_start = await self._get_udiff_line_start(self.diff_line_buffer.lstrip("\n\r"))

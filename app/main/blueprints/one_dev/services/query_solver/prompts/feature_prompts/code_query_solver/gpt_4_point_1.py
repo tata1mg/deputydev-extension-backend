@@ -1,37 +1,34 @@
-import textwrap
-from app.backend_common.services.llm.dataclasses.main import (
-    StreamingEvent,
-    NonStreamingResponse,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gpt_4_point_1 import (
-    StreamingTextEventProcessor,
-    ToolUseEventParser,
-    TextBlockEventParser,
-)
-from app.backend_common.models.dto.message_thread_dto import LLModels
 import json
+import textwrap
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
 from pydantic import BaseModel
+from torpedo import CONFIG
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
     MessageData,
     TextBlockData,
     ToolUseRequestData,
 )
-
+from app.backend_common.services.llm.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingEvent,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
 from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1 import (
     BaseGpt4Point1Prompt,
 )
-
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
-from torpedo import CONFIG
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gpt_4_point_1 import (
+    StreamingTextEventProcessor,
+    TextBlockEventParser,
+    ToolUseEventParser,
+)
 
 
 class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
