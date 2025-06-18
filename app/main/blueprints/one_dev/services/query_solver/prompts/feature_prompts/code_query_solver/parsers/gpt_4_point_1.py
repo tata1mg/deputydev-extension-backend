@@ -1,4 +1,9 @@
 import re
+from typing import AsyncIterator, List, Optional, Tuple, Union
+
+from partial_json_parser import loads
+from pydantic import BaseModel
+
 from app.backend_common.services.llm.dataclasses.main import (
     StreamingEvent,
     StreamingEventType,
@@ -26,10 +31,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     ThinkingBlockEnd,
     ThinkingBlockStart,
 )
-
-from partial_json_parser import loads
-from typing import AsyncIterator, List, Optional, Tuple, Union
-from pydantic import BaseModel
 
 
 class ToolUseEventParser:

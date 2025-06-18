@@ -6,10 +6,15 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, 
 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.exception import RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
+    ExtendedThinkingData,
+    FileBlockData,
+    FileContent,
     LLModels,
     MessageCallChainCategory,
     MessageThreadActor,
@@ -22,11 +27,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
     ToolUseResponseData,
-    FileBlockData,
-    FileContent,
-    ExtendedThinkingData,
-    ExtendedThinkingContent,
 )
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
@@ -55,10 +57,11 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
-from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
+
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -423,6 +426,7 @@ class LLMHandler(Generic[PromptFeatures]):
             user_and_system_messages = UserAndSystemMessages(system_message=prompt_handler.get_system_prompt())
         for i in range(0, max_retry):
             try:
+                disable_caching = getattr(prompt_handler, "disable_caching", False)
                 llm_payload = await client.build_llm_payload(
                     llm_model,
                     prompt=user_and_system_messages,
@@ -435,6 +439,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     feedback=feedback,
                     attachment_data_task_map=attachment_data_task_map,
                     search_web=search_web,
+                    disable_caching=disable_caching,
                 )
 
                 # Check if task is cancelled before making LLM call

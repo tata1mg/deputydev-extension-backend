@@ -132,8 +132,26 @@ class MultiAgentPRReviewManager:
 
         # segregate agents in realtime based on whether they should execute or not
         runnable_agents = [agent for agent in all_agents if await agent.should_execute()]
-        agent_tasks = [agent.run_agent(session_id=self.session_id) for agent in runnable_agents]
-        agent_tasks_results = await asyncio.gather(*agent_tasks, return_exceptions=False)
+
+        cache_establishing_agents = [
+            agent
+            for agent in runnable_agents
+            if agent.agent_type in [AgentTypes.SECURITY, AgentTypes.CODE_MAINTAINABILITY]
+        ]
+        cache_utilizing_agents = [
+            agent
+            for agent in runnable_agents
+            if agent.agent_type not in [AgentTypes.SECURITY, AgentTypes.CODE_MAINTAINABILITY]
+        ]
+
+        cache_establishing_tasks = [agent.run_agent(session_id=self.session_id) for agent in cache_establishing_agents]
+        cache_establishing_results = await asyncio.gather(*cache_establishing_tasks, return_exceptions=False)
+
+        # Run cache-utilizing agents after cache is up
+        cache_utilizing_tasks = [agent.run_agent(session_id=self.session_id) for agent in cache_utilizing_agents]
+        cache_utilizing_results = await asyncio.gather(*cache_utilizing_tasks, return_exceptions=False)
+
+        agent_tasks_results = cache_establishing_results + cache_utilizing_results
         non_error_results = [
             task_result for task_result in agent_tasks_results if not isinstance(task_result, BaseException)
         ]

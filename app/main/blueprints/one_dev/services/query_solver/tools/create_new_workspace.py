@@ -1,4 +1,5 @@
 import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 CREATE_NEW_WORKSPACE = ConversationTool(

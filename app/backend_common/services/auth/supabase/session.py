@@ -102,4 +102,4 @@ class SupabaseSession:
         except APIError as e:
             if e.code == "PGRST116":
                 return {"status": AuthStatus.PENDING.value}
-            raise APIError
+            raise e

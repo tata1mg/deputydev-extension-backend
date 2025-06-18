@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import asyncio
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
 from deputydev_core.utils.config_manager import ConfigManager
@@ -39,6 +39,7 @@ class BaseLLMProvider(ABC):
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
+        disable_caching: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.
