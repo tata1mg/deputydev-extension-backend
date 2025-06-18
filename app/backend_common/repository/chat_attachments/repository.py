@@ -2,9 +2,9 @@ from typing import Optional
 
 from sanic.log import logger
 
-from app.backend_common.repository.db import DB
 from app.backend_common.models.dao.postgres.chat_attachments import ChatAttachments
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO, ChatAttachmentsData
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsData, ChatAttachmentsDTO
+from app.backend_common.repository.db import DB
 
 
 class ChatAttachmentsRepository:
@@ -43,7 +43,7 @@ class ChatAttachmentsRepository:
                 f"error occurred while creating/updating chat_attachment in db for data : {chat_attachment_data.model_dump(mode='json')}, ex: {ex}"
             )
             raise ex
-        
+
     @classmethod
     async def update_attachment_status(cls, attachment_id: int, status: str) -> Optional[ChatAttachmentsDTO]:
         try:
@@ -54,5 +54,7 @@ class ChatAttachmentsRepository:
                 payload={"status": status},
             )
         except Exception as ex:
-            logger.error(f"error occurred while updating chat_attachment status in db for id : {attachment_id}, ex: {ex}")
+            logger.error(
+                f"error occurred while updating chat_attachment status in db for id : {attachment_id}, ex: {ex}"
+            )
             raise ex

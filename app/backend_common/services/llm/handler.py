@@ -6,10 +6,15 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, 
 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.exception import RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
+    ExtendedThinkingData,
+    FileBlockData,
+    FileContent,
     LLModels,
     MessageCallChainCategory,
     MessageThreadActor,
@@ -22,11 +27,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
     ToolUseResponseData,
-    FileBlockData,
-    FileContent,
-    ExtendedThinkingData,
-    ExtendedThinkingContent,
 )
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
@@ -55,9 +57,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
-from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -284,7 +284,11 @@ class LLMHandler(Generic[PromptFeatures]):
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
     async def parse_llm_response_data(
-        self, llm_response: UnparsedLLMCallResponse, prompt_handler: BasePrompt, query_id: int
+        self,
+        llm_response: UnparsedLLMCallResponse,
+        prompt_handler: BasePrompt,
+        query_id: int,
+        llm_response_storage_task: asyncio.Task[None],
     ) -> ParsedLLMCallResponse:
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             parsed_stream = await prompt_handler.get_parsed_streaming_events(llm_response)
@@ -298,6 +302,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 prompt_id=prompt_handler.prompt_type,
                 accumulated_events=llm_response.accumulated_events,
                 query_id=query_id,
+                llm_response_storage_task=llm_response_storage_task,
             )
         else:
             parsed_content = prompt_handler.get_parsed_result(llm_response)
@@ -342,7 +347,9 @@ class LLMHandler(Generic[PromptFeatures]):
         for message in previous_responses:
             for data in message.message_data:
                 if data.type == ContentBlockCategory.FILE:
-                    result = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=data.content.attachment_id)
+                    result = await ChatAttachmentsRepository.get_attachment_by_id(
+                        attachment_id=data.content.attachment_id
+                    )
                     if result and result.status == "deleted":
                         continue
                     previous_attachments.append(
@@ -415,6 +422,7 @@ class LLMHandler(Generic[PromptFeatures]):
             user_and_system_messages = UserAndSystemMessages(system_message=prompt_handler.get_system_prompt())
         for i in range(0, max_retry):
             try:
+                disable_caching = getattr(prompt_handler, "disable_caching", False)
                 llm_payload = await client.build_llm_payload(
                     llm_model,
                     prompt=user_and_system_messages,
@@ -427,6 +435,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     feedback=feedback,
                     attachment_data_task_map=attachment_data_task_map,
                     search_web=search_web,
+                    disable_caching=disable_caching,
                 )
 
                 llm_response = await client.call_service_client(
@@ -434,20 +443,8 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 # start task for storing LLM message in DB
-                if stream:
-                    asyncio.create_task(
-                        self.store_llm_response_in_db(
-                            llm_response,
-                            session_id,
-                            prompt_type=prompt_type,
-                            prompt_category=prompt_handler.prompt_category,
-                            llm_model=llm_model,
-                            query_id=query_id,
-                            call_chain_category=call_chain_category,
-                        )
-                    )
-                else:
-                    await self.store_llm_response_in_db(
+                llm_response_storage_task = asyncio.create_task(
+                    self.store_llm_response_in_db(
                         llm_response,
                         session_id,
                         prompt_type=prompt_type,
@@ -456,10 +453,18 @@ class LLMHandler(Generic[PromptFeatures]):
                         query_id=query_id,
                         call_chain_category=call_chain_category,
                     )
+                )
+
+                # if not streaming, ensure storage is done before sending response
+                if not stream:
+                    await llm_response_storage_task
 
                 # Parse the LLM response
                 parsed_response = await self.parse_llm_response_data(
-                    llm_response=llm_response, prompt_handler=prompt_handler, query_id=query_id
+                    llm_response=llm_response,
+                    prompt_handler=prompt_handler,
+                    query_id=query_id,
+                    llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
 

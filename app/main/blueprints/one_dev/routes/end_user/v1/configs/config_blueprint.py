@@ -39,7 +39,9 @@ async def get_essential_configs(_request: Request, **kwargs):
         params = ConfigParams(**query_params)
     except Exception:
         raise BadRequestException(error="Invalid query params", sentry_raise=False)
-    response = await ConfigFetcher.fetch_configs(params=params, config_type=ConfigType.ESSENTIAL, client_data=client_data)
+    response = await ConfigFetcher.fetch_configs(
+        params=params, config_type=ConfigType.ESSENTIAL, client_data=client_data
+    )
     return send_response(response)
 
 
