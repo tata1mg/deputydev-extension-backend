@@ -50,7 +50,9 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.services.tiktoken import TikToken
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 
 class Google(BaseLLMProvider):
     def __init__(self):
@@ -308,89 +310,63 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str = None
+        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str = None, session_id: Optional[int] = None
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed = False
         
         # Manual token counting for when final usage is not available
-        tiktoken_client = TikToken()
-        manual_output_tokens = 0
-        accumulated_text = ""
-        accumulated_tool_params = ""
-        final_usage_available = False
-        
+
         accumulated_events = []
 
         async def stream_content() -> AsyncIterator[StreamingEvent]:
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
-            nonlocal final_usage_available
-            nonlocal accumulated_text
-            nonlocal accumulated_tool_params
+            nonlocal session_id
+            # Use cancellation checker if we have a session_id
+            checker = CancellationChecker(session_id) if session_id else None
+            
+            if checker:
+                await checker.start_monitoring()
+            
             self._active_streams[stream_id] = response
             current_running_block_type: Optional[ContentBlockCategory] = None
             try:
                 async for chunk in response:
-                    # Check for task cancellation
-                    if asyncio.current_task() and asyncio.current_task().cancelled():
-                        break
-                        
+                    if checker and checker.is_cancelled():
+                        raise asyncio.CancelledError()
+                       
                     try:
                         event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
                             chunk, current_running_block_type
                         )
                         if event_usage:
                             usage += event_usage
-                            final_usage_available = True
                         if event_blocks:
                             current_running_block_type = event_block_category
                             for event_block in event_blocks:
                                 # Manual token counting for streaming content
-                                try:
-                                    if event_block.type == StreamingEventType.TEXT_BLOCK_DELTA  :
-                                        accumulated_text += event_block.content.text
-                                    elif event_block.type == StreamingEventType.TOOL_USE_REQUEST_DELTA :
-                                        accumulated_tool_params += event_block.content.input_params_json_delta
-                                except Exception as e:
-                                    AppLogger.log_error(f"Error in manual token counting: {e}")
-                                
                                 accumulated_events.append(event_block)
                                 yield event_block
                     except Exception:
-                        # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                         pass
-            except asyncio.CancelledError:
-                pass
             except Exception as e:
                 AppLogger.log_error(f"Streaming Error in Goggle: {e}")
             finally:
+                if checker:
+                    await checker.stop_monitoring()
                 streaming_completed = True
                 await close_client()
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            nonlocal final_usage_available
-            nonlocal manual_output_tokens
-            nonlocal accumulated_text
-            nonlocal accumulated_tool_params
             while not streaming_completed:
                 await asyncio.sleep(0.1)
 
-            # Return final usage if available, otherwise return manual count
-            if final_usage_available and (usage.input > 0 or usage.output > 0):
-                return usage
-            else:
-                if accumulated_text:
-                    manual_output_tokens += tiktoken_client.count(accumulated_text, model="gpt-4o")
-                    accumulated_text=""
-                if accumulated_events:
-                    manual_output_tokens += tiktoken_client.count(accumulated_tool_params, model="gpt-4o")
-                    accumulated_tool_params=""
-                return LLMUsage(input=0, output=manual_output_tokens, cache_read=0, cache_write=0)
+            return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
@@ -478,6 +454,7 @@ class Google(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         response_schema=None,
+        session_id: Optional[int] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the Vertex AI service client.
@@ -507,7 +484,7 @@ class Google(BaseLLMProvider):
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
             )
-            return await self._parse_streaming_response(response, stream_id)
+            return await self._parse_streaming_response(response, stream_id, session_id)
         else:
             response = await client.get_llm_non_stream_response(
                 model_name=vertex_model_name,

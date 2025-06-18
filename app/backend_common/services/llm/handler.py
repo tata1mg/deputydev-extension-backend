@@ -58,6 +58,7 @@ from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from deputydev_core.utils.config_manager import ConfigManager
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -434,7 +435,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     raise asyncio.CancelledError("LLM task cancelled before service call")
                 
                 llm_response = await client.call_service_client(
-                    llm_payload, llm_model, stream=stream, response_type=response_type
+                    llm_payload, llm_model, stream=stream, response_type=response_type, session_id=session_id
                 )
 
                 # start task for storing LLM message in DB
@@ -473,7 +474,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 raise  # Re-raise to properly propagate the exception
             except asyncio.CancelledError:
                 AppLogger.log_warn("LLM response task was cancelled")
-                break
+                raise  # Re-raise to properly propagate cancellation
             except json.JSONDecodeError as e:
                 AppLogger.log_debug(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry} JSON decode error: {e}")
@@ -619,6 +620,7 @@ class LLMHandler(Generic[PromptFeatures]):
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
+        save_to_redis: bool = False
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -659,6 +661,8 @@ class LLMHandler(Generic[PromptFeatures]):
             attachmnts=attachments,
             call_chain_category=call_chain_category,
         )
+        if save_to_redis:
+            await CodeGenTasksCache.set_session_query_id(prompt_thread.session_id, prompt_thread.id)
         return await self.fetch_and_parse_llm_response(
             client=client,
             session_id=session_id,

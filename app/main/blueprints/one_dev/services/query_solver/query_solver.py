@@ -79,7 +79,7 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
-from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
+
 
 from .prompts.factory import PromptFeatureFactory
 
@@ -184,7 +184,7 @@ class QuerySolver:
             async for data_block in llm_response.parsed_content:
                 # Check if the current task is cancelled
                 if asyncio.current_task() and asyncio.current_task().cancelled():
-                    break
+                    raise asyncio.CancelledError("Task cancelled in QuerySolver")
                     
                 if data_block.type in [
                     StreamingContentBlockType.SUMMARY_BLOCK_START,
@@ -217,7 +217,7 @@ class QuerySolver:
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False) -> AsyncIterator[BaseModel]:
         print(payload.model_dump(mode="json"))
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
@@ -289,11 +289,8 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
+                save_to_redis= save_to_redis
             )
-            
-            if isinstance(llm_response, StreamingParsedLLMCallResponse) and llm_response.query_id:
-                await CodeGenTasksCache.set_session_query_id(payload.session_id, llm_response.query_id)
-            
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
