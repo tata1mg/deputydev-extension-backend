@@ -22,12 +22,11 @@ class CodeGenTasksCache(Base):
         return {}
 
     @classmethod
-    async def _set_session_data(cls, session_id: int, data: Dict[str, Any]) -> None:
+    async def set_session_data(cls, session_id: int, data: Dict[str, Any]) -> None:
         """Set all session data to a single Redis key"""
         key = f"session:{session_id}"
         data_curr = await cls._get_session_data(session_id)
         if data_curr is not None:
-            data["query_id"] = data.get("query_id",data_curr.get("query_id",None) )
             data["cancelled"] = data.get("cancelled",data_curr.get("cancelled",False)) 
         await cls.set(key, json.dumps(data))
 
@@ -40,7 +39,7 @@ class CodeGenTasksCache(Base):
     async def cancel_session(cls, session_id: int) -> None:
         data = await cls._get_session_data(session_id)
         data["cancelled"] = True
-        await cls._set_session_data(session_id, data)
+        await cls.set_session_data(session_id, data)
 
 
     @classmethod
@@ -55,7 +54,7 @@ class CodeGenTasksCache(Base):
         """Set the query_id for the session"""
         data = await cls._get_session_data(session_id)
         data["query_id"] = query_id
-        await cls._set_session_data(session_id, data)
+        await cls.set_session_data(session_id, data)
 
     @classmethod
     async def get_session_data_for_db(cls, session_id: int) -> tuple[Optional[str], Optional[str], Optional[int]]:

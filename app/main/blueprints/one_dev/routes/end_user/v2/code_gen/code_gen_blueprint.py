@@ -1,7 +1,6 @@
 import asyncio
 import json
 import uuid
-import xxhash
 from typing import Any, Dict, List, Optional
 import httpx
 from deputydev_core.utils.app_logger import AppLogger
@@ -17,21 +16,6 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    MessageCallChainCategory,
-    MessageThreadActor,
-    MessageThreadData,
-    MessageType,
-    TextBlockContent,
-    TextBlockData,
-    LLModels,
-)
-from app.backend_common.repository.message_threads.repository import (
-    MessageThreadsRepository,
-)
-
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
@@ -67,12 +51,7 @@ from app.main.blueprints.one_dev.utils.session import (
     get_valid_session_data,
 )
 
-from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
-    QuerySummarysRepository,
-)
-from app.main.blueprints.one_dev.models.dto.query_summaries import (
-    QuerySummaryData,
-)
+from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 
@@ -100,7 +79,7 @@ async def solve_user_query_non_stream(
     if payload.llm_model:
         session_data["llm_model"] = payload.llm_model.value
     if session_data:
-        await CodeGenTasksCache._set_session_data(session_id, session_data)
+        await CodeGenTasksCache.set_session_data(session_id, session_data)
 
     blocks = []
 
@@ -112,20 +91,12 @@ async def solve_user_query_non_stream(
 
     # Create a task for this non-streaming request too for potential cancellation
     async def solve_query_task():
-        checker = CancellationChecker(session_id)
         try:
-            await checker.start_monitoring()
             try:
                 data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
 
                 last_block = None
                 async for data_block in data:
-                    # Check if task was cancelled via Redis checker
-                    if checker.is_cancelled():
-                        await CodeGenTasksCache.cleanup_session_data(session_id)
-                        blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled by session"})
-                        raise asyncio.CancelledError("Task cancelled by session")
-
                     last_block = data_block
                     blocks.append(data_block.model_dump(mode="json"))
 
@@ -140,12 +111,8 @@ async def solve_user_query_non_stream(
             except Exception as ex:
                 AppLogger.log_error(f"Error in solving query: {ex}")
                 blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
-        finally:
-            # Always stop monitoring
-            try:
-                await checker.stop_monitoring()
-            except Exception:
-                pass  # Ignore cleanup errors
+        except Exception as e:
+            AppLogger.log_error(f"Error in solving query: {e}")
         return blocks
 
     # Create and execute task without global tracking
@@ -185,14 +152,10 @@ async def solve_user_query(_request: Request, **kwargs: Any):
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
     aws_client = AWSAPIGatewayServiceClient()
-    try:
-        await aws_client.init_client(
-            endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
-        )
-    except asyncio.CancelledError:
-        pass
-    finally:
-        await aws_client.close()
+    await aws_client.init_client(
+        endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
+    )
+
 
     async def push_to_connection_stream(data: Dict[str, Any]):
         nonlocal connection_id
@@ -261,31 +224,21 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         user_team_id=user_team_id,
     )
 
-
-    AppLogger.log_info(f"Starting new stream query for session {payload.session_id}")
-
     # Store the active query and LLM model for potential cancellation
     session_data = {}
     if payload.query:
         session_data["query"] = payload.query
-    if payload.llm_model:
-        session_data["llm_model"] = payload.llm_model.value
-    if session_data:
-        await CodeGenTasksCache._set_session_data(payload.session_id, session_data)
+        if payload.llm_model:
+            session_data["llm_model"] = payload.llm_model.value
+        if session_data:
+            await CodeGenTasksCache.set_session_data(payload.session_id, session_data)
 
     async def solve_query():
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
 
-        current_session_id = payload.session_id if hasattr(payload, 'session_id') and payload.session_id else None
 
-        # Use cancellation checker if we have a session_id
-        checker = CancellationChecker(current_session_id) if current_session_id else None
-        task_cancelled = False
-        
-        if checker:
-            await checker.start_monitoring()
 
         try:
             # Mark session as active if we have session_id
@@ -294,18 +247,12 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             if auth_data.session_refresh_token:
                 start_data["new_session_data"] = auth_data.session_refresh_token
             await push_to_connection_stream(start_data)
-            data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
+            data = await QuerySolver().solve_query(payload=payload, client_data=client_data, save_to_redis=True)
             last_block = None
             # push data to stream
             async for data_block in data:
                 # Check if task was cancelled via Redis checker
-                if checker and checker.is_cancelled():
-                    task_cancelled = True
-                    raise asyncio.CancelledError("Task cancelled by session")
-                    
-                if task_cancelled:
-                    break
-                    
+ 
                 last_block = data_block
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
 
@@ -322,25 +269,15 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         except asyncio.CancelledError:
             cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled "}
             await push_to_connection_stream(cancel_data)
-            raise
         except Exception as ex:
             # push error message to stream
             error_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(error_data)
         finally:
             # Stop the cancellation checker
-            try:
-                if checker:
-                    await checker.stop_monitoring()
-            except Exception:
-                pass  
-            
             await aws_client.close()
 
     task = asyncio.create_task(solve_query())
-    
-    # Store task data in Redis for session tracking
-    current_session_id = payload.session_id if hasattr(payload, 'session_id') and payload.session_id else None
     
     return send_response({"status": "SUCCESS"})
 
@@ -397,57 +334,7 @@ async def terminal_command_edit(
 async def cancel_chat(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ):
-    original_query, stored_llm_model, existing_query_id = await CodeGenTasksCache.get_session_data_for_db(session_id)
-
-    if original_query:
-        try:
-            llm_model = LLModels(stored_llm_model)
-            # Create the cancelled query message
-            cancelled_query = f"[CANCELLED] {original_query}"
-
-            # Check if query_id already exists in Redis
-            if existing_query_id is None:
-                # Create new message thread only if query_id doesn't exist
-                data_hash = xxhash.xxh64(cancelled_query).hexdigest()
-                message_data = [
-                    TextBlockData(
-                        type=ContentBlockCategory.TEXT_BLOCK,
-                        content=TextBlockContent(text=cancelled_query),
-                        content_vars={"query": cancelled_query},
-                    )
-                ]
-
-                message_thread = MessageThreadData(
-                    session_id=session_id,
-                    actor=MessageThreadActor.USER,
-                    query_id=None,
-                    message_type=MessageType.QUERY,
-                    conversation_chain=[],
-                    message_data=message_data,
-                    data_hash=data_hash,
-                    prompt_type="CODE_QUERY_SOLVER",
-                    prompt_category="CODE_GENERATION",
-                    llm_model=llm_model,
-                    call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
-                )
-
-                created_thread = await MessageThreadsRepository.create_message_thread(message_thread)
-                cancelled_query_id = created_thread.id
-            else:
-                # Use existing query_id
-                cancelled_query_id = existing_query_id
-
-            # Always create a summary during cancellation
-            await QuerySummarysRepository.create_query_summary(
-                QuerySummaryData(
-                    session_id=session_id,
-                    query_id=cancelled_query_id,
-                    summary=cancelled_query,
-                )
-            )
-        except Exception as ex:
-            AppLogger.log_error(f"Error creating cancelled query entry: {ex}")
-            return None
+    await CancellationService().cancel(session_id) 
     await CodeGenTasksCache.cancel_session(session_id)
     await CodeGenTasksCache.cleanup_session_data(session_id)
     

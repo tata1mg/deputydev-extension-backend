@@ -53,7 +53,7 @@ class BaseLLMProvider(ABC):
         return ConfigManager.configs["LLM_MODELS"][model.value]
 
     async def call_service_client(
-        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None
+        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None, session_id: Optional[int] = None
     ) -> UnparsedLLMCallResponse:
         """
         Calls the LLM service client.
