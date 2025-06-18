@@ -676,15 +676,21 @@
         "PRESIGNED_URL_EXPIRY": 600,
         "MAX_BYTES": 5242880,
         "SUPPORTED_MIMETYPES": [
+            "application/json"
+        ],
+        "PAYLOAD_FOLDER_PATH": "chat_payloads"
+    },
+    "CHAT_IMAGE_UPLOAD": {
+        "PRESIGNED_URL_EXPIRY": 600,
+        "MAX_BYTES": 5242880,
+        "SUPPORTED_MIMETYPES": [
             "image/jpeg",
             "image/jpg",
             "image/png",
-            "image/webp",
-            "application/json"
+            "image/webp"
         ],
         "IMAGE_FOLDER_PATH": "chat_images",
-        "PAYLOAD_FOLDER_PATH": "chat_payloads"
-
+        "MAX_FILES": 5
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }
