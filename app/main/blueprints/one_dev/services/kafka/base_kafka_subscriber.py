@@ -16,6 +16,7 @@ def safe_json_deserializer(x):
         logger.error(f"Failed to deserialize message: {str(e)}")
         return None
 
+
 class BaseKafkaSubscriber(ABC):
     def __init__(self, config, topic_name):
         self.config = config
@@ -25,7 +26,7 @@ class BaseKafkaSubscriber(ABC):
             topic_name,
             bootstrap_servers=kafka_config.get("HOST"),
             group_id=kafka_config.get("GROUP_ID"),
-            value_deserializer=safe_json_deserializer
+            value_deserializer=safe_json_deserializer,
         )
 
     async def consume(self):
@@ -46,8 +47,7 @@ class BaseKafkaSubscriber(ABC):
                     await self._process_message(message)
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}")
-                    dlq_payload = {"data": message.value,
-                                   "type": message.value["event"]}
+                    dlq_payload = {"data": message.value, "type": message.value["event"]}
                     await FailedOperationsRepository.db_insert(dlq_payload)
         except Exception as e:
             logger.error(f"Kafka consumer error: {str(e)}")
