@@ -4,21 +4,49 @@ ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
     description="""
         Reads content of a file from a given start line number (1 indexed) to an end line number (1 indexed).
-        This tool can be used iteratively to read a file in chunks by just providing the offset line.
-        At once, it can read maximum of 100 lines.
-        If you do not know the end line number, just provide the end line number as start_line + 100.
-        It will let you know if the end of the file is reached.
-        To use this, a valid file path is required.
-        If you are not confident about import statements, then you can use this tool to read initial lines of the file to check imports.
+        This tool is designed for efficient iterative file reading with smart chunking strategies.
         
-        EFFICIENT USAGE:
-        - Calculate precisely which line ranges you need before calling
-        - Request 50-100 lines at once when appropriate
-        - Read entire functions/methods in a single call when possible
-        - Track where you left off to continue reading larger files
+        CORE CAPABILITIES:
+        - Reads up to 100 lines per call (enforced limit)
+        - Supports targeted reading based on line numbers
+        
+        EFFICIENT READING STRATEGIES:
+        
+        1. ALWAYS START WITH LARGER CHUNKS (100 lines minimum recommended):
+           - For unknown files: Start with lines 1-100, then 101-200, etc.
+           - For targeted reading: Read 100-line windows around your target area
+           - Avoid small chunks (20-50 lines) unless you know exactly what you need
+        
+        2. SMART TARGETING FOR PR REVIEWS:
+           - If reviewing changes at line 188: Read lines 100-200 first (covers context)
+           - If change is at line 45: Read lines 1-100 (captures imports + context)
+           - Always prefer reading AROUND the change area, not FROM the beginning
+        
+        3. CONTEXT-AWARE CHUNKING:
+           - For code files: Try to read complete functions/classes in one call
+           - For imports: Read first 50-100 lines to capture all import statements
+           - For specific functions: Calculate approximate line ranges and read entirely
+        
+        4. PROGRESSIVE EXPANSION:
+           - If you need more context after initial read, expand in 100-line increments
+           - Example: Read 100-200, then if needed 50-250 (overlapping for continuity)
+           - Don't restart from line 1 unless specifically analyzing file structure
+        
+        5. TERMINATION CONDITIONS:
+           - Stop reading when you have sufficient context for your task
+           - The response explicitly indicates if end of file is reached
+           - Don't continue reading if you found what you were looking for
 
-        Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
-        The response will EXPLICITLY mention if the end of the file is reached or not.
+        
+        BEST PRACTICES FOR PR REVIEWS:
+        - Identify changed line numbers first
+        - Calculate optimal reading windows around changes
+        - Read imports/dependencies if needed for context
+        - Focus on modified functions/classes and their immediate context
+        - Use overlapping reads only when necessary for continuity
+        - Avoid making many iterations for a single file
+        
+        Remember: Each call has cost implications. Maximize information per call while minimizing total iterations.
     """,
     input_schema=JSONSchema(
         **{

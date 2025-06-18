@@ -8,13 +8,15 @@ from deputydev_core.services.initialization.review_initialization_manager import
 )
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import ContextValueKeys
+from sanic import Sanic
 
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )
-from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import ReviewWeaviateSyncAndAsyncClients
-from sanic import Sanic
-from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import get_weaviate_connection
+from app.main.blueprints.deputy_dev.services.code_review.utils.weaviate_client import (
+    ReviewWeaviateSyncAndAsyncClients,
+    get_weaviate_connection,
+)
 
 
 class PRReviewInitializationService:

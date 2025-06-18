@@ -7,10 +7,14 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    ToolUseResponseContent,
+    ToolUseResponseData,
+)
 from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
     ConversationTool,
+    NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
@@ -28,6 +32,10 @@ from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.da
 from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import (
+    EXCEPTION_RAISED_FALLBACK,
+    NO_TOOL_USE_FALLBACK_PROMPT,
+)
 from app.main.blueprints.deputy_dev.services.code_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.tools.tool_request_manager import (
     ToolRequestManager,
@@ -36,14 +44,6 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
-from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import (
-    NO_TOOL_USE_FALLBACK_PROMPT,
-)
-from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
-from app.backend_common.models.dto.message_thread_dto import (
-    ToolUseResponseContent,
-    ToolUseResponseData,
-)
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):

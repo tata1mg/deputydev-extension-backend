@@ -1,13 +1,13 @@
+from app.backend_common.services.llm.dataclasses.main import (
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockStart,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     ThinkingBlockDelta,
     ThinkingBlockDeltaContent,
     ThinkingBlockEnd,
     ThinkingBlockStart,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    ExtendedThinkingBlockStart,
-    ExtendedThinkingBlockDelta,
-    ExtendedThinkingBlockEnd,
 )
 
 

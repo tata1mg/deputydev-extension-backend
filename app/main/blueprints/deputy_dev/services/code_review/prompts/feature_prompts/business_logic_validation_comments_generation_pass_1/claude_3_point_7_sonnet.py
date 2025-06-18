@@ -1,7 +1,8 @@
+from app.backend_common.models.dto.message_thread_dto import LLModels
+
 from .claude_3_point_5_sonnet import (
     Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt,
 )
-from app.backend_common.models.dto.message_thread_dto import LLModels
 
 
 class Claude3Point7BusinessLogicValidationCommentsGenerationPass1Prompt(

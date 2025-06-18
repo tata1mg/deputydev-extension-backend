@@ -44,12 +44,6 @@ from app.main.blueprints.deputydev_cli.app.ui.screens.repo_selection import (
     RepoSelection,
 )
 
-# log_stream = StringIO()
-# # Configure the root logger
-# logging.basicConfig(
-#     stream=log_stream,  # All logs go to this file
-#     level=logging.DEBUG,  # Capture all levels (DEBUG, INFO, WARNING, etc.)
-# )
 warnings.filterwarnings("ignore")
 
 
