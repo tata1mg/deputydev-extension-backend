@@ -452,7 +452,7 @@ wheels = [
 
 [[package]]
 name = "deputydev"
-version = "8.4.0"
+version = "8.5.1"
 source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
@@ -1497,7 +1497,7 @@ wheels = [
 
 [[package]]
 name = "realtime"
-version = "2.4.3"
+version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1505,9 +1505,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/fc/ef69bd4a1bf30a5435bc2d09f6c33bfef5f317746b1a4ca2932ef14b22fc/realtime-2.4.3.tar.gz", hash = "sha256:152febabc822ce60e11f202842c5aa6858ae4bd04920bfd6a00c1dd492f426b0", size = 18849, upload-time = "2025-04-28T19:50:38.387Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/9e/d6e478ccc23869a450a5d0dd9ab0c8a4e37fee7aec43c925d89bb09fcaf5/realtime-2.5.0.tar.gz", hash = "sha256:03d744dedc823de019a7f9917c1a6509fb6e98d357adf7fd7f4015618dac7ecd", size = 18865, upload-time = "2025-05-15T12:40:14.868Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/0c/68ce3db6354c466f68bba2be0fe0ad3a93dca8219e10b9bad3138077efec/realtime-2.4.3-py3-none-any.whl", hash = "sha256:09ff3b61ac928413a27765640b67362380eaddba84a7037a17972a64b1ac52f7", size = 22086, upload-time = "2025-04-28T19:50:37.01Z" },
+    { url = "https://files.pythonhosted.org/packages/52/09/a9ede9afa4a536ac84ad365bfa26116ab17463c8353f471b2396dc0e44d0/realtime-2.5.0-py3-none-any.whl", hash = "sha256:a54274a6cdc03c3eda61fbfec1d277e4a28e3aa9526d24b5c187385bb8a7e85a", size = 22086, upload-time = "2025-05-15T12:40:13.092Z" },
 ]
 
 [[package]]
