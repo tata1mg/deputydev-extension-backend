@@ -33,10 +33,6 @@ class DashboardFiltersManager:
         Raises:
             BadRequestException: If the database query fails.
         """
-        # this will be handled post authentication
-        # user_id = query_params.get("user_id")
-        # if user_id is None:
-        #     raise BadRequestException("User ID must be provided to retrieve teams.")
         query = DashboardQueries.teams_query.value
 
         try:

@@ -1,19 +1,19 @@
-from typing import Any, Dict, List, Optional, Literal, AsyncIterator
-from openai._streaming import AsyncStream
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional
 
 import httpx
 from deputydev_core.utils.singleton import Singleton
 from openai import AsyncOpenAI
+from openai._streaming import AsyncStream
 from openai.types.chat import ChatCompletion
-from torpedo import CONFIG
 from openai.types.responses import (
-    ResponseTextConfigParam,
+    Response,
     ResponseFormatTextJSONSchemaConfigParam,
+    ResponseTextConfigParam,
 )
-from openai.types.shared_params.response_format_text import ResponseFormatText
-from openai.types.shared_params.response_format_json_object import ResponseFormatJSONObject
 from openai.types.responses.response_stream_event import ResponseStreamEvent
-from openai.types.responses import Response
+from openai.types.shared_params.response_format_json_object import ResponseFormatJSONObject
+from openai.types.shared_params.response_format_text import ResponseFormatText
+from torpedo import CONFIG
 
 config = CONFIG.config
 

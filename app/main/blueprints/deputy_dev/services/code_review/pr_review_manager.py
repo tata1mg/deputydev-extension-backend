@@ -133,8 +133,6 @@ class PRReviewManager(BasePRReviewManager):
             raise ex
         finally:
             repo_service.delete_local_repo()
-            # initialisation_manager = ReviewInitialisationManager()
-            # await clean_weaviate_collections(initialisation_manager)
 
     @classmethod
     def check_no_pr_comments(cls, llm_response):

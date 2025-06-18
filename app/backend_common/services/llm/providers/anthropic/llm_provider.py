@@ -12,6 +12,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -24,18 +25,24 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockDeltaContent,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockEndContent,
+    ExtendedThinkingBlockStart,
     LLMCallResponseTypes,
     NonStreamingResponse,
     PromptCacheConfig,
+    RedactedThinking,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
@@ -50,17 +57,10 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStartContent,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
-    ExtendedThinkingBlockStart,
-    ExtendedThinkingBlockDelta,
-    ExtendedThinkingBlockDeltaContent,
-    ExtendedThinkingBlockEnd,
-    ExtendedThinkingBlockEndContent,
-    RedactedThinking,
 )
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
-from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 
 
@@ -180,12 +180,30 @@ class Anthropic(BaseLLMProvider):
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
+        disable_caching: bool = False,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
         messages: List[ConversationTurn] = await self.get_conversation_turns(
             previous_responses, attachment_data_task_map
         )
+
+        # remove last block from the messages if not tool response and last block is tool use request
+        if not tool_use_response and (
+            messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content
+        ):
+            last_content = messages[-1].content[-1]
+            if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
+                # remove the tool use request if the user has not responded to it
+                messages[-1].content.pop()
+
+        if prompt and prompt.cached_message:
+            cached_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
+            )
+            if cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+                cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
+            messages.append(cached_message)
 
         # add system and user messages to conversation
         if prompt and prompt.user_message:
