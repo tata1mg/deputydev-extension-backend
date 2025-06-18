@@ -1,9 +1,10 @@
 from typing import Optional
 
+from sanic.log import logger
+
 from app.backend_common.models.dao.postgres.subscription_plans import SubscriptionPlans
 from app.backend_common.models.dto.subscription_plans_dto import SubscriptionPlanDTO
 from app.backend_common.repository.db import DB
-from sanic.log import logger
 
 
 class SubscriptionPlansRepository:

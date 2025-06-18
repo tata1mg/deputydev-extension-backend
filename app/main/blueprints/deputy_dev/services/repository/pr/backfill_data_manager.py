@@ -174,12 +174,6 @@ class BackfillManager:
                     logger.info(f"Marked data to merge / decline state for PR row - {row['id']}")
             except Exception as error:
                 logger.info(f"Error occured for {row['id']} error: {error} pr_details: {pr_detail}")
-            # else:
-            #     await PRService.db_update(
-            #         payload={"pr_state": pr_detail["state"]},
-            #         filters={"id": row["id"]},
-            #     )
-            #     logger.info(f"Marked data to open state for PR row - {row['id']}")
 
     async def backfill_pr_approval_time(self, query_params):
         """

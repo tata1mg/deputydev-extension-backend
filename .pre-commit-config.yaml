@@ -1,14 +1,13 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.9  # replace with the latest if needed
     hooks:
-      - id: black
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    # Run the linter.
+    - id: ruff
+    # Run the formatter.
+    - id: ruff-format
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.3
     hooks:
-      - id: flake8
-        args: [ '--ignore=E501,E203' ]
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
+      - id: uv-lock

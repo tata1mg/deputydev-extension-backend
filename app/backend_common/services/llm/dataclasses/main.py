@@ -1,16 +1,16 @@
-from asyncio import Task
 import asyncio
+from asyncio import Task
 from enum import Enum
 from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     LLMUsage,
     ResponseData,
 )
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 
 
 class LLMCallResponseTypes(Enum):
@@ -27,6 +27,7 @@ class LLMMeta(BaseModel):
 class UserAndSystemMessages(BaseModel):
     user_message: Optional[str] = None
     system_message: Optional[str] = None
+    cached_message: Optional[str] = None
 
 
 class ConversationRole(Enum):
