@@ -78,18 +78,12 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
     QuerySummarysRepository,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 
-from .prompts.factory import PromptFeatureFactory
 
-MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING = "4.0.0"
-MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "5.0.0"
+from .prompts.factory import PromptFeatureFactory
 
 
 class QuerySolver:
@@ -202,6 +196,9 @@ class QuerySolver:
                 else:
                     yield data_block
 
+            # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
+            await llm_response.llm_response_storage_task
+
         return _streaming_content_block_generator()
 
     def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
@@ -217,40 +214,36 @@ class QuerySolver:
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False) -> AsyncIterator[BaseModel]:
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, ) -> AsyncIterator[BaseModel]:
         print(payload.model_dump(mode="json"))
         tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
+    def _get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        tools_to_use = [
+            ASK_USER_INPUT,
+            FOCUSED_SNIPPETS_SEARCHER,
+            FILE_PATH_SEARCHER,
+            ITERATIVE_FILE_READER,
+            GREP_SEARCH,
+            EXECUTE_COMMAND,
+            CREATE_NEW_WORKSPACE,
+            PUBLIC_URL_CONTENT_READER,
+        ]
+
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
-            tools_to_use.append(ITERATIVE_FILE_READER)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH, ">="):
-            tools_to_use.append(GREP_SEARCH)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
-            tools_to_use.append(EXECUTE_COMMAND)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
-            tools_to_use.append(CREATE_NEW_WORKSPACE)
-
-        if compare_version(
-            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
-        ):
-            tools_to_use.append(PUBLIC_URL_CONTENT_READER)
-        if payload.search_web and compare_version(
-            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH, ">="
-        ):
+        if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
-        if compare_version(client_data.client_version, MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR, ">="):
-            if payload.write_mode:
-                tools_to_use.append(REPLACE_IN_FILE)
-                tools_to_use.append(WRITE_TO_FILE)
+        if payload.write_mode:
+            tools_to_use.append(REPLACE_IN_FILE)
+            tools_to_use.append(WRITE_TO_FILE)
 
         for client_tool in payload.client_tools:
             tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
 
+        return tools_to_use
+
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False) -> AsyncIterator[BaseModel]:
+        tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
@@ -328,21 +321,16 @@ class QuerySolver:
                         ),
                     }
 
-            if compare_version(
-                client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="
-            ):
-                if payload.tool_use_failed:
-                    if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
-                        error_response = {
-                            "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                                tool_name=payload.tool_use_response.tool_name,
-                                error_type=tool_response.get("error_type", "Unknown"),
-                                error_message=tool_response.get(
-                                    "error_message", "An error occurred while using the tool."
-                                ),
-                            )
-                        }
-                        tool_response = error_response
+            if payload.tool_use_failed:
+                if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
+                    error_response = {
+                        "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                            tool_name=payload.tool_use_response.tool_name,
+                            error_type=tool_response.get("error_type", "Unknown"),
+                            error_message=tool_response.get("error_message", "An error occurred while using the tool."),
+                        )
+                    }
+                    tool_response = error_response
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
