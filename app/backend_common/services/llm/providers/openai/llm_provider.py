@@ -52,7 +52,9 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.services.tiktoken import TikToken
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 
 
 class OpenAI(BaseLLMProvider):
@@ -260,6 +262,7 @@ class OpenAI(BaseLLMProvider):
         model: LLModels,
         stream: bool = False,
         response_type: Literal["text", "json_object", "json_schema"] = None,
+        session_id: Optional[int] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenAI service client.
@@ -284,7 +287,7 @@ class OpenAI(BaseLLMProvider):
                 tool_choice="auto",
                 max_output_tokens=model_config["MAX_TOKENS"],
             )
-            return await self._parse_streaming_response(response, stream_id)
+            return await self._parse_streaming_response(response, stream_id, session_id)
         else:
             response = await OpenAIServiceClient().get_llm_non_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
@@ -298,7 +301,7 @@ class OpenAI(BaseLLMProvider):
             return self._parse_non_streaming_response(response)
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[ResponseStreamEvent], stream_id: str = None
+        self, response: AsyncIterator[ResponseStreamEvent], stream_id: str = None, session_id: Optional[int] = None
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
@@ -306,11 +309,6 @@ class OpenAI(BaseLLMProvider):
         streaming_completed = False
 
         # Manual token counting for when final usage is not available
-        tiktoken_client = TikToken()
-        manual_output_tokens = 0
-        accumulated_text = ""
-        accumulated_tool_params = ""
-        final_usage_available = False
         
 
         accumulated_events = []
@@ -319,43 +317,33 @@ class OpenAI(BaseLLMProvider):
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
-
-            # Store the stream for potential cleanup
             self._active_streams[stream_id] = response
-            nonlocal tiktoken_client
-            nonlocal manual_output_tokens
-            nonlocal accumulated_text
-            nonlocal accumulated_tool_params
-            nonlocal final_usage_available
+            nonlocal session_id
+            checker = CancellationChecker(session_id) if session_id else None
+            
+            if checker:
+                await checker.start_monitoring()
             try:
                 async for event in response:
                     # Check for task cancellation
-                    if asyncio.current_task() and asyncio.current_task().cancelled():
-                        break
-
+                    if checker and checker.is_cancelled():
+                        raise asyncio.CancelledError()
                     try:
                         event_block, event_block_category, event_usage = await self._get_parsed_stream_event(event)
                         if event_usage:
                             usage += event_usage
                             final_usage_available = True
                         if event_block:
-                            try:
-                                if event_block.type == StreamingEventType.TEXT_BLOCK_DELTA  :
-                                    accumulated_text += event_block.content.text
-                                elif event_block.type == StreamingEventType.TOOL_USE_REQUEST_DELTA :
-                                    accumulated_tool_params += event_block.content.input_params_json_delta
-                            except Exception as e:
-                                AppLogger.log_error(f"Error in manual token counting: {e}")
                             accumulated_events.append(event_block) 
                             yield event_block
                     except Exception:
                         # Depending on the error, you might want to break or continue
                         pass
-            except asyncio.CancelledError:
-                pass
             except Exception as e:
                 AppLogger.log_error(f"Streaming Error in OpenAI: {e}")
             finally:
+                if checker:
+                    await checker.stop_monitoring()
                 streaming_completed = True
                 await close_client()
 
@@ -375,24 +363,10 @@ class OpenAI(BaseLLMProvider):
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            nonlocal final_usage_available
-            nonlocal manual_output_tokens
-            nonlocal accumulated_text
-            nonlocal accumulated_tool_params
             while not streaming_completed:
                 await asyncio.sleep(0.1)
 
-            # Return final usage if available, otherwise return manual count
-            if final_usage_available and (usage.input > 0 or usage.output > 0):
-                return usage
-            else:
-                if accumulated_text:
-                    manual_output_tokens += tiktoken_client.count(accumulated_text, model="gpt-4o")
-                    accumulated_text=""
-                if accumulated_events:
-                    manual_output_tokens += tiktoken_client.count(accumulated_tool_params, model="gpt-4o")
-                    accumulated_tool_params=""
-                return LLMUsage(input=0, output=manual_output_tokens, cache_read=0, cache_write=0)
+            return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
