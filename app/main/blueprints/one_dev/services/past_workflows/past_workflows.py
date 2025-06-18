@@ -15,7 +15,6 @@ from app.main.blueprints.one_dev.services.past_workflows.serializer.serializers_
     SerializersFactory,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 
 class PastWorkflows:
@@ -75,8 +74,6 @@ class PastWorkflows:
             raw_data = raw_data[:limit]
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = await serializer_service.get_processed_data()
-        if compare_version(client_data.client_version, "2.0.1", "<="):
-            return processed_data
         return {
             "sessions": processed_data,
             "has_more": has_more,
