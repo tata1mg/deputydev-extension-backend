@@ -191,6 +191,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         try:
             await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
         except Exception:  # noqa: BLE001
+            AppLogger.log_error(f"Failed to delete S3 file {s3_key} after fetching S3 payload.")
             pass
 
         try:
@@ -199,6 +200,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                 status="deleted",
             )
         except Exception:  # noqa: BLE001
+            AppLogger.log_error(f"Failed to delete attachment {attachment_id} after fetching S3 payload.")
             pass
 
     payload = QuerySolverInput(
