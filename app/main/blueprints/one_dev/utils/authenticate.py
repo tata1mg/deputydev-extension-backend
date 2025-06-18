@@ -2,7 +2,8 @@ import json
 from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Tuple
-
+from datetime import datetime, timezone
+from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.constants.auth import AuthStatus
 from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import CONFIG, Request
@@ -144,6 +145,7 @@ def authenticate(func: Any) -> Any:
             # Get the auth data
             auth_data, response_headers = await get_auth_data(request)
             kwargs["response_headers"] = response_headers
+            ContextValue.set("response_headers", response_headers)
         except Exception as ex:
             raise BadRequestException(str(ex), sentry_raise=False)
         return await func(request, client_data=client_data, auth_data=auth_data, **kwargs)
