@@ -35,7 +35,6 @@ class SuggestionCodeGenerationManager:
 
             # Extract suggestion text (everything after URL)
             query = cls.build_suggestion_query(pr_diff, comment_payload)
-            # suggestion = cls.extract_suggestion_text(issue_comment_payload.issue_comment)
 
             await CodeGenerationHandler.generate_code_or_answer_query(
                 query=query,  # Use suggestion as query

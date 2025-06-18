@@ -11,7 +11,3 @@ class Base(BaseSCMClient):
     AUTH_TOKEN = config["CONFLUENCE"]["AUTH_TOKEN"]
     USERNAME = config["CONFLUENCE"]["USERNAME"]
     TIMEOUT = config["CONFLUENCE"]["TIMEOUT"]
-
-    # @classmethod
-    # def auth(cls):
-    #     return HTTPBasicAuth(cls.USERNAME, cls.AUTH_TOKEN)

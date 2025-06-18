@@ -37,9 +37,7 @@ class AWSAPIGatewayServiceClient:
                 Data=message.encode("utf-8"),
             )
         except Exception as _ex:
-            AppLogger.log_error(
-                f"Error occurred while sending message to connection_id: {connection_id} ex: {_ex}"
-            )
+            AppLogger.log_error(f"Error occurred while sending message to connection_id: {connection_id} ex: {_ex}")
             raise SocketClosedException(f"Connection with connection_id: {connection_id} is closed")
 
     async def close(self):
