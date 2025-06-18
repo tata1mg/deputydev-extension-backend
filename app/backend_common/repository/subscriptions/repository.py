@@ -1,4 +1,5 @@
 from typing import Optional
+
 from sanic.log import logger
 
 from app.backend_common.models.dao.postgres.subscriptions import Subscriptions

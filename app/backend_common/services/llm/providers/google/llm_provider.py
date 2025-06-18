@@ -10,6 +10,7 @@ from torpedo.exceptions import BadRequestException
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -22,7 +23,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
@@ -154,6 +154,7 @@ class Google(BaseLLMProvider):
             tools=True, system_message=True, conversation=True
         ),
         search_web: bool = False,
+        disable_caching: bool = False,
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -278,7 +279,6 @@ class Google(BaseLLMProvider):
         # Check finish reason (e.g., STOP, MAX_TOKENS, SAFETY, RECITATION, TOOL_CALL)
         _finish_reason = candidate.finish_reason.name
         # You might log or handle different finish reasons specifically
-        # print(f"Model finish reason: {finish_reason}")
 
         # Check for safety ratings
         if candidate.safety_ratings:

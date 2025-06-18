@@ -2,7 +2,7 @@ from typing import Optional
 
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values, get_context_value
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
@@ -43,7 +43,6 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-
 
 config = CONFIG.config
 one_dev_review_client = OneDevReviewClient()
@@ -103,9 +102,6 @@ class PRReviewPreProcessor:
 
         experiment_set = await self.get_experiment_set()
         self.is_reviewable_request = self.get_is_reviewable_request(experiment_set)
-        # if self.is_reviewable_request:
-        #     await PRReviewInitializationService.initialization()
-        #     await PRReviewInitializationService.create_embedding(self.repo_path)
 
     @staticmethod
     def is_reviewable_based_on_settings(setting: dict) -> bool:
