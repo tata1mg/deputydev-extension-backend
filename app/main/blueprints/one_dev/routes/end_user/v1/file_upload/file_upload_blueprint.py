@@ -24,7 +24,7 @@ async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwarg
             file_name=payload.file_name,
             file_type=payload.file_type,
         )
-        return send_response(presigned_urls.model_dump(mode="json"))
+        return send_response(presigned_urls.model_dump(mode="json"), headers=kwargs.get("response_headers"))
     except Exception as _ex:
         raise HTTPRequestException(
             f"Error generating presigned URL: {_ex}",
@@ -46,7 +46,7 @@ async def get_presigned_get_url(_request: Request, auth_data: AuthData, **kwargs
         presigned_get_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
             s3_key=***REMOVED***
         )
-        return send_response({"download_url": presigned_get_url, "file_name": attachment.file_name})
+        return send_response({"download_url": presigned_get_url, "file_name": attachment.file_name}, headers=kwargs.get("response_headers"))
     except Exception as _ex:
         raise HTTPRequestException(
             f"Error generating presigned URL: {_ex}",
@@ -64,7 +64,7 @@ async def delete_attachment(_request: Request, auth_data: AuthData, **kwargs: An
             attachment_id=payload.attachment_id,
             status="deleted",
         )
-        return send_response({"message": "Attachment deleted successfully."})
+        return send_response({"message": "Attachment deleted successfully."}, headers=kwargs.get("response_headers"))
     except Exception as _ex:
         raise HTTPRequestException(
             f"Error deleting attachment: {_ex}",
