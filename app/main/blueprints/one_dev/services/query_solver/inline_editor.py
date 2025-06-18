@@ -32,12 +32,8 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
     JobService,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-
-MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "5.0.0"
-MIN_SUPPORT_CLIENT_VERSION_FOR_TASK_COMPLETION = "5.0.0"
 
 
 class InlineEditGenerator:
@@ -64,13 +60,11 @@ class InlineEditGenerator:
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
 
-        if compare_version(client_data.client_version, MIN_SUPPORT_CLIENT_VERSION_FOR_TASK_COMPLETION, ">="):
-            if payload.llm_model and LLModels(payload.llm_model.value) == LLModels.GPT_4_POINT_1:
-                tools_to_use.append(TASK_COMPLETION)
-                payload.tool_choice = "required"
+        if payload.llm_model and LLModels(payload.llm_model.value) == LLModels.GPT_4_POINT_1:
+            tools_to_use.append(TASK_COMPLETION)
+            payload.tool_choice = "required"
 
-        if compare_version(client_data.client_version, MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR, ">="):
-            tools_to_use.append(REPLACE_IN_FILE)
+        tools_to_use.append(REPLACE_IN_FILE)
 
         if payload.tool_use_response:
             llm_response = await llm_handler.submit_tool_use_response(
@@ -132,7 +126,7 @@ class InlineEditGenerator:
                     "final_output": data,
                 },
             )
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             await JobService.db_update(
                 {
                     "id": job_id,
