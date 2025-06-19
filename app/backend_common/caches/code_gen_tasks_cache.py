@@ -65,7 +65,6 @@ class CodeGenTasksCache(Base):
 
     @classmethod
     async def cleanup_session_data(cls, session_id: int) -> None:
-        await asyncio.sleep(1.5)
         key = [f"session:{session_id}"]
         await cls.delete(key)
 
