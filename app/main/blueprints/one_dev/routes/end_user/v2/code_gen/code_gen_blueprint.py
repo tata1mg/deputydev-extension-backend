@@ -328,10 +328,9 @@ async def cancel_chat(
 ):
     await CancellationService().cancel(session_id) 
     await CodeGenTasksCache.cancel_session(session_id)
-    await CodeGenTasksCache.cleanup_session_data(session_id)
     return send_response({
         "status": "SUCCESS", 
-        "message": "LLM processing cancelled successfully ⚡",
+        "message": "LLM processing cancelled successfully ",
         "cancelled_session_id": session_id,
     })
 
