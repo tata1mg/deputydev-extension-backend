@@ -539,6 +539,7 @@ class Anthropic(BaseLLMProvider):
                 async for event in response_body:
                     if checker and checker.is_cancelled():
                         raise asyncio.CancelledError()
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
                     chunk = json.loads(event["chunk"]["bytes"])
                     # yield content block delta
                     try:
