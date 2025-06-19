@@ -269,7 +269,6 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             error_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(error_data)
         finally:
-            # Stop the cancellation checker
             await aws_client.close()
     task = asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
