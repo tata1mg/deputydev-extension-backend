@@ -24,6 +24,8 @@ class ErrorAnalyticsEventsRepository:
             error_data=row.error_data,
             repo_name=row.repo_name,
             error_source=row.error_source,
+            stack_trace=row.stack_trace,
+            user_system_info=row.user_system_info,
             client_version=row.client_version,
             timestamp=row.timestamp,
             user_team_id=row.user_team_id,
