@@ -12,6 +12,8 @@ class ErrorAnalyticsEventsData(BaseModel):
     error_data: Dict[str, Any]
     repo_name: Optional[str] = None
     error_source: Optional[str] = None
+    stack_trace: Optional[str] = None
+    user_system_info: Optional[Dict[str, Any]] = None
     client_version: str
     user_team_id: Optional[int] = None
     session_id: Optional[int] = None
