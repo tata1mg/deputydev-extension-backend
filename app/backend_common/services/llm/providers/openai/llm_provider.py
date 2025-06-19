@@ -331,6 +331,7 @@ class OpenAI(BaseLLMProvider):
                 async for event in response:
                     # Check for task cancellation
                     if checker and checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
                     try:
                         event_block, event_block_category, event_usage = await self._get_parsed_stream_event(event)
