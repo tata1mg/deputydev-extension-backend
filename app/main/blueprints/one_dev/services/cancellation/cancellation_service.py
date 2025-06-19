@@ -43,7 +43,7 @@ class CancellationService:
                     message_data = [
                         TextBlockData(
                             type=ContentBlockCategory.TEXT_BLOCK,
-                            content=TextBlockContent(text=cancelled_query),
+                            content=TextBlockContent(text=original_query),
                             content_vars={"query": original_query},
                         )
                     ]
