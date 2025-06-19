@@ -79,11 +79,7 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 from app.main.blueprints.one_dev.utils.version import compare_version
-
-
-
 from .prompts.factory import PromptFeatureFactory
-
 
 class QuerySolver:
     async def _generate_session_summary(
@@ -213,9 +209,6 @@ class QuerySolver:
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, ) -> AsyncIterator[BaseModel]:
-        print(payload.model_dump(mode="json"))
-        tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
     def _get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         tools_to_use = [
             ASK_USER_INPUT,
