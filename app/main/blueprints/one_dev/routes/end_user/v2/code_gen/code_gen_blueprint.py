@@ -60,12 +60,9 @@ from app.main.blueprints.one_dev.utils.session import (
 from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
 from app.main.blueprints.one_dev.utils.version import compare_version
 
-
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
-
 local_testing_stream_buffer: Dict[str, List[str]] = {}
-
 
 @code_gen_v2_bp.route("/generate-code-non-stream", methods=["POST"])
 @validate_client_version
@@ -75,9 +72,7 @@ async def solve_user_query_non_stream(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ) -> ResponseDict | response.JSONResponse:
     payload = QuerySolverInput(**_request.json, session_id=session_id)
-
     AppLogger.log_info(f"Starting new non-stream query for session {session_id}")
-
     # Store the active query and LLM model for potential cancellation
     session_data = {}
     if payload.query:
@@ -86,31 +81,24 @@ async def solve_user_query_non_stream(
         session_data["llm_model"] = payload.llm_model.value
     if session_data:
         await CodeGenTasksCache.set_session_data(session_id, session_data)
-
     blocks = []
-
     # Add stream start block
     start_data = {"type": "STREAM_START"}
     if auth_data.session_refresh_token:
         start_data["new_session_data"] = auth_data.session_refresh_token
     blocks.append(start_data)
-
     # Create a task for this non-streaming request too for potential cancellation
     async def solve_query_task():
         try:
             try:
                 data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
-
                 last_block = None
                 async for data_block in data:
                     last_block = data_block
                     blocks.append(data_block.model_dump(mode="json"))
-
                 if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
                     blocks.append({"type": "QUERY_COMPLETE"})
-
                 blocks.append({"type": "STREAM_END"})
-
             except asyncio.CancelledError:
                 blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled"})
                 raise
@@ -123,26 +111,18 @@ async def solve_user_query_non_stream(
 
     # Create and execute task without global tracking
     task = asyncio.create_task(solve_query_task())
-
-
     try:
         blocks = await task
     except asyncio.CancelledError:
         blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled"})
-
     except Exception as ex:  # noqa: BLE001
         AppLogger.log_error(f"Error in solving query: {ex}")
         blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
-
-
     return send_response({"status": "SUCCESS", "blocks": blocks})
 
-
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
-
 async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:  # noqa: C901
     connection_id: str = _request.headers["connectionid"]  # type: ignore
-
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
         raise ValueError(f"No connection data found for connection ID: {connection_id}")
@@ -169,14 +149,12 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
     )
 
-
     async def push_to_connection_stream(data: Dict[str, Any]) -> None:
-
         nonlocal connection_id
         nonlocal is_local
         nonlocal connection_id_gone
         nonlocal aws_client
-
+        
         if not connection_id_gone:
             if is_local:
                 local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data))
@@ -202,27 +180,21 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             },
             status="INVALID_CLIENT_VERSION",
         )
-
         await push_to_connection_stream(error_data.model_dump(mode="json"))
         return send_response({"status": "INVALID_CLIENT_VERSION"})
-
     if auth_error or not auth_data:
         error_data = {"type": "STREAM_ERROR", "message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
         await push_to_connection_stream(error_data)
         return send_response({"status": "SESSION_EXPIRED"})
-
     user_team_id = auth_data.user_team_id
     payload_dict = _request.json
     if payload_dict.get("type") == "PAYLOAD_ATTACHMENT" and payload_dict.get("attachment_id"):
         attachment_id = payload_dict["attachment_id"]
         # 1. Lookup attachment
         attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
-
         if not attachment_data or getattr(attachment_data, "status", None) == "deleted":
             raise ValueError(f"Attachment with ID {attachment_id} not found or already deleted.")
-
         s3_key = attachment_data.s3_key
-
         # 2. Fetch & decode S3 payload
         try:
             object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
@@ -235,14 +207,12 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             if field in payload_dict:
                 s3_payload[field] = payload_dict[field]
         payload_dict = s3_payload
-
         # 4. Delete S3 file and update DB (best effort; won't block downstream even if fails)
         try:
             await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
         except Exception:  # noqa: BLE001
             AppLogger.log_error(f"Failed to delete S3 file {s3_key} after fetching S3 payload.")
             pass
-
         try:
             await ChatAttachmentsRepository.update_attachment_status(
                 attachment_id=attachment_id,
@@ -251,13 +221,10 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         except Exception:  # noqa: BLE001
             AppLogger.log_error(f"Failed to delete attachment {attachment_id} after fetching S3 payload.")
             pass
-
     payload = QuerySolverInput(
         **payload_dict,
         user_team_id=user_team_id,
     )
-
-
     # Store the active query and LLM model for potential cancellation
     session_data = {}
     if payload.query:
@@ -267,16 +234,11 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         if session_data:
             await CodeGenTasksCache.set_session_data(payload.session_id, session_data)
 
-
     async def solve_query() -> None:
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
-
-
-
         try:
-            # Mark session as active if we have session_id
             # push stream start message
             start_data = {"type": "STREAM_START"}
             if auth_data.session_refresh_token:
@@ -295,17 +257,12 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
                 query_end_data = {"type": "QUERY_COMPLETE"}
                 await push_to_connection_stream(query_end_data)
-
             # push stream end message
             end_data = {"type": "STREAM_END"}
-            await push_to_connection_stream(end_data)
-
-                
+            await push_to_connection_stream(end_data)    
         except asyncio.CancelledError:
             cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled "}
             await push_to_connection_stream(cancel_data)
-        except Exception as ex:
-
         except Exception as ex:  # noqa: BLE001
             AppLogger.log_error(f"Error in solving query: {ex}")
             # push error message to stream
@@ -314,9 +271,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         finally:
             # Stop the cancellation checker
             await aws_client.close()
-
     task = asyncio.create_task(solve_query())
-    
     return send_response({"status": "SUCCESS"})
 
 
@@ -365,8 +320,6 @@ async def terminal_command_edit(
     return send_response(result)
 
 
-
-
 @code_gen_v2_bp.route("/cancel", methods=["POST"])
 @validate_client_version
 @authenticate
@@ -377,17 +330,11 @@ async def cancel_chat(
     await CancellationService().cancel(session_id) 
     await CodeGenTasksCache.cancel_session(session_id)
     await CodeGenTasksCache.cleanup_session_data(session_id)
-    
-
-    
     return send_response({
         "status": "SUCCESS", 
         "message": "LLM processing cancelled successfully ⚡",
         "cancelled_session_id": session_id,
     })
-
-
-
 
 
 # This is for testing purposes only
@@ -439,6 +386,6 @@ async def sse_websocket(request: Request, ws: Any) -> None:
                 except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error in websocket connection: {e}")
                     break
-
+                    
     except Exception as _ex:  # noqa: BLE001
         AppLogger.log_error(f"Error in websocket connection: {_ex}")
