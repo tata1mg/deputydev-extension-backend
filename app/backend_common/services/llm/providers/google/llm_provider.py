@@ -336,6 +336,7 @@ class Google(BaseLLMProvider):
             try:
                 async for chunk in response:
                     if checker and checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
                        
                     try:
