@@ -11,6 +11,8 @@ class KafkaErrorAnalyticsEventMessage(BaseModel):
     error_type: str
     repo_name: Optional[str] = None
     error_source: Optional[str] = None
+    stack_trace: Optional[str] = None
+    user_system_info: Optional[Dict[str, Any]] = None
     client_version: str
     timestamp: datetime
     error_data: Dict[str, Any]
@@ -18,7 +20,7 @@ class KafkaErrorAnalyticsEventMessage(BaseModel):
 
     # add validation to only allow error_type values in SNAKE_CASE
     @field_validator("error_type")
-    def error_type_must_be_snake_case(cls, v: str) -> str:
+    def error_type_must_be_snake_case(cls, v: str) -> str:  # noqa: N805
         # Allow only CAPITAL_SNAKE_CASE (uppercase letters and underscores, cannot start/end with underscore, no consecutive underscores)
         capital_snake_case_pattern = r"^[A-Z]+(_[A-Z]+)*$"
         if not re.match(capital_snake_case_pattern, v):
