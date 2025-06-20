@@ -217,7 +217,7 @@ class QuerySolver:
             PUBLIC_URL_CONTENT_READER,
         ]
 
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
             tools_to_use.append(RELATED_CODE_SEARCHER)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
