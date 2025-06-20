@@ -26,7 +26,7 @@ GREP_SEARCH = ConversationTool(
         properties={
             "search_path": JSONSchema(
                 type="string",
-                description="The relative path to search. This can be a directory or a file. This is a required parameter.",
+                description="The relative path to search. This can be a directory or a file. This is a required parameter. Use '.' for the project's root directory.",
             ),
             "query": JSONSchema(type="string", description="The search term or pattern to look for within files."),
             "case_insensitive": JSONSchema(type="boolean", description="If true, performs a case-insensitive search."),
