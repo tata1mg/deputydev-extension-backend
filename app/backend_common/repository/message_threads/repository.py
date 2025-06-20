@@ -54,8 +54,6 @@ class MessageThreadsRepository:
                 where_clause=filters,
                 fetch_one=False,
                 order_by=["id"],
-                # limit=limit,
-                # offset=offset,
             )
             if not message_threads:
                 return []

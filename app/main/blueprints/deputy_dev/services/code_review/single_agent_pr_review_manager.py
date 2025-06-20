@@ -142,7 +142,6 @@ class SingleAgentPRReviewManager:
         task_response = await get_task_response(tasks)
         # combine finetuned and gpt4 filtered comments
         foundation_model_pr_summarisation = task_response.get("foundation_model_pr_summarisation", {}).get("pr_summary")
-        # foundationa_pr_comments = task_response.get("foundation_model_pr_summarisation", {}).get("pr_summary")
         combined_comments = {
             "foundation_comments": task_response.get("foundation_model", {}).get("comments", []),
             "summary": foundation_model_pr_summarisation,
@@ -150,9 +149,6 @@ class SingleAgentPRReviewManager:
 
         # extract tokens data
         agents_tokens = self.create_agents_tokens(task_response)
-        # tokens_info.update(new_tokens_data)
-        # tokens_info[TokenTypes.PR_REVIEW_SYSTEM_PROMPT.value] = get_token_count(pr_review_system_prompt)
-        # tokens_info[TokenTypes.PR_REVIEW_USER_PROMPT.value] = get_token_count(pr_review_context)
 
         return combined_comments, agents_tokens, meta_info
 
@@ -235,20 +231,6 @@ class SingleAgentPRReviewManager:
         tokens[TokenTypes.SYSTEM_PROMPT.value] = get_token_count(pr_review_system_prompt)
         tokens[TokenTypes.USER_PROMPT.value] = get_token_count(pr_review_context)
         return {"foundation_comments": tokens, "summary": summary_tokens}
-
-    # def extract_tokens_post_pr_review(self, task_response: dict):
-    #     tokens_data = {
-    #         TokenTypes.PR_REVIEW_MODEL_INPUT.value: task_response.get("foundation_model", {}).get("prompt_tokens"),
-    #         TokenTypes.PR_REVIEW_MODEL_OUTPUT.value: task_response.get("foundation_model", {}).get("completion_tokens"),
-    #         TokenTypes.PR_SUMMARY_MODEL_INPUT.value: task_response.get("foundation_model_pr_summarisation", {}).get(
-    #             "prompt_tokens"
-    #         ),
-    #         TokenTypes.PR_SUMMARY_MODEL_OUTPUT.value: task_response.get("foundation_model_pr_summarisation", {}).get(
-    #             "completion_tokens"
-    #         ),
-    #     }
-    #
-    #     return tokens_data
 
     async def get_client_pr_comments(
         self, conversation_message, model, client_type, response_type="json_object", max_retry=2
