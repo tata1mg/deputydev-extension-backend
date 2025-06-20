@@ -17,9 +17,7 @@ from app.backend_common.caches.websocket_connections_cache import (
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,
 )
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
-)
+
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
@@ -98,6 +96,7 @@ async def solve_user_query_non_stream(
                     blocks.append(data_block.model_dump(mode="json"))
                 if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
                     blocks.append({"type": "QUERY_COMPLETE"})
+                    await CodeGenTasksCache.cleanup_session_data(session_id)
                 blocks.append({"type": "STREAM_END"})
             except asyncio.CancelledError:
                 blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled"})
@@ -256,6 +255,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             # TODO: Sugar code this part
             if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
                 query_end_data = {"type": "QUERY_COMPLETE"}
+                await CodeGenTasksCache.cleanup_session_data(payload.session_id)
                 await push_to_connection_stream(query_end_data)
             # push stream end message
             end_data = {"type": "STREAM_END"}

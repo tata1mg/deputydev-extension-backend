@@ -61,7 +61,12 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
-
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -442,12 +447,12 @@ class LLMHandler(Generic[PromptFeatures]):
                     disable_caching=disable_caching,
                 )
 
-                # Check if task is cancelled before making LLM call
-                if asyncio.current_task() and asyncio.current_task().cancelled():
-                    raise asyncio.CancelledError("LLM task cancelled before service call")
-                
+                checker = CancellationChecker(session_id) 
+                await checker.check_cancellation()
+                if checker.is_cancelled():
+                    raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
-                    llm_payload, llm_model, stream=stream, response_type=response_type, session_id=session_id
+                    llm_payload, llm_model,checker, stream=stream, response_type=response_type, session_id=session_id
                 )
 
                 # start task for storing LLM message in DB

@@ -53,6 +53,9 @@ from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 
 class Google(BaseLLMProvider):
     def __init__(self):
@@ -310,7 +313,7 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str = None, session_id: Optional[int] = None
+        self, response: AsyncIterator[google_genai_types.GenerateContentResponse],checker:CancellationChecker,stream_id: str= None,  session_id: Optional[int] = None
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
@@ -325,8 +328,7 @@ class Google(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             nonlocal session_id
-            # Use cancellation checker if we have a session_id
-            checker = CancellationChecker(session_id) if session_id else None
+            nonlocal checker
             
             if checker:
                 await checker.start_monitoring()
@@ -452,9 +454,9 @@ class Google(BaseLLMProvider):
         self,
         llm_payload: Dict[str, Any],
         model: LLModels,
+        checker: CancellationChecker,
         stream: bool = False,
         response_type: Optional[str] = None,
-        response_schema=None,
         session_id: Optional[int] = None,
     ) -> UnparsedLLMCallResponse:
         """
@@ -463,6 +465,7 @@ class Google(BaseLLMProvider):
         Args:
             llm_payload: The structured payload from build_llm_payload.
             model: The LLModels enum value specifying which model to use.
+            checker: checks if cancelled by user
             stream: Whether to use streaming mode.
             response_type: Optional response format hint (less common for Gemini chat).
             response_schema: Optional: response structure
@@ -485,7 +488,7 @@ class Google(BaseLLMProvider):
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
             )
-            return await self._parse_streaming_response(response, stream_id, session_id)
+            return await self._parse_streaming_response(response,checker, stream_id, session_id)
         else:
             response = await client.get_llm_non_stream_response(
                 model_name=vertex_model_name,
