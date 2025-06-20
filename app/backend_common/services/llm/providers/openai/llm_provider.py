@@ -65,8 +65,8 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 )
 
 class OpenAI(BaseLLMProvider):
-    def __init__(self):
-        super().__init__(LLMProviders.OPENAI.value)
+    def __init__(self, checker: CancellationChecker = None):
+        super().__init__(LLMProviders.OPENAI.value, checker=checker)
         self._active_streams: Dict[str, AsyncIterator] = {}
         self.anthropic_client = None
 
@@ -266,7 +266,6 @@ class OpenAI(BaseLLMProvider):
         self,
         llm_payload: Dict[str, Any],
         model: LLModels,
-        checker: CancellationChecker,
         stream: bool = False,
         response_type: Literal["text", "json_object", "json_schema"] = None,
         session_id: Optional[int] = None,
@@ -294,7 +293,7 @@ class OpenAI(BaseLLMProvider):
                 tool_choice="auto",
                 max_output_tokens=model_config["MAX_TOKENS"],
             )
-            return await self._parse_streaming_response(response,checker, stream_id, session_id)
+            return await self._parse_streaming_response(response, stream_id, session_id)
         else:
             response = await OpenAIServiceClient().get_llm_non_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
@@ -308,7 +307,7 @@ class OpenAI(BaseLLMProvider):
             return self._parse_non_streaming_response(response)
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[ResponseStreamEvent],checker:CancellationChecker, stream_id: str = None, session_id: Optional[int] = None
+        self, response: AsyncIterator[ResponseStreamEvent], stream_id: str = None, session_id: Optional[int] = None
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
@@ -326,13 +325,11 @@ class OpenAI(BaseLLMProvider):
             nonlocal accumulated_events
             self._active_streams[stream_id] = response
             nonlocal session_id
-            nonlocal checker        
-            if checker:
-                await checker.start_monitoring()
+
             try:
                 async for event in response:
                     # Check for task cancellation
-                    if checker and checker.is_cancelled():
+                    if self.checker and self.checker.is_cancelled():
                         await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
                     try:
@@ -349,8 +346,8 @@ class OpenAI(BaseLLMProvider):
             except Exception as e:
                 AppLogger.log_error(f"Streaming Error in OpenAI: {e}")
             finally:
-                if checker:
-                    await checker.stop_monitoring()
+                if self.checker:
+                    await self.checker.stop_monitoring()
                 streaming_completed = True
                 await close_client()
 

@@ -58,8 +58,8 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 )
 
 class Google(BaseLLMProvider):
-    def __init__(self):
-        super().__init__(LLMProviders.GOOGLE.value)
+    def __init__(self, checker: CancellationChecker = None):
+        super().__init__(LLMProviders.GOOGLE.value, checker=checker)
         self._active_streams: Dict[str, AsyncIterator] = {}
 
     async def get_conversation_turns(
@@ -313,7 +313,7 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse],checker:CancellationChecker,stream_id: str= None,  session_id: Optional[int] = None
+        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str= None,  session_id: Optional[int] = None
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
@@ -328,16 +328,13 @@ class Google(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             nonlocal session_id
-            nonlocal checker
-            
-            if checker:
-                await checker.start_monitoring()
+
             
             self._active_streams[stream_id] = response
             current_running_block_type: Optional[ContentBlockCategory] = None
             try:
                 async for chunk in response:
-                    if checker and checker.is_cancelled():
+                    if self.checker and self.checker.is_cancelled():
                         await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
                        
@@ -358,8 +355,8 @@ class Google(BaseLLMProvider):
             except Exception as e:
                 AppLogger.log_error(f"Streaming Error in Goggle: {e}")
             finally:
-                if checker:
-                    await checker.stop_monitoring()
+                if self.checker:
+                    await self.checker.stop_monitoring()
                 streaming_completed = True
                 await close_client()
 
@@ -454,7 +451,6 @@ class Google(BaseLLMProvider):
         self,
         llm_payload: Dict[str, Any],
         model: LLModels,
-        checker: CancellationChecker,
         stream: bool = False,
         response_type: Optional[str] = None,
         session_id: Optional[int] = None,
@@ -465,7 +461,6 @@ class Google(BaseLLMProvider):
         Args:
             llm_payload: The structured payload from build_llm_payload.
             model: The LLModels enum value specifying which model to use.
-            checker: checks if cancelled by user
             stream: Whether to use streaming mode.
             response_type: Optional response format hint (less common for Gemini chat).
             response_schema: Optional: response structure
@@ -488,7 +483,7 @@ class Google(BaseLLMProvider):
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
             )
-            return await self._parse_streaming_response(response,checker, stream_id, session_id)
+            return await self._parse_streaming_response(response, stream_id, session_id)
         else:
             response = await client.get_llm_non_stream_response(
                 model_name=vertex_model_name,
