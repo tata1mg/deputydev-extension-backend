@@ -1,5 +1,5 @@
 from typing import Any, Dict
-
+import traceback
 from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
@@ -36,9 +36,9 @@ history_v1_bp = Blueprint("history_v1_bp", url_prefix="/history")
 @ensure_session_id(auto_create=False)
 async def get_chats(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
     try:
-        response = await PastWorkflows.get_past_chats(session_id=session_id)
+        response = await PastWorkflows.get_past_chats(session_id=session_id, client_data=client_data)
     except Exception as e:
-        raise BadRequestException(f"Failed to fetch past chats: {str(e)}")
+        raise BadRequestException(f"Failed to fetch past chats: {traceback.format_exc()}")
     return send_response(response, headers=kwargs.get("response_headers"))
 
 

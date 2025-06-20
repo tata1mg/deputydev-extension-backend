@@ -93,7 +93,7 @@ class QuerySolverInput(BaseModel):
     is_embedding_done: Optional[bool] = True
 
     @field_validator("deputy_dev_rules")
-    def character_limit(cls, v: Optional[str]):
+    def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
         if v is None:
             return None
         if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
@@ -118,7 +118,7 @@ class InlineEditInput(BaseModel):
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
 
     @field_validator("deputy_dev_rules")
-    def character_limit(cls, v: Optional[str]):
+    def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
         if v is None:
             return None
         if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
@@ -148,3 +148,9 @@ class ResponseMetadataBlock(BaseModel):
 class UserQueryEnhancerInput(BaseModel):
     session_id: int
     user_query: str
+
+
+class StreamErrorData(BaseModel):
+    type: str
+    message: Optional[Any] = None
+    status: str

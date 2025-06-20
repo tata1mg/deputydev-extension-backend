@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionDTO
 from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_constants import (
@@ -8,6 +8,7 @@ from app.main.blueprints.one_dev.services.past_workflows.constants.serializer_co
 from app.main.blueprints.one_dev.services.past_workflows.serializer.base_serializers import (
     BaseSerializer,
 )
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 
 class PastSessionsSerializer(BaseSerializer):
@@ -18,7 +19,7 @@ class PastSessionsSerializer(BaseSerializer):
     """
 
     async def process_raw_data(
-        self, raw_data: List[ExtensionSessionDTO], type: SerializerTypes
+        self, raw_data: List[ExtensionSessionDTO], type: SerializerTypes, client_data: Optional[ClientData] = None
     ) -> List[Dict[str, Any]]:
         """
         Processes raw message session data and formats it for output.

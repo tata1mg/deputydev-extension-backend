@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
+
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
     ConfigParams,
@@ -142,20 +143,31 @@ class ConfigFetcher:
             },
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
             "VSCODE_LOGS_RETENTION_DAYS": 7,
+            "CHAT_PAYLOAD_MAX_SIZE": ConfigManager.configs["CHAT_PAYLOAD_MAX_SIZE"],
+            # TODO: remove after 7.0.0 force upgrade
             "CHAT_IMAGE_UPLOAD": {
                 "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
                 "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "MAX_FILES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_FILES"],
+            },
+            "CHAT_FILE_UPLOAD": {
+                "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
             },
         },
     }
 
     @classmethod
-    async def fetch_configs(cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData) -> Dict[str, Any]:
+    async def fetch_configs(
+        cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData
+    ) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
             if params.consumer in cls.essential_configs:
                 config = cls.essential_configs[params.consumer]
                 if params.consumer == ConfigConsumer.VSCODE_EXT:
-                    await cls.add_vscode_ext_config(config, params=params, config_type=config_type, client_data=client_data)
+                    await cls.add_vscode_ext_config(
+                        config, params=params, config_type=config_type, client_data=client_data
+                    )
                 return config
             else:
                 raise ValueError(f"Essential configs not found for client {params.consumer}")
@@ -192,7 +204,7 @@ class ConfigFetcher:
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
-    
+
     @classmethod
     async def _generate_presigned_url_for_binary(cls, s3_key: str):
         """
