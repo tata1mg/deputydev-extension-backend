@@ -66,6 +66,9 @@ from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 
 class Anthropic(BaseLLMProvider):
     def __init__(self):
@@ -503,6 +506,7 @@ class Anthropic(BaseLLMProvider):
         response: InvokeModelWithResponseStreamResponseTypeDef,
         async_bedrock_client: BedrockRuntimeClient,
         model_config: Dict[str, Any],
+        checker:CancellationChecker,
         session_id : Optional[int]
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
@@ -517,6 +521,7 @@ class Anthropic(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             nonlocal session_id
+            nonlocal checker
             non_combinable_events = [
                 RedactedThinking,
                 TextBlockStart,
@@ -531,7 +536,6 @@ class Anthropic(BaseLLMProvider):
             current_running_block_type: Optional[ContentBlockCategory] = None
             current_content_block_delta: str = ""
             response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
-            checker = CancellationChecker(session_id) if session_id else None
             
             if checker:
                 await checker.start_monitoring()
@@ -615,7 +619,7 @@ class Anthropic(BaseLLMProvider):
         )
 
     async def call_service_client(
-        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None, session_id: Optional[int] = None
+        self, llm_payload: Dict[str, Any], model: LLModels,checker:CancellationChecker, stream: bool = False, response_type: Optional[str] = None, session_id: Optional[int] = None
     ) -> UnparsedLLMCallResponse:
         anthropic_client = await self._get_service_client()
         AppLogger.log_debug(json.dumps(llm_payload))
@@ -629,4 +633,4 @@ class Anthropic(BaseLLMProvider):
             response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
-            return await self._parse_streaming_response(response, async_bedrock_client, model_config, session_id)
+            return await self._parse_streaming_response(response, async_bedrock_client, model_config,checker, session_id)
