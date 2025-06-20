@@ -10,7 +10,9 @@ from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic import Blueprint, response
 from torpedo import Request, send_response
 from torpedo.types import ResponseDict
-
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
@@ -237,13 +239,15 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
+        task_checker = CancellationChecker(payload.session_id)
         try:
+            await task_checker.start_monitoring()
             # push stream start message
             start_data = {"type": "STREAM_START"}
             if auth_data.session_refresh_token:
                 start_data["new_session_data"] = auth_data.session_refresh_token
             await push_to_connection_stream(start_data)
-            data = await QuerySolver().solve_query(payload=payload, client_data=client_data, save_to_redis=True)
+            data = await QuerySolver().solve_query(payload=payload, client_data=client_data, save_to_redis=True, task_checker=task_checker)
             last_block = None
             # push data to stream
             async for data_block in data:
@@ -269,6 +273,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             error_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(error_data)
         finally:
+            await task_checker.stop_monitoring()
             await aws_client.close()
     task = asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
