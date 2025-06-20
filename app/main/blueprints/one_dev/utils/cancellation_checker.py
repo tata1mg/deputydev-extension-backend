@@ -19,7 +19,7 @@ class CancellationChecker:
         """Start the periodic cancellation check"""
         # Reset our local cancelled event
         self.cancelled_event.clear()
-        self._checker_task = asyncio.create_task(self._check_cancellation())
+        self._checker_task = asyncio.create_task(self.check_cancellation())
     
     async def stop_monitoring(self) -> None:
         """Stop the periodic cancellation check"""
@@ -30,7 +30,7 @@ class CancellationChecker:
             except asyncio.CancelledError:
                 pass
     
-    async def _check_cancellation(self) -> None:
+    async def check_cancellation(self) -> None:
         """Periodically check Redis for cancellation status"""
         try:
             while True:
