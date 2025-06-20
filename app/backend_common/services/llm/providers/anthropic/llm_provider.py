@@ -71,8 +71,8 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 )
 
 class Anthropic(BaseLLMProvider):
-    def __init__(self):
-        super().__init__(LLMProviders.ANTHROPIC.value)
+    def __init__(self, checker: CancellationChecker=None):
+        super().__init__(LLMProviders.ANTHROPIC.value, checker=checker)
         self.anthropic_client = None
 
     async def get_conversation_turns(
@@ -506,7 +506,6 @@ class Anthropic(BaseLLMProvider):
         response: InvokeModelWithResponseStreamResponseTypeDef,
         async_bedrock_client: BedrockRuntimeClient,
         model_config: Dict[str, Any],
-        checker:CancellationChecker,
         session_id : Optional[int]
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
@@ -521,7 +520,6 @@ class Anthropic(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             nonlocal session_id
-            nonlocal checker
             non_combinable_events = [
                 RedactedThinking,
                 TextBlockStart,
@@ -536,12 +534,10 @@ class Anthropic(BaseLLMProvider):
             current_running_block_type: Optional[ContentBlockCategory] = None
             current_content_block_delta: str = ""
             response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
-            
-            if checker:
-                await checker.start_monitoring()
+
             try:
                 async for event in response_body:
-                    if checker and checker.is_cancelled():
+                    if self.checker and self.checker.is_cancelled():
                         await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
                     chunk = json.loads(event["chunk"]["bytes"])
@@ -580,11 +576,13 @@ class Anthropic(BaseLLMProvider):
                 if buffer:
                     combined_event = sum(buffer[1:], start=buffer[0])
                     yield combined_event
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 AppLogger.log_error(f"Streaming Error in Anthropic: {e}")
             finally:
-                if checker:
-                    await checker.stop_monitoring()
+                if self.checker:
+                    await self.checker.stop_monitoring()
                 streaming_completed = True
                 await close_client()
 
@@ -619,7 +617,7 @@ class Anthropic(BaseLLMProvider):
         )
 
     async def call_service_client(
-        self, llm_payload: Dict[str, Any], model: LLModels,checker:CancellationChecker, stream: bool = False, response_type: Optional[str] = None, session_id: Optional[int] = None
+        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None, session_id: Optional[int] = None
     ) -> UnparsedLLMCallResponse:
         anthropic_client = await self._get_service_client()
         AppLogger.log_debug(json.dumps(llm_payload))
@@ -633,4 +631,4 @@ class Anthropic(BaseLLMProvider):
             response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
-            return await self._parse_streaming_response(response, async_bedrock_client, model_config,checker, session_id)
+            return await self._parse_streaming_response(response, async_bedrock_client, model_config, session_id)
