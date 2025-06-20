@@ -18,7 +18,7 @@ GREP_SEARCH = ConversationTool(
         For accurate results, always use the exact syntax as it appears in the source (e.g., exact function names, variables).
         Avoid changing case or format unless you explicitly set case-insensitive mode.
 
-        Note: Total results are capped at 100.
+        Note: Total results are capped at 50.
         """
     ),
     input_schema=JSONSchema(
