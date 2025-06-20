@@ -1,6 +1,8 @@
 import asyncio
 from typing import AsyncIterator, List, Optional
-
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
@@ -241,7 +243,7 @@ class QuerySolver:
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-
+        task_checker = CancellationChecker(payload.session_id)
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
@@ -274,7 +276,8 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
-                save_to_redis= save_to_redis
+                save_to_redis= save_to_redis,
+                checker=task_checker
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
@@ -336,6 +339,7 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 prompt_vars=prompt_vars,
+                checker=task_checker
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
