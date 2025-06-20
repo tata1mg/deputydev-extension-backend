@@ -398,6 +398,7 @@ class LLMHandler(Generic[PromptFeatures]):
         response_type: Optional[str] = None,
         attachments: List[Attachment] = [],
         search_web: bool = False,
+        checker: CancellationChecker = None
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -446,13 +447,12 @@ class LLMHandler(Generic[PromptFeatures]):
                     search_web=search_web,
                     disable_caching=disable_caching,
                 )
-
-                checker = CancellationChecker(session_id) 
-                await checker.check_cancellation()
-                if checker.is_cancelled():
-                    raise asyncio.CancelledError()
+                if checker:
+                    await checker.check_cancellation()
+                    if checker.is_cancelled():
+                        raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
-                    llm_payload, llm_model,checker, stream=stream, response_type=response_type, session_id=session_id
+                    llm_payload, llm_model, stream=stream, response_type=response_type, session_id=session_id
                 )
 
                 # start task for storing LLM message in DB
@@ -633,7 +633,8 @@ class LLMHandler(Generic[PromptFeatures]):
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
-        save_to_redis: bool = False
+        save_to_redis: bool = False,
+        checker: CancellationChecker = None
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -653,7 +654,7 @@ class LLMHandler(Generic[PromptFeatures]):
         if llm_model not in self.model_to_provider_class_map:
             raise ValueError(f"LLM model {llm_model} not supported")
 
-        client = self.model_to_provider_class_map[llm_model]()
+        client = self.model_to_provider_class_map[llm_model](checker=checker)
         user_and_system_messages = prompt_handler.get_prompt()
 
         conversation_chain_messages = await self.get_conversation_chain_messages(
@@ -693,6 +694,7 @@ class LLMHandler(Generic[PromptFeatures]):
             stream=stream,
             response_type=prompt_handler.response_type,
             search_web=search_web,
+            checker=checker
         )
 
     async def store_tool_use_ressponse_in_db(
@@ -736,6 +738,7 @@ class LLMHandler(Generic[PromptFeatures]):
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         prompt_type: Optional[str] = None,
         prompt_vars: Optional[Dict[str, Any]] = None,
+        checker=None
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -813,7 +816,7 @@ class LLMHandler(Generic[PromptFeatures]):
             call_chain_category=call_chain_category,
         )
 
-        client = self.model_to_provider_class_map[detected_llm]()
+        client = self.model_to_provider_class_map[detected_llm](checker=checker)
 
         return await self.fetch_and_parse_llm_response(
             client=client,
@@ -829,6 +832,7 @@ class LLMHandler(Generic[PromptFeatures]):
             previous_responses=conversation_chain_messages,
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
+            checker=checker
         )
 
     async def submit_feedback_response(
