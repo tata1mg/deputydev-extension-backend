@@ -447,10 +447,8 @@ class LLMHandler(Generic[PromptFeatures]):
                     search_web=search_web,
                     disable_caching=disable_caching,
                 )
-                if checker:
-                    await checker.check_cancellation()
-                    if checker.is_cancelled():
-                        raise asyncio.CancelledError()
+                if checker and checker.is_cancelled():
+                    raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
                     llm_payload, llm_model, stream=stream, response_type=response_type, session_id=session_id
                 )
