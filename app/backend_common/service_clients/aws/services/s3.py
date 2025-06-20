@@ -1,13 +1,13 @@
-from typing import ClassVar, Dict
-from typing import Any
-from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
+from typing import Any, ClassVar, Dict
+
 from types_aiobotocore_s3.client import S3Client
+
+from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
 
 
 class AWSS3ServiceClient:
-
     _client_managers: ClassVar[Dict[str, AWSClientManager]] = {}
-    
+
     # constructor
     def __init__(self, bucket_name: str, region_name: str):
         self.region_name = region_name
@@ -15,14 +15,14 @@ class AWSS3ServiceClient:
         self.aws_service_name = "s3"
 
         client_key = f"{self.bucket_name}_{self.region_name}"
-        
+
         # Check if we already have a client manager for this configuration
         if client_key not in self._client_managers:
             self._client_managers[client_key] = AWSClientManager(
                 aws_service_name=self.aws_service_name,
                 region_name=self.region_name,
             )
-        
+
         # Use the shared client manager
         self.aws_client_manager = self._client_managers[client_key]
 
@@ -65,3 +65,10 @@ class AWSS3ServiceClient:
         response = await s3_client.get_object(Bucket=self.bucket_name, Key=object_name)
         async with response["Body"] as stream:  # type: ignore
             return await stream.read()  # type: ignore
+
+    async def delete_object(self, object_name: str) -> None:
+        """
+        Delete an object from S3
+        """
+        s3_client: S3Client = await self.aws_client_manager.get_client()  # type: ignore
+        await s3_client.delete_object(Bucket=self.bucket_name, Key=object_name)
