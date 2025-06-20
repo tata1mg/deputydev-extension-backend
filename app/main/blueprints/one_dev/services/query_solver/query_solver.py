@@ -236,14 +236,14 @@ class QuerySolver:
 
         return tools_to_use
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False) -> AsyncIterator[BaseModel]:
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False,
+                          task_checker: CancellationChecker = None) -> AsyncIterator[BaseModel]:
         tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-        task_checker = CancellationChecker(payload.session_id)
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
