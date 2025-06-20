@@ -534,9 +534,7 @@ class Anthropic(BaseLLMProvider):
             current_running_block_type: Optional[ContentBlockCategory] = None
             current_content_block_delta: str = ""
             response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
-            
-            if self.checker:
-                await self.checker.start_monitoring()
+
             try:
                 async for event in response_body:
                     if self.checker and self.checker.is_cancelled():
@@ -578,6 +576,8 @@ class Anthropic(BaseLLMProvider):
                 if buffer:
                     combined_event = sum(buffer[1:], start=buffer[0])
                     yield combined_event
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 AppLogger.log_error(f"Streaming Error in Anthropic: {e}")
             finally:

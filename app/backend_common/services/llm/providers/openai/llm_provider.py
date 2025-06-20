@@ -325,8 +325,7 @@ class OpenAI(BaseLLMProvider):
             nonlocal accumulated_events
             self._active_streams[stream_id] = response
             nonlocal session_id
-            if self.checker:
-                await self.checker.start_monitoring()
+
             try:
                 async for event in response:
                     # Check for task cancellation

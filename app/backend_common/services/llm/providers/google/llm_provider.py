@@ -328,9 +328,7 @@ class Google(BaseLLMProvider):
             nonlocal streaming_completed
             nonlocal accumulated_events
             nonlocal session_id
-            
-            if self.checker:
-                await self.checker.start_monitoring()
+
             
             self._active_streams[stream_id] = response
             current_running_block_type: Optional[ContentBlockCategory] = None
