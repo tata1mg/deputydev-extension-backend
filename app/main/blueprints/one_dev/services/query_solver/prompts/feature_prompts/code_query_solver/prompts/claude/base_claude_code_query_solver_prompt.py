@@ -2,19 +2,17 @@ import re
 import textwrap
 from typing import Any, Dict, List, Tuple, Union
 
-
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
+    ExtendedThinkingData,
     MessageData,
     TextBlockData,
     ToolUseRequestData,
-    ExtendedThinkingData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     UserAndSystemMessages,
 )
-
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )

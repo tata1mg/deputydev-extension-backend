@@ -7,6 +7,7 @@ from .base import Base
 class AnalyticsEvents(Base):
     serializable_keys = {
         "id",
+        "event_id",
         "session_id",
         "event_type",
         "event_data",
@@ -19,6 +20,7 @@ class AnalyticsEvents(Base):
     }
 
     id = fields.IntField(primary_key=True)
+    event_id = fields.UUIDField(null=True)
     session_id = fields.IntField()
     event_type = fields.TextField()
     event_data = fields.JSONField(null=False)

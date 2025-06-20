@@ -12,7 +12,9 @@ from app.main.blueprints.deputy_dev.services.message_queue.message_queue_helper 
 from app.main.blueprints.one_dev.services.kafka.analytics_events.analytics_event_subscriber import (
     AnalyticsEventSubscriber,
 )
-from app.main.blueprints.one_dev.services.kafka.error_analytics_events.error_analytics_event_subscriber import ErrorAnalyticsEventSubscriber
+from app.main.blueprints.one_dev.services.kafka.error_analytics_events.error_analytics_event_subscriber import (
+    ErrorAnalyticsEventSubscriber,
+)
 
 
 async def initialize_message_queue_subscribers(_app, loop):

@@ -49,30 +49,6 @@ class IssueCodeGenerationManager:
 
             await cls.process_command(command_type, issue_comment_payload, repo_service)
 
-            # query = issue_comment_payload.issue_description
-            #
-            # if not query:
-            #     logger.error(f"Could not fetch issue description for issue {issue_comment_payload}")
-            #     return
-            #
-            # destination_branch, source_branch = cls.parse_branches_form_comment(issue_comment_payload.issue_comment)
-            # logger.info(f"Using destination branch: {destination_branch}")
-            #
-            # # Use existing code generation handler with the issue description as query
-            # await CodeGenerationHandler.generate_code_or_answer_query(
-            #     query=query,
-            #     codebase_path=repo_service.repo_dir,
-            #     focus_files=None,
-            #     focus_snippets=None,
-            #     only_focus_code_chunks=False,
-            #     use_llm_based_re_ranking=False,
-            #     apply_diff=False,
-            #     create_pr=True,
-            #     scm_workspace_id=issue_comment_payload.scm_workspace_id,
-            #     destination_branch=destination_branch,
-            #     source_branch=source_branch,
-            # )
-
         except Exception as e:
             logger.error(f"Error handling issue comment: {str(e)}")
             raise
@@ -113,14 +89,6 @@ class IssueCodeGenerationManager:
             repo_service=repo_service,
             pr_title_prefix="DD-330 ",
         )
-
-        # TODO Create coment on issue by taking pr_url from context_values
-
-        # if response.get("pr_url"):
-        #     await repo_service.notify_pr_creation(
-        #         issue_comment_payload.issue_id,
-        #         response["pr_url"]
-        #     )
 
     @classmethod
     async def handle_suggestion(cls, issue_comment_payload, repo_service):

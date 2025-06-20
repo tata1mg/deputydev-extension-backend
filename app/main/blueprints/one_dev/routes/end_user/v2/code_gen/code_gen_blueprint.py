@@ -2,23 +2,29 @@ import asyncio
 import json
 import uuid
 from typing import Any, Dict, List, Optional
-import httpx
+
+import aiohttp
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.utils.constants.enums import Clients
-from sanic import Blueprint
+from deputydev_core.utils.constants.error_codes import APIErrorCodes
+from sanic import Blueprint, response
 from torpedo import Request, send_response
+from torpedo.types import ResponseDict
+
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
     SocketClosedException,
 )
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
+    StreamErrorData,
     TerminalCommandEditInput,
     UserQueryEnhancerInput,
 )
@@ -35,6 +41,7 @@ from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer impor
 from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
+    validate_version,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
@@ -42,7 +49,6 @@ from app.main.blueprints.one_dev.utils.session import (
     ensure_session_id,
     get_valid_session_data,
 )
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
@@ -56,7 +62,7 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 @ensure_session_id(auto_create=True)
 async def solve_user_query_non_stream(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
-):
+) -> ResponseDict | response.JSONResponse:
     payload = QuerySolverInput(**_request.json, session_id=session_id)
 
     blocks = []
@@ -80,7 +86,7 @@ async def solve_user_query_non_stream(
 
         blocks.append({"type": "STREAM_END"})
 
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001
         AppLogger.log_error(f"Error in solving query: {ex}")
         blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
 
@@ -88,42 +94,27 @@ async def solve_user_query_non_stream(
 
 
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
-async def solve_user_query(_request: Request, **kwargs: Any):
+async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:  # noqa: C901
     connection_id: str = _request.headers["connectionid"]  # type: ignore
-
     connection_data: Any = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
         raise ValueError(f"No connection data found for connection ID: {connection_id}")
     client_data = ClientData(**connection_data["client_data"])
-
-    session_id: Optional[int] = None
-    session_type: Optional[str] = None
     auth_error: bool
     auth_data: Optional[AuthData] = None
-    # support older versions of the client
-    if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", ">="):
-        # TODO: Remove this when we have a proper way to handle this
-        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
-
-        auth_data: Optional[AuthData] = None
-        auth_error: bool = False
-        try:
-            auth_data, _ = await get_auth_data(_request)
-        except Exception:
-            auth_error = True
-            auth_data = None
-        if auth_data:
-            session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
-            _request.json["session_id"] = session_data.id
-
-    else:
-        session_id = connection_data["session_id"]
-        session_type = connection_data["session_type"]
-        auth_error: bool = connection_data["auth_error"]
-        auth_data = AuthData(**connection_data["auth_data"]) if connection_data["auth_data"] else None
-
+    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+    auth_data: Optional[AuthData] = None
+    auth_error: bool = False
+    try:
+        auth_data, _ = await get_auth_data(_request)
+    except Exception:  # noqa: BLE001
+        auth_error = True
+        auth_data = None
+    if auth_data:
+        session_data = await get_valid_session_data(_request, client_data, auth_data, auto_create=True)
+        _request.json["session_id"] = session_data.id
     is_local: bool = _request.headers.get("X-Is-Local") == "true"
     connection_id_gone = False
     aws_client = AWSAPIGatewayServiceClient()
@@ -131,7 +122,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
         endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}",
     )
 
-    async def push_to_connection_stream(data: Dict[str, Any]):
+    async def push_to_connection_stream(data: Dict[str, Any]) -> None:
         nonlocal connection_id
         nonlocal is_local
         nonlocal connection_id_gone
@@ -149,23 +140,75 @@ async def solve_user_query(_request: Request, **kwargs: Any):
                 except SocketClosedException:
                     connection_id_gone = True
 
+    is_valid, upgrade_version, client_download_link = validate_version(
+        client=client_data.client, client_version=client_data.client_version
+    )
+    if not is_valid:
+        error_data = StreamErrorData(
+            type="STREAM_ERROR",
+            message={
+                "error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value,
+                "upgrade_version": upgrade_version,
+                **({"client_download_link": client_download_link} if client_download_link else {}),
+            },
+            status="INVALID_CLIENT_VERSION",
+        )
+
+        await push_to_connection_stream(error_data.model_dump(mode="json"))
+        return send_response({"status": "INVALID_CLIENT_VERSION"})
+
     if auth_error or not auth_data:
         error_data = {"type": "STREAM_ERROR", "message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
         await push_to_connection_stream(error_data)
         return send_response({"status": "SESSION_EXPIRED"})
 
     user_team_id = auth_data.user_team_id
+    payload_dict = _request.json
+    if payload_dict.get("type") == "PAYLOAD_ATTACHMENT" and payload_dict.get("attachment_id"):
+        attachment_id = payload_dict["attachment_id"]
+        # 1. Lookup attachment
+        attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
+
+        if not attachment_data or getattr(attachment_data, "status", None) == "deleted":
+            raise ValueError(f"Attachment with ID {attachment_id} not found or already deleted.")
+
+        s3_key = attachment_data.s3_key
+
+        # 2. Fetch & decode S3 payload
+        try:
+            object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
+            s3_payload = json.loads(object_bytes.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise ValueError(f"Failed to decode JSON payload from S3 for attachment {attachment_id}: {e}")
+
+        # 3. Merge session fields from envelope (envelope wins)
+        for field in ("session_id", "session_type", "auth_token"):
+            if field in payload_dict:
+                s3_payload[field] = payload_dict[field]
+        payload_dict = s3_payload
+
+        # 4. Delete S3 file and update DB (best effort; won't block downstream even if fails)
+        try:
+            await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
+        except Exception:  # noqa: BLE001
+            AppLogger.log_error(f"Failed to delete S3 file {s3_key} after fetching S3 payload.")
+            pass
+
+        try:
+            await ChatAttachmentsRepository.update_attachment_status(
+                attachment_id=attachment_id,
+                status="deleted",
+            )
+        except Exception:  # noqa: BLE001
+            AppLogger.log_error(f"Failed to delete attachment {attachment_id} after fetching S3 payload.")
+            pass
+
     payload = QuerySolverInput(
-        **_request.json,
+        **payload_dict,
         user_team_id=user_team_id,
-        **(
-            {"session_id": session_id, "session_type": session_type}
-            if client_data.client == Clients.VSCODE_EXT and compare_version(client_data.client_version, "3.0.0", "<")
-            else {}
-        ),
     )
 
-    async def solve_query():
+    async def solve_query() -> None:
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
@@ -192,7 +235,7 @@ async def solve_user_query(_request: Request, **kwargs: Any):
             # push stream end message
             end_data = {"type": "STREAM_END"}
             await push_to_connection_stream(end_data)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             AppLogger.log_error(f"Error in solving query: {ex}")
             # push error message to stream
             error_data = {"type": "STREAM_ERROR", "message": str(ex)}
@@ -208,7 +251,9 @@ async def solve_user_query(_request: Request, **kwargs: Any):
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def generate_enhanced_user_query(_request: Request, session_id: int, **kwargs: Any):
+async def generate_enhanced_user_query(
+    _request: Request, session_id: int, **kwargs: Any
+) -> ResponseDict | response.JSONResponse:
     input_data = UserQueryEnhancerInput(**_request.json, session_id=session_id)
 
     result = await UserQueryEnhancer().get_enhanced_user_query(
@@ -224,7 +269,7 @@ async def generate_enhanced_user_query(_request: Request, session_id: int, **kwa
 @ensure_session_id(auto_create=True)
 async def generate_inline_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
-):
+) -> ResponseDict | response.JSONResponse:
     data = await InlineEditGenerator().create_and_start_job(
         payload=InlineEditInput(**_request.json, session_id=session_id, auth_data=auth_data),
         client_data=client_data,
@@ -238,7 +283,7 @@ async def generate_inline_edit(
 @ensure_session_id(auto_create=False)
 async def terminal_command_edit(
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
-):
+) -> ResponseDict | response.JSONResponse:
     input_data = TerminalCommandEditInput(**_request.json, session_id=session_id, auth_data=auth_data)
     result = await TerminalCommandEditGenerator().get_new_terminal_command(
         payload=input_data,
@@ -252,18 +297,20 @@ async def terminal_command_edit(
 
 
 @code_gen_v2_bp.websocket("/generate-code-local-connection")
-async def sse_websocket(request: Request, ws: Any):
+async def sse_websocket(request: Request, ws: Any) -> None:
     try:
-        async with httpx.AsyncClient() as client:
+        async with aiohttp.ClientSession() as session:
             # generate a random connectionid
             connection_id = uuid.uuid4().hex
             # first mock connecting to the server using /connect endpoint
             self_host_url = f"http://{ConfigManager.configs['HOST']}:{ConfigManager.configs['PORT']}"
-            connection_response = await client.post(
-                f"{self_host_url}/end_user/v1/websocket-connection/connect",
-                headers={**dict(request.headers), "connectionid": connection_id},
-            )
-            connection_data = connection_response.json()
+            url = f"{self_host_url}/end_user/v1/websocket-connection/connect"
+
+            # Convert starlette request headers to dict
+            headers: Dict[str, str] = {**dict(request.headers), "connectionid": connection_id}
+
+            connection_response = await session.post(url, headers=headers)
+            connection_data = await connection_response.json()
             if connection_data.get("status") != "SUCCESS":
                 raise Exception("Connection failed")
 
@@ -274,7 +321,7 @@ async def sse_websocket(request: Request, ws: Any):
                     payload = json.loads(raw_payload)
 
                     # then get a stream of data from the /generate-code endpoint
-                    await client.post(
+                    await session.post(
                         f"{self_host_url}/end_user/v2/code-gen/generate-code",
                         headers={"connectionid": connection_id, "X-Is-Local": "true"},
                         json=payload,
@@ -287,17 +334,13 @@ async def sse_websocket(request: Request, ws: Any):
                             await ws.send(data)
                             if data == json.dumps({"type": "STREAM_END"}):
                                 # remove the connectionid from stream buffer
-                                # del local_testing_stream_buffer[connection_id]
+                                del local_testing_stream_buffer[connection_id]
                                 break
                         else:
                             await asyncio.sleep(0.2)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error in websocket connection: {e}")
                     break
 
-            # finally, disconnect from the server using /disconnect endpoint
-            # await client.post(
-            #     f"{self_host_url}/end_user/v1/websocket-connection/disconnect", headers={"connectionid": connection_id}
-            # )
-    except Exception as _ex:
+    except Exception as _ex:  # noqa: BLE001
         AppLogger.log_error(f"Error in websocket connection: {_ex}")
