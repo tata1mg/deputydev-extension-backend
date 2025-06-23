@@ -1,7 +1,6 @@
 import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
-
 import jwt
 from deputydev_core.utils.jwt_handler import JWTHandler
 
@@ -161,6 +160,7 @@ class SupabaseAuth:
             # update the session data with the refreshed access and refresh tokens
             session_data["access_token"] = response.session.access_token
             session_data["refresh_token"] = response.session.refresh_token
+            session_data["token_updated_at"] = str(datetime.now())
             # return the refreshed session data
             encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
             return encrypted_session_data, email, user_name
