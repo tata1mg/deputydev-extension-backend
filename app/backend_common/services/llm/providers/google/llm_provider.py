@@ -34,6 +34,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingEvent,
+    StreamingEventType,
     StreamingResponse,
     TextBlockDelta,
     TextBlockDeltaContent,
@@ -48,11 +49,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-
+from deputydev_core.utils.app_logger import AppLogger
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 
 class Google(BaseLLMProvider):
-    def __init__(self):
-        super().__init__(LLMProviders.GOOGLE.value)
+    def __init__(self, checker: CancellationChecker = None):
+        super().__init__(LLMProviders.GOOGLE.value, checker=checker)
+        self._active_streams: Dict[str, AsyncIterator] = {}
 
     async def get_conversation_turns(
         self,
@@ -305,34 +313,52 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse]
+        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str= None,  session_id: Optional[int] = None
     ) -> StreamingResponse:
+        stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed = False
+        
+        # Manual token counting for when final usage is not available
+
         accumulated_events = []
 
         async def stream_content() -> AsyncIterator[StreamingEvent]:
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
-            current_running_block_type: Optional[ContentBlockCategory] = None
-            async for chunk in response:
-                try:
-                    event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
-                        chunk, current_running_block_type
-                    )
-                    if event_usage:
-                        usage += event_usage
-                    if event_blocks:
-                        current_running_block_type = event_block_category
-                        for event_block in event_blocks:
-                            accumulated_events.append(event_block)
-                            yield event_block
-                except Exception:
-                    # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
-                    pass
+            nonlocal session_id
 
-            streaming_completed = True
+            
+            self._active_streams[stream_id] = response
+            current_running_block_type: Optional[ContentBlockCategory] = None
+            try:
+                async for chunk in response:
+                    if self.checker and self.checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
+                        raise asyncio.CancelledError()
+                       
+                    try:
+                        event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
+                            chunk, current_running_block_type
+                        )
+                        if event_usage:
+                            usage += event_usage
+                        if event_blocks:
+                            current_running_block_type = event_block_category
+                            for event_block in event_blocks:
+                                # Manual token counting for streaming content
+                                accumulated_events.append(event_block)
+                                yield event_block
+                    except Exception:
+                        pass
+            except Exception as e:
+                AppLogger.log_error(f"Streaming Error in Goggle: {e}")
+            finally:
+                if self.checker:
+                    await self.checker.stop_monitoring()
+                streaming_completed = True
+                await close_client()
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
@@ -349,13 +375,17 @@ class Google(BaseLLMProvider):
                 await asyncio.sleep(0.1)
             return accumulated_events
 
-        async def close_client():
-            nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-            # TODO: close client
+        async def close_client() -> None:
+            try:
+                if stream_id in self._active_streams and streaming_completed:
+                    stream_iter = self._active_streams[stream_id]
+                    await stream_iter.aclose()
+                    del self._active_streams[stream_id]
+            except Exception as e:
+                AppLogger.log_error(f"Error closing Google LLM client for stream {stream_id}: {e}")
+            if stream_id in self._active_streams:
+                    del self._active_streams[stream_id]
 
-        asyncio.create_task(close_client())
 
         return StreamingResponse(
             content=stream_content(),
@@ -423,7 +453,7 @@ class Google(BaseLLMProvider):
         model: LLModels,
         stream: bool = False,
         response_type: Optional[str] = None,
-        response_schema=None,
+        session_id: Optional[int] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the Vertex AI service client.
@@ -442,6 +472,7 @@ class Google(BaseLLMProvider):
         vertex_model_name = model_config.get("NAME")
         max_output_tokens = model_config.get("MAX_TOKENS") or 8192
         client = GeminiServiceClient()
+        stream_id = str(uuid.uuid4())
 
         if stream:
             response = await client.get_llm_stream_response(
@@ -452,7 +483,7 @@ class Google(BaseLLMProvider):
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
             )
-            return await self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response, stream_id, session_id)
         else:
             response = await client.get_llm_non_stream_response(
                 model_name=vertex_model_name,
