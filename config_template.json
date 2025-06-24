@@ -337,6 +337,12 @@
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
+    "AWS_CLOUDFRONT": {
+        "DISTRIBUTION_URL": "",
+        "KEY_PAIR_ID": "",
+        "SIGNED_URL_EXPIRY": 600,
+        "PRIVATE_KEY": ""
+    },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
             "NAME": "",

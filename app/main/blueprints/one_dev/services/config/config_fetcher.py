@@ -3,7 +3,7 @@ from typing import Any, Dict
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
 
-from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
+from app.backend_common.service_clients.aws.services.cloudfront import AWSCloudFrontServiceClient
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
     ConfigParams,
     ConfigType,
@@ -208,12 +208,9 @@ class ConfigFetcher:
     @classmethod
     async def _generate_presigned_url_for_binary(cls, s3_key: str):
         """
-        Generate presigned URL for binary download from S3
+        Generate signed URL for binary download from CloudFront
         """
-        bucket_name = ConfigManager.configs["AWS_S3_BUCKET"]["AWS_BUCKET_NAME"]
-        region = ConfigManager.configs["AWS_S3_BUCKET"]["AWS_REGION"]
         expiry = ConfigManager.configs["BINARY"]["PRESIGNED_URL_EXPIRY"]
-
-        s3_client = AWSS3ServiceClient(bucket_name=bucket_name, region_name=region)
-        presigned_url = await s3_client.create_presigned_get_url(s3_key=s3_key, expiry=expiry)
-        return presigned_url
+        cloudfront_client = AWSCloudFrontServiceClient()
+        signed_url = await cloudfront_client.generate_signed_url(s3_key=s3_key, expiry=expiry)
+        return signed_url
