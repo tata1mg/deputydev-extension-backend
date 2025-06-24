@@ -1,6 +1,8 @@
 import asyncio
 from typing import AsyncIterator, List, Optional
-
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
@@ -78,8 +80,8 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
+from app.main.blueprints.one_dev.utils.version import compare_version
 from .prompts.factory import PromptFeatureFactory
-
 
 class QuerySolver:
     async def _generate_session_summary(
@@ -171,6 +173,10 @@ class QuerySolver:
             )
 
             async for data_block in llm_response.parsed_content:
+                # Check if the current task is cancelled
+                if asyncio.current_task() and asyncio.current_task().cancelled():
+                    raise asyncio.CancelledError("Task cancelled in QuerySolver")
+                    
                 if data_block.type in [
                     StreamingContentBlockType.SUMMARY_BLOCK_START,
                     StreamingContentBlockType.SUMMARY_BLOCK_DELTA,
@@ -230,14 +236,14 @@ class QuerySolver:
 
         return tools_to_use
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
+    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False,
+                          task_checker: CancellationChecker = None) -> AsyncIterator[BaseModel]:
         tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
@@ -270,6 +276,8 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
+                save_to_redis= save_to_redis,
+                checker=task_checker
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
@@ -331,6 +339,7 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 prompt_vars=prompt_vars,
+                checker=task_checker
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
