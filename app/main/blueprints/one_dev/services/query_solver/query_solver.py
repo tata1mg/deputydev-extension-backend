@@ -1,8 +1,6 @@
 import asyncio
 from typing import AsyncIterator, List, Optional
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
-)
+
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
@@ -31,6 +29,7 @@ from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
+    DetailedDirectoryItem,
     DetailedFocusItem,
     MCPToolMetadata,
     QuerySolverInput,
@@ -78,10 +77,13 @@ from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file impor
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
-from app.main.blueprints.one_dev.utils.version import compare_version
 from .prompts.factory import PromptFeatureFactory
+
 
 class QuerySolver:
     async def _generate_session_summary(
@@ -89,10 +91,11 @@ class QuerySolver:
         session_id: int,
         query: str,
         focus_items: List[DetailedFocusItem],
+        directory_items: List[DetailedDirectoryItem],
         llm_handler: LLMHandler[PromptFeatures],
         user_team_id: int,
         session_type: str,
-    ):
+    ) -> None:
         current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
         if current_session and current_session.summary:
             return
@@ -108,7 +111,7 @@ class QuerySolver:
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-            prompt_vars={"query": query, "focus_items": focus_items},
+            prompt_vars={"query": query, "focus_items": focus_items, "directory_items": directory_items},
             previous_responses=[],
             tools=[],
             stream=False,
@@ -176,7 +179,7 @@ class QuerySolver:
                 # Check if the current task is cancelled
                 if asyncio.current_task() and asyncio.current_task().cancelled():
                     raise asyncio.CancelledError("Task cancelled in QuerySolver")
-                    
+
                 if data_block.type in [
                     StreamingContentBlockType.SUMMARY_BLOCK_START,
                     StreamingContentBlockType.SUMMARY_BLOCK_DELTA,
@@ -236,8 +239,13 @@ class QuerySolver:
 
         return tools_to_use
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData, save_to_redis:bool = False,
-                          task_checker: CancellationChecker = None) -> AsyncIterator[BaseModel]:
+    async def solve_query(
+        self,
+        payload: QuerySolverInput,
+        client_data: ClientData,
+        save_to_redis: bool = False,
+        task_checker: CancellationChecker = None,
+    ) -> AsyncIterator[BaseModel]:
         tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
@@ -250,6 +258,7 @@ class QuerySolver:
                     session_id=payload.session_id,
                     query=payload.query,
                     focus_items=payload.focus_items,
+                    directory_items=payload.directory_items,
                     llm_handler=llm_handler,
                     user_team_id=payload.user_team_id,
                     session_type=payload.session_type,
@@ -262,6 +271,7 @@ class QuerySolver:
                 prompt_vars={
                     "query": payload.query,
                     "focus_items": payload.focus_items,
+                    "directory_items": payload.directory_items,
                     "deputy_dev_rules": payload.deputy_dev_rules,
                     "write_mode": payload.write_mode,
                     "urls": [url.model_dump() for url in payload.urls],
@@ -276,8 +286,8 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
-                save_to_redis= save_to_redis,
-                checker=task_checker
+                save_to_redis=save_to_redis,
+                checker=task_checker,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
@@ -339,7 +349,7 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 prompt_vars=prompt_vars,
-                checker=task_checker
+                checker=task_checker,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
