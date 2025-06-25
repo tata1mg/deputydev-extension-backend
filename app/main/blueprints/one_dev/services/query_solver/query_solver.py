@@ -91,7 +91,7 @@ class QuerySolver:
         session_id: int,
         query: str,
         focus_items: List[DetailedFocusItem],
-        directory_items: List[DetailedDirectoryItem],
+        directory_items: Optional[List[DetailedDirectoryItem]],
         llm_handler: LLMHandler[PromptFeatures],
         user_team_id: int,
         session_type: str,

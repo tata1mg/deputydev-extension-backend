@@ -42,7 +42,7 @@ class DirectoryEntry(BaseModel):
 class DetailedDirectoryItem(BaseModel):
     path: str
     value: Optional[str] = None
-    structure: List[DirectoryEntry] = []
+    structure: Optional[List[DirectoryEntry]] = None
 
 
 class Url(BaseModel):
@@ -85,7 +85,7 @@ class Attachment(BaseModel):
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
-    directory_items: List[DetailedDirectoryItem] = []
+    directory_items: Optional[List[DetailedDirectoryItem]] = None
     write_mode: bool = False
     session_id: int
     tool_use_failed: Optional[bool] = None
