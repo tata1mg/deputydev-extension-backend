@@ -309,6 +309,7 @@ class BaseClaudeQuerySolverPrompt:
             urls = self.params.get("urls")
             urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
 
+
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(f"""
             Here is the user's query for editing - {self.params.get("query")}
@@ -326,13 +327,9 @@ class BaseClaudeQuerySolverPrompt:
             def some_function():
                 return "Hello, World!"
             </code_block>
-
-            <important>
-            If you need to edit a file, please please use the tool replace_in_file.
-            </important>
-
-            Also, please use the tools provided to you to help you with the task.
-
+            
+            {self.tool_usage_guidelines(is_write_mode=True)}
+            
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
@@ -405,8 +402,8 @@ class BaseClaudeQuerySolverPrompt:
                 In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
                 </extra_important>
                 </important>
-
-                Also, please use the tools provided to you to help you with the task.
+                
+                {self.tool_usage_guidelines(is_write_mode=False)}
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
@@ -454,6 +451,56 @@ class BaseClaudeQuerySolverPrompt:
             user_message=user_message,
             system_message=system_message,
         )
+
+    def tool_usage_guidelines(self, is_write_mode):
+        write_mode_specific_guidelines = ""
+        if is_write_mode:
+            write_mode_specific_guidelines = """
+              <important>
+                - For write operations always use built-in tools, unless explicitely asked to use a specific tool
+                - If you need to edit a file, please use the system defined tool replace_in_file.
+              </important>
+            """
+
+        return f"""
+            <tool_usage_guidelines>
+              {write_mode_specific_guidelines}
+              
+              <selection_strategy>
+                <priority_order>
+                  <rule>Always prefer the most specialized tool that directly addresses the user's specific need</rule>
+                  <rule>Use generic/multi-purpose tools only as fallbacks when specialized tools fail or don't exist</rule>
+                  <rule>Specialized tools are typically more accurate, efficient, and provide cleaner results</rule>
+                </priority_order>
+              </selection_strategy>
+            
+              <decision_framework>
+                <step number="1">Identify if there's a tool designed specifically for this exact task</step>
+                <step number="2">If multiple specialized tools exist, choose the one that most closely matches the requirement</step>
+                <step number="3">Only use generic/multi-purpose tools when specialized options fail or are unavailable</step>
+                <step number="4">Implement graceful degradation: start specific, fall back to generic if needed</step>
+              </decision_framework>
+            
+              <example_scenario>
+                <task>Find the definition of a method, class, or variable in codebase</task>
+                <available_tools>
+                  <tool name="definition" type="specialized">Purpose-built for reading symbol definitions</tool>
+                  <tool name="focused_snippets_searcher" type="generic">Multi-purpose tool with various capabilities including symbol definition lookup</tool>
+                </available_tools>
+                <correct_choice>
+                  <primary>Use "definition" tool first</primary>
+                  <reasoning>Purpose-built for this exact task, likely more accurate and faster</reasoning>
+                  <fallback>If "definition" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
+                </correct_choice>
+              </example_scenario>
+            
+              <behavioral_guidelines>
+                <guideline>Consider the specific context and requirements of the user's codebase when selecting tools</guideline>
+                <guideline>Provide clear reasoning when tool selection choices are not immediately obvious</guideline>
+                <guideline>Optimize for efficiency - specialized tools typically require fewer API calls and provide cleaner results</guideline>
+              </behavioral_guidelines>
+            </tool_usage_guidelines>
+        """
 
     @classmethod
     def get_parsed_response_blocks(

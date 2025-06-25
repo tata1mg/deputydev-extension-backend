@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
     description="""
+        This is a built-in tool.
         Reads content of a file from a given start line number (1 indexed) to an end line number (1 indexed).
         This tool can be used iteratively to read a file in chunks by just providing the offset line.
         At once, it can read maximum of 100 lines.
