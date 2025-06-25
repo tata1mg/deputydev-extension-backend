@@ -3,8 +3,13 @@ import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
 from google.genai import types as google_genai_types
 from torpedo.exceptions import BadRequestException
+
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 
 # Your existing DTOs and base class
 from app.backend_common.constants.constants import LLMProviders
@@ -34,7 +39,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingEvent,
-    StreamingEventType,
     StreamingResponse,
     TextBlockDelta,
     TextBlockDeltaContent,
@@ -49,13 +53,10 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
-)
+
 
 class Google(BaseLLMProvider):
     def __init__(self, checker: CancellationChecker = None):
@@ -313,12 +314,15 @@ class Google(BaseLLMProvider):
         )
 
     async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse], stream_id: str= None,  session_id: Optional[int] = None
+        self,
+        response: AsyncIterator[google_genai_types.GenerateContentResponse],
+        stream_id: str = None,
+        session_id: Optional[int] = None,
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
         streaming_completed = False
-        
+
         # Manual token counting for when final usage is not available
 
         accumulated_events = []
@@ -329,7 +333,6 @@ class Google(BaseLLMProvider):
             nonlocal accumulated_events
             nonlocal session_id
 
-            
             self._active_streams[stream_id] = response
             current_running_block_type: Optional[ContentBlockCategory] = None
             try:
@@ -337,7 +340,7 @@ class Google(BaseLLMProvider):
                     if self.checker and self.checker.is_cancelled():
                         await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
-                       
+
                     try:
                         event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
                             chunk, current_running_block_type
@@ -384,8 +387,7 @@ class Google(BaseLLMProvider):
             except Exception as e:
                 AppLogger.log_error(f"Error closing Google LLM client for stream {stream_id}: {e}")
             if stream_id in self._active_streams:
-                    del self._active_streams[stream_id]
-
+                del self._active_streams[stream_id]
 
         return StreamingResponse(
             content=stream_content(),
@@ -400,7 +402,7 @@ class Google(BaseLLMProvider):
         current_running_block_type: Optional[ContentBlockCategory] = None,
     ) -> Tuple[List[Optional[StreamingEvent]], Optional[ContentBlockCategory], Optional[LLMUsage]]:
         event_blocks: List[StreamingEvent] = []
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
+        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
         candidate = chunk.candidates[0]
         part: google_genai_types.Part = candidate.content.parts[0]
         # Block type is changing, so mark current running block end and start new block.
@@ -435,9 +437,13 @@ class Google(BaseLLMProvider):
             )
             event_blocks.append(event_block)
         if candidate.finish_reason:
-            if chunk.usage_metadata.prompt_token_count or chunk.usage_metadata.candidates_token_count:
-                usage.input = chunk.usage_metadata.prompt_token_count
-                usage.output = chunk.usage_metadata.candidates_token_count
+            if chunk.usage_metadata:
+                usage.input = (chunk.usage_metadata.prompt_token_count or 0) - (
+                    chunk.usage_metadata.cached_content_token_count or 0
+                )
+                usage.output = chunk.usage_metadata.candidates_token_count or 0
+                usage.cache_read = chunk.usage_metadata.cached_content_token_count or 0
+
             event_block = None
             if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
                 event_block = TextBlockEnd()
