@@ -8,6 +8,7 @@ import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.exception import RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
@@ -58,14 +59,8 @@ from app.backend_common.services.llm.providers.anthropic.llm_provider import Ant
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-
-from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
-from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
-)
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
 )
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
@@ -398,7 +393,7 @@ class LLMHandler(Generic[PromptFeatures]):
         response_type: Optional[str] = None,
         attachments: List[Attachment] = [],
         search_web: bool = False,
-        checker: CancellationChecker = None
+        checker: CancellationChecker = None,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -632,7 +627,7 @@ class LLMHandler(Generic[PromptFeatures]):
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
         save_to_redis: bool = False,
-        checker: CancellationChecker = None
+        checker: CancellationChecker = None,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -692,7 +687,7 @@ class LLMHandler(Generic[PromptFeatures]):
             stream=stream,
             response_type=prompt_handler.response_type,
             search_web=search_web,
-            checker=checker
+            checker=checker,
         )
 
     async def store_tool_use_ressponse_in_db(
@@ -736,7 +731,7 @@ class LLMHandler(Generic[PromptFeatures]):
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         prompt_type: Optional[str] = None,
         prompt_vars: Optional[Dict[str, Any]] = None,
-        checker=None
+        checker=None,
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -830,7 +825,7 @@ class LLMHandler(Generic[PromptFeatures]):
             previous_responses=conversation_chain_messages,
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
-            checker=checker
+            checker=checker,
         )
 
     async def submit_feedback_response(

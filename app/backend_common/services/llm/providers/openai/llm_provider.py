@@ -1,18 +1,16 @@
 import asyncio
 import json
-
 import uuid
-from typing import Any, Dict, List, Optional, Literal, AsyncIterator
-from openai.types.responses.response_stream_event import ResponseStreamEvent
-from openai.types.chat import ChatCompletion
-
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional
 
-
+from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
 from openai.types.chat import ChatCompletion
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
@@ -56,13 +54,10 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
-)
+
 
 class OpenAI(BaseLLMProvider):
     def __init__(self, checker: CancellationChecker = None):
@@ -311,11 +306,10 @@ class OpenAI(BaseLLMProvider):
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        
+
         streaming_completed = False
 
         # Manual token counting for when final usage is not available
-        
 
         accumulated_events = []
 
@@ -338,7 +332,7 @@ class OpenAI(BaseLLMProvider):
                             usage += event_usage
                             final_usage_available = True
                         if event_block:
-                            accumulated_events.append(event_block) 
+                            accumulated_events.append(event_block)
                             yield event_block
                     except Exception:
                         # Depending on the error, you might want to break or continue
@@ -355,11 +349,10 @@ class OpenAI(BaseLLMProvider):
             nonlocal streaming_completed
             streaming_completed = True
             if stream_id in self._active_streams and streaming_completed:
-                    
                 try:
                     stream_iter = self._active_streams.pop(stream_id)
                     await stream_iter.aclose()
-                except Exception as e:
+                except Exception:
                     AppLogger.log_error("OpenAI Cancel Error")
                 if stream_id in self._active_streams:
                     del self._active_streams[stream_id]

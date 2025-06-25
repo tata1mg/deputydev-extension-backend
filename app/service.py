@@ -1,7 +1,8 @@
-from app.backend_common.utils.error_handler import DDErrorHandler
 from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint
 from torpedo import Torpedo
+
+from app.backend_common.utils.error_handler import DDErrorHandler
 
 ConfigManager.initialize()
 
