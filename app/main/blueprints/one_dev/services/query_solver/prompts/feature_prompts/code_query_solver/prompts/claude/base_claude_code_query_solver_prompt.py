@@ -482,7 +482,7 @@ class BaseClaudeQuerySolverPrompt:
               </decision_framework>
             
               <example_scenario>
-                <task>Find the definition of a method, class, or variable in codebase</task>
+                <task>Find the definition of a symbol (method, class, or variable) in codebase</task>
                 <available_tools>
                   <tool name="definition" type="specialized">Purpose-built for reading symbol definitions</tool>
                   <tool name="focused_snippets_searcher" type="generic">Multi-purpose tool with various capabilities including symbol definition lookup</tool>
