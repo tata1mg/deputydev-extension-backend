@@ -3,11 +3,11 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 
-from .claude_3_point_5_sonnet import Claude3Point5RelevantChatFilterPrompt
+from .gemini_2_point_5_flash import Gemini2Point5FlashRelevantChatFilterPrompt
 
 
 class ChatRankingPromptFactory(BaseFeaturePromptFactory):
-    chat_re_ranking_prompts = {LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5RelevantChatFilterPrompt}
+    chat_re_ranking_prompts = {LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashRelevantChatFilterPrompt}
 
     @classmethod
     def get_prompt(cls, model_name: LLModels):
