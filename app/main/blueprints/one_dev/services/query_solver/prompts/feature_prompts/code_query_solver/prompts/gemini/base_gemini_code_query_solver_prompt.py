@@ -21,7 +21,7 @@ class BaseGeminiCodeQuerySolverPrompt:
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> str:
@@ -296,6 +296,8 @@ class BaseGeminiCodeQuerySolverPrompt:
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
+                if focus_item.type == FocusItemTypes.DIRECTORY:
+                    continue
                 focus_chunks_message += (
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
@@ -304,6 +306,17 @@ class BaseGeminiCodeQuerySolverPrompt:
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+
+        if self.params.get("directory_items"):
+            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
+            for directory_item in self.params["directory_items"]:
+                focus_chunks_message += (
+                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                )
+                for entry in directory_item.structure:
+                    label = "file" if entry.type == "file" else "folder"
+                    focus_chunks_message += f"{label}: {entry.name}\n"
+                focus_chunks_message += "</structure></item>"
         urls_message = ""
         if self.params.get("urls"):
             urls = self.params.get("urls")
