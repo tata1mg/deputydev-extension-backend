@@ -1,25 +1,22 @@
 from __future__ import annotations
-from deputydev_core.utils.context_value import ContextValue
 
 import typing as t
-from torpedo.constants.http import STATUS_CODE_MAPPING, HTTPStatusCodes
-from torpedo.ctx import app_ctx
-from torpedo.types import ErrorResponseDict, ResponseDict
 
-
+from deputydev_core.utils.context_value import ContextValue
 from sanic import response
 from sanic.log import error_logger
-from typing_extensions import override
-
 from torpedo.constants.errors import (
     HANDLED_ERR,
     INTERSERVICE_ERR,
     SOMETHING_WENT_WRONG,
     UNHANDLED_ERR,
 )
-from torpedo.constants.http import STATUS_CODE_4XX, HTTPStatusCodes
+from torpedo.constants.http import STATUS_CODE_4XX, STATUS_CODE_MAPPING, HTTPStatusCodes
+from torpedo.ctx import app_ctx
 from torpedo.request import TorpedoRequest
+from torpedo.types import ErrorResponseDict
 from torpedo.utils import capture_exception, name
+from typing_extensions import override
 
 ############################
 # import tortoise excpetions
@@ -117,7 +114,7 @@ def exception_response(
     status_code: int | None = None,
     *,
     meta: t.Any = None,
-    response_headers: t.Optional[dict]
+    response_headers: t.Optional[dict],
 ) -> response.JSONResponse:
     error = error or str(exception)
 
@@ -256,5 +253,5 @@ class DDErrorHandler(_TorpedoErrorHandler):
             exc,
             error=SOMETHING_WENT_WRONG,
             status_code=HTTPStatusCodes.INTERNAL_SERVER_ERROR.value,
-            response_headers=response_headers
+            response_headers=response_headers,
         )
