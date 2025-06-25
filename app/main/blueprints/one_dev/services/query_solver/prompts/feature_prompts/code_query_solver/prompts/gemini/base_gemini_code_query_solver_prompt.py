@@ -324,9 +324,6 @@ class BaseGeminiCodeQuerySolverPrompt:
 
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(f"""
-            Here is the user's query for editing - {self.params.get("query")}
-
-
             If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
 
@@ -350,11 +347,11 @@ class BaseGeminiCodeQuerySolverPrompt:
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+
+            Here is the user's query for editing - {self.params.get("query")}
             """)
         else:
             user_message = textwrap.dedent(f"""
-            User Query: {self.params.get("query")}
-
             If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
 
@@ -425,6 +422,8 @@ class BaseGeminiCodeQuerySolverPrompt:
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+
+            User Query: {self.params.get("query")}
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
@@ -460,9 +459,9 @@ class BaseGeminiCodeQuerySolverPrompt:
                 """
 
         if focus_chunks_message:
-            user_message = focus_chunks_message + "\n" + user_message
+            user_message = user_message + "\n" + focus_chunks_message
         if urls_message:
-            user_message = urls_message + "\n" + user_message
+            user_message = user_message + "\n" + urls_message
 
         return UserAndSystemMessages(
             user_message=user_message,

@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
+
 import jwt
 from deputydev_core.utils.jwt_handler import JWTHandler
 

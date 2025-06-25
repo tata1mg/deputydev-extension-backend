@@ -49,7 +49,10 @@ async def get_presigned_get_url(_request: Request, auth_data: AuthData, **kwargs
         if not attachment:
             raise HTTPRequestException(f"Attachment with ID {payload.attachment_id} not found.")
         presigned_get_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(s3_key=attachment.s3_key)
-        return send_response({"download_url": presigned_get_url, "file_name": attachment.file_name}, headers=kwargs.get("response_headers"))
+        return send_response(
+            {"download_url": presigned_get_url, "file_name": attachment.file_name},
+            headers=kwargs.get("response_headers"),
+        )
     except Exception as _ex:
         raise HTTPRequestException(
             f"Error generating presigned URL: {_ex}",
