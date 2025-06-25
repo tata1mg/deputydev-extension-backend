@@ -22,11 +22,6 @@ class AWSS3ServiceClient:
             self._client_managers[client_key] = AWSClientManager(
                 aws_service_name=self.aws_service_name,
                 region_name=self.region_name,
-                # aws_connection_params=AWSConnectionParams(
-                #     endpoint_url="http://localhost:4566",  # LocalStack endpoint,
-                #     aws_access_key_id="test",
-                #     aws_secret_access_key="test",
-                # ),
             )
 
         # Use the shared client manager
