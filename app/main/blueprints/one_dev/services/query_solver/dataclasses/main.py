@@ -34,6 +34,17 @@ class DetailedFocusItem(BaseModel):
     url: Optional[str] = ""
 
 
+class DirectoryEntry(BaseModel):
+    name: str
+    type: str
+
+
+class DetailedDirectoryItem(BaseModel):
+    path: str
+    value: Optional[str] = None
+    structure: Optional[List[DirectoryEntry]] = None
+
+
 class Url(BaseModel):
     value: str
     url: str
@@ -74,6 +85,7 @@ class Attachment(BaseModel):
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
+    directory_items: Optional[List[DetailedDirectoryItem]] = None
     write_mode: bool = False
     session_id: int
     tool_use_failed: Optional[bool] = None
