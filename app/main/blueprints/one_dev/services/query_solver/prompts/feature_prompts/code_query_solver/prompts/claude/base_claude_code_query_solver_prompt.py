@@ -2,22 +2,13 @@ import re
 import textwrap
 from typing import Any, Dict, List, Tuple, Union
 
-
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
-    MessageData,
-    TextBlockData,
-    ToolUseRequestData,
-    ExtendedThinkingData,
-)
+    ExtendedThinkingData, MessageData, TextBlockData, ToolUseRequestData)
 from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    UserAndSystemMessages,
-)
-
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    FocusItemTypes,
-)
+    NonStreamingResponse, UserAndSystemMessages)
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import \
+    FocusItemTypes
 
 
 class BaseClaudeQuerySolverPrompt:
@@ -302,7 +293,11 @@ class BaseClaudeQuerySolverPrompt:
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
                     + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
+                    + (
+                        f"<path>{focus_item.path}</path>"
+                        if focus_item.type == FocusItemTypes.DIRECTORY
+                        else ""
+                    )
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
@@ -310,11 +305,10 @@ class BaseClaudeQuerySolverPrompt:
         if self.params.get("urls"):
             urls = self.params.get("urls")
             urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
-
         if self.params.get("write_mode") is True:
-            user_message = textwrap.dedent(f"""
+            user_message = textwrap.dedent(
+                f"""
             Here is the user's query for editing - {self.params.get("query")}
-
             
             If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
@@ -339,20 +333,48 @@ class BaseClaudeQuerySolverPrompt:
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
-            """)
+            """
+            )
         else:
-            user_message = textwrap.dedent(f"""
+            user_message = textwrap.dedent(
+                f"""
             User Query: {self.params.get("query")}
 
                 If you are thinking something, please provide that in <thinking> tag.
-                Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
+                Please answer the user query in the best way possible. 
+                
+                <repository_context>
+                  You are working with two types of repositories:
+                  <working_repository>
+                    <purpose>The primary repository where you will make changes and apply modifications</purpose>
+                    <access_level>Full read/write access</access_level>
+                    <allowed_operations>All read and write operations</allowed_operations>
+                    <restrictions>No restrictions</restrictions>
+                  </working_repository>
+                  <context_repository>
+                    <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
+                    <access_level>Read-only access</access_level>
+                    <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
+                    <restrictions>
+                      1. NO write operations allowed
+                      2. NO file creation or modification
+                      3. NO diff application
+                    </restrictions>
+                  </context_repository>
+                </repository_context>
+                
+                <code_block_guidelines>
+                You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
 
                 There are two types of code blocks you can use:
                 1. Code block which contains a diff for some code to be applied.
                 2. Code block which contains a code snippet.
-
-                DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST.
-                ALSO, PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                
+                <important> 
+                  1. Diff code blocks can ONLY be applied to the Working Repository. Never create diffs for Context Repositories.
+                  2. DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST. 
+                  3. PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                </important>
 
                 General structure of code block:
                 <code_block>
@@ -363,7 +385,7 @@ class BaseClaudeQuerySolverPrompt:
                     return "Hello, World!"
                 </code_block>
 
-                <important>
+                <diff_block_rules>
                 If you are providing a diff, set is_diff to true and return edits similar to unified diffs that `diff -U0` would produce.
                 Make sure you include the first 2 lines with the file paths.
                 Don't include timestamps with the file paths.
@@ -393,6 +415,8 @@ class BaseClaudeQuerySolverPrompt:
                 To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
 
                 To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.
+                </diff_block_rules>
+                </code_block_guidelines>
 
                 <extra_important>
                 Make sure you provide different code snippets for different files.
@@ -406,34 +430,108 @@ class BaseClaudeQuerySolverPrompt:
                 Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
                 In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
                 </extra_important>
-                </important>
 
                 Also, please use the tools provided to you to help you with the task.
+                <tool_usage_guidelines>
+                    When using provided tools:
+                    
+                    For Working Repository:
+                    Use all available tools including read and write operations
+                    Apply diffs and create files as needed
+                    Make actual code changes here
+                    
+                    
+                    For Context Repositories:
+                    Use only read-based tools (file reading, directory listing, etc.)
+                    Never attempt write operations on context repos
+                    If you need to reference code from context repos, copy patterns/examples to working repo
+                    
+                    
+                    Repository Identification:
+                    Always identify which repository you're working with
+                    Clearly state when switching between working repo and context repos
+                    Mention the repository type when providing file paths
+                </tool_usage_guidelines>
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
-            """)
+            """
+            )
 
         if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             ====
             SYSTEM INFORMATION:
 
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
             ====
-            """)
+            """
+            )
         if self.params.get("vscode_env"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             ====
             Below is the information about the current vscode environment:
-            {self.params.get("vscode_env")}
+            <environment_details>
+            # VSCode Visible Files
+            (No visible files in this workspace)
+            
+            # VSCode Open Tabs
+            (No open tabs in this workspace)
+            
+            # Current Time
+            05/06/2025, 12:29:40 pm (Asia/Calcutta, UTC+5.5:00)
+            
+            <working_repository>
+            <absolute_root_path>
+            /Users/deepak/workspace/genai
+            </absolute_root_path>
+            <root_directory_context>
+            Dockerfile
+            LaTeX
+            README.md
+            __init__.py
+            agent_comment_mapping_backfill.py
+            app
+            bitbucket-pipelines.yml
+            build_data
+            config.json
+            config_template.json
+            configs
+            conftest.py
+            db
+            deputydev.toml
+            pyproject.toml
+            pytest.ini
+            requirements
+            settings.toml
+            uv.lock
+            </root_directory_context>
+            </working_repository>
+            <context_repository>
+            <absolute_root_path>
+            /Users/deepak/workspace/deputydev-core
+            </absolute_root_path>
+            <root_directory_context>
+            CHANGELOG.md
+            deputydev_core
+            uv.lock
+            README.md
+            pyproject.toml
+            venv
+            </root_directory_context>
+            </context_repository>
+            </environment_details>
             ====
-            """)
+            """
+            )
         if self.params.get("deputy_dev_rules"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             Here are some more user provided rules and information that you can take reference from:
             <important>
             Follow these guidelines while using user provided rules or information:
@@ -445,7 +543,8 @@ class BaseClaudeQuerySolverPrompt:
             <user_rules_or_info>
             {self.params.get("deputy_dev_rules")}
             </user_rules_or_info>
-            """)
+            """
+            )
 
         if focus_chunks_message:
             user_message = focus_chunks_message + "\n" + user_message
@@ -477,13 +576,23 @@ class BaseClaudeQuerySolverPrompt:
                 }
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
-            elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
-                final_content.append({"type": "THINKING_BLOCK", "content": {"text": block.content.thinking}})
+            elif (
+                isinstance(block, ExtendedThinkingData)
+                and block.content.type == "thinking"
+            ):
+                final_content.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": block.content.thinking},
+                    }
+                )
 
         return final_content, tool_use_map
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    def get_parsed_result(
+        cls, llm_response: NonStreamingResponse
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         final_content: tuple[list[dict[str, Any]], dict[str, Any]]
         final_content = cls.get_parsed_response_blocks(llm_response.content)
         return final_content
@@ -501,18 +610,30 @@ class BaseClaudeQuerySolverPrompt:
         # is not ending tag for it, then we append the ending tag for it
         # this is very rare, but can happen if the last block is not closed properly
         last_code_block_tag = input_string.rfind("<code_block>")
-        if last_code_block_tag != -1 and input_string[last_code_block_tag:].rfind("</code_block>") == -1:
+        if (
+            last_code_block_tag != -1
+            and input_string[last_code_block_tag:].rfind("</code_block>") == -1
+        ):
             input_string += "</code_block>"
 
         last_summary_tag = input_string.rfind("<summary>")
-        if last_summary_tag != -1 and input_string[last_summary_tag:].rfind("</summary>") == -1:
+        if (
+            last_summary_tag != -1
+            and input_string[last_summary_tag:].rfind("</summary>") == -1
+        ):
             input_string += "</summary>"
 
         # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
         last_thinking_tag = input_string.rfind("<thinking>")
-        if last_thinking_tag != -1 and input_string[last_thinking_tag:].rfind("</thinking>") == -1:
+        if (
+            last_thinking_tag != -1
+            and input_string[last_thinking_tag:].rfind("</thinking>") == -1
+        ):
             # remove the last thinking tag
-            input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
+            input_string = (
+                input_string[:last_thinking_tag]
+                + input_string[last_thinking_tag + len("<thinking>") :]
+            )
 
         # Find all occurrences of either pattern
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
@@ -520,7 +641,9 @@ class BaseClaudeQuerySolverPrompt:
         matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
-        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
+        matches = (
+            list(matches_thinking) + list(matches_code_block) + list(matches_summary)
+        )
         matches.sort(key=lambda match: match.start())
 
         last_end = 0
@@ -531,14 +654,21 @@ class BaseClaudeQuerySolverPrompt:
             if start_index > last_end:
                 text_before = input_string[last_end:start_index]
                 if text_before.strip():  # Only append if not empty
-                    result.append({"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}})
+                    result.append(
+                        {"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}}
+                    )
 
             if match.re.pattern == code_block_pattern:
                 code_block_string = match.group(1).strip()
                 code_block_info = cls.extract_code_block_info(code_block_string)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
             elif match.re.pattern == thinking_pattern:
-                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+                result.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": match.group(1).strip()},
+                    }
+                )
 
             last_end = end_index
 
@@ -546,12 +676,16 @@ class BaseClaudeQuerySolverPrompt:
         if last_end < len(input_string):
             remaining_text = input_string[last_end:]
             if remaining_text.strip():  # Only append if not empty
-                result.append({"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}})
+                result.append(
+                    {"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}}
+                )
 
         return result
 
     @classmethod
-    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool, int]]:
+    def extract_code_block_info(
+        cls, code_block_string: str
+    ) -> Dict[str, Union[str, bool, int]]:
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
         file_path_pattern = r"<file_path>(.*?)</file_path>"
@@ -584,7 +718,11 @@ class BaseClaudeQuerySolverPrompt:
             code_lines = code.split("\n")
 
             for line in code_lines:
-                if line.startswith(" ") or line.startswith("+") and not line.startswith("++"):
+                if (
+                    line.startswith(" ")
+                    or line.startswith("+")
+                    and not line.startswith("++")
+                ):
                     code_selected_lines.append(line[1:])
                 if line.startswith("+"):
                     added_lines += 1
@@ -595,7 +733,12 @@ class BaseClaudeQuerySolverPrompt:
             diff = "\n".join(code_lines)
 
         return (
-            {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
+            {
+                "language": language,
+                "file_path": file_path,
+                "code": code,
+                "is_diff": is_diff,
+            }
             if not is_diff
             else {
                 "language": language,
