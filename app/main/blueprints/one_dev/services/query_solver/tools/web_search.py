@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 WEB_SEARCH = ConversationTool(
     name="web_search",
     description="""
+        This is a built-in tool.
         Performs a real-time, AI-powered web search using a **detailed, natural language prompt** that includes relevant context such as code snippets, error messages, intent, or technology stack.
 
         This tool should be used when:
