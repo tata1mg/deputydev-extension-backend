@@ -39,6 +39,8 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPromptHa
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
+                if focus_item.type == FocusItemTypes.DIRECTORY:
+                    continue
                 focus_chunks_message += (
                     ("<item>" + f"<type>{focus_item.type}</type>" + f"<value>{focus_item.value}</value>" + "</item>")
                     if focus_item.type != FocusItemTypes.CODE_SNIPPET
@@ -47,6 +49,17 @@ class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPromptHa
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+
+        if self.params.get("directory_items"):
+            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
+            for directory_item in self.params["directory_items"]:
+                focus_chunks_message += (
+                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                )
+                for entry in directory_item.structure:
+                    label = "file" if entry.type == "file" else "folder"
+                    focus_chunks_message += f"{label}: {entry.name}\n"
+                focus_chunks_message += "</structure></item>"
 
         user_message = f"""
             Here is a query asked on some repository by the user.
