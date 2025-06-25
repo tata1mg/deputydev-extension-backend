@@ -514,52 +514,60 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         )
 
     def tool_usage_guidelines(self, is_write_mode):
-        write_mode_specific_guidelines = ""
+        write_mode_guidelines = ""
         if is_write_mode:
-            write_mode_specific_guidelines = """
-              <important>
-                - For write operations always use built-in tools, unless explicitely asked to use a specific tool
-              </important>
+            write_mode_guidelines = """
+                ## Important Notes for Write Mode
+                - For **write operations**, always use **built-in tools**, unless the user explicitly requests a specific tool.
             """
 
         return f"""
-            <tool_usage_guidelines>
-              {write_mode_specific_guidelines}
-
-              <selection_strategy>
-                <priority_order>
-                  <rule>Always prefer the most specialized tool that directly addresses the user's specific need</rule>
-                  <rule>Use generic/multi-purpose tools only as fallbacks when specialized tools fail or don't exist</rule>
-                  <rule>Specialized tools are typically more accurate, efficient, and provide cleaner results</rule>
-                </priority_order>
-              </selection_strategy>
-
-              <decision_framework>
-                <step number="1">Identify if there's a tool designed specifically for this exact task</step>
-                <step number="2">If multiple specialized tools exist, choose the one that most closely matches the requirement</step>
-                <step number="3">Only use generic/multi-purpose tools when specialized options fail or are unavailable</step>
-                <step number="4">Implement graceful degradation: start specific, fall back to generic if needed</step>
-              </decision_framework>
-
-              <example_scenario>
-                <task>Find the definition of a symbol (method, class, or variable) in codebase</task>
-                <available_tools>
-                  <tool name="definition" type="specialized">Purpose-built for reading symbol definitions</tool>
-                  <tool name="focused_snippets_searcher" type="generic">Multi-purpose tool with various capabilities including symbol definition lookup</tool>
-                </available_tools>
-                <correct_choice>
-                  <primary>Use "definition" tool first</primary>
-                  <reasoning>Purpose-built for this exact task, likely more accurate and faster</reasoning>
-                  <fallback>If "definition" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
-                </correct_choice>
-              </example_scenario>
-
-              <behavioral_guidelines>
-                <guideline>Consider the specific context and requirements of the user's codebase when selecting tools</guideline>
-                <guideline>Provide clear reasoning when tool selection choices are not immediately obvious</guideline>
-                <guideline>Optimize for efficiency - specialized tools typically require fewer API calls and provide cleaner results</guideline>
-              </behavioral_guidelines>
-            </tool_usage_guidelines>
+            # Tool Usage Guidelines
+        
+            {write_mode_guidelines.strip()}
+        
+            ---
+        
+            ## Tool Selection Strategy
+        
+            ### Priority Order
+            1. **Always prefer specialized tools** that are built for the specific task.
+            2. Use **generic or multi-purpose tools only as fallbacks** when no specialized tools are available or suitable.
+            3. Specialized tools are typically **more accurate**, **more efficient**, and produce **cleaner results**.
+        
+            ---
+        
+            ## Tool Selection Decision Framework
+        
+            Follow these steps when deciding which tool to use:
+        
+            1. **Check if there's a tool designed specifically** for this task.
+            2. If multiple specialized tools exist, **choose the one that best matches the need**.
+            3. Use generic tools **only if specialized ones fail or are unavailable**.
+            4. **Implement graceful degradation**: start with specialized, fall back to generic.
+        
+            ---
+        
+            ## Example Scenario
+        
+            **Task**: Find the definition of a symbol (method, class, or variable) in the codebase.
+        
+            **Available Tools**:
+            - `definition` (specialized): Built specifically for reading symbol definitions.
+            - `focused_snippets_searcher` (generic): A general-purpose tool that includes symbol lookup among other capabilities.
+        
+            **Correct Choice**:
+            - Use the `definition` tool **first**.
+            - **Why**: It's optimized for this task and likely faster and more accurate.
+            - **Fallback**: If `definition` fails or provides insufficient results, then use `focused_snippets_searcher`.
+        
+            ---
+        
+            ## Behavioral Guidelines
+        
+            - Always consider the **specific context** and the **user's intent** before choosing a tool.
+            - When the right tool isn't obvious, **provide your reasoning** for the choice.
+            - **Optimize for efficiency**: specialized tools usually require fewer API calls and return more relevant results.
         """
 
     @classmethod
