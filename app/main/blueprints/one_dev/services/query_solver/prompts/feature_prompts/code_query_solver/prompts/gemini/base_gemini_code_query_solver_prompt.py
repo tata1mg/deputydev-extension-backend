@@ -51,20 +51,20 @@ class BaseGeminiCodeQuerySolverPrompt:
                 tool name: write_to_file
                 path: src/frontend-config.json
                 diff:
-                {
+                {{
                 "apiEndpoint": "https://api.example.com",
-                "theme": {
+                "theme": {{
                     "primaryColor": "#007bff",
                     "secondaryColor": "#6c757d",
                     "fontFamily": "Arial, sans-serif"
-                },
-                "features": {
+                }},
+                "features": {{
                     "darkMode": true,
                     "notifications": true,
                     "analytics": false
-                },
+                }},
                 "version": "1.0.0"
-                }
+                }}
 
                 ## Example 2: Requesting to make targeted edits to a file
 
@@ -74,14 +74,14 @@ class BaseGeminiCodeQuerySolverPrompt:
                 <<<<<<< SEARCH
                 import React from 'react';
                 =======
-                import React, { useState } from 'react';
+                import React, {{ useState }} from 'react';
                 >>>>>>> REPLACE
 
                 <<<<<<< SEARCH
-                function handleSubmit() {
+                function handleSubmit() {{
                 saveData();
                 setLoading(false);
-                }
+                }}
 
                 =======
                 >>>>>>> REPLACE
@@ -90,10 +90,10 @@ class BaseGeminiCodeQuerySolverPrompt:
                 return (
                 <div>
                 =======
-                function handleSubmit() {
+                function handleSubmit() {{
                 saveData();
                 setLoading(false);
-                }
+                }}
 
                 return (
                 <div>
@@ -126,15 +126,15 @@ class BaseGeminiCodeQuerySolverPrompt:
                 tool name: focused_snippets_searcher
                 search_terms:
                 [
-                {
+                {{
                     "keyword": "UserManager",
                     "type": "class",
                     "file_path": "src/auth/user_manager.py"
-                },
-                {
+                }},
+                {{
                     "keyword": "calculate_score",
                     "type": "function"
-                }
+                }}
                 ]
                 
                 ## Example 8: Find references of a symbol [This is an user installed from tool mcp. Fallback to other tools if not present]
