@@ -692,5 +692,6 @@
         "IMAGE_FOLDER_PATH": "chat_images",
         "MAX_FILES": 5
     },
-    "ALLOWED_PR_REVIEW_RETRIES": 3
+    "ALLOWED_PR_REVIEW_RETRIES": 3,
+    "EXTENSION_REPOS_ENCRYPTION_PASSWORD": ""
 }
