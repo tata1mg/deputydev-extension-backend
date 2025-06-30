@@ -1,6 +1,8 @@
 from app.main.blueprints.deputy_dev.services.code_review.pre_processors.base_review_pre_processor import BaseReviewPreProcessor
-from app.backend_common.repository.repo.user_extension_repo_repository import UserExtensionReposRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.caches.extension_review_cache import ExtensionReviewCache
+from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
+from torpedo import CONFIG
 
 class ExtensionReviewPreProcessor(BaseReviewPreProcessor):
     def __init__(self):
@@ -18,10 +20,15 @@ class ExtensionReviewPreProcessor(BaseReviewPreProcessor):
         6. Return agent list.
         """
         repo_name = data.get("repo_name")
-        review_diff = data.get("review_diff")
+        diff_s3_url = data.get("diff_s3_url")
+        s3_bucket = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_BUCKET"]
+        s3_region = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_REGION"]
+        s3_client = AWSS3ServiceClient(bucket_name=s3_bucket, region_name=s3_region)
+        review_diff_bytes = await s3_client.get_object(diff_s3_url)
+        review_diff = review_diff_bytes.decode("utf-8")
         user_team_id = data.get("user_team_id")
 
-        self.extension_repo_dto = await UserExtensionReposRepository.find_or_create(
+        self.extension_repo_dto = await RepoRepository.find_or_create(
             user_team_id=user_team_id,
             repo_name=repo_name,
             repo_path=repo_name,  # repo path or name
