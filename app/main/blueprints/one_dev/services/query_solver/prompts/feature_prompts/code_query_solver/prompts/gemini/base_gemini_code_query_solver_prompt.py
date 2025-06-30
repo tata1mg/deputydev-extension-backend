@@ -249,7 +249,11 @@ q               query: Get all the usages of xyz method in class abc
                 3. No manual implementation is required from the user.
                 4. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
-                """.format(tool_use_capabilities_resolution_guidelines = self.tool_use_capabilities_resolution_guidelines(is_write_mode=True))
+                """.format(
+                    tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
+                        is_write_mode=True
+                    )
+                )
             )
         else:
             system_message = textwrap.dedent(
@@ -311,12 +315,16 @@ q               query: Find all the references of xyz method in class abc
                 symbolName: abc.xyz
                 
                 {tool_use_capabilities_resolution_guidelines}
-                """.format(tool_use_capabilities_resolution_guidelines = self.tool_use_capabilities_resolution_guidelines(is_write_mode=False))
+                """.format(
+                    tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
+                        is_write_mode=False
+                    )
+                )
             )
 
         return system_message
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
@@ -494,7 +502,7 @@ q               query: Find all the references of xyz method in class abc
             system_message=system_message,
         )
 
-    def tool_use_capabilities_resolution_guidelines(self, is_write_mode):
+    def tool_use_capabilities_resolution_guidelines(self, is_write_mode: bool) -> str:
         write_mode_guidelines = ""
         if is_write_mode:
             write_mode_guidelines = """
@@ -573,7 +581,7 @@ q               query: Find all the references of xyz method in class abc
         return final_content
 
     @classmethod
-    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
+    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:  # noqa: C901
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
