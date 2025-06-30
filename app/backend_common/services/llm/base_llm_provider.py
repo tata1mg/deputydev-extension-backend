@@ -17,12 +17,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 
 class BaseLLMProvider(ABC):
     """Abstract LLM interface"""
 
-    def __init__(self, llm_type: str, checker=None):
+    def __init__(self, llm_type: str, checker: Optional[CancellationChecker] = None) -> None:
         self.llm_type = llm_type
         self.checker = checker
 
