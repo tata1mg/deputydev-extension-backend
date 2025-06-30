@@ -59,11 +59,11 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
 
 
 class Google(BaseLLMProvider):
-    def __init__(self, checker: CancellationChecker = None):
+    def __init__(self, checker: Optional[CancellationChecker] = None) -> None:
         super().__init__(LLMProviders.GOOGLE.value, checker=checker)
         self._active_streams: Dict[str, AsyncIterator] = {}
 
-    async def get_conversation_turns(
+    async def get_conversation_turns(  # noqa: C901
         self,
         previous_responses: List[MessageThreadDTO],
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -143,7 +143,7 @@ class Google(BaseLLMProvider):
 
         return conversation_turns
 
-    async def build_llm_payload(
+    async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -263,17 +263,19 @@ class Google(BaseLLMProvider):
         content_blocks: List[ResponseData] = []
         input_tokens = 0
         output_tokens = 0
+        cache_read_tokens = 0
 
         # Extract usage data
         if response.usage_metadata:
-            input_tokens = response.usage_metadata.prompt_token_count
             output_tokens = response.usage_metadata.candidates_token_count  # Sum across candidates if multiple
+            cache_read_tokens = response.usage_metadata.cached_content_token_count or 0
+            input_tokens = (response.usage_metadata.prompt_token_count or 0) - cache_read_tokens
 
         # Check for safety blocks or empty candidates
         if not response.candidates:
             # Handle cases where the response was blocked or no content generated
             # You might want to check response.prompt_feedback for block reasons
-            print(f"Warning: No candidates found in response. Feedback: {response.prompt_feedback}")
+            AppLogger.log_info(f"Warning: No candidates found in response. Feedback: {response.prompt_feedback}")
             # Return an empty or error response structure
             return NonStreamingResponse(content=[], usage=LLMUsage(input=input_tokens, output=output_tokens))
 
@@ -288,7 +290,9 @@ class Google(BaseLLMProvider):
         if candidate.safety_ratings:
             for rating in candidate.safety_ratings:
                 if rating.blocked:
-                    print(f"Warning: Response content blocked due to safety rating: {rating.category.name}")
+                    AppLogger.log_info(
+                        f"Warning: Response content blocked due to safety rating: {rating.category.name if rating.category else 'UNKNOWN'}"
+                    )
                     # Decide how to handle blocked content (e.g., return empty, raise error)
 
         # Extract content parts (text, function calls)
@@ -310,18 +314,18 @@ class Google(BaseLLMProvider):
 
         return NonStreamingResponse(
             content=content_blocks,
-            usage=LLMUsage(input=input_tokens or 0, output=output_tokens or 0),
+            usage=LLMUsage(input=input_tokens or 0, output=output_tokens or 0, cache_read=cache_read_tokens),
         )
 
-    async def _parse_streaming_response(
+    async def _parse_streaming_response(  # noqa: C901
         self,
         response: AsyncIterator[google_genai_types.GenerateContentResponse],
-        stream_id: str = None,
+        stream_id: Optional[str] = None,
         session_id: Optional[int] = None,
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        streaming_completed = False
+        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
+        streaming_completed = asyncio.Event()
 
         # Manual token counting for when final usage is not available
 
@@ -353,29 +357,26 @@ class Google(BaseLLMProvider):
                                 # Manual token counting for streaming content
                                 accumulated_events.append(event_block)
                                 yield event_block
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Streaming Error in Goggle: {e}")
             finally:
                 if self.checker:
                     await self.checker.stop_monitoring()
-                streaming_completed = True
+                streaming_completed.set()
                 await close_client()
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-
+            await streaming_completed.wait()
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             return accumulated_events
 
         async def close_client() -> None:
@@ -384,7 +385,7 @@ class Google(BaseLLMProvider):
                     stream_iter = self._active_streams[stream_id]
                     await stream_iter.aclose()
                     del self._active_streams[stream_id]
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Error closing Google LLM client for stream {stream_id}: {e}")
             if stream_id in self._active_streams:
                 del self._active_streams[stream_id]
@@ -396,7 +397,7 @@ class Google(BaseLLMProvider):
             accumulated_events=asyncio.create_task(get_accumulated_events()),
         )
 
-    async def _get_parsed_stream_event(
+    async def _get_parsed_stream_event(  # noqa: C901
         self,
         chunk: google_genai_types.GenerateContentResponse,
         current_running_block_type: Optional[ContentBlockCategory] = None,

@@ -71,11 +71,11 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
 
 
 class Anthropic(BaseLLMProvider):
-    def __init__(self, checker: CancellationChecker = None):
+    def __init__(self, checker: Optional[CancellationChecker] = None) -> None:
         super().__init__(LLMProviders.ANTHROPIC.value, checker=checker)
         self.anthropic_client = None
 
-    async def get_conversation_turns(
+    async def get_conversation_turns(  # noqa: C901
         self,
         previous_responses: List[MessageThreadDTO],
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -173,7 +173,7 @@ class Anthropic(BaseLLMProvider):
 
         return conversation_turns
 
-    async def build_llm_payload(
+    async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -293,7 +293,7 @@ class Anthropic(BaseLLMProvider):
 
         return llm_payload
 
-    async def _get_service_client(self):
+    async def _get_service_client(self) -> BedrockServiceClient:
         if not self.anthropic_client:
             self.anthropic_client = BedrockServiceClient()
         return self.anthropic_client
@@ -338,7 +338,7 @@ class Anthropic(BaseLLMProvider):
             type=LLMCallResponseTypes.NON_STREAMING,
         )
 
-    def _get_parsed_stream_event(
+    def _get_parsed_stream_event(  # noqa: C901
         self,
         event: Dict[str, Any],
         current_content_block_delta: str,
@@ -362,6 +362,10 @@ class Anthropic(BaseLLMProvider):
                 usage.input = invocation_metrics.get("inputTokenCount")
             if "outputTokenCount" in invocation_metrics:
                 usage.output = invocation_metrics.get("outputTokenCount")
+            if "cacheReadInputTokenCount" in invocation_metrics:
+                usage.cache_read = invocation_metrics.get("cacheReadInputTokenCount")
+            if "cacheWriteInputTokenCount" in invocation_metrics:
+                usage.cache_write = invocation_metrics.get("cacheWriteInputTokenCount")
 
             return [], None, None, usage
 
@@ -501,7 +505,7 @@ class Anthropic(BaseLLMProvider):
 
         return [], None, None, None
 
-    async def _parse_streaming_response(
+    async def _parse_streaming_response(  # noqa: C901
         self,
         response: InvokeModelWithResponseStreamResponseTypeDef,
         async_bedrock_client: BedrockRuntimeClient,
@@ -509,13 +513,13 @@ class Anthropic(BaseLLMProvider):
         session_id: Optional[int],
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        streaming_completed: bool = False
+        streaming_completed = asyncio.Event()
 
         # Manual token counting for when final usage is not available
 
         accumulated_events: List[StreamingEvent] = []
 
-        async def stream_content() -> AsyncIterator[StreamingEvent]:
+        async def stream_content() -> AsyncIterator[StreamingEvent]:  # noqa: C901
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
@@ -572,7 +576,7 @@ class Anthropic(BaseLLMProvider):
 
                         if content_block_delta is not None:
                             current_content_block_delta = content_block_delta
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
                         pass
                 if buffer:
@@ -580,34 +584,30 @@ class Anthropic(BaseLLMProvider):
                     yield combined_event
             except asyncio.CancelledError:
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Streaming Error in Anthropic: {e}")
             finally:
                 if self.checker:
                     await self.checker.stop_monitoring()
-                streaming_completed = True
+                streaming_completed.set()  # signal that streaming is completed
                 await close_client()
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-
+            await streaming_completed.wait()
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             return accumulated_events
 
         # close the async bedrock client
         async def close_client() -> None:
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             await async_bedrock_client.__aexit__(None, None, None)
 
         return StreamingResponse(
