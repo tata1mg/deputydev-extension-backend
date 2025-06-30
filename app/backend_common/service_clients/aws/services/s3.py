@@ -9,7 +9,7 @@ class AWSS3ServiceClient:
     _client_managers: ClassVar[Dict[str, AWSClientManager]] = {}
 
     # constructor
-    def __init__(self, bucket_name: str, region_name: str):
+    def __init__(self, bucket_name: str, region_name: str) -> None:
         self.region_name = region_name
         self.bucket_name = bucket_name
         self.aws_service_name = "s3"
