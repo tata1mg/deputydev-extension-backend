@@ -290,7 +290,7 @@ class BaseClaudeQuerySolverPrompt:
 
         return system_message
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
@@ -320,7 +320,6 @@ class BaseClaudeQuerySolverPrompt:
         if self.params.get("urls"):
             urls = self.params.get("urls")
             urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
-
 
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(f"""
@@ -464,7 +463,7 @@ class BaseClaudeQuerySolverPrompt:
             system_message=system_message,
         )
 
-    def tool_usage_guidelines(self, is_write_mode):
+    def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_specific_guidelines = ""
         if is_write_mode:
             write_mode_specific_guidelines = """
@@ -546,7 +545,7 @@ class BaseClaudeQuerySolverPrompt:
         return final_content
 
     @classmethod
-    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
+    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:  # noqa: C901
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
