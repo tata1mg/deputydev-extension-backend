@@ -22,7 +22,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
-    StreamingParsedLLMCallResponse
+    StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
@@ -164,7 +164,7 @@ class QuerySolver:
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
 
-        async def _streaming_content_block_generator():
+        async def _streaming_content_block_generator() -> AsyncIterator[BaseModel]:
             nonlocal llm_response
             nonlocal query_summary
             if not isinstance(llm_response, StreamingParsedLLMCallResponse):
