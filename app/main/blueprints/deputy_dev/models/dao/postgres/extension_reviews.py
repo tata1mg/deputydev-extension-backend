@@ -6,11 +6,15 @@ from app.backend_common.models.dao.postgres.base import Base
 class ExtensionReviews(Base):
     serializable_keys = {
         "id",
-        "user_repo_id",
+        "repo_id",
         "loc",
         "reviewed_files",
         "execution_time_seconds",
         "status",
+        "source_branch",
+        "target_branch",
+        "source_commit",
+        "target_commit",
         "fail_message",
         "review_datetime",
         "is_deleted",
@@ -19,15 +23,18 @@ class ExtensionReviews(Base):
         "diff_s3_url",
         "created_at",
         "updated_at",
-        "ide_reviews_comment_id",
     }
 
     id = fields.BigIntField(pk=True)
-    user_repo_id = fields.BigIntField()
+    repo_id = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
     loc = fields.IntField()
     reviewed_files = fields.JSONField()
     execution_time_seconds = fields.IntField(null=True)
     status = fields.CharField(max_length=20)
+    source_branch = fields.TextField(null=True)
+    target_branch = fields.TextField(null=True)
+    source_commit = fields.TextField(null=True)
+    target_commit = fields.TextField(null=True)
     fail_message = fields.TextField(null=True)
     review_datetime = fields.DatetimeField(null=True)
     is_deleted = fields.BooleanField(default=False)
@@ -46,7 +53,7 @@ class ExtensionReviews(Base):
 
     class Columns(Enum):
         id = ("id",)
-        user_repo_id = ("user_repo_id",)
+        repo_id = ("repo_id",)
         loc = ("loc",)
         reviewed_files = ("reviewed_files",)
         execution_time_seconds = ("execution_time_seconds",)
@@ -59,3 +66,7 @@ class ExtensionReviews(Base):
         diff_s3_key = ("diff_s3_key",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
+        source_branch = ("source_branch",)
+        target_branch = ("target_branch",)
+        source_commit = ("source_commit",)
+        target_commit = ("target_commit",)
