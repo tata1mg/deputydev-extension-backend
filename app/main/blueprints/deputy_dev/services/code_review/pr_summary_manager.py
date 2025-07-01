@@ -9,7 +9,7 @@ from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
