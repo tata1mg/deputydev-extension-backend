@@ -1,4 +1,4 @@
-name: Code Quality Checks on PR to master
+name: Code Quality
 
 on:
   pull_request:
