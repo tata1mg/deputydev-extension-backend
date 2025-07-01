@@ -279,3 +279,16 @@ ParsedLLMCallResponse = Annotated[
 class ChatAttachmentDataWithObjectBytes(BaseModel):
     attachment_metadata: ChatAttachmentsDTO
     object_bytes: bytes
+
+
+class LLMToolChoice(Enum):
+    NONE = "NONE"
+    AUTO = "AUTO"
+    REQUIRED = "REQUIRED"
+
+
+class LLMHandlerInputs(BaseModel):
+    user_message: str
+    system_message: Optional[str] = None
+    tools: Optional[List[ConversationTool]] = None
+    tool_choice: LLMToolChoice = LLMToolChoice.AUTO
