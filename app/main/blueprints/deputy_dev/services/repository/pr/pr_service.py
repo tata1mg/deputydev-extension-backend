@@ -9,7 +9,7 @@ from app.backend_common.models.dao.postgres.repos import Repos
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.repository.db import DB
-from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
