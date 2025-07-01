@@ -3,7 +3,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
-from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.repo_factory import RepoFactory
