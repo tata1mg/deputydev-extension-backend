@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-
 from app.backend_common.models.dto.message_thread_dto import MessageThreadDTO
 from app.backend_common.services.llm.dataclasses.main import LLMHandlerInputs
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
