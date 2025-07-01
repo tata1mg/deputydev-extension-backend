@@ -3,8 +3,7 @@ from typing import Any, ClassVar, Dict
 from types_aiobotocore_s3.client import S3Client
 
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
-
-from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams # noqa: ERA001
+from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams  # noqa: ERA001
 
 
 class AWSS3ServiceClient:
