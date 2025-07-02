@@ -13,6 +13,11 @@ ITERATIVE_FILE_READER = ConversationTool(
 
         Try to use this tool iteratively, to read a file until either the desired context is found or the end of the file is reached.
         The response will EXPLICITLY mention if the end of the file is reached or not.
+
+        Special behavior for entire file requests:
+        - If you request the entire file (start_line=1 and end_line covers the whole file) and the file has more than 1000 lines, you will receive a summary instead of the full content.
+        - The summary will contain an overview of the file's constructs (classes, functions, etc.) and their sizes/line counts.
+        - For files with 1000 lines or fewer, you will receive the complete file content as usual.
     """,
     input_schema=JSONSchema(
         **{
