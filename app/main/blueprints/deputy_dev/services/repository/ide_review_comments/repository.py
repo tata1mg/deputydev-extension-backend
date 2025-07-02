@@ -5,6 +5,7 @@ from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import Id
 
 from app.backend_common.repository.db import DB
 
+
 class IdeReviewsCommentsRepository:
     @classmethod
     async def db_get(cls, filters, fetch_one=False) -> Union[IdeReviewsCommentDTO, List[IdeReviewsCommentDTO]]:
