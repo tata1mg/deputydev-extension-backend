@@ -32,6 +32,8 @@ async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
     try:
         # Extract query parameters
         query_params = _request.request_params()
+
+
         review_history_params = ReviewHistoryParams(**query_params, user_team_id=auth_data.user_team_id)
 
         # Initialize manager and fetch reviews
