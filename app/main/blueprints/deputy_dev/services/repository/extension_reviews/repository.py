@@ -6,9 +6,9 @@ from app.backend_common.repository.db import DB
 
 class ExtensionReviewsRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False) -> Union[ExtensionReviewDTO, List[ExtensionReviewDTO]]:
+    async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[ExtensionReviewDTO, List[ExtensionReviewDTO]]:
         try:
-            review_data = await DB.by_filters(model_name=ExtensionReviews, where_clause=filters, fetch_one=fetch_one)
+            review_data = await DB.by_filters(model_name=ExtensionReviews, where_clause=filters, fetch_one=fetch_one, order_by=order_by)
             if review_data and fetch_one:
                 return ExtensionReviewDTO(**review_data)
             elif review_data:
@@ -47,3 +47,14 @@ class ExtensionReviewsRepository:
             }
             review_dto = await cls.db_insert(ExtensionReviewDTO(**review_data))
         return review_dto
+
+
+    @classmethod
+    async def fetch_reviews_history(cls, filters, order_by):
+        try:
+            reviews = await ExtensionReviews.filter(**filters).order_by("-created_at").prefetch_related("review_comments")
+            return [ExtensionReviewDTO(**review) for review in reviews]
+        except Exception as ex:
+            logger.error(f"Error fetching review history: {filters}, ex: {ex}")
+            raise ex
+
