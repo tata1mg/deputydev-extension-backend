@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from .ide_reviews_comment_dto import IdeReviewsCommentDTO
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ExtensionReviewDTO(BaseModel):
@@ -21,3 +21,5 @@ class ExtensionReviewDTO(BaseModel):
     diff_s3_url: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)

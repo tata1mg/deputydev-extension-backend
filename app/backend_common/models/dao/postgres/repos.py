@@ -16,6 +16,7 @@ class Repos(Base):
         "scm_repo_id",
         "created_at",
         "updated_at",
+        "repo_hash"
     }
 
     id = fields.IntField(primary_key=True)
@@ -24,6 +25,7 @@ class Repos(Base):
     scm = fields.CharField(max_length=1000)
     workspace_id = fields.BigIntField()
     scm_repo_id = fields.CharField(max_length=100)
+    repo_hash = fields.CharField(max_length=64)
 
     class Meta:
         table = "repos"
@@ -39,3 +41,4 @@ class Repos(Base):
         scm_repo_id = ("scm_repo_id",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
+        repo_hash = ("repo_hash",)

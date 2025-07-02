@@ -32,7 +32,7 @@ async def code_review_history(_request: Request, auth_data: AuthData,  **kwargs)
     try:
         # Extract query parameters
         query_params = _request.request_params()
-        review_history_params = ReviewHistoryParams(**query_params)
+        review_history_params = ReviewHistoryParams(**query_params, user_team_id=auth_data.user_team_id)
 
         # Initialize manager and fetch reviews
         history_manager = ExtensionCodeReviewHistoryManager()
@@ -40,8 +40,5 @@ async def code_review_history(_request: Request, auth_data: AuthData,  **kwargs)
         return send_response(reviews)
         
     except Exception as e:
-        return send_response(
-            response={"error": f"Internal server error: {str(e)}"}, 
-            status=500
-        )
+        raise e
 
