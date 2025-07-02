@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS extension_reviews (
     id BIGSERIAL PRIMARY KEY,
     repo_id BIGINT NOT NULL,
+    user_team_id BIGINT NOT NULL,
     loc INTEGER NOT NULL,
     reviewed_files JSONB NOT NULL,
     execution_time_seconds INTEGER,
@@ -18,7 +19,8 @@ CREATE TABLE IF NOT EXISTS extension_reviews (
     diff_s3_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (repo_id) REFERENCES repos(id)
+    FOREIGN KEY (repo_id) REFERENCES repos(id),
+    FOREIGN KEY (user_team_id) REFERENCES user_teams(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_extension_reviews_user_repo_id ON extension_reviews(repo_id);
