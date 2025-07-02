@@ -14,7 +14,7 @@ class IdeReviewCommentFeedbacks(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    comment_id = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="feedback_review")
+    comment = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="feedback_review")
     feedback_comment = fields.TextField(null=True)
     like = fields.BooleanField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
