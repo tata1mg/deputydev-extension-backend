@@ -9,9 +9,9 @@ class ExtensionCodeReviewHistoryManager:
         """
         Fetch extension reviews based on provided filters using DB class
         """
-        user_team_id = review_history_params.user_team_id,
-        source_branch = review_history_params.source_branch,
-        target_branch = review_history_params.target_branch,
+        user_team_id = review_history_params.user_team_id
+        source_branch = review_history_params.source_branch
+        target_branch = review_history_params.target_branch
         repo_id = review_history_params.repo_id
         try:
             # Build where clause for reviews
@@ -26,48 +26,9 @@ class ExtensionCodeReviewHistoryManager:
                 where_clause["target_branch"] = target_branch
             if user_team_id:
                 where_clause["user_team_id"] = user_team_id
-
+            where_clause["status__not"] = "cancelled"
             reviews = await ExtensionReviewsRepository.fetch_reviews_history(filters=where_clause)
-
-            # Format response
-            result = []
-            for review in reviews:
-                # Fetch comments for this review using DB class
-                comment_filters = {
-                    "review_id": review.id,
-                    "is_deleted": False
-                }
-                comments = await DB.by_filters(
-                    model_name="dao.IdeReviewsComments",
-                    where_clause=comment_filters,
-                    fetch_one=False,
-                    only=["file_path", "comment", "line_number"]
-                )
-                
-                # Format comments
-                formatted_comments = [
-                    {
-                        "file_path": comment["file_path"],
-                        "comment": comment["comment"],
-                        "line_number": comment["line_number"]
-                    }
-                    for comment in comments
-                ]
-                
-                # Format review data
-                review_data = {
-                    "id": review["id"],
-                    "repo_id": str(review["repo_id"]) if review["repo_id"] else "",
-                    "reviewed_files": review["reviewed_files"] or "",
-                    "execution_time_seconds": review["execution_time_seconds"] or "",
-                    "status": review["status"] or "",
-                    "fail_message": review["fail_message"] or "",
-                    "review_datetime": review["review_datetime"].isoformat() if review["review_datetime"] else "",
-                    "comments": formatted_comments
-                }
-                
-                result.append(review_data)
-            
+            result = [review.model_dump(mode="json") for review in reviews]
             return result
             
         except Exception as e:
