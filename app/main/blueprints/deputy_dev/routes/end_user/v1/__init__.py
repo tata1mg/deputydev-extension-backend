@@ -12,6 +12,14 @@ from app.main.blueprints.deputy_dev.routes.end_user.v1.onboarding import onboard
 from app.main.blueprints.deputy_dev.routes.end_user.v1.setting import setting
 from app.main.blueprints.deputy_dev.routes.end_user.v1.extension_code_review import extension_code_review
 
-blueprints = [smart_code, onboarding_bp, ab_analysis, console, setting, backfill, extension_code_review]  # onboarding flows,
+blueprints = [
+    smart_code,
+    onboarding_bp,
+    ab_analysis,
+    console,
+    setting,
+    backfill,
+    extension_code_review,
+]  # onboarding flows,
 
 code_review_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
