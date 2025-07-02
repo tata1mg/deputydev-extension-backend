@@ -2,6 +2,7 @@ from enum import Enum
 from tortoise import fields
 from app.backend_common.models.dao.postgres.base import Base
 
+
 class IdeReviewsComments(Base):
     serializable_keys = {
         "id",
