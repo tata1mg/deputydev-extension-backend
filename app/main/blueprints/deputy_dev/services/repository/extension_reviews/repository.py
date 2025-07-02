@@ -3,6 +3,7 @@ from sanic.log import logger
 from app.main.blueprints.deputy_dev.models.dao.postgres.extension_reviews import ExtensionReviews
 from app.main.blueprints.deputy_dev.models.dto.extension_review_dto import ExtensionReviewDTO
 from app.backend_common.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 
 class ExtensionReviewsRepository:
     @classmethod
@@ -50,10 +51,19 @@ class ExtensionReviewsRepository:
 
 
     @classmethod
-    async def fetch_reviews_history(cls, filters, order_by):
+    async def fetch_reviews_history(cls, filters, order_by="-created_at"):
         try:
-            reviews = await ExtensionReviews.filter(**filters).order_by("-created_at").prefetch_related("review_comments")
-            return [ExtensionReviewDTO(**review) for review in reviews]
+            reviews = await ExtensionReviews.filter(**filters).order_by(order_by).prefetch_related("review_comments")
+            review_dtos = []
+            for review in reviews:
+                comments = []
+                for comment in review.review_comments:
+                    if not comment.is_deleted:
+                        comments.append(IdeReviewsCommentDTO(**dict(comment)))
+                review_dto = ExtensionReviewDTO(**dict(review))
+                review_dto.comments = comments
+                review_dtos.append(review_dto)
+            return review_dtos
         except Exception as ex:
             logger.error(f"Error fetching review history: {filters}, ex: {ex}")
             raise ex
