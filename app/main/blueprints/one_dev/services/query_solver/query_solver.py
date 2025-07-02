@@ -1,7 +1,6 @@
 import asyncio
 from typing import AsyncIterator, List, Optional
 
-from deputydev_core.models.dto.summarization_dto import FileContent
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
@@ -313,7 +312,7 @@ class QuerySolver:
 
                 if payload.tool_use_response.tool_name == "iterative_file_reader":
                     tool_response = {
-                        "file_content_with_line_numbers": FileContent(**tool_response["data"]["chunk"]).get_xml(),
+                        "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
                         "eof_reached": tool_response["data"]["eof_reached"],
                     }
 
