@@ -26,7 +26,7 @@ class ExtensionCodeReviewHistoryManager:
                 where_clause["target_branch"] = target_branch
             if user_team_id:
                 where_clause["user_team_id"] = user_team_id
-            where_clause["is_deleted"] = False
+            where_clause["status__not"] = "cancelled"
             reviews = await ExtensionReviewsRepository.fetch_reviews_history(filters=where_clause)
             result = [review.model_dump(mode="json") for review in reviews]
             return result
