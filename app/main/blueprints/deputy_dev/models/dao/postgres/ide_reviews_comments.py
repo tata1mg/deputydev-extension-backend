@@ -17,7 +17,7 @@ class IdeReviewsComments(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    review_id = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="review_comments")
+    review = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="review_comments")
     comment = fields.TextField()
     agent_id = fields.IntField()
     is_deleted = fields.BooleanField(default=False)
