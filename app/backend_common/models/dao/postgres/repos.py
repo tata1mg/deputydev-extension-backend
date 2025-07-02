@@ -16,7 +16,7 @@ class Repos(Base):
         "scm_repo_id",
         "created_at",
         "updated_at",
-        "repo_hash"
+        "repo_hash",
     }
 
     id = fields.IntField(primary_key=True)

@@ -20,13 +20,13 @@ config = CONFIG.config
 @extension_code_review.route("/history", methods=["GET"])
 @validate_client_version
 @authenticate
-async def code_review_history(_request: Request, auth_data: AuthData,  **kwargs):
+async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
     """
     Get code review history based on filters
     Query parameters:
     - user_team_id: Filter by user team ID
     - source_branch: Filter by source branch
-    - target_branch: Filter by target branch  
+    - target_branch: Filter by target branch
     - repo_id: Filter by repository ID
     """
     try:
@@ -38,7 +38,6 @@ async def code_review_history(_request: Request, auth_data: AuthData,  **kwargs)
         history_manager = ExtensionCodeReviewHistoryManager()
         reviews = await history_manager.fetch_reviews_by_filters(review_history_params)
         return send_response(reviews)
-        
+
     except Exception as e:
         raise e
-

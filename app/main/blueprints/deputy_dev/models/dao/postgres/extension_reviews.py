@@ -48,9 +48,7 @@ class ExtensionReviews(Base):
     class Meta:
         table = "extension_reviews"
         indexes = (("repo_id",),)
-        constraints = [
-            "FOREIGN KEY (repo_id) REFERENCES repos(id)"
-        ]
+        constraints = ["FOREIGN KEY (repo_id) REFERENCES repos(id)"]
 
     class Columns(Enum):
         id = ("id",)
