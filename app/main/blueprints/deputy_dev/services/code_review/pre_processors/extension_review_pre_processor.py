@@ -1,8 +1,11 @@
-from app.main.blueprints.deputy_dev.services.code_review.pre_processors.base_review_pre_processor import BaseReviewPreProcessor
+from app.main.blueprints.deputy_dev.services.code_review.pre_processors.base_review_pre_processor import (
+    BaseReviewPreProcessor,
+)
 from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.caches.extension_review_cache import ExtensionReviewCache
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
 from torpedo import CONFIG
+
 
 class ExtensionReviewPreProcessor(BaseReviewPreProcessor):
     def __init__(self):
@@ -39,10 +42,7 @@ class ExtensionReviewPreProcessor(BaseReviewPreProcessor):
         await self.run_validation(review_diff)
 
         if self.is_valid:
-            await ExtensionReviewCache.set(
-                key=self.extension_repo_dto.repo_id,
-                value=review_diff
-            )
+            await ExtensionReviewCache.set(key=self.extension_repo_dto.repo_id, value=review_diff)
 
         agent_list = await self.fetch_agents(self.extension_repo_dto.repo_id)
 

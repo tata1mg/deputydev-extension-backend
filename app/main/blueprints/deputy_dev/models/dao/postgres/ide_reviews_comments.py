@@ -2,6 +2,7 @@ from enum import Enum
 from tortoise import fields
 from app.backend_common.models.dao.postgres.base import Base
 
+
 class IdeReviewsComments(Base):
     serializable_keys = {
         "id",
@@ -17,13 +18,15 @@ class IdeReviewsComments(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    review_id = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="comment_review")
+    review = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="review_comments")
     comment = fields.TextField()
     agent_id = fields.IntField()
     is_deleted = fields.BooleanField(default=False)
     file_path = fields.TextField()
-    file_hash = fields.TextField()
+    line_hash = fields.TextField()
     line_number = fields.IntField()
+    tag = fields.CharField(max_length=20, null=True)
+    is_valid = fields.BooleanField(default=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 

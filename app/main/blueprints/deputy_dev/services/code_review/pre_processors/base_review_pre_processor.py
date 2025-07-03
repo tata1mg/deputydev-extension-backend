@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class BaseReviewPreProcessor(ABC):
     def __init__(self):
         self.is_valid = True
