@@ -25,6 +25,8 @@ class IdeReviewsComments(Base):
     file_path = fields.TextField()
     file_hash = fields.TextField()
     line_number = fields.IntField()
+    tag = fields.CharField(max_length=20, null=True)
+    is_valid = fields.BooleanField(default=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
