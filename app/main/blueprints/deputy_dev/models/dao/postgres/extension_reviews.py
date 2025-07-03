@@ -26,7 +26,8 @@ class ExtensionReviews(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    repo_id = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
+    repo = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
+    user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
     loc = fields.IntField()
     reviewed_files = fields.JSONField()
     execution_time_seconds = fields.IntField(null=True)
@@ -47,9 +48,7 @@ class ExtensionReviews(Base):
     class Meta:
         table = "extension_reviews"
         indexes = (("repo_id",),)
-        constraints = [
-            "FOREIGN KEY (repo_id) REFERENCES repos(id)"
-        ]
+        constraints = ["FOREIGN KEY (repo_id) REFERENCES repos(id)"]
 
     class Columns(Enum):
         id = ("id",)

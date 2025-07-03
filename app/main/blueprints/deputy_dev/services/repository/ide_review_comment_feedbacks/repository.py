@@ -4,9 +4,12 @@ from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_comment_feedb
 from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
 from app.backend_common.repository.db import DB
 
+
 class IdeReviewCommentFeedbacksRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False) -> Union[IdeReviewCommentFeedbackDTO, List[IdeReviewCommentFeedbackDTO]]:
+    async def db_get(
+        cls, filters, fetch_one=False
+    ) -> Union[IdeReviewCommentFeedbackDTO, List[IdeReviewCommentFeedbackDTO]]:
         try:
             data = await DB.by_filters(model_name=IdeReviewCommentFeedbacks, where_clause=filters, fetch_one=fetch_one)
             if data and fetch_one:
