@@ -17,6 +17,7 @@ __all__ = [
     "UserAgents",
     "UserAgentCommentMapping",
     "ReviewAgentStatus",
+    "ExtensionReviewFeedback"
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos
@@ -37,3 +38,4 @@ from .extension_reviews import ExtensionReviews
 from .user_agents import UserAgents
 from .user_agent_comment_mapping import UserAgentCommentMapping
 from .review_agent_status import ReviewAgentStatus
+from .extension_review_feedback import ExtensionReviewFeedback

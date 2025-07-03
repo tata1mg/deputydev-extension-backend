@@ -12,6 +12,7 @@ from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_aut
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.managers.extension_code_review_history_manager import (
     ExtensionCodeReviewHistoryManager,
 )
+from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.extension_review_pre_processor import (
     ExtensionReviewPreProcessor,
 )
@@ -37,6 +38,14 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.datacl
     MultiAgentReviewRequest, AgentRequestItem
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.post_proces_web_socket_manager import PostProcessWebSocketManager
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import CommentUpdateRequest, GetRepoIdRequest
+from app.main.blueprints.deputy_dev.services.repository.ide_review_comment_feedbacks.repository import (
+    IdeReviewCommentFeedbacksRepository,
+)
+from app.main.blueprints.deputy_dev.services.repository.extension_review_feedbacks.repository import (
+    ExtensionReviewFeedbacksRepository,
+)
+from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
+from app.main.blueprints.deputy_dev.models.dto.extension_review_feedback_dto import ExtensionReviewFeedbackDTO
 
 extension_code_review = Blueprint("ide_code_review", "/extension-code-review")
 
@@ -538,3 +547,71 @@ async def get_repo_id(request: Request, auth_data: AuthData, **kwargs):
     except Exception as e:
         AppLogger.log_error(f"Error getting repo id: {e}")
         return send_response({"status": "ERROR", "message": str(e)})
+
+
+@extension_code_review.route("/comments/<comment_id:int>/feedback", methods=["POST"])
+@validate_client_version
+@authenticate
+@exception_logger
+async def create_comment_feedback(request: Request, auth_data: AuthData, comment_id: int, **kwargs):
+    """
+    Create feedback for a specific comment
+
+    Request Body:
+    {
+        "feedback_comment": "string (optional)",
+        "like": "boolean (optional)"
+    }
+    """
+    try:
+        # Get request body
+        request_data = request.json or {}
+
+        # Create feedback DTO
+        feedback_dto = IdeReviewCommentFeedbackDTO(
+            comment_id=comment_id,
+            feedback_comment=request_data.get("feedback_comment"),
+            like=request_data.get("like")
+        )
+
+        # Insert feedback via repository
+        created_feedback = await IdeReviewCommentFeedbacksRepository.db_insert(feedback_dto)
+
+        return send_response(created_feedback.model_dump(mode="json"))
+
+    except Exception as e:
+        raise e
+
+
+@extension_code_review.route("/reviews/<review_id:int>/feedback", methods=["POST"])
+@validate_client_version
+@authenticate
+@exception_logger
+async def create_review_feedback(request: Request, auth_data: AuthData, review_id: int, **kwargs):
+    """
+    Create feedback for a specific review
+
+    Request Body:
+    {
+        "feedback_comment": "string (optional)",
+        "like": "boolean (optional)"
+    }
+    """
+    try:
+        # Get request body
+        request_data = request.json or {}
+
+        # Create feedback DTO
+        feedback_dto = ExtensionReviewFeedbackDTO(
+            review_id=review_id,
+            feedback_comment=request_data.get("feedback_comment"),
+            like=request_data.get("like")
+        )
+
+        # Insert feedback via repository
+        created_feedback = await ExtensionReviewFeedbacksRepository.db_insert(feedback_dto)
+
+        return send_response(created_feedback.model_dump(mode="json"))
+
+    except Exception as e:
+        raise e

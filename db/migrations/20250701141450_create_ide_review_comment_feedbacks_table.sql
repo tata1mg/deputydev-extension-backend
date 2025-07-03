@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS ide_review_comment_feedbacks (
     comment_id BIGINT NOT NULL,
     feedback_comment TEXT,
     "like" BOOLEAN,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (comment_id) REFERENCES ide_reviews_comments(id)
 );
 
