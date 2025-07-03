@@ -23,7 +23,7 @@ class IdeReviewsComments(Base):
     agent_id = fields.IntField()
     is_deleted = fields.BooleanField(default=False)
     file_path = fields.TextField()
-    file_hash = fields.TextField()
+    line_hash = fields.TextField()
     line_number = fields.IntField()
     tag = fields.CharField(max_length=20, null=True)
     is_valid = fields.BooleanField(default=True)
