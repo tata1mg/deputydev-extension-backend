@@ -46,7 +46,8 @@ from app.main.blueprints.deputy_dev.services.repository.extension_review_feedbac
 )
 from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
 from app.main.blueprints.deputy_dev.models.dto.extension_review_feedback_dto import ExtensionReviewFeedbackDTO
-
+from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.extension_review_feedback_payload import ExtensionReviewFeedbackPayload
+from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.ide_review_comment_feedback_payload import IdeReviewCommentFeedbackPayload
 extension_code_review = Blueprint("ide_code_review", "/extension-code-review")
 
 config = CONFIG.config
@@ -564,21 +565,16 @@ async def create_comment_feedback(request: Request, auth_data: AuthData, comment
     }
     """
     try:
-        # Get request body
         request_data = request.json or {}
-
-        # Create feedback DTO
+        payload = IdeReviewCommentFeedbackPayload(**request_data)
         feedback_dto = IdeReviewCommentFeedbackDTO(
             comment_id=comment_id,
-            feedback_comment=request_data.get("feedback_comment"),
-            like=request_data.get("like")
+            feedback_comment=payload.feedback_comment,
+            like=payload.like
         )
-
-        # Insert feedback via repository
         created_feedback = await IdeReviewCommentFeedbacksRepository.db_insert(feedback_dto)
-
         return send_response(created_feedback.model_dump(mode="json"))
-
+    
     except Exception as e:
         raise e
 
@@ -600,12 +596,12 @@ async def create_review_feedback(request: Request, auth_data: AuthData, review_i
     try:
         # Get request body
         request_data = request.json or {}
-
+        payload = ExtensionReviewFeedbackPayload(**request_data)
         # Create feedback DTO
         feedback_dto = ExtensionReviewFeedbackDTO(
             review_id=review_id,
-            feedback_comment=request_data.get("feedback_comment"),
-            like=request_data.get("like")
+            feedback_comment=payload.feedback_comment,
+            like=payload.like
         )
 
         # Insert feedback via repository
