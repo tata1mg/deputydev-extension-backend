@@ -10,7 +10,7 @@ class IdeReviewsCommentDTO(BaseModel):
     agent_id: int
     is_deleted: bool = False
     file_path: str
-    file_hash: str
+    line_hash: str
     line_number: int
     tag: str
     is_valid: bool

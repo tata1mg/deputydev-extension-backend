@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS ide_reviews_comments (
     agent_id INTEGER NOT NULL,
     is_deleted BOOLEAN DEFAULT FALSE,
     file_path TEXT NOT NULL,
-    file_hash TEXT NOT NULL,
+    line_hash TEXT NOT NULL,
     line_number INTEGER NOT NULL,
     tag text NOT NULL,
     is_valid BOOLEAN NOT NULL,
