@@ -117,7 +117,7 @@ def exception_response(
     status_code: int | None = None,
     *,
     meta: t.Any = None,
-    response_headers: t.Optional[dict]
+    response_headers: t.Optional[dict],
 ) -> response.JSONResponse:
     error = error or str(exception)
 
@@ -256,5 +256,5 @@ class DDErrorHandler(_TorpedoErrorHandler):
             exc,
             error=SOMETHING_WENT_WRONG,
             status_code=HTTPStatusCodes.INTERNAL_SERVER_ERROR.value,
-            response_headers=response_headers
+            response_headers=response_headers,
         )
