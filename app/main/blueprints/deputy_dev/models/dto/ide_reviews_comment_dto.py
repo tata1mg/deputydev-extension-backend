@@ -12,6 +12,8 @@ class IdeReviewsCommentDTO(BaseModel):
     file_path: str
     file_hash: str
     line_number: int
+    tag: str
+    is_valid: bool
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
