@@ -3,10 +3,10 @@ from tortoise import fields
 from app.backend_common.models.dao.postgres.base import Base
 
 
-class IdeReviewCommentFeedbacks(Base):
+class ExtensionReviewFeedback(Base):
     serializable_keys = {
         "id",
-        "comment_id",
+        "review_id",
         "feedback_comment",
         "like",
         "created_at",
@@ -14,19 +14,19 @@ class IdeReviewCommentFeedbacks(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    comment = fields.ForeignKeyField(model_name="dao.IdeReviewsComments", related_name="comment_feedback")
+    review = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="review_feedback")
     feedback_comment = fields.TextField(null=True)
     like = fields.BooleanField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
-        table = "ide_review_comment_feedbacks"
-        indexes = (("comment_id",),)
+        table = "extension_reviews_feedbacks"
+        indexes = (("review_id",),)
 
     class Columns(Enum):
         id = ("id",)
-        comment_id = ("comment_id",)
+        review_id = ("review_id",)
         feedback_comment = ("feedback_comment",)
         like = ("like",)
         created_at = ("created_at",)

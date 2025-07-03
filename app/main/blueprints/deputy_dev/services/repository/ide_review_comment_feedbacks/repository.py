@@ -26,7 +26,7 @@ class IdeReviewCommentFeedbacksRepository:
             payload = feedback_dto.dict()
             del payload["id"]
             row = await DB.insert_row(IdeReviewCommentFeedbacks, payload)
-            return IdeReviewCommentFeedbackDTO(**row)
+            return IdeReviewCommentFeedbackDTO(**dict(row))
         except Exception as ex:
             logger.error(f"Error inserting ide_review_comment_feedback: {feedback_dto.dict()}, ex: {ex}")
             raise ex
