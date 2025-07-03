@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS ide_reviews_comments (
     file_path TEXT NOT NULL,
     file_hash TEXT NOT NULL,
     line_number INTEGER NOT NULL,
+    tag text NOT NULL,
+    is_valid BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (review_id) REFERENCES extension_reviews(id)
