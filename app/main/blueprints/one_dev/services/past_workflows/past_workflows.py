@@ -15,7 +15,6 @@ from app.main.blueprints.one_dev.services.past_workflows.serializer.serializers_
     SerializersFactory,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 
 class PastWorkflows:
@@ -75,15 +74,13 @@ class PastWorkflows:
             raw_data = raw_data[:limit]
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_SESSIONS)
         processed_data = await serializer_service.get_processed_data()
-        if compare_version(client_data.client_version, "2.0.1", "<="):
-            return processed_data
         return {
             "sessions": processed_data,
             "has_more": has_more,
         }
 
     @classmethod
-    async def get_past_chats(cls, session_id: int) -> List[Dict[str, Any]]:
+    async def get_past_chats(cls, session_id: int, client_data: Optional[ClientData] = None) -> List[Dict[str, Any]]:
         """
         Fetch past chats.
 
@@ -96,10 +93,10 @@ class PastWorkflows:
             Exception: For any other errors encountered during the process.
         """
         raw_data = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id, call_chain_category=MessageCallChainCategory("CLIENT_CHAIN")
+            session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN, prompt_type="CODE_QUERY_SOLVER"
         )
-        serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes("PAST_CHATS"))
-        processed_data = await serializer_service.get_processed_data()
+        serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_CHATS)
+        processed_data = await serializer_service.get_processed_data(client_data=client_data)
         return processed_data
 
     @classmethod
