@@ -154,5 +154,3 @@ class StatsCollectionTrigger:
     async def is_repo_eligible_for_review(self):
         # TODO: This is done temporarily for fixing latency  issue
         return True
-        # setting = await SettingService(self.repo_service, self.workspace.team_id).build()
-        # return setting["code_review_agent"]["enable"]

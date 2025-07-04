@@ -1,5 +1,7 @@
 from typing import List
+
 from pydantic import BaseModel
+
 from app.backend_common.services.llm.dataclasses.main import (
     TextBlockDelta,
 )

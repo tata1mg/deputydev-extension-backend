@@ -34,6 +34,17 @@ class DetailedFocusItem(BaseModel):
     url: Optional[str] = ""
 
 
+class DirectoryEntry(BaseModel):
+    name: str
+    type: str
+
+
+class DetailedDirectoryItem(BaseModel):
+    path: str
+    value: Optional[str] = None
+    structure: Optional[List[DirectoryEntry]] = None
+
+
 class Url(BaseModel):
     value: str
     url: str
@@ -74,6 +85,7 @@ class Attachment(BaseModel):
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
+    directory_items: Optional[List[DetailedDirectoryItem]] = None
     write_mode: bool = False
     session_id: int
     tool_use_failed: Optional[bool] = None
@@ -90,9 +102,10 @@ class QuerySolverInput(BaseModel):
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
+    is_embedding_done: Optional[bool] = True
 
     @field_validator("deputy_dev_rules")
-    def character_limit(cls, v: Optional[str]):
+    def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
         if v is None:
             return None
         if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
@@ -117,7 +130,7 @@ class InlineEditInput(BaseModel):
     llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
 
     @field_validator("deputy_dev_rules")
-    def character_limit(cls, v: Optional[str]):
+    def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
         if v is None:
             return None
         if len(v) > MAX_DEPUTY_DEV_RULES_LENGTH:
@@ -147,3 +160,9 @@ class ResponseMetadataBlock(BaseModel):
 class UserQueryEnhancerInput(BaseModel):
     session_id: int
     user_query: str
+
+
+class StreamErrorData(BaseModel):
+    type: str
+    message: Optional[Any] = None
+    status: str

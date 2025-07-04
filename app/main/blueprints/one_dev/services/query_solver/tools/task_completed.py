@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 TASK_COMPLETION = ConversationTool(
     name="task_completion",
     description="""
+        This is a built-in tool.
         Use this tool to signal that a task or workflow is finished, failed, or in some other state.
         The model should call this function with an appropriate status and summary message when the work is done or cannot proceed.
         This helps the client know when to stop or handle errors.
