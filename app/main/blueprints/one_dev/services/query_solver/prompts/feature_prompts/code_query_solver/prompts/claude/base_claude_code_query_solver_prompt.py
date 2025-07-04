@@ -11,11 +11,12 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import \
     FocusItemTypes
 
 
+
 class BaseClaudeQuerySolverPrompt:
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> str:
@@ -283,12 +284,14 @@ class BaseClaudeQuerySolverPrompt:
 
         return system_message
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
+                if focus_item.type == FocusItemTypes.DIRECTORY:
+                    continue
                 focus_chunks_message += (
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
@@ -301,6 +304,16 @@ class BaseClaudeQuerySolverPrompt:
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+        if self.params.get("directory_items"):
+            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
+            for directory_item in self.params["directory_items"]:
+                focus_chunks_message += (
+                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                )
+                for entry in directory_item.structure:
+                    label = "file" if entry.type == "file" else "folder"
+                    focus_chunks_message += f"{label}: {entry.name}\n"
+                focus_chunks_message += "</structure></item>"
         urls_message = ""
         if self.params.get("urls"):
             urls = self.params.get("urls")
@@ -322,13 +335,9 @@ class BaseClaudeQuerySolverPrompt:
             def some_function():
                 return "Hello, World!"
             </code_block>
-
-            <important>
-            If you need to edit a file, please please use the tool replace_in_file.
-            </important>
-
-            Also, please use the tools provided to you to help you with the task.
-
+            
+            {self.tool_usage_guidelines(is_write_mode=True)}
+            
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
@@ -431,27 +440,7 @@ class BaseClaudeQuerySolverPrompt:
                 In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
                 </extra_important>
 
-                Also, please use the tools provided to you to help you with the task.
-                <tool_usage_guidelines>
-                    When using provided tools:
-                    
-                    For Working Repository:
-                    Use all available tools including read and write operations
-                    Apply diffs and create files as needed
-                    Make actual code changes here
-                    
-                    
-                    For Context Repositories:
-                    Use only read-based tools (file reading, directory listing, etc.)
-                    Never attempt write operations on context repos
-                    If you need to reference code from context repos, copy patterns/examples to working repo
-                    
-                    
-                    Repository Identification:
-                    Always identify which repository you're working with
-                    Clearly state when switching between working repo and context repos
-                    Mention the repository type when providing file paths
-                </tool_usage_guidelines>
+                {self.tool_usage_guidelines(is_write_mode=False)}
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
@@ -556,6 +545,56 @@ class BaseClaudeQuerySolverPrompt:
             system_message=system_message,
         )
 
+    def tool_usage_guidelines(self, is_write_mode: bool) -> str:
+        write_mode_specific_guidelines = ""
+        if is_write_mode:
+            write_mode_specific_guidelines = """
+              <important>
+                - For write operations always use built-in tools, unless explicitely asked to use a specific tool
+                - If you need to edit a file, please use the system defined tool replace_in_file.
+              </important>
+            """
+
+        return f"""
+            <tool_usage_guidelines>
+              {write_mode_specific_guidelines}
+              
+              <selection_strategy>
+                <priority_order>
+                  <rule>Always prefer the most specialized tool that directly addresses the user's specific need</rule>
+                  <rule>Use generic/multi-purpose tools only as fallbacks when specialized tools fail or don't exist</rule>
+                  <rule>Specialized tools are typically more accurate, efficient, and provide cleaner results</rule>
+                </priority_order>
+              </selection_strategy>
+            
+              <decision_framework>
+                <step number="1">Identify if there's a tool designed specifically for this exact task</step>
+                <step number="2">If multiple specialized tools exist, choose the one that most closely matches the requirement</step>
+                <step number="3">Only use generic/multi-purpose tools when specialized options fail or are unavailable</step>
+                <step number="4">Implement graceful degradation: start specific, fall back to generic if needed</step>
+              </decision_framework>
+            
+              <example_scenario>
+                <task>Find the definition of a symbol (method, class, or variable) in codebase</task>
+                <available_tools>
+                  <tool name="definition" type="specialized">Purpose-built for reading symbol definitions</tool>
+                  <tool name="focused_snippets_searcher" type="generic">Multi-purpose tool with various capabilities including symbol definition lookup</tool>
+                </available_tools>
+                <correct_choice>
+                  <primary>Use "definition" tool first</primary>
+                  <reasoning>Purpose-built for this exact task, likely more accurate and faster</reasoning>
+                  <fallback>If "definition" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
+                </correct_choice>
+              </example_scenario>
+            
+              <behavioral_guidelines>
+                <guideline>Consider the specific context and requirements of the user's codebase when selecting tools</guideline>
+                <guideline>Provide clear reasoning when tool selection choices are not immediately obvious</guideline>
+                <guideline>Optimize for efficiency - specialized tools typically require fewer API calls and provide cleaner results</guideline>
+              </behavioral_guidelines>
+            </tool_usage_guidelines>
+        """
+
     @classmethod
     def get_parsed_response_blocks(
         cls, response_block: List[MessageData]
@@ -598,7 +637,7 @@ class BaseClaudeQuerySolverPrompt:
         return final_content
 
     @classmethod
-    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:
+    def _get_parsed_custom_blocks(cls, input_string: str) -> List[Dict[str, Any]]:  # noqa: C901
         result: List[Dict[str, Any]] = []
 
         # Define the patterns

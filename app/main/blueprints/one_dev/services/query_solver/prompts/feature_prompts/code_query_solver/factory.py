@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Dict, Type
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
@@ -14,11 +14,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_4_sonnet_thinking_handler import (
     Claude4ThinkingCodeQuerySolverPromptHandler,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_pro_handler import (
-    Gemini2Point5ProCodeQuerySolverPromptHandler,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_flash_handler import (
     Gemini2Point5FlashCodeQuerySolverPromptHandler,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_pro_handler import (
+    Gemini2Point5ProCodeQuerySolverPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_4_point_1 import (
     Gpt4Point1Prompt,
@@ -26,7 +26,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 
 
 class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
-    code_query_solver_prompts = {
+    code_query_solver_prompts: Dict[LLModels, Type[BasePrompt]] = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_PRO: Gemini2Point5ProCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashCodeQuerySolverPromptHandler,

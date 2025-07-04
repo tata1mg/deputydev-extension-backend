@@ -636,7 +636,6 @@
         "INSERT": 120
     },
     "DEFAULT_EXTENSION_SETTINGS": {
-        "default_mode": "ask",
         "terminal_settings": {
             "enable_yolo_mode": false,
             "command_deny_list": [
@@ -671,6 +670,15 @@
         }
     ],
     "LLM_MAX_RETRY": 2,
+    "CHAT_PAYLOAD_MAX_SIZE": 100,
+    "CHAT_FILE_UPLOAD": {
+        "PRESIGNED_URL_EXPIRY": 600,
+        "MAX_BYTES": 5242880,
+        "SUPPORTED_MIMETYPES": [
+            "application/json"
+        ],
+        "PAYLOAD_FOLDER_PATH": "chat_payloads"
+    },
     "CHAT_IMAGE_UPLOAD": {
         "PRESIGNED_URL_EXPIRY": 600,
         "MAX_BYTES": 5242880,
@@ -680,7 +688,8 @@
             "image/png",
             "image/webp"
         ],
-        "FOLDER_PATH": "chat_images"
+        "IMAGE_FOLDER_PATH": "chat_images",
+        "MAX_FILES": 5
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }

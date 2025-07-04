@@ -29,6 +29,7 @@ from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
+    DetailedDirectoryItem,
     DetailedFocusItem,
     MCPToolMetadata,
     QuerySolverInput,
@@ -72,23 +73,16 @@ from app.main.blueprints.one_dev.services.query_solver.tools.related_code_search
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
-
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
-
-MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER = "2.0.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH = "2.0.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND = "2.6.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER = "2.5.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH = "2.8.0"
-MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING = "4.0.0"
-MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR = "5.0.0"
 
 
 class QuerySolver:
@@ -97,10 +91,11 @@ class QuerySolver:
         session_id: int,
         query: str,
         focus_items: List[DetailedFocusItem],
+        directory_items: Optional[List[DetailedDirectoryItem]],
         llm_handler: LLMHandler[PromptFeatures],
         user_team_id: int,
         session_type: str,
-    ):
+    ) -> None:
         current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
         if current_session and current_session.summary:
             return
@@ -115,8 +110,8 @@ class QuerySolver:
         # then generate a more detailed summary using LLM
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
-            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
-            prompt_vars={"query": query, "focus_items": focus_items},
+            llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
+            prompt_vars={"query": query, "focus_items": focus_items, "directory_items": directory_items},
             previous_responses=[],
             tools=[],
             stream=False,
@@ -169,7 +164,7 @@ class QuerySolver:
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
 
-        async def _streaming_content_block_generator():
+        async def _streaming_content_block_generator() -> AsyncIterator[BaseModel]:
             nonlocal llm_response
             nonlocal query_summary
             if not isinstance(llm_response, StreamingParsedLLMCallResponse):
@@ -181,6 +176,10 @@ class QuerySolver:
             )
 
             async for data_block in llm_response.parsed_content:
+                # Check if the current task is cancelled
+                if asyncio.current_task() and asyncio.current_task().cancelled():
+                    raise asyncio.CancelledError("Task cancelled in QuerySolver")
+
                 if data_block.type in [
                     StreamingContentBlockType.SUMMARY_BLOCK_START,
                     StreamingContentBlockType.SUMMARY_BLOCK_DELTA,
@@ -197,6 +196,9 @@ class QuerySolver:
                 else:
                     yield data_block
 
+            # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
+            await llm_response.llm_response_storage_task
+
         return _streaming_content_block_generator()
 
     def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
@@ -212,52 +214,51 @@ class QuerySolver:
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    async def solve_query(self, payload: QuerySolverInput, client_data: ClientData) -> AsyncIterator[BaseModel]:
-        print(payload.model_dump(mode="json"))
-        tools_to_use = [ASK_USER_INPUT, FOCUSED_SNIPPETS_SEARCHER, FILE_PATH_SEARCHER]
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
+    def _get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        tools_to_use = [
+            ASK_USER_INPUT,
+            FOCUSED_SNIPPETS_SEARCHER,
+            FILE_PATH_SEARCHER,
+            ITERATIVE_FILE_READER,
+            GREP_SEARCH,
+            EXECUTE_COMMAND,
+            CREATE_NEW_WORKSPACE,
+            PUBLIC_URL_CONTENT_READER,
+        ]
+
+        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
             tools_to_use.append(RELATED_CODE_SEARCHER)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_ITERATIVE_FILE_READER, ">="):
-            tools_to_use.append(ITERATIVE_FILE_READER)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_GREP_SEARCH, ">="):
-            tools_to_use.append(GREP_SEARCH)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
-            tools_to_use.append(EXECUTE_COMMAND)
-
-        if compare_version(client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_EXECUTE_COMMAND, ">="):
-            tools_to_use.append(CREATE_NEW_WORKSPACE)
-
-        if compare_version(
-            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_PUBLIC_URL_CONTENT_READER, ">="
-        ):
-            tools_to_use.append(PUBLIC_URL_CONTENT_READER)
-        if payload.search_web and compare_version(
-            client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_WEB_SEARCH, ">="
-        ):
+        if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
-        if compare_version(client_data.client_version, MIN_SUPPORT_CLIENT_VERSION_FOR_NEW_FILE_EDITOR, ">="):
-            if payload.write_mode:
-                tools_to_use.append(REPLACE_IN_FILE)
-                tools_to_use.append(WRITE_TO_FILE)
+        if payload.write_mode:
+            tools_to_use.append(REPLACE_IN_FILE)
+            tools_to_use.append(WRITE_TO_FILE)
 
         for client_tool in payload.client_tools:
             tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
 
+        return tools_to_use
+
+    async def solve_query(
+        self,
+        payload: QuerySolverInput,
+        client_data: ClientData,
+        save_to_redis: bool = False,
+        task_checker: CancellationChecker = None,
+    ) -> AsyncIterator[BaseModel]:
+        tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
                     session_id=payload.session_id,
                     query=payload.query,
                     focus_items=payload.focus_items,
+                    directory_items=payload.directory_items,
                     llm_handler=llm_handler,
                     user_team_id=payload.user_team_id,
                     session_type=payload.session_type,
@@ -270,6 +271,7 @@ class QuerySolver:
                 prompt_vars={
                     "query": payload.query,
                     "focus_items": payload.focus_items,
+                    "directory_items": payload.directory_items,
                     "deputy_dev_rules": payload.deputy_dev_rules,
                     "write_mode": payload.write_mode,
                     "urls": [url.model_dump() for url in payload.urls],
@@ -284,6 +286,8 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 session_id=payload.session_id,
+                save_to_redis=save_to_redis,
+                checker=task_checker,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
@@ -322,21 +326,16 @@ class QuerySolver:
                         ),
                     }
 
-            if compare_version(
-                client_data.client_version, MIN_SUPPORTED_CLIENT_VERSION_FOR_TOOL_USE_ERROR_RESPONSE_FORMATING, ">="
-            ):
-                if payload.tool_use_failed:
-                    if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
-                        error_response = {
-                            "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                                tool_name=payload.tool_use_response.tool_name,
-                                error_type=tool_response.get("error_type", "Unknown"),
-                                error_message=tool_response.get(
-                                    "error_message", "An error occurred while using the tool."
-                                ),
-                            )
-                        }
-                        tool_response = error_response
+            if payload.tool_use_failed:
+                if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
+                    error_response = {
+                        "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                            tool_name=payload.tool_use_response.tool_name,
+                            error_type=tool_response.get("error_type", "Unknown"),
+                            error_message=tool_response.get("error_message", "An error occurred while using the tool."),
+                        )
+                    }
+                    tool_response = error_response
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,
@@ -350,6 +349,7 @@ class QuerySolver:
                 tools=tools_to_use,
                 stream=True,
                 prompt_vars=prompt_vars,
+                checker=task_checker,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
