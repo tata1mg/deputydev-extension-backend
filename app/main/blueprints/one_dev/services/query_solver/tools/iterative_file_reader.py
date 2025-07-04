@@ -15,7 +15,7 @@ ITERATIVE_FILE_READER = ConversationTool(
         If summary content is returned, the tool can be run again with specific start and end lines to read more detailed content.
 
         This tool can be used iteratively, to read a file until either the desired context is found.
-        If using this tool iteratively, the `start_line` and `end_line` parameters should be used to specify the range of lines to read in each iteration. The recommended maximum range is 500 lines, but it can be adjusted based on the file size and content.
+        If using this tool iteratively, the `start_line` and `end_line` parameters should be used to specify the range of lines to read in each iteration. The recommended maximum range is 250 lines, but it can be adjusted based on the file size and content.
         A range of greater than 1000 lines, when provided explicitly, will automatically trigger an error.
                                 
         If unsure about the range of lines to read, it is recommended to start with a summary, i.e. not providing `start_line` and `end_line` parameters, which will return a summary of the file.
