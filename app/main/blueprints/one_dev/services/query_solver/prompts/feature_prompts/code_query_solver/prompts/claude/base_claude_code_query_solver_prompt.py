@@ -465,56 +465,7 @@ class BaseClaudeQuerySolverPrompt:
                 f"""
             ====
             Below is the information about the current vscode environment:
-            <environment_details>
-            # VSCode Visible Files
-            (No visible files in this workspace)
-            
-            # VSCode Open Tabs
-            (No open tabs in this workspace)
-            
-            # Current Time
-            05/06/2025, 12:29:40 pm (Asia/Calcutta, UTC+5.5:00)
-            
-            <working_repository>
-            <absolute_root_path>
-            /Users/deepak/workspace/genai
-            </absolute_root_path>
-            <root_directory_context>
-            Dockerfile
-            LaTeX
-            README.md
-            __init__.py
-            agent_comment_mapping_backfill.py
-            app
-            bitbucket-pipelines.yml
-            build_data
-            config.json
-            config_template.json
-            configs
-            conftest.py
-            db
-            deputydev.toml
-            pyproject.toml
-            pytest.ini
-            requirements
-            settings.toml
-            uv.lock
-            </root_directory_context>
-            </working_repository>
-            <context_repository>
-            <absolute_root_path>
-            /Users/deepak/workspace/deputydev-core
-            </absolute_root_path>
-            <root_directory_context>
-            CHANGELOG.md
-            deputydev_core
-            uv.lock
-            README.md
-            pyproject.toml
-            venv
-            </root_directory_context>
-            </context_repository>
-            </environment_details>
+            {self.params.get("vscode_env")}
             ====
             """
             )
@@ -592,6 +543,27 @@ class BaseClaudeQuerySolverPrompt:
                 <guideline>Provide clear reasoning when tool selection choices are not immediately obvious</guideline>
                 <guideline>Optimize for efficiency - specialized tools typically require fewer API calls and provide cleaner results</guideline>
               </behavioral_guidelines>
+              
+              <repo_specific_guidelines>
+                When using provided tools:
+    
+                For Working Repository:
+                Use all available tools including read and write operations
+                Apply diffs and create files as needed
+                Make actual code changes here
+                
+                
+                For Context Repositories:
+                Use only read-based tools (file reading, directory listing, etc.)
+                Never attempt write operations on context repos
+                If you need to reference code from context repos, copy patterns/examples to working repo
+                
+                
+                Repository Identification:
+                Always identify which repository you're working with
+                Clearly state when switching between working repo and context repos
+                Mention the repository type when providing file paths
+              </repo_specific_guidelines>
             </tool_usage_guidelines>
         """
 
