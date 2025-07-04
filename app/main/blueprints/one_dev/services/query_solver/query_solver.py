@@ -110,7 +110,7 @@ class QuerySolver:
         # then generate a more detailed summary using LLM
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
-            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
             prompt_vars={"query": query, "focus_items": focus_items, "directory_items": directory_items},
             previous_responses=[],
             tools=[],
