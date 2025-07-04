@@ -12,15 +12,15 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro_prompt_handler import (
-    BaseGemini2Point5ProPromptHandler,
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
+    BaseGemini2Point5FlashPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
 
 
-class Gemini2Point5FlashSessionSummaryGeneratorPrompt(BaseGemini2Point5ProPromptHandler):
+class Gemini2Point5FlashSessionSummaryGeneratorPrompt(BaseGemini2Point5FlashPromptHandler):
     prompt_type = "SESSION_SUMMARY_GENERATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
