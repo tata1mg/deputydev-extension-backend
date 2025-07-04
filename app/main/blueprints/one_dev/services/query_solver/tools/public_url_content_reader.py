@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 PUBLIC_URL_CONTENT_READER = ConversationTool(
     name="public_url_content_reader",
     description="""
+        This is a built-in tool.
         Fetches and converts content from publicly accessible HTTP/HTTPS URLs into clean, readable Markdown.
 
         Supports common web content types including HTML pages, text files, and public documentation. 

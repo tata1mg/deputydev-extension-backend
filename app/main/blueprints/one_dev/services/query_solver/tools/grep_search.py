@@ -1,31 +1,41 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 GREP_SEARCH = ConversationTool(
     name="grep_search",
-    description="""
-    This tool searches the content in all the files in a given directory path for specified search terms. It uses grep to perform the search.
-    It does pattern matching on the file contents recursively. This can be used to search for specific patterns/words/sentences/keywords on the files in a directory in a very quick and efficient way.
-    This tool reads the contents of the files and returns the lines that match the search terms.
-    This should be used for queries that require to find specific pattern in the files, or which require a find and replace operation.
-    
-    Note: For accurate results, always use exact syntax from the source code (e.g., function or variable names). Avoid adding or removing underscores, changing casing, or converting identifiers into plain English phrases.
+    description=textwrap.dedent(
+        """
+        This is a built-in tool.
+        Use git grep or standard grep to find exact pattern matches within files or directories.
 
-    """,
+        This tool searches for specific text patterns inside files within a given path. It supports both plain text and regular expression queries.
+
+        Results are returned in XML format. Each match includes:
+        - The file path and matching line number
+        - The matched line
+        - Up to 2 lines of surrounding context
+
+        For accurate results, always use the exact syntax as it appears in the source (e.g., exact function names, variables).
+        Avoid changing case or format unless you explicitly set case-insensitive mode.
+
+        Note: Total results are capped at 50.
+        """
+    ),
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "directory_path": {
-                    "type": "string",
-                    "description": "The complete path of the directory to search in",
-                },
-                "search_terms": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "List of search terms to match against file names. ",
-                },
-            },
-            "required": ["directory_path", "search_terms"],
-        }
+        type="object",
+        properties={
+            "search_path": JSONSchema(
+                type="string",
+                description="The relative path to search. This can be a directory or a file. This is a required parameter. Use '.' for the project's root directory.",
+            ),
+            "query": JSONSchema(type="string", description="The search term or pattern to look for within files."),
+            "case_insensitive": JSONSchema(type="boolean", description="If true, performs a case-insensitive search."),
+            "use_regex": JSONSchema(
+                type="boolean",
+                description="If true, treats the query as a regular expression. If false, uses fixed string matching.",
+            ),
+        },
+        required=["search_path", "query", "case_insensitive", "use_regex"],
     ),
 )
