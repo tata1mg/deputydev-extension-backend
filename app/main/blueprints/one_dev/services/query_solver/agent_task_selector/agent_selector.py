@@ -1,9 +1,13 @@
-from typing import List, Type
+from typing import Any, Dict, List, Optional, Type
 
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent_task import (
     BaseQuerySolverAgent,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import DetailedDirectoryItem, DetailedFocusItem
+from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 
 
 class QuerySolverAgentSelector:
@@ -11,25 +15,62 @@ class QuerySolverAgentSelector:
     Class to select the appropriate query solver agent based on the input.
     """
 
-    def __init__(self, user_query: str, all_agents: List[BaseQuerySolverAgent]) -> None:
+    def __init__(
+        self,
+        user_query: str,
+        focus_items: List[DetailedFocusItem],
+        directory_items: List[DetailedDirectoryItem],
+        all_agents: List[Type[BaseQuerySolverAgent]],
+        llm_handler: LLMHandler[PromptFeatures],
+        session_id: int,
+    ) -> None:
         # Initialize with the user query.
         self.user_query = user_query
-        self.llm_handler = LLMHandler()
+        self.focus_items = focus_items
+        self.directory_items = directory_items
         self.all_agents = all_agents
+        self.llm_handler = llm_handler
+        self.session_id = session_id
 
-    def select_agent(self) -> Type[BaseQuerySolverAgent]:
+    async def select_agent(self) -> Optional[Type[BaseQuerySolverAgent]]:
         """
         Select the appropriate agent for the user query.
         """
 
         # Here we would typically use the LLM handler to analyze the user query
         # and determine which task is most appropriate.
-        # For simplicity, we will return a placeholder task name.
-        # return the agent task that is most appropriate for the user query
-        task_name = self.llm_handler.get_task_name_from_query(self.user_query)
+        # For simplicity, we will return a placeholder agent name.
+        # return the agent that is most appropriate for the user query
 
-        if not task_name:
-            # have a default agent here
-            raise ValueError("No appropriate task found for the given user query.")
+        prompt_vars: Dict[str, Any] = {
+            "query": self.user_query,
+            "focus_items": self.focus_items,
+            "directory_items": self.directory_items,
+            "intents": [
+                {
+                    "name": agent.agent_name,
+                    "description": agent.description,
+                }
+                for agent in self.all_agents
+            ],
+        }
 
-        return task_name
+        selected_intent = await self.llm_handler.start_llm_query(
+            prompt_vars=prompt_vars,
+            session_id=self.session_id,
+            llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
+            prompt_feature=PromptFeatures.INTENT_SELECTOR,
+        )
+
+        if not isinstance(selected_intent, NonStreamingParsedLLMCallResponse):
+            raise ValueError("Invalid response from LLM. Expected NonStreamingParsedLLMCallResponse.")
+
+        agent = next(
+            (agent for agent in self.all_agents if agent.agent_name == selected_intent.parsed_content["intent_name"]),
+            None,
+        )
+
+        if agent:
+            return agent
+
+        return None
