@@ -1,34 +1,35 @@
+import xxhash
+from deputydev_core.utils.app_logger import AppLogger
+
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    LLModels,
     MessageCallChainCategory,
     MessageThreadActor,
     MessageThreadData,
     MessageType,
     TextBlockContent,
     TextBlockData,
-    LLModels,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
-import xxhash
-from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
-    QuerySummarysRepository,
-)
 from app.main.blueprints.one_dev.models.dto.query_summaries import (
     QuerySummaryData,
 )
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
+from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+    QuerySummarysRepository,
 )
-from deputydev_core.utils.app_logger import AppLogger
+
 
 class CancellationService:
-    async def cancel(
-           self,
-           session_id:int
-    ) -> None : 
-        original_query, stored_llm_model, existing_query_id = await CodeGenTasksCache.get_session_data_for_db(session_id)
+    async def cancel(self, session_id: int) -> None:
+        original_query, stored_llm_model, existing_query_id = await CodeGenTasksCache.get_session_data_for_db(
+            session_id
+        )
 
         if original_query:
             try:

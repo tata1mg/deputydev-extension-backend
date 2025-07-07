@@ -35,7 +35,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> str:
@@ -381,6 +381,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
+                if focus_item.type == FocusItemTypes.DIRECTORY:
+                    continue
                 focus_chunks_message += (
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
@@ -389,6 +391,18 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
+
+        if self.params.get("directory_items"):
+            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
+            for directory_item in self.params["directory_items"]:
+                focus_chunks_message += (
+                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                )
+                for entry in directory_item.structure:
+                    label = "file" if entry.type == "file" else "folder"
+                    focus_chunks_message += f"{label}: {entry.name}\n"
+                focus_chunks_message += "</structure></item>"
+
         urls_message = ""
         if self.params.get("urls"):
             urls = self.params.get("urls")
@@ -417,8 +431,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             User doesn't want to see the diff or the code you updated so no need to show them in code_block, editing via tool is enough.
             </extra_important>
                                            
-
-            Also, please use the tools provided to you to help you with the task.
+            {self.tool_usage_guidelines(is_write_mode=True)}
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
             
@@ -460,6 +473,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             - All code goes into `"code"` under `"type": "code_block"`.
             - If you use a `"file_path"` in a code block, use an exact string like `"src/app/main.py"`.
             </response_formatting_rules>
+            
+            {self.tool_usage_guidelines(is_write_mode=False)}
             
             <summary_rule>
             At the end, include a summary (max 20 words) under the "summary" key.
@@ -511,6 +526,63 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             user_message=user_message,
             system_message=system_message,
         )
+
+    def tool_usage_guidelines(self, is_write_mode):
+        write_mode_guidelines = ""
+        if is_write_mode:
+            write_mode_guidelines = """
+                ## Important Notes for Write Mode
+                - For **write operations**, always use **built-in tools**, unless the user explicitly requests a specific tool.
+            """
+
+        return f"""
+            # Tool Usage Guidelines
+        
+            {write_mode_guidelines.strip()}
+        
+            ---
+        
+            ## Tool Selection Strategy
+        
+            ### Priority Order
+            1. **Always prefer specialized tools** that are built for the specific task.
+            2. Use **generic or multi-purpose tools only as fallbacks** when no specialized tools are available or suitable.
+            3. Specialized tools are typically **more accurate**, **more efficient**, and produce **cleaner results**.
+        
+            ---
+        
+            ## Tool Selection Decision Framework
+        
+            Follow these steps when deciding which tool to use:
+        
+            1. **Check if there's a tool designed specifically** for this task.
+            2. If multiple specialized tools exist, **choose the one that best matches the need**.
+            3. Use generic tools **only if specialized ones fail or are unavailable**.
+            4. **Implement graceful degradation**: start with specialized, fall back to generic.
+        
+            ---
+        
+            ## Example Scenario
+        
+            **Task**: Find the definition of a symbol (method, class, or variable) in the codebase.
+        
+            **Available Tools**:
+            - `definition` (specialized): Built specifically for reading symbol definitions.
+            - `focused_snippets_searcher` (generic): A general-purpose tool that includes symbol lookup among other capabilities.
+        
+            **Correct Choice**:
+            - Use the `definition` tool **first**.
+            - **Why**: It's optimized for this task and likely faster and more accurate.
+            - **Fallback**: If `definition` fails or provides insufficient results, then use `focused_snippets_searcher`.
+        
+            ---
+        
+            ## Behavioral Guidelines
+        
+            - Always consider the **specific context** and the **user's intent** before choosing a tool.
+            - When the right tool isn't obvious, **provide your reasoning** for the choice.
+            - **Optimize for efficiency**: specialized tools usually require fewer API calls and return more relevant results.
+        """
 
     @classmethod
     def get_parsed_response_blocks(
