@@ -175,7 +175,15 @@ class QuerySolver:
                 type="RESPONSE_METADATA",
             )
 
-            async for data_block in llm_response.parsed_content:
+            response_arr = [data_block async for data_block in llm_response.parsed_content]
+            # async def debug_async_gen(gen):
+            #     for data_block in gen:
+            #         print("=========== DATA BLOCK ================")
+            #         print(data_block)
+            #
+            # await debug_async_gen(response_arr)
+
+            for data_block in response_arr:
                 # Check if the current task is cancelled
                 if asyncio.current_task() and asyncio.current_task().cancelled():
                     raise asyncio.CancelledError("Task cancelled in QuerySolver")
@@ -264,7 +272,6 @@ class QuerySolver:
                     session_type=payload.session_type,
                 )
             )
-
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels(payload.llm_model.value),
@@ -278,6 +285,7 @@ class QuerySolver:
                     "os_name": payload.os_name,
                     "shell": payload.shell,
                     "vscode_env": payload.vscode_env,
+                    "repositories": payload.repositories
                 },
                 attachments=payload.attachments,
                 previous_responses=await self.get_previous_message_thread_ids(

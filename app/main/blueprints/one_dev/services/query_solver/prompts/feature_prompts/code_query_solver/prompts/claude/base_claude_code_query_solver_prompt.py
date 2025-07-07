@@ -352,26 +352,6 @@ class BaseClaudeQuerySolverPrompt:
                 If you are thinking something, please provide that in <thinking> tag.
                 Please answer the user query in the best way possible. 
                 
-                <repository_context>
-                  You are working with two types of repositories:
-                  <working_repository>
-                    <purpose>The primary repository where you will make changes and apply modifications</purpose>
-                    <access_level>Full read/write access</access_level>
-                    <allowed_operations>All read and write operations</allowed_operations>
-                    <restrictions>No restrictions</restrictions>
-                  </working_repository>
-                  <context_repository>
-                    <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
-                    <access_level>Read-only access</access_level>
-                    <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
-                    <restrictions>
-                      1. NO write operations allowed
-                      2. NO file creation or modification
-                      3. NO diff application
-                    </restrictions>
-                  </context_repository>
-                </repository_context>
-                
                 <code_block_guidelines>
                 You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
 
@@ -469,6 +449,8 @@ class BaseClaudeQuerySolverPrompt:
             ====
             """
             )
+        if self.params.get("repositories"):
+            user_message += textwrap.dedent(self.get_repository_context())
         if self.params.get("deputy_dev_rules"):
             user_message += textwrap.dedent(
                 f"""
@@ -495,6 +477,49 @@ class BaseClaudeQuerySolverPrompt:
             user_message=user_message,
             system_message=system_message,
         )
+
+    def get_repository_context(self):
+        working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
+        context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
+        context_repos_str = ""
+        for context_repo in context_repos:
+            context_repos_str += f"""
+              <repository>
+                <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
+                <repo_name>{context_repo.repo_name}</repo_name>
+                <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
+              </repository>
+            """
+
+        return f"""
+        ====
+        <repository_context>
+          You are working with two types of repositories:
+          <working_repository>
+            <purpose>The primary repository where you will make changes and apply modifications</purpose>
+            <access_level>Full read/write access</access_level>
+            <allowed_operations>All read and write operations</allowed_operations>
+            <restrictions>No restrictions</restrictions>
+            <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
+            <repo_name>{working_repo.repo_name}</repo_name>
+            <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
+          </working_repository>
+          <context_repositories>
+            <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
+            <access_level>Read-only access</access_level>
+            <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
+            <restrictions>
+              1. NO write operations allowed
+              2. NO file creation or modification
+              3. NO diff application
+            </restrictions>
+            <list_of_context_repositories>
+                {context_repos_str}
+            </list_of_context_repositories>
+          </context_repositories>
+        </repository_context>
+        ====
+        """
 
     def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_specific_guidelines = ""
