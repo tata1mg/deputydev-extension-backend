@@ -531,13 +531,17 @@
                         "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     },
                     "x64": {
                         "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 },
                 "linux": {
@@ -545,7 +549,9 @@
                         "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 },
                 "win32": {
@@ -553,7 +559,9 @@
                         "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": "" 
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 }
             }
