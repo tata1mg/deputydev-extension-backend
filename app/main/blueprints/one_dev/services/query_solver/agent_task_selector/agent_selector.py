@@ -1,14 +1,14 @@
-from typing import List, Tuple, Type
+from typing import List, Type
+
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import BaseQuerySolverAgent
-from app.main.blueprints.one_dev.services.query_solver.agents.tasks.base_query_solver_agent_task import (
-    BaseQuerySolverAgentTask,
+from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent_task import (
+    BaseQuerySolverAgent,
 )
 
 
-class QuerySolverAgentTaskSelector:
+class QuerySolverAgentSelector:
     """
-    Class to select the appropriate query solver agent task based on the input.
+    Class to select the appropriate query solver agent based on the input.
     """
 
     def __init__(self, user_query: str, all_agents: List[BaseQuerySolverAgent]) -> None:
@@ -17,9 +17,9 @@ class QuerySolverAgentTaskSelector:
         self.llm_handler = LLMHandler()
         self.all_agents = all_agents
 
-    def select_task(self) -> Tuple[BaseQuerySolverAgent, Type[BaseQuerySolverAgentTask]]:
+    def select_agent(self) -> Type[BaseQuerySolverAgent]:
         """
-        Select the appropriate task based on the user query, using the LLM handler
+        Select the appropriate agent for the user query.
         """
 
         # Here we would typically use the LLM handler to analyze the user query
@@ -32,4 +32,4 @@ class QuerySolverAgentTaskSelector:
             # have a default agent here
             raise ValueError("No appropriate task found for the given user query.")
 
-        return BaseQuerySolverAgent, task_name
+        return task_name
