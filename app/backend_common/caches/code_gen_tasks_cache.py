@@ -1,13 +1,14 @@
 import json
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from app.backend_common.caches.base import Base
-import asyncio
 
 
 class CodeGenTasksCache(Base):
     """Redis cache for managing code generation task cancellation status and active queries by session_id"""
+
     _key_prefix = "codegen_session"
-    _expire_in_sec = 3600  
+    _expire_in_sec = 3600
 
     @classmethod
     async def _get_session_data(cls, session_id: int) -> Dict[str, Any]:
@@ -27,7 +28,7 @@ class CodeGenTasksCache(Base):
         key = f"session:{session_id}"
         data_curr = await cls._get_session_data(session_id)
         if data_curr is not None:
-            data["cancelled"] = data.get("cancelled",data_curr.get("cancelled",False)) 
+            data["cancelled"] = data.get("cancelled", data_curr.get("cancelled", False))
         await cls.set(key, json.dumps(data))
 
     @classmethod
@@ -40,7 +41,6 @@ class CodeGenTasksCache(Base):
         data = await cls._get_session_data(session_id)
         data["cancelled"] = True
         await cls.set_session_data(session_id, data)
-
 
     @classmethod
     async def get_session_query_id(cls, session_id: int) -> Optional[int]:
@@ -67,6 +67,3 @@ class CodeGenTasksCache(Base):
     async def cleanup_session_data(cls, session_id: int) -> None:
         key = [f"session:{session_id}"]
         await cls.delete(key)
-
-
-        
