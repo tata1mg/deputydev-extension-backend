@@ -180,7 +180,7 @@ class ConfigFetcher:
     @classmethod
     async def add_vscode_ext_config(
         cls, base_config: Dict[str, Any], params: ConfigParams, config_type: ConfigType, client_data: ClientData
-    ):
+    ) -> None:
         if not params.os or not params.arch:
             raise ValueError("os and arch are required for vscode extension config")
         client_version = client_data.client_version
@@ -196,7 +196,7 @@ class ConfigFetcher:
             file_config = original_config.copy()
             file_config.pop("s3_key", None)
 
-            file_config["download_link"] = await cls._generate_presigned_url_for_binary(s3_key)
+            file_config["download_link"] = await cls._generate_signed_url_for_binary(s3_key)
             base_config["BINARY"] = {
                 **file_config,
                 "password": ConfigManager.configs["BINARY"]["PASSWORD"],
@@ -206,11 +206,11 @@ class ConfigFetcher:
             }
 
     @classmethod
-    async def _generate_presigned_url_for_binary(cls, s3_key: str):
+    async def _generate_signed_url_for_binary(cls, s3_key: str) -> str:
         """
         Generate signed URL for binary download from CloudFront
         """
-        expiry = ConfigManager.configs["BINARY"]["PRESIGNED_URL_EXPIRY"]
+        expiry = ConfigManager.configs["AWS_CLOUDFRONT"]["SIGNED_URL_EXPIRY"]
         cloudfront_client = AWSCloudFrontServiceClient()
         signed_url = await cloudfront_client.generate_signed_url(s3_key=s3_key, expiry=expiry)
         return signed_url

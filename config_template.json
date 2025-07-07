@@ -340,7 +340,7 @@
     "AWS_CLOUDFRONT": {
         "DISTRIBUTION_URL": "",
         "KEY_PAIR_ID": "",
-        "SIGNED_URL_EXPIRY": 600,
+        "SIGNED_URL_EXPIRY": 1800,
         "PRIVATE_KEY": ""
     },
     "LLM_MODELS": {
@@ -529,7 +529,6 @@
             "CHUNKING_ENABLED": true
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
-        "PRESIGNED_URL_EXPIRY": 1800,
         "FILE": {
             "latest": {
                 "darwin": {
@@ -559,7 +558,7 @@
                         "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": "" 
+                        "s3_key": ""
                     }
                 }
             }
