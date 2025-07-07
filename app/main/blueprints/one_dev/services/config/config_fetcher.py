@@ -195,8 +195,8 @@ class ConfigFetcher:
 
             file_config = original_config.copy()
             file_config.pop("s3_key", None)
-
-            file_config["download_link"] = await cls._generate_presigned_url_for_binary(s3_key)
+            if s3_key:
+                file_config["download_link"] = await cls._generate_presigned_url_for_binary(s3_key)
             base_config["BINARY"] = {
                 **file_config,
                 "password": ConfigManager.configs["BINARY"]["PASSWORD"],

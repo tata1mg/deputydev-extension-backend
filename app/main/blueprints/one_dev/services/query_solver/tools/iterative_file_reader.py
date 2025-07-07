@@ -38,8 +38,12 @@ ITERATIVE_FILE_READER = ConversationTool(
                     "type": "number",
                     "description": "Optional. End line to read until. It is 1 indexed. If not provided, it will read until the end of the file.",
                 },
+                "repo_path": {
+                    "type": "string",
+                    "description": "Expects absolute path of the repository",
+                }
             },
-            "required": ["file_path"],
+            "required": ["file_path", "repo_path"],
             "additionalProperties": False,
         }
     ),
