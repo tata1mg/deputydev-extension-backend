@@ -29,7 +29,7 @@ class LLMBasedChatFiltration:
         llm_response = await llm_handler.start_llm_query(
             session_id=session_id,
             prompt_feature=PromptFeatures.CHAT_RERANKING,
-            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
             prompt_vars={
                 "query": query,
                 "chats": chats,

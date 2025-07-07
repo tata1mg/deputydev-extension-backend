@@ -10,24 +10,21 @@ from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic import Blueprint, response
 from torpedo import Request, send_response
 from torpedo.types import ResponseDict
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
+
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
 )
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
-)
-
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
-
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
     SocketClosedException,
 )
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
+from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
@@ -46,6 +43,9 @@ from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer impor
     UserQueryEnhancer,
 )
 from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
     validate_version,
@@ -57,12 +57,10 @@ from app.main.blueprints.one_dev.utils.session import (
     get_valid_session_data,
 )
 
-from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
-from app.main.blueprints.one_dev.utils.version import compare_version
-
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
 local_testing_stream_buffer: Dict[str, List[str]] = {}
+
 
 @code_gen_v2_bp.route("/generate-code-non-stream", methods=["POST"])
 @validate_client_version
@@ -87,6 +85,7 @@ async def solve_user_query_non_stream(
     if auth_data.session_refresh_token:
         start_data["new_session_data"] = auth_data.session_refresh_token
     blocks.append(start_data)
+
     # Create a task for this non-streaming request too for potential cancellation
     async def solve_query_task():
         try:
@@ -120,6 +119,7 @@ async def solve_user_query_non_stream(
         AppLogger.log_error(f"Error in solving query: {ex}")
         blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
     return send_response({"status": "SUCCESS", "blocks": blocks})
+
 
 @code_gen_v2_bp.route("/generate-code", methods=["POST"])
 async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:  # noqa: C901
@@ -155,7 +155,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         nonlocal is_local
         nonlocal connection_id_gone
         nonlocal aws_client
-        
+
         if not connection_id_gone:
             if is_local:
                 local_testing_stream_buffer.setdefault(connection_id, []).append(json.dumps(data))
@@ -247,12 +247,14 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             if auth_data.session_refresh_token:
                 start_data["new_session_data"] = auth_data.session_refresh_token
             await push_to_connection_stream(start_data)
-            data = await QuerySolver().solve_query(payload=payload, client_data=client_data, save_to_redis=True, task_checker=task_checker)
+            data = await QuerySolver().solve_query(
+                payload=payload, client_data=client_data, save_to_redis=True, task_checker=task_checker
+            )
             last_block = None
             # push data to stream
             async for data_block in data:
                 # Check if task was cancelled via Redis checker
- 
+
                 last_block = data_block
                 await push_to_connection_stream(data_block.model_dump(mode="json"))
 
@@ -263,7 +265,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                 await push_to_connection_stream(query_end_data)
             # push stream end message
             end_data = {"type": "STREAM_END"}
-            await push_to_connection_stream(end_data)    
+            await push_to_connection_stream(end_data)
         except asyncio.CancelledError:
             cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled "}
             await push_to_connection_stream(cancel_data)
@@ -275,6 +277,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         finally:
             await task_checker.stop_monitoring()
             await aws_client.close()
+
     task = asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
 
@@ -328,16 +331,16 @@ async def terminal_command_edit(
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=False)
-async def cancel_chat(
-    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
-):
-    await CancellationService().cancel(session_id) 
+async def cancel_chat(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+    await CancellationService().cancel(session_id)
     await CodeGenTasksCache.cancel_session(session_id)
-    return send_response({
-        "status": "SUCCESS", 
-        "message": "LLM processing cancelled successfully ",
-        "cancelled_session_id": session_id,
-    })
+    return send_response(
+        {
+            "status": "SUCCESS",
+            "message": "LLM processing cancelled successfully ",
+            "cancelled_session_id": session_id,
+        }
+    )
 
 
 # This is for testing purposes only
@@ -389,6 +392,6 @@ async def sse_websocket(request: Request, ws: Any) -> None:
                 except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error in websocket connection: {e}")
                     break
-                    
+
     except Exception as _ex:  # noqa: BLE001
         AppLogger.log_error(f"Error in websocket connection: {_ex}")

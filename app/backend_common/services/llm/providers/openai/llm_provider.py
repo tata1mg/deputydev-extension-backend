@@ -1,18 +1,16 @@
 import asyncio
 import json
-
 import uuid
-from typing import Any, Dict, List, Optional, Literal, AsyncIterator
-from openai.types.responses.response_stream_event import ResponseStreamEvent
-from openai.types.chat import ChatCompletion
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional
-
-
+from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
-from openai.types.chat import ChatCompletion
+from openai.types.responses import Response
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
@@ -56,16 +54,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-from deputydev_core.utils.app_logger import AppLogger
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
-)
+
 
 class OpenAI(BaseLLMProvider):
-    def __init__(self, checker: CancellationChecker = None):
+    def __init__(self, checker: Optional[CancellationChecker] = None) -> None:
         super().__init__(LLMProviders.OPENAI.value, checker=checker)
         self._active_streams: Dict[str, AsyncIterator] = {}
         self.anthropic_client = None
@@ -149,7 +144,7 @@ class OpenAI(BaseLLMProvider):
             "tool_choice": tool_choice,
         }
 
-    async def get_conversation_turns(
+    async def get_conversation_turns(  # noqa: C901
         self,
         previous_responses: List[MessageThreadDTO],
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -224,7 +219,7 @@ class OpenAI(BaseLLMProvider):
                     last_tool_use_request = False
         return conversation_turns
 
-    def _parse_non_streaming_response(self, response: ChatCompletion) -> NonStreamingResponse:
+    def _parse_non_streaming_response(self, response: Response) -> NonStreamingResponse:
         """
         Parses the response from OpenAI's GPT model.
 
@@ -253,7 +248,7 @@ class OpenAI(BaseLLMProvider):
             content=non_streaming_content_blocks,
             usage=(
                 LLMUsage(
-                    input=response.usage.input_tokens,
+                    input=response.usage.input_tokens - response.usage.input_tokens_details.cached_tokens,
                     output=response.usage.output_tokens,
                     cache_read=response.usage.input_tokens_details.cached_tokens,
                 )
@@ -306,16 +301,15 @@ class OpenAI(BaseLLMProvider):
             )
             return self._parse_non_streaming_response(response)
 
-    async def _parse_streaming_response(
+    async def _parse_streaming_response(  # noqa: C901
         self, response: AsyncIterator[ResponseStreamEvent], stream_id: str = None, session_id: Optional[int] = None
     ) -> StreamingResponse:
         stream_id = stream_id or str(uuid.uuid4())
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        
-        streaming_completed = False
+        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
+
+        streaming_completed = asyncio.Event()
 
         # Manual token counting for when final usage is not available
-        
 
         accumulated_events = []
 
@@ -333,33 +327,31 @@ class OpenAI(BaseLLMProvider):
                         await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
                     try:
-                        event_block, event_block_category, event_usage = await self._get_parsed_stream_event(event)
+                        event_block, _event_block_category, event_usage = await self._get_parsed_stream_event(event)
                         if event_usage:
                             usage += event_usage
-                            final_usage_available = True
                         if event_block:
-                            accumulated_events.append(event_block) 
+                            accumulated_events.append(event_block)
                             yield event_block
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         # Depending on the error, you might want to break or continue
                         pass
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Streaming Error in OpenAI: {e}")
             finally:
                 if self.checker:
                     await self.checker.stop_monitoring()
-                streaming_completed = True
+                streaming_completed.set()
                 await close_client()
 
         async def close_client() -> None:
             nonlocal streaming_completed
-            streaming_completed = True
-            if stream_id in self._active_streams and streaming_completed:
-                    
+            streaming_completed.set()
+            if stream_id in self._active_streams:
                 try:
                     stream_iter = self._active_streams.pop(stream_id)
                     await stream_iter.aclose()
-                except Exception as e:
+                except Exception:  # noqa: BLE001
                     AppLogger.log_error("OpenAI Cancel Error")
                 if stream_id in self._active_streams:
                     del self._active_streams[stream_id]
@@ -367,16 +359,13 @@ class OpenAI(BaseLLMProvider):
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-
+            await streaming_completed.wait()
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             return accumulated_events
 
         return StreamingResponse(
@@ -386,12 +375,14 @@ class OpenAI(BaseLLMProvider):
             accumulated_events=asyncio.create_task(get_accumulated_events()),
         )
 
-    async def _get_parsed_stream_event(self, event: ResponseStreamEvent):
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        if event.type == "response.completed":
-            usage.input = event.response.usage.input_tokens
-            usage.output = event.response.usage.output_tokens
+    async def _get_parsed_stream_event(
+        self, event: ResponseStreamEvent
+    ) -> Tuple[Optional[StreamingEvent], Optional[ContentBlockCategory], Optional[LLMUsage]]:
+        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
+        if event.type == "response.completed" and event.response.usage:
             usage.cache_read = event.response.usage.input_tokens_details.cached_tokens
+            usage.input = event.response.usage.input_tokens - usage.cache_read
+            usage.output = event.response.usage.output_tokens
             return None, None, usage
         if event.type == "response.output_item.added" and event.item.type == "function_call":
             return (

@@ -13,16 +13,16 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
-    BaseClaude3Point5SonnetPromptHandler,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
+    BaseClaude4SonnetPromptHandler,
 )
 
 
-class Claude3Point5InlineEditorPrompt(BaseClaude3Point5SonnetPromptHandler):
+class Claude4InlineEditorPrompt(BaseClaude4SonnetPromptHandler):
     prompt_type = "INLINE_EDITOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> str:
