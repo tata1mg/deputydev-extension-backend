@@ -6,19 +6,19 @@ from app.backend_common.services.llm.dataclasses.main import LLMHandlerInputs
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 
-class BaseQuerySolverAgentTask(ABC):
+class BaseQuerySolverAgent(ABC):
     """
-    Base class for query solver agent tasks.
-    This class should be extended by specific query solver agent tasks.
+    Base class for query solver agents.
+    This class should be extended by specific query solver agents.
     """
 
     # this needs to be overridden by the subclass
-    task_name: str = "BaseQuerySolverAgentTask"
-    description: str = "Base Query Solver Agent Task"
+    agent_name: str = "BaseQuerySolverAgent"
+    description: str = "Base Query Solver Agent"
 
     def __init__(self, previous_messages: Optional[List[MessageThreadDTO]] = None) -> None:
         """
-        Initialize the task with previous messages.
+        Initialize the agent with previous messages.
 
         :param previous_messages: Optional list of previous messages in the conversation.
         """
