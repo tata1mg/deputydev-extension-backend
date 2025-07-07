@@ -38,7 +38,7 @@ class TerminalCommandEditGenerator:
             llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
                 prompt_feature=PromptFeatures.TERMINAL_COMMAND_EDITOR,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                llm_model=LLModels.CLAUDE_4_SONNET,
                 prompt_vars={
                     "query": payload.query,
                     "old_terminal_command": payload.old_terminal_command,

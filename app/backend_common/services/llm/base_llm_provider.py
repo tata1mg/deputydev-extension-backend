@@ -19,10 +19,11 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
+
 class BaseLLMProvider(ABC):
     """Abstract LLM interface"""
 
-    def __init__(self, llm_type: str, checker=None):
+    def __init__(self, llm_type: str, checker: Optional[CancellationChecker] = None) -> None:
         self.llm_type = llm_type
         self.checker = checker
 
@@ -55,7 +56,12 @@ class BaseLLMProvider(ABC):
         return ConfigManager.configs["LLM_MODELS"][model.value]
 
     async def call_service_client(
-        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None, session_id: Optional[int] = None
+        self,
+        llm_payload: Dict[str, Any],
+        model: LLModels,
+        stream: bool = False,
+        response_type: Optional[str] = None,
+        session_id: Optional[int] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the LLM service client.
