@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import List, Optional, Type
 
 from deputydev_core.utils.config_manager import ConfigManager

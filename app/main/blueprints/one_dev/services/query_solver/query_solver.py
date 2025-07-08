@@ -301,9 +301,7 @@ class QuerySolver:
                         response=tool_response,
                     )
                 ),
-                tools=DefaultQuerySolverAgent().get_all_tools(
-                    payload=payload, _client_data=client_data
-                ),
+                tools=DefaultQuerySolverAgent().get_all_tools(payload=payload, _client_data=client_data),
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
