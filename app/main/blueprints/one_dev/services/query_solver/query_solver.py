@@ -26,6 +26,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
+from app.main.blueprints.one_dev.services.query_solver.agents.backend_app_creator_query_solver_agent import BackendAppCreatorQuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import DefaultQuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     DetailedDirectoryItem,
@@ -37,6 +38,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.backend_app_creator.factory import BackendAppCreatorPromptFactory
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     StreamingContentBlockType,
 )
@@ -201,7 +203,7 @@ class QuerySolver:
                 user_query=payload.query,
                 focus_items=payload.focus_items,
                 directory_items=payload.directory_items if payload.directory_items else [],
-                all_agents=[],
+                all_agents=[BackendAppCreatorQuerySolverAgent],
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
                 default_agent=DefaultQuerySolverAgent,
