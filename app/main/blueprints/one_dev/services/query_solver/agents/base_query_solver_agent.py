@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Type
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import LLMHandlerInputs
+from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData

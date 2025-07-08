@@ -1,7 +1,6 @@
 import asyncio
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from agent_selector.agent_selector import QuerySolverAgentSelector
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from pydantic import BaseModel
 
@@ -26,7 +25,9 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.query_solver.agents.backend_app_creator_query_solver_agent import BackendAppCreatorQuerySolverAgent
+from app.main.blueprints.one_dev.services.query_solver.agents.backend_app_creator_query_solver_agent import (
+    BackendAppCreatorQuerySolverAgent,
+)
 from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import DefaultQuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     DetailedDirectoryItem,
@@ -38,7 +39,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.backend_app_creator.factory import BackendAppCreatorPromptFactory
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     StreamingContentBlockType,
 )
@@ -50,6 +50,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
+from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
 
 
