@@ -145,7 +145,7 @@ class TextBlockDelta(BaseModel):
     type: Literal[StreamingEventType.TEXT_BLOCK_DELTA] = StreamingEventType.TEXT_BLOCK_DELTA
     content: TextBlockDeltaContent
 
-    def __add__(self, other: "TextBlockDelta"):
+    def __add__(self, other: "TextBlockDelta") -> "TextBlockDelta":
         return TextBlockDelta(content=TextBlockDeltaContent(text=self.content.text + other.content.text))
 
 
@@ -163,7 +163,7 @@ class ToolUseRequestDelta(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_DELTA] = StreamingEventType.TOOL_USE_REQUEST_DELTA
     content: ToolUseRequestDeltaContent
 
-    def __add__(self, other: "ToolUseRequestDelta"):
+    def __add__(self, other: "ToolUseRequestDelta") -> "ToolUseRequestDelta":
         return ToolUseRequestDelta(
             content=ToolUseRequestDeltaContent(
                 input_params_json_delta=self.content.input_params_json_delta + other.content.input_params_json_delta
@@ -196,7 +196,7 @@ class ExtendedThinkingBlockDelta(BaseModel):
     type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA] = StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA
     content: ExtendedThinkingBlockDeltaContent
 
-    def __add__(self, other):
+    def __add__(self, other: "ExtendedThinkingBlockDelta") -> "ExtendedThinkingBlockDelta":
         return ExtendedThinkingBlockDelta(
             content=ExtendedThinkingBlockDeltaContent(
                 thinking_delta=self.content.thinking_delta + other.content.thinking_delta
