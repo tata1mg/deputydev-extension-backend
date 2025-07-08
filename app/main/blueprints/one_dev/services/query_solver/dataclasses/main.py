@@ -92,14 +92,14 @@ class QuerySolverInput(BaseModel):
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
-    user_team_id: Optional[int] = None
-    session_type: Optional[str] = None
-    urls: Optional[List[Url]] = []
+    user_team_id: int
+    session_type: str
+    urls: List[Url] = []
     os_name: Optional[str] = None
     shell: Optional[str] = None
     vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
-    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    llm_model: LLMModel
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
     is_embedding_done: Optional[bool] = True
