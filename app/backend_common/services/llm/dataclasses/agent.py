@@ -1,11 +1,9 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, LLMToolChoice
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-
+from typing import List, Optional, Type
 
 from pydantic import BaseModel
 
-
-from typing import List, Optional, Type
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, LLMToolChoice
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 
 class LLMHandlerInputs(BaseModel):

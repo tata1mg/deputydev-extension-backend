@@ -71,7 +71,11 @@ class QuerySolverAgentSelector:
             raise ValueError("Invalid response from LLM. Expected NonStreamingParsedLLMCallResponse.")
 
         agent = next(
-            (agent for agent in self.all_agents if agent.agent_name == selected_intent.parsed_content["intent_name"]),
+            (
+                agent
+                for agent in self.all_agents
+                if agent.agent_name == selected_intent.parsed_content[0]["intent_name"]
+            ),
             None,
         )
 

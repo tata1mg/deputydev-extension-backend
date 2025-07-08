@@ -99,7 +99,7 @@ class QuerySolverInput(BaseModel):
     shell: Optional[str] = None
     vscode_env: Optional[str] = None
     search_web: Optional[bool] = False
-    llm_model: LLMModel
+    llm_model: Optional[LLMModel] = None
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
     is_embedding_done: Optional[bool] = True

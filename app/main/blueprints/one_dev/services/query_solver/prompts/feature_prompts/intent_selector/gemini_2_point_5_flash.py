@@ -29,7 +29,7 @@ class Gemini2Point5FlashIntentSelectorPrompt(BaseGemini2Point5FlashPromptHandler
 
     def get_system_prompt(self) -> str:
         return """
-            You are tasked with choosing the best intent (from a given set of intents) behind a user query related to software development. If you do it well, you will be rewarded handsomely.
+            You are tasked with choosing the best intent from a given set of intents behind a user query. If you do it well, you will be rewarded handsomely.
         """
 
     def get_prompt(self) -> UserAndSystemMessages:
@@ -70,12 +70,12 @@ class Gemini2Point5FlashIntentSelectorPrompt(BaseGemini2Point5FlashPromptHandler
             {self.params.get("query")}
         """
 
-        intent_gen_prompt = """
+        intent_gen_prompt = f"""
         We have the following intents available to choose from:
         {
             "<intents>"
             + "".join(
-                f"<intent><name>{intent.name}</name><description>{intent.description}</description></intent>"
+                f"<intent><name>{intent['name']}</name><description>{intent['description']}</description></intent>"
                 for intent in self.params.get("intents", [])
             )
             + "</intents>"
