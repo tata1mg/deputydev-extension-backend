@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Type
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent_task import (
+from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import (
     BaseQuerySolverAgent,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import DetailedDirectoryItem, DetailedFocusItem
@@ -23,6 +23,7 @@ class QuerySolverAgentSelector:
         all_agents: List[Type[BaseQuerySolverAgent]],
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
+        default_agent: Optional[Type[BaseQuerySolverAgent]] = None,
     ) -> None:
         # Initialize with the user query.
         self.user_query = user_query
@@ -31,6 +32,7 @@ class QuerySolverAgentSelector:
         self.all_agents = all_agents
         self.llm_handler = llm_handler
         self.session_id = session_id
+        self.default_agent = default_agent
 
     async def select_agent(self) -> Optional[Type[BaseQuerySolverAgent]]:
         """
@@ -41,6 +43,9 @@ class QuerySolverAgentSelector:
         # and determine which task is most appropriate.
         # For simplicity, we will return a placeholder agent name.
         # return the agent that is most appropriate for the user query
+
+        if not self.all_agents:
+            return self.default_agent or None
 
         prompt_vars: Dict[str, Any] = {
             "query": self.user_query,
@@ -73,4 +78,4 @@ class QuerySolverAgentSelector:
         if agent:
             return agent
 
-        return None
+        return self.default_agent or None
