@@ -509,42 +509,64 @@ q               query: Find all the references of xyz method in class abc
         working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
         context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
         context_repos_str = ""
-        for context_repo in context_repos:
+        for index, context_repo in enumerate(context_repos):
             context_repos_str += f"""
-              <repository>
-                <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
-                <repo_name>{context_repo.repo_name}</repo_name>
-                <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
-              </repository>
+              Context Repository {index+1}:
+                Absolute Path: {context_repo.repo_path}
+                Repository Name: {context_repo.repo_name}
+                Root Directory Context: 
+                  {context_repo.root_directory_context}
+                
             """
 
         return f"""
-        ====
-        <repository_context>
-          You are working with two types of repositories:
-          <working_repository>
-            <purpose>The primary repository where you will make changes and apply modifications</purpose>
-            <access_level>Full read/write access</access_level>
-            <allowed_operations>All read and write operations</allowed_operations>
-            <restrictions>No restrictions</restrictions>
-            <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
-            <repo_name>{working_repo.repo_name}</repo_name>
-            <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
-          </working_repository>
-          <context_repositories>
-            <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
-            <access_level>Read-only access</access_level>
-            <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
-            <restrictions>
-              1. NO write operations allowed
-              2. NO file creation or modification
-              3. NO diff application
-            </restrictions>
-            <list_of_context_repositories>
-                {context_repos_str}
-            </list_of_context_repositories>
-          </context_repositories>
-        </repository_context>
+        ==== 
+        We are dealing with 2 types of repositories:
+        1. Working Repository (Primary):
+            Purpose: The main repository where you will make changes and apply modifications.
+            Access Level: Full read/write access.
+            Allowed tools: All read and write tools.
+            Restrictions: None.
+            Absolute Path: {working_repo.repo_path}
+            Repository Name: {working_repo.repo_name}
+            Root Directory Context: 
+              {working_repo.root_directory_context}
+         
+        2. Context Repositories (Reference Only):
+            Purpose: These repositories are used to gather context, understand patterns, or look up examples.
+            Access Level: Read-only.
+            Allowed tools: Only tools that read context from the repository are allowed.
+            Restrictions:
+                a) No write operations even if asked explicitly. Mention politely that write capability to context repositories is coming soon.
+                b) No file creation or modification.
+                c) No diffs or patch applications.
+            List of Context Repositories: {context_repos_str}
+            
+        ###IMPORTANT###
+        Before serving the user query, properly analyse if the query is to be served in context of working repository or context repository.
+        If context repository, then see if it is a write or read operation and act accordingly. Remember you can only read context repositories.
+        Few examples:
+        1. Example 1:
+             User query: Can you refactor autocomplete method in search service?  
+             Working repository: athena_service
+             Context repositories: search_service, cache_wrapper
+             
+             First analyse the query properly - In given scenario, service name is explicitely mentioned and also is mentioned to be a context repository. 
+             Hence we can tell user that write operation is not permitted on context repository.
+             
+        2. Example 2:
+             User query: Can you refactor autocomplete method?  
+             Working repository: athena_service
+             Context repositories: search_service, cache_wrapper
+             
+             In this scenario, no service name is mentioned, and since it is a write operation you can proceed with the working repository.
+             
+         3. Example 3:
+             User query: Can you find references for autocomplete method?  
+             Working repository: athena_service
+             Context repositories: search_service, cache_wrapper
+             
+             After analysing, we know this is a read query and since there is no service mentioned try finding it in all repositories that you find relevant and mention the output repository wise
         ====
         """
 
