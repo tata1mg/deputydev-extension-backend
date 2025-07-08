@@ -17,6 +17,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.inline_editor.factory import (
     InlineEditorPromptFactory,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.intent_selector.factory import (
+    IntentSelectorPromptFactory,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.session_summary_generator.factory import (
     SessionSummaryGeneratorPromptFactory,
 )
@@ -35,6 +38,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.INLINE_EDITOR: InlineEditorPromptFactory,
         PromptFeatures.TERMINAL_COMMAND_EDITOR: TerminalCommandEditorPromptFactory,
         PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
+        PromptFeatures.INTENT_SELECTOR: IntentSelectorPromptFactory,
     }
 
     @classmethod
