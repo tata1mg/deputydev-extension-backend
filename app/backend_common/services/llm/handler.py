@@ -729,6 +729,134 @@ class LLMHandler(Generic[PromptFeatures]):
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
+    async def submit_batch_tool_use_response(  # noqa : C901
+        self,
+        session_id: int,
+        tool_use_responses: List[ToolUseResponseData],
+        tools: Optional[List[ConversationTool]] = None,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
+        stream: bool = False,
+        call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
+        prompt_type: Optional[str] = None,
+        prompt_vars: Optional[Dict[str, Any]] = None,
+        checker: Optional[CancellationChecker] = None,
+    ) -> ParsedLLMCallResponse:
+        """
+        Submit multiple tool use responses to LLM for parallel processing
+
+        Parameters:
+            :param session_id: Session id
+            :param tool_use_responses: List of tool use response data
+            :param tools: List of tools
+            :param stream: Stream response
+            :return: Parsed LLM response
+
+        Returns:
+            ParsedLLMCallResponse: Parsed LLM response
+        """
+        if not prompt_vars:
+            prompt_vars = {}
+
+        session_messages = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+        )
+        session_messages.sort(key=lambda x: x.id)
+        filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
+
+        # Find common context for all tool responses
+        detected_llm: Optional[LLModels] = None
+        detected_prompt_handler: Optional[BasePrompt] = None
+        main_query_id: int = 0
+        selected_prev_query_ids = []
+        tool_use_request_message_ids = []
+
+        # Get tool use IDs from responses
+        tool_use_ids = {resp.content.tool_use_id for resp in tool_use_responses}
+
+        for message in filtered_messages:
+            for data in message.message_data:
+                if data.type == ContentBlockCategory.TOOL_USE_REQUEST and data.content.tool_use_id in tool_use_ids:
+                    tool_use_request_message_ids.append(message.id)
+                    if not detected_llm:
+                        detected_llm = message.llm_model
+                        if message.message_type == MessageType.QUERY:
+                            main_query_id = message.id
+                            selected_prev_query_ids = message.conversation_chain
+                        elif message.query_id:
+                            main_query_id = message.query_id
+                        else:
+                            raise ValueError("Main query id not found")
+
+                        detected_prompt_handler = self.prompt_handler_map.get_prompt(
+                            model_name=detected_llm, feature=self.prompt_features(message.prompt_type)
+                        )(prompt_vars)
+
+        if not tool_use_request_message_ids or not detected_llm:
+            raise ValueError("Tool use request messages not found for batch tool responses")
+
+        if not detected_prompt_handler:
+            raise ValueError("Prompt handler not found for prompt type")
+
+        # Find the latest tool use request message ID for context
+        latest_message_id = max(tool_use_request_message_ids)
+
+        conversation_chain_messages = [
+            message
+            for message in session_messages
+            if message.id <= latest_message_id
+            and (
+                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
+                or not selected_prev_query_ids
+            )
+        ]
+
+        # Store all tool responses in DB
+        for tool_response in tool_use_responses:
+            await self.store_tool_use_ressponse_in_db(
+                session_id=session_id,
+                previous_responses=conversation_chain_messages,
+                prompt_type=detected_prompt_handler.prompt_type,
+                prompt_category=detected_prompt_handler.prompt_category,
+                llm_model=detected_llm,
+                tool_use_response=tool_response,
+                query_id=main_query_id,
+                call_chain_category=call_chain_category,
+            )
+
+        client = self.model_to_provider_class_map[detected_llm](checker=checker)
+
+        # Update conversation chain to include all tool responses
+        updated_session_messages = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+        )
+        updated_session_messages.sort(key=lambda x: x.id)
+
+        updated_conversation_chain = [
+            message
+            for message in updated_session_messages
+            if message.id <= max([msg.id for msg in updated_session_messages])
+            and (
+                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
+                or not selected_prev_query_ids
+            )
+        ]
+
+        return await self.fetch_and_parse_llm_response(
+            client=client,
+            session_id=session_id,
+            prompt_type=detected_prompt_handler.prompt_type,
+            llm_model=detected_llm,
+            query_id=main_query_id,
+            prompt_handler=detected_prompt_handler,
+            call_chain_category=call_chain_category,
+            tools=tools,
+            tool_choice=tool_choice,
+            previous_responses=updated_conversation_chain,
+            max_retry=MAX_LLM_RETRIES,
+            stream=stream,
+            checker=checker,
+        )
+
     async def submit_tool_use_response(
         self,
         session_id: int,

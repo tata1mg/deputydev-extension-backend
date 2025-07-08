@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
@@ -35,6 +35,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
+    ToolUseResponseInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
@@ -291,7 +292,7 @@ class QuerySolver:
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
-        elif payload.tool_use_response:
+        elif payload.tool_use_response or payload.batch_tool_responses:
             prompt_vars = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
@@ -299,59 +300,119 @@ class QuerySolver:
                 "write_mode": payload.write_mode,
                 "deputy_dev_rules": payload.deputy_dev_rules,
             }
-            tool_response = payload.tool_use_response.response
-            if not payload.tool_use_failed:
-                if payload.tool_use_response.tool_name == "focused_snippets_searcher":
-                    tool_response = {
-                        "chunks": [
-                            ChunkInfo(**chunk).get_xml()
-                            for search_response in tool_response["batch_chunks_search"]["response"]
-                            for chunk in search_response["chunks"]
-                        ],
-                    }
 
-                if payload.tool_use_response.tool_name == "iterative_file_reader":
-                    tool_response = {
-                        "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
-                        "eof_reached": tool_response["data"]["eof_reached"],
-                    }
+            if payload.batch_tool_responses:
+                # Handle parallel tool responses
+                tool_responses = []
+                for resp in payload.batch_tool_responses:
+                    if not payload.tool_use_failed:
+                        response_data = self._tool_response_format(resp)
+                    else:
+                        if resp.tool_name not in {"replace_in_file", "write_to_file"}:
+                            response_data = {
+                                "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                                    tool_name=resp.tool_name,
+                                    error_type=resp.response.get("error_type", "Unknown")
+                                    if resp.response
+                                    else "Unknown",
+                                    error_message=resp.response.get(
+                                        "error_message", "An error occurred while using the tool."
+                                    )
+                                    if resp.response
+                                    else "An error occurred while using the tool.",
+                                )
+                            }
+                        else:
+                            response_data = resp.response
 
-                if payload.tool_use_response.tool_name == "grep_search":
-                    tool_response = {
-                        "matched_contents": "".join(
-                            [
-                                f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
-                                for matched_block in tool_response["data"]
-                            ]
-                        ),
-                    }
-
-            if payload.tool_use_failed:
-                if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
-                    error_response = {
-                        "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                            tool_name=payload.tool_use_response.tool_name,
-                            error_type=tool_response.get("error_type", "Unknown"),
-                            error_message=tool_response.get("error_message", "An error occurred while using the tool."),
+                    tool_responses.append(
+                        ToolUseResponseData(
+                            content=ToolUseResponseContent(
+                                tool_name=resp.tool_name,
+                                tool_use_id=resp.tool_use_id,
+                                response=response_data,
+                            )
                         )
-                    }
-                    tool_response = error_response
-
-            llm_response = await llm_handler.submit_tool_use_response(
-                session_id=payload.session_id,
-                tool_use_response=ToolUseResponseData(
-                    content=ToolUseResponseContent(
-                        tool_name=payload.tool_use_response.tool_name,
-                        tool_use_id=payload.tool_use_response.tool_use_id,
-                        response=tool_response,
                     )
-                ),
-                tools=tools_to_use,
-                stream=True,
-                prompt_vars=prompt_vars,
-                checker=task_checker,
-            )
+
+                llm_response = await llm_handler.submit_batch_tool_use_response(
+                    session_id=payload.session_id,
+                    tool_use_responses=tool_responses,
+                    tools=tools_to_use,
+                    stream=True,
+                    prompt_vars=prompt_vars,
+                    checker=task_checker,
+                )
+            else:
+                # Handle single tool response
+                tool_response: Any = None
+                if not payload.tool_use_failed:
+                    tool_response = self._tool_response_format(payload.tool_use_response)
+                else:
+                    if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
+                        tool_response = {
+                            "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                                tool_name=payload.tool_use_response.tool_name,
+                                error_type=payload.tool_use_response.response.get("error_type", "Unknown")
+                                if payload.tool_use_response.response
+                                else "Unknown",
+                                error_message=payload.tool_use_response.response.get(
+                                    "error_message", "An error occurred while using the tool."
+                                )
+                                if payload.tool_use_response.response
+                                else "An error occurred while using the tool.",
+                            )
+                        }
+                    else:
+                        tool_response = payload.tool_use_response.response
+
+                llm_response = await llm_handler.submit_tool_use_response(
+                    session_id=payload.session_id,
+                    tool_use_response=ToolUseResponseData(
+                        content=ToolUseResponseContent(
+                            tool_name=payload.tool_use_response.tool_name,
+                            tool_use_id=payload.tool_use_response.tool_use_id,
+                            response=tool_response,
+                        )
+                    ),
+                    tools=tools_to_use,
+                    stream=True,
+                    prompt_vars=prompt_vars,
+                    checker=task_checker,
+                )
+
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         else:
             raise ValueError("Invalid input")
+
+    def _tool_response_format(self, tool_use_response: ToolUseResponseInput) -> Dict[str, Any]:
+        """Handle and structure tool responses based on tool type."""
+        tool_response = tool_use_response.response
+
+        if tool_use_response.tool_name == "focused_snippets_searcher":
+            return {
+                "chunks": [
+                    ChunkInfo(**chunk).get_xml()
+                    for search_response in tool_response["batch_chunks_search"]["response"]
+                    for chunk in search_response["chunks"]
+                ],
+            }
+
+        if tool_use_response.tool_name == "iterative_file_reader":
+            return {
+                "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
+                "eof_reached": tool_response["data"]["eof_reached"],
+            }
+
+        if tool_use_response.tool_name == "grep_search":
+            return {
+                "matched_contents": "".join(
+                    [
+                        f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
+                        for matched_block in tool_response["data"]
+                    ]
+                ),
+            }
+
+        return tool_response if tool_response else {}
