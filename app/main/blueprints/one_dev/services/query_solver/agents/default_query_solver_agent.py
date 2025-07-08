@@ -85,7 +85,7 @@ class DefaultQuerySolverAgent(BaseQuerySolverAgent):
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    def _get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+    def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         tools_to_use = [
             ASK_USER_INPUT,
             FOCUSED_SNIPPETS_SEARCHER,
@@ -110,7 +110,6 @@ class DefaultQuerySolverAgent(BaseQuerySolverAgent):
 
         return tools_to_use
 
-    @abstractmethod
     def get_llm_inputs(
         self, payload: QuerySolverInput, _client_data: ClientData, llm_model: LLModels
     ) -> LLMHandlerInputs:
@@ -119,7 +118,7 @@ class DefaultQuerySolverAgent(BaseQuerySolverAgent):
         :return: LLMHandlerInputs object containing the user and system messages.
         """
 
-        tools = self._get_all_tools(payload, _client_data)
+        tools = self.get_all_tools(payload, _client_data)
 
         return LLMHandlerInputs(
             tools=tools,

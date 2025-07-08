@@ -143,7 +143,8 @@ class QuerySolver:
 
             async for data_block in llm_response.parsed_content:
                 # Check if the current task is cancelled
-                if asyncio.current_task() and asyncio.current_task().cancelled():
+                current_task = asyncio.current_task()
+                if current_task and current_task.cancelled():
                     raise asyncio.CancelledError("Task cancelled in QuerySolver")
 
                 if data_block.type in [
@@ -213,8 +214,6 @@ class QuerySolver:
             # Create an instance of the selected agent
             agent_instance = selected_agent(previous_messages=previous_responses)
 
-            selected_prompt = agent_instance.prompt
-
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
                 "focus_items": payload.focus_items,
@@ -233,7 +232,7 @@ class QuerySolver:
             )
 
             llm_response = await llm_handler.start_llm_query(
-                prompt_feature=PromptFeatures(selected_prompt.prompt_type),
+                prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
                 llm_model=model_to_use,
                 prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
@@ -243,12 +242,12 @@ class QuerySolver:
                 session_id=payload.session_id,
                 save_to_redis=save_to_redis,
                 checker=task_checker,
-                prompt_handler_instance=selected_prompt(params=prompt_vars_to_use),
+                prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.tool_use_response:
-            prompt_vars = {
+            prompt_vars: Dict[str, Any] = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
                 "vscode_env": payload.vscode_env,
@@ -267,7 +266,7 @@ class QuerySolver:
                     }
 
                 if payload.tool_use_response.tool_name == "iterative_file_reader":
-                    tool_response = {
+                    tool_response: Dict[str, Any] = {
                         "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
                         "eof_reached": tool_response["data"]["eof_reached"],
                     }
@@ -302,7 +301,9 @@ class QuerySolver:
                         response=tool_response,
                     )
                 ),
-                tools=tools_to_use,
+                tools=DefaultQuerySolverAgent().get_all_tools(
+                    payload=payload, _client_data=client_data
+                ),
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
