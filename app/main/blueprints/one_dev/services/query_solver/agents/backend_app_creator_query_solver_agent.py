@@ -3,9 +3,9 @@ from typing import List, Optional, Type
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
-    LLMHandlerInputs,
 )
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import BaseQuerySolverAgent

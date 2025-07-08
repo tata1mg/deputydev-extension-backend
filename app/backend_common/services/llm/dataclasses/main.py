@@ -1,7 +1,7 @@
 import asyncio
 from asyncio import Task
 from enum import Enum
-from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional, Type, Union
+from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -11,7 +11,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     ResponseData,
 )
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 
 class LLMCallResponseTypes(Enum):
@@ -286,12 +285,3 @@ class LLMToolChoice(Enum):
     NONE = "NONE"
     AUTO = "AUTO"
     REQUIRED = "REQUIRED"
-
-
-class LLMHandlerInputs(BaseModel):
-    # user_message: str  # noqa: ERA001
-    # system_message: Optional[str] = None  # noqa: ERA001
-    tools: Optional[List[ConversationTool]] = None
-    tool_choice: LLMToolChoice = LLMToolChoice.AUTO
-    prompt: Type[BasePrompt]
-    previous_messages: List[int] = []
