@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional
+from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Union
 
 import httpx
 from deputydev_core.utils.singleton import Singleton
@@ -19,7 +19,7 @@ config = CONFIG.config
 
 
 class OpenAIServiceClient(metaclass=Singleton):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__client = AsyncOpenAI(
             api_key=config.get("OPENAI_KEY"),
             timeout=config.get("OPENAI_TIMEOUT"),
@@ -40,9 +40,9 @@ class OpenAIServiceClient(metaclass=Singleton):
         tool_choice: Literal["none", "auto", "required"] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         response_type: Literal["text", "json_object"] = "json_object",
-        response_schema=None,
-        response_format_name=None,
-        response_format_description=None,
+        response_schema: Any = None,
+        response_format_name: Any = None,
+        response_format_description: Any = None,
         instructions: str = None,
         max_output_tokens: str = None,
     ) -> Response:
@@ -59,7 +59,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             tools=tools,
             stream=False,
             text=response_type,
-            parallel_tool_calls=False,
+            parallel_tool_calls=True,
             instructions=instructions,
             max_output_tokens=max_output_tokens,
         )
@@ -89,7 +89,12 @@ class OpenAIServiceClient(metaclass=Singleton):
         # we need both message and output token now to returning full completion message
         return completion
 
-    async def create_embedding(self, input, model: str, encoding_format: Literal["float", "base64"]):
+    async def create_embedding(  # noqa : ANN201
+        self,
+        input: Union[str, List[str], Iterable[int], Iterable[Iterable[int]]],
+        model: str,
+        encoding_format: Literal["float", "base64"],
+    ):
         embeddings = await self.__client.embeddings.create(
             input=input, model=model, encoding_format=encoding_format, timeout=2
         )
@@ -102,9 +107,9 @@ class OpenAIServiceClient(metaclass=Singleton):
         tool_choice: Literal["none", "auto", "required"] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         response_type: Literal["text", "json_object"] = "json_object",
-        response_schema=None,
-        response_format_name=None,
-        response_format_description=None,
+        response_schema: Any = None,
+        response_format_name: Any = None,
+        response_format_description: Any = None,
         instructions: str = None,
         max_output_tokens: int = None,
     ) -> AsyncIterator[ResponseStreamEvent]:
@@ -121,14 +126,14 @@ class OpenAIServiceClient(metaclass=Singleton):
             tools=tools,
             stream=True,
             text=response_type,
-            parallel_tool_calls=False,
+            parallel_tool_calls=True,
             instructions=instructions,
             max_output_tokens=max_output_tokens,
         )
         return stream_manager.__stream__()
 
     def _get_response_type(
-        self, response_type, response_schema=None, schema_name=None, schema_description=None
+        self, response_type: Any, response_schema: Any = None, schema_name: Any = None, schema_description: Any = None
     ) -> ResponseTextConfigParam:
         if response_type == "json_schema":
             return ResponseTextConfigParam(
