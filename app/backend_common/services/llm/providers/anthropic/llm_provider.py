@@ -20,7 +20,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
-    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -88,16 +87,10 @@ class Anthropic(BaseLLMProvider):
             List[ConversationTurn]: The formatted conversation turns.
         """
         conversation_turns: List[ConversationTurn] = []
-        last_tool_use_request: bool = False
         for message in previous_responses:
-            if last_tool_use_request and not (
-                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-            ):
-                # remove the tool use request if the user has not responded to it
-                conversation_turns.pop()
-                last_tool_use_request = False
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             content: List[Dict[str, Any]] = []
+            tool_requests: Dict[str, Dict[str, Any]] = {}
             # sort message datas, keep text block first and tool use request last
             message_datas = list(message.message_data)
             for message_data in message_datas:
@@ -121,32 +114,31 @@ class Anthropic(BaseLLMProvider):
                             "text": content_data.text,
                         }
                     )
-                    last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
-                    if (
-                        last_tool_use_request
-                        and conversation_turns
-                        and not isinstance(conversation_turns[-1].content, str)
-                        and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
-                    ):
-                        content.append(
+                    tool_request = tool_requests[content_data.tool_use_id]
+                    if tool_request:
+                        content_req: List[Dict[str, Any]] = []
+                        content_res: List[Dict[str, Any]] = []
+                        content_req.append(tool_request)
+                        conversation_turns.append(
+                            ConversationTurn(role=ConversationRole.ASSISTANT, content=content_req)
+                        )
+                        content_res.append(
                             {
                                 "type": "tool_result",
                                 "tool_use_id": content_data.tool_use_id,
                                 "content": json.dumps(content_data.response),
                             }
                         )
-                        last_tool_use_request = False
+                        conversation_turns.append(ConversationTurn(role=ConversationRole.USER, content=content_res))
+                        tool_requests.pop(content_data.tool_use_id)
                 elif isinstance(content_data, ToolUseRequestContent):
-                    content.append(
-                        {
-                            "type": "tool_use",
-                            "name": content_data.tool_name,
-                            "id": content_data.tool_use_id,
-                            "input": content_data.tool_input,
-                        }
-                    )
-                    last_tool_use_request = True
+                    tool_requests[content_data.tool_use_id] = {
+                        "type": "tool_use",
+                        "name": content_data.tool_name,
+                        "id": content_data.tool_use_id,
+                        "input": content_data.tool_input,
+                    }
 
                 # handle file attachments
                 else:
@@ -165,9 +157,12 @@ class Anthropic(BaseLLMProvider):
                                 },
                             }
                         )
-                    last_tool_use_request = False
 
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
+            for rem in tool_requests:
+                content_rem: List[Dict[str, Any]] = []
+                content_rem.append(tool_requests[rem])
+                conversation_turns.append(ConversationTurn(role=ConversationRole.ASSISTANT, content=content_rem))
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
 
@@ -194,14 +189,50 @@ class Anthropic(BaseLLMProvider):
             previous_responses, attachment_data_task_map
         )
 
-        # remove last block from the messages if not tool response and last block is tool use request
-        if not tool_use_response and (
-            messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content
-        ):
-            last_content = messages[-1].content[-1]
-            if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
-                # remove the tool use request if the user has not responded to it
-                messages[-1].content.pop()
+        if not tool_use_response:
+            # Collect all tool_use IDs that have responses in the conversation
+            responded_tool_ids = set()
+            for msg in messages:
+                if isinstance(msg.content, list):
+                    for content_block in msg.content:
+                        if isinstance(content_block, dict) and content_block.get("type") == "tool_result":
+                            tool_use_id = content_block.get("tool_use_id")
+                            if tool_use_id:
+                                responded_tool_ids.add(tool_use_id)
+
+            # Remove tool_use requests that don't have responses for parallel tool use support
+            cleaned_messages = []
+            for msg in messages:
+                if msg.role == ConversationRole.ASSISTANT and isinstance(msg.content, list):
+                    cleaned_content = []
+                    removed_tool_ids = []
+
+                    for block in msg.content:
+                        if isinstance(block, dict) and block.get("type") == "tool_use":
+                            tool_id = block.get("id")
+                            if tool_id and tool_id in responded_tool_ids:
+                                cleaned_content.append(block)
+                            elif tool_id:
+                                removed_tool_ids.append(tool_id)
+                                AppLogger.log_warn(f"Removing tool_use request without response: {tool_id}")
+                            else:
+                                # Keep tool_use blocks without IDs for safety
+                                cleaned_content.append(block)
+                        else:
+                            cleaned_content.append(block)
+
+                    # Only keep assistant messages with content
+                    if cleaned_content:
+                        msg.content = cleaned_content
+                        cleaned_messages.append(msg)
+                    elif removed_tool_ids:
+                        AppLogger.log_warn(
+                            f"Removed empty assistant message after cleaning tool requests: {removed_tool_ids}"
+                        )
+                else:
+                    cleaned_messages.append(msg)
+
+            messages = cleaned_messages
 
         if prompt and prompt.cached_message:
             cached_message = ConversationTurn(
@@ -238,17 +269,82 @@ class Anthropic(BaseLLMProvider):
 
         # add tool result to conversation
         if tool_use_response:
-            tool_message = ConversationTurn(
-                role=ConversationRole.USER,
-                content=[
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_response.content.tool_use_id,
-                        "content": json.dumps(tool_use_response.content.response),
-                    }
-                ],
-            )
-            messages.append(tool_message)
+            if isinstance(tool_use_response.content, list):
+                for resp in tool_use_response.content:
+                    try:
+                        # Ensure proper JSON serialization for tool response
+                        response_content = resp.response
+                        if isinstance(response_content, str):
+                            # If already a string, validate it's valid JSON
+                            json.loads(response_content)
+                            serialized_response = response_content
+                        else:
+                            # Serialize dict/other objects to JSON
+                            serialized_response = json.dumps(response_content)
+
+                        tool_message = ConversationTurn(
+                            role=ConversationRole.USER,
+                            content=[
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": resp.tool_use_id,
+                                    "content": serialized_response,
+                                }
+                            ],
+                        )
+                        messages.append(tool_message)
+                    except (json.JSONDecodeError, TypeError) as e:
+                        AppLogger.log_error(f"Failed to serialize tool response: {e}")
+                        # Fallback to string representation
+                        tool_message = ConversationTurn(
+                            role=ConversationRole.USER,
+                            content=[
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": resp.tool_use_id,
+                                    "content": str(tool_use_response.content.response),
+                                }
+                            ],
+                        )
+                        messages.append(tool_message)
+            else:
+                try:
+                    # Ensure proper JSON serialization for tool response
+                    response_content = tool_use_response.content.response
+                    if isinstance(response_content, str):
+                        # If already a string, validate it's valid JSON
+                        json.loads(response_content)
+                        serialized_response = response_content
+                    else:
+                        # Serialize dict/other objects to JSON
+                        serialized_response = json.dumps(response_content)
+
+                    tool_message = ConversationTurn(
+                        role=ConversationRole.USER,
+                        content=[
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": tool_use_response.content.tool_use_id,
+                                "content": serialized_response,
+                            }
+                        ],
+                    )
+                    messages.append(tool_message)
+                except (json.JSONDecodeError, TypeError) as e:
+                    AppLogger.log_error(f"Failed to serialize tool response: {e}")
+                    # Fallback to string representation
+                    tool_message = ConversationTurn(
+                        role=ConversationRole.USER,
+                        content=[
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": tool_use_response.content.tool_use_id,
+                                "content": str(tool_use_response.content.response),
+                            }
+                        ],
+                    )
+                    messages.append(tool_message)
+
         if feedback:
             feedback_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": feedback}]
@@ -370,10 +466,15 @@ class Anthropic(BaseLLMProvider):
             return [], None, None, usage
 
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "thinking":
-            return ExtendedThinkingBlockStart(), ContentBlockCategory.EXTENDED_THINKING, None
+            return [ExtendedThinkingBlockStart()], ContentBlockCategory.EXTENDED_THINKING, None, None
 
         if event["type"] == "content_block_start" and event["content_block"]["type"] == "redacted_thinking":
-            return RedactedThinking(data=event["content_block"]["data"]), ContentBlockCategory.EXTENDED_THINKING, None
+            return (
+                [RedactedThinking(data=event["content_block"]["data"])],
+                ContentBlockCategory.EXTENDED_THINKING,
+                None,
+                None,
+            )
 
         if event["type"] == "content_block_delta" and event["delta"]["type"] == "thinking_delta":
             return (

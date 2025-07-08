@@ -53,7 +53,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 8. Do not share what tools you have access, or how you use them, while using any tool use genaral terms like searching codebase, editing file, etc. 
 
 
-                You have access to a set of tools that are executed upon the user's approval. You can use one tool per message, and will receive the result of that tool use in the user's response. You use tools step-by-step to accomplish a given task, with each tool use informed by the result of the previous tool use.
+                You have access to a set of tools that are executed upon the user's approval. You can use multiple tools in parallel when they are of the same type and don't require sequential dependency, especially for information gathering tools. Writing tools (write_to_file, replace_in_file) should be used one at a time to avoid conflicts. You use tools step-by-step to accomplish a given task, with each tool use informed by the result of the previous tool use.
 
 
                 # Tool Use Examples
@@ -125,14 +125,59 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     }
                 ]
                 }
+                ## Parallel Tool Use Examples
+
+                ### Example: Searching multiple directories simultaneously
+                ```
+                [
+                  {
+                    "tool_name": "file_path_searcher",
+                    "directory": "src/components/",
+                    "search_terms": ["Button", "Modal"]
+                  },
+                  {
+                    "tool_name": "file_path_searcher", 
+                    "directory": "src/utils/",
+                    "search_terms": ["validation", "helper"]
+                  }
+                ]
+                ```
+
+                ### Example: Reading multiple files simultaneously
+                ```
+                [
+                  {
+                    "tool_name": "iterative_file_reader",
+                    "file_path": "src/components/Header.tsx"
+                  },
+                  {
+                    "tool_name": "iterative_file_reader",
+                    "file_path": "src/components/Footer.tsx"
+                  }
+                ]
 
 
 
                 # Tool Use Guidelines
 
+                ## Parallel Tool Usage Rules
+                1. **Information Gathering Tools** can be used in parallel when they serve the same purpose:
+                   - Multiple `file_path_searcher` calls for different directories
+                   - Multiple `grep_search` calls for different search patterns
+                   - Multiple `iterative_file_reader` calls for different files
+                   - Multiple `focused_snippets_searcher` calls for different code elements
+                   - Multiple `related_code_searcher` calls for different queries
+
+                2. **Writing Tools** must be used sequentially (one at a time):
+                   - `write_to_file` and `replace_in_file` should not be used in parallel
+                   - Wait for completion before using another writing tool
+
+                3. **Command Execution** should be used individually unless they are independent operations
+
+                ## General Guidelines
                 1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
                 2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                3. If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+                3. When multiple information gathering actions are needed for the same purpose, group similar tools together in parallel. For sequential dependencies or writing operations, use tools one at a time per message.
                 4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
                 5. Information about whether the tool succeeded or failed, along with any reasons for failure.
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
@@ -374,7 +419,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
         return system_message
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa : C901
         system_message = self.get_system_prompt()
 
         focus_chunks_message = ""
@@ -527,7 +572,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             system_message=system_message,
         )
 
-    def tool_usage_guidelines(self, is_write_mode):
+    def tool_usage_guidelines(self, is_write_mode: bool = False) -> str:
         write_mode_guidelines = ""
         if is_write_mode:
             write_mode_guidelines = """
