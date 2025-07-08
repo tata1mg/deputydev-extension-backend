@@ -204,7 +204,7 @@ class QuerySolver:
                 user_query=payload.query,
                 focus_items=payload.focus_items,
                 directory_items=payload.directory_items if payload.directory_items else [],
-                all_agents=[BackendAppCreatorQuerySolverAgent],
+                all_agents=[BackendAppCreatorQuerySolverAgent, DefaultQuerySolverAgent],
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
                 default_agent=DefaultQuerySolverAgent,
