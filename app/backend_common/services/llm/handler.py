@@ -635,7 +635,8 @@ class LLMHandler(Generic[PromptFeatures]):
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
         save_to_redis: bool = False,
-        checker: CancellationChecker = None,
+        checker: Optional[CancellationChecker] = None,
+        prompt_handler_instance: Optional[BasePrompt] = None,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -650,7 +651,11 @@ class LLMHandler(Generic[PromptFeatures]):
             :return: Parsed LLM response
         """
 
-        prompt_handler = self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
+        prompt_handler = (
+            prompt_handler_instance
+            if prompt_handler_instance
+            else self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
+        )
 
         if llm_model not in self.model_to_provider_class_map:
             raise ValueError(f"LLM model {llm_model} not supported")
