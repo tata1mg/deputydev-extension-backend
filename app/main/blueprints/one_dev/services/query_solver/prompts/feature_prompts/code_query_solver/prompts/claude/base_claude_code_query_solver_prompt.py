@@ -482,13 +482,13 @@ class BaseClaudeQuerySolverPrompt:
         working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
         context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
         context_repos_str = ""
-        for context_repo in context_repos:
+        for index, context_repo in enumerate(context_repos):
             context_repos_str += f"""
-              <repository>
+              <context_repository_{index+1}>
                 <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
                 <repo_name>{context_repo.repo_name}</repo_name>
                 <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
-              </repository>
+              </context_repository_{index+1}>
             """
 
         return f"""

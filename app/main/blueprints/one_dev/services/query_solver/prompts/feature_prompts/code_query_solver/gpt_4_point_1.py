@@ -440,7 +440,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
             </summary_rule>
 
-            Here is the user's query for editing - {self.params.get("query")}
+            Here is the user's query for editing - {self.params.get("query")}. 
+            
+            Important instructions:
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
             """)
         else:
             user_message = textwrap.dedent(f"""
@@ -481,7 +484,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
             </summary_rule>
             
-            User Query: {self.params.get("query")}
+            User Query: {self.params.get("query")}. 
+            
+            Important instructions:
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
@@ -534,42 +540,64 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
         context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
         context_repos_str = ""
-        for context_repo in context_repos:
+        for index, context_repo in enumerate(context_repos):
             context_repos_str += f"""
-              <repository>
-                <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
-                <repo_name>{context_repo.repo_name}</repo_name>
-                <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
-              </repository>
+              Context Repository {index+1}:
+                - Absolute Repository Path: {context_repo.repo_path}
+                - Repository Name: {context_repo.repo_name}
+                - Root Directory Context: 
+                  {context_repo.root_directory_context}
+
             """
 
         return f"""
         ====
-        <repository_context>
-          You are working with two types of repositories:
-          <working_repository>
-            <purpose>The primary repository where you will make changes and apply modifications</purpose>
-            <access_level>Full read/write access</access_level>
-            <allowed_operations>All read and write operations</allowed_operations>
-            <restrictions>No restrictions</restrictions>
-            <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
-            <repo_name>{working_repo.repo_name}</repo_name>
-            <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
-          </working_repository>
-          <context_repositories>
-            <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
-            <access_level>Read-only access</access_level>
-            <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
-            <restrictions>
-              1. NO write operations allowed
-              2. NO file creation or modification
-              3. NO diff application
-            </restrictions>
-            <list_of_context_repositories>
-                {context_repos_str}
-            </list_of_context_repositories>
-          </context_repositories>
-        </repository_context>
+        You are working with two types of repositories:
+        1. **Working Repository**
+           - Absolute Repository Path: {working_repo.repo_path}
+           - Repository Name: {working_repo.repo_name}
+           - Root Directory Context: 
+             {working_repo.root_directory_context}
+        
+        2. **Context Repositories**
+             {context_repos_str}
+        
+        Guidelines for Handling User Queries Across Repositories
+        
+        Important Instructions
+        - Before responding to a user query, analyze whether it should be handled using the working repository or a context repository.
+        - If a context repository is involved:
+          - Determine whether the requested operation is a read or write.
+          - Only read operations are allowed on context repositories.
+          - Write operations must be strictly avoided on context repositories.
+        
+        Examples
+        
+        Example 1
+        - User Query: “Can you refactor autocomplete method in search service?”
+        - Working Repository: athena_service
+        - Context Repositories: search_service, cache_wrapper
+        - Analysis:
+          - The service name (search service) is explicitly mentioned and it matches a context repository.
+          - This is a write operation.
+          - Correct response: Inform the user that write operations are not permitted on context repositories.
+        
+        Example 2
+        - User Query: “Can you refactor autocomplete method?”
+        - Working Repository: athena_service
+        - Context Repositories: search_service, cache_wrapper
+        - Analysis:
+          - No service name is mentioned.
+          - Since it's a write operation, you should proceed using the working repository.
+        
+        Example 3
+        - User Query: “Can you find references for autocomplete method?”
+        - Working Repository: athena_service
+        - Context Repositories: search_service, cache_wrapper
+        - Analysis:
+          - This is a read operation.
+          - No service name is mentioned.
+          - Correct action: Search across all relevant repositories (working + context), and return results grouped per repository.
         ====
         """
 
@@ -628,6 +656,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             - Always consider the **specific context** and the **user's intent** before choosing a tool.
             - When the right tool isn't obvious, **provide your reasoning** for the choice.
             - **Optimize for efficiency**: specialized tools usually require fewer API calls and return more relevant results.
+            - **Uninterrupted flow execution:**  Send end signal only when task is completed. If you need user's input please use ask_user_input tool, so flow is not interrupted.
         """
 
     @classmethod
