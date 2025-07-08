@@ -1,8 +1,8 @@
 import asyncio
-from typing import AsyncIterator, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 
+from agent_selector.agent_selector import QuerySolverAgentSelector
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -18,7 +18,6 @@ from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTool,
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
@@ -27,11 +26,10 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
+from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import DefaultQuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    ClientTool,
     DetailedDirectoryItem,
     DetailedFocusItem,
-    MCPToolMetadata,
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
@@ -42,38 +40,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     StreamingContentBlockType,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
-    ASK_USER_INPUT,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.create_new_workspace import (
-    CREATE_NEW_WORKSPACE,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.execute_command import (
-    EXECUTE_COMMAND,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import REPLACE_IN_FILE
-from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
-    FILE_PATH_SEARCHER,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
-    FOCUSED_SNIPPETS_SEARCHER,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
-    GREP_SEARCH,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import (
-    ITERATIVE_FILE_READER,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
-    PUBLIC_URL_CONTENT_READER,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
-    RELATED_CODE_SEARCHER,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
-    WEB_SEARCH,
-)
-from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
@@ -201,57 +167,19 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
-    def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
-        # check if tool is MCP type tool
-        if isinstance(client_tool.tool_metadata, MCPToolMetadata):
-            description_extra = f"This tool is provided by a third party MCP server - {client_tool.tool_metadata.server_id}. Please ensure that any data passed to this tool is exactly what is required to be sent to this tool to function properly. Do not supply any sensitive data to this tool which can be misused by the MCP server. In case of ambiguity, ask the user for clarification."
-            return ConversationTool(
-                name=client_tool.name,
-                description=description_extra + "\n" + client_tool.description,
-                input_schema=client_tool.input_schema,
-            )
-        raise ValueError(
-            f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
-        )
-
-    def _get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
-        tools_to_use = [
-            ASK_USER_INPUT,
-            FOCUSED_SNIPPETS_SEARCHER,
-            FILE_PATH_SEARCHER,
-            ITERATIVE_FILE_READER,
-            GREP_SEARCH,
-            EXECUTE_COMMAND,
-            CREATE_NEW_WORKSPACE,
-            PUBLIC_URL_CONTENT_READER,
-        ]
-
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
-            tools_to_use.append(RELATED_CODE_SEARCHER)
-        if payload.search_web:
-            tools_to_use.append(WEB_SEARCH)
-        if payload.write_mode:
-            tools_to_use.append(REPLACE_IN_FILE)
-            tools_to_use.append(WRITE_TO_FILE)
-
-        for client_tool in payload.client_tools:
-            tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
-
-        return tools_to_use
-
     async def solve_query(
         self,
         payload: QuerySolverInput,
         client_data: ClientData,
         save_to_redis: bool = False,
-        task_checker: CancellationChecker = None,
+        task_checker: Optional[CancellationChecker] = None,
     ) -> AsyncIterator[BaseModel]:
-        tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
+
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
@@ -265,29 +193,57 @@ class QuerySolver:
                 )
             )
 
+            previous_responses = await self.get_previous_message_thread_ids(
+                payload.session_id, payload.previous_query_ids
+            )
+            agent_selector = QuerySolverAgentSelector(
+                user_query=payload.query,
+                focus_items=payload.focus_items,
+                directory_items=payload.directory_items if payload.directory_items else [],
+                all_agents=[],
+                llm_handler=llm_handler,
+                session_id=payload.session_id,
+                default_agent=DefaultQuerySolverAgent,
+            )
+
+            selected_agent = await agent_selector.select_agent()
+            if not selected_agent:
+                raise ValueError("No suitable agent found for the query.")
+
+            # Create an instance of the selected agent
+            agent_instance = selected_agent(previous_messages=previous_responses)
+
+            selected_prompt = agent_instance.prompt
+
+            prompt_vars_to_use: Dict[str, Any] = {
+                "query": payload.query,
+                "focus_items": payload.focus_items,
+                "directory_items": payload.directory_items,
+                "deputy_dev_rules": payload.deputy_dev_rules,
+                "write_mode": payload.write_mode,
+                "urls": [url.model_dump() for url in payload.urls],
+                "os_name": payload.os_name,
+                "shell": payload.shell,
+                "vscode_env": payload.vscode_env,
+            }
+
+            model_to_use = LLModels(payload.llm_model.value)
+            llm_inputs = agent_instance.get_llm_inputs(
+                payload=payload, _client_data=client_data, llm_model=model_to_use
+            )
+
             llm_response = await llm_handler.start_llm_query(
-                prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
-                llm_model=LLModels(payload.llm_model.value),
-                prompt_vars={
-                    "query": payload.query,
-                    "focus_items": payload.focus_items,
-                    "directory_items": payload.directory_items,
-                    "deputy_dev_rules": payload.deputy_dev_rules,
-                    "write_mode": payload.write_mode,
-                    "urls": [url.model_dump() for url in payload.urls],
-                    "os_name": payload.os_name,
-                    "shell": payload.shell,
-                    "vscode_env": payload.vscode_env,
-                },
+                prompt_feature=PromptFeatures(selected_prompt.prompt_type),
+                llm_model=model_to_use,
+                prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
-                previous_responses=await self.get_previous_message_thread_ids(
-                    payload.session_id, payload.previous_query_ids
-                ),
-                tools=tools_to_use,
+                previous_responses=llm_inputs.previous_messages,
+                tools=llm_inputs.tools,
                 stream=True,
                 session_id=payload.session_id,
                 save_to_redis=save_to_redis,
                 checker=task_checker,
+                prompt_handler_instance=selected_prompt(params=prompt_vars_to_use),
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
