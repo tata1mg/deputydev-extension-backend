@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS extension_reviews (
 
 CREATE INDEX IF NOT EXISTS idx_extension_reviews_user_repo_id ON extension_reviews(repo_id);
 CREATE INDEX IF NOT EXISTS idx_extension_reviews_created_at ON extension_reviews(created_at);
-CREATE INDEX IF NOT EXISTS idx_extension_reviews_status ON extension_reviews(status);
+CREATE INDEX IF NOT EXISTS idx_extension_reviews_status ON extension_reviews(review_status);
 
 -- migrate:down
 DROP INDEX IF EXISTS idx_extension_reviews_status;
