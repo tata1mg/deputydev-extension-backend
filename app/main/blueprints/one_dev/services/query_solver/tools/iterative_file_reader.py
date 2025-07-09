@@ -41,7 +41,7 @@ ITERATIVE_FILE_READER = ConversationTool(
                 "repo_path": {
                     "type": "string",
                     "description": "Expects absolute path of the repository",
-                }
+                },
             },
             "required": ["file_path", "repo_path"],
             "additionalProperties": False,

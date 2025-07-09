@@ -4,12 +4,13 @@ from typing import Any, Dict, List, Tuple, Union
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
-    ExtendedThinkingData, MessageData, TextBlockData, ToolUseRequestData)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse, UserAndSystemMessages)
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import \
-    FocusItemTypes
-
+    ExtendedThinkingData,
+    MessageData,
+    TextBlockData,
+    ToolUseRequestData,
+)
+from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItemTypes
 
 
 class BaseClaudeQuerySolverPrompt:
@@ -296,11 +297,7 @@ class BaseClaudeQuerySolverPrompt:
                     "<item>"
                     + f"<type>{focus_item.type.value}</type>"
                     + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                    + (
-                        f"<path>{focus_item.path}</path>"
-                        if focus_item.type == FocusItemTypes.DIRECTORY
-                        else ""
-                    )
+                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
                     + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
                     + "</item>"
                 )
@@ -478,17 +475,17 @@ class BaseClaudeQuerySolverPrompt:
             system_message=system_message,
         )
 
-    def get_repository_context(self):
+    def get_repository_context(self) -> str:
         working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
         context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
         context_repos_str = ""
         for index, context_repo in enumerate(context_repos):
             context_repos_str += f"""
-              <context_repository_{index+1}>
+              <context_repository_{index + 1}>
                 <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
                 <repo_name>{context_repo.repo_name}</repo_name>
                 <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
-              </context_repository_{index+1}>
+              </context_repository_{index + 1}>
             """
 
         return f"""
@@ -612,10 +609,7 @@ class BaseClaudeQuerySolverPrompt:
                 }
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
-            elif (
-                isinstance(block, ExtendedThinkingData)
-                and block.content.type == "thinking"
-            ):
+            elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
                 final_content.append(
                     {
                         "type": "THINKING_BLOCK",
@@ -626,9 +620,7 @@ class BaseClaudeQuerySolverPrompt:
         return final_content, tool_use_map
 
     @classmethod
-    def get_parsed_result(
-        cls, llm_response: NonStreamingResponse
-    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         final_content: tuple[list[dict[str, Any]], dict[str, Any]]
         final_content = cls.get_parsed_response_blocks(llm_response.content)
         return final_content
@@ -646,30 +638,18 @@ class BaseClaudeQuerySolverPrompt:
         # is not ending tag for it, then we append the ending tag for it
         # this is very rare, but can happen if the last block is not closed properly
         last_code_block_tag = input_string.rfind("<code_block>")
-        if (
-            last_code_block_tag != -1
-            and input_string[last_code_block_tag:].rfind("</code_block>") == -1
-        ):
+        if last_code_block_tag != -1 and input_string[last_code_block_tag:].rfind("</code_block>") == -1:
             input_string += "</code_block>"
 
         last_summary_tag = input_string.rfind("<summary>")
-        if (
-            last_summary_tag != -1
-            and input_string[last_summary_tag:].rfind("</summary>") == -1
-        ):
+        if last_summary_tag != -1 and input_string[last_summary_tag:].rfind("</summary>") == -1:
             input_string += "</summary>"
 
         # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
         last_thinking_tag = input_string.rfind("<thinking>")
-        if (
-            last_thinking_tag != -1
-            and input_string[last_thinking_tag:].rfind("</thinking>") == -1
-        ):
+        if last_thinking_tag != -1 and input_string[last_thinking_tag:].rfind("</thinking>") == -1:
             # remove the last thinking tag
-            input_string = (
-                input_string[:last_thinking_tag]
-                + input_string[last_thinking_tag + len("<thinking>") :]
-            )
+            input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
 
         # Find all occurrences of either pattern
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
@@ -677,9 +657,7 @@ class BaseClaudeQuerySolverPrompt:
         matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
-        matches = (
-            list(matches_thinking) + list(matches_code_block) + list(matches_summary)
-        )
+        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
         matches.sort(key=lambda match: match.start())
 
         last_end = 0
@@ -690,9 +668,7 @@ class BaseClaudeQuerySolverPrompt:
             if start_index > last_end:
                 text_before = input_string[last_end:start_index]
                 if text_before.strip():  # Only append if not empty
-                    result.append(
-                        {"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}}
-                    )
+                    result.append({"type": "TEXT_BLOCK", "content": {"text": text_before.strip()}})
 
             if match.re.pattern == code_block_pattern:
                 code_block_string = match.group(1).strip()
@@ -712,16 +688,12 @@ class BaseClaudeQuerySolverPrompt:
         if last_end < len(input_string):
             remaining_text = input_string[last_end:]
             if remaining_text.strip():  # Only append if not empty
-                result.append(
-                    {"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}}
-                )
+                result.append({"type": "TEXT_BLOCK", "content": {"text": remaining_text.strip()}})
 
         return result
 
     @classmethod
-    def extract_code_block_info(
-        cls, code_block_string: str
-    ) -> Dict[str, Union[str, bool, int]]:
+    def extract_code_block_info(cls, code_block_string: str) -> Dict[str, Union[str, bool, int]]:
         # Define the patterns
         language_pattern = r"<programming_language>(.*?)</programming_language>"
         file_path_pattern = r"<file_path>(.*?)</file_path>"
@@ -754,11 +726,7 @@ class BaseClaudeQuerySolverPrompt:
             code_lines = code.split("\n")
 
             for line in code_lines:
-                if (
-                    line.startswith(" ")
-                    or line.startswith("+")
-                    and not line.startswith("++")
-                ):
+                if line.startswith(" ") or line.startswith("+") and not line.startswith("++"):
                     code_selected_lines.append(line[1:])
                 if line.startswith("+"):
                     added_lines += 1
