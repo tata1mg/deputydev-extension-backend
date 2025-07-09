@@ -30,11 +30,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.b
 
 
 class Claude4BackendAppCreatorPromptHandler(BaseClaude4SonnetPromptHandler):
-    prompt_type = "backend_app_creator"
+    prompt_type = "BACKEND_APP_CREATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Claude4BackendAppCreatorPrompt
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.prompt = self.prompt_class(params)
 

@@ -14,8 +14,8 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     MCPToolMetadata,
     QuerySolverInput,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
-    CodeQuerySolverPromptFactory,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.backend_app_creator.factory import (
+    BackendAppCreatorPromptFactory,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
@@ -60,7 +60,7 @@ class BackendAppCreatorQuerySolverAgent(BaseQuerySolverAgent):
     # this needs to be overridden by the subclass
     agent_name: str = "BACKEND_APP_CREATOR_QUERY_SOLVER_AGENT"
     description: str = "This is the backend app creator query solver agent."
-    prompt: Type[BaseFeaturePromptFactory] = CodeQuerySolverPromptFactory
+    prompt: Type[BaseFeaturePromptFactory] = BackendAppCreatorPromptFactory
 
     def __init__(self, previous_messages: Optional[List[int]] = None) -> None:
         """
