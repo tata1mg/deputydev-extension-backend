@@ -157,6 +157,7 @@ class OpenAI(BaseLLMProvider):
         """
         conversation_turns: List[Dict[str, Any]] = []
         tool_requests: Dict[str, Dict[str, Any]] = {}
+        tool_requests_order: List[str] = []
         for message in previous_responses:
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             message_datas = list(message.message_data)
@@ -165,18 +166,19 @@ class OpenAI(BaseLLMProvider):
                 if isinstance(content_data, TextBlockContent):
                     conversation_turns.append({"role": role.value, "content": content_data.text})
                 elif isinstance(content_data, ToolUseResponseContent):
-                    # Check if there's a matching function call in any previous conversation turn
-                    tool_request = tool_requests[content_data.tool_use_id]
-                    if tool_request:
-                        conversation_turns.append(tool_request)
-                        conversation_turns.append(
-                            {
-                                "call_id": content_data.tool_use_id,
-                                "output": json.dumps(content_data.response),
-                                "type": "function_call_output",
-                            }
-                        )
-                        tool_requests.pop(content_data.tool_use_id)
+                    while len(tool_requests_order) > 0:
+                        if tool_requests_order[0] == content_data.tool_use_id:
+                            conversation_turns.append(tool_requests[content_data.tool_use_id])
+                            conversation_turns.append(
+                                {
+                                    "call_id": content_data.tool_use_id,
+                                    "output": json.dumps(content_data.response),
+                                    "type": "function_call_output",
+                                }
+                            )
+                            tool_requests_order.pop(0)
+                            break
+                        tool_requests_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
                     tool_requests[content_data.tool_use_id] = {
                         "call_id": content_data.tool_use_id,
@@ -184,6 +186,7 @@ class OpenAI(BaseLLMProvider):
                         "name": content_data.tool_name,
                         "type": "function_call",
                     }
+                    tool_requests_order.append(content_data.tool_use_id)
                 elif isinstance(content_data, ExtendedThinkingContent):
                     continue
 
@@ -204,7 +207,7 @@ class OpenAI(BaseLLMProvider):
                                 ],
                             }
                         )
-        for rem in tool_requests:
+        for rem in tool_requests_order:
             conversation_turns.append(tool_requests[rem])
         return conversation_turns
 

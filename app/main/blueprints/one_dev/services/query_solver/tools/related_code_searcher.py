@@ -4,6 +4,7 @@ RELATED_CODE_SEARCHER = ConversationTool(
     name="related_code_searcher",
     description="""
         This is a built-in tool.
+        This tool can be used in parallel only with other related_code_searcher calls.
         Searches the codebase for relevant code snippets based on the given query.
         This tool does a vector + lexical hybrid search on the chunks on the entire codebase and then returns the ones which are relevant to the query.
         This tool also optionally takes a list of paths to limit the scope of the search.
