@@ -25,8 +25,12 @@ RELATED_CODE_SEARCHER = ConversationTool(
                     },
                     "description": "The paths to limit the search to. If not provided, the search will be done on the entire codebase",
                 },
+                "repo_path": {
+                    "type": "string",
+                    "description": "Expects absolute path of the repository",
+                },
             },
-            "required": ["search_query"],
+            "required": ["search_query", "repo_path"],
             "additionalProperties": False,
         }
     ),
