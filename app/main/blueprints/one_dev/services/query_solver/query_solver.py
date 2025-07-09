@@ -207,7 +207,6 @@ class QuerySolver:
                 all_agents=[BackendAppCreatorQuerySolverAgent, DefaultQuerySolverAgent],
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
-                default_agent=DefaultQuerySolverAgent,
             )
 
             selected_agent = await agent_selector.select_agent()
