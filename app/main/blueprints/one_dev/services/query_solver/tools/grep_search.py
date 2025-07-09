@@ -38,7 +38,7 @@ GREP_SEARCH = ConversationTool(
             "repo_path": {
                 "type": "string",
                 "description": "Expects absolute path of the repository",
-            }
+            },
         },
         required=["search_path", "query", "case_insensitive", "use_regex", "repo_path"],
     ),

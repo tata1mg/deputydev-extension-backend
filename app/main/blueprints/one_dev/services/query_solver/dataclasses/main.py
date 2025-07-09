@@ -81,11 +81,13 @@ class ClientTool(BaseModel):
 class Attachment(BaseModel):
     attachment_id: int
 
+
 class Repository(BaseModel):
     repo_path: str
     repo_name: str
     root_directory_context: str
     is_working_repository: bool
+
 
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
