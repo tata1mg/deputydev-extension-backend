@@ -7,7 +7,6 @@ class IdeReviewsCommentDTO(BaseModel):
     id: Optional[int] = None
     review_id: int
     comment: str
-    agent_id: int
     is_deleted: bool = False
     file_path: str
     line_hash: str
