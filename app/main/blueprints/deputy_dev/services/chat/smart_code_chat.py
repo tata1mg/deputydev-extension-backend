@@ -29,10 +29,10 @@ from app.main.blueprints.deputy_dev.services.atlassian.jira.jira_manager import 
 from app.main.blueprints.deputy_dev.services.chat.pre_processors.comment_pre_processer import (
     CommentPreprocessor,
 )
-from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger import (
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.code_review_trigger import (
     CodeReviewTrigger,
 )
-from app.main.blueprints.deputy_dev.services.code_review.pr_summary_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pr_summary_manager import (
     PRSummaryManager,
 )
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (

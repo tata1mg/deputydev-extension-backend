@@ -7,6 +7,7 @@ from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.repository.db import DB
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
+import mmh3
 
 
 class RepoRepository:
@@ -53,4 +54,19 @@ class RepoRepository:
     async def find_or_create_with_workspace_id(cls, scm_workspace_id, pr_model: BasePrModel):
         workspace_dto = await WorkspaceService.find(scm_workspace_id=scm_workspace_id, scm=pr_model.scm_type())
         repo_dto = await cls.find_or_create(workspace_dto.id, workspace_dto.team_id, pr_model)
+        return repo_dto
+
+    @classmethod
+    async def find_or_create_extension_repo(cls, repo_name: str, repo_origin: str, team_id: int):
+        repo_dto = await cls.db_get(
+            filters={"name": repo_name, "repo_hash": mmh3.hash(repo_origin), "team_id": team_id}, fetch_one=True
+        )
+        if not repo_dto:
+            repo_data = {
+                "name": repo_name,
+                "repo_hash": repo_origin,
+                "team_id": team_id,
+                "scm": "VSCODE_EXT",  # or whatever string you use for extension SCM
+            }
+            repo_dto = await cls.db_insert(RepoDTO(**repo_data))
         return repo_dto
