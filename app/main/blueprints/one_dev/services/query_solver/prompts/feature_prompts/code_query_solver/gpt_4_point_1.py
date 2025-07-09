@@ -374,7 +374,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
         return system_message
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
 
         focus_chunks_message = ""
@@ -440,7 +440,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
             </summary_rule>
 
-            Here is the user's query for editing - {self.params.get("query")}
+            Here is the user's query for editing - {self.params.get("query")}. 
+            
+            Important instructions:
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
             """)
         else:
             user_message = textwrap.dedent(f"""
@@ -481,7 +484,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
             </summary_rule>
             
-            User Query: {self.params.get("query")}
+            User Query: {self.params.get("query")}. 
+            
+            Important instructions:
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
@@ -501,6 +507,9 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             {self.params.get("vscode_env")}
 
             ====""")
+
+        if self.params.get("repositories"):
+            user_message += textwrap.dedent(self.get_repository_context())
 
         if self.params.get("deputy_dev_rules"):
             user_message += textwrap.dedent(f"""
@@ -527,7 +536,72 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             system_message=system_message,
         )
 
-    def tool_usage_guidelines(self, is_write_mode):
+    def get_repository_context(self) -> str:
+        working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
+        context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
+        context_repos_str = ""
+        for index, context_repo in enumerate(context_repos):
+            context_repos_str += f"""
+              Context Repository {index + 1}:
+                - Absolute Repository Path: {context_repo.repo_path}
+                - Repository Name: {context_repo.repo_name}
+                - Root Directory Context: 
+                  {context_repo.root_directory_context}
+
+            """
+
+        return f"""
+        ====
+        You are working with two types of repositories:
+        1. **Working Repository**
+           - Absolute Repository Path: {working_repo.repo_path}
+           - Repository Name: {working_repo.repo_name}
+           - Root Directory Context: 
+             {working_repo.root_directory_context}
+        
+        2. **Context Repositories**
+             {context_repos_str}
+        
+        Guidelines for Handling User Queries Across Repositories
+        
+        Important Instructions
+        - Before responding to a user query, analyze whether it should be handled using the working repository or a context repository.
+        - If a context repository is involved:
+          - Determine whether the requested operation is a read or write.
+          - Only read operations are allowed on context repositories.
+          - Write operations must be strictly avoided on context repositories.
+        
+        Examples
+        
+        Example 1
+        - User Query: “Can you refactor autocomplete method in search service?”
+        - Working Repository: athena_service
+        - Context Repositories: search_service, cache_wrapper
+        - Analysis:
+          - The service name (search service) is explicitly mentioned and it matches a context repository.
+          - This is a write operation.
+          - Correct response: Inform the user that write operations are not permitted on context repositories.
+        
+        Example 2
+        - User Query: “Can you refactor autocomplete method?”
+        - Working Repository: athena_service
+        - Context Repositories: search_service, cache_wrapper
+        - Analysis:
+          - No service name is mentioned.
+          - Since it's a write operation, you should proceed using the working repository.
+        
+        Example 3
+        - User Query: “Can you find references for autocomplete method?”
+        - Working Repository: athena_service
+        - Context Repositories: search_service, cache_wrapper
+        - Analysis:
+          - This is a read operation.
+          - No service name is mentioned.
+          - Correct action: Search across all relevant repositories (working + context), and return results grouped per repository.
+        ====
+        """
+
+    def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_guidelines = ""
         if is_write_mode:
             write_mode_guidelines = """
