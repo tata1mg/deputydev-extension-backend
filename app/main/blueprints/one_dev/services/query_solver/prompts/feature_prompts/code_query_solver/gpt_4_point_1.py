@@ -536,13 +536,13 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             system_message=system_message,
         )
 
-    def get_repository_context(self):
+    def get_repository_context(self) -> str:
         working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
         context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
         context_repos_str = ""
         for index, context_repo in enumerate(context_repos):
             context_repos_str += f"""
-              Context Repository {index+1}:
+              Context Repository {index + 1}:
                 - Absolute Repository Path: {context_repo.repo_path}
                 - Repository Name: {context_repo.repo_name}
                 - Root Directory Context: 
@@ -601,7 +601,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
         ====
         """
 
-    def tool_usage_guidelines(self, is_write_mode):
+    def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_guidelines = ""
         if is_write_mode:
             write_mode_guidelines = """
@@ -656,7 +656,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             - Always consider the **specific context** and the **user's intent** before choosing a tool.
             - When the right tool isn't obvious, **provide your reasoning** for the choice.
             - **Optimize for efficiency**: specialized tools usually require fewer API calls and return more relevant results.
-            - **Uninterrupted flow execution:**  Send end signal only when task is completed. If you need user's input please use ask_user_input tool, so flow is not interrupted.
         """
 
     @classmethod
