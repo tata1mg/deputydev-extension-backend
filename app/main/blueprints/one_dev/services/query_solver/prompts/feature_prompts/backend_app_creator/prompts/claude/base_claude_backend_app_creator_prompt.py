@@ -19,7 +19,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 
 
 class BaseClaudeQuerySolverPrompt:
-    prompt_type = "backend_app_creator"
+    prompt_type = "BACKEND_APP_CREATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
     def __init__(self, params: Dict[str, Any]) -> None:
@@ -325,6 +325,70 @@ class BaseClaudeQuerySolverPrompt:
             user_message = textwrap.dedent(f"""
             Here is the user's query for editing - {self.params.get("query")}
 
+            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
+            You should follow the below guidelines while creating the backend application:
+                                           
+        <process>
+
+        1. **Understand the Requirements**  
+        Carefully read the user’s query and any provided context to understand what the backend application should do. Ask clarifying questions if anything is ambiguous or missing.
+
+        2. **Confirm and Gather the Technology Stack from the User**  
+        - Ask explicitly if the user has a preferred tech stack (language, framework, database, etc.).  
+        - Consider scalability, performance, ease of development, and compatibility with other systems.  
+        - If any technology or term is unclear, use available tools or documentation to gather context before proceeding.  
+        - **Make sure to confirm if the implementation is meant for a specific repository or the currently active one.**
+
+        3. **Ask if TDD (Test-Driven Development) is to be followed**  
+        - Prompt the user: *“Do you want to follow a TDD approach?”*  
+        - If **yes**, confirm:
+            - The test framework (e.g., Jest, Pytest, Mocha, JUnit, etc.)
+            - Any test runners, mocks, coverage tools, etc.  
+        - Set up the test environment before any implementation begins.
+
+        4. **Research Unfamiliar Technologies**  
+        If the stack includes technologies that are not fully familiar or require special handling, use built-in tools or documentation to explore how to scaffold and structure the project appropriately.
+
+        5. **Prepare and Share a Project Blueprint**  
+        - Outline the high-level design, including module structure, responsibilities, API endpoints, data flow, and services to be used.  
+        - **Confirm the blueprint with the user** before proceeding with implementation to ensure alignment.
+
+        6. **Design the System Architecture**  
+        - Define how components interact (e.g., client, server, database, third-party APIs).  
+        - Choose architectural patterns (e.g., MVC, layered architecture, microservices) suited for the use case.  
+        - Consider security, performance, and future scalability in your design.
+
+        7. **Define the Data Models First**  
+        - Identify and design all required data models, including fields, types, relationships, and constraints.  
+        - Explain the models clearly to the user and **get approval before implementation**.
+
+        8. **Implement the Backend Logic**  
+        - Develop the APIs and core backend functionality.  
+        - Incorporate authentication, validation, and business rules as needed.  
+        - Maintain clear code structure, with separation of concerns and reusable components.  
+        - If following TDD, ensure tests are written *before* implementation logic.
+
+        9. **Set Up and Configure the Database**  
+        - Choose the appropriate type (SQL/NoSQL/etc.) based on the use case.  
+        - Create the schema, tables/collections, indexes, and relationships.  
+        - Handle migrations and seeders if required.  
+        - Ensure data consistency and normalization where appropriate.
+
+        10. **Testing (With Explicit User Approval First)**  
+        - Ask the user before starting the testing phase (unless following TDD).  
+        - Implement:
+            - Unit tests for individual functions/components  
+            - Integration tests for API and database layers  
+            - End-to-end tests (if applicable) to simulate full workflows  
+        - Use testing tools and frameworks suitable for the chosen stack.  
+        - Ensure coverage for edge cases and failure scenarios.
+
+        11. **Iterate and Finalize**  
+        - Revisit earlier steps if new information emerges or requirements evolve.  
+        - Do not stop until the **user confirms that the solution is complete and satisfactory**.
+
+        </process>
+
             
             If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
@@ -352,16 +416,66 @@ class BaseClaudeQuerySolverPrompt:
             The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
             You should follow the below guidelines while creating the backend application:
                                            
-            <process>
-            1. **Understand the requirements**: Carefully read the user's query and any provided context to understand what the backend application should do.
-            2. **Choose the right technology stack**: Based on the requirements, select appropriate backend technologies, frameworks, and languages. Consider factors like scalability, performance, and ease of development. Also, make sure to explicitly know if the user wants to use some specific stack. If required, get the info from available tools if any,
-            2. MAKE SURE TO ASK THE USER FOR CLARIFICATION IF HE WANTS TO IMPLEMENT IN A SPECIFIC REPO OR THE CURRENT REPO.
-            3. **Design the architecture**: Plan the overall architecture of the backend application, including how different components will interact, data storage solutions, and any third-party services that may be needed.
-            4. **Implement the backend logic**: Write the necessary code to implement the backend logic, including APIs, data processing, and any business logic required.
-            5. **Set up the database**: If the application requires data storage, design and set up the database schema, ensuring it meets the application's needs.
-            6. DO NOT STOP UNLESS THE USER'S QUERY IS FULLY SATISFIED.                        
-            6. **Test the backend**: FIRSTLY ASK FOR CONFIRMATION FROM THE USER, THEN Thoroughly test the backend application to ensure it works as expected. This includes unit tests, integration tests, and end-to-end tests.
-            </process>
+        <process>
+
+        1. **Understand the Requirements**  
+        Carefully read the user’s query and any provided context to understand what the backend application should do. Ask clarifying questions if anything is ambiguous or missing.
+
+        2. **Confirm and Gather the Technology Stack from the User**  
+        - Ask explicitly if the user has a preferred tech stack (language, framework, database, etc.).  
+        - Consider scalability, performance, ease of development, and compatibility with other systems.  
+        - If any technology or term is unclear, use available tools or documentation to gather context before proceeding.  
+        - **Make sure to confirm if the implementation is meant for a specific repository or the currently active one.**
+
+        3. **Ask if TDD (Test-Driven Development) is to be followed**  
+        - Prompt the user: *“Do you want to follow a TDD approach?”*  
+        - If **yes**, confirm:
+            - The test framework (e.g., Jest, Pytest, Mocha, JUnit, etc.)
+            - Any test runners, mocks, coverage tools, etc.  
+        - Set up the test environment before any implementation begins.
+
+        4. **Research Unfamiliar Technologies**  
+        If the stack includes technologies that are not fully familiar or require special handling, use built-in tools or documentation to explore how to scaffold and structure the project appropriately.
+
+        5. **Prepare and Share a Project Blueprint**  
+        - Outline the high-level design, including module structure, responsibilities, API endpoints, data flow, and services to be used.  
+        - **Confirm the blueprint with the user** before proceeding with implementation to ensure alignment.
+
+        6. **Design the System Architecture**  
+        - Define how components interact (e.g., client, server, database, third-party APIs).  
+        - Choose architectural patterns (e.g., MVC, layered architecture, microservices) suited for the use case.  
+        - Consider security, performance, and future scalability in your design.
+
+        7. **Define the Data Models First**  
+        - Identify and design all required data models, including fields, types, relationships, and constraints.  
+        - Explain the models clearly to the user and **get approval before implementation**.
+
+        8. **Implement the Backend Logic**  
+        - Develop the APIs and core backend functionality.  
+        - Incorporate authentication, validation, and business rules as needed.  
+        - Maintain clear code structure, with separation of concerns and reusable components.  
+        - If following TDD, ensure tests are written *before* implementation logic.
+
+        9. **Set Up and Configure the Database**  
+        - Choose the appropriate type (SQL/NoSQL/etc.) based on the use case.  
+        - Create the schema, tables/collections, indexes, and relationships.  
+        - Handle migrations and seeders if required.  
+        - Ensure data consistency and normalization where appropriate.
+
+        10. **Testing (With Explicit User Approval First)**  
+        - Ask the user before starting the testing phase (unless following TDD).  
+        - Implement:
+            - Unit tests for individual functions/components  
+            - Integration tests for API and database layers  
+            - End-to-end tests (if applicable) to simulate full workflows  
+        - Use testing tools and frameworks suitable for the chosen stack.  
+        - Ensure coverage for edge cases and failure scenarios.
+
+        11. **Iterate and Finalize**  
+        - Revisit earlier steps if new information emerges or requirements evolve.  
+        - Do not stop until the **user confirms that the solution is complete and satisfactory**.
+
+        </process>
 
                 If you are thinking something, please provide that in <thinking> tag.
                 Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
