@@ -292,7 +292,7 @@ class QuerySolver:
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
-        elif payload.tool_use_response or payload.batch_tool_responses:
+        elif payload.batch_tool_responses:
             prompt_vars = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
@@ -301,85 +301,44 @@ class QuerySolver:
                 "deputy_dev_rules": payload.deputy_dev_rules,
             }
 
-            if payload.batch_tool_responses:
-                # Handle parallel tool responses
-                tool_responses = []
-                for resp in payload.batch_tool_responses:
-                    if not payload.tool_use_failed:
-                        response_data = self._tool_response_format(resp)
-                    else:
-                        if resp.tool_name not in {"replace_in_file", "write_to_file"}:
-                            response_data = {
-                                "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                                    tool_name=resp.tool_name,
-                                    error_type=resp.response.get("error_type", "Unknown")
-                                    if resp.response
-                                    else "Unknown",
-                                    error_message=resp.response.get(
-                                        "error_message", "An error occurred while using the tool."
-                                    )
-                                    if resp.response
-                                    else "An error occurred while using the tool.",
-                                )
-                            }
-                        else:
-                            response_data = resp.response
-
-                    tool_responses.append(
-                        ToolUseResponseData(
-                            content=ToolUseResponseContent(
-                                tool_name=resp.tool_name,
-                                tool_use_id=resp.tool_use_id,
-                                response=response_data,
-                            )
-                        )
-                    )
-
-                llm_response = await llm_handler.submit_batch_tool_use_response(
-                    session_id=payload.session_id,
-                    tool_use_responses=tool_responses,
-                    tools=tools_to_use,
-                    stream=True,
-                    prompt_vars=prompt_vars,
-                    checker=task_checker,
-                )
-            else:
-                # Handle single tool response
-                tool_response: Any = None
+            tool_responses = []
+            for resp in payload.batch_tool_responses:
                 if not payload.tool_use_failed:
-                    tool_response = self._tool_response_format(payload.tool_use_response)
+                    response_data = self._tool_response_format(resp)
                 else:
-                    if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
-                        tool_response = {
+                    if resp.tool_name not in {"replace_in_file", "write_to_file"}:
+                        response_data = {
                             "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                                tool_name=payload.tool_use_response.tool_name,
-                                error_type=payload.tool_use_response.response.get("error_type", "Unknown")
-                                if payload.tool_use_response.response
-                                else "Unknown",
-                                error_message=payload.tool_use_response.response.get(
+                                tool_name=resp.tool_name,
+                                error_type=resp.response.get("error_type", "Unknown") if resp.response else "Unknown",
+                                error_message=resp.response.get(
                                     "error_message", "An error occurred while using the tool."
                                 )
-                                if payload.tool_use_response.response
+                                if resp.response
                                 else "An error occurred while using the tool.",
                             )
                         }
                     else:
-                        tool_response = payload.tool_use_response.response
+                        response_data = resp.response
 
-                llm_response = await llm_handler.submit_tool_use_response(
-                    session_id=payload.session_id,
-                    tool_use_response=ToolUseResponseData(
+                tool_responses.append(
+                    ToolUseResponseData(
                         content=ToolUseResponseContent(
-                            tool_name=payload.tool_use_response.tool_name,
-                            tool_use_id=payload.tool_use_response.tool_use_id,
-                            response=tool_response,
+                            tool_name=resp.tool_name,
+                            tool_use_id=resp.tool_use_id,
+                            response=response_data,
                         )
-                    ),
-                    tools=tools_to_use,
-                    stream=True,
-                    prompt_vars=prompt_vars,
-                    checker=task_checker,
+                    )
                 )
+
+            llm_response = await llm_handler.submit_batch_tool_use_response(
+                session_id=payload.session_id,
+                tool_use_responses=tool_responses,
+                tools=tools_to_use,
+                stream=True,
+                prompt_vars=prompt_vars,
+                checker=task_checker,
+            )
 
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 

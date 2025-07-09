@@ -86,73 +86,70 @@ class Anthropic(BaseLLMProvider):
         Returns:
             List[ConversationTurn]: The formatted conversation turns.
         """
-        raw_conversation_turns: List[Tuple[ConversationRole, List[Dict[str, Any]]]] = []
-        last_role: bool = False
+        conversation_turns: List[ConversationTurn] = []
+        tool_requests: Dict[str, Any] = {}
+        tool_request_order: List[str] = []
         for message in previous_responses:
-            """if last_tool_use_request:
-                if not (
-                    message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-                ) and conversation_turns:
-                    # remove the tool use request if the user has not responded to it
-                    conversation_turns.pop()
-                last_tool_use_request = False"""
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             content: List[Dict[str, Any]] = []
-
-            # Group content by type to handle parallel tool use properly
-            text_blocks = []
-            thinking_blocks = []
-            tool_use_blocks = []
-            tool_result_blocks = []
-            image_blocks = []
-
+            # sort message datas, keep text block first and tool use request last
             message_datas = list(message.message_data)
             for message_data in message_datas:
                 content_data = message_data.content
                 if isinstance(content_data, ExtendedThinkingContent):
-                    thinking_block = (
-                        {"type": "thinking", "thinking": content_data.thinking, "signature": content_data.signature}
-                        if content_data.type == "thinking"
-                        else {"type": "redacted_thinking", "data": content_data.thinking}
-                    )
-                    thinking_blocks.append(thinking_block)
-                elif isinstance(content_data, TextBlockContent):
-                    text_blocks.append({"type": "text", "text": content_data.text})
-                elif isinstance(content_data, ToolUseResponseContent):
-                    if last_role:
-                        raw_conversation_turns[-1][1].append(
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": content_data.tool_use_id,
-                                "content": json.dumps(content_data.response),
-                            }
+                    if content_data.type == "thinking":
+                        content.append(
+                            {"type": "thinking", "thinking": content_data.thinking, "signature": content_data.signature}
                         )
-                        continue
                     else:
-                        tool_result_blocks.append(
+                        content.append(
                             {
-                                "type": "tool_result",
-                                "tool_use_id": content_data.tool_use_id,
-                                "content": json.dumps(content_data.response),
+                                "type": "redacted_thinking",
+                                "data": content_data.thinking,
                             }
                         )
-                elif isinstance(content_data, ToolUseRequestContent):
-                    tool_use_blocks.append(
+                elif isinstance(content_data, TextBlockContent):
+                    content.append(
                         {
-                            "type": "tool_use",
-                            "name": content_data.tool_name,
-                            "id": content_data.tool_use_id,
-                            "input": content_data.tool_input,
+                            "type": "text",
+                            "text": content_data.text,
                         }
                     )
+                elif isinstance(content_data, ToolUseResponseContent):
+                    while len(tool_request_order) > 0:
+                        if tool_request_order[0] == content_data.tool_use_id:
+                            tool_request = tool_requests[content_data.tool_use_id]
+                            tool_response = {
+                                "type": "tool_result",
+                                "tool_use_id": content_data.tool_use_id,
+                                "content": json.dumps(content_data.response),
+                            }
+                            conversation_turns.append(
+                                ConversationTurn(role=ConversationRole.ASSISTANT, content=[tool_request])
+                            )
+                            conversation_turns.append(
+                                ConversationTurn(role=ConversationRole.USER, content=[tool_response])
+                            )
+                            tool_request_order.pop(0)
+                            break
+                        tool_request_order.pop(0)
+                elif isinstance(content_data, ToolUseRequestContent):
+                    tool_requests[content_data.tool_use_id] = {
+                        "type": "tool_use",
+                        "name": content_data.tool_name,
+                        "id": content_data.tool_use_id,
+                        "input": content_data.tool_input,
+                    }
+                    tool_request_order.append(content_data.tool_use_id)
+
+                # handle file attachments
                 else:
-                    # handle file attachments
                     attachment_id = content_data.attachment_id
                     if attachment_id not in attachment_data_task_map:
                         continue
                     attachment_data = await attachment_data_task_map[attachment_id]
                     if attachment_data.attachment_metadata.file_type.startswith("image/"):
-                        image_blocks.append(
+                        content.append(
                             {
                                 "type": "image",
                                 "source": {
@@ -163,27 +160,14 @@ class Anthropic(BaseLLMProvider):
                             }
                         )
 
-            # Build content in the correct order for Anthropic API
-            # For assistant messages: thinking, text, then tool_use blocks
-            # For user messages: images, text, then tool_result blocks
-            if role == ConversationRole.ASSISTANT:
-                content.extend(thinking_blocks)
-                content.extend([block for block in text_blocks if block["text"].strip()])
-                content.extend(tool_use_blocks)
-                last_role = False
-            else:  # USER role
-                content.extend(image_blocks)
-                content.extend([block for block in text_blocks if block["text"].strip()])
-                content.extend(tool_result_blocks)
-                if tool_result_blocks:
-                    last_role = True
-
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
-                raw_conversation_turns.append((role, content))
-        conversation_turns: List[ConversationTurn] = [
-            ConversationTurn(role=role, content=content) for role, content in raw_conversation_turns
-        ]
+                conversation_turns.append(ConversationTurn(role=role, content=content))
+        if tool_request_order:
+            content: List[Dict[str, Any]] = []
+            for req in tool_request_order:
+                content.append(tool_requests[req])
+            conversation_turns.append(ConversationTurn(role=ConversationRole.ASSISTANT, content=content))
         return conversation_turns
 
     async def build_llm_payload(  # noqa: C901
