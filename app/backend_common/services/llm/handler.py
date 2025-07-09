@@ -809,10 +809,9 @@ class LLMHandler(Generic[PromptFeatures]):
                 or not selected_prev_query_ids
             )
         ]
-
         # Store all tool responses in DB
-        for tool_response in tool_use_responses:
-            await self.store_tool_use_ressponse_in_db(
+        storage_tasks = [
+            self.store_tool_use_ressponse_in_db(
                 session_id=session_id,
                 previous_responses=conversation_chain_messages,
                 prompt_type=detected_prompt_handler.prompt_type,
@@ -822,6 +821,9 @@ class LLMHandler(Generic[PromptFeatures]):
                 query_id=main_query_id,
                 call_chain_category=call_chain_category,
             )
+            for tool_response in tool_use_responses
+        ]
+        await asyncio.gather(*storage_tasks)
 
         client = self.model_to_provider_class_map[detected_llm](checker=checker)
 
@@ -831,16 +833,23 @@ class LLMHandler(Generic[PromptFeatures]):
         )
         updated_session_messages.sort(key=lambda x: x.id)
 
-        updated_conversation_chain = [
+        # Find the IDs of the original conversation chain messages
+        original_chain_ids = {msg.id for msg in conversation_chain_messages}
+
+        # Find newly added tool response messages (they have message_type TOOL_RESPONSE and query_id matching main_query_id)
+        new_tool_response_messages = [
             message
             for message in updated_session_messages
-            if message.id <= max([msg.id for msg in updated_session_messages])
-            and (
-                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
-                or not selected_prev_query_ids
-            )
+            if message.message_type == MessageType.TOOL_RESPONSE
+            and message.query_id == main_query_id
+            and message.id not in original_chain_ids
         ]
 
+        # Combine original conversation chain with new tool responses
+        updated_conversation_chain = conversation_chain_messages + new_tool_response_messages
+
+        # Sort by ID to maintain chronological order
+        updated_conversation_chain.sort(key=lambda x: x.id)
         return await self.fetch_and_parse_llm_response(
             client=client,
             session_id=session_id,
