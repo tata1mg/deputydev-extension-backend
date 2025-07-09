@@ -78,6 +78,7 @@ class Google(BaseLLMProvider):
         """
         conversation_turns: List[google_genai_types.Content] = []
         tool_requests: Dict[str, ToolUseRequestContent] = {}
+        tool_requests_order: List[str] = []
 
         for message in previous_responses:
             role = (
@@ -98,24 +99,27 @@ class Google(BaseLLMProvider):
                     parts.append(google_genai_types.Part.from_text(text=content_data.text))
 
                 elif isinstance(content_data, ToolUseResponseContent):
-                    tool_request = tool_requests[content_data.tool_use_id]
-                    if tool_request:
-                        parts_req: List[google_genai_types.Part] = []
-                        function_call = google_genai_types.Part.from_function_call(
-                            name=tool_request.tool_name, args=tool_request.tool_input
-                        )
-                        parts_req.append(function_call)
-                        conversation_turns.append(
-                            google_genai_types.Content(role=ConversationRoleGemini.MODEL.value, parts=parts_req)
-                        )
-                        tool_response = google_genai_types.Part.from_function_response(
-                            name=content_data.tool_name, response=content_data.response
-                        )
-                        parts.append(tool_response)
-                        tool_requests.pop(content_data.tool_use_id)
-
+                    while len(tool_requests_order) > 0:
+                        if tool_requests_order[0] == content_data.tool_use_id:
+                            function_call = google_genai_types.Part.from_function_call(
+                                name=tool_requests[content_data.tool_use_id].tool_name,
+                                args=tool_requests[content_data.tool_use_id].tool_input,
+                            )
+                            conversation_turns.append(
+                                google_genai_types.Content(
+                                    role=ConversationRoleGemini.MODEL.value, parts=[function_call]
+                                )
+                            )
+                            tool_response = google_genai_types.Part.from_function_response(
+                                name=content_data.tool_name, response=content_data.response
+                            )
+                            parts.append(tool_response)
+                            tool_requests_order.pop(0)
+                            break
+                        tool_requests_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
                     tool_requests[content_data.tool_use_id] = content_data
+                    tool_requests_order.append(content_data.tool_use_id)
 
                 elif isinstance(content_data, ExtendedThinkingContent):
                     continue
@@ -132,7 +136,7 @@ class Google(BaseLLMProvider):
                                 mime_type=attachment_data.attachment_metadata.file_type,
                             )
                         )
-            for rem in tool_requests:
+            for rem in tool_requests_order:
                 function_call = google_genai_types.Part.from_function_call(
                     name=tool_requests[rem].tool_name, args=tool_requests[rem].tool_input
                 )
