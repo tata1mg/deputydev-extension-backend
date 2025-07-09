@@ -419,7 +419,9 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
         return system_message
 
+
     def get_prompt(self) -> UserAndSystemMessages:  # noqa : C901
+
         system_message = self.get_system_prompt()
 
         focus_chunks_message = ""
@@ -485,7 +487,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
             </summary_rule>
 
-            Here is the user's query for editing - {self.params.get("query")}
+            Here is the user's query for editing - {self.params.get("query")}. 
+            
+            Important instructions:
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
             """)
         else:
             user_message = textwrap.dedent(f"""
@@ -526,7 +531,10 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
             </summary_rule>
             
-            User Query: {self.params.get("query")}
+            User Query: {self.params.get("query")}. 
+            
+            Important instructions:
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
@@ -546,6 +554,9 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             {self.params.get("vscode_env")}
 
             ====""")
+
+        if self.params.get("repositories"):
+            user_message += textwrap.dedent(self.get_repository_context())
 
         if self.params.get("deputy_dev_rules"):
             user_message += textwrap.dedent(f"""
@@ -572,7 +583,9 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             system_message=system_message,
         )
 
-    def tool_usage_guidelines(self, is_write_mode: bool = False) -> str:
+
+    def tool_usage_guidelines(self, is_write_mode: bool) -> str:
+
         write_mode_guidelines = ""
         if is_write_mode:
             write_mode_guidelines = """
