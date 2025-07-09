@@ -374,7 +374,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
         return system_message
 
-    def get_prompt(self) -> UserAndSystemMessages:
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
 
         focus_chunks_message = ""
