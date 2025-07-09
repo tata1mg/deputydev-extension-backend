@@ -337,6 +337,10 @@
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
+    "AWS_S3_BINARY_BUCKET": {
+        "AWS_BUCKET_NAME": "deputydev",
+        "AWS_REGION": "ap-south-1"
+    },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
             "NAME": "",
@@ -437,7 +441,7 @@
         "CODE_GENERATION": "CLAUDE_3_POINT_5_SONNET",
         "CHUNK_DESCRIPTION": "CLAUDE_3_POINT_5_SONNET",
         "COMMENT_VALIDATION": "GPT_4O",
-        "COMMENT_SUMMARIZATION": "GPT_4O",
+    "COMMENT_SUMMARIZATION": "GPT_4O",
         "RE_RANKING": "CLAUDE_3_POINT_5_SONNET",
         "PR_REVIEW_PLANNER": "CLAUDE_3_POINT_7_SONNET"
     },

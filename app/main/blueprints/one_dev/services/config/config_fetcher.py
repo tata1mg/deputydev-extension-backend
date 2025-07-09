@@ -2,12 +2,13 @@ from typing import Any, Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
-from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
+
+from app.backend_common.service_clients.aws.services.s3 import \
+    AWSS3ServiceClient
 from app.main.blueprints.one_dev.services.config.dataclasses.main import (
-    ConfigParams,
-    ConfigType,
-)
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+    ConfigParams, ConfigType)
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import \
+    ClientData
 
 ConfigManager.configs
 
@@ -41,8 +42,12 @@ class ConfigFetcher:
         ConfigConsumer.CLI: {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
-                "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
-                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
+                "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"][
+                    "MAX_CHUNKS_CODE_GENERATION"
+                ],
+                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"][
+                    "IS_LLM_RERANKING_ENABLED"
+                ],
             },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],
@@ -71,27 +76,45 @@ class ConfigFetcher:
         },
         ConfigConsumer.BINARY: {
             "CHUNKING": {
-                "CHARACTER_SIZE": ConfigManager.configs["BINARY"]["CHUNKING"]["CHARACTER_SIZE"],
-                "NUMBER_OF_CHUNKS": ConfigManager.configs["BINARY"]["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
-                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["BINARY"]["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
+                "CHARACTER_SIZE": ConfigManager.configs["BINARY"]["CHUNKING"][
+                    "CHARACTER_SIZE"
+                ],
+                "NUMBER_OF_CHUNKS": ConfigManager.configs["BINARY"]["CHUNKING"][
+                    "MAX_CHUNKS_CODE_GENERATION"
+                ],
+                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["BINARY"]["CHUNKING"][
+                    "IS_LLM_RERANKING_ENABLED"
+                ],
                 "DEFAULT_MAX_CHUNKS_CODE_GENERATION": ConfigManager.configs["CHUNKING"][
                     "DEFAULT_MAX_CHUNKS_CODE_GENERATION"
                 ],
             },
             "MCP": {
                 "MAX_TOOLS": ConfigManager.configs["BINARY"]["MCP"]["MAX_TOOLS"],
-                "SERVER_CONNECTION_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["SERVER_CONNECTION_TIMEOUT"],
-                "TOOL_RESPONSE_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"]["TOOL_RESPONSE_TIMEOUT"],
+                "SERVER_CONNECTION_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"][
+                    "SERVER_CONNECTION_TIMEOUT"
+                ],
+                "TOOL_RESPONSE_TIMEOUT": ConfigManager.configs["BINARY"]["MCP"][
+                    "TOOL_RESPONSE_TIMEOUT"
+                ],
                 "BUFFER_SIZE": ConfigManager.configs["BINARY"]["MCP"]["BUFFER_SIZE"],
             },
             "EMBEDDING": {
                 "MODEL": ConfigManager.configs["BINARY"]["EMBEDDING"]["MODEL"],
-                "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"]["TOKEN_LIMIT"],
-                "MAX_PARALLEL_TASKS": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_PARALLEL_TASKS"],
-                "MAX_BACKOFF": ConfigManager.configs["BINARY"]["EMBEDDING"]["MAX_BACKOFF"],
+                "TOKEN_LIMIT": ConfigManager.configs["BINARY"]["EMBEDDING"][
+                    "TOKEN_LIMIT"
+                ],
+                "MAX_PARALLEL_TASKS": ConfigManager.configs["BINARY"]["EMBEDDING"][
+                    "MAX_PARALLEL_TASKS"
+                ],
+                "MAX_BACKOFF": ConfigManager.configs["BINARY"]["EMBEDDING"][
+                    "MAX_BACKOFF"
+                ],
             },
             "RELEVANT_CHUNKS": {
-                "CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"]["CHUNKING_ENABLED"]
+                "CHUNKING_ENABLED": ConfigManager.configs["BINARY"]["RELEVANT_CHUNKS"][
+                    "CHUNKING_ENABLED"
+                ]
             },
             "DEPUTY_DEV": {
                 "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
@@ -101,43 +124,71 @@ class ConfigFetcher:
                 "TTL_DNS_CACHE": ConfigManager.configs["ONE_DEV"]["TTL_DNS_CACHE"],
             },
             "WEAVIATE_HOST": "127.0.0.1",
-            "WEAVIATE_STARTUP_TIMEOUT": ConfigManager.configs["BINARY"]["WEAVIATE"]["STARTUP_TIMEOUT"],
-            "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": ConfigManager.configs["BINARY"]["WEAVIATE"][
-                "STARTUP_HEALTHCHECK_INTERVAL"
+            "WEAVIATE_STARTUP_TIMEOUT": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "STARTUP_TIMEOUT"
             ],
-            "WEAVIATE_HTTP_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["HTTP_PORT"],
-            "WEAVIATE_GRPC_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"]["GRPC_PORT"],
+            "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": ConfigManager.configs["BINARY"][
+                "WEAVIATE"
+            ]["STARTUP_HEALTHCHECK_INTERVAL"],
+            "WEAVIATE_HTTP_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "HTTP_PORT"
+            ],
+            "WEAVIATE_GRPC_PORT": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "GRPC_PORT"
+            ],
             "WEAVIATE_VERSION": ConfigManager.configs["BINARY"]["WEAVIATE"]["VERSION"],
-            "WEAVIATE_CLIENT_TIMEOUTS": ConfigManager.configs["BINARY"]["WEAVIATE"]["CLIENT_TIMEOUTS"],
-            "WEAVIATE_ENV_VARIABLES": ConfigManager.configs["BINARY"]["WEAVIATE"]["ENV_VARIABLES"],
-            "NUMBER_OF_WORKERS": ConfigManager.configs["BINARY"]["EMBEDDING"]["NUMBER_OF_WORKERS"],
-            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"]["USE_GRACE_PERIOD_FOR_EMBEDDING"],
+            "WEAVIATE_CLIENT_TIMEOUTS": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "CLIENT_TIMEOUTS"
+            ],
+            "WEAVIATE_ENV_VARIABLES": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "ENV_VARIABLES"
+            ],
+            "NUMBER_OF_WORKERS": ConfigManager.configs["BINARY"]["EMBEDDING"][
+                "NUMBER_OF_WORKERS"
+            ],
+            "USE_GRACE_PERIOD_FOR_EMBEDDING": ConfigManager.configs["BINARY"][
+                "USE_GRACE_PERIOD_FOR_EMBEDDING"
+            ],
             "AUTOCOMPLETE_SEARCH": {
-                "PRE_FILTER_LIMIT": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"]["PRE_FILTER_LIMIT"],
-                "MAX_RECORDS_TO_RETURN": ConfigManager.configs["BINARY"]["AUTOCOMPLETE_SEARCH"][
-                    "MAX_RECORDS_TO_RETURN"
-                ],
+                "PRE_FILTER_LIMIT": ConfigManager.configs["BINARY"][
+                    "AUTOCOMPLETE_SEARCH"
+                ]["PRE_FILTER_LIMIT"],
+                "MAX_RECORDS_TO_RETURN": ConfigManager.configs["BINARY"][
+                    "AUTOCOMPLETE_SEARCH"
+                ]["MAX_RECORDS_TO_RETURN"],
             },
-            "WEAVIATE_BASE_DIR": ConfigManager.configs["BINARY"]["WEAVIATE"]["BASE_DIR"],
-            "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"]["EMBEDDED_DB_PATH"],  # DEPRECATED
-            "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"][
+            "WEAVIATE_BASE_DIR": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "BASE_DIR"
+            ],
+            "WEAVIATE_EMBEDDED_DB_PATH": ConfigManager.configs["BINARY"]["WEAVIATE"][
+                "EMBEDDED_DB_PATH"
+            ],  # DEPRECATED
+            "WEAVIATE_EMBEDDED_DB_BINARY_PATH": ConfigManager.configs["BINARY"][
+                "WEAVIATE"
+            ][
                 "EMBEDDED_DB_BINARY_PATH"
             ],  # DEPRECATED
             "URL_CONTENT_READER": {
-                "MAX_CONTENT_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["MAX_CONTENT_SIZE"],
-                "SUMMARIZE_LARGE_CONTENT": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
-                    "SUMMARIZE_LARGE_CONTENT"
+                "MAX_CONTENT_SIZE": ConfigManager.configs["BINARY"][
+                    "URL_CONTENT_READER"
+                ]["MAX_CONTENT_SIZE"],
+                "SUMMARIZE_LARGE_CONTENT": ConfigManager.configs["BINARY"][
+                    "URL_CONTENT_READER"
+                ]["SUMMARIZE_LARGE_CONTENT"],
+                "VALIDATE_CONTENT_UPDATION": ConfigManager.configs["BINARY"][
+                    "URL_CONTENT_READER"
+                ]["VALIDATE_CONTENT_UPDATION"],
+                "BATCH_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
+                    "BATCH_SIZE"
                 ],
-                "VALIDATE_CONTENT_UPDATION": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"][
-                    "VALIDATE_CONTENT_UPDATION"
-                ],
-                "BATCH_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["BATCH_SIZE"],
             },
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {
                 "WRITE_KEY": ConfigManager.configs["RUDDER"]["WRITE_KEY"],
-                "WRITE_KEY_ERROR_TRACKING": ConfigManager.configs["RUDDER"]["WRITE_KEY_ERROR_TRACKING"],
+                "WRITE_KEY_ERROR_TRACKING": ConfigManager.configs["RUDDER"][
+                    "WRITE_KEY_ERROR_TRACKING"
+                ],
                 "DATA_PLANE_URL": ConfigManager.configs["RUDDER"]["DATA_PLANE_URL"],
             },
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
@@ -146,25 +197,38 @@ class ConfigFetcher:
             # TODO: remove after 7.0.0 force upgrade
             "CHAT_IMAGE_UPLOAD": {
                 "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
-                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"][
+                    "SUPPORTED_MIMETYPES"
+                ],
             },
             "CHAT_FILE_UPLOAD": {
                 "MAX_BYTES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["MAX_BYTES"],
-                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"]["SUPPORTED_MIMETYPES"],
+                "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_FILE_UPLOAD"][
+                    "SUPPORTED_MIMETYPES"
+                ],
             },
         },
     }
 
     @classmethod
-    async def fetch_configs(cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData) -> Dict[str, Any]:
+    async def fetch_configs(
+        cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData
+    ) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
             if params.consumer in cls.essential_configs:
                 config = cls.essential_configs[params.consumer]
                 if params.consumer == ConfigConsumer.VSCODE_EXT:
-                    await cls.add_vscode_ext_config(config, params=params, config_type=config_type, client_data=client_data)
+                    await cls.add_vscode_ext_config(
+                        config,
+                        params=params,
+                        config_type=config_type,
+                        client_data=client_data,
+                    )
                 return config
             else:
-                raise ValueError(f"Essential configs not found for client {params.consumer}")
+                raise ValueError(
+                    f"Essential configs not found for client {params.consumer}"
+                )
 
         if params.consumer in cls.main_configs:
             return cls.main_configs[params.consumer]
@@ -173,7 +237,11 @@ class ConfigFetcher:
 
     @classmethod
     async def add_vscode_ext_config(
-        cls, base_config: Dict[str, Any], params: ConfigParams, config_type: ConfigType, client_data: ClientData
+        cls,
+        base_config: Dict[str, Any],
+        params: ConfigParams,
+        config_type: ConfigType,
+        client_data: ClientData,
     ):
         if not params.os or not params.arch:
             raise ValueError("os and arch are required for vscode extension config")
@@ -181,24 +249,36 @@ class ConfigFetcher:
         arch = params.arch.value
         os = params.os.value
         if config_type == ConfigType.ESSENTIAL:
-            original_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]
-            s3_key = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch]["s3_key"]
+            original_config = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][
+                arch
+            ]
+            s3_key = ConfigManager.configs["BINARY"]["FILE"]["latest"][os][arch][
+                "s3_key"
+            ]
             if client_version in ConfigManager.configs["BINARY"]["FILE"]:
-                original_config = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]
-                s3_key = ConfigManager.configs["BINARY"]["FILE"][client_version][os][arch]["s3_key"]
+                original_config = ConfigManager.configs["BINARY"]["FILE"][
+                    client_version
+                ][os][arch]
+                s3_key = ConfigManager.configs["BINARY"]["FILE"][client_version][os][
+                    arch
+                ]["s3_key"]
 
             file_config = original_config.copy()
             file_config.pop("s3_key", None)
 
-            file_config["download_link"] = await cls._generate_presigned_url_for_binary(s3_key)
+            file_config["download_link"] = await cls._generate_presigned_url_for_binary(
+                s3_key
+            )
             base_config["BINARY"] = {
                 **file_config,
-                "password": ConfigManager.configs["BINARY"]["PASSWORD"],
+                "password": ConfigManager.configs["BINARY"][
+                    "PASSWORD"
+                ],  # remove after 9.0.0 force upgrade
                 "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
-    
+
     @classmethod
     async def _generate_presigned_url_for_binary(cls, s3_key: str):
         """
@@ -209,5 +289,7 @@ class ConfigFetcher:
         expiry = ConfigManager.configs["BINARY"]["PRESIGNED_URL_EXPIRY"]
 
         s3_client = AWSS3ServiceClient(bucket_name=bucket_name, region_name=region)
-        presigned_url = await s3_client.create_presigned_get_url(s3_key=s3_key, expiry=expiry)
+        presigned_url = await s3_client.create_presigned_get_url(
+            s3_key=s3_key, expiry=expiry
+        )
         return presigned_url
