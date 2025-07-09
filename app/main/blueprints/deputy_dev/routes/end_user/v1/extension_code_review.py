@@ -1,11 +1,11 @@
 from sanic import Blueprint
 from torpedo import CONFIG, Request, send_response
 
-from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.deputy_dev.services.code_review.managers.extension_code_review_history_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.common.managers.extension_code_review_history_manager import (
     ExtensionCodeReviewHistoryManager,
 )
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.extension_review_pre_processor import ExtensionReviewPreProcessor
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
@@ -41,3 +41,13 @@ async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
 
     except Exception as e:
         raise e
+
+
+@extension_code_review.route("/pre-process", methods=["POST"])
+@validate_client_version
+@authenticate
+async def pre_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
+    data = request.json
+    processor = ExtensionReviewPreProcessor()
+    review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
+    return send_response({"status": "SUCCESS", "review": review_dto.model_dump(mode="json")})

@@ -85,6 +85,14 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.REJECTED_ALREADY_DECLINED.value: "This PR is declined. If you still want to review it, review using our #review feature by commenting #review on PR",
 }
 
+class ExtensionReviewStatusTypes(Enum):
+    IN_PROGRESS = "IN_PROGRESS"  # Eligible for experiment
+    COMPLETED = "COMPLETED"  # Eligible for experiment
+    REJECTED_LARGE_SIZE = "REJECTED_LARGE_SIZE"
+    REJECTED_NO_DIFF = "REJECTED_NO_DIFF"
+    REJECTED_INVALID_REQUEST = "REJECTED_INVALID_REQUEST"
+    FAILED = "FAILED"
+
 
 class LLMCommentTypes(Enum):
     FINE_TUNED_COMMENTS = "finetuned_comments"
