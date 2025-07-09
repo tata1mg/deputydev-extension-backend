@@ -18,7 +18,9 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.cont
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
+from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.tools_fallback import (
+    EXCEPTION_RAISED_FALLBACK,
+)
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )

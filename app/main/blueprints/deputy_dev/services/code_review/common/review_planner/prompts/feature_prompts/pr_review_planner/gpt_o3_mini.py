@@ -12,7 +12,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.main.blueprints.deputy_dev.services.code_review.common.review_planner.prompts.dataclasses.main import PromptFeatures
+from app.main.blueprints.deputy_dev.services.code_review.common.review_planner.prompts.dataclasses.main import (
+    PromptFeatures,
+)
 
 
 class GptO3MiniReviewPlannerPrompt(BasePrompt):
