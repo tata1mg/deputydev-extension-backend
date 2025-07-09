@@ -31,7 +31,6 @@ class ExtensionReviewPreProcessor:
         self.is_valid = True
 
     async def pre_process_pr(self, data: dict, user_team_id: int):
-
         repo_name = data.get("repo_name")
         repo_origin = data.get("repo_origin")
         diff_s3_url = data.get("diff_s3_url")
@@ -79,7 +78,7 @@ class ExtensionReviewPreProcessor:
             reviewed_files=reviewed_files,
             diff_s3_url=diff_s3_url,
             session_id=self.session_id,
-            meta_info={"tokens": token_count}
+            meta_info={"tokens": token_count},
         )
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 
@@ -89,9 +88,7 @@ class ExtensionReviewPreProcessor:
         return {
             "review_id": self.review_dto.id,
             "session_id": self.session_id,
-
         }
-
 
     async def run_validation(self, review_diff: str, token_count: int):
         """
@@ -103,4 +100,3 @@ class ExtensionReviewPreProcessor:
         elif token_count > MAX_PR_DIFF_TOKEN_LIMIT:
             self.is_valid = False
             self.review_status = ExtensionReviewStatusTypes.REJECTED_LARGE_SIZE.value
-
