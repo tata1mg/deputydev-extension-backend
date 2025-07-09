@@ -27,7 +27,7 @@ RELATED_CODE_SEARCHER = ConversationTool(
                 "repo_path": {
                     "type": "string",
                     "description": "Expects absolute path of the repository",
-                }
+                },
             },
             "required": ["search_query", "repo_path"],
             "additionalProperties": False,

@@ -505,13 +505,13 @@ q               query: Find all the references of xyz method in class abc
             system_message=system_message,
         )
 
-    def get_repository_context(self):
+    def get_repository_context(self) -> str:
         working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
         context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
         context_repos_str = ""
         for index, context_repo in enumerate(context_repos):
             context_repos_str += f"""
-              Context Repository {index+1}:
+              Context Repository {index + 1}:
                 Absolute Path: {context_repo.repo_path}
                 Repository Name: {context_repo.repo_name}
                 Root Directory Context: 

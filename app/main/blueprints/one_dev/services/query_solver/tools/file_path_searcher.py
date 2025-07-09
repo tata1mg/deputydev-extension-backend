@@ -28,7 +28,7 @@ FILE_PATH_SEARCHER = ConversationTool(
                 "repo_path": {
                     "type": "string",
                     "description": "Expects absolute path of the repository",
-                }
+                },
             },
             "required": ["directory", "repo_path"],
         }

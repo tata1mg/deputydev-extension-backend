@@ -180,7 +180,7 @@ class ConfigFetcher:
     @classmethod
     async def add_vscode_ext_config(
         cls, base_config: Dict[str, Any], params: ConfigParams, config_type: ConfigType, client_data: ClientData
-    ):
+    ) -> None:
         if not params.os or not params.arch:
             raise ValueError("os and arch are required for vscode extension config")
         client_version = client_data.client_version
@@ -206,7 +206,7 @@ class ConfigFetcher:
             }
 
     @classmethod
-    async def _generate_presigned_url_for_binary(cls, s3_key: str):
+    async def _generate_presigned_url_for_binary(cls, s3_key: str) -> str:
         """
         Generate presigned URL for binary download from S3
         """
