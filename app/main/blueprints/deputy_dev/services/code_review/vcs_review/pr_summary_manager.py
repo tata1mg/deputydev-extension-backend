@@ -94,18 +94,20 @@ class PRSummaryManager(BasePRReviewManager):
 
         non_error_results, is_large_pr = await review_manager.get_code_review_comments(valid_agents_and_init_params)
 
-
         await cls.post_process_review_results(
-            agent_results=non_error_results, is_large_pr=is_large_pr, comment_service=comment_service, chat_request=chat_request
+            agent_results=non_error_results,
+            is_large_pr=is_large_pr,
+            comment_service=comment_service,
+            chat_request=chat_request,
         )
 
     @classmethod
     async def post_process_review_results(
-            cls,
-            agent_results: List[AgentRunResult],
-            is_large_pr: bool,
-            comment_service: BaseComment,
-            chat_request: ChatRequest,
+        cls,
+        agent_results: List[AgentRunResult],
+        is_large_pr: bool,
+        comment_service: BaseComment,
+        chat_request: ChatRequest,
     ) -> Tuple[Optional[List[Dict[str, Any]]], Dict[str, Any], Dict[str, Any], bool]:
         """Post-process agent results to generate final comments and metadata.
 
@@ -168,7 +170,7 @@ class PRSummaryManager(BasePRReviewManager):
 
     @classmethod
     def get_valid_agents_and_init_params_for_review(
-            cls,
+        cls,
     ) -> List[AgentAndInitParams]:
         valid_agents: List[AgentAndInitParams] = []
 

@@ -1,8 +1,8 @@
 from app.backend_common.caches.extension_review_cache import ExtensionReviewCache
 from app.backend_common.utils.formatting import append_line_numbers
 
-class ExtensionContextService:
 
+class ExtensionContextService:
     def __init__(self, review_id: int, repo_id: int):
         self.review_id = review_id
         self.repo_id = repo_id

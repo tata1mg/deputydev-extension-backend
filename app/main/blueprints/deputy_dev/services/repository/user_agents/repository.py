@@ -4,6 +4,7 @@ from app.main.blueprints.deputy_dev.models.dao.postgres.user_agents import UserA
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.backend_common.repository.db import DB
 
+
 class UserAgentRepository:
     @classmethod
     async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[UserAgentDTO, List[UserAgentDTO]]:

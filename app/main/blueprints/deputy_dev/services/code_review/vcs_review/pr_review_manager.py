@@ -162,16 +162,15 @@ class PRReviewManager(BasePRReviewManager):
     def check_no_pr_comments(cls, llm_response):
         return not llm_response
 
-
     @classmethod
     async def review_pr(
-            cls,
-            session_id: int,
-            repo_service: BaseRepo,
-            comment_service: BaseComment,
-            pr_service: BasePR,
-            prompt_version,
-            pr_diff_handler: PRDiffHandler,
+        cls,
+        session_id: int,
+        repo_service: BaseRepo,
+        comment_service: BaseComment,
+        pr_service: BasePR,
+        prompt_version,
+        pr_diff_handler: PRDiffHandler,
     ):
         valid_agents_and_init_params = cls.get_valid_agents_and_init_params_for_review()
         non_error_results, is_large_pr = await MultiAgentPRReviewManager(
@@ -180,10 +179,9 @@ class PRReviewManager(BasePRReviewManager):
 
         return non_error_results, is_large_pr
 
-
     @classmethod
     def get_valid_agents_and_init_params_for_review(
-            cls,
+        cls,
     ) -> List[AgentAndInitParams]:
         valid_agents: List[AgentAndInitParams] = []
 
@@ -216,18 +214,18 @@ class PRReviewManager(BasePRReviewManager):
 
     @classmethod
     async def post_process_review_results(
-            cls,
-            agent_results: List[AgentRunResult],
-            is_large_pr: bool,
-            repo_service: BaseRepo,
-            pr_service: BasePR,
-            comment_service: BaseComment,
-            pr_diff_handler: PRDiffHandler,
-            session_id: int,
-            execution_start_time: datetime,
-            data: Dict[str, Any],
-            affirmation_service,
-            pr_dto,
+        cls,
+        agent_results: List[AgentRunResult],
+        is_large_pr: bool,
+        repo_service: BaseRepo,
+        pr_service: BasePR,
+        comment_service: BaseComment,
+        pr_diff_handler: PRDiffHandler,
+        session_id: int,
+        execution_start_time: datetime,
+        data: Dict[str, Any],
+        affirmation_service,
+        pr_dto,
     ) -> Tuple[Optional[List[Dict[str, Any]]], Dict[str, Any], Dict[str, Any], bool]:
         """Post-process agent results to generate final comments and metadata.
 
@@ -251,10 +249,15 @@ class PRReviewManager(BasePRReviewManager):
         # Handle large PR case
         if is_large_pr:
             agents_tokens = await pr_diff_handler.get_pr_diff_token_count()
-            return None, agents_tokens, {
-                "issue_id": None,
-                "confluence_doc_id": None,
-            }, is_large_pr
+            return (
+                None,
+                agents_tokens,
+                {
+                    "issue_id": None,
+                    "confluence_doc_id": None,
+                },
+                is_large_pr,
+            )
 
         # Process agent results
         for agent_result in agent_results:
@@ -295,14 +298,14 @@ class PRReviewManager(BasePRReviewManager):
         formatted_summary = ""
         if pr_summary:
             from app.backend_common.utils.formatting import format_summary_with_metadata
+
             loc = await pr_service.get_loc_changed_count()
             formatted_summary = format_summary_with_metadata(
                 summary=pr_summary, loc=loc, commit_id=pr_service.pr_model().commit_id()
             )
 
         final_comments = (
-            [comment.model_dump(mode="json") for comment in filtered_comments]
-            if filtered_comments else None
+            [comment.model_dump(mode="json") for comment in filtered_comments] if filtered_comments else None
         )
 
         # We will only post summary for first PR review request
@@ -322,14 +325,13 @@ class PRReviewManager(BasePRReviewManager):
             "issue_id": context_service.issue_id,
             "confluence_doc_id": context_service.confluence_id,
             "execution_start_time": execution_start_time,
-            "pr_review_start_time": data.get("pr_review_start_time")
+            "pr_review_start_time": data.get("pr_review_start_time"),
         }
         await PRReviewPostProcessor(
             pr_service=pr_service,
             comment_service=comment_service,
             affirmation_service=affirmation_service,
         ).post_process_pr(pr_dto, final_comments, agents_tokens, is_large_pr, meta_info_to_save)
-
 
     @staticmethod
     def _update_bucket_name(agent_result: AgentRunResult):

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Any
 from pydantic import BaseModel, ConfigDict
 
+
 class UserAgentDTO(BaseModel):
     id: Optional[int] = None
     agent_name: str
