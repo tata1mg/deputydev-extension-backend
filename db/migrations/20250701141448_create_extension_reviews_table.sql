@@ -1,12 +1,12 @@
 -- migrate:up
 CREATE TABLE IF NOT EXISTS extension_reviews (
     id BIGSERIAL PRIMARY KEY,
+    review_status varchar NOT NULL,
     repo_id BIGINT NOT NULL,
     user_team_id BIGINT NOT NULL,
     loc INTEGER NOT NULL,
     reviewed_files JSONB NOT NULL,
     execution_time_seconds INTEGER,
-    status VARCHAR(20) NOT NULL,
     source_branch TEXT,
     target_branch TEXT,
     source_commit TEXT,
@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS extension_reviews (
     deletion_datetime TIMESTAMP,
     meta_info JSONB,
     diff_s3_url TEXT,
+    session_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (repo_id) REFERENCES repos(id),

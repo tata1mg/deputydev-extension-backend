@@ -6,11 +6,11 @@ from app.backend_common.models.dao.postgres.base import Base
 class ExtensionReviews(Base):
     serializable_keys = {
         "id",
+        "review_status",
         "repo_id",
         "loc",
         "reviewed_files",
         "execution_time_seconds",
-        "status",
         "source_branch",
         "target_branch",
         "source_commit",
@@ -20,18 +20,20 @@ class ExtensionReviews(Base):
         "is_deleted",
         "deletion_datetime",
         "meta_info",
+        "session_id"
         "diff_s3_url",
         "created_at",
         "updated_at",
     }
 
     id = fields.BigIntField(pk=True)
+    review_status = fields.CharField(max_length=100)
+
     repo = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
     user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
     loc = fields.IntField()
     reviewed_files = fields.JSONField()
     execution_time_seconds = fields.IntField(null=True)
-    status = fields.CharField(max_length=20)
     source_branch = fields.TextField(null=True)
     target_branch = fields.TextField(null=True)
     source_commit = fields.TextField(null=True)
@@ -44,6 +46,7 @@ class ExtensionReviews(Base):
     diff_s3_url = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+    session_id = fields.BigIntField(null=True)
 
     class Meta:
         table = "extension_reviews"
@@ -52,11 +55,11 @@ class ExtensionReviews(Base):
 
     class Columns(Enum):
         id = ("id",)
+        review_status = ("review_status",)
         repo_id = ("repo_id",)
         loc = ("loc",)
         reviewed_files = ("reviewed_files",)
         execution_time_seconds = ("execution_time_seconds",)
-        status = ("status",)
         fail_message = ("fail_message",)
         review_datetime = ("review_datetime",)
         is_deleted = ("is_deleted",)
@@ -69,3 +72,4 @@ class ExtensionReviews(Base):
         target_branch = ("target_branch",)
         source_commit = ("source_commit",)
         target_commit = ("target_commit",)
+        session_id = ("session_id",)
