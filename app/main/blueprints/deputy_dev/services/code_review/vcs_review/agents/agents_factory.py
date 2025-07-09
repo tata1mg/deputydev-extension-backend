@@ -86,7 +86,6 @@ class AgentFactory:
         include_agent_types: List[AgentTypes] = [],
         exclude_agent_types: List[AgentTypes] = [],
     ) -> List[BaseCodeReviewAgent]:
-
         initialized_agents: List[BaseCodeReviewAgent] = []
 
         for agent_type_and_init_params in valid_agents_and_init_params:

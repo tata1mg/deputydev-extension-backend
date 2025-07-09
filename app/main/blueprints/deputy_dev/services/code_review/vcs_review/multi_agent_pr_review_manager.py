@@ -160,7 +160,6 @@ class MultiAgentPRReviewManager:
 
         return non_error_results, self._is_large_pr
 
-
     def update_bucket_name(self, agent_result: AgentRunResult):
         comments = agent_result.agent_result["comments"]
         for comment in comments:

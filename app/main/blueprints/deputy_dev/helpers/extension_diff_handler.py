@@ -2,10 +2,11 @@ from typing import List, Set
 from app.backend_common.utils.app_utils import get_token_count
 import re
 
+
 class ExtensionDiffHandler:
     def __init__(self, pr_diff: str):
         self.pr_diff = pr_diff
-        self.diff_git_re = re.compile(r'^diff --git a/(.+?) b/(.+)$')
+        self.diff_git_re = re.compile(r"^diff --git a/(.+?) b/(.+)$")
 
     def get_diff_loc(self) -> int:
         """
@@ -15,11 +16,11 @@ class ExtensionDiffHandler:
         added = 0
         removed = 0
         for line in self.pr_diff.splitlines():
-            if line.startswith('+++') or line.startswith('---'):
+            if line.startswith("+++") or line.startswith("---"):
                 continue
-            if line.startswith('+') and not line.startswith('+++'):
+            if line.startswith("+") and not line.startswith("+++"):
                 added += 1
-            elif line.startswith('-') and not line.startswith('---'):
+            elif line.startswith("-") and not line.startswith("---"):
                 removed += 1
         return added + removed
 
@@ -40,7 +41,7 @@ class ExtensionDiffHandler:
 
             old_path, new_path = match.groups()
             # prefer new path unless it's /dev/null
-            selected_path = new_path if new_path != '/dev/null' else old_path
+            selected_path = new_path if new_path != "/dev/null" else old_path
 
             if selected_path not in seen_files:
                 seen_files.add(selected_path)
