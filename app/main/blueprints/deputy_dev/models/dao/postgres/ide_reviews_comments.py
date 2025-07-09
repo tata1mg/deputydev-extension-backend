@@ -8,7 +8,6 @@ class IdeReviewsComments(Base):
         "id",
         "review_id",
         "comment",
-        "agent_id",
         "is_deleted",
         "file_path",
         "file_hash",
@@ -20,7 +19,6 @@ class IdeReviewsComments(Base):
     id = fields.BigIntField(pk=True)
     review = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="review_comments")
     comment = fields.TextField()
-    agent_id = fields.IntField()
     is_deleted = fields.BooleanField(default=False)
     file_path = fields.TextField()
     line_hash = fields.TextField()
@@ -38,7 +36,6 @@ class IdeReviewsComments(Base):
         id = ("id",)
         review_id = ("review_id",)
         comment = ("comment",)
-        agent_id = ("agent_id",)
         is_deleted = ("is_deleted",)
         file_path = ("file_path",)
         file_hash = ("file_hash",)
