@@ -73,9 +73,13 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
                         },
                         "required": ["keyword", "type"],
                     },
-                }
+                },
+                "repo_path": {
+                    "type": "string",
+                    "description": "Expects absolute path of the repository",
+                },
             },
-            "required": ["search_terms"],
+            "required": ["search_terms", "repo_path"],
             "additionalProperties": False,
         }
     ),

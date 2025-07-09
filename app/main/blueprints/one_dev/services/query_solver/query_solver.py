@@ -265,7 +265,6 @@ class QuerySolver:
                     session_type=payload.session_type,
                 )
             )
-
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.CODE_QUERY_SOLVER,
                 llm_model=LLModels(payload.llm_model.value),
@@ -279,6 +278,7 @@ class QuerySolver:
                     "os_name": payload.os_name,
                     "shell": payload.shell,
                     "vscode_env": payload.vscode_env,
+                    "repositories": payload.repositories,
                 },
                 attachments=payload.attachments,
                 previous_responses=await self.get_previous_message_thread_ids(

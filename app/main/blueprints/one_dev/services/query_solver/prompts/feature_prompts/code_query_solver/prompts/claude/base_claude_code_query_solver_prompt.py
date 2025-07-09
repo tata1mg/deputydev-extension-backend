@@ -9,13 +9,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     TextBlockData,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    UserAndSystemMessages,
-)
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    FocusItemTypes,
-)
+from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItemTypes
 
 
 class BaseClaudeQuerySolverPrompt:
@@ -224,11 +219,10 @@ class BaseClaudeQuerySolverPrompt:
         if self.params.get("urls"):
             urls = self.params.get("urls")
             urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
-
         if self.params.get("write_mode") is True:
-            user_message = textwrap.dedent(f"""
+            user_message = textwrap.dedent(
+                f"""
             Here is the user's query for editing - {self.params.get("query")}
-
             
             If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
@@ -249,20 +243,28 @@ class BaseClaudeQuerySolverPrompt:
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
-            """)
+            """
+            )
         else:
-            user_message = textwrap.dedent(f"""
+            user_message = textwrap.dedent(
+                f"""
             User Query: {self.params.get("query")}
 
                 If you are thinking something, please provide that in <thinking> tag.
-                Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
+                Please answer the user query in the best way possible. 
+                
+                <code_block_guidelines>
+                You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
 
                 There are two types of code blocks you can use:
                 1. Code block which contains a diff for some code to be applied.
                 2. Code block which contains a code snippet.
-
-                DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST.
-                ALSO, PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                
+                <important> 
+                  1. Diff code blocks can ONLY be applied to the Working Repository. Never create diffs for Context Repositories.
+                  2. DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST. 
+                  3. PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                </important>
 
                 General structure of code block:
                 <code_block>
@@ -273,7 +275,7 @@ class BaseClaudeQuerySolverPrompt:
                     return "Hello, World!"
                 </code_block>
 
-                <important>
+                <diff_block_rules>
                 If you are providing a diff, set is_diff to true and return edits similar to unified diffs that `diff -U0` would produce.
                 Make sure you include the first 2 lines with the file paths.
                 Don't include timestamps with the file paths.
@@ -303,6 +305,8 @@ class BaseClaudeQuerySolverPrompt:
                 To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
 
                 To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.
+                </diff_block_rules>
+                </code_block_guidelines>
 
                 <extra_important>
                 Make sure you provide different code snippets for different files.
@@ -316,34 +320,41 @@ class BaseClaudeQuerySolverPrompt:
                 Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
                 In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
                 </extra_important>
-                </important>
-                
+
                 {self.tool_usage_guidelines(is_write_mode=False)}
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
-            """)
+            """
+            )
 
         if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             ====
             SYSTEM INFORMATION:
 
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
             ====
-            """)
+            """
+            )
         if self.params.get("vscode_env"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             ====
             Below is the information about the current vscode environment:
             {self.params.get("vscode_env")}
             ====
-            """)
+            """
+            )
+        if self.params.get("repositories"):
+            user_message += textwrap.dedent(self.get_repository_context())
         if self.params.get("deputy_dev_rules"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             Here are some more user provided rules and information that you can take reference from:
             <important>
             Follow these guidelines while using user provided rules or information:
@@ -355,7 +366,8 @@ class BaseClaudeQuerySolverPrompt:
             <user_rules_or_info>
             {self.params.get("deputy_dev_rules")}
             </user_rules_or_info>
-            """)
+            """
+            )
 
         if focus_chunks_message:
             user_message = focus_chunks_message + "\n" + user_message
@@ -366,6 +378,49 @@ class BaseClaudeQuerySolverPrompt:
             user_message=user_message,
             system_message=system_message,
         )
+
+    def get_repository_context(self) -> str:
+        working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
+        context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
+        context_repos_str = ""
+        for index, context_repo in enumerate(context_repos):
+            context_repos_str += f"""
+              <context_repository_{index + 1}>
+                <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
+                <repo_name>{context_repo.repo_name}</repo_name>
+                <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
+              </context_repository_{index + 1}>
+            """
+
+        return f"""
+        ====
+        <repository_context>
+          You are working with two types of repositories:
+          <working_repository>
+            <purpose>The primary repository where you will make changes and apply modifications</purpose>
+            <access_level>Full read/write access</access_level>
+            <allowed_operations>All read and write operations</allowed_operations>
+            <restrictions>No restrictions</restrictions>
+            <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
+            <repo_name>{working_repo.repo_name}</repo_name>
+            <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
+          </working_repository>
+          <context_repositories>
+            <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
+            <access_level>Read-only access</access_level>
+            <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
+            <restrictions>
+              1. NO write operations allowed
+              2. NO file creation or modification
+              3. NO diff application
+            </restrictions>
+            <list_of_context_repositories>
+                {context_repos_str}
+            </list_of_context_repositories>
+          </context_repositories>
+        </repository_context>
+        ====
+        """
 
     def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_specific_guidelines = ""
@@ -414,6 +469,27 @@ class BaseClaudeQuerySolverPrompt:
                 <guideline>Provide clear reasoning when tool selection choices are not immediately obvious</guideline>
                 <guideline>Optimize for efficiency - specialized tools typically require fewer API calls and provide cleaner results</guideline>
               </behavioral_guidelines>
+              
+              <repo_specific_guidelines>
+                When using provided tools:
+    
+                For Working Repository:
+                Use all available tools including read and write operations
+                Apply diffs and create files as needed
+                Make actual code changes here
+                
+                
+                For Context Repositories:
+                Use only read-based tools (file reading, directory listing, etc.)
+                Never attempt write operations on context repos
+                If you need to reference code from context repos, copy patterns/examples to working repo
+                
+                
+                Repository Identification:
+                Always identify which repository you're working with
+                Clearly state when switching between working repo and context repos
+                Mention the repository type when providing file paths
+              </repo_specific_guidelines>
             </tool_usage_guidelines>
         """
 
@@ -438,7 +514,12 @@ class BaseClaudeQuerySolverPrompt:
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
             elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
-                final_content.append({"type": "THINKING_BLOCK", "content": {"text": block.content.thinking}})
+                final_content.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": block.content.thinking},
+                    }
+                )
 
         return final_content, tool_use_map
 
@@ -498,7 +579,12 @@ class BaseClaudeQuerySolverPrompt:
                 code_block_info = cls.extract_code_block_info(code_block_string)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
             elif match.re.pattern == thinking_pattern:
-                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+                result.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": match.group(1).strip()},
+                    }
+                )
 
             last_end = end_index
 
@@ -555,7 +641,12 @@ class BaseClaudeQuerySolverPrompt:
             diff = "\n".join(code_lines)
 
         return (
-            {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
+            {
+                "language": language,
+                "file_path": file_path,
+                "code": code,
+                "is_diff": is_diff,
+            }
             if not is_diff
             else {
                 "language": language,
