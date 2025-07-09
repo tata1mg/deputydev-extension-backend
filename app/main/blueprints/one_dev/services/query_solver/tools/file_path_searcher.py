@@ -26,8 +26,12 @@ FILE_PATH_SEARCHER = ConversationTool(
                     },
                     "description": "The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
                 },
+                "repo_path": {
+                    "type": "string",
+                    "description": "Expects absolute path of the repository",
+                },
             },
-            "required": ["directory"],
+            "required": ["directory", "repo_path"],
         }
     ),
 )
