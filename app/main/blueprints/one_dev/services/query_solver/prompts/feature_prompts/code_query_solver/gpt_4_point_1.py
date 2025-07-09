@@ -304,9 +304,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
         return system_message
 
-
     def get_prompt(self) -> UserAndSystemMessages:  # noqa : C901
-
         system_message = self.get_system_prompt()
 
         focus_chunks_message = ""
@@ -468,9 +466,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             system_message=system_message,
         )
 
-
     def tool_usage_guidelines(self, is_write_mode: bool) -> str:
-
         write_mode_guidelines = ""
         if is_write_mode:
             write_mode_guidelines = """
