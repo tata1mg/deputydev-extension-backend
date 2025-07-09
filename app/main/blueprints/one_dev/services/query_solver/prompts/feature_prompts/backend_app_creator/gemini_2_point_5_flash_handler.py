@@ -27,11 +27,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.b
 
 
 class Gemini2Point5FlashBackendAppCreatorPromptHandler(BaseGemini2Point5FlashPromptHandler):
-    prompt_type = "backend_app_creator"
+    prompt_type = "BACKEND_APP_CREATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Gemini2Point5FlashBackendAppCreatorPrompt
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.prompt = self.prompt_class(params)
 
