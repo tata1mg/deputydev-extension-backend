@@ -1,7 +1,8 @@
+from sanic.log import logger
+
+from app.backend_common.models.dao.postgres.referrals import Referrals
 from app.backend_common.models.dto.referrals_dto import ReferralData, ReferralDTO
 from app.backend_common.repository.db import DB
-from app.backend_common.models.dao.postgres.referrals import Referrals
-from sanic.log import logger
 
 
 class ReferralsRepository:

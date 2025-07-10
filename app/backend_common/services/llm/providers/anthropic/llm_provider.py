@@ -9,9 +9,13 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelWithResponseStreamResponseTypeDef,
 )
 
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
+    ExtendedThinkingContent,
     LLModels,
     LLMUsage,
     MessageThreadActor,
@@ -24,18 +28,24 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
-    ExtendedThinkingContent,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
+from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockDeltaContent,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockEndContent,
+    ExtendedThinkingBlockStart,
     LLMCallResponseTypes,
     NonStreamingResponse,
     PromptCacheConfig,
+    RedactedThinking,
     StreamingEvent,
     StreamingEventType,
     StreamingResponse,
@@ -50,26 +60,22 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStartContent,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
-    ExtendedThinkingBlockStart,
-    ExtendedThinkingBlockDelta,
-    ExtendedThinkingBlockDeltaContent,
-    ExtendedThinkingBlockEnd,
-    ExtendedThinkingBlockEndContent,
-    RedactedThinking,
 )
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
-from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 
 
 class Anthropic(BaseLLMProvider):
-    def __init__(self):
-        super().__init__(LLMProviders.ANTHROPIC.value)
+    def __init__(self, checker: Optional[CancellationChecker] = None) -> None:
+        super().__init__(LLMProviders.ANTHROPIC.value, checker=checker)
         self.anthropic_client = None
 
-    async def get_conversation_turns(
+    async def get_conversation_turns(  # noqa: C901
         self,
         previous_responses: List[MessageThreadDTO],
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -167,7 +173,7 @@ class Anthropic(BaseLLMProvider):
 
         return conversation_turns
 
-    async def build_llm_payload(
+    async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -180,12 +186,30 @@ class Anthropic(BaseLLMProvider):
         feedback: Optional[str] = None,
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
+        disable_caching: bool = False,
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
         messages: List[ConversationTurn] = await self.get_conversation_turns(
             previous_responses, attachment_data_task_map
         )
+
+        # remove last block from the messages if not tool response and last block is tool use request
+        if not tool_use_response and (
+            messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content
+        ):
+            last_content = messages[-1].content[-1]
+            if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
+                # remove the tool use request if the user has not responded to it
+                messages[-1].content.pop()
+
+        if prompt and prompt.cached_message:
+            cached_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
+            )
+            if cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+                cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
+            messages.append(cached_message)
 
         # add system and user messages to conversation
         if prompt and prompt.user_message:
@@ -269,7 +293,7 @@ class Anthropic(BaseLLMProvider):
 
         return llm_payload
 
-    async def _get_service_client(self):
+    async def _get_service_client(self) -> BedrockServiceClient:
         if not self.anthropic_client:
             self.anthropic_client = BedrockServiceClient()
         return self.anthropic_client
@@ -314,7 +338,7 @@ class Anthropic(BaseLLMProvider):
             type=LLMCallResponseTypes.NON_STREAMING,
         )
 
-    def _get_parsed_stream_event(
+    def _get_parsed_stream_event(  # noqa: C901
         self,
         event: Dict[str, Any],
         current_content_block_delta: str,
@@ -338,6 +362,10 @@ class Anthropic(BaseLLMProvider):
                 usage.input = invocation_metrics.get("inputTokenCount")
             if "outputTokenCount" in invocation_metrics:
                 usage.output = invocation_metrics.get("outputTokenCount")
+            if "cacheReadInputTokenCount" in invocation_metrics:
+                usage.cache_read = invocation_metrics.get("cacheReadInputTokenCount")
+            if "cacheWriteInputTokenCount" in invocation_metrics:
+                usage.cache_write = invocation_metrics.get("cacheWriteInputTokenCount")
 
             return [], None, None, usage
 
@@ -477,20 +505,25 @@ class Anthropic(BaseLLMProvider):
 
         return [], None, None, None
 
-    async def _parse_streaming_response(
+    async def _parse_streaming_response(  # noqa: C901
         self,
         response: InvokeModelWithResponseStreamResponseTypeDef,
         async_bedrock_client: BedrockRuntimeClient,
         model_config: Dict[str, Any],
+        session_id: Optional[int],
     ) -> StreamingResponse:
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        streaming_completed: bool = False
+        streaming_completed = asyncio.Event()
+
+        # Manual token counting for when final usage is not available
+
         accumulated_events: List[StreamingEvent] = []
 
-        async def stream_content() -> AsyncIterator[StreamingEvent]:
+        async def stream_content() -> AsyncIterator[StreamingEvent]:  # noqa: C901
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
+            nonlocal session_id
             non_combinable_events = [
                 RedactedThinking,
                 TextBlockStart,
@@ -505,70 +538,77 @@ class Anthropic(BaseLLMProvider):
             current_running_block_type: Optional[ContentBlockCategory] = None
             current_content_block_delta: str = ""
             response_body = cast(AsyncIterable[Dict[str, Any]], response["body"])
-            async for event in response_body:
-                chunk = json.loads(event["chunk"]["bytes"])
-                # yield content block delta
-                try:
-                    event_blocks, event_block_category, content_block_delta, event_usage = (
-                        self._get_parsed_stream_event(chunk, current_content_block_delta, current_running_block_type)
-                    )
-                    if event_usage:
-                        usage += event_usage
 
-                    for event_block in event_blocks:
-                        last_block_type = type(event_block)
-                        if current_type is None:
-                            current_type = last_block_type
-                        if buffer and (
-                            current_type in non_combinable_events
-                            or last_block_type != current_type
-                            or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
-                        ):
-                            combined_event = sum(buffer[1:], start=buffer[0])
-                            yield combined_event
-                            buffer.clear()
-                            current_type = last_block_type
+            try:
+                async for event in response_body:
+                    if self.checker and self.checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
+                        raise asyncio.CancelledError()
+                    chunk = json.loads(event["chunk"]["bytes"])
+                    # yield content block delta
+                    try:
+                        event_blocks, event_block_category, content_block_delta, event_usage = (
+                            self._get_parsed_stream_event(
+                                chunk, current_content_block_delta, current_running_block_type
+                            )
+                        )
+                        if event_usage:
+                            usage += event_usage
+                        for event_block in event_blocks:
+                            last_block_type = type(event_block)
+                            if current_type is None:
+                                current_type = last_block_type
+                            if buffer and (
+                                current_type in non_combinable_events
+                                or last_block_type != current_type
+                                or len(buffer) == (model_config.get("STREAM_BATCH_SIZE") or 1)
+                            ):
+                                combined_event = sum(buffer[1:], start=buffer[0])
+                                yield combined_event
+                                buffer.clear()
+                                current_type = last_block_type
 
-                        buffer.append(event_block)
+                            buffer.append(event_block)
 
-                    if event_blocks:
-                        current_running_block_type = event_block_category
-                        accumulated_events.extend(event_blocks)
+                        if event_blocks:
+                            current_running_block_type = event_block_category
+                            accumulated_events.extend(event_blocks)
 
-                    if content_block_delta is not None:
-                        current_content_block_delta = content_block_delta
-                except Exception:
-                    # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
-                    pass
-            if buffer:
-                combined_event = sum(buffer[1:], start=buffer[0])
-                yield combined_event
-
-            streaming_completed = True
+                        if content_block_delta is not None:
+                            current_content_block_delta = content_block_delta
+                    except Exception:  # noqa: BLE001
+                        # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
+                        pass
+                if buffer:
+                    combined_event = sum(buffer[1:], start=buffer[0])
+                    yield combined_event
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:  # noqa: BLE001
+                AppLogger.log_error(f"Streaming Error in Anthropic: {e}")
+            finally:
+                if self.checker:
+                    await self.checker.stop_monitoring()
+                streaming_completed.set()  # signal that streaming is completed
+                await close_client()
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-
+            await streaming_completed.wait()
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             return accumulated_events
 
         # close the async bedrock client
-        async def close_client():
+        async def close_client() -> None:
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             await async_bedrock_client.__aexit__(None, None, None)
-
-        asyncio.create_task(close_client())
 
         return StreamingResponse(
             content=stream_content(),
@@ -578,7 +618,12 @@ class Anthropic(BaseLLMProvider):
         )
 
     async def call_service_client(
-        self, llm_payload: Dict[str, Any], model: LLModels, stream: bool = False, response_type: Optional[str] = None
+        self,
+        llm_payload: Dict[str, Any],
+        model: LLModels,
+        stream: bool = False,
+        response_type: Optional[str] = None,
+        session_id: Optional[int] = None,
     ) -> UnparsedLLMCallResponse:
         anthropic_client = await self._get_service_client()
         AppLogger.log_debug(json.dumps(llm_payload))
@@ -592,4 +637,4 @@ class Anthropic(BaseLLMProvider):
             response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
                 llm_payload=llm_payload, model=model_config["NAME"]
             )
-            return await self._parse_streaming_response(response, async_bedrock_client, model_config)
+            return await self._parse_streaming_response(response, async_bedrock_client, model_config, session_id)

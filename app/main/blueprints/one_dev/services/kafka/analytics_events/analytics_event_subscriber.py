@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.analytics_events_dto import AnalyticsEventsData
 from app.backend_common.repository.analytics_events.repository import AnalyticsEventsRepository
 from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.main.blueprints.one_dev.services.kafka.analytics_events.dataclasses.kafka_analytics_events import (
     KafkaAnalyticsEventMessage,
 )
@@ -37,8 +37,7 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
             )
 
         except Exception as ex:
-            raise ValueError(
-                f"Error processing error analytics event message: {str(ex)}")
+            raise ValueError(f"Error processing error analytics event message: {str(ex)}")
 
     async def _process_message(self, message: Any) -> None:
         """Process and store session event messages in DB."""

@@ -337,6 +337,12 @@
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
+    "AWS_CLOUDFRONT": {
+        "DISTRIBUTION_URL": "",
+        "KEY_PAIR_ID": "",
+        "SIGNED_URL_EXPIRY": 1800,
+        "PRIVATE_KEY": ""
+    },
     "AWS_S3_BINARY_BUCKET": {
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
@@ -441,7 +447,7 @@
         "CODE_GENERATION": "CLAUDE_3_POINT_5_SONNET",
         "CHUNK_DESCRIPTION": "CLAUDE_3_POINT_5_SONNET",
         "COMMENT_VALIDATION": "GPT_4O",
-    "COMMENT_SUMMARIZATION": "GPT_4O",
+        "COMMENT_SUMMARIZATION": "GPT_4O",
         "RE_RANKING": "CLAUDE_3_POINT_5_SONNET",
         "PR_REVIEW_PLANNER": "CLAUDE_3_POINT_7_SONNET"
     },
@@ -527,37 +533,40 @@
             "CHUNKING_ENABLED": true
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
-        "PRESIGNED_URL_EXPIRY": 1800,
         "FILE": {
             "latest": {
                 "darwin": {
                     "arm64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     },
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 },
                 "linux": {
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 },
                 "win32": {
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 }
             }
@@ -640,7 +649,6 @@
         "INSERT": 120
     },
     "DEFAULT_EXTENSION_SETTINGS": {
-        "default_mode": "ask",
         "terminal_settings": {
             "enable_yolo_mode": false,
             "command_deny_list": [
@@ -680,14 +688,21 @@
         "PRESIGNED_URL_EXPIRY": 600,
         "MAX_BYTES": 5242880,
         "SUPPORTED_MIMETYPES": [
+            "application/json"
+        ],
+        "PAYLOAD_FOLDER_PATH": "chat_payloads"
+    },
+    "CHAT_IMAGE_UPLOAD": {
+        "PRESIGNED_URL_EXPIRY": 600,
+        "MAX_BYTES": 5242880,
+        "SUPPORTED_MIMETYPES": [
             "image/jpeg",
             "image/jpg",
             "image/png",
-            "image/webp",
-            "application/json"
+            "image/webp"
         ],
         "IMAGE_FOLDER_PATH": "chat_images",
-        "PAYLOAD_FOLDER_PATH": "chat_payloads"
+        "MAX_FILES": 5
     },
     "BINARY_UPLOAD": {
         "PRESIGNED_URL_EXPIRY": 3600,

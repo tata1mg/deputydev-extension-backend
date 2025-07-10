@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.error_analytics_events_dto import ErrorAnalyticsEventsData
 from app.backend_common.repository.error_analytics_events.repository import ErrorAnalyticsEventsRepository
 from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.main.blueprints.one_dev.services.kafka.error_analytics_events.dataclasses.kafka_error_analytics_events import (
     KafkaErrorAnalyticsEventMessage,
 )
@@ -16,7 +16,9 @@ class ErrorAnalyticsEventSubscriber(BaseKafkaSubscriber):
     def __init__(self, config: Dict[str, Any]) -> None:
         super().__init__(config, config["KAFKA"]["ERROR_QUEUE"]["NAME"])
 
-    async def _get_analytics_event_data_from_message(self, message: Dict[str, Any]) -> Optional[ErrorAnalyticsEventsData]:
+    async def _get_analytics_event_data_from_message(
+        self, message: Dict[str, Any]
+    ) -> Optional[ErrorAnalyticsEventsData]:
         """Extract and return ErrorAnalyticsEventsData from the message."""
         try:
             error_analytics_event_message = KafkaErrorAnalyticsEventMessage(**message)
@@ -26,8 +28,7 @@ class ErrorAnalyticsEventSubscriber(BaseKafkaSubscriber):
                         f"Duplicate event with ID '{error_analytics_event_message.error_id}' received. Skipping."
                     )
                     return None
-            session_id: Optional[int] = getattr(
-                error_analytics_event_message, "session_id", None)
+            session_id: Optional[int] = getattr(error_analytics_event_message, "session_id", None)
 
             user_team_id = None
             if session_id:
@@ -42,8 +43,7 @@ class ErrorAnalyticsEventSubscriber(BaseKafkaSubscriber):
             )
 
         except Exception as ex:
-            raise ValueError(
-                f"Error processing error analytics event message: {str(ex)}")
+            raise ValueError(f"Error processing error analytics event message: {str(ex)}")
 
     async def _process_message(self, message: Any) -> None:
         """Process and store session event messages in DB."""

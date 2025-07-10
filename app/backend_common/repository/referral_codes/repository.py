@@ -1,9 +1,10 @@
 from typing import Optional
 
-from app.backend_common.repository.db import DB
 from sanic.log import logger
+
 from app.backend_common.models.dao.postgres.referral_codes import ReferralCodes
 from app.backend_common.models.dto.referral_codes_dto import ReferralCodeDTO
+from app.backend_common.repository.db import DB
 
 
 class ReferralCodesRepository:
