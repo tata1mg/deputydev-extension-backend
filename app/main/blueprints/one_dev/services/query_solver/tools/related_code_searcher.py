@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 RELATED_CODE_SEARCHER = ConversationTool(
     name="related_code_searcher",
     description="""
+        This is a built-in tool.
         Searches the codebase for relevant code snippets based on the given query.
         This tool does a vector + lexical hybrid search on the chunks on the entire codebase and then returns the ones which are relevant to the query.
         This tool also optionally takes a list of paths to limit the scope of the search.
@@ -23,8 +24,12 @@ RELATED_CODE_SEARCHER = ConversationTool(
                     },
                     "description": "The paths to limit the search to. If not provided, the search will be done on the entire codebase",
                 },
+                "repo_path": {
+                    "type": "string",
+                    "description": "Expects absolute path of the repository",
+                },
             },
-            "required": ["search_query"],
+            "required": ["search_query", "repo_path"],
             "additionalProperties": False,
         }
     ),

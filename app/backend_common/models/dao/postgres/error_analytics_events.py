@@ -1,6 +1,8 @@
 from tortoise import fields
 from tortoise_wrapper.db import NaiveDatetimeField
+
 from .base import Base
+
 
 class ErrorAnalyticsEvents(Base):
     serializable_keys = {
@@ -13,8 +15,10 @@ class ErrorAnalyticsEvents(Base):
         "error_source",
         "client_version",
         "timestamp",
+        "stack_trace",
         "user_team_id",
         "session_id",
+        "user_system_info",
         "created_at",
         "updated_at",
     }
@@ -30,6 +34,8 @@ class ErrorAnalyticsEvents(Base):
     timestamp = NaiveDatetimeField(null=False)
     user_team_id = fields.BigIntField(null=True)
     session_id = fields.BigIntField(null=True)
+    stack_trace = fields.TextField(null=True)
+    user_system_info = fields.JSONField(null=True)
 
     class Meta:
         table = "error_analytics_events"

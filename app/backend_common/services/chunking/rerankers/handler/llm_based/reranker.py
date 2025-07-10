@@ -49,7 +49,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
                 llm_response = await llm_handler.start_llm_query(
                     session_id=self.session_id,
                     prompt_feature=PromptFeatures.CHUNK_RE_RANKING,
-                    llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                    llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
                     prompt_vars={
                         "query": query,
                         "focus_chunks": render_snippet_array(focus_chunks),
@@ -62,7 +62,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
                         raise ValueError("Expected NonStreamingParsedLLMCallResponse")
                     response = llm_response
                     break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_warn(f"LLM reranking call Attempt {attempt + 1} failed: {e}")
                 await asyncio.sleep(1)  # Optional: add a delay before retrying
 
