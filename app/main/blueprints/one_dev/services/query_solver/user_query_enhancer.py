@@ -35,7 +35,7 @@ class UserQueryEnhancer:
             llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
                 prompt_feature=PromptFeatures.USER_QUERY_ENHANCER,
-                llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+                llm_model=LLModels.CLAUDE_4_SONNET,
                 prompt_vars={"query": payload.user_query},
                 previous_responses=[],
                 stream=False,

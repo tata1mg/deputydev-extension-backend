@@ -12,30 +12,30 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
-    BaseClaude3Point5SonnetPromptHandler,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
+    BaseClaude4SonnetPromptHandler,
 )
 
 
-class Claude3Point5UserQueryEnhancerPrompt(BaseClaude3Point5SonnetPromptHandler):
+class Claude4UserQueryEnhancerPrompt(BaseClaude4SonnetPromptHandler):
     prompt_type = "USER_QUERY_ENHANCER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> Optional[str]:
-        return "Generate an enhanced version of user query (reply with only the enhanced user query - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes)."
+        return "Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes). If prompt have URL, include the URL in the enhanced prompt."
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = self.get_system_prompt()
 
         user_message = f"""
-        User Query: {self.params.get("query")}
+        Prompt: {self.params.get("query")}
         Respond with:
-        <enhanced_query>
-        new enhanced query here
-        </enhanced_query>
+        <enhanced_prompt>
+        new enhanced prompt here
+        </enhanced_prompt>
         """
 
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
@@ -43,14 +43,14 @@ class Claude3Point5UserQueryEnhancerPrompt(BaseClaude3Point5SonnetPromptHandler)
     @classmethod
     def _parse_text_block(cls, text_block: TextBlockData) -> Optional[Dict[str, Any]]:
         content = text_block.content.text
-        start_tag = "<enhanced_query>"
-        end_tag = "</enhanced_query>"
+        start_tag = "<enhanced_prompt>"
+        end_tag = "</enhanced_prompt>"
 
         if start_tag in content and end_tag in content:
             try:
                 enhanced_query = content.split(start_tag)[1].split(end_tag)[0].strip()
                 if enhanced_query:
-                    return {"enhanced_query": enhanced_query}
+                    return {"enhanced_prompt": enhanced_query}
             except IndexError:
                 return None
         return None
