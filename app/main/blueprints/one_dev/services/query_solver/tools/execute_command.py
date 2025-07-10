@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 EXECUTE_COMMAND = ConversationTool(
     name="execute_command",
     description="""
+        This is a built-in tool.
         Executes a CLI command in the current working directory of the project.
         
         This tool is used to perform system-level operations such as building projects,

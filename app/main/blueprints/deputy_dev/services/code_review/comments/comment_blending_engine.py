@@ -263,7 +263,6 @@ class CommentBlendingEngine:
 
         # Attempt summarization with retries
         for attempt in range(self.MAX_RETRIES):
-            # try:
             agents = AgentFactory.get_review_finalization_agents(
                 context_service=self.context_service,
                 comments=multi_comments,

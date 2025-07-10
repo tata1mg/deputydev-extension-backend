@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 FILE_PATH_SEARCHER = ConversationTool(
     name="file_path_searcher",
     description="""
+        This is a built-in tool.
         Searches for files with given search terms in a given directory path.
         It is very important to provide the correct and complete directory path to search in, otherwise the tool will return the results from the repo root.
         This tool uses fuzzy search to match the search terms with the parts of file paths.
@@ -24,8 +25,12 @@ FILE_PATH_SEARCHER = ConversationTool(
                     },
                     "description": "The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
                 },
+                "repo_path": {
+                    "type": "string",
+                    "description": "Expects absolute path of the repository",
+                },
             },
-            "required": ["directory"],
+            "required": ["directory", "repo_path"],
         }
     ),
 )

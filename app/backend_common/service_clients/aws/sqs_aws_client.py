@@ -1,7 +1,8 @@
-from app.backend_common.utils.types.aws import AWSErrorMessages
 from aiobotocore.config import AioConfig  # type: ignore
-from aiobotocore.session import AioSession, ClientCreatorContext, get_session  # type: ignore
 from aiobotocore.endpoint import MAX_POOL_CONNECTIONS  # type: ignore
+from aiobotocore.session import AioSession, ClientCreatorContext, get_session  # type: ignore
+
+from app.backend_common.utils.types.aws import AWSErrorMessages
 
 
 class AWSClient:
