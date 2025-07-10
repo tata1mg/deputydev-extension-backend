@@ -79,3 +79,13 @@ class AWSS3ServiceClient:
         """
         s3_client: S3Client = await self.aws_client_manager.get_client()  # type: ignore
         await s3_client.delete_object(Bucket=self.bucket_name, Key=object_name)
+
+    async def create_presigned_put_url(self, expiry: int, s3_key: str) -> str:
+        """
+        Generate a presigned URL to upload binary
+        """
+        s3_client: S3Client = await self.aws_client_manager.get_client()  # type: ignore
+        response = await s3_client.generate_presigned_url(
+            ClientMethod="put_object", Params={"Bucket": self.bucket_name, "Key": s3_key}, ExpiresIn=expiry
+        )
+        return response
