@@ -343,6 +343,10 @@
         "SIGNED_URL_EXPIRY": 1800,
         "PRIVATE_KEY": ""
     },
+    "AWS_S3_BINARY_BUCKET": {
+        "AWS_BUCKET_NAME": "deputydev",
+        "AWS_REGION": "ap-south-1"
+    },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
             "NAME": "",
@@ -699,6 +703,10 @@
         ],
         "IMAGE_FOLDER_PATH": "chat_images",
         "MAX_FILES": 5
+    },
+    "BINARY_UPLOAD": {
+        "PRESIGNED_URL_EXPIRY": 3600,
+        "AUTH_KEY": ""
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }
