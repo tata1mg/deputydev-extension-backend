@@ -4,10 +4,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
 
 from app.backend_common.service_clients.aws.services.cloudfront import AWSCloudFrontServiceClient
-from app.main.blueprints.one_dev.services.config.dataclasses.main import (
-    ConfigParams,
-    ConfigType,
-)
+from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigParams, ConfigType
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 ConfigManager.configs
@@ -199,7 +196,7 @@ class ConfigFetcher:
                 file_config["download_link"] = await cls._generate_signed_url_for_binary(s3_key)
             base_config["BINARY"] = {
                 **file_config,
-                "password": ConfigManager.configs["BINARY"]["PASSWORD"],
+                "password": ConfigManager.configs["BINARY"]["PASSWORD"],  # remove after 9.0.0 force upgrade
                 "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
