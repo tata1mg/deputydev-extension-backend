@@ -2,7 +2,8 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 
 REPLACE_IN_FILE = ConversationTool(
     name="replace_in_file",
-    description="""Request to replace sections of content in an existing file using SEARCH/REPLACE blocks that define exact changes to specific parts of the file. 
+    description="""This is a built-in tool. 
+    Request to replace sections of content in an existing file using SEARCH/REPLACE blocks that define exact changes to specific parts of the file. 
 This tool should be used when you need to make targeted changes to specific parts of a file.
 Make sure you give all search/replace blocks for a single file in a single request.
 The tool response will tell you if the changes were successful or not.

@@ -5,14 +5,14 @@ from typing import Any, Dict, Optional
 from deputydev_core.services.embedding.pr_review_embedding_manager import (
     PRReviewEmbeddingManager,
 )
+from deputydev_core.services.initialization.review_initialization_manager import (
+    ReviewInitialisationManager,
+)
 from deputydev_core.services.tools.file_path_search.dataclass.main import (
     FilePathSearchPayload,
 )
 from deputydev_core.services.tools.file_path_search.file_path_search import (
     FilePathSearch,
-)
-from deputydev_core.services.initialization.review_initialization_manager import (
-    ReviewInitialisationManager,
 )
 from deputydev_core.services.tools.focussed_snippet_search.dataclass.main import (
     FocussedSnippetSearchParams,
@@ -108,12 +108,14 @@ class ToolHandlers:
             The tool response.
         """
         tool_input["repo_path"] = get_context_value("repo_path")
-        if isinstance(tool_input["search_terms"], str):
-            tool_input["search_terms"] = [tool_input["search_terms"]]
+        if isinstance(tool_input["search_term"], str):
+            tool_input["search_term"] = [tool_input["search_term"]]
         payload = GrepSearchRequestParams(**tool_input)
         grep_search_results = await GrepSearch(repo_path=payload.repo_path).perform_grep_search(
             directory_path=payload.directory_path,
-            search_terms=payload.search_terms,
+            search_term=payload.search_term,
+            case_insensitive=payload.case_insensitive,
+            use_regex=payload.use_regex,
         )
 
         response = {
@@ -144,7 +146,7 @@ class ToolHandlers:
         tool_input["repo_path"] = get_context_value("repo_path")
         payload = IterativeFileReaderRequestParams(**tool_input)
         file_content, eof_reached = await IterativeFileReader(
-            file_path=os.path.join(payload.repo_path, payload.file_path)
+            file_path=os.path.join(payload.repo_path, payload.file_path)  # noqa: PTH118
         ).read_lines(start_line=payload.start_line, end_line=payload.end_line)
         response = {
             "data": {

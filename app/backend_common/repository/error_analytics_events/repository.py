@@ -24,6 +24,8 @@ class ErrorAnalyticsEventsRepository:
             error_data=row.error_data,
             repo_name=row.repo_name,
             error_source=row.error_source,
+            stack_trace=row.stack_trace,
+            user_system_info=row.user_system_info,
             client_version=row.client_version,
             timestamp=row.timestamp,
             user_team_id=row.user_team_id,
@@ -34,8 +36,5 @@ class ErrorAnalyticsEventsRepository:
 
     @classmethod
     async def error_id_exists(cls, error_id: str) -> bool:
-        count = await DB.count_by_filters(
-            model_name=ErrorAnalyticsEvents,
-            filters={"error_id": error_id}
-        )
+        count = await DB.count_by_filters(model_name=ErrorAnalyticsEvents, filters={"error_id": error_id})
         return count > 0

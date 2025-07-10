@@ -1,3 +1,4 @@
+import json
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
@@ -17,6 +18,7 @@ from app.main.blueprints.deputy_dev.services.code_review.context.context_service
 from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.deputy_dev.services.code_review.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
@@ -33,8 +35,6 @@ from app.main.blueprints.deputy_dev.services.code_review.tools.pr_review_planner
 from app.main.blueprints.deputy_dev.services.code_review.tools.tool_handlers import (
     ToolHandlers,
 )
-import json
-from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import EXCEPTION_RAISED_FALLBACK
 
 
 class ToolRequestManager:
