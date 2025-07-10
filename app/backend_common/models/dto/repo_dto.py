@@ -8,7 +8,7 @@ class RepoDTO(BaseModel):
     id: Optional[int] = None
     name: str
     team_id: int
-    scm: Optional[str]
+    scm: Optional[str] = None
     workspace_id: Optional[int] = None
     scm_repo_id: Optional[str] = None
     repo_hash: Optional[str] = None

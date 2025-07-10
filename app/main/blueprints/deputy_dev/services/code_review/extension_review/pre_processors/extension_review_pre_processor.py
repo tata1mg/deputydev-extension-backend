@@ -20,6 +20,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.test_diff import diff
 
 
 class ExtensionReviewPreProcessor:
@@ -38,11 +39,14 @@ class ExtensionReviewPreProcessor:
         source_branch = data.get("source_branch")
         target_branch = data.get("target_branch")
 
-        s3_bucket = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_BUCKET"]
-        s3_region = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_REGION"]
-        s3_client = AWSS3ServiceClient(bucket_name=s3_bucket, region_name=s3_region)
-        review_diff_bytes = await s3_client.get_object(diff_s3_url)
-        review_diff = review_diff_bytes.decode("utf-8")
+        # s3_bucket = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_BUCKET"]
+        # s3_region = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_REGION"]
+        # s3_client = AWSS3ServiceClient(bucket_name=s3_bucket, region_name=s3_region)
+        #TODO uncomment it
+
+        # review_diff_bytes = await s3_client.get_object(diff_s3_url)
+        # review_diff = review_diff_bytes.decode("utf-8")
+        review_diff=diff
 
         diff_handler = ExtensionDiffHandler(review_diff)
         loc = diff_handler.get_diff_loc()
@@ -50,7 +54,7 @@ class ExtensionReviewPreProcessor:
         token_count = diff_handler.get_diff_token_count()
 
         self.extension_repo_dto = await RepoRepository.find_or_create_extension_repo(
-            repo_name=repo_name, repo_origin=repo_origin, team_id=user_team_id
+            repo_name=repo_name, repo_origin=repo_origin, team_id=5
         )
 
         user_team_dto = await UserTeamRepository.db_get(
@@ -79,17 +83,18 @@ class ExtensionReviewPreProcessor:
             reviewed_files=reviewed_files,
             diff_s3_url=diff_s3_url,
             session_id=self.session_id,
-            meta_info={"tokens": token_count}
+            meta_info={"tokens": token_count},
+            source_branch=source_branch,
+            target_branch=target_branch
         )
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 
         if self.is_valid:
-            await ExtensionReviewCache.set(key=self.extension_repo_dto.repo_id, value=review_diff)
+            await ExtensionReviewCache.set(key=self.extension_repo_dto.id, value=review_diff)
 
         return {
             "review_id": self.review_dto.id,
             "session_id": self.session_id,
-
         }
 
 

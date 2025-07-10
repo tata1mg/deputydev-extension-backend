@@ -29,7 +29,7 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.multi_agent_
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,
     AgentRunResult,

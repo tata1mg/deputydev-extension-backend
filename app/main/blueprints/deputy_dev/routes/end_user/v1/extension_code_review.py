@@ -44,10 +44,12 @@ async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @extension_code_review.route("/pre-process", methods=["POST"])
-@validate_client_version
-@authenticate
-async def pre_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
+# @validate_client_version
+# @authenticate
+# async def pre_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
+async def pre_process_extension_review(request: Request, **kwargs):
     data = request.json
     processor = ExtensionReviewPreProcessor()
-    review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
-    return send_response({"status": "SUCCESS", "review": review_dto.model_dump(mode="json")})
+    # review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
+    review_dto = await processor.pre_process_pr(data, user_team_id=data.get("user_team_id"))
+    return send_response(review_dto)

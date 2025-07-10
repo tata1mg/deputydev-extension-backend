@@ -34,7 +34,7 @@ from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service
 )
 
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentRunResult,
     AgentTypes,
@@ -43,10 +43,10 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.factory import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.factory import (
     PromptFeatureFactory,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.comment_blending_engine import (
