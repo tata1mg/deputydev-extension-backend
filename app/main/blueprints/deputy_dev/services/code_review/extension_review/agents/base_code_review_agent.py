@@ -16,8 +16,8 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
     AgentRunResult,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
+    ExtensionContextService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
@@ -32,13 +32,11 @@ class BaseCodeReviewAgent(ABC):
 
     def __init__(
         self,
-        context_service: ContextService,
-        is_reflection_enabled: bool,
+        context_service: ExtensionContextService,
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
         self.context_service = context_service
-        self.is_reflection_enabled = is_reflection_enabled
         self.tiktoken = TikToken()
         self.agent_name = self.agent_type.value
         self.llm_handler = llm_handler
@@ -86,13 +84,12 @@ class BaseCodeReviewAgent(ABC):
         Run the agent and return the agent run result
         """
         total_passes = 1 if not self.is_dual_pass else 2
-        last_pass_result: Optional[Any] = None
         tokens_data: Dict[str, Dict[str, Any]] = {}
         for pass_num in range(1, total_passes + 1):
             prompt_feature = self.prompt_features[pass_num - 1]  # 0 indexed
 
             # check if the token limit has been exceeded
-            prompt_vars = await self.required_prompt_variables(last_pass_result=last_pass_result or {})
+            prompt_vars = await self.required_prompt_variables()
             prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(
                 model_name=self.model, feature=prompt_feature
             )(prompt_vars)

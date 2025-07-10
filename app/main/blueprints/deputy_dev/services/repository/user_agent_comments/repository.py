@@ -25,7 +25,8 @@ class UserAgentCommentMappingRepository:
             payload = mapping_dto.dict()
             del payload["id"]
             row = await DB.insert_row(UserAgentCommentMapping, payload)
-            return UserAgentCommentMappingDTO(**row)
+            row_dict = await row.to_dict()
+            return UserAgentCommentMappingDTO(**row_dict)
         except Exception as ex:
             logger.error(f"Error inserting user agent comment mapping: {mapping_dto.dict()}, ex: {ex}")
             raise ex

@@ -11,7 +11,7 @@ class UserAgentCommentMapping(Base):
     }
 
     id = fields.BigIntField(primary_key=True)
-    agent = fields.ForeignKeyField("dao.UserAgent", related_name="user_agent_comment_mappings")
+    agent = fields.ForeignKeyField("dao.UserAgents", related_name="user_agent_comment_mappings")
     comment = fields.ForeignKeyField("dao.IdeReviewsComments", related_name="user_agent_comment_mappings")
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
