@@ -1,6 +1,7 @@
 -- migrate:up
 CREATE TABLE IF NOT EXISTS user_agents (
     id BIGSERIAL PRIMARY KEY,
+    user_team_id INT NOT NULL,
     agent_name CITEXT NOT NULL,
     display_name VARCHAR(1000),
     custom_prompt TEXT DEFAULT '',

@@ -3,17 +3,17 @@ from typing import Any, Dict, Optional
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
 
-from ..base_commenter import BaseCommenterAgent
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.base_commentor import BaseCommenterAgent
 
 
 class CustomAgent(BaseCommenterAgent):

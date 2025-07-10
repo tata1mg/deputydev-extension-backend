@@ -31,7 +31,8 @@ class ExtensionReviewsRepository:
             payload = review_dto.dict()
             del payload["id"]
             row = await DB.insert_row(ExtensionReviews, payload)
-            return ExtensionReviewDTO(**row)
+            row_dict = await row.to_dict()
+            return ExtensionReviewDTO(**row_dict)
         except Exception as ex:
             logger.error(f"Error inserting extension review: {review_dto.dict()}, ex: {ex}")
             raise ex

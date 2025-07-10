@@ -1,14 +1,14 @@
 from typing import Dict
 
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
 
-from ..base_commenter import BaseCommenterAgent
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.base_commentor import BaseCommenterAgent
 
 
 class BusinessValidationAgent(BaseCommenterAgent):

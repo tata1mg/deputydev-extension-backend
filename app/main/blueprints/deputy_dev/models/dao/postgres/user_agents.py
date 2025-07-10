@@ -3,10 +3,11 @@ from tortoise import fields
 from tortoise_wrapper.db import CITextField
 from app.backend_common.models.dao.postgres.base import Base
 
-class UserAgent(Base):
+class UserAgents(Base):
     serializable_keys = {
         "id",
         "agent_name",
+        "user_team_id",
         "display_name",
         "custom_prompt",
         "exclusions",
@@ -20,6 +21,7 @@ class UserAgent(Base):
 
     id = fields.BigIntField(primary_key=True)
     agent_name = CITextField(max_length=1000)
+    user_team_id = fields.IntField()
     display_name = fields.CharField(max_length=1000, null=True)
     custom_prompt = fields.TextField(default="")
     exclusions = fields.JSONField(default=list)
@@ -34,6 +36,7 @@ class UserAgent(Base):
     class Columns(Enum):
         id = ("id",)
         agent_name = ("agent_name",)
+        user_team_id = ("user_team_id",)
         display_name = ("display_name",)
         custom_prompt = ("custom_prompt",)
         exclusions = ("exclusions",)
