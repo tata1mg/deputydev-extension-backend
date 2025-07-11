@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Dict
+from typing import Any, ClassVar, Dict, Optional
 
 from types_aiobotocore_s3.client import S3Client
 
@@ -79,3 +79,22 @@ class AWSS3ServiceClient:
         """
         s3_client: S3Client = await self.aws_client_manager.get_client()  # type: ignore
         await s3_client.delete_object(Bucket=self.bucket_name, Key=object_name)
+
+    async def create_presigned_put_url(
+        self,
+        s3_key: str,
+        expiry: int,
+        cache_control: Optional[str] = None,
+    ) -> str:
+        """
+        Generate a presigned URL to upload binary with optional Cache-Control header.
+        """
+        s3_client: S3Client = await self.aws_client_manager.get_client()  # type: ignore
+        params = {
+            "Bucket": self.bucket_name,
+            "Key": s3_key,
+        }
+        if cache_control:
+            params["CacheControl"] = cache_control
+        response = await s3_client.generate_presigned_url(ClientMethod="put_object", Params=params, ExpiresIn=expiry)
+        return response
