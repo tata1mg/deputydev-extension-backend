@@ -5,19 +5,23 @@ from botocore.signers import CloudFrontSigner
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-from deputydev_core.utils.config_manager import ConfigManager
 
 
 class AWSCloudFrontServiceClient:
     _signers: ClassVar[Dict[str, CloudFrontSigner]] = {}
 
-    def __init__(self):
-        self.distribution_url = ConfigManager.configs["AWS_CLOUDFRONT"]["DISTRIBUTION_URL"]
-        self.key_pair_id = ConfigManager.configs["AWS_CLOUDFRONT"]["KEY_PAIR_ID"]
-        self.default_expiry: int = ConfigManager.configs["AWS_CLOUDFRONT"]["SIGNED_URL_EXPIRY"]
-        self.private_key_str = ConfigManager.configs["AWS_CLOUDFRONT"]["PRIVATE_KEY"]
+    def __init__(
+        self,
+        distribution_url: str,
+        key_pair_id: str,
+        private_key_str: str,
+        default_expiry: int = 1800,  # seconds
+    ) -> None:
+        self.distribution_url = distribution_url
+        self.key_pair_id = key_pair_id
+        self.private_key_str = private_key_str
+        self.default_expiry = default_expiry
 
-        # Create or reuse signer for this key pair
         if self.key_pair_id not in self._signers:
             self._signers[self.key_pair_id] = self._create_signer()
 
