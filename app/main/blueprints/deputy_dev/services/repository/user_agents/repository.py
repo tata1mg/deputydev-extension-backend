@@ -1,6 +1,6 @@
 from typing import List, Union, Optional
 from sanic.log import logger
-from app.main.blueprints.deputy_dev.models.dao.postgres.user_agents import UserAgent
+from app.main.blueprints.deputy_dev.models.dao.postgres.user_agents import UserAgents
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.backend_common.repository.db import DB
 
@@ -10,7 +10,7 @@ class UserAgentRepository:
     async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[UserAgentDTO, List[UserAgentDTO]]:
         try:
             agent_data = await DB.by_filters(
-                model_name=UserAgent, where_clause=filters, fetch_one=fetch_one, order_by=order_by
+                model_name=UserAgents, where_clause=filters, fetch_one=fetch_one, order_by=order_by
             )
             if agent_data and fetch_one:
                 return UserAgentDTO(**agent_data)
@@ -25,8 +25,9 @@ class UserAgentRepository:
         try:
             payload = agent_dto.dict()
             del payload["id"]
-            row = await DB.insert_row(UserAgent, payload)
-            return UserAgentDTO(**row)
+            row = await DB.insert_row(UserAgents, payload)
+            row_dict = await row.to_dict()
+            return UserAgentDTO(**row_dict)
         except Exception as ex:
             logger.error(f"Error inserting user agent: {agent_dto.dict()}, ex: {ex}")
             raise ex
@@ -34,7 +35,7 @@ class UserAgentRepository:
     @classmethod
     async def db_update(cls, filters, payload) -> Optional[UserAgentDTO]:
         try:
-            await DB.update_by_filters(UserAgent, filters, payload)
+            await DB.update_by_filters(UserAgents, filters, payload)
             updated = await cls.db_get(filters, fetch_one=True)
             return updated
         except Exception as ex:
@@ -44,7 +45,7 @@ class UserAgentRepository:
     @classmethod
     async def db_delete(cls, filters) -> None:
         try:
-            await DB.delete_by_filters(UserAgent, filters)
+            await DB.delete_by_filters(UserAgents, filters)
         except Exception as ex:
             logger.error(f"Error deleting user agent: {filters}, ex: {ex}")
             raise ex

@@ -7,6 +7,7 @@ class ExtensionReviews(Base):
     serializable_keys = {
         "id",
         "review_status",
+        "user_team_id",
         "repo_id",
         "loc",
         "reviewed_files",
@@ -27,9 +28,9 @@ class ExtensionReviews(Base):
 
     id = fields.BigIntField(pk=True)
     review_status = fields.CharField(max_length=100)
-
-    repo = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
     user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
+    repo = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
+    # user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
     loc = fields.IntField()
     reviewed_files = fields.JSONField()
     execution_time_seconds = fields.IntField(null=True)
@@ -55,6 +56,7 @@ class ExtensionReviews(Base):
     class Columns(Enum):
         id = ("id",)
         review_status = ("review_status",)
+        user_team_id = ("user_team_id",)
         repo_id = ("repo_id",)
         loc = ("loc",)
         reviewed_files = ("reviewed_files",)
