@@ -8,6 +8,7 @@ from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.repository.db import DB
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 import mmh3
+import hashlib
 
 
 class RepoRepository:
@@ -58,15 +59,16 @@ class RepoRepository:
 
     @classmethod
     async def find_or_create_extension_repo(cls, repo_name: str, repo_origin: str, team_id: int):
+        # repo_hash = mmh3.hash(repo_origin)
+        repo_hash =hashlib.sha256(repo_origin.encode()).hexdigest()
         repo_dto = await cls.db_get(
-            filters={"name": repo_name, "repo_hash": mmh3.hash(repo_origin), "team_id": team_id}, fetch_one=True
+            filters={"name": repo_name, "repo_hash": repo_hash, "team_id": team_id}, fetch_one=True
         )
         if not repo_dto:
             repo_data = {
                 "name": repo_name,
-                "repo_hash": repo_origin,
+                "repo_hash": repo_hash,
                 "team_id": team_id,
-                "scm": "VSCODE_EXT",  # or whatever string you use for extension SCM
             }
             repo_dto = await cls.db_insert(RepoDTO(**repo_data))
         return repo_dto

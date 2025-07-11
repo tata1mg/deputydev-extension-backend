@@ -20,7 +20,7 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.base_prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
 
