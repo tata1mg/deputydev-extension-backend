@@ -706,6 +706,7 @@
     },
     "BINARY_UPLOAD": {
         "PRESIGNED_URL_EXPIRY": 3600,
+        "CACHE_CONTROL" : "max-age=7776000",
         "AUTH_KEY": ""
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
