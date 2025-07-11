@@ -10,21 +10,19 @@ TASK_COMPLETION = ConversationTool(
         If **replace_in_file** fails multiple times, it is recommended to call this tool with status as 'failed' and a message indicating the reason for failure rather than retrying the same tool.
     """,
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "description": "Overall result of the task",
-                    "enum": ["completed", "failed", "partial"],
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Short human-readable summary (e.g., what was done or why it failed).",
-                },
-            },
-            "required": ["status", "message"],
-            "additionalProperties": False,
-        }
+        type="object",
+        properties={
+            "status": JSONSchema(
+                type="string",
+                description="Overall result of the task.",
+                enum=["completed", "failed", "partial"],
+            ),
+            "message": JSONSchema(
+                type="string",
+                description="Short human-readable summary (e.g., what was done or why it failed).",
+            ),
+        },
+        required=["status", "message"],
+        additionalProperties=False,
     ),
 )
