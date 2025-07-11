@@ -21,9 +21,15 @@ class BaseClaudeQuerySolverPrompt:
         self.params = params
 
     def get_system_prompt(self) -> str:
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path = "use absolute path here" if use_absolute_path else "relative file path here"
+        file_path_example = (
+            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
+            if use_absolute_path
+            else "src/tools/grep_search.py"
+        )
         if self.params.get("write_mode") is True:
-            system_message = textwrap.dedent(
-                """
+            system_message = textwrap.dedent(f"""
                 You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
                 # Communication guidelines:
                 1. Be concise and avoid repetition
@@ -47,20 +53,20 @@ class BaseClaudeQuerySolverPrompt:
                 tool name: write_to_file
                 path: src/frontend-config.json
                 diff:
-                {
+                {{
                 "apiEndpoint": "https://api.example.com",
-                "theme": {
+                "theme": {{
                     "primaryColor": "#007bff",
                     "secondaryColor": "#6c757d",
                     "fontFamily": "Arial, sans-serif"
-                },
-                "features": {
+                }},
+                "features": {{
                     "darkMode": true,
                     "notifications": true,
                     "analytics": false
-                },
+                }},
                 "version": "1.0.0"
-                }
+                }}
 
                 ## Example 2: Requesting to make targeted edits to a file
 
@@ -70,14 +76,14 @@ class BaseClaudeQuerySolverPrompt:
                 <<<<<<< SEARCH
                 import React from 'react';
                 =======
-                import React, { useState } from 'react';
+                import React, {{ useState }}, from 'react';
                 >>>>>>> REPLACE
 
                 <<<<<<< SEARCH
-                function handleSubmit() {
+                function handleSubmit() {{
                 saveData();
                 setLoading(false);
-                }
+                }},
 
                 =======
                 >>>>>>> REPLACE
@@ -86,10 +92,10 @@ class BaseClaudeQuerySolverPrompt:
                 return (
                 <div>
                 =======
-                function handleSubmit() {
+                function handleSubmit() {{
                 saveData();
                 setLoading(false);
-                }
+                }},
 
                 return (
                 <div>
@@ -106,15 +112,21 @@ class BaseClaudeQuerySolverPrompt:
                 tool name: file_path_searcher
                 directory: src/components/
                 search_terms: ["Button", "Modal"]
+                repo_path: /absolute/path/to/repo
 
-                ## Example 5: Searching file contents with grep
-                tool name: grep_search
-                directory_path: src/utils/
-                search_terms: ["validateInput", "parseDate"]
+                ## Example 5: Searching file contents with grep search tool
+                tool name: grep_search        
+                "search_path": "src/utils/",
+                "query": "validateInput",
+                "case_insensitive": False,
+                "use_regex": False,
+                "repo_path": "/absolute/path/to/repo"
+
 
                 ## Example 6: Reading part of a file iteratively
                 tool name: iterative_file_reader
                 file_path: src/services/data_loader.py
+                repo_path: "/absolute/path/to/repo"
                 start_line: 1
                 end_line: 100
 
@@ -122,15 +134,15 @@ class BaseClaudeQuerySolverPrompt:
                 tool name: focused_snippets_searcher
                 search_terms:
                 [
-                {
+                {{
                     "keyword": "UserManager",
                     "type": "class",
                     "file_path": "src/auth/user_manager.py"
-                },
-                {
+                }},
+                {{
                     "keyword": "calculate_score",
                     "type": "function"
-                }
+                }},
                 ]
 
 
@@ -151,7 +163,7 @@ class BaseClaudeQuerySolverPrompt:
                 Usage: 
                 <code_block>
                 <programming_language>programming Language name</programming_language>
-                <file_path>file path here</file_path>
+                <file_path>{file_path}</file_path>
                 <is_diff>false(always false)</is_diff>
                 code here
                 </code_block>
@@ -160,7 +172,7 @@ class BaseClaudeQuerySolverPrompt:
                 ## Example of code block:
                 <code_block>
                 <programming_language>python</programming_language>
-                <file_path>app/main.py</file_path>
+                <file_path>{file_path_example}</file_path>
                 <is_diff>false</is_diff>
                 def some_function():
                     return "Hello, World!"
@@ -233,8 +245,7 @@ class BaseClaudeQuerySolverPrompt:
                 4. No manual implementation is required from the user.
                 5. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
-                """
-            )
+                """)
         else:
             system_message = textwrap.dedent(
                 """
@@ -288,6 +299,8 @@ class BaseClaudeQuerySolverPrompt:
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path_example = "//Users/vaibhavmeena/DeputyDev/app/main.py" if use_absolute_path else "app/main.py"
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
             for focus_item in self.params["focus_items"]:
@@ -327,7 +340,7 @@ class BaseClaudeQuerySolverPrompt:
             General structure of code block:
             <code_block>
             <programming_language>python</programming_language>
-            <file_path>app/main.py</file_path>
+            <file_path>{file_path_example}</file_path>
             <is_diff>false(always)</is_diff>
             def some_function():
                 return "Hello, World!"
@@ -365,7 +378,7 @@ class BaseClaudeQuerySolverPrompt:
                 General structure of code block:
                 <code_block>
                 <programming_language>python</programming_language>
-                <file_path>app/main.py</file_path>
+                <file_path>{file_path_example}</file_path>
                 <is_diff>false</is_diff>
                 def some_function():
                     return "Hello, World!"
