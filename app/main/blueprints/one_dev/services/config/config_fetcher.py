@@ -207,7 +207,17 @@ class ConfigFetcher:
         """
         Generate signed URL for binary download from CloudFront
         """
+        distribution_url = ConfigManager.configs["AWS_CLOUDFRONT"]["DISTRIBUTION_URL"]
+        key_pair_id = ConfigManager.configs["AWS_CLOUDFRONT"]["KEY_PAIR_ID"]
+        private_key_str = ConfigManager.configs["AWS_CLOUDFRONT"]["PRIVATE_KEY"]
         expiry = ConfigManager.configs["AWS_CLOUDFRONT"]["SIGNED_URL_EXPIRY"]
-        cloudfront_client = AWSCloudFrontServiceClient()
+
+        cloudfront_client = AWSCloudFrontServiceClient(
+            distribution_url=distribution_url,
+            key_pair_id=key_pair_id,
+            private_key_str=private_key_str,
+            default_expiry=expiry,
+        )
+
         signed_url = await cloudfront_client.generate_signed_url(s3_key=s3_key, expiry=expiry)
         return signed_url
