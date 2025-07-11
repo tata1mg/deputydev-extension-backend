@@ -337,6 +337,16 @@
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
+    "AWS_CLOUDFRONT": {
+        "DISTRIBUTION_URL": "",
+        "KEY_PAIR_ID": "",
+        "SIGNED_URL_EXPIRY": 1800,
+        "PRIVATE_KEY": ""
+    },
+    "AWS_S3_BINARY_BUCKET": {
+        "AWS_BUCKET_NAME": "deputydev",
+        "AWS_REGION": "ap-south-1"
+    },
     "LLM_MODELS": {
         "CLAUDE_3_POINT_5_SONNET": {
             "NAME": "",
@@ -523,12 +533,10 @@
             "CHUNKING_ENABLED": true
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
-        "PRESIGNED_URL_EXPIRY": 1800,
         "FILE": {
             "latest": {
                 "darwin": {
                     "arm64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
                         "s3_key": "",
@@ -536,7 +544,6 @@
                         "file_path": ""
                     },
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
                         "s3_key": "",
@@ -546,7 +553,6 @@
                 },
                 "linux": {
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
                         "s3_key": "",
@@ -556,7 +562,6 @@
                 },
                 "win32": {
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
                         "s3_key": "",
@@ -698,6 +703,11 @@
         ],
         "IMAGE_FOLDER_PATH": "chat_images",
         "MAX_FILES": 5
+    },
+    "BINARY_UPLOAD": {
+        "PRESIGNED_URL_EXPIRY": 3600,
+        "CACHE_CONTROL" : "max-age=7776000",
+        "AUTH_KEY": ""
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3
 }
