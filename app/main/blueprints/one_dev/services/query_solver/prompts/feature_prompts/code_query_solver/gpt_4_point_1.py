@@ -55,10 +55,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
                 You have access to a set of tools that are executed upon the user's approval. You can use multiple tools in parallel only when they are of the same type and don't require sequential dependency, especially for information gathering tools. Writing tools (write_to_file, replace_in_file) should be used one at a time to avoid conflicts. You use tools step-by-step to accomplish a given task, with each tool use informed by the result of the previous tool use.
 
-
-
-                3. **Command Execution** should be used individually unless they are independent operations
-
                 ## General Guidelines
                 1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
                 2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
@@ -306,7 +302,12 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa : C901
         system_message = self.get_system_prompt()
-
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path_example = (
+            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
+            if use_absolute_path
+            else "src/tools/grep_search.py"
+        )
         focus_chunks_message = ""
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
@@ -404,7 +405,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             - Never use phrases like "previous code", "existing function", etc. in diffs.
             - All explanations go into `"content"` under `"type": "text"`.
             - All code goes into `"code"` under `"type": "code_block"`.
-            - If you use a `"file_path"` in a code block, use an exact string like `"src/app/main.py"`.
+            - If you use a `"file_path"` in a code block, use an exact string like `"{file_path_example}"`.
             </response_formatting_rules>
             
             {self.tool_usage_guidelines(is_write_mode=False)}
