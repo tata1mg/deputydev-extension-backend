@@ -11,9 +11,11 @@ __all__ = [
     "Configurations",
     "Tokens",
     "Agents",
-    # "IdeReviewsComments",
-    # "IdeReviewCommentFeedbacks",
-    # "ExtensionReviews",
+    "IdeReviewsComments",
+    "IdeReviewCommentFeedbacks",
+    "ExtensionReviews",
+    "UserAgentCommentMapping",
+    "UserAgent"
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos
@@ -28,6 +30,8 @@ from .feedbacks import Feedbacks
 from .integrations import Integrations
 from .pr_comments import PRComments
 from .pull_requests import PullRequests
-# from .ide_reviews_comments import IdeReviewsComments
-# from .ide_review_comment_feedbacks import IdeReviewCommentFeedbacks
-# from .extension_reviews import ExtensionReviews
+from .ide_reviews_comments import IdeReviewsComments
+from .ide_review_comment_feedbacks import IdeReviewCommentFeedbacks
+from .extension_reviews import ExtensionReviews
+from .user_agent_comment_mapping import UserAgentCommentMapping
+from .user_agents import UserAgent

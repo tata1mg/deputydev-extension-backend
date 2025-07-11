@@ -7,11 +7,11 @@ class UserAgentDTO(BaseModel):
     id: Optional[int] = None
     agent_name: str
     display_name: Optional[str] = None
-    custom_prompt: str = ""
-    exclusions: List[Any] = []
-    inclusions: List[Any] = []
+    custom_prompt: Optional[str] = ""
+    exclusions: Optional[List[Any]] = []
+    inclusions: Optional[List[Any]] = []
     confidence_score: float = 0.9
-    objective: str = "Responsibility of this agent is checking security issues"
+    objective: Optional[str] = None
     is_custom_agent: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
