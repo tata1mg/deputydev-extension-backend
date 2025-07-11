@@ -81,6 +81,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .prompts.factory import PromptFeatureFactory
 
@@ -252,6 +253,10 @@ class QuerySolver:
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
+        use_absolute_path = compare_version(
+            client_data.client_version, "8.3.0", ">"
+        )  # remove after 9.0.0. force upgrade  # noqa: N806
+
         if payload.query:
             asyncio.create_task(
                 self._generate_session_summary(
@@ -278,6 +283,7 @@ class QuerySolver:
                     "shell": payload.shell,
                     "vscode_env": payload.vscode_env,
                     "repositories": payload.repositories,
+                    "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade
                 },
                 attachments=payload.attachments,
                 previous_responses=await self.get_previous_message_thread_ids(
