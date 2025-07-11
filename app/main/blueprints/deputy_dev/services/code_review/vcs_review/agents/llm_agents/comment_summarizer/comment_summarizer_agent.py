@@ -6,7 +6,7 @@ from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
     BaseCodeReviewAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
@@ -15,7 +15,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.comments.datacla
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
 
