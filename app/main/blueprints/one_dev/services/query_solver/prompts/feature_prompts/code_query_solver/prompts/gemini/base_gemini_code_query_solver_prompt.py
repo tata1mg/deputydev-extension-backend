@@ -25,9 +25,16 @@ class BaseGeminiCodeQuerySolverPrompt:
         self.params = params
 
     def get_system_prompt(self) -> str:
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path = "absolute file path here" if use_absolute_path else "relative file path here"
+        file_path_example = (
+            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
+            if use_absolute_path
+            else "src/tools/grep_search.py"
+        )
         if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
-                """
+                f"""
                 You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
                 # Communication guidelines:
                 1. Be concise and avoid repetition
@@ -109,16 +116,21 @@ class BaseGeminiCodeQuerySolverPrompt:
                 ## Example 4: Searching for files in a directory
                 tool name: file_path_searcher
                 directory: src/components/
+                repo_path: /absolute/path/to/repo                            
                 search_terms: ["Button", "Modal"]
 
                 ## Example 5: Searching file contents with grep
-                tool name: grep_search
-                directory_path: src/utils/
-                search_terms: ["validateInput", "parseDate"]
+                tool name: grep_search        
+                "search_path": "src/utils/",
+                "query": "validateInput",
+                "case_insensitive": false,
+                "use_regex": false,
+                "repo_path": "/absolute/path/to/repo"
 
                 ## Example 6: Reading part of a file iteratively
                 tool name: iterative_file_reader
                 file_path: src/services/data_loader.py
+                repo_path: /absolute/path/to/repo
                 start_line: 1
                 end_line: 100
 
@@ -144,7 +156,7 @@ class BaseGeminiCodeQuerySolverPrompt:
                 symbol: xyz
                 
                 ### Instance 2
-q               query: Get all the usages of xyz method in class abc
+                query: Get all the usages of xyz method in class abc
                 tool name: language-server-references
                 symbol: abc.xyz
 
@@ -160,14 +172,14 @@ q               query: Get all the usages of xyz method in class abc
                 8. Please do not include line numbers at the beginning of lines in the search and replace blocks when using the replace_in_file tool. (IMPORTANT)
                 9. Before using replace_in_file or write_to_file tools, send a small text to user telling you are doing these changes etc. (IMPORTANT)
 
-                {tool_use_capabilities_resolution_guidelines}
+                {self.tool_use_capabilities_resolution_guidelines(is_write_mode=True)}
 
                 If you want to show a code snippet to user, please provide the code in the following format:
 
                 Usage: 
                 <code_block>
                 <programming_language>programming Language name</programming_language>
-                <file_path>file path here</file_path>
+                <file_path>{file_path}</file_path>
                 <is_diff>false(always false)</is_diff>
                 code here
                 </code_block>
@@ -176,7 +188,7 @@ q               query: Get all the usages of xyz method in class abc
                 ## Example of code block:
                 <code_block>
                 <programming_language>python</programming_language>
-                <file_path>app/main.py</file_path>
+                <file_path>{file_path_example}</file_path>
                 <is_diff>false</is_diff>
                 def some_function():
                     return "Hello, World!"
@@ -310,7 +322,7 @@ q               query: Get all the usages of xyz method in class abc
                 symbolName: xyz
                 
                 ### Instance 2
-q               query: Find all the references of xyz method in class abc
+                query: Find all the references of xyz method in class abc
                 tool name: language-server-references
                 symbolName: abc.xyz
                 
@@ -325,6 +337,12 @@ q               query: Find all the references of xyz method in class abc
         return system_message
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path_example = (
+            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
+            if use_absolute_path
+            else "src/tools/grep_search.py"
+        )
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
@@ -365,7 +383,7 @@ q               query: Find all the references of xyz method in class abc
             General structure of code block:
             <code_block>
             <programming_language>python</programming_language>
-            <file_path>app/main.py</file_path>
+            <file_path>{file_path_example}</file_path>
             <is_diff>false(always)</is_diff>
             def some_function():
                 return "Hello, World!"
@@ -399,7 +417,7 @@ q               query: Find all the references of xyz method in class abc
             General structure of code block:
             <code_block>
             <programming_language>python</programming_language>
-            <file_path>app/main.py</file_path>
+            <file_path>{file_path_example}</file_path>
             <is_diff>false</is_diff>
             def some_function():
                 return "Hello, World!"
