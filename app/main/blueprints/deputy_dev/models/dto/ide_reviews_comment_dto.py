@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
+from .user_agent_dto import UserAgentDTO
 
 
 class IdeReviewsCommentDTO(BaseModel):
@@ -13,6 +14,7 @@ class IdeReviewsCommentDTO(BaseModel):
     line_number: int
     tag: str
     is_valid: bool
+    agents: Optional[list[UserAgentDTO]] = []
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

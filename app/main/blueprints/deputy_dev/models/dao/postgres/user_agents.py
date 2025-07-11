@@ -26,7 +26,7 @@ class UserAgent(Base):
     exclusions = fields.JSONField(default=list)
     inclusions = fields.JSONField(default=list)
     confidence_score = fields.FloatField(default=0.9)
-    objective = fields.TextField(default="Responsibility of this agent is checking security issues")
+    objective = fields.TextField()
     is_custom_agent = fields.BooleanField(default=False)
 
     class Meta:
