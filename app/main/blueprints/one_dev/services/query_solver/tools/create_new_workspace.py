@@ -22,19 +22,17 @@ CREATE_NEW_WORKSPACE = ConversationTool(
         - Freely use other tools to complete the task.
         """),
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": textwrap.dedent(
-                        "A clear and concise description of the workspace or project the user wants to create. "
-                        "This is a natural language request like 'Create a Next.js blog with TypeScript' or "
-                        "'Start a Vite React project for a dashboard UI'."
-                    ),
-                },
-            },
-            "required": ["query"],
-        }
+        type="object",
+        properties={
+            "query": JSONSchema(
+                type="string",
+                description=textwrap.dedent(
+                    "A clear and concise description of the workspace or project the user wants to create. "
+                    "This is a natural language request like 'Create a Next.js blog with TypeScript' or "
+                    "'Start a Vite React project for a dashboard UI'."
+                ),
+            ),
+        },
+        required=["query"],
     ),
 )

@@ -90,6 +90,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 {
                 "tool_name": "file_path_searcher",
                 "directory": "src/components/",
+                "repo_path": "/absolute/path/to/repo"
                 "search_terms": ["Button", "Modal"]
                 }
 
@@ -97,14 +98,19 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 ## Example 5: Searching file contents with grep
                 tool name: grep_search
                 {
-                "directory_path": "src/utils/",
-                "search_terms": ["validateInput", "parseDate"]
+                "search_path": "src/utils/",
+                "query": "validateInput",
+                "case_insensitive": false,
+                "use_regex": false,
+                "repo_path": "/absolute/path/to/repo"
                 }
+
 
                 ## Example 6: Reading part of a file iteratively
                 tool name: iterative_file_reader
                 {
                 "file_path": "src/services/data_loader.py",
+                "repo_path": "/absolute/path/to/repo"
                 "start_line": 1,
                 "end_line": 100
                 }
@@ -376,7 +382,12 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
-
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path_example = (
+            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
+            if use_absolute_path
+            else "src/tools/grep_search.py"
+        )
         focus_chunks_message = ""
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
@@ -474,7 +485,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             - Never use phrases like "previous code", "existing function", etc. in diffs.
             - All explanations go into `"content"` under `"type": "text"`.
             - All code goes into `"code"` under `"type": "code_block"`.
-            - If you use a `"file_path"` in a code block, use an exact string like `"src/app/main.py"`.
+            - If you use a `"file_path"` in a code block, use an exact string like `"{file_path_example}"`.
             </response_formatting_rules>
             
             {self.tool_usage_guidelines(is_write_mode=False)}
