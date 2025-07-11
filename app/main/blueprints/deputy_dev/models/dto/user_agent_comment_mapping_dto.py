@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
+
 class UserAgentCommentMappingDTO(BaseModel):
     id: Optional[int] = None
     agent_id: int
