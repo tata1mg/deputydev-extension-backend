@@ -12,26 +12,22 @@ FILE_PATH_SEARCHER = ConversationTool(
         This gives at max 100 files.
     """,
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "directory": {
-                    "type": "string",
-                    "description": "The complete path of the directory",
-                },
-                "search_terms": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                    },
-                    "description": "The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
-                },
-                "repo_path": {
-                    "type": "string",
-                    "description": "Expects absolute path of the repository",
-                },
-            },
-            "required": ["directory", "repo_path"],
-        }
+        type="object",
+        properties={
+            "directory": JSONSchema(
+                type="string",
+                description="The full path to the file, relative to the root of the repository.",
+            ),
+            "repo_path": JSONSchema(
+                type="string",
+                description="The absolute path to the root of the repository.",
+            ),
+            "search_terms": JSONSchema(
+                type="array",
+                items=JSONSchema(type="string"),
+                description="The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
+            ),
+        },
+        required=["directory", "repo_path"],
     ),
 )
