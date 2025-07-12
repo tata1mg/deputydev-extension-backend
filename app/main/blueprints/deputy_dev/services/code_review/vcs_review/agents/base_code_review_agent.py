@@ -16,8 +16,8 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
     AgentRunResult,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
+    ExtensionContextService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
@@ -32,12 +32,12 @@ class BaseCodeReviewAgent(ABC):
 
     def __init__(
         self,
-        context_service: ContextService,
+        extension_context_service: ExtensionContextService,
         is_reflection_enabled: bool,
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
-        self.context_service = context_service
+        self.extension_context_service = extension_context_service
         self.is_reflection_enabled = is_reflection_enabled
         self.tiktoken = TikToken()
         self.agent_name = self.agent_type.value
