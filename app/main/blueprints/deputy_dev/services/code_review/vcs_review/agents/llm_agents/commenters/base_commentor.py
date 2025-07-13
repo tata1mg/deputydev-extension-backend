@@ -23,8 +23,8 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
 )
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
-    ExtensionContextService,
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
@@ -52,12 +52,12 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
     def __init__(
         self,
-        extension_context_service: ExtensionContextService,
+        context_service: ContextService,
         is_reflection_enabled: bool,
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
-        super().__init__(extension_context_service, is_reflection_enabled, llm_handler, model)
+        super().__init__(context_service, is_reflection_enabled, llm_handler, model)
         self.agent_name = SettingService.helper.predefined_name_to_custom_name(self.agent_name)
         self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
         self.agent_id = self.agent_setting.get("agent_id")

@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
@@ -9,33 +9,30 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
     AgentAndInitParams,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.comment_summarizer.comment_summarizer_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.comment_summarizer.comment_summarizer_agent import (
     CommentSummarizerAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.comment_validator.comment_validator_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.comment_validator.comment_validator_agent import (
     CommentValidatorAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.business_validation_agent import (
-    BusinessValidationAgent,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.code_communication_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.code_communication_agent import (
     CodeCommunicationAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.code_maintainability_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.code_maintainability_agent import (
     CodeMaintainabilityAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.error_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.error_agent import (
     ErrorAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.performance_optimization_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.performance_optimization_agent import (
     PerformanceOptimizationAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
-    PRSummarizerAgent,
-)
+# from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
+#     PRSummarizerAgent,
+# )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     ParsedAggregatedCommentData,
     ParsedCommentData,
@@ -43,9 +40,14 @@ from app.main.blueprints.deputy_dev.services.code_review.common.comments.datacla
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
+    ExtensionContextService,
+)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.base_commentor import BaseCommenterAgent
 
 
 class AgentFactory:
@@ -62,13 +64,12 @@ class AgentFactory:
     }
 
     code_review_agents = {
-        AgentTypes.BUSINESS_LOGIC_VALIDATION: BusinessValidationAgent,
         AgentTypes.CODE_MAINTAINABILITY: CodeMaintainabilityAgent,
         AgentTypes.CODE_COMMUNICATION: CodeCommunicationAgent,
         AgentTypes.ERROR: ErrorAgent,
         AgentTypes.PERFORMANCE_OPTIMIZATION: PerformanceOptimizationAgent,
         AgentTypes.SECURITY: SecurityAgent,
-        AgentTypes.PR_SUMMARY: PRSummarizerAgent,
+        # AgentTypes.PR_SUMMARY: PRSummarizerAgent,
     }
 
     review_finalization_agents = {
@@ -105,6 +106,40 @@ class AgentFactory:
                     )
 
         return initialized_agents
+
+    @classmethod
+    def get_code_review_agent(
+            cls,
+            agent_and_init_params: AgentAndInitParams,
+            context_service: ExtensionContextService,
+            llm_handler: LLMHandler[PromptFeatures],
+            user_agent_dto: Optional[UserAgentDTO] = None
+    ) -> Optional[BaseCommenterAgent]:
+        """
+        Create a single extension review agent instance.
+
+        Args:
+            agent_and_init_params: Agent configuration and initialization parameters
+            context_service: Extension context service
+            llm_handler: LLM handler instance
+            user_agent_dto: Optional user agent configuration
+
+        Returns:
+            Single agent instance or None if creation fails
+        """
+
+        agent_type = agent_and_init_params.agent_type
+
+        agent = cls.code_review_agents[agent_and_init_params.agent_type](
+                            context_service=context_service,
+                            # is_reflection_enabled=False,
+                            llm_handler=llm_handler,
+                            model=cls.agent_type_to_model_map[agent_and_init_params.agent_type],
+                            user_agent_dto=user_agent_dto,
+                            **agent_and_init_params.init_params,
+                        )
+
+        return agent
 
     @classmethod
     def get_review_finalization_agents(
