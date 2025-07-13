@@ -11,6 +11,8 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.extension_review_manager import ExtensionReviewManager
+from deputydev_core.utils.app_logger import AppLogger
 
 extension_code_review = Blueprint("ide_code_review", "/extension-code-review")
 
@@ -53,3 +55,34 @@ async def pre_process_extension_review(request: Request, **kwargs):
     # review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
     review_dto = await processor.pre_process_pr(data, user_team_id=data.get("user_team_id"))
     return send_response(review_dto)
+
+
+@extension_code_review.route("/run-agent", methods=["POST"])
+# @validate_client_version
+# @authenticate
+# async def run_extension_agent(request: Request, auth_data: AuthData, **kwargs):
+async def run_extension_agent(request: Request, **kwargs):
+    """
+    Run an agent for extension code review.
+    
+    Payload:
+    - review_id: The review ID from pre-process step
+    - agent_type: The type of agent to run (e.g., "PERFORMANCE_OPTIMIZATION", "SECURITY", etc.)
+    - type: Request type ("query" for initial request, "tool_use_response" for tool responses)
+    - tool_use_response: Tool use response data (required when type is "tool_use_response")
+    
+    Returns:
+    - For query type: Either tool request details or final result
+    - For tool_use_response type: Either next tool request or final result
+    """
+    try:
+        payload = request.json
+        result = await ExtensionReviewManager.review_diff(payload)
+
+        return send_response(result)
+
+    except Exception as e:
+        AppLogger.log_error(f"Error in review_diff_endpoint: {e}")
+        return send_response({
+                    "status": "SUCCESS",
+                })
