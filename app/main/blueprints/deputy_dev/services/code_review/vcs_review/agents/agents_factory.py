@@ -43,6 +43,9 @@ from app.main.blueprints.deputy_dev.services.code_review.common.comments.datacla
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
+    ExtensionContextService,
+)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -132,5 +135,3 @@ class AgentFactory:
 
         return initialized_agents
 
-    @classmethod
-    def comment_validation_agent(cls, ):

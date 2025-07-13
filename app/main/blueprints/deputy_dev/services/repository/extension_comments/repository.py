@@ -11,7 +11,7 @@ class ExtensionCommentRepository:
             is_deleted=False, review_id=review_id, is_valid=True
         ).prefetch_related(
             Prefetch(
-                "user_agent_comment_mappings",
+                "user_agent_comment_mapping",
                 queryset=UserAgentCommentMapping.all().prefetch_related("agent"),
             )
         ).all()
