@@ -15,7 +15,7 @@ class ParsedCommentData(BaseModel):
     buckets: List[CommentBuckets] = []
     confidence_score: float
     corrective_code: Optional[str] = None
-    model: str
+    model: Optional[str] = None
     is_valid: Optional[bool] = None
     is_summarized: bool = False
     rationale: str

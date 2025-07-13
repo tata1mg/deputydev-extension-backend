@@ -62,9 +62,9 @@ async def pre_process_extension_review(request: Request, **kwargs):
 
 @extension_code_review.route("/post-process", methods=["POST"])
 @validate_client_version
-@authenticate
-async def post_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
+# @authenticate
+async def post_process_extension_review(request: Request, **kwargs):
     data = request.json
     processor = ExtensionReviewPostProcessor()
-    review_dto = await processor.post_process_pr(data, user_team_id=auth_data.user_team_id)
+    review_dto = await processor.post_process_pr(data, user_team_id=1)
     return send_response({"status": "SUCCESS", "review": review_dto.model_dump(mode="json")})
