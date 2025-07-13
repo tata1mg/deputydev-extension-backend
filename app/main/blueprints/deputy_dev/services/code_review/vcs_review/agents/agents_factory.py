@@ -131,3 +131,6 @@ class AgentFactory:
                     )
 
         return initialized_agents
+
+    @classmethod
+    def comment_validation_agent(cls, ):
