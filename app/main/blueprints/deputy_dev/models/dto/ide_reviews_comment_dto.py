@@ -8,6 +8,9 @@ class IdeReviewsCommentDTO(BaseModel):
     id: Optional[int] = None
     review_id: int
     comment: str
+    confidence_score: float = 0
+    rationale: Optional[str] = ""
+    corrective_code: Optional[str] = ""
     is_deleted: bool = False
     file_path: str
     line_hash: str
