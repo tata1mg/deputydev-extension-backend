@@ -54,12 +54,14 @@ from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.agent_factory import AgentFactory
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import ExtensionContextService
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
 
 
-class PRReviewManager1(BasePRReviewManager):
+class ExtensionReviewManager(BasePRReviewManager):
     """Manager for processing Pull Request reviews."""
 
 
@@ -69,17 +71,92 @@ class PRReviewManager1(BasePRReviewManager):
             payload
     ):
         agent_id = payload.get("agent_id")
-        user_agent_dto = UserAgentRepository.db_get(filters={"agent_id": agent_id}, fetch_one=True)
-        agents_and_init_params = cls.get_agent_and_init_params_for_review(user_agent_dto)
+        review_id = payload.get("review_id")
+        repo_id = payload.get("repo_id")
+        session_id = payload.get("session_id")
+        user_agent_dto = await UserAgentRepository.db_get(filters={"id": agent_id}, fetch_one=True)
+        agent_and_init_params = cls.get_agent_and_init_params_for_review(user_agent_dto)
 
+        context_service = ExtensionContextService(review_id=review_id, repo_id=repo_id)
 
+        llm_handler = LLMHandler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+            cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
+        )
 
-        # non_error_results, is_large_pr = await MultiAgentPRReviewManager(
-        #     repo_service, pr_service, pr_diff_handler, session_id, prompt_version
-        # ).get_code_review_comments(valid_agents_and_init_params)
+        agent = AgentFactory.get_code_review_agent(
+            agent_and_init_params=agent_and_init_params,
+            context_service=context_service,
+            llm_handler=llm_handler,
+            user_agent_dto=user_agent_dto
+        )
 
-        # return non_error_results, is_large_pr
+        agent_result = await agent.run_agent(session_id=session_id, payload=payload)
 
+        return cls._format_agent_response(agent_result, payload.get("agent_id"))
+
+    @classmethod
+    def _format_agent_response(cls, agent_result: AgentRunResult, agent_id:int) -> Dict[str, Any]:
+        """Format agent result for API response with single response block."""
+        agent_result_dict = agent_result.agent_result
+
+        if isinstance(agent_result_dict, dict):
+            if agent_result_dict.get("type") == "tool_use_request":
+                # Tool use request - frontend needs to process tool
+                return {
+                    "status": "SUCCESS",
+                    "type": "TOOL_USE_REQUEST",
+                    "tool_name": agent_result_dict["tool_name"],
+                    "tool_input": agent_result_dict["tool_input"],
+                    "tool_use_id": agent_result_dict["tool_use_id"],
+                    "agent_name": agent_result.agent_name,
+                    "agent_type": agent_result.agent_type.value,
+                    "tokens_data": agent_result.tokens_data,
+                    "model": agent_result.model.value,
+                    "display_name": agent_result.display_name,
+                    "agent_id": agent_id,
+                }
+            elif agent_result_dict.get("status") == "success":
+                # Review completed successfully
+                return {
+                    "status": "SUCCESS",
+                    "type": "REVIEW_COMPLETE",
+                    "message": agent_result_dict.get("message", "Review completed successfully"),
+                    "agent_name": agent_result.agent_name,
+                    "agent_type": agent_result.agent_type.value,
+                    "tokens_data": agent_result.tokens_data,
+                    "model": agent_result.model.value,
+                    "display_name": agent_result.display_name,
+                    "agent_id": agent_id
+                }
+            elif agent_result_dict.get("status") == "error":
+                # Error occurred
+                return {
+                    "status": "SUCCESS",
+                    "type": "REVIEW_ERROR",
+                    "message": agent_result_dict.get("message", "An error occurred"),
+                    "agent_name": agent_result.agent_name,
+                    "agent_type": agent_result.agent_type.value,
+                    "tokens_data": agent_result.tokens_data,
+                    "model": agent_result.model.value,
+                    "display_name": agent_result.display_name,
+                    "agent_id": agent_id
+                }
+
+        # # Generic result or fallback
+        # return {
+        #     "status": "SUCCESS",
+        #     "type": "REVIEW_RESULT",
+        #     "result": agent_result_dict,
+        #     "agent_name": agent_result.agent_name,
+        #     "agent_type": agent_result.agent_type.value,
+        #     "tokens_data": agent_result.tokens_data,
+        #     "model": agent_result.model.value,
+        #     "display_name": agent_result.display_name,
+        #     "prompt_tokens_exceeded": agent_result.prompt_tokens_exceeded,
+        #     "agent_id": agent_id
+        # }
 
     @classmethod
     def get_agent_and_init_params_for_review(
