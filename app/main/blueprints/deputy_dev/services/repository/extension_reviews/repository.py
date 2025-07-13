@@ -82,7 +82,7 @@ class ExtensionReviewsRepository:
         comment_ids = []
         for review in reviews:
             for comment in review.review_comments:
-                # is_deleted is already filtered in queryset but retained for safety
+                # is_deleted is already filtered in qxueryset but retained for safety
                 if not comment.is_deleted:
                     comment_ids.append(comment.id)
         return comment_ids

@@ -8,6 +8,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.factory 
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.repository.extension_comments.repository import ExtensionCommentRepository
+from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
     ExtensionContextService,
@@ -20,6 +21,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.commen
 class ExtensionReviewPostProcessor:
     async def post_process_pr(self, data, user_team_id: int):
         review_id = data.get("review_id")
+        review = await ExtensionReviewsRepository.db_get(filters={"id": review_id}, fetch_one=True)
         comments = await ExtensionCommentRepository().get_review_comments(review_id)
         formatted_comments = self.format_comments(comments)
         context_service = ExtensionContextService(review_id=review_id)
@@ -30,12 +32,14 @@ class ExtensionReviewPostProcessor:
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-        comment_blending_service = CommentBlendingEngine(llm_comments=formatted_comments, )
+        comment_blending_service = CommentBlendingEngine(
+            llm_comments=formatted_comments,
+            session_id=review.session_id,
+            context_service=context_service,
+            agents=user_agents
+        )
 
 
-
-    def fetch_comments(self, review_id):
-        pass
 
     def format_comments(self, comments: list[IdeReviewsCommentDTO]):
         comments_by_agent_name = {}
