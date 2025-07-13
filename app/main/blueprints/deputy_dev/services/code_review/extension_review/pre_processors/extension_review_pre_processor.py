@@ -90,7 +90,7 @@ class ExtensionReviewPreProcessor:
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 
         if self.is_valid:
-            await ExtensionReviewCache.set(key=self.extension_repo_dto.id, value=review_diff)
+            a = await ExtensionReviewCache.set(key=str(self.review_dto.id), value=review_diff)
 
         return {
             "review_id": self.review_dto.id,
