@@ -34,12 +34,14 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 
+
 class CommentBlendingEngine:
     def __init__(
         self,
         llm_comments: Dict[str, list[Comment]],
         context_service: ExtensionContextService,
         llm_handler: LLMHandler[PromptFeatures],
+        session_id: int,
         agents: List[UserAgentDTO] = None
     ):
         self.llm_comments = llm_comments
@@ -50,6 +52,7 @@ class CommentBlendingEngine:
         self.context_service = context_service
         self.MAX_RETRIES = 2
         self.agent_results: Dict[str, list[Comment]] = {}
+        self.session_id = session_id
 
 
 
