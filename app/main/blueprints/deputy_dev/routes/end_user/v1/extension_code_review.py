@@ -1,6 +1,7 @@
 from sanic import Blueprint
 from torpedo import CONFIG, Request, send_response
 
+from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.deputy_dev.services.code_review.common.managers.extension_code_review_history_manager import (
     ExtensionCodeReviewHistoryManager,
@@ -91,6 +92,41 @@ async def run_extension_agent(request: Request, **kwargs):
         return send_response({
                     "status": "SUCCESS",
                 })
+
+
+@extension_code_review.route("/user-agents", methods=["GET"])
+# @validate_client_version
+# @authenticate
+async def get_user_agents(_request: Request, **kwargs):
+    """
+    Get user agents for a specific user team.
+
+    Query parameters:
+    - user_team_id: The user team ID (automatically extracted from auth_data)
+
+    Returns:
+    - List of user agents associated with the user team
+    """
+    try:
+        user_team_id = _request.request_params().get("user_team_id")
+        user_agents = await UserAgentRepository.db_get(
+            filters={"user_team_id": user_team_id},
+        )
+
+        # Convert to JSON-serializable format
+        agents_response = []
+        if user_agents:
+            for agent in user_agents:
+                agents_response.append(agent.model_dump(mode="json"))
+
+        return send_response({
+            "agents": agents_response,
+            "count": len(agents_response)
+        })
+
+    except Exception as e:
+        AppLogger.log_error(f"Error fetching user agents: {e}")
+        raise e
 
 
 @extension_code_review.route("/post-process", methods=["POST"])
