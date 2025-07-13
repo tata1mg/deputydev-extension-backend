@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 class UserAgentDTO(BaseModel):
     id: Optional[int] = None
     agent_name: str
+    user_team_id: int
     display_name: Optional[str] = None
     custom_prompt: Optional[str] = ""
     exclusions: Optional[List[Any]] = []

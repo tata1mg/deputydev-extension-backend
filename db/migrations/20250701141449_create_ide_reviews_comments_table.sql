@@ -9,8 +9,11 @@ CREATE TABLE IF NOT EXISTS ide_reviews_comments (
     line_number INTEGER NOT NULL,
     tag text NOT NULL,
     is_valid BOOLEAN NOT NULL,
+    corrective_code TEXT,
+    rationale TEXT,
+    confidence_score NUMERIC(5, 4),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (review_id) REFERENCES extension_reviews(id)
 );
 
