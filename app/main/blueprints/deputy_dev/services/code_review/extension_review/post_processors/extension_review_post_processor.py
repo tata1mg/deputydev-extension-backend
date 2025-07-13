@@ -25,8 +25,7 @@ class ExtensionReviewPostProcessor:
         comments = await ExtensionCommentRepository().get_review_comments(review_id)
         formatted_comments = self.format_comments(comments)
         context_service = ExtensionContextService(review_id=review_id)
-        code_diff = await context_service.get_pr_diff()
-        user_agents = UserAgentRepository.db_get({"user_team_id": user_team_id})
+        user_agents = await UserAgentRepository.db_get({"user_team_id": user_team_id})
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
@@ -36,8 +35,10 @@ class ExtensionReviewPostProcessor:
             llm_comments=formatted_comments,
             session_id=review.session_id,
             context_service=context_service,
-            agents=user_agents
+            agents=user_agents,
+            llm_handler=llm_handler
         )
+        filtered_comments, agent_results = await comment_blending_service.blend_comments()
 
 
 

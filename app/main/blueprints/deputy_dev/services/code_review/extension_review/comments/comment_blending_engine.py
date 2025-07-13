@@ -8,7 +8,7 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agents_factory import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.agent_factory import (
     AgentFactory,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import (
@@ -124,14 +124,7 @@ class CommentBlendingEngine:
         # Attempt validation with retries
         for attempt in range(self.MAX_RETRIES):
             try:
-                agents = AgentFactory.get_review_finalization_agents(
-                    context_service=self.context_service,
-                    comments=validation_data,
-                    llm_handler=self.llm_handler,
-                    include_agent_types=[AgentTypes.COMMENT_VALIDATION],
-                )
-
-                comment_validation_agent = agents[0]
+                comment_validation_agent = AgentFactory.comment_validation_agent(self.context_service, self.filtered_comments, self.llm_handler)
                 agent_result = await comment_validation_agent.run_agent(session_id=self.session_id)
                 self.agent_results[agent_result.agent_name] = agent_result
                 if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
