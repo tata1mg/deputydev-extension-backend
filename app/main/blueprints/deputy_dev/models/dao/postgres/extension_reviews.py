@@ -21,7 +21,8 @@ class ExtensionReviews(Base):
         "is_deleted",
         "deletion_datetime",
         "meta_info",
-        "session_iddiff_s3_url",
+        "session_id",
+        "diff_s3_url",
         "created_at",
         "updated_at",
     }
