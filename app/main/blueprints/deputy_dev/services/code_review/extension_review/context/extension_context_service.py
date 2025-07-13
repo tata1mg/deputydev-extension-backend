@@ -18,7 +18,7 @@ class ExtensionContextService:
         Returns:
             str: The PR diff, optionally with line numbers.
         """
-        cache_key = f"{self.review_id}:{self.repo_id}"
+        cache_key = f"{self.review_id}"
         pr_diff = await ExtensionReviewCache.get(cache_key)
         if pr_diff is None:
             raise ValueError(f"PR diff not found in cache for review_id={self.review_id}, repo_id={self.repo_id}")
