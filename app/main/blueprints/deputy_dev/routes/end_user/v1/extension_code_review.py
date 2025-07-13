@@ -24,8 +24,8 @@ config = CONFIG.config
 
 @extension_code_review.route("/history", methods=["GET"])
 @validate_client_version
-@authenticate
-async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
+# @authenticate
+async def code_review_history(_request: Request,  **kwargs):
     """
     Get code review history based on filters
     Query parameters:
@@ -37,7 +37,7 @@ async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
     try:
         # Extract query parameters
         query_params = _request.request_params()
-        review_history_params = ReviewHistoryParams(**query_params, user_team_id=auth_data.user_team_id)
+        review_history_params = ReviewHistoryParams(**query_params, user_team_id=1)
 
         # Initialize manager and fetch reviews
         history_manager = ExtensionCodeReviewHistoryManager()
