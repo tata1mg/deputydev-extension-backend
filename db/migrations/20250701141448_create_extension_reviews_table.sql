@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS extension_reviews (
     meta_info JSONB,
     diff_s3_url TEXT,
     session_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (repo_id) REFERENCES repos(id),
     FOREIGN KEY (user_team_id) REFERENCES user_teams(id)
 );
