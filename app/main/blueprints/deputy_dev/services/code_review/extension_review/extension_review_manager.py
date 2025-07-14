@@ -77,7 +77,7 @@ class ExtensionReviewManager(BasePRReviewManager):
         user_agent_dto = await UserAgentRepository.db_get(filters={"id": agent_id}, fetch_one=True)
         agent_and_init_params = cls.get_agent_and_init_params_for_review(user_agent_dto)
 
-        context_service = ExtensionContextService(review_id=review_id, repo_id=repo_id)
+        context_service = ExtensionContextService(review_id=review_id)
 
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
