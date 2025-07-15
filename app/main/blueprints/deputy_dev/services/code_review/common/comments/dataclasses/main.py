@@ -9,6 +9,7 @@ class CommentBuckets(BaseModel):
 
 
 class ParsedCommentData(BaseModel):
+    id: Optional[int] = None
     file_path: str
     line_number: str
     comment: str
@@ -25,11 +26,12 @@ class ParsedAggregatedCommentData(BaseModel):
     file_path: str
     line_number: str
     comments: List[str] = []
+    comment_ids: Optional[List[int]] = []
     buckets: List[CommentBuckets] = []
     agent_ids: List[str] = []
     corrective_code: List[str] = []
     confidence_scores: List[float] = []
     confidence_score: float
-    model: str
+    model: Optional[str] = None
     is_valid: Optional[bool] = None
     rationales: List[str]

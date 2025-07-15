@@ -73,9 +73,11 @@ class ExtensionReviewsRepository:
     @classmethod
     async def _fetch_reviews_with_comments(cls, filters, order_by):
         filtered_comments = IdeReviewsComments.filter(is_deleted=False)
-        return await ExtensionReviews.filter(**filters) \
-            .order_by(order_by) \
+        return (
+            await ExtensionReviews.filter(**filters)
+            .order_by(order_by)
             .prefetch_related(Prefetch("review_comments", queryset=filtered_comments))
+        )
 
     @classmethod
     def _extract_non_deleted_comment_ids(cls, reviews):
@@ -89,9 +91,9 @@ class ExtensionReviewsRepository:
 
     @classmethod
     async def _fetch_comment_agents_map(cls, comment_ids):
-        comment_agent_mappings = await UserAgentCommentMapping.filter(
-            comment_id__in=comment_ids
-        ).prefetch_related("agent")
+        comment_agent_mappings = await UserAgentCommentMapping.filter(comment_id__in=comment_ids).prefetch_related(
+            "agent"
+        )
 
         comment_agents_map = defaultdict(list)
         for mapping in comment_agent_mappings:

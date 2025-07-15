@@ -30,6 +30,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
 )
+
 # from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
 #     PRSummarizerAgent,
 # )
@@ -47,7 +48,9 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclas
     PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.base_commentor import BaseCommenterAgent
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.base_commentor import (
+    BaseCommenterAgent,
+)
 
 
 class AgentFactory:
@@ -87,7 +90,6 @@ class AgentFactory:
         include_agent_types: List[AgentTypes] = [],
         exclude_agent_types: List[AgentTypes] = [],
     ) -> List[BaseCodeReviewAgent]:
-
         initialized_agents: List[BaseCodeReviewAgent] = []
 
         for agent_type_and_init_params in valid_agents_and_init_params:
@@ -109,11 +111,11 @@ class AgentFactory:
 
     @classmethod
     def get_code_review_agent(
-            cls,
-            agent_and_init_params: AgentAndInitParams,
-            context_service: ExtensionContextService,
-            llm_handler: LLMHandler[PromptFeatures],
-            user_agent_dto: Optional[UserAgentDTO] = None
+        cls,
+        agent_and_init_params: AgentAndInitParams,
+        context_service: ExtensionContextService,
+        llm_handler: LLMHandler[PromptFeatures],
+        user_agent_dto: Optional[UserAgentDTO] = None,
     ) -> Optional[BaseCommenterAgent]:
         """
         Create a single extension review agent instance.
@@ -131,13 +133,13 @@ class AgentFactory:
         agent_type = agent_and_init_params.agent_type
 
         agent = cls.code_review_agents[agent_and_init_params.agent_type](
-                            context_service=context_service,
-                            # is_reflection_enabled=False,
-                            llm_handler=llm_handler,
-                            model=cls.agent_type_to_model_map[agent_and_init_params.agent_type],
-                            user_agent_dto=user_agent_dto,
-                            **agent_and_init_params.init_params,
-                        )
+            context_service=context_service,
+            # is_reflection_enabled=False,
+            llm_handler=llm_handler,
+            model=cls.agent_type_to_model_map[agent_and_init_params.agent_type],
+            user_agent_dto=user_agent_dto,
+            **agent_and_init_params.init_params,
+        )
 
         return agent
 
@@ -173,7 +175,21 @@ class AgentFactory:
         cls,
         context_service: ExtensionContextService,
         comments: List[ParsedCommentData],
-        llm_handler: LLMHandler[PromptFeatures]
+        llm_handler: LLMHandler[PromptFeatures],
     ):
         model = cls.agent_type_to_model_map[AgentTypes.COMMENT_VALIDATION]
-        return CommentValidatorAgent(context_service=context_service, comments=comments, llm_handler=llm_handler, model=model)
+        return CommentValidatorAgent(
+            context_service=context_service, comments=comments, llm_handler=llm_handler, model=model
+        )
+
+    @classmethod
+    def comment_summarization_agent(
+        cls,
+        context_service: ExtensionContextService,
+        comments: List[ParsedCommentData],
+        llm_handler: LLMHandler[PromptFeatures],
+    ):
+        model = cls.agent_type_to_model_map[AgentTypes.COMMENT_SUMMARIZATION]
+        return CommentSummarizerAgent(
+            context_service=context_service, comments=comments, llm_handler=llm_handler, model=model
+        )

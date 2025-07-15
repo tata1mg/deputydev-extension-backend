@@ -46,7 +46,7 @@ class CommentBlendingEngine:
     ):
         self.llm_comments = llm_comments
         self.llm_handler = llm_handler
-        self.agents: Dict[str, UserAgentDTO] = {agent.name: agent for agent in agents}
+        self.agents: Dict[str, UserAgentDTO] = {agent.agent_name: agent for agent in agents}
         self.filtered_comments: List[ParsedCommentData] = []
         self.invalid_comments: List[ParsedCommentData] = []
         self.context_service = context_service
@@ -55,11 +55,10 @@ class CommentBlendingEngine:
         self.session_id = session_id
 
 
-
     async def blend_comments(self) -> Tuple[List[ParsedCommentData], Dict[str, AgentRunResult]]:
         # this function can contain other operations in future
         self.apply_agent_confidence_score_limit()
-        await self.validate_comments()
+        # await self.validate_comments()
         await self.process_all_comments()
         self.filtered_comments.extend(self.invalid_comments)
         return self.filtered_comments, self.agent_results
@@ -79,13 +78,14 @@ class CommentBlendingEngine:
                 if comment.confidence_score >= confidence_threshold:
                     confidence_filtered_comments.append(
                         ParsedCommentData(
+                            id=comment.id,
                             file_path=comment.file_path,
-                            line_number=comment.line_number,
+                            line_number=str(comment.line_number),
                             comment=comment.comment,
                             buckets=[
                                 CommentBuckets(
                                     name=comment.bucket,
-                                    agent_id=self.agents[agent].id,
+                                    agent_id=str(self.agents[agent].id),
                                 )
                             ],
                             confidence_score=comment.confidence_score,
@@ -175,6 +175,7 @@ class CommentBlendingEngine:
                     file_path=file_path,
                     line_number=line_number,
                     comments=[],
+                    comment_ids=[],
                     buckets=[],
                     agent_ids=[],
                     corrective_code=[],
@@ -187,6 +188,7 @@ class CommentBlendingEngine:
 
             # Add the single comment's data to the lists
             aggregated_comments[file_path][line_number].comments.append(comment.comment)
+            aggregated_comments[file_path][line_number].comment_ids.append(comment.id)
             aggregated_comments[file_path][line_number].buckets.append(comment.buckets[0])
             corrective_code = comment.corrective_code
             aggregated_comments[file_path][line_number].corrective_code.append(
@@ -210,6 +212,7 @@ class CommentBlendingEngine:
                 if len(data.comments) == 1:
                     single_comments.append(
                         ParsedCommentData(
+                            id=data.comment_ids[0],
                             file_path=file_path,
                             line_number=line_number,
                             comment=data.comments[0],
@@ -246,14 +249,7 @@ class CommentBlendingEngine:
 
         # Attempt summarization with retries
         for attempt in range(self.MAX_RETRIES):
-            agents = AgentFactory.get_review_finalization_agents(
-                context_service=self.context_service,
-                comments=multi_comments,
-                llm_handler=self.llm_handler,
-                include_agent_types=[AgentTypes.COMMENT_SUMMARIZATION],
-            )
-
-            comment_summarization_agent = agents[0]
+            comment_summarization_agent = AgentFactory.comment_summarization_agent(self.context_service, self.filtered_comments, self.llm_handler)
             agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
             self.agent_results[agent_result.agent_name] = agent_result
             if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
@@ -265,6 +261,7 @@ class CommentBlendingEngine:
             for comment in agent_result.agent_result["comments"]:
                 processed_comments.append(
                     ParsedCommentData(
+                        id=comment.get("id"),
                         file_path=comment.get("file_path"),
                         line_number=comment.get("line_number"),
                         comment=comment.get("comment"),

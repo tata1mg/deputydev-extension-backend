@@ -31,13 +31,11 @@ class CommentSummarizerAgent(BaseCodeReviewAgent):
         self,
         context_service: ExtensionContextService,
         comments: List[ParsedAggregatedCommentData],
-        is_reflection_enabled: bool,
-        agent_setting: Dict[str, Any],
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
     ):
         self.comments = comments
-        super().__init__(context_service, is_reflection_enabled, llm_handler, model)
+        super().__init__(context_service, llm_handler, model)
 
     async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
         return {
