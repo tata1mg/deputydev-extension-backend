@@ -256,6 +256,7 @@ class OpenAI(BaseLLMProvider):
         stream: bool = False,
         response_type: Literal["text", "json_object", "json_schema"] = None,
         session_id: Optional[int] = None,
+        parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenAI service client.
@@ -279,6 +280,7 @@ class OpenAI(BaseLLMProvider):
                 instructions=llm_payload["system_message"],
                 tool_choice="auto",
                 max_output_tokens=model_config["MAX_TOKENS"],
+                parallel_tool_calls=parallel_tool_calls,
             )
             return await self._parse_streaming_response(response, stream_id, session_id)
         else:
@@ -290,6 +292,7 @@ class OpenAI(BaseLLMProvider):
                 instructions=llm_payload["system_message"],
                 tool_choice=llm_payload["tool_choice"],
                 max_output_tokens=model_config["MAX_TOKENS"],
+                parallel_tool_calls=parallel_tool_calls,
             )
             return self._parse_non_streaming_response(response)
 
