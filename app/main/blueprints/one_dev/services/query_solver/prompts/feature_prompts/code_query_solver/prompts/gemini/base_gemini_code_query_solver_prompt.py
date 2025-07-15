@@ -34,7 +34,7 @@ class BaseGeminiCodeQuerySolverPrompt:
         )
         if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
-                f"""
+                """
                 You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
                 # Communication guidelines:
                 1. Be concise and avoid repetition
@@ -59,14 +59,14 @@ class BaseGeminiCodeQuerySolverPrompt:
                 8. Please do not include line numbers at the beginning of lines in the search and replace blocks when using the replace_in_file tool. (IMPORTANT)
                 9. Before using replace_in_file or write_to_file tools, send a small text to user telling you are doing these changes etc. (IMPORTANT)
 
-                {self.tool_use_capabilities_resolution_guidelines(is_write_mode=True)}
+                {tool_use_capabilities_resolution_guidelines}
 
                 If you want to show a code snippet to user, please provide the code in the following format:
 
                 Usage: 
                 <code_block>
                 <programming_language>programming Language name</programming_language>
-                <file_path>{file_path}</file_path>
+                <file_path>{file_path_code_block}</file_path>
                 <is_diff>false(always false)</is_diff>
                 code here
                 </code_block>
@@ -149,9 +149,11 @@ class BaseGeminiCodeQuerySolverPrompt:
                 4. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
                 """.format(
+                    file_path_code_block=file_path,
+                    file_path_example=file_path_example,
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
-                    )
+                    ),
                 )
             )
         else:
