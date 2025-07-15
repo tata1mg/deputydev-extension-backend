@@ -641,6 +641,7 @@ class Anthropic(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         session_id: Optional[int] = None,
+        parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         model_config = self._get_model_config(model)
         anthropic_client, model_identifier = await self._get_service_client_and_model_name(model, model_config)
