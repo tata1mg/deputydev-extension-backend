@@ -14,8 +14,13 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.contex
     ExtensionContextService,
 )
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.comment_blending_engine import CommentBlendingEngine
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import AgentRunResult, Comment
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.comment_blending_engine import (
+    CommentBlendingEngine,
+)
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import (
+    AgentRunResult,
+    Comment,
+)
 
 
 class ExtensionReviewPostProcessor:
@@ -36,11 +41,10 @@ class ExtensionReviewPostProcessor:
             session_id=review.session_id,
             context_service=context_service,
             agents=user_agents,
-            llm_handler=llm_handler
+            llm_handler=llm_handler,
         )
         filtered_comments, agent_results = await comment_blending_service.blend_comments()
-
-
+        print("hello")
 
     def format_comments(self, comments: list[IdeReviewsCommentDTO]):
         comments_by_agent_name = {}
@@ -49,6 +53,7 @@ class ExtensionReviewPostProcessor:
                 if agent.agent_name not in comments_by_agent_name:
                     comments_by_agent_name[agent.agent_name] = []
                 formatted_comment = Comment(
+                    id=comment.id,
                     comment=comment.comment,
                     corrective_code=comment.corrective_code,
                     file_path=comment.file_path,
@@ -59,6 +64,3 @@ class ExtensionReviewPostProcessor:
                 )
                 comments_by_agent_name[agent.agent_name].append(formatted_comment)
         return comments_by_agent_name
-
-
-
