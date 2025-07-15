@@ -66,9 +66,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
                 7. Any other relevant feedback or information related to the tool use.
 
-
-
-
+                """
+                + """
                 ====
 
                 EDITING FILES
@@ -245,7 +244,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
                     ## Parallel Tool Usage Guidelines
                     {"If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result." if self.params.get("parallel_tool_use_enabled", True) else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."}
-                
+                """
+                + """
                 **Response Schema**
                 Adhere to given schema:
                 <response_schema>
