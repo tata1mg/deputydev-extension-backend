@@ -4,6 +4,7 @@ EXECUTE_COMMAND = ConversationTool(
     name="execute_command",
     description="""
         This is a built-in tool.
+        This tool cannot be run in Parallel.
         Executes a CLI command in the current working directory of the project.
         
         This tool is used to perform system-level operations such as building projects,
