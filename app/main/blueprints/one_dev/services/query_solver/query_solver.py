@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional, Type
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from pydantic import BaseModel
@@ -28,6 +28,7 @@ from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryD
 from app.main.blueprints.one_dev.services.query_solver.agents.backend_app_creator_query_solver_agent import (
     BackendAppCreatorQuerySolverAgent,
 )
+from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import BaseQuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import DefaultQuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     DetailedDirectoryItem,
@@ -170,6 +171,10 @@ class QuerySolver:
             await llm_response.llm_response_storage_task
 
         return _streaming_content_block_generator()
+
+    async def _generate_dynamic_query_solver_agents() -> List[Type[BaseQuerySolverAgent]]:
+        # Logic to dynamically generate query solver agents based on the context
+        return [DefaultQuerySolverAgent]
 
     async def solve_query(
         self,
