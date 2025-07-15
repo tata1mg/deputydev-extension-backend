@@ -52,7 +52,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.create_new_workspac
 from app.main.blueprints.one_dev.services.query_solver.tools.execute_command import (
     EXECUTE_COMMAND,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
@@ -71,6 +70,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
@@ -310,7 +310,7 @@ class QuerySolver:
             tool_responses = []
             for resp in payload.batch_tool_responses:
                 if not payload.tool_use_failed:
-                    response_data = self._tool_response_format(resp)
+                    response_data = self._format_tool_response(resp)
                 else:
                     if resp.tool_name not in {"replace_in_file", "write_to_file"}:
                         response_data = {
@@ -351,7 +351,7 @@ class QuerySolver:
         else:
             raise ValueError("Invalid input")
 
-    def _tool_response_format(self, tool_use_response: ToolUseResponseInput) -> Dict[str, Any]:
+    def _format_tool_response(self, tool_use_response: ToolUseResponseInput) -> Dict[str, Any]:
         """Handle and structure tool responses based on tool type."""
         tool_response = tool_use_response.response
 
