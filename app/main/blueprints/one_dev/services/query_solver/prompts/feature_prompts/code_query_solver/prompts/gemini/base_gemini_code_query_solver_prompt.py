@@ -227,7 +227,7 @@ class BaseGeminiCodeQuerySolverPrompt:
                     ),
                     parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
                     if self.params.get("parallel_tool_use_enabled", True)
-                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.",
+                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result. The system does not support parallel tool calls",
                 )
             )
 
