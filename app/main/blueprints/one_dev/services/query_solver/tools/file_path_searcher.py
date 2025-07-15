@@ -4,7 +4,6 @@ FILE_PATH_SEARCHER = ConversationTool(
     name="file_path_searcher",
     description="""
         This is a built-in tool.
-        This tool can be used in parallel only with other file_path_searcher calls.
         Searches for files with given search terms in a given directory path.
         It is very important to provide the correct and complete directory path to search in, otherwise the tool will return the results from the repo root.
         This tool uses fuzzy search to match the search terms with the parts of file paths.
