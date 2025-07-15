@@ -307,6 +307,7 @@ class QuerySolver:
                 session_id=payload.session_id,
                 save_to_redis=save_to_redis,
                 checker=task_checker,
+                parallel_tool_calls=parallel_tool_use_enabled,
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
@@ -357,6 +358,7 @@ class QuerySolver:
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
+                parallel_tool_calls=parallel_tool_use_enabled,
             )
 
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)

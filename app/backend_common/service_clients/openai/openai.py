@@ -45,6 +45,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         response_format_description: Any = None,
         instructions: str = None,
         max_output_tokens: str = None,
+        parallel_tool_calls: bool = True,
     ) -> Response:
         response_type = self._get_response_type(
             response_type=response_type,
@@ -59,7 +60,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             tools=tools,
             stream=False,
             text=response_type,
-            parallel_tool_calls=True,
+            parallel_tool_calls=parallel_tool_calls,
             instructions=instructions,
             max_output_tokens=max_output_tokens,
         )
@@ -112,6 +113,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         response_format_description: Any = None,
         instructions: str = None,
         max_output_tokens: int = None,
+        parallel_tool_calls: bool = True,
     ) -> AsyncIterator[ResponseStreamEvent]:
         response_type = self._get_response_type(
             response_type=response_type,
@@ -126,7 +128,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             tools=tools,
             stream=True,
             text=response_type,
-            parallel_tool_calls=True,
+            parallel_tool_calls=parallel_tool_calls,
             instructions=instructions,
             max_output_tokens=max_output_tokens,
         )
