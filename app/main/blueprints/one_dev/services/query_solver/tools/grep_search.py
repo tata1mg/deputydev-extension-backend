@@ -7,7 +7,6 @@ GREP_SEARCH = ConversationTool(
     description=textwrap.dedent(
         """
         This is a built-in tool.
-        This tool can be used in parallel only with other grep search calls.
         Use git grep or standard grep to find exact pattern matches within files or directories.
 
         This tool searches for specific text patterns inside files within a given path. It supports both plain text and regular expression queries.
