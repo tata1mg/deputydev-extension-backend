@@ -4,9 +4,12 @@ from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mappi
 from app.main.blueprints.deputy_dev.models.dto.user_agent_comment_mapping_dto import UserAgentCommentMappingDTO
 from app.backend_common.repository.db import DB
 
+
 class UserAgentCommentMappingRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[UserAgentCommentMappingDTO, List[UserAgentCommentMappingDTO]]:
+    async def db_get(
+        cls, filters, fetch_one=False, order_by=None
+    ) -> Union[UserAgentCommentMappingDTO, List[UserAgentCommentMappingDTO]]:
         try:
             data = await DB.by_filters(
                 model_name=UserAgentCommentMapping, where_clause=filters, fetch_one=fetch_one, order_by=order_by

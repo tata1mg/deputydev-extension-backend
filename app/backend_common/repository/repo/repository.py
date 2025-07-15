@@ -60,7 +60,7 @@ class RepoRepository:
     @classmethod
     async def find_or_create_extension_repo(cls, repo_name: str, repo_origin: str, team_id: int):
         # repo_hash = mmh3.hash(repo_origin)
-        repo_hash =hashlib.sha256(repo_origin.encode()).hexdigest()
+        repo_hash = hashlib.sha256(repo_origin.encode()).hexdigest()
         repo_dto = await cls.db_get(
             filters={"name": repo_name, "repo_hash": repo_hash, "team_id": team_id}, fetch_one=True
         )
