@@ -6,6 +6,7 @@ CREATE_NEW_WORKSPACE = ConversationTool(
     name="create_new_workspace",
     description=textwrap.dedent("""
         This is a built-in tool.
+        This tool cannot be run in Parallel.
         Assist the user in scaffolding a brand-new workspace based on a high-level project request.
         Given a natural-language query (e.g. “Create a Next.js blog with TypeScript” or “Start a Vite React dashboard”, etc.),
         
