@@ -246,7 +246,7 @@ class QuerySolver:
         payload: QuerySolverInput,
         client_data: ClientData,
         save_to_redis: bool = False,
-        task_checker: CancellationChecker = None,
+        task_checker: Optional[CancellationChecker] = None,
     ) -> AsyncIterator[BaseModel]:
         tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
@@ -257,6 +257,17 @@ class QuerySolver:
         use_absolute_path = compare_version(
             client_data.client_version, "8.3.0", ">"
         )  # remove after 9.0.0. force upgrade  # noqa: N806
+
+        parallel_tool_use_enabled = compare_version(client_data.client_version, "8.4.0", ">=")
+
+        # TODO: remove this after 9.0.0. force upgrade
+        if (
+            not parallel_tool_use_enabled
+            and payload.query is None
+            and payload.batch_tool_responses is None
+            and payload.tool_use_response is not None
+        ):
+            payload.batch_tool_responses = [payload.tool_use_response]
 
         if payload.query:
             asyncio.create_task(
@@ -284,7 +295,8 @@ class QuerySolver:
                     "shell": payload.shell,
                     "vscode_env": payload.vscode_env,
                     "repositories": payload.repositories,
-                    "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade
+                    "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade,
+                    "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
                 },
                 attachments=payload.attachments,
                 previous_responses=await self.get_previous_message_thread_ids(
@@ -305,6 +317,7 @@ class QuerySolver:
                 "vscode_env": payload.vscode_env,
                 "write_mode": payload.write_mode,
                 "deputy_dev_rules": payload.deputy_dev_rules,
+                "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
             tool_responses = []
