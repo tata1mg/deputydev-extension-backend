@@ -6,7 +6,6 @@ ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
     description=textwrap.dedent("""
         This is a built-in tool.
-
         Reads content of a file, and optionally between a specific range of lines if a start line and/or end line is provided. (1 indexed).
 
         If the file is small (<=1000 lines) and the entire file is requested, it will return the full content.
