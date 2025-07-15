@@ -507,6 +507,7 @@ class Google(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         session_id: Optional[int] = None,
+        parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the Vertex AI service client.
