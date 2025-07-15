@@ -52,7 +52,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.create_new_workspac
 from app.main.blueprints.one_dev.services.query_solver.tools.execute_command import (
     EXECUTE_COMMAND,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
@@ -71,6 +70,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
@@ -246,7 +246,7 @@ class QuerySolver:
         payload: QuerySolverInput,
         client_data: ClientData,
         save_to_redis: bool = False,
-        task_checker: CancellationChecker = None,
+        task_checker: Optional[CancellationChecker] = None,
     ) -> AsyncIterator[BaseModel]:
         tools_to_use = self._get_all_tools(payload=payload, _client_data=client_data)
         llm_handler = LLMHandler(
@@ -257,6 +257,17 @@ class QuerySolver:
         use_absolute_path = compare_version(
             client_data.client_version, "8.3.0", ">"
         )  # remove after 9.0.0. force upgrade  # noqa: N806
+
+        parallel_tool_use_enabled = compare_version(client_data.client_version, "8.4.0", ">=")
+
+        # TODO: remove this after 9.0.0. force upgrade
+        if (
+            not parallel_tool_use_enabled
+            and payload.query is None
+            and payload.batch_tool_responses is None
+            and payload.tool_use_response is not None
+        ):
+            payload.batch_tool_responses = [payload.tool_use_response]
 
         if payload.query:
             asyncio.create_task(
@@ -284,7 +295,8 @@ class QuerySolver:
                     "shell": payload.shell,
                     "vscode_env": payload.vscode_env,
                     "repositories": payload.repositories,
-                    "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade
+                    "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade,
+                    "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
                 },
                 attachments=payload.attachments,
                 previous_responses=await self.get_previous_message_thread_ids(
@@ -305,12 +317,13 @@ class QuerySolver:
                 "vscode_env": payload.vscode_env,
                 "write_mode": payload.write_mode,
                 "deputy_dev_rules": payload.deputy_dev_rules,
+                "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
             tool_responses = []
             for resp in payload.batch_tool_responses:
                 if not payload.tool_use_failed:
-                    response_data = self._tool_response_format(resp)
+                    response_data = self._format_tool_response(resp)
                 else:
                     if resp.tool_name not in {"replace_in_file", "write_to_file"}:
                         response_data = {
@@ -351,7 +364,7 @@ class QuerySolver:
         else:
             raise ValueError("Invalid input")
 
-    def _tool_response_format(self, tool_use_response: ToolUseResponseInput) -> Dict[str, Any]:
+    def _format_tool_response(self, tool_use_response: ToolUseResponseInput) -> Dict[str, Any]:
         """Handle and structure tool responses based on tool type."""
         tool_response = tool_use_response.response
 
