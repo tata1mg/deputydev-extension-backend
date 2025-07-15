@@ -97,6 +97,7 @@ class QuerySolverInput(BaseModel):
     session_id: int
     tool_use_failed: Optional[bool] = None
     batch_tool_responses: Optional[List[ToolUseResponseInput]] = None
+    tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
     user_team_id: Optional[int] = None
