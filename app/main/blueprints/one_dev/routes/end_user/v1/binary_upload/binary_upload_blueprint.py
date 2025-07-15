@@ -22,7 +22,7 @@ async def get_presigned_url(_request: Request, **kwargs: Any) -> dict[str, Any]:
         if not s3_key:
             raise HTTPRequestException("s3_key is required")
         presigned_url_for_binary_upload = await BinaryFileUpload.get_presigned_urls_for_upload(s3_key)
-        return send_response({presigned_url_for_binary_upload: presigned_url_for_binary_upload})
+        return send_response({"presigned_url": presigned_url_for_binary_upload})
     except Exception as _ex:  # noqa: BLE001
         raise HTTPRequestException(
             f"Error generating presigned URL: {_ex}",
