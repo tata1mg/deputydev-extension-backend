@@ -4,6 +4,7 @@ ASK_USER_INPUT = ConversationTool(
     name="ask_user_input",
     description="""
         This is a built-in tool.
+        This tool should not be run in parallel with any tool. This must be given as a single tool request.
         This tool asks user any input if needed. This can be used to clear doubts, get user's view etc.
         It requires to send a prompt to be shown to the user. After which the user will reply basis the previous context and the given prompt.
     """,

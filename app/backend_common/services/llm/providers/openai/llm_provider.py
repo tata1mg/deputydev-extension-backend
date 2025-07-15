@@ -19,7 +19,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
-    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -156,46 +155,38 @@ class OpenAI(BaseLLMProvider):
         Returns:
             List[ConversationTurn]: The formatted conversation turns.
         """
-        conversation_turns = []
-        last_tool_use_request: bool = False
+        conversation_turns: List[Dict[str, Any]] = []
+        tool_requests: Dict[str, Dict[str, Any]] = {}
+        tool_requests_order: List[str] = []
         for message in previous_responses:
-            if last_tool_use_request and not (
-                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-            ):
-                # remove the tool use request if the user has not responded to it
-                conversation_turns.pop()
-                last_tool_use_request = False
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             message_datas = list(message.message_data)
             for message_data in message_datas:
                 content_data = message_data.content
                 if isinstance(content_data, TextBlockContent):
                     conversation_turns.append({"role": role.value, "content": content_data.text})
-                    last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
-                    if (
-                        last_tool_use_request
-                        and conversation_turns
-                        and conversation_turns[-1].get("call_id") == content_data.tool_use_id
-                    ):
-                        conversation_turns.append(
-                            {
-                                "call_id": content_data.tool_use_id,
-                                "output": json.dumps(content_data.response),
-                                "type": "function_call_output",
-                            }
-                        )
-                        last_tool_use_request = False
+                    while len(tool_requests_order) > 0:
+                        if tool_requests_order[0] == content_data.tool_use_id:
+                            conversation_turns.append(tool_requests[content_data.tool_use_id])
+                            conversation_turns.append(
+                                {
+                                    "call_id": content_data.tool_use_id,
+                                    "output": json.dumps(content_data.response),
+                                    "type": "function_call_output",
+                                }
+                            )
+                            tool_requests_order.pop(0)
+                            break
+                        tool_requests_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
-                    conversation_turns.append(
-                        {
-                            "call_id": content_data.tool_use_id,
-                            "arguments": json.dumps(content_data.tool_input),
-                            "name": content_data.tool_name,
-                            "type": "function_call",
-                        }
-                    )
-                    last_tool_use_request = True
+                    tool_requests[content_data.tool_use_id] = {
+                        "call_id": content_data.tool_use_id,
+                        "arguments": json.dumps(content_data.tool_input),
+                        "name": content_data.tool_name,
+                        "type": "function_call",
+                    }
+                    tool_requests_order.append(content_data.tool_use_id)
                 elif isinstance(content_data, ExtendedThinkingContent):
                     continue
 
@@ -216,7 +207,8 @@ class OpenAI(BaseLLMProvider):
                                 ],
                             }
                         )
-                    last_tool_use_request = False
+        for rem in tool_requests_order:
+            conversation_turns.append(tool_requests[rem])
         return conversation_turns
 
     def _parse_non_streaming_response(self, response: Response) -> NonStreamingResponse:
