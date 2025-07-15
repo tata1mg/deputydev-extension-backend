@@ -134,4 +134,3 @@ class AgentFactory:
                     )
 
         return initialized_agents
-

@@ -14,7 +14,7 @@ class IdeReviewsComments(Base):
         "file_path",
         "file_hash",
         "line_number",
-        "created_at",
+        "confidence_scorecreated_at",
         "updated_at",
     }
 
@@ -29,6 +29,7 @@ class IdeReviewsComments(Base):
     line_number = fields.IntField()
     tag = fields.CharField(max_length=20, null=True)
     is_valid = fields.BooleanField(default=True)
+    confidence_score = fields.FloatField()
     # status = fields.TextField()
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -47,5 +48,6 @@ class IdeReviewsComments(Base):
         file_path = ("file_path",)
         file_hash = ("file_hash",)
         line_number = ("line_number",)
+        confidence_score = ("confidence_score",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
