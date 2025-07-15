@@ -394,6 +394,7 @@ class LLMHandler(Generic[PromptFeatures]):
         attachments: List[Attachment] = [],
         search_web: bool = False,
         checker: CancellationChecker = None,
+        parallel_tool_calls: bool = False,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -447,7 +448,12 @@ class LLMHandler(Generic[PromptFeatures]):
                 if checker and checker.is_cancelled():
                     raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
-                    llm_payload, llm_model, stream=stream, response_type=response_type, session_id=session_id
+                    llm_payload,
+                    llm_model,
+                    stream=stream,
+                    response_type=response_type,
+                    session_id=session_id,
+                    parallel_tool_calls=parallel_tool_calls,
                 )
 
                 # start task for storing LLM message in DB
@@ -636,6 +642,7 @@ class LLMHandler(Generic[PromptFeatures]):
         search_web: bool = False,
         save_to_redis: bool = False,
         checker: CancellationChecker = None,
+        parallel_tool_calls: bool = False,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -696,6 +703,7 @@ class LLMHandler(Generic[PromptFeatures]):
             response_type=prompt_handler.response_type,
             search_web=search_web,
             checker=checker,
+            parallel_tool_calls=parallel_tool_calls,
         )
 
     async def store_tool_use_ressponse_in_db(
@@ -740,6 +748,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_type: Optional[str] = None,
         prompt_vars: Optional[Dict[str, Any]] = None,
         checker: Optional[CancellationChecker] = None,
+        parallel_tool_calls: bool = False,
     ) -> ParsedLLMCallResponse:
         """
         Submit multiple tool use responses to LLM for parallel processing
@@ -864,6 +873,7 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
             checker=checker,
+            parallel_tool_calls=parallel_tool_calls,
         )
 
     async def submit_tool_use_response(
@@ -877,6 +887,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_type: Optional[str] = None,
         prompt_vars: Optional[Dict[str, Any]] = None,
         checker: Optional[CancellationChecker] = None,
+        parallel_tool_calls: bool = False,
     ) -> ParsedLLMCallResponse:
         """
         Submit tool use response to LLM
@@ -971,6 +982,7 @@ class LLMHandler(Generic[PromptFeatures]):
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
             checker=checker,
+            parallel_tool_calls=parallel_tool_calls,
         )
 
     async def submit_feedback_response(
@@ -1024,4 +1036,5 @@ class LLMHandler(Generic[PromptFeatures]):
             previous_responses=conversation_chain_messages,
             max_retry=MAX_LLM_RETRIES,
             stream=stream,
+            parallel_tool_calls=False,
         )
