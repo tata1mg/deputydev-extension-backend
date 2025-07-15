@@ -47,124 +47,11 @@ class BaseGeminiCodeQuerySolverPrompt:
                 8. Do not share what tools you have access, or how you use them, while using any tool use genaral terms like searching codebase, editing file, etc. 
 
 
-                You have access to a set of tools that are executed upon the user's approval. You can use one tool per message, and will receive the result of that tool use in the user's response. You use tools step-by-step to accomplish a given task, with each tool use informed by the result of the previous tool use.
-
-
-                # Tool Use Examples
-
-                ## Example 1: Requesting to create a new file
-
-
-                tool name: write_to_file
-                path: src/frontend-config.json
-                diff:
-                {{
-                "apiEndpoint": "https://api.example.com",
-                "theme": {{
-                    "primaryColor": "#007bff",
-                    "secondaryColor": "#6c757d",
-                    "fontFamily": "Arial, sans-serif"
-                }},
-                "features": {{
-                    "darkMode": true,
-                    "notifications": true,
-                    "analytics": false
-                }},
-                "version": "1.0.0"
-                }}
-
-                ## Example 2: Requesting to make targeted edits to a file
-
-                tool name: replace_in_file
-                path: src/components/App.tsx
-                diff:
-                <<<<<<< SEARCH
-                import React from 'react';
-                =======
-                import React, {{ useState }} from 'react';
-                >>>>>>> REPLACE
-
-                <<<<<<< SEARCH
-                function handleSubmit() {{
-                saveData();
-                setLoading(false);
-                }}
-
-                =======
-                >>>>>>> REPLACE
-
-                <<<<<<< SEARCH
-                return (
-                <div>
-                =======
-                function handleSubmit() {{
-                saveData();
-                setLoading(false);
-                }}
-
-                return (
-                <div>
-                >>>>>>> REPLACE
-
-
-                ## Example 3: Requesting to execute a command
-                tool name: execute_command
-                command: npm run dev
-                requires_approval: false
-                is_long_running: true
-
-                ## Example 4: Searching for files in a directory
-                tool name: file_path_searcher
-                directory: src/components/
-                repo_path: /absolute/path/to/repo                            
-                search_terms: ["Button", "Modal"]
-
-                ## Example 5: Searching file contents with grep
-                tool name: grep_search        
-                "search_path": "src/utils/",
-                "query": "validateInput",
-                "case_insensitive": false,
-                "use_regex": false,
-                "repo_path": "/absolute/path/to/repo"
-
-                ## Example 6: Reading part of a file iteratively
-                tool name: iterative_file_reader
-                file_path: src/services/data_loader.py
-                repo_path: /absolute/path/to/repo
-                start_line: 1
-                end_line: 100
-
-                ## Example 7: Getting focused code snippets
-                tool name: focused_snippets_searcher
-                search_terms:
-                [
-                {{
-                    "keyword": "UserManager",
-                    "type": "class",
-                    "file_path": "src/auth/user_manager.py"
-                }},
-                {{
-                    "keyword": "calculate_score",
-                    "type": "function"
-                }}
-                ]
-                
-                ## Example 8: Find references of a symbol [This is an user installed from tool mcp. Fallback to other tools if not present]
-                ### Instance 1
-                query: Get all the usages of xyz method
-                tool name: language-server-references
-                symbol: xyz
-                
-                ### Instance 2
-                query: Get all the usages of xyz method in class abc
-                tool name: language-server-references
-                symbol: abc.xyz
-
                 # Tool Use Guidelines
 
                 1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
                 2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                3. If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+                3. {parallel_tool_use_guidelines}
                 4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
                 5. Information about whether the tool succeeded or failed, along with any reasons for failure.
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
@@ -267,6 +154,9 @@ class BaseGeminiCodeQuerySolverPrompt:
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
                     ),
+                    parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
+                    if self.params.get("parallel_tool_use_enabled", True)
+                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.",
                 )
             )
         else:
@@ -329,10 +219,15 @@ class BaseGeminiCodeQuerySolverPrompt:
                 symbolName: abc.xyz
                 
                 {tool_use_capabilities_resolution_guidelines}
+
+                {parallel_tool_use_guidelines}
                 """.format(
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=False
-                    )
+                    ),
+                    parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
+                    if self.params.get("parallel_tool_use_enabled", True)
+                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.",
                 )
             )
 
