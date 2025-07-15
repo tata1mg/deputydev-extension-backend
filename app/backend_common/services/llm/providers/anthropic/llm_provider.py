@@ -20,7 +20,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
-    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -88,14 +87,9 @@ class Anthropic(BaseLLMProvider):
             List[ConversationTurn]: The formatted conversation turns.
         """
         conversation_turns: List[ConversationTurn] = []
-        last_tool_use_request: bool = False
+        tool_requests: Dict[str, Any] = {}
+        tool_request_order: List[str] = []
         for message in previous_responses:
-            if last_tool_use_request and not (
-                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-            ):
-                # remove the tool use request if the user has not responded to it
-                conversation_turns.pop()
-                last_tool_use_request = False
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             content: List[Dict[str, Any]] = []
             # sort message datas, keep text block first and tool use request last
@@ -121,32 +115,32 @@ class Anthropic(BaseLLMProvider):
                             "text": content_data.text,
                         }
                     )
-                    last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
-                    if (
-                        last_tool_use_request
-                        and conversation_turns
-                        and not isinstance(conversation_turns[-1].content, str)
-                        and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
-                    ):
-                        content.append(
-                            {
+                    while len(tool_request_order) > 0:
+                        if tool_request_order[0] == content_data.tool_use_id:
+                            tool_request = tool_requests[content_data.tool_use_id]
+                            tool_response = {
                                 "type": "tool_result",
                                 "tool_use_id": content_data.tool_use_id,
                                 "content": json.dumps(content_data.response),
                             }
-                        )
-                        last_tool_use_request = False
+                            conversation_turns.append(
+                                ConversationTurn(role=ConversationRole.ASSISTANT, content=[tool_request])
+                            )
+                            conversation_turns.append(
+                                ConversationTurn(role=ConversationRole.USER, content=[tool_response])
+                            )
+                            tool_request_order.pop(0)
+                            break
+                        tool_request_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
-                    content.append(
-                        {
-                            "type": "tool_use",
-                            "name": content_data.tool_name,
-                            "id": content_data.tool_use_id,
-                            "input": content_data.tool_input,
-                        }
-                    )
-                    last_tool_use_request = True
+                    tool_requests[content_data.tool_use_id] = {
+                        "type": "tool_use",
+                        "name": content_data.tool_name,
+                        "id": content_data.tool_use_id,
+                        "input": content_data.tool_input,
+                    }
+                    tool_request_order.append(content_data.tool_use_id)
 
                 # handle file attachments
                 else:
@@ -165,12 +159,15 @@ class Anthropic(BaseLLMProvider):
                                 },
                             }
                         )
-                    last_tool_use_request = False
 
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
-
+        if tool_request_order:
+            content: List[Dict[str, Any]] = []
+            for req in tool_request_order:
+                content.append(tool_requests[req])
+            conversation_turns.append(ConversationTurn(role=ConversationRole.ASSISTANT, content=content))
         return conversation_turns
 
     async def build_llm_payload(  # noqa: C901
@@ -195,14 +192,6 @@ class Anthropic(BaseLLMProvider):
         )
 
         # remove last block from the messages if not tool response and last block is tool use request
-        if not tool_use_response and (
-            messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content
-        ):
-            last_content = messages[-1].content[-1]
-            if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
-                # remove the tool use request if the user has not responded to it
-                messages[-1].content.pop()
-
         if prompt and prompt.cached_message:
             cached_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
