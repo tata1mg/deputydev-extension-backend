@@ -9,6 +9,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelWithResponseStreamResponseTypeDef,
 )
 
+from app.backend_common.caches.bedrock_cache import BedrockCache
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,
 )
@@ -20,7 +21,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
-    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -73,7 +73,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
 class Anthropic(BaseLLMProvider):
     def __init__(self, checker: Optional[CancellationChecker] = None) -> None:
         super().__init__(LLMProviders.ANTHROPIC.value, checker=checker)
-        self.anthropic_client = None
+        self.anthropic_clients: Dict[str, BedrockServiceClient] = {}
 
     async def get_conversation_turns(  # noqa: C901
         self,
@@ -88,14 +88,9 @@ class Anthropic(BaseLLMProvider):
             List[ConversationTurn]: The formatted conversation turns.
         """
         conversation_turns: List[ConversationTurn] = []
-        last_tool_use_request: bool = False
+        tool_requests: Dict[str, Any] = {}
+        tool_request_order: List[str] = []
         for message in previous_responses:
-            if last_tool_use_request and not (
-                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-            ):
-                # remove the tool use request if the user has not responded to it
-                conversation_turns.pop()
-                last_tool_use_request = False
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             content: List[Dict[str, Any]] = []
             # sort message datas, keep text block first and tool use request last
@@ -121,32 +116,32 @@ class Anthropic(BaseLLMProvider):
                             "text": content_data.text,
                         }
                     )
-                    last_tool_use_request = False
                 elif isinstance(content_data, ToolUseResponseContent):
-                    if (
-                        last_tool_use_request
-                        and conversation_turns
-                        and not isinstance(conversation_turns[-1].content, str)
-                        and conversation_turns[-1].content[-1].get("id") == content_data.tool_use_id
-                    ):
-                        content.append(
-                            {
+                    while len(tool_request_order) > 0:
+                        if tool_request_order[0] == content_data.tool_use_id:
+                            tool_request = tool_requests[content_data.tool_use_id]
+                            tool_response = {
                                 "type": "tool_result",
                                 "tool_use_id": content_data.tool_use_id,
                                 "content": json.dumps(content_data.response),
                             }
-                        )
-                        last_tool_use_request = False
+                            conversation_turns.append(
+                                ConversationTurn(role=ConversationRole.ASSISTANT, content=[tool_request])
+                            )
+                            conversation_turns.append(
+                                ConversationTurn(role=ConversationRole.USER, content=[tool_response])
+                            )
+                            tool_request_order.pop(0)
+                            break
+                        tool_request_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
-                    content.append(
-                        {
-                            "type": "tool_use",
-                            "name": content_data.tool_name,
-                            "id": content_data.tool_use_id,
-                            "input": content_data.tool_input,
-                        }
-                    )
-                    last_tool_use_request = True
+                    tool_requests[content_data.tool_use_id] = {
+                        "type": "tool_use",
+                        "name": content_data.tool_name,
+                        "id": content_data.tool_use_id,
+                        "input": content_data.tool_input,
+                    }
+                    tool_request_order.append(content_data.tool_use_id)
 
                 # handle file attachments
                 else:
@@ -165,12 +160,15 @@ class Anthropic(BaseLLMProvider):
                                 },
                             }
                         )
-                    last_tool_use_request = False
 
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
-
+        if tool_request_order:
+            content: List[Dict[str, Any]] = []
+            for req in tool_request_order:
+                content.append(tool_requests[req])
+            conversation_turns.append(ConversationTurn(role=ConversationRole.ASSISTANT, content=content))
         return conversation_turns
 
     async def build_llm_payload(  # noqa: C901
@@ -195,14 +193,6 @@ class Anthropic(BaseLLMProvider):
         )
 
         # remove last block from the messages if not tool response and last block is tool use request
-        if not tool_use_response and (
-            messages and messages[-1].role == ConversationRole.ASSISTANT and messages[-1].content
-        ):
-            last_content = messages[-1].content[-1]
-            if isinstance(last_content, dict) and last_content.get("type") == "tool_use":
-                # remove the tool use request if the user has not responded to it
-                messages[-1].content.pop()
-
         if prompt and prompt.cached_message:
             cached_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
@@ -286,17 +276,44 @@ class Anthropic(BaseLLMProvider):
                 }
             ]
 
-        # Todo Uncomment this later when bedrock provide support of prompt caching
-
         if cache_config.conversation and messages and model_config["PROMPT_CACHING_SUPPORTED"]:
             llm_payload["messages"][-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
 
         return llm_payload
 
-    async def _get_service_client(self) -> BedrockServiceClient:
-        if not self.anthropic_client:
-            self.anthropic_client = BedrockServiceClient()
-        return self.anthropic_client
+    async def _get_region_from_round_robin(self, model_name: LLModels, model_config: Dict[str, Any]) -> Tuple[str, str]:
+        """
+        Get the region from round robin.
+        This fetches the region last used for the BedRock service client from redis cache.
+        Then, it updates the region in the cache to the next region in the list and returns the region.
+        """
+        region_and_identifier_list: List[Dict[str, str]] = model_config["PROVIDER_CONFIG"]["REGION_AND_IDENTIFIER_LIST"]
+        last_used_cache_key = f"last_used_region:{model_name.value}"
+        last_used_region: Optional[str] = cast(Optional[str], await BedrockCache.get(last_used_cache_key))
+        if not last_used_region:
+            # If no region is found, default to the first one
+            last_used_region = region_and_identifier_list[0]["AWS_REGION"]
+        # Update the cache with the next regions
+        current_index = 0
+        for index, region_info in enumerate(region_and_identifier_list):
+            if region_info["AWS_REGION"] == last_used_region:
+                current_index = index
+                break
+        next_index = (current_index + 1) % len(region_and_identifier_list)
+        next_region = region_and_identifier_list[next_index]["AWS_REGION"]
+        next_model_identifier = region_and_identifier_list[next_index]["MODEL_IDENTIFIER"]
+        await BedrockCache.set(last_used_cache_key, next_region)  # type: ignore
+        return next_region, next_model_identifier
+
+    async def _get_service_client_and_model_name(
+        self, model_name: LLModels, model_config: Dict[str, Any]
+    ) -> Tuple[BedrockServiceClient, str]:
+        """Get the BedRock service client for selected region"""
+        selected_region, selected_model_identifier = await self._get_region_from_round_robin(model_name, model_config)
+        if not self.anthropic_clients.get(selected_region):
+            self.anthropic_clients[selected_region] = BedrockServiceClient(region_name=selected_region)
+
+        return self.anthropic_clients[selected_region], selected_model_identifier
 
     async def _parse_non_streaming_response(self, response: InvokeModelResponseTypeDef) -> NonStreamingResponse:
         body: bytes = await response["body"].read()  # type: ignore
@@ -624,17 +641,18 @@ class Anthropic(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         session_id: Optional[int] = None,
+        parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
-        anthropic_client = await self._get_service_client()
-        AppLogger.log_debug(json.dumps(llm_payload))
         model_config = self._get_model_config(model)
+        anthropic_client, model_identifier = await self._get_service_client_and_model_name(model, model_config)
+        AppLogger.log_debug(json.dumps(llm_payload))
         if stream is False:
             response = await anthropic_client.get_llm_non_stream_response(
-                llm_payload=llm_payload, model=model_config["NAME"]
+                llm_payload=llm_payload, model=model_identifier
             )
             return await self._parse_non_streaming_response(response)
         else:
             response, async_bedrock_client = await anthropic_client.get_llm_stream_response(
-                llm_payload=llm_payload, model=model_config["NAME"]
+                llm_payload=llm_payload, model=model_identifier
             )
             return await self._parse_streaming_response(response, async_bedrock_client, model_config, session_id)

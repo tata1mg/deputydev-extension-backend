@@ -82,6 +82,13 @@ class Attachment(BaseModel):
     attachment_id: int
 
 
+class Repository(BaseModel):
+    repo_path: str
+    repo_name: str
+    root_directory_context: str
+    is_working_repository: bool
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
@@ -89,6 +96,7 @@ class QuerySolverInput(BaseModel):
     write_mode: bool = False
     session_id: int
     tool_use_failed: Optional[bool] = None
+    batch_tool_responses: Optional[List[ToolUseResponseInput]] = None
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
@@ -98,6 +106,7 @@ class QuerySolverInput(BaseModel):
     os_name: Optional[str] = None
     shell: Optional[str] = None
     vscode_env: Optional[str] = None
+    repositories: Optional[List[Repository]] = None
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
     client_tools: List[ClientTool] = []
