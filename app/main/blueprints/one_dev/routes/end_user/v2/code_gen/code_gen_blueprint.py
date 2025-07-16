@@ -22,6 +22,9 @@ from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_
     AWSAPIGatewayServiceClient,
     SocketClosedException,
 )
+from app.backend_common.service_clients.exceptions import (
+    LLMThrottledError,
+)
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
@@ -66,7 +69,7 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def solve_user_query_non_stream(
+async def solve_user_query_non_stream(  # noqa: C901
     _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ) -> ResponseDict | response.JSONResponse:
     payload = QuerySolverInput(**_request.json, session_id=session_id)
@@ -79,7 +82,7 @@ async def solve_user_query_non_stream(
         session_data["llm_model"] = payload.llm_model.value
     if session_data:
         await CodeGenTasksCache.set_session_data(session_id, session_data)
-    blocks = []
+    blocks: List[Dict[str, Any]] = []
     # Add stream start block
     start_data = {"type": "STREAM_START"}
     if auth_data.session_refresh_token:
@@ -87,7 +90,7 @@ async def solve_user_query_non_stream(
     blocks.append(start_data)
 
     # Create a task for this non-streaming request too for potential cancellation
-    async def solve_query_task():
+    async def solve_query_task() -> List[Dict[str, Any]]:
         try:
             try:
                 data = await QuerySolver().solve_query(payload=payload, client_data=client_data)
@@ -102,10 +105,10 @@ async def solve_user_query_non_stream(
             except asyncio.CancelledError:
                 blocks.append({"type": "STREAM_CANCELLED", "message": "LLM processing cancelled"})
                 raise
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 AppLogger.log_error(f"Error in solving query: {ex}")
                 blocks.append({"type": "STREAM_ERROR", "message": str(ex)})
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error in solving query: {e}")
         return blocks
 
@@ -266,6 +269,24 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             # push stream end message
             end_data = {"type": "STREAM_END"}
             await push_to_connection_stream(end_data)
+
+        except LLMThrottledError as ex:
+            AppLogger.log_error(
+                f"Throttled by LLM provider: {getattr(ex, 'provider', None)} | "
+                f"model: {getattr(ex, 'model', None)} | "
+                f"detail: {ex.detail}"
+            )
+            error_data: Dict[str, Any] = {
+                "type": "STREAM_ERROR",
+                "status": "LLM_THROTTLED",
+                "provider": getattr(ex, "provider", None),
+                "model": getattr(ex, "model", None),
+                "retry_after": ex.retry_after,
+                "message": "The language model is busy or rate-limited. Please try again in a few seconds.",
+                "detail": ex.detail,
+            }
+            await push_to_connection_stream(error_data)
+
         except asyncio.CancelledError:
             cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled "}
             await push_to_connection_stream(cancel_data)
@@ -278,7 +299,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             await task_checker.stop_monitoring()
             await aws_client.close()
 
-    task = asyncio.create_task(solve_query())
+    asyncio.create_task(solve_query())
     return send_response({"status": "SUCCESS"})
 
 
@@ -331,7 +352,9 @@ async def terminal_command_edit(
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=False)
-async def cancel_chat(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def cancel_chat(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+) -> ResponseDict | response.JSONResponse:
     await CancellationService().cancel(session_id)
     await CodeGenTasksCache.cancel_session(session_id)
     return send_response(
