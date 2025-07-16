@@ -1,5 +1,5 @@
 import re
-from typing import AsyncIterator, List, Optional, Tuple, Union
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from partial_json_parser import loads
 from pydantic import BaseModel
@@ -22,6 +22,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.b
     CodeBlockEndContent,
     CodeBlockStart,
     CodeBlockStartContent,
+    StreamingContentBlock,
     SummaryBlockDelta,
     SummaryBlockDeltaContent,
     SummaryBlockEnd,
@@ -42,11 +43,11 @@ class ToolUseEventParser:
 
 
 class TextBlockParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.status = "NOT_STARTED"
 
-    def parse(self, content: str, last_index: int):
-        events = []
+    def parse(self, content: str, last_index: int) -> Tuple[List[StreamingContentBlock], int]:
+        events: List[StreamingContentBlock] = []
         if self.status == "NOT_STARTED":
             events.append(TextBlockStart())
             self.status = "STARTED"
@@ -54,13 +55,13 @@ class TextBlockParser:
             events.append(TextBlockDelta(content=TextBlockDeltaContent(text=content[last_index:])))
         return events, len(content)
 
-    def end(self):
+    def end(self) -> List[StreamingContentBlock]:
         self.status = "NOT_STARTED"
         return [TextBlockEnd()]
 
 
 class CodeBlockParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.status = "NOT_STARTED"
         self.diff_buffer = ""
         self.diff_line_buffer = ""
@@ -94,8 +95,8 @@ class CodeBlockParser:
             return "-"
         return None
 
-    def parse(self, part: dict, last_index: int):
-        events = []
+    def parse(self, part: Dict[str, Any], last_index: int) -> Tuple[List[StreamingContentBlock], int]:
+        events: List[StreamingContentBlock] = []
         if self.status == "NOT_STARTED":
             events.append(
                 CodeBlockStart(
@@ -137,7 +138,7 @@ class CodeBlockParser:
             self.text_buffer = ""
         return events, len(part["code"])
 
-    def end(self):
+    def end(self) -> List[StreamingContentBlock]:
         end_content = CodeBlockEndContent()
         if self.is_diff:
             end_content.diff = self.diff_buffer
@@ -156,12 +157,12 @@ class CodeBlockParser:
 
 
 class ResponsePartParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.text_parser = TextBlockParser()
         self.code_parser = CodeBlockParser()
         self.current_type = None
 
-    def parse_helper(self, part, last_index=0):
+    def parse_helper(self, part: Dict[str, Any], last_index: int = 0) -> Tuple[List[StreamingContentBlock], int]:
         if part.get("type") == "text" and part.get("content"):
             self.current_type = "text"
             return self.text_parser.parse(part["content"], last_index)
@@ -170,14 +171,16 @@ class ResponsePartParser:
             return self.code_parser.parse(part, last_index)
         return [], last_index
 
-    def end_current_block(self):
+    def end_current_block(self) -> List[StreamingContentBlock]:
         if self.current_type == "text":
             return self.text_parser.end()
         elif self.current_type == "code_block":
             return self.code_parser.end()
         return []
 
-    def parse(self, response_parts, last_index=0, last_processed=0):
+    def parse(
+        self, response_parts: List[Dict[str, Any]], last_index: int = 0, last_processed: int = 0
+    ) -> Tuple[List[StreamingEvent], int, int]:
         old_events, new_events = [], []
 
         if last_processed < len(response_parts) - 1:
@@ -194,7 +197,7 @@ class ResponsePartParser:
 
 
 class TextBlockEventParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.buffer = ""
         self.prev_block = ""
         self.current_block = ""
@@ -207,7 +210,7 @@ class TextBlockEventParser:
     def can_parse(self, event: StreamingEvent) -> bool:
         return isinstance(event, (TextBlockStart, TextBlockDelta, TextBlockEnd))
 
-    async def parse(self, event: StreamingEvent) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
+    async def parse(self, event: StreamingEvent) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:  # noqa: C901
         if event.type == StreamingEventType.TEXT_BLOCK_START:
             return
 
@@ -259,7 +262,7 @@ class TextBlockEventParser:
             for e in events:
                 yield e
 
-    async def _handle_previous_block(self, parsed_response):
+    async def _handle_previous_block(self, parsed_response: Dict[str, Any]) -> AsyncIterator[StreamingContentBlock]:
         block_data = parsed_response.get(self.prev_block, "")
         if self.prev_block == "thinking":
             delta = block_data[self.parsed_index :]
@@ -285,16 +288,16 @@ class TextBlockEventParser:
 
 
 class BaseBlockParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.status = "NOT_STARTED"
 
-    def start(self):
+    def start(self) -> bool:
         if self.status == "NOT_STARTED":
             self.status = "STARTED"
             return True
         return False
 
-    def end(self):
+    def end(self) -> None:
         self.status = "NOT_STARTED"
 
 
@@ -331,7 +334,7 @@ class SummaryBlockParser(BaseBlockParser):
 
 
 class StreamingTextEventProcessor:
-    def __init__(self, parsers: List[Union[TextBlockEventParser, ToolUseEventParser]]):
+    def __init__(self, parsers: List[Union[TextBlockEventParser, ToolUseEventParser]]) -> None:
         self.parsers = parsers
 
     async def parse(self, events: AsyncIterator[StreamingEvent]) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
