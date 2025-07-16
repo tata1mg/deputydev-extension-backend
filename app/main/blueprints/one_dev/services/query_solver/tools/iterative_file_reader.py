@@ -6,7 +6,6 @@ ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
     description=textwrap.dedent("""
         This is a built-in tool.
-
         Reads content of a file, and optionally between a specific range of lines if a start line and/or end line is provided. (1 indexed).
 
         If the file is small (<=1000 lines) and the entire file is requested, it will return the full content.
@@ -23,24 +22,25 @@ ITERATIVE_FILE_READER = ConversationTool(
         The response will EXPLICITLY mention if the end of the file is reached or not.
     """),
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "file_path": {
-                    "type": "string",
-                    "description": "The complete path of the file relative to the repo root",
-                },
-                "start_line": {
-                    "type": "number",
-                    "description": "Optional. Start line to read from. It is 1 indexed. If not provided, it will read from the start of the file.",
-                },
-                "end_line": {
-                    "type": "number",
-                    "description": "Optional. End line to read until. It is 1 indexed. If not provided, it will read until the end of the file.",
-                },
-            },
-            "required": ["file_path"],
-            "additionalProperties": False,
-        }
+        type="object",
+        properties={
+            "file_path": JSONSchema(
+                type="string", description="The full path to the file, relative to the root of the repository."
+            ),
+            "repo_path": JSONSchema(
+                type="string",
+                description="The absolute path to the root of the repository.",
+            ),
+            "start_line": JSONSchema(
+                type="number",
+                description="Optional. Start line to read from. It is 1 indexed. If not provided, it will read from the start of the file.",
+            ),
+            "end_line": JSONSchema(
+                type="number",
+                description="Optional. End line to read until. It is 1 indexed. If not provided, it will read until the end of the file.",
+            ),
+        },
+        required=["file_path", "repo_path"],
+        additionalProperties=False,
     ),
 )
