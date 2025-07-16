@@ -4,7 +4,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.b
 
 
 class Claude4ThinkingBackendAppCreatorPrompt(Claude4BackendAppCreatorPrompt):
-    def get_system_prompt(self):
+    def get_system_prompt(self) -> str:
         system_prompt = super().get_system_prompt()
         additional_prompt = """
         IMPORTANT: As this is extended thinking model **DO NOT** provide <thinking> tag. 
