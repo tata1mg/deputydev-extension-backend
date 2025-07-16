@@ -3,12 +3,15 @@ from typing import Any, Dict, Optional, Tuple
 
 from aiobotocore.config import AioConfig  # type: ignore
 from aiobotocore.session import get_session  # type: ignore
+from botocore.exceptions import ClientError
 from torpedo import CONFIG  # type: ignore
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
     InvokeModelWithResponseStreamResponseTypeDef,
 )
+
+from app.backend_common.service_clients.exceptions import AnthropicThrottledError
 
 
 class BedrockServiceClient:
@@ -47,6 +50,12 @@ class BedrockServiceClient:
                 modelId=model, body=json.dumps(llm_payload)
             )
             return response, bedrock_client
+        except ClientError as e:
+            code = e.response.get("Error", {}).get("Code", "")
+            status = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode", 0)
+            if code == "ThrottlingException" or status == 429:
+                await bedrock_client.__aexit__(None, None, None)
+                raise AnthropicThrottledError(model=model, retry_after=None, detail=str(e)) from e
         except Exception as e:
             await bedrock_client.__aexit__(None, None, None)
             raise e
