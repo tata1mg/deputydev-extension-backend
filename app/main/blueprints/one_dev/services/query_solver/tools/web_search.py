@@ -33,15 +33,13 @@ WEB_SEARCH = ConversationTool(
         "I'm getting 'psycopg2.OperationalError: could not connect to server' when running Django with Postgres in Docker Compose. I suspect it's due to race condition on startup. Please find a 2024-recommended solution or wait-for-it script alternatives."
     """,
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "descriptive_query": {
-                    "type": "string",
-                    "description": "Full, natural language prompt including user intent, code, errors, and context for the search.",
-                }
-            },
-            "required": ["descriptive_query"],
-        }
+        type="object",
+        properties={
+            "descriptive_query": JSONSchema(
+                type="string",
+                description="Full, natural language prompt including user intent, code, errors, and context for the search.",
+            ),
+        },
+        required=["descriptive_query"],
     ),
 )

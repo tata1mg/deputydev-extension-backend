@@ -20,7 +20,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
-    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -78,16 +77,10 @@ class Google(BaseLLMProvider):
             List[Content]: The formatted conversation history for Gemini.
         """
         conversation_turns: List[google_genai_types.Content] = []
-        last_tool_use_request: bool = False
+        tool_requests: Dict[str, ToolUseRequestContent] = {}
+        tool_requests_order: List[str] = []
 
         for message in previous_responses:
-            if last_tool_use_request and not (
-                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-            ):
-                # Remove the previous tool_use if it was not followed by a proper response
-                conversation_turns.pop()
-                last_tool_use_request = False
-
             role = (
                 ConversationRoleGemini.USER.value
                 if message.actor == MessageThreadActor.USER
@@ -104,22 +97,29 @@ class Google(BaseLLMProvider):
 
                 if isinstance(content_data, TextBlockContent):
                     parts.append(google_genai_types.Part.from_text(text=content_data.text))
-                    last_tool_use_request = False
 
                 elif isinstance(content_data, ToolUseResponseContent):
-                    if last_tool_use_request and conversation_turns and conversation_turns[-1].parts[-1].function_call:
-                        tool_response = google_genai_types.Part.from_function_response(
-                            name=content_data.tool_name, response=content_data.response
-                        )
-                        parts.append(tool_response)
-                        last_tool_use_request = False
-
+                    while len(tool_requests_order) > 0:
+                        if tool_requests_order[0] == content_data.tool_use_id:
+                            function_call = google_genai_types.Part.from_function_call(
+                                name=tool_requests[content_data.tool_use_id].tool_name,
+                                args=tool_requests[content_data.tool_use_id].tool_input,
+                            )
+                            conversation_turns.append(
+                                google_genai_types.Content(
+                                    role=ConversationRoleGemini.MODEL.value, parts=[function_call]
+                                )
+                            )
+                            tool_response = google_genai_types.Part.from_function_response(
+                                name=content_data.tool_name, response=content_data.response
+                            )
+                            parts.append(tool_response)
+                            tool_requests_order.pop(0)
+                            break
+                        tool_requests_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
-                    function_call = google_genai_types.Part.from_function_call(
-                        name=content_data.tool_name, args=content_data.tool_input
-                    )
-                    parts.append(function_call)
-                    last_tool_use_request = True
+                    tool_requests[content_data.tool_use_id] = content_data
+                    tool_requests_order.append(content_data.tool_use_id)
 
                 elif isinstance(content_data, ExtendedThinkingContent):
                     continue
@@ -136,8 +136,13 @@ class Google(BaseLLMProvider):
                                 mime_type=attachment_data.attachment_metadata.file_type,
                             )
                         )
-                    last_tool_use_request = False
-
+            for rem in tool_requests_order:
+                function_call = google_genai_types.Part.from_function_call(
+                    name=tool_requests[rem].tool_name, args=tool_requests[rem].tool_input
+                )
+                conversation_turns.append(
+                    google_genai_types.Content(role=ConversationRoleGemini.MODEL.value, parts=[function_call])
+                )
             if parts:
                 conversation_turns.append(google_genai_types.Content(role=role, parts=parts))
 
@@ -215,12 +220,16 @@ class Google(BaseLLMProvider):
 
         # 4. Handle Tool Use Response (if provided for this specific call)
         if tool_use_response:
-            tool_response = google_genai_types.Part.from_function_response(
-                name=tool_use_response.content.tool_name,
-                response=tool_use_response.content.response,
+            contents.append(
+                google_genai_types.Content(
+                    parts=[
+                        google_genai_types.Part.from_function_response(
+                            name=tool_use_response.content.tool_name, response=tool_use_response.content.response
+                        )
+                    ],
+                    role=ConversationRoleGemini.USER.value,
+                )
             )
-            contents.append(google_genai_types.Content(parts=[tool_response], role=ConversationRoleGemini.USER.value))
-
         # 5. Handle Tools Definition
         tools = sorted(tools, key=lambda x: x.name) if tools else []
         formatted_tools = []
@@ -403,40 +412,79 @@ class Google(BaseLLMProvider):
         current_running_block_type: Optional[ContentBlockCategory] = None,
     ) -> Tuple[List[Optional[StreamingEvent]], Optional[ContentBlockCategory], Optional[LLMUsage]]:
         event_blocks: List[StreamingEvent] = []
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
+        usage: LLMUsage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
         candidate = chunk.candidates[0]
-        part: google_genai_types.Part = candidate.content.parts[0]
-        # Block type is changing, so mark current running block end and start new block.
-        if current_running_block_type != ContentBlockCategory.TEXT_BLOCK and part.text:
-            if current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+
+        # Process all parts instead of just the first one
+        parts = candidate.content.parts if candidate.content and candidate.content.parts else []
+
+        for i, part in enumerate(parts):
+            # Block type is changing, so mark current running block end and start new block.
+            if part.text and current_running_block_type != ContentBlockCategory.TEXT_BLOCK:
+                if current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+                    event_block = ToolUseRequestEnd()
+                    event_blocks.append(event_block)
+                event_block = TextBlockStart()
+                event_blocks.append(event_block)
+                current_running_block_type = ContentBlockCategory.TEXT_BLOCK
+            elif part.function_call:
+                # End previous block if needed
+                if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
+                    event_block = TextBlockEnd()
+                    event_blocks.append(event_block)
+                elif current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+                    # End previous tool use request before starting a new one
+                    event_block = ToolUseRequestEnd()
+                    event_blocks.append(event_block)
+
+                # Start new tool use request for each function call
+                function_call: google_genai_types.FunctionCall = part.function_call
+                event_block = ToolUseRequestStart(
+                    content=ToolUseRequestStartContent(
+                        tool_name=function_call.name, tool_use_id=function_call.id or str(uuid.uuid4())
+                    )
+                )
+                event_blocks.append(event_block)
+
+                # Google provides complete function call args
+                args_json = "{}"
+                if part.function_call.args:
+                    if isinstance(part.function_call.args, str):
+                        # Validate if the string is already valid JSON
+                        try:
+                            json.loads(part.function_call.args)
+                            args_json = part.function_call.args
+                        except (json.JSONDecodeError, ValueError, TypeError) as e:
+                            # If not valid JSON, treat it as a plain string and wrap it properly
+                            AppLogger.log_warn(f"Invalid JSON in function call args, wrapping as string: {e}")
+                            try:
+                                args_json = json.dumps({"value": part.function_call.args})
+                            except (TypeError, ValueError) as wrap_error:
+                                AppLogger.log_error(f"Failed to wrap function call args as JSON: {wrap_error}")
+                                args_json = json.dumps({"error": "Invalid function arguments"})
+                    else:
+                        # Convert dict/object to JSON string
+                        try:
+                            args_json = json.dumps(part.function_call.args)
+                        except (TypeError, ValueError) as e:
+                            AppLogger.log_error(f"Error serializing function call args: {e}")
+                            args_json = json.dumps({"error": "Failed to serialize function arguments"})
+
+                event_block = ToolUseRequestDelta(content=ToolUseRequestDeltaContent(input_params_json_delta=args_json))
+                event_blocks.append(event_block)
+
+                # End this tool use request immediately
                 event_block = ToolUseRequestEnd()
                 event_blocks.append(event_block)
-            event_block = TextBlockStart()
-            event_blocks.append(event_block)
-            current_running_block_type = ContentBlockCategory.TEXT_BLOCK
-        elif current_running_block_type != ContentBlockCategory.TOOL_USE_REQUEST and part.function_call:
-            if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
-                event_block = TextBlockEnd()
-                event_blocks.append(event_block)
-            function_call: google_genai_types.FunctionCall = part.function_call
-            event_block = ToolUseRequestStart(
-                content=ToolUseRequestStartContent(
-                    tool_name=function_call.name, tool_use_id=function_call.id or str(uuid.uuid4())
-                )
-            )
-            event_blocks.append(event_block)
-            current_running_block_type = ContentBlockCategory.TOOL_USE_REQUEST
-        # ============================================================================== #
+                current_running_block_type = None
 
-        # ============================ Add data of current block ======================= #
-        if part.text:
-            event_block = TextBlockDelta(content=TextBlockDeltaContent(text=part.text))
-            event_blocks.append(event_block)
-        elif part.function_call:
-            event_block = ToolUseRequestDelta(
-                content=ToolUseRequestDeltaContent(input_params_json_delta=json.dumps(part.function_call.args))
-            )
-            event_blocks.append(event_block)
+            # ============================ Add data of current block ======================= #
+            if part.text:
+                event_block = TextBlockDelta(content=TextBlockDeltaContent(text=part.text))
+                event_blocks.append(event_block)
+                current_running_block_type = ContentBlockCategory.TEXT_BLOCK
+
+        # Handle finish reason at the end
         if candidate.finish_reason:
             if chunk.usage_metadata:
                 usage.input = (chunk.usage_metadata.prompt_token_count or 0) - (
@@ -445,12 +493,10 @@ class Google(BaseLLMProvider):
                 usage.output = chunk.usage_metadata.candidates_token_count or 0
                 usage.cache_read = chunk.usage_metadata.cached_content_token_count or 0
 
-            event_block = None
             if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
                 event_block = TextBlockEnd()
-            elif current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
-                event_block = ToolUseRequestEnd()
-            event_blocks.append(event_block)
+                event_blocks.append(event_block)
+            # Don't append None when current_running_block_type is not TEXT_BLOCK
 
         return event_blocks, current_running_block_type, usage
 
@@ -461,6 +507,7 @@ class Google(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         session_id: Optional[int] = None,
+        parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the Vertex AI service client.

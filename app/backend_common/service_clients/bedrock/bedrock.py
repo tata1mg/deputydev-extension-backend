@@ -12,8 +12,9 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 
 
 class BedrockServiceClient:
-    def __init__(self):
+    def __init__(self, region_name: str) -> None:
         self.client: Optional[BedrockRuntimeClient] = None
+        self.region_name = region_name
 
     def _get_bedrock_client(self) -> BedrockRuntimeClient:
         session = get_session()
@@ -23,7 +24,7 @@ class BedrockServiceClient:
             aws_access_key_id=CONFIG.config["AWS"].get("ACCESS_KEY_ID"),  # type: ignore
             aws_secret_access_key=CONFIG.config["AWS"].get("SECRET_ACCESS_KEY"),  # type: ignore
             aws_session_token=CONFIG.config["AWS"].get("SESSION_TOKEN"),  # type: ignore
-            region_name=CONFIG.config["AWS"]["AWS_REGION"],  # type: ignore
+            region_name=self.region_name,  # type: ignore
             config=config,  # type: ignore
         )
 
