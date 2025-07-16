@@ -12,7 +12,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.b
 
 
 class Claude4ExtendedThinkingParser:
-    def parse(self, event):
+    def parse(
+        self, event: ExtendedThinkingBlockStart | ExtendedThinkingBlockDelta | ExtendedThinkingBlockEnd
+    ) -> ThinkingBlockDelta | ThinkingBlockStart | ThinkingBlockEnd:
         if isinstance(event, ExtendedThinkingBlockStart):
             return ThinkingBlockStart()
         if isinstance(event, ExtendedThinkingBlockDelta):
