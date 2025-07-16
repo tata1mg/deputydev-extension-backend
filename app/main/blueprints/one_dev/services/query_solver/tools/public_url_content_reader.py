@@ -17,17 +17,19 @@ PUBLIC_URL_CONTENT_READER = ConversationTool(
         Tip: For best performance, process 3-5 URLs at a time.
     """,
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "urls": {
-                    "type": "array",
-                    "items": {"type": "string", "format": "uri", "pattern": "^https?://"},
-                    "description": "A list of publicly accessible HTTP/HTTPS URLs (maximum: 5).",
-                    "maxItems": 5,
-                },
-            },
-            "required": ["urls"],
-        }
+        type="object",
+        properties={
+            "urls": JSONSchema(
+                type="array",
+                items=JSONSchema(
+                    type="string",
+                    format="uri",
+                    pattern="^https?://",
+                ),
+                description="A list of publicly accessible HTTP/HTTPS URLs (maximum: 5).",
+                maxItems=5,
+            ),
+        },
+        required=["urls"],
     ),
 )
