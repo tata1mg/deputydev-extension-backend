@@ -17,7 +17,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 
 
 class SummaryParser(BaseAnthropicTextDeltaParser):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(xml_tag="summary")
 
     async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
