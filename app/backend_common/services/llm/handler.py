@@ -201,6 +201,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_vars: Dict[str, Any],
         call_chain_category: MessageCallChainCategory,
         attachmnts: Optional[List[Attachment]],
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> MessageThreadDTO:
         """
         Store LLM query in DB
@@ -242,6 +243,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_category=prompt_category,
             llm_model=llm_model,
             call_chain_category=call_chain_category,
+            metadata=metadata,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
@@ -644,6 +646,7 @@ class LLMHandler(Generic[PromptFeatures]):
         checker: Optional[CancellationChecker] = None,
         parallel_tool_calls: bool = False,
         prompt_handler_instance: Optional[BasePrompt] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -687,6 +690,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_vars=prompt_vars,
             attachmnts=attachments,
             call_chain_category=call_chain_category,
+            metadata=metadata,
         )
         if save_to_redis:
             await CodeGenTasksCache.set_session_query_id(prompt_thread.session_id, prompt_thread.id)

@@ -2,11 +2,14 @@ import asyncio
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
+    MessageThreadDTO,
+    MessageType,
     ToolUseResponseContent,
     ToolUseResponseData,
 )
@@ -25,6 +28,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
+from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
     CustomQuerySolverAgent,
 )
@@ -195,6 +199,37 @@ class QuerySolver:
 
         return agent_classes
 
+    async def get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
+        """
+        Get the last query message for the session.
+        """
+        try:
+            messages = await MessageThreadsRepository.get_message_threads_for_session(
+                session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
+            )
+            last_query_message = None
+            for message in messages:
+                if message.message_type == MessageType.QUERY and message.prompt_type in [
+                    "CODE_QUERY_SOLVER",
+                    "CUSTOM_CODE_QUERY_SOLVER",
+                ]:
+                    last_query_message = message
+            return last_query_message
+        except Exception as ex:  # noqa: BLE001
+            AppLogger.log_error(f"Error occurred while fetching last query message for session {session_id}: {ex}")
+            return None
+
+    async def _get_agent_instance_by_name(
+        self, agent_name: str, all_agents: List[QuerySolverAgent]
+    ) -> QuerySolverAgent:
+        """
+        Get the agent instance by its name.
+        """
+        for agent in all_agents:
+            if agent.agent_name == agent_name:
+                return agent
+        return DefaultQuerySolverAgentInstance
+
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -238,17 +273,21 @@ class QuerySolver:
             previous_responses = await self.get_previous_message_thread_ids(
                 payload.session_id, payload.previous_query_ids
             )
+            last_query_message = await self.get_last_query_message_for_session(payload.session_id)
             all_custom_agents = await self._generate_dynamic_query_solver_agents()
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
                 focus_items=payload.focus_items,
                 directory_items=payload.directory_items if payload.directory_items else [],
+                last_agent=last_query_message.metadata.get("agent_name")
+                if last_query_message and last_query_message.metadata
+                else None,
                 all_agents=[*all_custom_agents, DefaultQuerySolverAgentInstance],
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
             )
 
-            agent_instance = await agent_selector.select_agent()
+            agent_instance = await agent_selector.select_agent() or DefaultQuerySolverAgentInstance
             if not agent_instance:
                 raise ValueError("No suitable agent found for the query.")
 
@@ -285,6 +324,9 @@ class QuerySolver:
                 checker=task_checker,
                 parallel_tool_calls=parallel_tool_use_enabled,
                 prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
+                metadata={
+                    "agent_name": agent_instance.agent_name,
+                },
             )
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
@@ -328,10 +370,27 @@ class QuerySolver:
                     )
                 )
 
+            last_query_message = await self.get_last_query_message_for_session(payload.session_id)
+            agent_name = (
+                last_query_message.metadata.get("agent_name")
+                if last_query_message and last_query_message.metadata
+                else None
+            )
+            agent_instance: QuerySolverAgent = await self._get_agent_instance_by_name(
+                agent_name=agent_name or DefaultQuerySolverAgentInstance.agent_name,
+                all_agents=[*await self._generate_dynamic_query_solver_agents(), DefaultQuerySolverAgentInstance],
+            )
+            llm_inputs = agent_instance.get_llm_inputs(
+                payload=payload,
+                _client_data=client_data,
+                llm_model=LLModels(payload.llm_model.value),
+                previous_messages=None,
+            )
+
             llm_response = await llm_handler.submit_batch_tool_use_response(
                 session_id=payload.session_id,
                 tool_use_responses=tool_responses,
-                tools=DefaultQuerySolverAgentInstance.get_all_tools(payload=payload, _client_data=client_data),
+                tools=llm_inputs.tools,
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,

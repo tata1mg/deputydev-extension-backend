@@ -81,7 +81,11 @@ class Gemini2Point5FlashIntentSelectorPrompt(BaseGemini2Point5FlashPromptHandler
             + "</intents>"
         }
 
-        Please choose the most appropriate intent for the user query.
+        Also, the last intent used by the user was: {self.params.get("last_agent", "None")}
+
+        If you feel that the current query is a continuation of the last intent, select that intent.
+        Otherwise, choose the most appropriate intent from the list above.
+
         Give the answer in the following format:
         <intent_name>INTENT_NAME_HERE</intent_name>
         """
