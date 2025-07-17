@@ -57,11 +57,10 @@ class ExtensionCodeReviewHistoryManager:
                     comment_data["agent_names"].append(agent.display_name or agent.name)
                 review_data["tag_summary"][comment.tag] += 1
                 review_data["comments"][comment.file_path].append(comment_data)
-            review_data["meta"]["file_count"] = len(review_data["comments"])
             for file in review.reviewed_files:
                 if file not in review_data["comments"]:
                     review_data["comments"][file] = []
-
+            review_data["meta"]["file_count"] = len(review_data["comments"])
             formatted_reviews.append(review_data)
 
         return formatted_reviews
