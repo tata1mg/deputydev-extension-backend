@@ -136,13 +136,6 @@ class Google(BaseLLMProvider):
                                 mime_type=attachment_data.attachment_metadata.file_type,
                             )
                         )
-            for rem in tool_requests_order:
-                function_call = google_genai_types.Part.from_function_call(
-                    name=tool_requests[rem].tool_name, args=tool_requests[rem].tool_input
-                )
-                conversation_turns.append(
-                    google_genai_types.Content(role=ConversationRoleGemini.MODEL.value, parts=[function_call])
-                )
             if parts:
                 conversation_turns.append(google_genai_types.Content(role=role, parts=parts))
 
