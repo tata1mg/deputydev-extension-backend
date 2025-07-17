@@ -249,12 +249,7 @@ class QuerySolver:
         parallel_tool_use_enabled = compare_version(client_data.client_version, "8.4.0", ">=")
 
         # TODO: remove this after 9.0.0. force upgrade
-        if (
-            not parallel_tool_use_enabled
-            and payload.query is None
-            and payload.batch_tool_responses is None
-            and payload.tool_use_response is not None
-        ):
+        if payload.query is None and payload.batch_tool_responses is None and payload.tool_use_response is not None:
             payload.batch_tool_responses = [payload.tool_use_response]
 
         if payload.query:
@@ -311,10 +306,12 @@ class QuerySolver:
                 payload=payload, _client_data=client_data, llm_model=model_to_use, previous_messages=previous_responses
             )
 
+            prompt_vars_to_use = {**prompt_vars_to_use, **llm_inputs.extra_prompt_vars}
+
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
                 llm_model=model_to_use,
-                prompt_vars={**prompt_vars_to_use, **llm_inputs.extra_prompt_vars},
+                prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
                 previous_responses=llm_inputs.previous_messages,
                 tools=llm_inputs.tools,
@@ -383,7 +380,7 @@ class QuerySolver:
             llm_inputs = agent_instance.get_llm_inputs(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(payload.llm_model.value),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_5_SONNET),
                 previous_messages=None,
             )
 

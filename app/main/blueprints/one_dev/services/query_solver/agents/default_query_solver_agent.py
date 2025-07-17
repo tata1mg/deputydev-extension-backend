@@ -13,7 +13,7 @@ class DefaultQuerySolverAgent(QuerySolverAgent):
     This class should be extended by specific query solver agents.
     """
 
-    prompt: Type[BaseFeaturePromptFactory] = CodeQuerySolverPromptFactory
+    prompt_factory: Type[BaseFeaturePromptFactory] = CodeQuerySolverPromptFactory
 
     def __init__(self) -> None:
         super().__init__(

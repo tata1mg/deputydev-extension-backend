@@ -38,7 +38,7 @@ class MessageThreadsRepository:
         session_id: int,
         call_chain_category: MessageCallChainCategory,
         content_hashes: List[str] = [],
-        prompt_type: Optional[str] = None,
+        prompt_types: List[str] = [],
     ) -> List[MessageThreadDTO]:
         try:
             filters: Dict[str, Union[List[str], int, str]] = {
@@ -47,8 +47,8 @@ class MessageThreadsRepository:
             }
             if content_hashes:
                 filters["data_hash__in"] = content_hashes
-            if prompt_type:
-                filters["prompt_type"] = prompt_type
+            if prompt_types:
+                filters["prompt_type__in"] = prompt_types
             message_threads = await DB.by_filters(
                 model_name=MessageThread,
                 where_clause=filters,
@@ -87,7 +87,7 @@ class MessageThreadsRepository:
                         prompt_type=message_thread.prompt_type,
                         prompt_category=message_thread.prompt_category,
                         call_chain_category=message_thread.call_chain_category,
-                        tools_used=message_thread.tools_used,
+                        metadata=message_thread.metadata,
                     )
                 )
             )
