@@ -200,6 +200,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_vars: Dict[str, Any],
         call_chain_category: MessageCallChainCategory,
         attachmnts: Optional[List[Attachment]],
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> MessageThreadDTO:
         """
         Store LLM query in DB
@@ -241,6 +242,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_category=prompt_category,
             llm_model=llm_model,
             call_chain_category=call_chain_category,
+            metadata=metadata,
         )
         return await MessageThreadsRepository.create_message_thread(message_thread)
 
@@ -642,8 +644,10 @@ class LLMHandler(Generic[PromptFeatures]):
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
         save_to_redis: bool = False,
-        checker: CancellationChecker = None,
+        checker: Optional[CancellationChecker] = None,
         parallel_tool_calls: bool = False,
+        prompt_handler_instance: Optional[BasePrompt] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ParsedLLMCallResponse:
         """
         Start LLM query
@@ -658,7 +662,11 @@ class LLMHandler(Generic[PromptFeatures]):
             :return: Parsed LLM response
         """
 
-        prompt_handler = self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
+        prompt_handler = (
+            prompt_handler_instance
+            if prompt_handler_instance
+            else self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
+        )
 
         if llm_model not in self.model_to_provider_class_map:
             raise ValueError(f"LLM model {llm_model} not supported")
@@ -683,6 +691,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_vars=prompt_vars,
             attachmnts=attachments,
             call_chain_category=call_chain_category,
+            metadata=metadata,
         )
         if save_to_redis:
             await CodeGenTasksCache.set_session_query_id(prompt_thread.session_id, prompt_thread.id)
@@ -768,7 +777,9 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_vars = {}
 
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
@@ -839,7 +850,9 @@ class LLMHandler(Generic[PromptFeatures]):
 
         # Update conversation chain to include all tool responses
         updated_session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         updated_session_messages.sort(key=lambda x: x.id)
 
@@ -906,7 +919,9 @@ class LLMHandler(Generic[PromptFeatures]):
         if not prompt_vars:
             prompt_vars = {}
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
@@ -996,7 +1011,9 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_type: Optional[str] = None,
     ) -> ParsedLLMCallResponse:
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         session_messages.sort(key=lambda x: x.id)
 
