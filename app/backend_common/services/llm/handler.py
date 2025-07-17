@@ -33,6 +33,7 @@ from app.backend_common.repository.chat_attachments.repository import ChatAttach
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
+from app.backend_common.service_clients.exceptions import LLMThrottledError
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
@@ -59,9 +60,7 @@ from app.backend_common.services.llm.providers.anthropic.llm_provider import Ant
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
-)
+from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 
@@ -373,7 +372,7 @@ class LLMHandler(Generic[PromptFeatures]):
 
         return attachment_data_task_map
 
-    async def fetch_and_parse_llm_response(
+    async def fetch_and_parse_llm_response(  # noqa: C901
         self,
         client: BaseLLMProvider,
         session_id: int,
@@ -481,7 +480,11 @@ class LLMHandler(Generic[PromptFeatures]):
                     llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
-
+            except LLMThrottledError as e:
+                AppLogger.log_warn(
+                    f"LLM Throttled Error: {e}, retrying {i + 1}/{max_retry} after {e.retry_after} seconds"
+                )
+                raise
             except GeneratorExit:
                 # Properly handle GeneratorExit exception when the coroutine is cancelled
                 AppLogger.log_warn("LLM response generation was cancelled")
@@ -494,21 +497,19 @@ class LLMHandler(Generic[PromptFeatures]):
                 all_exceptions.append(e)
                 AppLogger.log_debug(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry} JSON decode error: {e}")
-                await asyncio.sleep(2)
             except ValueError as e:
                 all_exceptions.append(e)
                 AppLogger.log_debug(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry} Parse error: {e}")
-                await asyncio.sleep(2)
             except Exception as e:  # noqa: BLE001
                 all_exceptions.append(e)
                 AppLogger.log_debug(traceback.format_exc())
                 AppLogger.log_warn(f"Retry {i + 1}/{max_retry} Error while fetching/parsing data from LLM: {e}")
-                await asyncio.sleep(2)
-
-        raise RetryException(
-            f"Failed to get or parse response from LLM after {max_retry} retries - {all_exceptions[-1]}"
-        ) from all_exceptions[-1]
+            await asyncio.sleep(2)
+        if all_exceptions:
+            raise RetryException(
+                f"Failed to get or parse response from LLM after {max_retry} retries - {all_exceptions[-1]}"
+            ) from all_exceptions[-1]
 
     async def fetch_message_threads_from_conversation_turns(
         self,

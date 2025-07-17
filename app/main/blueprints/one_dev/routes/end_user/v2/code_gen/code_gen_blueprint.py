@@ -22,6 +22,9 @@ from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_
     AWSAPIGatewayServiceClient,
     SocketClosedException,
 )
+from app.backend_common.service_clients.exceptions import (
+    LLMThrottledError,
+)
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
@@ -79,7 +82,7 @@ async def solve_user_query_non_stream(  # noqa: C901
         session_data["llm_model"] = payload.llm_model.value
     if session_data:
         await CodeGenTasksCache.set_session_data(session_id, session_data)
-    blocks = []
+    blocks: List[Dict[str, Any]] = []
     # Add stream start block
     start_data = {"type": "STREAM_START"}
     if auth_data.session_refresh_token:
@@ -270,6 +273,24 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             # push stream end message
             end_data = {"type": "STREAM_END"}
             await push_to_connection_stream(end_data)
+
+        except LLMThrottledError as ex:
+            AppLogger.log_error(
+                f"Throttled by LLM provider: {getattr(ex, 'provider', None)} | "
+                f"model: {getattr(ex, 'model', None)} | "
+                f"detail: {ex.detail}"
+            )
+            error_data: Dict[str, Any] = {
+                "type": "STREAM_ERROR",
+                "status": "LLM_THROTTLED",
+                "provider": getattr(ex, "provider", None),
+                "model": getattr(ex, "model", None),
+                "retry_after": ex.retry_after,
+                "message": "This chat is currently being throttled. You can wait, or switch to a different model.",
+                "detail": ex.detail,
+            }
+            await push_to_connection_stream(error_data)
+
         except asyncio.CancelledError as ex:
             cancel_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(cancel_data)
