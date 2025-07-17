@@ -18,17 +18,24 @@ class ExtensionContextService:
             str: The PR diff, optionally with line numbers.
         """
         return """
-        diff --git a/app/managers/sku_offer/sku_offer_manager.py b/app/managers/sku_offer/sku_offer_manager.py
-        index 3c03ff2e..df5fa3d1 100644
-        --- a/app/managers/sku_offer/sku_offer_manager.py
-        +++ b/app/managers/sku_offer/sku_offer_manager.py
-        @@ -4,7 +4,6 @@ import json
-         from sanic.log import logger
-         
-         from app.constants.enum import DiscountingPhaseTwoExperiment
-        -from app.service_clients.order.order import OrdersClient
-         from app.service_clients.search.search import SearchClient
-         from app.service_clients.subscription.subscription import SubscriptionServiceClient
+        diff --git a/torpedo/utils/math_utils.py b/torpedo/utils/math_utils.py
+        new file mode 100644
+        index 00000000..b7e23a1f
+        --- /dev/null
+        +++ b/torpedo/utils/math_utils.py
+        @@ -0,0 +1,12 @@
+        +def add(a, b):
+        +    # Adds two numbers
+        +    return a + b
+        +
+        +
+        +def divide(a, b):
+        +    return a / 0
+        +
+        +
+        +def multiply(a, b):
+        +    # Multiplies two numbers
+        +    return a * b
         """
         cache_key = f"code_diff:{self.review_id}"
         pr_diff = await ExtensionReviewCache.get(cache_key)

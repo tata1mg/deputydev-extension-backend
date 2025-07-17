@@ -6,6 +6,7 @@ from .user_agent_dto import UserAgentDTO
 
 class IdeReviewsCommentDTO(BaseModel):
     id: Optional[int] = None
+    title: str
     review_id: int
     comment: str
     confidence_score: float = 0

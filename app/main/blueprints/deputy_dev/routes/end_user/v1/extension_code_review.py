@@ -136,5 +136,5 @@ async def get_user_agents(_request: Request, **kwargs):
 async def post_process_extension_review(request: Request, **kwargs):
     data = request.json
     processor = ExtensionReviewPostProcessor()
-    review_dto = await processor.post_process_pr(data, user_team_id=1)
-    return send_response({"status": "SUCCESS", "review": review_dto.model_dump(mode="json")})
+    await processor.post_process_pr(data, user_team_id=1)
+    return send_response({"status": "SUCCESS"})
