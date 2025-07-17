@@ -3,7 +3,7 @@ from torpedo import CONFIG, Request, send_response
 
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
-from app.main.blueprints.deputy_dev.services.code_review.common.managers.extension_code_review_history_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.managers.extension_code_review_history_manager import (
     ExtensionCodeReviewHistoryManager,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.extension_review_pre_processor import (
