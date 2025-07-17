@@ -11,11 +11,11 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.backend_app_creator.factory import (
-    BackendAppCreatorPromptFactory,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
     CodeQuerySolverPromptFactory,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.factory import (
+    CustomCodeQuerySolverPromptFactory,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.inline_editor.factory import (
     InlineEditorPromptFactory,
@@ -42,7 +42,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.TERMINAL_COMMAND_EDITOR: TerminalCommandEditorPromptFactory,
         PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
         PromptFeatures.INTENT_SELECTOR: IntentSelectorPromptFactory,
-        PromptFeatures.BACKEND_APP_CREATOR: BackendAppCreatorPromptFactory,
+        PromptFeatures.CUSTOM_CODE_QUERY_SOLVER: CustomCodeQuerySolverPromptFactory,
     }
 
     @classmethod
