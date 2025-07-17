@@ -279,9 +279,14 @@ class Anthropic(BaseLLMProvider):
         self, session_id: int, model_name: LLModels, model_config: Dict[str, Any]
     ) -> Tuple[str, str]:
         """
-        Get the region from round robin.
-        This fetches the region last used for the BedRock service client from redis cache.
-        Then, it updates the region in the cache to the next region in the list and returns the region.
+        Get the best region and model identifier for the query based on session ID.
+        Args:
+            session_id (int): The session ID to determine the region.
+            model_name (LLModels): The model name to determine the region.
+            model_config (Dict[str, Any]): The model configuration.
+
+        Returns:
+            Tuple[str, str]: The selected region and model identifier.
         """
         region_and_identifier_list: List[Dict[str, str]] = model_config["PROVIDER_CONFIG"]["REGION_AND_IDENTIFIER_LIST"]
         region_index_basis_session = session_id % len(region_and_identifier_list)
