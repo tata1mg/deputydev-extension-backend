@@ -450,11 +450,11 @@ class LLMHandler(Generic[PromptFeatures]):
                 if checker and checker.is_cancelled():
                     raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
-                    llm_payload,
-                    llm_model,
+                    session_id=session_id,
+                    llm_payload=llm_payload,
+                    model=llm_model,
                     stream=stream,
                     response_type=response_type,
-                    session_id=session_id,
                     parallel_tool_calls=parallel_tool_calls,
                 )
 
