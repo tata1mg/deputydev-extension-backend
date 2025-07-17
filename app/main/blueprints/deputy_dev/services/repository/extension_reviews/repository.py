@@ -116,3 +116,8 @@ class ExtensionReviewsRepository:
             review_dto.comments = comments_dto
             review_dtos.append(review_dto)
         return review_dtos
+
+    @classmethod
+    async def update_review(cls, review_id, data):
+        if data and review_id:
+            await ExtensionReviews.filter(id=review_id).update(**data)
