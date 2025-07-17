@@ -756,5 +756,10 @@
         "CACHE_CONTROL": "max-age=7776000",
         "AUTH_KEY": ""
     },
-    "ALLOWED_PR_REVIEW_RETRIES": 3
+    "ALLOWED_PR_REVIEW_RETRIES": 3,
+    "RERANKER": {
+        "TOKEN_LIMIT": 4000,
+        "CHARACTER_LIMIT_HIGH": 19200,
+        "CHARACTER_LIMIT_SAFE": 7800
+    }
 }
