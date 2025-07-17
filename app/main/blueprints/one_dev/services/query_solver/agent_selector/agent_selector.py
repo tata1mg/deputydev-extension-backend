@@ -1,10 +1,10 @@
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import (
-    BaseQuerySolverAgent,
+    QuerySolverAgent,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import DetailedDirectoryItem, DetailedFocusItem
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
@@ -20,10 +20,10 @@ class QuerySolverAgentSelector:
         user_query: str,
         focus_items: List[DetailedFocusItem],
         directory_items: List[DetailedDirectoryItem],
-        all_agents: List[Type[BaseQuerySolverAgent]],
+        all_agents: List[QuerySolverAgent],
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
-        default_agent: Optional[Type[BaseQuerySolverAgent]] = None,
+        default_agent: Optional[QuerySolverAgent] = None,
     ) -> None:
         # Initialize with the user query.
         self.user_query = user_query
@@ -34,7 +34,7 @@ class QuerySolverAgentSelector:
         self.session_id = session_id
         self.default_agent = default_agent
 
-    async def select_agent(self) -> Optional[Type[BaseQuerySolverAgent]]:
+    async def select_agent(self) -> Optional[QuerySolverAgent]:
         """
         Select the appropriate agent for the user query.
         """
@@ -54,7 +54,7 @@ class QuerySolverAgentSelector:
             "intents": [
                 {
                     "name": agent.agent_name,
-                    "description": agent.description,
+                    "description": agent.agent_description,
                 }
                 for agent in self.all_agents
             ],
