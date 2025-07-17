@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 class ExtensionReviewDTO(BaseModel):
     id: Optional[int] = None
-    title: str
+    title: Optional[str] = None
     review_status: str
     repo_id: int
     user_team_id: int
