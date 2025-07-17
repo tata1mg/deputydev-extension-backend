@@ -249,11 +249,11 @@ class OpenAI(BaseLLMProvider):
 
     async def call_service_client(
         self,
+        session_id: int,
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
         response_type: Literal["text", "json_object", "json_schema"] = None,
-        session_id: Optional[int] = None,
         parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         """
