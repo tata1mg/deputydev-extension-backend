@@ -282,7 +282,11 @@ class QuerySolver:
                 session_id=payload.session_id,
             )
 
-            agent_instance = await agent_selector.select_agent() or DefaultQuerySolverAgentInstance
+            agent_instance = (
+                (await agent_selector.select_agent() or DefaultQuerySolverAgentInstance)
+                if all_custom_agents
+                else DefaultQuerySolverAgentInstance
+            )
             if not agent_instance:
                 raise ValueError("No suitable agent found for the query.")
 
