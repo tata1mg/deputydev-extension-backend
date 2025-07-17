@@ -3,7 +3,8 @@ from typing import Any, ClassVar, Dict, Optional
 from types_aiobotocore_s3.client import S3Client
 
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
-from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams  # noqa: ERA001
+
+# from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams  # noqa: ERA001
 
 
 class AWSS3ServiceClient:
@@ -22,11 +23,11 @@ class AWSS3ServiceClient:
             self._client_managers[client_key] = AWSClientManager(
                 aws_service_name=self.aws_service_name,
                 region_name=self.region_name,
-                aws_connection_params=AWSConnectionParams(  # noqa: ERA001
-                    aws_access_key_id="test",  # noqa: ERA001
-                    aws_secret_access_key="test",  # noqa: ERA001
-                    endpoint_url="http://localhost:4566",  # LocalStack endpoint for testing  # noqa: ERA001
-                ),
+                # aws_connection_params=AWSConnectionParams(  # noqa: ERA001
+                #     aws_access_key_id="test",  # noqa: ERA001
+                #     aws_secret_access_key="test",  # noqa: ERA001
+                #     endpoint_url="http://localhost:4566",  # LocalStack endpoint for testing  # noqa: ERA001
+                # ),
             )
 
         # Use the shared client manager
