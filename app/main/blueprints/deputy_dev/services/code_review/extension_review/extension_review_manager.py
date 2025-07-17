@@ -63,7 +63,7 @@ NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
 
 
-class ExtensionReviewManager(BasePRReviewManager):
+class ExtensionReviewManager:
     """Manager for processing Pull Request reviews."""
 
     @classmethod
@@ -167,121 +167,6 @@ class ExtensionReviewManager(BasePRReviewManager):
 
         return agent_and_init_params
 
-    # @classmethod
-    # async def post_process_review_results(
-    #         cls,
-    #         agent_results: List[AgentRunResult],
-    #         is_large_pr: bool,
-    #         repo_service: BaseRepo,
-    #         pr_service: BasePR,
-    #         comment_service: BaseComment,
-    #         pr_diff_handler: PRDiffHandler,
-    #         session_id: int,
-    #         execution_start_time: datetime,
-    #         data: Dict[str, Any],
-    #         affirmation_service,
-    #         pr_dto,
-    # ) -> Tuple[Optional[List[Dict[str, Any]]], Dict[str, Any], Dict[str, Any], bool]:
-    #     """Post-process agent results to generate final comments and metadata.
-    #
-    #     Args:
-    #         agent_results: List of agent run results
-    #         is_large_pr: Whether this is a large PR
-    #         repo_service: Repository service
-    #         pr_service: PR service
-    #         comment_service: Comment service
-    #         pr_diff_handler: PR diff handler
-    #         session_id: Session ID for the review
-    #
-    #     Returns:
-    #         Tuple of (comments, tokens_data, meta_info_to_save, is_large_pr)
-    #     """
-    #     agents_tokens = {}
-    #     filtered_comments = None
-    #     agent_results_dict: Dict[str, AgentRunResult] = {}
-    #     blending_agent_results: Dict[str, AgentRunResult] = {}
-    #
-    #     # Handle large PR case
-    #     if is_large_pr:
-    #         agents_tokens = await pr_diff_handler.get_pr_diff_token_count()
-    #         return None, agents_tokens, {
-    #             "issue_id": None,
-    #             "confluence_doc_id": None,
-    #         }, is_large_pr
-    #
-    #     # Process agent results
-    #     for agent_result in agent_results:
-    #         if agent_result.agent_result is not None:
-    #             if agent_result.agent_type != AgentTypes.PR_SUMMARY:
-    #                 cls._update_bucket_name(agent_result)
-    #             agent_results_dict[agent_result.agent_name] = agent_result
-    #
-    #     # Extract PR summary
-    #     pr_summary_result = agent_results_dict.pop(AgentTypes.PR_SUMMARY.value, None)
-    #     pr_summary = pr_summary_result.agent_result if pr_summary_result else None
-    #     pr_summary_tokens = pr_summary_result.tokens_data if pr_summary_result else {}
-    #
-    #     # Set up context service and LLM handler for comment blending
-    #     context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
-    #
-    #     llm_handler = LLMHandler(
-    #         prompt_factory=PromptFeatureFactory,
-    #         prompt_features=PromptFeatures,
-    #         cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
-    #     )
-    #
-    #     # Filter comments using blending engine
-    #     if agent_results_dict:
-    #         filtered_comments, blending_agent_results = await CommentBlendingEngine(
-    #             agent_results_dict, context_service, llm_handler, session_id
-    #         ).blend_comments()
-    #
-    #     # Update agent results with blending results
-    #     agent_results_dict.update(blending_agent_results)
-    #
-    #     # Populate token information
-    #     agents_tokens.update(pr_summary_tokens)
-    #     for agent, agent_run_results in agent_results_dict.items():
-    #         agents_tokens.update(agent_run_results.tokens_data)
-    #
-    #     # Format final response
-    #     formatted_summary = ""
-    #     if pr_summary:
-    #         from app.backend_common.utils.formatting import format_summary_with_metadata
-    #         loc = await pr_service.get_loc_changed_count()
-    #         formatted_summary = format_summary_with_metadata(
-    #             summary=pr_summary, loc=loc, commit_id=pr_service.pr_model().commit_id()
-    #         )
-    #
-    #     final_comments = (
-    #         [comment.model_dump(mode="json") for comment in filtered_comments]
-    #         if filtered_comments else None
-    #     )
-    #
-    #     # We will only post summary for first PR review request
-    #     if pr_summary:
-    #         await pr_service.update_pr_description(formatted_summary)
-    #
-    #     if is_large_pr:
-    #         await comment_service.create_pr_comment(
-    #             comment=PR_SIZE_TOO_BIG_MESSAGE, model=config.get("FEATURE_MODELS").get("PR_REVIEW")
-    #         )
-    #     elif cls.check_no_pr_comments(final_comments):
-    #         await comment_service.create_pr_comment("LGTM!!", config.get("FEATURE_MODELS").get("PR_REVIEW"))
-    #     else:
-    #         await comment_service.post_bots_comments(final_comments)
-    #
-    #     meta_info_to_save = {
-    #         "issue_id": context_service.issue_id,
-    #         "confluence_doc_id": context_service.confluence_id,
-    #         "execution_start_time": execution_start_time,
-    #         "pr_review_start_time": data.get("pr_review_start_time")
-    #     }
-    #     await PRReviewPostProcessor(
-    #         pr_service=pr_service,
-    #         comment_service=comment_service,
-    #         affirmation_service=affirmation_service,
-    #     ).post_process_pr(pr_dto, final_comments, agents_tokens, is_large_pr, meta_info_to_save)
 
     @staticmethod
     def _update_bucket_name(agent_result: AgentRunResult):
