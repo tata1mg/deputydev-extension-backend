@@ -93,7 +93,9 @@ class PastWorkflows:
             Exception: For any other errors encountered during the process.
         """
         raw_data = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN, prompt_type="CODE_QUERY_SOLVER"
+            session_id,
+            call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
+            prompt_types=["CODE_QUERY_SOLVER", "CUSTOM_CODE_QUERY_SOLVER"],
         )
         serializer_service = SerializersFactory.get_serializer_service(raw_data, SerializerTypes.PAST_CHATS)
         processed_data = await serializer_service.get_processed_data(client_data=client_data)

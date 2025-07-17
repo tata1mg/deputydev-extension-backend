@@ -83,8 +83,9 @@ class Gemini2Point5FlashIntentSelectorPrompt(BaseGemini2Point5FlashPromptHandler
 
         Also, the last intent used by the user was: {self.params.get("last_agent", "None")}
 
-        If you feel that the current query is a continuation of the last intent, select that intent.
-        Otherwise, choose the most appropriate intent from the list above.
+        If you feel that the current query is a continuation of the last intent, select that intent. If you feel that there is a more specialized intent which is more suited to the user's answer for the last intent, then select it.
+        Otherwise, choose the most appropriate intent from the list above. Only choose specialized intents if you're sure that the user's query is related to that intent specifically. For instance, if there are several backend app creation intents with different tech stacks, then select the one which is best suited. Do not select a specialized intent for a generic query. For instance, do not select a node JS backend app creation intent for queries that request a generic backend app creation.
+
 
         Give the answer in the following format:
         <intent_name>INTENT_NAME_HERE</intent_name>

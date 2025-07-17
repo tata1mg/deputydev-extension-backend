@@ -776,7 +776,9 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_vars = {}
 
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
@@ -847,7 +849,9 @@ class LLMHandler(Generic[PromptFeatures]):
 
         # Update conversation chain to include all tool responses
         updated_session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         updated_session_messages.sort(key=lambda x: x.id)
 
@@ -914,7 +918,9 @@ class LLMHandler(Generic[PromptFeatures]):
         if not prompt_vars:
             prompt_vars = {}
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         session_messages.sort(key=lambda x: x.id)
         filtered_messages = [message for message in session_messages if message.message_type == MessageType.RESPONSE]
@@ -1004,7 +1010,9 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_type: Optional[str] = None,
     ) -> ParsedLLMCallResponse:
         session_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=call_chain_category, prompt_type=prompt_type
+            session_id=session_id,
+            call_chain_category=call_chain_category,
+            prompt_types=[prompt_type] if prompt_type else [],
         )
         session_messages.sort(key=lambda x: x.id)
 

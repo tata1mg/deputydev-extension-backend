@@ -7,7 +7,7 @@ class QuerySolverAgent(Base):
     serializable_keys = {
         "id",
         "name",
-        "unique_slug",
+        "agent_enum",
         "description",
         "prompt_intent",
         "allowed_first_party_tools",
@@ -26,4 +26,4 @@ class QuerySolverAgent(Base):
 
     class Meta:
         table = "query_solver_agents"
-        indexes = (("unique_slug",),)
+        indexes = (("agent_enum",),)
