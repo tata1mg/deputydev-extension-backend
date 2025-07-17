@@ -1,6 +1,8 @@
 import asyncio
 from typing import Dict, List, Tuple, Union
 
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadDTO,
@@ -24,18 +26,86 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 
 
 class ChatHistoryHandler:
-    def __init__(self, previous_chat_payload: PreviousChatPayload):
+    def __init__(self, previous_chat_payload: PreviousChatPayload) -> None:
         self.payload = previous_chat_payload
         self.previous_chats: List[PreviousChats] = []
         self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO]] = {}
 
+    def _get_entire_chat_content(self, chat: PreviousChats) -> str:
+        # Get responses for this chat
+        responses = self._get_responses_data_for_previous_chats(chat.id)
+        responses_text = "\n".join(responses) if responses else ""
+
+        # Combine query, summary, and responses
+        chat_content = f"Query: {chat.query}\nSummary: {chat.summary}\nResponses: {responses_text}"
+        return chat_content
+
+    def _estimate_chats_character_count(self, chats: List[PreviousChats]) -> int:
+        total_chars = 0
+        for chat in chats:
+            chat_content = self._get_entire_chat_content(chat)
+            total_chars += len(chat_content)
+        return total_chars
+
+    def _estimate_chats_token_count(self, chats: List[PreviousChats]) -> int:
+        total_tokens = 0
+        for chat in chats:
+            total_tokens += self._get_chat_token_count_from_db(chat.id)
+
+        return total_tokens
+
+    def _should_use_reranker(self, chats: List[PreviousChats]) -> str:
+        if not chats:
+            return "SAFE TO HANDLE"
+
+        # First check characters of entire chat
+        total_chars = self._estimate_chats_character_count(chats)
+
+        # Get character limits from config
+        char_limit_high = ConfigManager.configs["RERANKER"]["CHARACTER_LIMIT_HIGH"]
+        char_limit_safe = ConfigManager.configs["RERANKER"]["CHARACTER_LIMIT_SAFE"]
+
+        # If above character limit, surely rerank
+        if total_chars >= char_limit_high:
+            return "UNSAFE TO HANDLE"
+
+        # If below safe character limit, don't rerank
+        if total_chars <= char_limit_safe:
+            return "SAFE TO HANDLE"
+
+        # If in between, count tokens of entire chat and then decide
+        return "NEED TO CHECK TOKENS"
+
     async def filter_chat_summaries(self) -> List[int]:
         if not self.previous_chats:
             return []
-        reranked_chat_ids = await LLMBasedChatFiltration.rerank(
-            self.previous_chats, self.payload.query, self.payload.session_id
-        )
-        return reranked_chat_ids
+
+        reranking_decision = self._should_use_reranker(self.previous_chats)
+
+        if reranking_decision == "SAFE TO HANDLE":
+            # Return all chat IDs without reranking
+            return [chat.id for chat in self.previous_chats]
+
+        elif reranking_decision == "UNSAFE TO HANDLE":
+            # Use reranker to filter down to most relevant chats
+            reranked_chat_ids = await LLMBasedChatFiltration.rerank(
+                self.previous_chats, self.payload.query, self.payload.session_id
+            )
+            return reranked_chat_ids
+
+        else:  # uncertain case
+            # Get precise token count and make decision
+            token_limit = ConfigManager.configs["RERANKER"]["TOKEN_LIMIT"]
+            precise_token_count = self._estimate_chats_token_count(self.previous_chats)
+            if precise_token_count <= token_limit:
+                # We can fit all chats within the limit
+                return [chat.id for chat in self.previous_chats]
+            else:
+                # We need to use reranker to reduce the context
+                reranked_chat_ids = await LLMBasedChatFiltration.rerank(
+                    self.previous_chats, self.payload.query, self.payload.session_id
+                )
+                return reranked_chat_ids
 
     def _set_data_map(
         self, all_message_threads: List[MessageThreadDTO], all_query_summaries: List[QuerySummaryDTO]
@@ -59,6 +129,33 @@ class ChatHistoryHandler:
                 self.data_map[message_thread.query_id][1].append(message_thread)
             else:
                 continue
+
+    def _get_chat_token_count_from_db(self, query_id: int) -> int:
+        """
+        Get the total token count for a chat from the database using stored LLM usage data.
+
+        Args:
+            query_id: The query ID to get token count for
+
+        Returns:
+            int: Total token count (input + output) for the chat
+        """
+        if query_id not in self.data_map:
+            return 0
+
+        query_message_thread, non_query_message_threads, _query_summary = self.data_map[query_id]
+        total_tokens = 0
+
+        # Add tokens from the query message thread
+        if query_message_thread.usage:
+            total_tokens += query_message_thread.usage.input + query_message_thread.usage.output
+
+        # Add tokens from all response message threads
+        for message_thread in non_query_message_threads:
+            if message_thread.usage:
+                total_tokens += message_thread.usage.input + message_thread.usage.output
+
+        return total_tokens
 
     def _get_responses_data_for_previous_chats(self, query_id: int) -> List[str]:
         _query_message_thread, non_query_message_threads, _query_summary = self.data_map[query_id]
