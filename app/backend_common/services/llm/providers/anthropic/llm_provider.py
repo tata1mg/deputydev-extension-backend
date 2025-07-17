@@ -9,7 +9,6 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelWithResponseStreamResponseTypeDef,
 )
 
-from app.backend_common.caches.bedrock_cache import BedrockCache
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,
 )
@@ -164,11 +163,6 @@ class Anthropic(BaseLLMProvider):
             content = [block for block in content if block["type"] != "text" or block["text"].strip()]
             if content:
                 conversation_turns.append(ConversationTurn(role=role, content=content))
-        if tool_request_order:
-            content: List[Dict[str, Any]] = []
-            for req in tool_request_order:
-                content.append(tool_requests[req])
-            conversation_turns.append(ConversationTurn(role=ConversationRole.ASSISTANT, content=content))
         return conversation_turns
 
     async def build_llm_payload(  # noqa: C901
@@ -281,35 +275,33 @@ class Anthropic(BaseLLMProvider):
 
         return llm_payload
 
-    async def _get_region_from_round_robin(self, model_name: LLModels, model_config: Dict[str, Any]) -> Tuple[str, str]:
+    async def _get_best_region_for_query(
+        self, session_id: int, model_name: LLModels, model_config: Dict[str, Any]
+    ) -> Tuple[str, str]:
         """
-        Get the region from round robin.
-        This fetches the region last used for the BedRock service client from redis cache.
-        Then, it updates the region in the cache to the next region in the list and returns the region.
+        Get the best region and model identifier for the query based on session ID.
+        Args:
+            session_id (int): The session ID to determine the region.
+            model_name (LLModels): The model name to determine the region.
+            model_config (Dict[str, Any]): The model configuration.
+
+        Returns:
+            Tuple[str, str]: The selected region and model identifier.
         """
         region_and_identifier_list: List[Dict[str, str]] = model_config["PROVIDER_CONFIG"]["REGION_AND_IDENTIFIER_LIST"]
-        last_used_cache_key = f"last_used_region:{model_name.value}"
-        last_used_region: Optional[str] = cast(Optional[str], await BedrockCache.get(last_used_cache_key))
-        if not last_used_region:
-            # If no region is found, default to the first one
-            last_used_region = region_and_identifier_list[0]["AWS_REGION"]
-        # Update the cache with the next regions
-        current_index = 0
-        for index, region_info in enumerate(region_and_identifier_list):
-            if region_info["AWS_REGION"] == last_used_region:
-                current_index = index
-                break
-        next_index = (current_index + 1) % len(region_and_identifier_list)
-        next_region = region_and_identifier_list[next_index]["AWS_REGION"]
-        next_model_identifier = region_and_identifier_list[next_index]["MODEL_IDENTIFIER"]
-        await BedrockCache.set(last_used_cache_key, next_region)  # type: ignore
+        region_index_basis_session = session_id % len(region_and_identifier_list)
+
+        next_region = region_and_identifier_list[region_index_basis_session]["AWS_REGION"]
+        next_model_identifier = region_and_identifier_list[region_index_basis_session]["MODEL_IDENTIFIER"]
         return next_region, next_model_identifier
 
     async def _get_service_client_and_model_name(
-        self, model_name: LLModels, model_config: Dict[str, Any]
+        self, session_id: int, model_name: LLModels, model_config: Dict[str, Any]
     ) -> Tuple[BedrockServiceClient, str]:
         """Get the BedRock service client for selected region"""
-        selected_region, selected_model_identifier = await self._get_region_from_round_robin(model_name, model_config)
+        selected_region, selected_model_identifier = await self._get_best_region_for_query(
+            session_id, model_name, model_config
+        )
         if not self.anthropic_clients.get(selected_region):
             self.anthropic_clients[selected_region] = BedrockServiceClient(region_name=selected_region)
 
@@ -636,15 +628,17 @@ class Anthropic(BaseLLMProvider):
 
     async def call_service_client(
         self,
+        session_id: int,
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
         response_type: Optional[str] = None,
-        session_id: Optional[int] = None,
         parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         model_config = self._get_model_config(model)
-        anthropic_client, model_identifier = await self._get_service_client_and_model_name(model, model_config)
+        anthropic_client, model_identifier = await self._get_service_client_and_model_name(
+            session_id, model, model_config
+        )
         AppLogger.log_debug(json.dumps(llm_payload))
         if stream is False:
             response = await anthropic_client.get_llm_non_stream_response(
