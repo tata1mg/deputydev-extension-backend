@@ -6,6 +6,7 @@ from app.backend_common.models.dao.postgres.base import Base
 class ExtensionReviews(Base):
     serializable_keys = {
         "id",
+        "title",
         "review_status",
         "user_team_id",
         "repo_id",
@@ -28,6 +29,7 @@ class ExtensionReviews(Base):
     }
 
     id = fields.BigIntField(pk=True)
+    title = fields.TextField(null=True)
     review_status = fields.CharField(max_length=100)
     user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
     repo = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
@@ -56,6 +58,7 @@ class ExtensionReviews(Base):
 
     class Columns(Enum):
         id = ("id",)
+        title = ("title",)
         review_status = ("review_status",)
         user_team_id = ("user_team_id",)
         repo_id = ("repo_id",)

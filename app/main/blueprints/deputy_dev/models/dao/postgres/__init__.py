@@ -15,7 +15,7 @@ __all__ = [
     "IdeReviewCommentFeedbacks",
     "ExtensionReviews",
     "UserAgents",
-    "UserAgentCommentMapping"
+    "UserAgentCommentMapping",
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos

@@ -113,10 +113,10 @@ class ToolRequestManager:
 
         for content_block in llm_response.parsed_content:
             if (
-                    hasattr(content_block, "type")
-                    and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
-                    and isinstance(content_block, ToolUseRequestData)
-                    and content_block.content.tool_name == tool_name
+                hasattr(content_block, "type")
+                and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
+                and isinstance(content_block, ToolUseRequestData)
+                and content_block.content.tool_name == tool_name
             ):
                 return True
 
@@ -131,10 +131,10 @@ class ToolRequestManager:
 
         for content_block in llm_response.parsed_content:
             if (
-                    hasattr(content_block, "type")
-                    and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
-                    and isinstance(content_block, ToolUseRequestData)
-                    and content_block.content.tool_name == "parse_final_response"
+                hasattr(content_block, "type")
+                and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
+                and isinstance(content_block, ToolUseRequestData)
+                and content_block.content.tool_name == "parse_final_response"
             ):
                 return self._parse_comments_from_tool_input(content_block.content.tool_input)
 
@@ -149,13 +149,15 @@ class ToolRequestManager:
 
         for content_block in llm_response.parsed_content:
             if (
-                    hasattr(content_block, "type")
-                    and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
-                    and isinstance(content_block, ToolUseRequestData)
-                    and content_block.content.tool_name == "pr_review_planner"
+                hasattr(content_block, "type")
+                and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
+                and isinstance(content_block, ToolUseRequestData)
+                and content_block.content.tool_name == "pr_review_planner"
             ):
                 tool_input = content_block.content.tool_input
-                return await ExtensionToolHandlers.handle_pr_review_planner(tool_input, session_id, self.context_service)
+                return await ExtensionToolHandlers.handle_pr_review_planner(
+                    tool_input, session_id, self.context_service
+                )
 
         return {}
 

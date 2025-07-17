@@ -17,7 +17,9 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.extension_review_manager import ExtensionReviewManager
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.extension_review_manager import (
+    ExtensionReviewManager,
+)
 from deputydev_core.utils.app_logger import AppLogger
 
 extension_code_review = Blueprint("ide_code_review", "/extension-code-review")
@@ -28,7 +30,7 @@ config = CONFIG.config
 @extension_code_review.route("/history", methods=["GET"])
 @validate_client_version
 # @authenticate
-async def code_review_history(_request: Request,  **kwargs):
+async def code_review_history(_request: Request, **kwargs):
     """
     Get code review history based on filters
     Query parameters:
@@ -89,9 +91,11 @@ async def run_extension_agent(request: Request, **kwargs):
 
     except Exception as e:
         AppLogger.log_error(f"Error in review_diff_endpoint: {e}")
-        return send_response({
-                    "status": "SUCCESS",
-                })
+        return send_response(
+            {
+                "status": "SUCCESS",
+            }
+        )
 
 
 @extension_code_review.route("/user-agents", methods=["GET"])
@@ -119,10 +123,7 @@ async def get_user_agents(_request: Request, **kwargs):
             for agent in user_agents:
                 agents_response.append(agent.model_dump(mode="json"))
 
-        return send_response({
-            "agents": agents_response,
-            "count": len(agents_response)
-        })
+        return send_response({"agents": agents_response, "count": len(agents_response)})
 
     except Exception as e:
         AppLogger.log_error(f"Error fetching user agents: {e}")
@@ -135,5 +136,5 @@ async def get_user_agents(_request: Request, **kwargs):
 async def post_process_extension_review(request: Request, **kwargs):
     data = request.json
     processor = ExtensionReviewPostProcessor()
-    review_dto = await processor.post_process_pr(data, user_team_id=1)
-    return send_response({"status": "SUCCESS", "review": review_dto.model_dump(mode="json")})
+    await processor.post_process_pr(data, user_team_id=1)
+    return send_response({"status": "SUCCESS"})
