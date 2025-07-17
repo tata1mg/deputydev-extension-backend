@@ -338,6 +338,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         # Check for review planner response
         if self.tool_request_manager.is_review_planner_response(llm_response):
             try:
+                print("PLANNING")
                 review_plan = await self.tool_request_manager.process_review_planner_response(llm_response, session_id)
                 # Submit the review plan response to the LLM
                 tool_use_response = ToolUseResponseData(
