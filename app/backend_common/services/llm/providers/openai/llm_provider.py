@@ -207,8 +207,6 @@ class OpenAI(BaseLLMProvider):
                                 ],
                             }
                         )
-        for rem in tool_requests_order:
-            conversation_turns.append(tool_requests[rem])
         return conversation_turns
 
     def _parse_non_streaming_response(self, response: Response) -> NonStreamingResponse:
