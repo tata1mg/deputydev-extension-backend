@@ -44,18 +44,21 @@ class BedrockServiceClient:
     async def get_llm_stream_response(
         self, llm_payload: Dict[str, Any], model: str
     ) -> Tuple[InvokeModelWithResponseStreamResponseTypeDef, BedrockRuntimeClient]:
-        bedrock_client = await self._get_bedrock_client().__aenter__()
-        try:
-            response = await bedrock_client.invoke_model_with_response_stream(
-                modelId=model, body=json.dumps(llm_payload)
-            )
-            return response, bedrock_client
-        except ClientError as e:
-            code = e.response.get("Error", {}).get("Code", "")
-            status = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode", 0)
-            if code == "ThrottlingException" or status == 429:
+        async with self._get_bedrock_client() as bedrock_client:
+            try:
+                response = await bedrock_client.invoke_model_with_response_stream(
+                    modelId=model, body=json.dumps(llm_payload)
+                )
+                return response, bedrock_client
+            except ClientError as e:
+                code = e.response.get("Error", {}).get("Code", "")
+                status = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode", 0)
+                if code == "ThrottlingException" or status == 429:
+                    await bedrock_client.__aexit__(None, None, None)
+                    raise AnthropicThrottledError(model=model, retry_after=None, detail=str(e)) from e
+                    # Handle other client errors: log and re-raise
                 await bedrock_client.__aexit__(None, None, None)
-                raise AnthropicThrottledError(model=model, retry_after=None, detail=str(e)) from e
-        except Exception as e:
-            await bedrock_client.__aexit__(None, None, None)
-            raise e
+                raise e
+            except Exception as e:
+                await bedrock_client.__aexit__(None, None, None)
+                raise e

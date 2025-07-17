@@ -33,6 +33,7 @@ from app.backend_common.repository.chat_attachments.repository import ChatAttach
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
+from app.backend_common.service_clients.exceptions import LLMThrottledError
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
@@ -479,7 +480,11 @@ class LLMHandler(Generic[PromptFeatures]):
                     llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
-
+            except LLMThrottledError as e:
+                AppLogger.log_warn(
+                    f"LLM Throttled Error: {e}, retrying {i + 1}/{max_retry} after {e.retry_after} seconds"
+                )
+                raise
             except GeneratorExit:
                 # Properly handle GeneratorExit exception when the coroutine is cancelled
                 AppLogger.log_warn("LLM response generation was cancelled")
