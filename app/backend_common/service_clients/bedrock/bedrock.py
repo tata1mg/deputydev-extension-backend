@@ -56,7 +56,6 @@ class BedrockServiceClient:
                 if code == "ThrottlingException" or status == 429:
                     await bedrock_client.__aexit__(None, None, None)
                     raise AnthropicThrottledError(model=model, retry_after=None, detail=str(e)) from e
-                    # Handle other client errors: log and re-raise
                 await bedrock_client.__aexit__(None, None, None)
                 raise e
             except Exception as e:
