@@ -20,6 +20,7 @@ class QuerySolverAgentSelector:
         user_query: str,
         focus_items: List[DetailedFocusItem],
         directory_items: List[DetailedDirectoryItem],
+        last_agent: Optional[str],
         all_agents: List[QuerySolverAgent],
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
@@ -33,6 +34,7 @@ class QuerySolverAgentSelector:
         self.llm_handler = llm_handler
         self.session_id = session_id
         self.default_agent = default_agent
+        self.last_agent = last_agent
 
     async def select_agent(self) -> Optional[QuerySolverAgent]:
         """
@@ -58,6 +60,7 @@ class QuerySolverAgentSelector:
                 }
                 for agent in self.all_agents
             ],
+            "last_agent": self.last_agent,
         }
 
         selected_intent = await self.llm_handler.start_llm_query(
