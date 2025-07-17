@@ -282,7 +282,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                 "provider": getattr(ex, "provider", None),
                 "model": getattr(ex, "model", None),
                 "retry_after": ex.retry_after,
-                "message": "The language model is busy or rate-limited. Please try again in a few seconds.",
+                "message": "This chat is currently being throttled. You can wait, or switch to a different model.",
                 "detail": ex.detail,
             }
             await push_to_connection_stream(error_data)
