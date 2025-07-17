@@ -41,11 +41,11 @@ class ExtensionReviewPreProcessor:
         # s3_bucket = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_BUCKET"]
         # s3_region = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_REGION"]
         # s3_client = AWSS3ServiceClient(bucket_name=s3_bucket, region_name=s3_region)
-        #TODO uncomment it
+        # TODO uncomment it
 
         # review_diff_bytes = await s3_client.get_object(diff_s3_url)
         # review_diff = review_diff_bytes.decode("utf-8")
-        review_diff=diff
+        review_diff = diff
 
         diff_handler = ExtensionDiffHandler(review_diff)
         loc = diff_handler.get_diff_loc()
@@ -84,7 +84,7 @@ class ExtensionReviewPreProcessor:
             session_id=self.session_id,
             meta_info={"tokens": token_count},
             source_branch=source_branch,
-            target_branch=target_branch
+            target_branch=target_branch,
         )
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 

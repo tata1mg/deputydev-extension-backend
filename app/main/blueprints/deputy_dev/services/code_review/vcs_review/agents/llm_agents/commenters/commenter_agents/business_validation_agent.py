@@ -8,7 +8,9 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclas
     PromptFeatures,
 )
 
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.base_commentor import BaseCommenterAgent
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.base_commentor import (
+    BaseCommenterAgent,
+)
 
 
 class BusinessValidationAgent(BaseCommenterAgent):
