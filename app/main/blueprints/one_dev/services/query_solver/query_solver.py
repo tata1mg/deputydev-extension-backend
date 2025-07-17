@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, AsyncIterator, Dict, List, Optional, Type
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from pydantic import BaseModel
@@ -25,11 +25,12 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.query_solver.agents.backend_app_creator_query_solver_agent import (
-    BackendAppCreatorQuerySolverAgent,
+from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
+    CustomQuerySolverAgent,
 )
-from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import BaseQuerySolverAgent
-from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import DefaultQuerySolverAgent
+from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import (
+    DefaultQuerySolverAgentInstance,
+)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     DetailedDirectoryItem,
     DetailedFocusItem,
@@ -44,6 +45,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     StreamingContentBlockType,
 )
+from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
@@ -174,9 +176,24 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
-    async def _generate_dynamic_query_solver_agents() -> List[Type[BaseQuerySolverAgent]]:
-        # Logic to dynamically generate query solver agents based on the context
-        return [DefaultQuerySolverAgent]
+    async def _generate_dynamic_query_solver_agents(self) -> List[CustomQuerySolverAgent]:
+        # get all the intents from the database
+        all_agents = await QuerySolverAgentsRepository.get_query_solver_agents()
+        if not all_agents:
+            return []
+
+        # create a list of agent classes based on the data from the database
+        agent_classes: List[CustomQuerySolverAgent] = []
+        for agent_data in all_agents:
+            agent_class = CustomQuerySolverAgent(
+                agent_name=agent_data.name,
+                agent_description=agent_data.description,
+                allowed_tools=agent_data.allowed_first_party_tools,
+                prompt_intent=agent_data.prompt_intent,
+            )
+            agent_classes.append(agent_class)
+
+        return agent_classes
 
     async def solve_query(
         self,
@@ -221,21 +238,19 @@ class QuerySolver:
             previous_responses = await self.get_previous_message_thread_ids(
                 payload.session_id, payload.previous_query_ids
             )
+            all_custom_agents = await self._generate_dynamic_query_solver_agents()
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
                 focus_items=payload.focus_items,
                 directory_items=payload.directory_items if payload.directory_items else [],
-                all_agents=[BackendAppCreatorQuerySolverAgent, DefaultQuerySolverAgent],
+                all_agents=[*all_custom_agents, DefaultQuerySolverAgentInstance],
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
             )
 
-            selected_agent = await agent_selector.select_agent()
-            if not selected_agent:
+            agent_instance = await agent_selector.select_agent()
+            if not agent_instance:
                 raise ValueError("No suitable agent found for the query.")
-
-            # Create an instance of the selected agent
-            agent_instance = selected_agent(previous_messages=previous_responses)
 
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
@@ -254,13 +269,13 @@ class QuerySolver:
 
             model_to_use = LLModels(payload.llm_model.value)
             llm_inputs = agent_instance.get_llm_inputs(
-                payload=payload, _client_data=client_data, llm_model=model_to_use
+                payload=payload, _client_data=client_data, llm_model=model_to_use, previous_messages=previous_responses
             )
 
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
                 llm_model=model_to_use,
-                prompt_vars=prompt_vars_to_use,
+                prompt_vars={**prompt_vars_to_use, **llm_inputs.extra_prompt_vars},
                 attachments=payload.attachments,
                 previous_responses=llm_inputs.previous_messages,
                 tools=llm_inputs.tools,
@@ -274,7 +289,7 @@ class QuerySolver:
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.batch_tool_responses:
-            prompt_vars = {
+            prompt_vars: Dict[str, Any] = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
                 "vscode_env": payload.vscode_env,
@@ -316,7 +331,7 @@ class QuerySolver:
             llm_response = await llm_handler.submit_batch_tool_use_response(
                 session_id=payload.session_id,
                 tool_use_responses=tool_responses,
-                tools=DefaultQuerySolverAgent().get_all_tools(payload=payload, _client_data=client_data),
+                tools=DefaultQuerySolverAgentInstance.get_all_tools(payload=payload, _client_data=client_data),
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,

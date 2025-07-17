@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from pydantic import BaseModel
 
@@ -13,3 +13,6 @@ class LLMHandlerInputs(BaseModel):
     tool_choice: LLMToolChoice = LLMToolChoice.AUTO
     prompt: Type[BasePrompt]
     previous_messages: List[int] = []
+
+    # TODO: Move to user and system messages
+    extra_prompt_vars: Dict[str, Any] = {}
