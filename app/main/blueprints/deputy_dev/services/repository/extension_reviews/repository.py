@@ -59,10 +59,10 @@ class ExtensionReviewsRepository:
         return review_dto
 
     @classmethod
-    async def fetch_reviews_history(cls, filters, order_by="-created_at"):
+    async def fetch_reviews_history(cls, filters: dict, order_by: str = "-created_at") -> list[ExtensionReviewDTO]:
         try:
             reviews = await cls._fetch_reviews_with_comments(filters, order_by)
-            comment_ids = cls._extract_non_deleted_comment_ids(reviews)
+            comment_ids = cls._extract_comment_ids(reviews)
             comment_agents_map = await cls._fetch_comment_agents_map(comment_ids)
             review_dtos = cls._build_review_dtos(reviews, comment_agents_map)
             return review_dtos
@@ -71,28 +71,27 @@ class ExtensionReviewsRepository:
             raise ex
 
     @classmethod
-    async def _fetch_reviews_with_comments(cls, filters, order_by):
-        filtered_comments = IdeReviewsComments.filter(is_deleted=False)
-        return await ExtensionReviews.filter(**filters) \
-            .order_by(order_by) \
+    async def _fetch_reviews_with_comments(cls, filters: dict, order_by: str) -> list[ExtensionReviews]:
+        filtered_comments = IdeReviewsComments.filter(is_deleted=False, is_valid=True)
+        return (
+            await ExtensionReviews.filter(**filters)
+            .order_by(order_by)
             .prefetch_related(Prefetch("review_comments", queryset=filtered_comments))
+        )
 
     @classmethod
-    def _extract_non_deleted_comment_ids(cls, reviews):
+    def _extract_comment_ids(cls, reviews: list[ExtensionReviews]) -> list[int]:
         comment_ids = []
         for review in reviews:
             for comment in review.review_comments:
-                # is_deleted is already filtered in qxueryset but retained for safety
-                if not comment.is_deleted:
-                    comment_ids.append(comment.id)
+                comment_ids.append(comment.id)
         return comment_ids
 
     @classmethod
-    async def _fetch_comment_agents_map(cls, comment_ids):
-        comment_agent_mappings = await UserAgentCommentMapping.filter(
-            comment_id__in=comment_ids
-        ).prefetch_related("agent")
-
+    async def _fetch_comment_agents_map(cls, comment_ids: list[int]) -> dict[int, list[UserAgentDTO]]:
+        comment_agent_mappings = await UserAgentCommentMapping.filter(comment_id__in=comment_ids).prefetch_related(
+            "agent"
+        )
         comment_agents_map = defaultdict(list)
         for mapping in comment_agent_mappings:
             dto = UserAgentDTO(**dict(mapping.agent))
@@ -100,7 +99,7 @@ class ExtensionReviewsRepository:
         return comment_agents_map
 
     @classmethod
-    def _build_review_dtos(cls, reviews, comment_agents_map):
+    def _build_review_dtos(cls, reviews, comment_agents_map) -> list[ExtensionReviewDTO]:
         review_dtos = []
         for review in reviews:
             comments_dto = []
@@ -114,3 +113,8 @@ class ExtensionReviewsRepository:
             review_dto.comments = comments_dto
             review_dtos.append(review_dto)
         return review_dtos
+
+    @classmethod
+    async def update_review(cls, review_id: int, data: dict) -> None:
+        if data and review_id:
+            await ExtensionReviews.filter(id=review_id).update(**data)

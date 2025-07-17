@@ -55,7 +55,9 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.agent_factory import AgentFactory
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import ExtensionContextService
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
+    ExtensionContextService,
+)
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -64,12 +66,8 @@ config = CONFIG.config
 class ExtensionReviewManager(BasePRReviewManager):
     """Manager for processing Pull Request reviews."""
 
-
     @classmethod
-    async def review_diff(
-            cls,
-            payload
-    ):
+    async def review_diff(cls, payload):
         agent_id = payload.get("agent_id")
         review_id = payload.get("review_id")
         repo_id = payload.get("repo_id")
@@ -89,7 +87,7 @@ class ExtensionReviewManager(BasePRReviewManager):
             agent_and_init_params=agent_and_init_params,
             context_service=context_service,
             llm_handler=llm_handler,
-            user_agent_dto=user_agent_dto
+            user_agent_dto=user_agent_dto,
         )
 
         agent_result = await agent.run_agent(session_id=session_id, payload=payload)
@@ -97,7 +95,7 @@ class ExtensionReviewManager(BasePRReviewManager):
         return cls._format_agent_response(agent_result, payload.get("agent_id"))
 
     @classmethod
-    def _format_agent_response(cls, agent_result: AgentRunResult, agent_id:int) -> Dict[str, Any]:
+    def _format_agent_response(cls, agent_result: AgentRunResult, agent_id: int) -> Dict[str, Any]:
         """Format agent result for API response with single response block."""
         agent_result_dict = agent_result.agent_result
 
@@ -128,7 +126,7 @@ class ExtensionReviewManager(BasePRReviewManager):
                     "tokens_data": agent_result.tokens_data,
                     "model": agent_result.model.value,
                     "display_name": agent_result.display_name,
-                    "agent_id": agent_id
+                    "agent_id": agent_id,
                 }
             elif agent_result_dict.get("status") == "error":
                 # Error occurred
@@ -141,7 +139,7 @@ class ExtensionReviewManager(BasePRReviewManager):
                     "tokens_data": agent_result.tokens_data,
                     "model": agent_result.model.value,
                     "display_name": agent_result.display_name,
-                    "agent_id": agent_id
+                    "agent_id": agent_id,
                 }
 
         # # Generic result or fallback
@@ -159,10 +157,7 @@ class ExtensionReviewManager(BasePRReviewManager):
         # }
 
     @classmethod
-    def get_agent_and_init_params_for_review(
-            cls, user_agent_dto: UserAgentDTO
-    ) -> Optional[AgentAndInitParams]:
-
+    def get_agent_and_init_params_for_review(cls, user_agent_dto: UserAgentDTO) -> Optional[AgentAndInitParams]:
         agent_and_init_params = None
         try:
             agent_name = AgentTypes(user_agent_dto.agent_name)
@@ -287,7 +282,6 @@ class ExtensionReviewManager(BasePRReviewManager):
     #         comment_service=comment_service,
     #         affirmation_service=affirmation_service,
     #     ).post_process_pr(pr_dto, final_comments, agents_tokens, is_large_pr, meta_info_to_save)
-
 
     @staticmethod
     def _update_bucket_name(agent_result: AgentRunResult):
