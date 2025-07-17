@@ -57,11 +57,11 @@ class BaseLLMProvider(ABC):
 
     async def call_service_client(
         self,
+        session_id: int,
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
         response_type: Optional[str] = None,
-        session_id: Optional[int] = None,
         parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         """
