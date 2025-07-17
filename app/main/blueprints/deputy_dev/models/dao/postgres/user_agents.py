@@ -16,6 +16,7 @@ class UserAgents(Base):
         "confidence_score",
         "objective",
         "is_custom_agent",
+        "is_deleted",
         "created_at",
         "updated_at",
     }
@@ -28,8 +29,9 @@ class UserAgents(Base):
     exclusions = fields.JSONField(default=list)
     inclusions = fields.JSONField(default=list)
     confidence_score = fields.FloatField(default=0.9)
-    objective = fields.TextField()
+    objective = fields.TextField(null=True)
     is_custom_agent = fields.BooleanField(default=False)
+    is_deleted = fields.BooleanField(default=False)
 
     class Meta:
         table = "user_agents"
@@ -45,5 +47,6 @@ class UserAgents(Base):
         confidence_score = ("confidence_score",)
         objective = ("objective",)
         is_custom_agent = ("is_custom_agent",)
+        is_deleted = ("is_deleted",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
