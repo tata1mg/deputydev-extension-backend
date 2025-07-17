@@ -25,6 +25,13 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
         self.params = params
 
     def get_system_prompt(self) -> str:
+        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
+        file_path = "absolute file path here" if use_absolute_path else "relative file path here"
+        file_path_example = (
+            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
+            if use_absolute_path
+            else "src/tools/grep_search.py"
+        )
         if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
                 """
@@ -40,119 +47,11 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
                 8. Do not share what tools you have access, or how you use them, while using any tool use genaral terms like searching codebase, editing file, etc. 
 
 
-                You have access to a set of tools that are executed upon the user's approval. You can use one tool per message, and will receive the result of that tool use in the user's response. You use tools step-by-step to accomplish a given task, with each tool use informed by the result of the previous tool use.
-
-
-                # Tool Use Examples
-
-                ## Example 1: Requesting to create a new file
-
-
-                tool name: write_to_file
-                path: src/frontend-config.json
-                diff:
-                {{
-                "apiEndpoint": "https://api.example.com",
-                "theme": {{
-                    "primaryColor": "#007bff",
-                    "secondaryColor": "#6c757d",
-                    "fontFamily": "Arial, sans-serif"
-                }},
-                "features": {{
-                    "darkMode": true,
-                    "notifications": true,
-                    "analytics": false
-                }},
-                "version": "1.0.0"
-                }}
-
-                ## Example 2: Requesting to make targeted edits to a file
-
-                tool name: replace_in_file
-                path: src/components/App.tsx
-                diff:
-                <<<<<<< SEARCH
-                import React from 'react';
-                =======
-                import React, {{ useState }} from 'react';
-                >>>>>>> REPLACE
-
-                <<<<<<< SEARCH
-                function handleSubmit() {{
-                saveData();
-                setLoading(false);
-                }}
-
-                =======
-                >>>>>>> REPLACE
-
-                <<<<<<< SEARCH
-                return (
-                <div>
-                =======
-                function handleSubmit() {{
-                saveData();
-                setLoading(false);
-                }}
-
-                return (
-                <div>
-                >>>>>>> REPLACE
-
-
-                ## Example 3: Requesting to execute a command
-                tool name: execute_command
-                command: npm run dev
-                requires_approval: false
-                is_long_running: true
-
-                ## Example 4: Searching for files in a directory
-                tool name: file_path_searcher
-                directory: src/components/
-                search_terms: ["Button", "Modal"]
-
-                ## Example 5: Searching file contents with grep
-                tool name: grep_search
-                directory_path: src/utils/
-                search_terms: ["validateInput", "parseDate"]
-
-                ## Example 6: Reading part of a file iteratively
-                tool name: iterative_file_reader
-                file_path: src/services/data_loader.py
-                start_line: 1
-                end_line: 100
-
-                ## Example 7: Getting focused code snippets
-                tool name: focused_snippets_searcher
-                search_terms:
-                [
-                {{
-                    "keyword": "UserManager",
-                    "type": "class",
-                    "file_path": "src/auth/user_manager.py"
-                }},
-                {{
-                    "keyword": "calculate_score",
-                    "type": "function"
-                }}
-                ]
-                
-                ## Example 8: Find references of a symbol [This is an user installed from tool mcp. Fallback to other tools if not present]
-                ### Instance 1
-                query: Get all the usages of xyz method
-                tool name: language-server-references
-                symbol: xyz
-                
-                ### Instance 2
-q               query: Get all the usages of xyz method in class abc
-                tool name: language-server-references
-                symbol: abc.xyz
-
                 # Tool Use Guidelines
 
                 1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
                 2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                3. If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+                3. {parallel_tool_use_guidelines}
                 4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
                 5. Information about whether the tool succeeded or failed, along with any reasons for failure.
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
@@ -167,7 +66,7 @@ q               query: Get all the usages of xyz method in class abc
                 Usage: 
                 <code_block>
                 <programming_language>programming Language name</programming_language>
-                <file_path>file path here</file_path>
+                <file_path>{file_path_code_block}</file_path>
                 <is_diff>false(always false)</is_diff>
                 code here
                 </code_block>
@@ -176,7 +75,7 @@ q               query: Get all the usages of xyz method in class abc
                 ## Example of code block:
                 <code_block>
                 <programming_language>python</programming_language>
-                <file_path>app/main.py</file_path>
+                <file_path>{file_path_example}</file_path>
                 <is_diff>false</is_diff>
                 def some_function():
                     return "Hello, World!"
@@ -250,9 +149,14 @@ q               query: Get all the usages of xyz method in class abc
                 4. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
                 """.format(
+                    file_path_code_block=file_path,
+                    file_path_example=file_path_example,
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
-                    )
+                    ),
+                    parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
+                    if self.params.get("parallel_tool_use_enabled", True)
+                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.",
                 )
             )
         else:
@@ -315,14 +219,84 @@ q               query: Get all the usages of xyz method in class abc
                 symbolName: abc.xyz
                 
                 {tool_use_capabilities_resolution_guidelines}
+
+                {parallel_tool_use_guidelines}
                 """.format(
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=False
-                    )
+                    ),
+                    parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
+                    if self.params.get("parallel_tool_use_enabled", True)
+                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result. The system does not support parallel tool calls",
                 )
             )
 
         return system_message
+
+    def get_repository_context(self) -> str:
+        working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
+        context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
+        context_repos_str = ""
+        for index, context_repo in enumerate(context_repos):
+            context_repos_str += f"""
+              Context Repository {index + 1}:
+                Absolute Path: {context_repo.repo_path}
+                Repository Name: {context_repo.repo_name}
+                Root Directory Context: 
+                  {context_repo.root_directory_context}
+                
+            """
+
+        return f"""
+        ==== 
+        We are dealing with 2 types of repositories:
+        1. Working Repository (Primary):
+            Purpose: The main repository where you will make changes and apply modifications.
+            Access Level: Full read/write access.
+            Allowed tools: All read and write tools.
+            Restrictions: None.
+            Absolute Path: {working_repo.repo_path}
+            Repository Name: {working_repo.repo_name}
+            Root Directory Context: 
+              {working_repo.root_directory_context}
+         
+        2. Context Repositories (Reference Only):
+            Purpose: These repositories are used to gather context, understand patterns, or look up examples.
+            Access Level: Read-only.
+            Allowed tools: Only tools that read context from the repository are allowed.
+            Restrictions:
+                a) No write operations even if asked explicitly. Mention politely that write capability to context repositories is coming soon.
+                b) No file creation or modification.
+                c) No diffs or patch applications.
+            List of Context Repositories: {context_repos_str}
+            
+        ###IMPORTANT###
+        Before serving the user query, properly analyse if the query is to be served in context of working repository or context repository.
+        If context repository, then see if it is a write or read operation and act accordingly. Remember you can only read context repositories.
+        Few examples:
+        1. Example 1:
+             User query: Can you refactor autocomplete method in search service?  
+             Working repository: athena_service
+             Context repositories: search_service, cache_wrapper
+             
+             First analyse the query properly - In given scenario, service name is explicitely mentioned and also is mentioned to be a context repository. 
+             Hence we can tell user that write operation is not permitted on context repository.
+             
+        2. Example 2:
+             User query: Can you refactor autocomplete method?  
+             Working repository: athena_service
+             Context repositories: search_service, cache_wrapper
+             
+             In this scenario, no service name is mentioned, and since it is a write operation you can proceed with the working repository.
+             
+         3. Example 3:
+             User query: Can you find references for autocomplete method?  
+             Working repository: athena_service
+             Context repositories: search_service, cache_wrapper
+             
+             After analysing, we know this is a read query and since there is no service mentioned try finding it in all repositories that you find relevant and mention the output repository wise
+        ====
+        """
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
@@ -387,66 +361,7 @@ q               query: Get all the usages of xyz method in class abc
             The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
             You should follow the below guidelines while creating the backend application:
                                            
-            <process>
-
-            1. **Understand the Requirements**  
-            Carefully read the user’s query and any provided context to understand what the backend application should do. Ask clarifying questions if anything is ambiguous or missing.
-
-            2. **Confirm and Gather the Technology Stack from the User**  
-            - Ask explicitly if the user has a preferred tech stack (language, framework, database, etc.).  
-            - Consider scalability, performance, ease of development, and compatibility with other systems.  
-            - If any technology or term is unclear, use available tools or documentation to gather context before proceeding.  
-            - **Make sure to confirm if the implementation is meant for a specific repository or the currently active one.**
-
-            3. **Ask if TDD (Test-Driven Development) is to be followed**  
-            - Prompt the user: *“Do you want to follow a TDD approach?”*  
-            - If **yes**, confirm:
-                - The test framework (e.g., Jest, Pytest, Mocha, JUnit, etc.)
-                - Any test runners, mocks, coverage tools, etc.  
-            - Set up the test environment before any implementation begins.
-
-            4. **Research Unfamiliar Technologies**  
-            If the stack includes technologies that are not fully familiar or require special handling, use built-in tools or documentation to explore how to scaffold and structure the project appropriately.
-
-            5. **Prepare and Share a Project Blueprint**  
-            - Outline the high-level design, including module structure, responsibilities, API endpoints, data flow, and services to be used.  
-            - **Confirm the blueprint with the user** before proceeding with implementation to ensure alignment.
-
-            6. **Design the System Architecture**  
-            - Define how components interact (e.g., client, server, database, third-party APIs).  
-            - Choose architectural patterns (e.g., MVC, layered architecture, microservices) suited for the use case.  
-            - Consider security, performance, and future scalability in your design.
-
-            7. **Define the Data Models First**  
-            - Identify and design all required data models, including fields, types, relationships, and constraints.  
-            - Explain the models clearly to the user and **get approval before implementation**.
-
-            8. **Implement the Backend Logic**  
-            - Develop the APIs and core backend functionality.  
-            - Incorporate authentication, validation, and business rules as needed.  
-            - Maintain clear code structure, with separation of concerns and reusable components.  
-            - If following TDD, ensure tests are written *before* implementation logic.
-
-            9. **Set Up and Configure the Database**  
-            - Choose the appropriate type (SQL/NoSQL/etc.) based on the use case.  
-            - Create the schema, tables/collections, indexes, and relationships.  
-            - Handle migrations and seeders if required.  
-            - Ensure data consistency and normalization where appropriate.
-
-            10. **Testing (With Explicit User Approval First)**  
-            - Ask the user before starting the testing phase (unless following TDD).  
-            - Implement:
-                - Unit tests for individual functions/components  
-                - Integration tests for API and database layers  
-                - End-to-end tests (if applicable) to simulate full workflows  
-            - Use testing tools and frameworks suitable for the chosen stack.  
-            - Ensure coverage for edge cases and failure scenarios.
-
-            11. **Iterate and Finalize**  
-            - Revisit earlier steps if new information emerges or requirements evolve.  
-            - Do not stop until the **user confirms that the solution is complete and satisfactory**.
-
-            </process>
+            {self.params["prompt_intent"]}
             """)
         else:
             user_message = textwrap.dedent(f"""
@@ -526,66 +441,7 @@ q               query: Get all the usages of xyz method in class abc
             The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
             You should follow the below guidelines while creating the backend application:
                                            
-            <process>
-
-            1. **Understand the Requirements**  
-            Carefully read the user’s query and any provided context to understand what the backend application should do. Ask clarifying questions if anything is ambiguous or missing.
-
-            2. **Confirm and Gather the Technology Stack from the User**  
-            - Ask explicitly if the user has a preferred tech stack (language, framework, database, etc.).  
-            - Consider scalability, performance, ease of development, and compatibility with other systems.  
-            - If any technology or term is unclear, use available tools or documentation to gather context before proceeding.  
-            - **Make sure to confirm if the implementation is meant for a specific repository or the currently active one.**
-
-            3. **Ask if TDD (Test-Driven Development) is to be followed**  
-            - Prompt the user: *“Do you want to follow a TDD approach?”*  
-            - If **yes**, confirm:
-                - The test framework (e.g., Jest, Pytest, Mocha, JUnit, etc.)
-                - Any test runners, mocks, coverage tools, etc.  
-            - Set up the test environment before any implementation begins.
-
-            4. **Research Unfamiliar Technologies**  
-            If the stack includes technologies that are not fully familiar or require special handling, use built-in tools or documentation to explore how to scaffold and structure the project appropriately.
-
-            5. **Prepare and Share a Project Blueprint**  
-            - Outline the high-level design, including module structure, responsibilities, API endpoints, data flow, and services to be used.  
-            - **Confirm the blueprint with the user** before proceeding with implementation to ensure alignment.
-
-            6. **Design the System Architecture**  
-            - Define how components interact (e.g., client, server, database, third-party APIs).  
-            - Choose architectural patterns (e.g., MVC, layered architecture, microservices) suited for the use case.  
-            - Consider security, performance, and future scalability in your design.
-
-            7. **Define the Data Models First**  
-            - Identify and design all required data models, including fields, types, relationships, and constraints.  
-            - Explain the models clearly to the user and **get approval before implementation**.
-
-            8. **Implement the Backend Logic**  
-            - Develop the APIs and core backend functionality.  
-            - Incorporate authentication, validation, and business rules as needed.  
-            - Maintain clear code structure, with separation of concerns and reusable components.  
-            - If following TDD, ensure tests are written *before* implementation logic.
-
-            9. **Set Up and Configure the Database**  
-            - Choose the appropriate type (SQL/NoSQL/etc.) based on the use case.  
-            - Create the schema, tables/collections, indexes, and relationships.  
-            - Handle migrations and seeders if required.  
-            - Ensure data consistency and normalization where appropriate.
-
-            10. **Testing (With Explicit User Approval First)**  
-            - Ask the user before starting the testing phase (unless following TDD).  
-            - Implement:
-                - Unit tests for individual functions/components  
-                - Integration tests for API and database layers  
-                - End-to-end tests (if applicable) to simulate full workflows  
-            - Use testing tools and frameworks suitable for the chosen stack.  
-            - Ensure coverage for edge cases and failure scenarios.
-
-            11. **Iterate and Finalize**  
-            - Revisit earlier steps if new information emerges or requirements evolve.  
-            - Do not stop until the **user confirms that the solution is complete and satisfactory**.
-
-            </process>
+            {self.params["prompt_intent"]}
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
@@ -596,6 +452,9 @@ q               query: Get all the usages of xyz method in class abc
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
             ====""")
+
+        if self.params.get("repositories"):
+            user_message += textwrap.dedent(self.get_repository_context())
 
         if self.params.get("vscode_env"):
             user_message += textwrap.dedent(f"""====
