@@ -229,6 +229,10 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         **payload_dict,
         user_team_id=user_team_id,
     )
+    # HACK: Prevent cancellation of newer query for session_id
+    # TODO: Cancellation shall be on query_id instead of session_id
+    await CodeGenTasksCache.cleanup_session_data(payload.session_id)
+
     # Store the active query and LLM model for potential cancellation
     session_data = {}
     if payload.query:
@@ -287,8 +291,8 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             }
             await push_to_connection_stream(error_data)
 
-        except asyncio.CancelledError:
-            cancel_data = {"type": "STREAM_CANCELLED", "message": "LLM processing cancelled "}
+        except asyncio.CancelledError as ex:
+            cancel_data = {"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}
             await push_to_connection_stream(cancel_data)
         except Exception as ex:  # noqa: BLE001
             AppLogger.log_error(f"Error in solving query: {ex}")
