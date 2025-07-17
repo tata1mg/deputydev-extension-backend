@@ -1,6 +1,7 @@
 from tortoise import fields
 from app.backend_common.models.dao.postgres.base import Base
 
+
 class UserAgentCommentMapping(Base):
     serializable_keys = {
         "id",
@@ -11,10 +12,8 @@ class UserAgentCommentMapping(Base):
     }
 
     id = fields.BigIntField(primary_key=True)
-    agent = fields.ForeignKeyField("dao.UserAgents", related_name="user_agent")
-    comment = fields.ForeignKeyField("dao.IdeReviewsComments", related_name="review_comment")
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
+    agent = fields.ForeignKeyField("dao.UserAgents", related_name="user_agent_comment_mapping")
+    comment = fields.ForeignKeyField("dao.IdeReviewsComments", related_name="user_agent_comment_mapping")
 
     class Meta:
         table = "user_agent_comment_mapping"

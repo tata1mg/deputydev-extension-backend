@@ -52,11 +52,11 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
     prompt_features: List[PromptFeatures]
 
     def __init__(
-            self,
-            context_service: ExtensionContextService,
-            llm_handler: LLMHandler[PromptFeatures],
-            model: LLModels,
-            user_agent_dto: Optional[UserAgentDTO] = None,
+        self,
+        context_service: ExtensionContextService,
+        llm_handler: LLMHandler[PromptFeatures],
+        model: LLModels,
+        user_agent_dto: Optional[UserAgentDTO] = None,
     ):
         super().__init__(context_service, llm_handler, model)
         self.agent_id = user_agent_dto.id
@@ -92,9 +92,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         return {
             "PULL_REQUEST_TITLE": "",
             "PULL_REQUEST_DESCRIPTION": "",
-            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(
-                append_line_no_info=True
-            ),
+            "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
             "REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER": last_pass_comments_str,
             "USER_STORY": "",
             "PRODUCT_RESEARCH_DOCUMENT": "",
@@ -117,7 +115,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
     def get_display_name(self):
         return self.agent_setting.get("display_name")
-
 
     def get_tools_for_review(self, prompt_handler) -> List[ConversationTool]:
         """
@@ -174,9 +171,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         # Check if the token limit has been exceeded
         prompt_vars = await self.required_prompt_variables()
-        prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(
-            model_name=self.model, feature=prompt_feature
-        )(prompt_vars)
+        prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(model_name=self.model, feature=prompt_feature)(
+            prompt_vars
+        )
         user_and_system_messages = prompt_handler.get_prompt()
         current_tokens_data = self.get_tokens_data(user_and_system_messages)
         token_limit_exceeded = self.has_exceeded_token_limit(user_and_system_messages)
@@ -185,7 +182,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         tokens_data[token_key] = current_tokens_data
 
         if token_limit_exceeded:
-            #TODO what to return in case of limit exceed
+            # TODO what to return in case of limit exceed
             return AgentRunResult(
                 agent_result=None,
                 prompt_tokens_exceeded=True,
@@ -210,10 +207,12 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
             raise ValueError(f"LLM Response is not of type NonStreamingParsedLLMCallResponse: {llm_response}")
 
-        tokens_data[token_key].update({
-            "input_tokens": llm_response.usage.input,
-            "output_tokens": llm_response.usage.output,
-        })
+        tokens_data[token_key].update(
+            {
+                "input_tokens": llm_response.usage.input,
+                "output_tokens": llm_response.usage.output,
+            }
+        )
 
         # Process the LLM response
         return await self._process_llm_response(llm_response, session_id, tools_to_use, prompt_handler, tokens_data)
@@ -271,9 +270,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         # Get tools and prompt handler
         prompt_vars = await self.required_prompt_variables()
         prompt_feature = self.prompt_features[0]  # Use first prompt feature for tool responses
-        prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(
-            model_name=self.model, feature=prompt_feature
-        )(prompt_vars)
+        prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(model_name=self.model, feature=prompt_feature)(
+            prompt_vars
+        )
         tools_to_use = self.get_tools_for_review(prompt_handler)
 
         # Submit the tool use response to the LLM
@@ -288,12 +287,12 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         return await self._process_llm_response(current_response, session_id, tools_to_use, prompt_handler, {})
 
     async def _process_llm_response(
-            self,
-            llm_response: NonStreamingParsedLLMCallResponse,
-            session_id: int,
-            tools_to_use: List[ConversationTool],
-            prompt_handler: Any,
-            tokens_data: Dict[str, Dict[str, Any]]
+        self,
+        llm_response: NonStreamingParsedLLMCallResponse,
+        session_id: int,
+        tools_to_use: List[ConversationTool],
+        prompt_handler: Any,
+        tokens_data: Dict[str, Dict[str, Any]],
     ) -> AgentRunResult:
         """
         Process LLM response and handle different response types.
@@ -313,7 +312,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             try:
                 final_response = self.tool_request_manager.extract_final_response(llm_response)
                 # Save to DB and return success
-                #TODO Save comments
+                # TODO Save comments
                 # await self._save_comments_to_db(final_response)
                 return AgentRunResult(
                     agent_result={"status": "success", "message": "Review completed successfully"},
@@ -327,10 +326,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             except Exception as e:
                 AppLogger.log_error(f"Error processing parse_final_response: {e}")
                 return AgentRunResult(
-                    agent_result={
-                        "status": "error",
-                        "message": f"Error processing final response: {str(e)}"
-                    },
+                    agent_result={"status": "error", "message": f"Error processing final response: {str(e)}"},
                     prompt_tokens_exceeded=False,
                     agent_name=self.agent_name,
                     agent_type=self.agent_type,
@@ -358,15 +354,13 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     prompt_type=prompt_handler.prompt_type,
                 )
                 # Recursively process the new response
-                return await self._process_llm_response(current_response, session_id, tools_to_use, prompt_handler,
-                                                        tokens_data)
+                return await self._process_llm_response(
+                    current_response, session_id, tools_to_use, prompt_handler, tokens_data
+                )
             except Exception as e:
                 AppLogger.log_error(f"Error processing pr_review_planner: {e}")
                 return AgentRunResult(
-                    agent_result={
-                        "status": "error",
-                        "message": f"Error processing review planner: {str(e)}"
-                    },
+                    agent_result={"status": "error", "message": f"Error processing review planner: {str(e)}"},
                     prompt_tokens_exceeded=False,
                     agent_name=self.agent_name,
                     agent_type=self.agent_type,
@@ -391,10 +385,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         # No tool use request found - provide fallback
         return AgentRunResult(
-            agent_result={
-                "status": "error",
-                "message": "No valid tool use request found in LLM response"
-            },
+            agent_result={"status": "error", "message": "No valid tool use request found in LLM response"},
             prompt_tokens_exceeded=False,
             agent_name=self.agent_name,
             agent_type=self.agent_type,

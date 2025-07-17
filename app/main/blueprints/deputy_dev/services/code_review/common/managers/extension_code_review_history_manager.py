@@ -1,4 +1,6 @@
 from typing import List, Dict, Any, Optional
+from collections import defaultdict
+from app.main.blueprints.deputy_dev.models.dto.extension_review_dto import ExtensionReviewDTO
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
@@ -15,8 +17,7 @@ class ExtensionCodeReviewHistoryManager:
         repo_id = review_history_params.repo_id
         try:
             # Build where clause for reviews
-            where_clause = {}
-
+            where_clause = {"review_status": "Completed", "is_deleted": False}
             # Add filters based on provided parameters
             if repo_id:
                 where_clause["repo_id"] = repo_id
@@ -26,15 +27,47 @@ class ExtensionCodeReviewHistoryManager:
                 where_clause["target_branch"] = target_branch
             if user_team_id:
                 where_clause["user_team_id"] = user_team_id
-            where_clause["review_status__not"] = "cancelled"
             reviews = await ExtensionReviewsRepository.fetch_reviews_history(filters=where_clause)
-            result = [review.model_dump(mode="json") for review in reviews]
-            return result
+            history = self.format_reviews(reviews)
+            return history
 
         except Exception as e:
             # Log the error and return empty list
             print(f"Error fetching reviews: {str(e)}")
             return []
+
+    @classmethod
+    def format_reviews(cls, reviews: list[ExtensionReviewDTO]) -> list[dict]:
+        formatted_reviews = []
+        review_fields = {"id", "title", "execution_time_seconds", "review_datetime", "comments"}
+        comment_fields = {"id", "title", "comment", "corrective_code", "rationale", "file_path", "line_hash",
+                          "line_number", "tag"}
+        for review in reviews:
+            review_data = review.model_dump(mode="json", include=review_fields)
+            review_data["agent_summary"] = defaultdict(int)
+            review_data["tag_summary"] = defaultdict(int)
+            review_data["comments"] = defaultdict(list)
+            review_data["meta"] = {"file_count": 0, "comment_count": 0}
+            for comment in review.comments:
+                review_data["meta"]["comment_count"] += 1
+                comment_data = comment.model_dump(mode='json', include=comment_fields)
+                comment_data["agent_names"] = []
+                for agent in comment.agents:
+                    review_data["agent_summary"][agent.display_name or agent.name] += 1
+                    comment_data["agent_names"].append(agent.display_name or agent.name)
+                review_data["tag_summary"][comment.tag] += 1
+                review_data["comments"][comment.file_path].append(comment_data)
+            review_data["meta"]["file_count"] = len(review_data["comments"])
+            for file in review.reviewed_files:
+                if file not in review_data["comments"]:
+                    review_data["comments"][file] = []
+
+            formatted_reviews.append(review_data)
+
+        return formatted_reviews
+
+
+
 
     async def get_review_count_by_filters(
         self,

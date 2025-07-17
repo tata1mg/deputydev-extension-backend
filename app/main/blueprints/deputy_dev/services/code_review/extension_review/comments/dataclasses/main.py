@@ -2,16 +2,20 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
-class Comment(BaseModel):
+class LLMCommentData(BaseModel):
+    id: Optional[int]
     comment: str
+    title: Optional[str] = None
     corrective_code: Optional[str] = None
-    file_path: str
-    line_number: int
-    confidence_score: float
-    rationale: str
-    bucket: str
+    file_path: Optional[str] = None
+    line_number: Optional[int] = None
+    line_hash: str
+    tag: str
+    confidence_score: Optional[float] = None
+    rationale: Optional[str] = None
+    bucket: Optional[str] = None
 
 
 class AgentRunResult(BaseModel):
-    comments: List[Comment] = None
+    comments: List[LLMCommentData] = None
     agent_name: str
