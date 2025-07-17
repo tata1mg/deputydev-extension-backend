@@ -10,8 +10,11 @@ class CommentBuckets(BaseModel):
 
 class ParsedCommentData(BaseModel):
     id: Optional[int] = None
+    title: Optional[str] = None
     file_path: str
     line_number: str
+    line_hash: Optional[str] = None
+    tag: Optional[str] = None
     comment: str
     buckets: List[CommentBuckets] = []
     confidence_score: float
@@ -23,9 +26,12 @@ class ParsedCommentData(BaseModel):
 
 
 class ParsedAggregatedCommentData(BaseModel):
+    titles: Optional[List[str]] = []
     file_path: str
     line_number: str
+    line_hash: Optional[str] = None
     comments: List[str] = []
+    tags: List[str] = []
     comment_ids: Optional[List[int]] = []
     buckets: List[CommentBuckets] = []
     agent_ids: List[str] = []

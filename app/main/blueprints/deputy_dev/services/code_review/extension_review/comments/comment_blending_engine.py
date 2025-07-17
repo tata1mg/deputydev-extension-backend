@@ -1,18 +1,13 @@
 import asyncio
 import json
 from typing import Any, Dict, List, Optional, Tuple
-from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
-    AgentTypes,
-)
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
-
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.agent_factory import (
     AgentFactory,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import (
-    AgentRunResult, Comment
+    LLMCommentData
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     CommentBuckets,
@@ -22,14 +17,8 @@ from app.main.blueprints.deputy_dev.services.code_review.common.comments.datacla
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
     ExtensionContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
-    LLMCommentData,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
-)
-from app.main.blueprints.deputy_dev.services.setting.setting_service import (
-    SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
@@ -38,7 +27,7 @@ from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDT
 class CommentBlendingEngine:
     def __init__(
         self,
-        llm_comments: Dict[str, list[Comment]],
+        llm_comments: Dict[str, list[LLMCommentData]],
         context_service: ExtensionContextService,
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
@@ -51,17 +40,16 @@ class CommentBlendingEngine:
         self.invalid_comments: List[ParsedCommentData] = []
         self.context_service = context_service
         self.MAX_RETRIES = 2
-        self.agent_results: Dict[str, list[Comment]] = {}
+        self.agent_results: Dict[str, list[LLMCommentData]] = {}
         self.session_id = session_id
 
-
-    async def blend_comments(self) -> Tuple[List[ParsedCommentData], Dict[str, AgentRunResult]]:
+    async def blend_comments(self) -> tuple[list[ParsedCommentData], dict[str, list], str]:
         # this function can contain other operations in future
         self.apply_agent_confidence_score_limit()
-        # await self.validate_comments()
-        await self.process_all_comments()
+        await self.validate_comments()
+        review_title = await self.process_all_comments()
         self.filtered_comments.extend(self.invalid_comments)
-        return self.filtered_comments, self.agent_results
+        return self.filtered_comments, self.agent_results, review_title
 
     def apply_agent_confidence_score_limit(self) -> None:
         """
@@ -79,9 +67,12 @@ class CommentBlendingEngine:
                     confidence_filtered_comments.append(
                         ParsedCommentData(
                             id=comment.id,
+                            title=comment.title,
                             file_path=comment.file_path,
                             line_number=str(comment.line_number),
                             comment=comment.comment,
+                            tag=comment.tag,
+                            line_hash=comment.line_hash,
                             buckets=[
                                 CommentBuckets(
                                     name=comment.bucket,
@@ -90,8 +81,6 @@ class CommentBlendingEngine:
                             ],
                             confidence_score=comment.confidence_score,
                             corrective_code=comment.corrective_code,
-                            # TODO: check if model name is required or not
-                            model=None,
                             rationale=comment.rationale,
                         )
                     )
@@ -172,8 +161,11 @@ class CommentBlendingEngine:
                 aggregated_comments[file_path] = {}
             if line_number not in aggregated_comments[file_path]:
                 aggregated_comments[file_path][line_number] = ParsedAggregatedCommentData(
+                    titles=[],
                     file_path=file_path,
                     line_number=line_number,
+                    line_hash=comment.line_hash,
+                    tags=[],
                     comments=[],
                     comment_ids=[],
                     buckets=[],
@@ -187,9 +179,11 @@ class CommentBlendingEngine:
                 )
 
             # Add the single comment's data to the lists
+            aggregated_comments[file_path][line_number].titles.append(comment.title)
             aggregated_comments[file_path][line_number].comments.append(comment.comment)
             aggregated_comments[file_path][line_number].comment_ids.append(comment.id)
             aggregated_comments[file_path][line_number].buckets.append(comment.buckets[0])
+            aggregated_comments[file_path][line_number].tags.append(comment.tag)
             corrective_code = comment.corrective_code
             aggregated_comments[file_path][line_number].corrective_code.append(
                 corrective_code.strip() if corrective_code else ""
@@ -213,8 +207,11 @@ class CommentBlendingEngine:
                     single_comments.append(
                         ParsedCommentData(
                             id=data.comment_ids[0],
+                            title=data.titles[0],
                             file_path=file_path,
                             line_number=line_number,
+                            line_hash=data.line_hash,
+                            tag=data.tags[0],
                             comment=data.comments[0],
                             buckets=data.buckets,
                             corrective_code=data.corrective_code[0] if data.corrective_code else "",
@@ -249,9 +246,10 @@ class CommentBlendingEngine:
 
         # Attempt summarization with retries
         for attempt in range(self.MAX_RETRIES):
-            comment_summarization_agent = AgentFactory.comment_summarization_agent(self.context_service, self.filtered_comments, self.llm_handler)
+            comment_summarization_agent = AgentFactory.comment_summarization_agent(self.context_service, multi_comments, self.llm_handler)
             agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
             self.agent_results[agent_result.agent_name] = agent_result
+            review_title = agent_result.agent_result["title"]
             if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
                 return
 
@@ -262,8 +260,11 @@ class CommentBlendingEngine:
                 processed_comments.append(
                     ParsedCommentData(
                         id=comment.get("id"),
+                        title=comment.get("title"),
                         file_path=comment.get("file_path"),
                         line_number=comment.get("line_number"),
+                        line_hash=comment.get("line_hash"),
+                        tag=comment.get("tag"),
                         comment=comment.get("comment"),
                         buckets=comment.get("buckets"),
                         confidence_score=comment.get("confidence_score"),
@@ -275,4 +276,4 @@ class CommentBlendingEngine:
                     )
                 )
             self.filtered_comments = processed_comments
-            return
+            return review_title
