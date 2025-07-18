@@ -37,6 +37,19 @@ class CustomQuerySolverAgent(QuerySolverAgent):
         """
         return [tool for tool in tools if tool.name in self.allowed_tools]
 
+    def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        """
+        Get all tools available for this agent, filtered by allowed tools.
+        :param payload: QuerySolverInput containing the task details.
+        :param _client_data: ClientData containing client information.
+        :return: List of ConversationTool objects.
+        """
+        all_tools = self.get_all_first_party_tools(payload, _client_data)
+        all_tools = self._filter_tools(all_tools)
+        all_tools.extend(self.get_all_client_tools(payload, _client_data))
+
+        return all_tools
+
     def get_llm_inputs(
         self,
         payload: QuerySolverInput,
@@ -52,7 +65,7 @@ class CustomQuerySolverAgent(QuerySolverAgent):
         tools = self.get_all_tools(payload, _client_data)
 
         return LLMHandlerInputs(
-            tools=self._filter_tools(tools),
+            tools=tools,
             prompt=self.prompt_factory.get_prompt(model_name=llm_model),
             previous_messages=previous_messages if previous_messages else [],
             extra_prompt_vars={
