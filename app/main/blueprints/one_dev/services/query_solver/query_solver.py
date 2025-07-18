@@ -309,15 +309,14 @@ class QuerySolver:
                     }
 
             if payload.tool_use_failed:
-                if payload.tool_use_response.tool_name not in {"replace_in_file", "write_to_file"}:
-                    error_response = {
-                        "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                            tool_name=payload.tool_use_response.tool_name,
-                            error_type=tool_response.get("error_type", "Unknown"),
-                            error_message=tool_response.get("error_message", "An error occurred while using the tool."),
-                        )
-                    }
-                    tool_response = error_response
+                error_response = {
+                    "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                        tool_name=payload.tool_use_response.tool_name,
+                        error_type=tool_response.get("error_type", "Unknown"),
+                        error_message=tool_response.get("error_message", "An error occurred while using the tool."),
+                    )
+                }
+                tool_response = error_response
 
             llm_response = await llm_handler.submit_tool_use_response(
                 session_id=payload.session_id,

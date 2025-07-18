@@ -6,6 +6,8 @@ from deputydev_core.services.chunking.utils.snippet_renderer import render_snipp
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
+from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
+from app.main.blueprints.deputy_dev.services.repository.extension_comments.repository import ExtensionCommentRepository
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -258,14 +260,63 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         #     }
 
         # Convert to ToolUseResponseData
+        tool_response = tool_use_response.get("response")
+        tool_name = tool_use_response.get("tool_name")
+        tool_use_id = tool_use_response.get("tool_use_id")
+        tool_use_failed = payload.get("type") == "tool_use_failed" or payload.get("tool_use_failed", False)
+
+        if not tool_use_failed:
+            if tool_name == "focused_snippets_searcher":
+                tool_response = {
+                    "chunks": [
+                        ChunkInfo(**chunk).get_xml()
+                        for search_response in tool_response["batch_chunks_search"]["response"]
+                        for chunk in search_response["chunks"]
+                    ],
+                }
+            elif tool_name == "iterative_file_reader":
+                tool_response = {
+                    "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
+                    "eof_reached": tool_response["data"]["eof_reached"],
+                }
+            elif tool_name == "grep_search":
+                tool_response = {
+                    "matched_contents": "".join(
+                        [
+                            f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
+                            for matched_block in tool_response["data"]
+                        ]
+                    ),
+                }
+        else:
+            if tool_name not in {"replace_in_file", "write_to_file"}:
+                error_response = {
+                    "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                        tool_name=tool_name,
+                        error_type=tool_response.get("error_type", "Unknown"),
+                        error_message=tool_response.get("error_message", "An error occurred while using the tool."),
+                    )
+                }
+                tool_response = error_response
+
+            # Build the ToolUseResponseData
         tool_use_response = ToolUseResponseData(
             content=ToolUseResponseContent(
-                tool_name=tool_use_response["tool_name"],
-                tool_use_id=tool_use_response["tool_use_id"],
-                response="**Just call parse_final_response tool and provide the Final COMMENTS.**",
-                # response=tool_use_response["response"],
+                tool_name=tool_name,
+                tool_use_id=tool_use_id,
+                response=tool_response,
             )
         )
+
+
+        # tool_use_response = ToolUseResponseData(
+        #     content=ToolUseResponseContent(
+        #         tool_name=tool_use_response["tool_name"],
+        #         tool_use_id=tool_use_response["tool_use_id"],
+        #         response="**Just call parse_final_response tool and provide the Final COMMENTS.**",
+        #         # response=tool_use_response["response"],
+        #     )
+        # )
 
         # Get tools and prompt handler
         prompt_vars = await self.required_prompt_variables()
@@ -313,7 +364,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 final_response = self.tool_request_manager.extract_final_response(llm_response)
                 # Save to DB and return success
                 # TODO Save comments
-                # await self._save_comments_to_db(final_response)
+                await self._save_comments_to_db(final_response)
                 return AgentRunResult(
                     agent_result={"status": "success", "message": "Review completed successfully"},
                     prompt_tokens_exceeded=False,
@@ -394,3 +445,39 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             tokens_data=tokens_data,
             display_name=self.get_display_name(),
         )
+
+    async def _save_comments_to_db(self, final_response: dict):
+        """
+        Save the final LLM comments to the database as IdeReviewsCommentDTOs.
+        """
+        comments = final_response.get("comments", [])
+        review_id = self.context_service.review_id
+        comments_to_insert = []
+
+        for comment in comments:
+            # comment is an instance of LLMCommentData
+            # Use dummy values for title and tag as requested
+            # For agents, use buckets if available, else fallback to self.agent_id
+            if hasattr(comment, "buckets") and comment.buckets:
+                agents = [UserAgentDTO(id=agent.agent_id) for agent in comment.buckets]
+            else:
+                agents = [UserAgentDTO(id=self.agent_id)]
+
+            comment_dto = IdeReviewsCommentDTO(
+                review_id=review_id,
+                title="Code Review",
+                comment=comment.comment,
+                confidence_score=comment.confidence_score,
+                rationale=comment.rationale,
+                corrective_code=comment.corrective_code,
+                file_path=comment.file_path,
+                line_hash="",  # If you have a way to compute line_hash, fill it here
+                line_number=int(comment.line_number),
+                tag="BUG",
+                is_valid=True,
+                agents=agents,
+            )
+            comments_to_insert.append(comment_dto)
+
+        if comments_to_insert:
+            await ExtensionCommentRepository.insert_comments(comments_to_insert)
