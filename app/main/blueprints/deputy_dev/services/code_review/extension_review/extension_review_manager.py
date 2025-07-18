@@ -32,6 +32,7 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pre_processo
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
+from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 
 from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRService
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
@@ -70,8 +71,7 @@ class ExtensionReviewManager:
     async def review_diff(cls, payload):
         agent_id = payload.get("agent_id")
         review_id = payload.get("review_id")
-        repo_id = payload.get("repo_id")
-        session_id = payload.get("session_id")
+        extension_review_dto = await ExtensionReviewsRepository.db_get(filters={"id": review_id}, fetch_one=True)
         user_agent_dto = await UserAgentRepository.db_get(filters={"id": agent_id}, fetch_one=True)
         agent_and_init_params = cls.get_agent_and_init_params_for_review(user_agent_dto)
 
@@ -90,7 +90,7 @@ class ExtensionReviewManager:
             user_agent_dto=user_agent_dto,
         )
 
-        agent_result = await agent.run_agent(session_id=session_id, payload=payload)
+        agent_result = await agent.run_agent(session_id=extension_review_dto.session_id, payload=payload)
 
         return cls._format_agent_response(agent_result, payload.get("agent_id"))
 
