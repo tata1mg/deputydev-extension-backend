@@ -7,6 +7,7 @@ class RequestType(str, Enum):
     """Request types for multi-agent review API."""
     QUERY = "query"
     TOOL_USE_RESPONSE = "tool_use_response"
+    TOOL_USE_FAILED = "tool_use_failed"
 
 
 class ToolUseResponseData(BaseModel):
@@ -20,8 +21,6 @@ class AgentRequestItem(BaseModel):
     """Individual agent request item in the multi-agent payload."""
     agent_id: int
     review_id: int
-    repo_id: int
-    session_id: int
     type: RequestType
     tool_use_response: Optional[ToolUseResponseData] = None
 
@@ -29,6 +28,7 @@ class AgentRequestItem(BaseModel):
 class MultiAgentReviewRequest(BaseModel):
     """Multi-agent review request payload."""
     agents: List[AgentRequestItem]
+    review_id: int
     connection_id: str
     user_team_id: Optional[int] = None
 

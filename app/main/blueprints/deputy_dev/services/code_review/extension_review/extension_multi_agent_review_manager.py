@@ -25,8 +25,9 @@ class MultiAgentWebSocketManager:
     Handles parallel agent execution and real-time result streaming.
     """
 
-    def __init__(self, connection_id: str, is_local: bool = False):
+    def __init__(self, connection_id: str, review_id:int, is_local: bool = False):
         self.connection_id = connection_id
+        self.review_id = review_id
         self.is_local = is_local
         self.connection_id_gone = False
         self.aws_client: Optional[AWSAPIGatewayServiceClient] = None
@@ -87,9 +88,7 @@ class MultiAgentWebSocketManager:
             # Convert AgentRequestItem to payload format expected by review_diff
             payload = {
                 "agent_id": agent_request.agent_id,
-                "review_id": agent_request.review_id,
-                "repo_id": agent_request.repo_id,
-                "session_id": agent_request.session_id,
+                "review_id": self.review_id,
                 "type": agent_request.type.value,
             }
 
@@ -117,7 +116,7 @@ class MultiAgentWebSocketManager:
 
             # Handle error case
             if formatted_result.get("status") == "ERROR":
-                event_type = "REVIEW_ERROR"
+                event_type = "AGENT_FAIL"
                 error_message = formatted_result.get("message", "Unknown error occurred")
 
             return AgentTaskResult(
@@ -143,6 +142,30 @@ class MultiAgentWebSocketManager:
                 error_message=str(e)
             )
 
+    def format_agent_result_to_ws_message(self, result: AgentTaskResult) -> WebSocketMessage:
+        if result.status == "TOOL_USE_REQUEST":
+            return WebSocketMessage(
+                type="TOOL_USE_REQUEST",
+                agent_id=result.agent_id,
+                data={
+                    "tool_use_id": result.result.get("tool_use_id"),
+                    "tool_name": result.result.get("tool_name"),
+                    "tool_input": result.result.get("tool_input"),
+                }
+            )
+        elif result.status == "AGENT_COMPLETE":
+            return WebSocketMessage(
+                type="AGENT_COMPLETE",
+                agent_id=result.agent_id,
+                data=result.result  # or filter as needed
+            )
+        elif result.status == "AGENT_ERROR":
+            return WebSocketMessage(
+                type="AGENT_FAIL",
+                agent_id=result.agent_id,
+                data={"message": result.error_message or "Unknown error"}
+            )
+
     def determine_event_type(self, formatted_result: Dict[str, Any]) -> str:
         """
         Determine status from formatted agent result.
@@ -160,11 +183,11 @@ class MultiAgentWebSocketManager:
         if result_type == "TOOL_USE_REQUEST":
             return "TOOL_USE_REQUEST"
         elif result_type == "REVIEW_COMPLETE":
-            return "REVIEW_COMPLETE"
+            return "AGENT_COMPLETE"
         elif result_type == "REVIEW_ERROR":
-            return "REVIEW_ERROR"
+            return "AGENT_ERROR"
         else:
-            return "REVIEW_COMPLETE"  # Default to success for other cases
+            return "AGENT_COMPLETE"  # Default to success for other cases
 
     async def process_multi_agent_request(self, agents: List[AgentRequestItem], local_testing_stream_buffer) -> None:
         """
@@ -221,13 +244,11 @@ class MultiAgentWebSocketManager:
             # Execute agent task using review_diff
             result = await self.execute_agent_task(agent_request)
 
+            ws_message = self.format_agent_result_to_ws_message(result)
+
             # Stream the result
             await self.push_to_connection_stream(
-                WebSocketMessage(
-                    type=result.status,
-                    agent_id=result.agent_id,
-                    data=result.model_dump(mode="json")
-                ), local_testing_stream_buffer
+                ws_message, local_testing_stream_buffer
             )
 
         except Exception as e:

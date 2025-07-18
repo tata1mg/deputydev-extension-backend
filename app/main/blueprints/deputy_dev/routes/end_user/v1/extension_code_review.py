@@ -239,7 +239,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         manager = None
         try:
             # Create WebSocket manager
-            manager = MultiAgentWebSocketManager(request.connection_id, is_local)
+            manager = MultiAgentWebSocketManager(request.connection_id, request.review_id, is_local)
             await manager.initialize_aws_client()
 
             # Process all agents
