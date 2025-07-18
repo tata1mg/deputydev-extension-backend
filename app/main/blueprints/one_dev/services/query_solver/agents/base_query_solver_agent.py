@@ -80,7 +80,7 @@ class QuerySolverAgent(ABC):
             f"Unsupported tool metadata type: {type(client_tool.tool_metadata)} for tool {client_tool.name}"
         )
 
-    def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+    def get_all_first_party_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         tools_to_use = [
             ASK_USER_INPUT,
             FOCUSED_SNIPPETS_SEARCHER,
@@ -100,9 +100,20 @@ class QuerySolverAgent(ABC):
             tools_to_use.append(REPLACE_IN_FILE)
             tools_to_use.append(WRITE_TO_FILE)
 
+    def get_all_client_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        """
+        Get all client tools from the payload.
+        :param payload: QuerySolverInput containing client tools.
+        :return: List of ConversationTool objects.
+        """
+        tools_to_use: List[ConversationTool] = []
         for client_tool in payload.client_tools:
             tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
+        return tools_to_use
 
+    def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        tools_to_use: List[ConversationTool] = self.get_all_first_party_tools(payload, _client_data)
+        tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
     def get_llm_inputs(
