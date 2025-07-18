@@ -63,7 +63,7 @@ class ExtensionReviewPostProcessor:
                     line_number=comment.line_number,
                     tag=comment.tag,
                     is_valid=True,
-                    agents=[UserAgentDTO(id=agent.agent_id) for agent in comment.buckets]
+                    agents=[UserAgentDTO(id=agent.agent_id) for agent in comment.buckets],
                 )
                 comments_to_insert.append(blended_comment)
         await ExtensionCommentRepository.insert_comments(comments_to_insert)
