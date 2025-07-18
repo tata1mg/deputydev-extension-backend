@@ -51,6 +51,7 @@ class UserAgentRepository:
         except Exception as ex:
             logger.error(f"Error updating user agent: {filters}, ex: {ex}")
             raise ex
+
     @classmethod
     async def db_delete(cls, agent_id) -> None:
         try:
