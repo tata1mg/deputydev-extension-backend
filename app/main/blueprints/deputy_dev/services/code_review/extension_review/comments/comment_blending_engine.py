@@ -7,7 +7,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
     AgentFactory,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import (
-    LLMCommentData
+    LLMCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     CommentBuckets,
@@ -31,7 +31,7 @@ class CommentBlendingEngine:
         context_service: ExtensionContextService,
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
-        agents: List[UserAgentDTO] = None
+        agents: List[UserAgentDTO] = None,
     ):
         self.llm_comments = llm_comments
         self.llm_handler = llm_handler
@@ -113,7 +113,9 @@ class CommentBlendingEngine:
         # Attempt validation with retries
         for attempt in range(self.MAX_RETRIES):
             try:
-                comment_validation_agent = AgentFactory.comment_validation_agent(self.context_service, self.filtered_comments, self.llm_handler)
+                comment_validation_agent = AgentFactory.comment_validation_agent(
+                    self.context_service, self.filtered_comments, self.llm_handler
+                )
                 agent_result = await comment_validation_agent.run_agent(session_id=self.session_id)
                 self.agent_results[agent_result.agent_name] = agent_result
                 if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
@@ -246,7 +248,9 @@ class CommentBlendingEngine:
 
         # Attempt summarization with retries
         for attempt in range(self.MAX_RETRIES):
-            comment_summarization_agent = AgentFactory.comment_summarization_agent(self.context_service, multi_comments, self.llm_handler)
+            comment_summarization_agent = AgentFactory.comment_summarization_agent(
+                self.context_service, multi_comments, self.llm_handler
+            )
             agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
             self.agent_results[agent_result.agent_name] = agent_result
             review_title = agent_result.agent_result["title"]
