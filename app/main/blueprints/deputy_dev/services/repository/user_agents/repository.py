@@ -35,7 +35,8 @@ class UserAgentRepository:
     @classmethod
     async def db_update(cls, filters, payload) -> Optional[UserAgentDTO]:
         try:
-            await DB.update_by_filters(UserAgents, filters, payload)
+            payload.pop("id", None)
+            await UserAgents.filter(**filters).update(**payload)
             updated = await cls.db_get(filters, fetch_one=True)
             return updated
         except Exception as ex:
@@ -43,9 +44,17 @@ class UserAgentRepository:
             raise ex
 
     @classmethod
-    async def db_delete(cls, filters) -> None:
+    async def update_agent(cls, filters, payload):
         try:
-            await DB.delete_by_filters(UserAgents, filters)
+            await UserAgents.filter(**filters).update(**payload)
+            return
         except Exception as ex:
-            logger.error(f"Error deleting user agent: {filters}, ex: {ex}")
+            logger.error(f"Error updating user agent: {filters}, ex: {ex}")
+            raise ex
+    @classmethod
+    async def db_delete(cls, agent_id) -> None:
+        try:
+            await UserAgents.filter(id=agent_id).update(is_deleted=True)
+        except Exception as ex:
+            logger.error(f"Error soft deleting user agent: {agent_id}, ex: {ex}")
             raise ex
