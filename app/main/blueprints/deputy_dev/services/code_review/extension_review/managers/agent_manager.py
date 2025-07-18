@@ -111,5 +111,5 @@ class AgentManager:
         if not agents:
             await UserAgentRepository.bulk_create_agents(cls.DEFAULT_AGENTS, user_team_id)
             agents = await UserAgentRepository.db_get(filters=agent_fileter)
-        agents_response = [agent.model_dump(mode="json",include=cls.AGENT_FIELDS) for agent in agents]
+        agents_response = [agent.model_dump(mode="json", include=cls.AGENT_FIELDS) for agent in agents]
         return agents_response
