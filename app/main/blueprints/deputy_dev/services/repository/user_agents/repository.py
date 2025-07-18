@@ -7,7 +7,7 @@ from app.backend_common.repository.db import DB
 
 class UserAgentRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[UserAgentDTO, List[UserAgentDTO]]:
+    async def db_get(cls, filters, fetch_one=False, order_by="agent_name") -> Union[UserAgentDTO, List[UserAgentDTO]]:
         try:
             agent_data = await DB.by_filters(
                 model_name=UserAgents, where_clause=filters, fetch_one=fetch_one, order_by=order_by
@@ -59,3 +59,19 @@ class UserAgentRepository:
         except Exception as ex:
             logger.error(f"Error soft deleting user agent: {agent_id}, ex: {ex}")
             raise ex
+
+    @classmethod
+    async def bulk_create_agents(cls, agents: List[UserAgentDTO], user_team_id: int) -> None:
+        """
+        Bulk create agents in the database.
+
+        Args:
+            agents (List[UserAgentDTO]): List of UserAgentDTO objects to be created.
+            user_team_id: int - The ID of the user team to which these agents belong.
+        """
+        user_agents = []
+        for agent in agents:
+            agent.user_team_id = user_team_id
+            agent_dict = agent.model_dump(exclude={"id", "created_at", "updated_at"})
+            user_agents.append(UserAgents(**agent_dict))
+        await UserAgents.bulk_create(user_agents)
