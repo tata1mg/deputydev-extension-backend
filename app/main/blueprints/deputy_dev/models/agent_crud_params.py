@@ -6,4 +6,4 @@ class AgentParams(BaseModel):
     id: Optional[int] = None
     name: str
     custom_prompt: str
-    user_team_id: int
+    user_team_id: Optional[int] = None
