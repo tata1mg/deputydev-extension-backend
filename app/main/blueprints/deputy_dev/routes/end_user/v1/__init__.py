@@ -21,7 +21,7 @@ blueprints = [
     setting,
     backfill,
     extension_code_review,
-    agents
+    agents,
 ]  # onboarding flows,
 
 code_review_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
