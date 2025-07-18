@@ -40,32 +40,50 @@ class ExtensionCodeReviewHistoryManager:
     def format_reviews(cls, reviews: list[ExtensionReviewDTO]) -> list[dict]:
         formatted_reviews = []
         review_fields = {"id", "title", "execution_time_seconds", "review_datetime", "comments"}
-        comment_fields = {"id", "title", "comment", "corrective_code", "rationale", "file_path", "line_hash",
-                          "line_number", "tag"}
+        comment_fields = {
+            "id",
+            "title",
+            "comment",
+            "corrective_code",
+            "rationale",
+            "file_path",
+            "line_hash",
+            "line_number",
+            "tag",
+        }
         for review in reviews:
             review_data = review.model_dump(mode="json", include=review_fields)
-            review_data["agent_summary"] = defaultdict(int)
+            comments_per_agent = defaultdict(int)
+            review_data["agent_summary"] = []
+            agent_data = {}
             review_data["tag_summary"] = defaultdict(int)
             review_data["comments"] = defaultdict(list)
             review_data["meta"] = {"file_count": 0, "comment_count": 0}
             for comment in review.comments:
                 review_data["meta"]["comment_count"] += 1
-                comment_data = comment.model_dump(mode='json', include=comment_fields)
-                comment_data["agent_names"] = []
+                comment_data = comment.model_dump(mode="json", include=comment_fields)
+                comment_data["agent_ids"] = []
                 for agent in comment.agents:
-                    review_data["agent_summary"][agent.display_name or agent.name] += 1
-                    comment_data["agent_names"].append(agent.display_name or agent.name)
+                    agent_data[agent.id] = {"name": agent.agent_name, "display_name": agent.display_name}
+                    comments_per_agent[agent.id] += 1
+                    comment_data["agent_ids"].append(agent.id)
                 review_data["tag_summary"][comment.tag] += 1
                 review_data["comments"][comment.file_path].append(comment_data)
+            for key, count in comments_per_agent.items():
+                review_data["agent_summary"].append(
+                    {
+                        "count": count,
+                        "id": key,
+                        "name": agent_data[key]["name"],
+                        "display_name": agent_data[key]["display_name"],
+                    }
+                )
             for file in review.reviewed_files:
                 if file not in review_data["comments"]:
                     review_data["comments"][file] = []
             review_data["meta"]["file_count"] = len(review_data["comments"])
             formatted_reviews.append(review_data)
         return formatted_reviews
-
-
-
 
     async def get_review_count_by_filters(
         self,

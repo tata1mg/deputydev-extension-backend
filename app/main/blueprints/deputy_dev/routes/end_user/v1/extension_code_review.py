@@ -28,6 +28,8 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.extens
     ExtensionReviewManager,
 )
 from deputydev_core.utils.app_logger import AppLogger
+from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.extension_multi_agent_review_manager import MultiAgentWebSocketManager
 
 from app.main.blueprints.one_dev.utils.session import get_valid_session_data
@@ -42,8 +44,8 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 
 @extension_code_review.route("/history", methods=["GET"])
 @validate_client_version
-# @authenticate
-async def code_review_history(_request: Request, **kwargs):
+@authenticate
+async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
     """
     Get code review history based on filters
     Query parameters:
@@ -55,7 +57,7 @@ async def code_review_history(_request: Request, **kwargs):
     try:
         # Extract query parameters
         query_params = _request.request_params()
-        review_history_params = ReviewHistoryParams(**query_params, user_team_id=1)
+        review_history_params = ReviewHistoryParams(**query_params, user_team_id=auth_data.user_team_id)
 
         # Initialize manager and fetch reviews
         history_manager = ExtensionCodeReviewHistoryManager()
@@ -109,38 +111,6 @@ async def run_extension_agent(request: Request, **kwargs):
                 "status": "SUCCESS",
             }
         )
-
-
-@extension_code_review.route("/user-agents", methods=["GET"])
-# @validate_client_version
-# @authenticate
-async def get_user_agents(_request: Request, **kwargs):
-    """
-    Get user agents for a specific user team.
-
-    Query parameters:
-    - user_team_id: The user team ID (automatically extracted from auth_data)
-
-    Returns:
-    - List of user agents associated with the user team
-    """
-    try:
-        user_team_id = _request.request_params().get("user_team_id")
-        user_agents = await UserAgentRepository.db_get(
-            filters={"user_team_id": user_team_id},
-        )
-
-        # Convert to JSON-serializable format
-        agents_response = []
-        if user_agents:
-            for agent in user_agents:
-                agents_response.append(agent.model_dump(mode="json"))
-
-        return send_response({"agents": agents_response, "count": len(agents_response)})
-
-    except Exception as e:
-        AppLogger.log_error(f"Error fetching user agents: {e}")
-        raise e
 
 
 @extension_code_review.route("/post-process", methods=["POST"])
