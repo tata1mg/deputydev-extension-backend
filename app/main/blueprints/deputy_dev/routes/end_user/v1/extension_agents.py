@@ -18,9 +18,8 @@ config = CONFIG.config
 
 @agents.route("/list", methods=["GET"])
 @validate_client_version
-# @authenticate
-# async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
-async def get_user_agents(_request: Request, **kwargs):
+@authenticate
+async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
     """
     Get user agents for a specific user team.
 
@@ -31,7 +30,7 @@ async def get_user_agents(_request: Request, **kwargs):
     - List of user agents associated with the user team
     """
     try:
-        agents_response = await AgentManager.get_or_create_agents(user_team_id=2)
+        agents_response = await AgentManager.get_or_create_agents(user_team_id=auth_data.user_team_id)
         return send_response({"agents": agents_response, "count": len(agents_response)})
     except Exception as e:
         AppLogger.log_error(f"Error fetching user agents: {e}")
