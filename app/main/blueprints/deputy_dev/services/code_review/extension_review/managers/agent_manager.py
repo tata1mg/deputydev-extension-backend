@@ -16,7 +16,7 @@ class AgentManager:
             display_name="Documentation",
             is_custom_agent=False,
             objective="Responsibility of this agent is checking code_communication issues.",
-            confiedence_score=0.98,
+            confidence_score=0.98,
         ),
         UserAgentDTO(
             agent_name="performance_optimisation",
@@ -77,6 +77,7 @@ class AgentManager:
         )
         if db_agent.is_custom_agent:
             agent.agent_name = agent_params.name
+            agent.display_name = agent_params.name
 
         updated_agent = await UserAgentRepository.db_update({"id": agent.id}, agent.model_dump(exclude_unset=True))
         return updated_agent.model_dump(mode="json", include=self.AGENT_FIELDS)
