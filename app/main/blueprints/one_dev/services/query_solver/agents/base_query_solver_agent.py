@@ -99,6 +99,7 @@ class QuerySolverAgent(ABC):
         if payload.write_mode:
             tools_to_use.append(REPLACE_IN_FILE)
             tools_to_use.append(WRITE_TO_FILE)
+        return tools_to_use
 
     def get_all_client_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         """
