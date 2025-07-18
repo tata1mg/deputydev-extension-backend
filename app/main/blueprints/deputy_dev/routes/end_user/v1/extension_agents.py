@@ -8,8 +8,10 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentParams
+from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentCreateParams, AgentUpdateParams
 from deputydev_core.utils.app_logger import AppLogger
+from pydantic import ValidationError
+from torpedo.exceptions import BadRequestException
 
 agents = Blueprint("agents", "/agent")
 
@@ -43,27 +45,27 @@ async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
 async def create_agent(_request: Request, auth_data: AuthData, **kwargs):
     try:
         payload = _request.custom_json()
-        payload = AgentParams(**payload, user_team_id=auth_data.user_team_id)
+        payload = AgentCreateParams(**payload, user_team_id=2)
         agent_manager = AgentManager()
         agent = await agent_manager.create_agent(payload)
         return send_response(agent)
-    except Exception as e:
-        raise e
+    except ValidationError as e:
+        raise BadRequestException(f"Invalid parameters: {e}")
 
 
 @agents.route("/<agent_id:int>", methods=["PATCH"])
 @validate_client_version
 @authenticate
 async def update_agent(_request: Request, agent_id, auth_data: AuthData, **kwargs):
-    """Update an existing agent with the provided parameters."""
     try:
+        """Update an existing agent with the provided parameters."""
         payload = _request.custom_json()
-        payload = AgentParams(**payload, id=agent_id, user_team_id=auth_data.user_team_id)
+        payload = AgentUpdateParams(**payload, id=agent_id, user_team_id=2)
         agent_manager = AgentManager()
         agent = await agent_manager.update_agent(payload)
         return send_response(agent)
-    except Exception as e:
-        raise e
+    except ValidationError as e:
+        raise BadRequestException(f"Invalid parameters: {e}")
 
 
 @agents.route("/<agent_id:int>", methods=["DELETE"])
