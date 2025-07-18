@@ -47,17 +47,11 @@ class ExtensionCommentRepository:
                 line_hash=comment.line_hash,
                 line_number=int(comment.line_number),
                 tag=comment.tag,
-                confidence_score=comment.confidence_score
+                confidence_score=comment.confidence_score,
             )
             await comment_to_insert.save()
             for agent in comment.agents:
                 agent_comment_mappings.append(
-                    UserAgentCommentMapping(
-                        agent_id=agent.id,
-                        comment_id=comment_to_insert.id
-                    )
+                    UserAgentCommentMapping(agent_id=agent.id, comment_id=comment_to_insert.id)
                 )
         await UserAgentCommentMapping.bulk_create(agent_comment_mappings)
-
-
-
