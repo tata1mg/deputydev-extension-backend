@@ -62,7 +62,6 @@ class ExtensionCodeReviewHistoryManager:
                     review_data["comments"][file] = []
             review_data["meta"]["file_count"] = len(review_data["comments"])
             formatted_reviews.append(review_data)
-
         return formatted_reviews
 
 
