@@ -9,7 +9,7 @@ from typing import Optional, Dict, List
 from app.backend_common.caches.websocket_connections_cache import WebsocketConnectionCache
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
-from app.main.blueprints.deputy_dev.services.code_review.common.managers.extension_code_review_history_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.managers.extension_code_review_history_manager import (
     ExtensionCodeReviewHistoryManager,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.extension_review_pre_processor import (
