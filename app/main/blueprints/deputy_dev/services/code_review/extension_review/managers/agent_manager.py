@@ -1,6 +1,7 @@
-from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentParams
+from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentUpdateParams, AgentCreateParams
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
+from torpedo.exceptions import BadRequestException
 
 
 class AgentManager:
@@ -40,7 +41,7 @@ class AgentManager:
 
     AGENT_FIELDS = {"id", "agent_name", "custom_prompt", "is_custom_agent", "objective", "display_name"}
 
-    async def create_agent(self, agent_params: AgentParams) -> dict:
+    async def create_agent(self, agent_params: AgentCreateParams) -> dict:
         """
         Create a new agent with the provided parameters.
 
@@ -58,10 +59,12 @@ class AgentManager:
             custom_prompt=agent_params.custom_prompt,
             is_custom_agent=True,
         )
+        if agent.is_custom_agent and not agent.custom_prompt:
+            raise BadRequestException("For custom agent custom prompt is required")
         agent = await UserAgentRepository.db_insert(agent)
         return agent.model_dump(mode="json", include=self.AGENT_FIELDS)
 
-    async def update_agent(self, agent_params: AgentParams) -> dict:
+    async def update_agent(self, agent_params: AgentUpdateParams) -> dict:
         """
         Update an existing agent with the provided parameters.
         Args:
@@ -76,6 +79,8 @@ class AgentManager:
             custom_prompt=agent_params.custom_prompt,
         )
         if db_agent.is_custom_agent:
+            if not agent.custom_prompt:
+                raise BadRequestException("For custom agent custom prompt is required")
             agent.agent_name = agent_params.name
             agent.display_name = agent_params.name
 
