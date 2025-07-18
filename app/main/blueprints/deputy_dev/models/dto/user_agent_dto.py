@@ -14,6 +14,7 @@ class UserAgentDTO(BaseModel):
     confidence_score: Optional[float] = 0.9
     objective: Optional[str] = None
     is_custom_agent: bool = False
+    is_deleted: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
