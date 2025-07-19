@@ -230,8 +230,8 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         Returns:
             AgentRunResult: The agent run result.
         """
-        tool_use_response = payload.get("tool_use_response")
-        if not tool_use_response:
+        tool_response = payload.get("tool_use_response")
+        if not tool_response:
             raise ValueError("tool_use_response is required in payload")
 
         # if payload.get("tool_use_response").get("tool_name") == "focused_snippets_searcher":
@@ -260,9 +260,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         #     }
 
         # Convert to ToolUseResponseData
-        tool_response = tool_use_response.get("response")
-        tool_name = tool_use_response.get("tool_name")
-        tool_use_id = tool_use_response.get("tool_use_id")
+        # tool_response = tool_use_response.get("response")
+        tool_name = payload.get("tool_use_response").get("tool_name")
+        tool_use_id = payload.get("tool_use_response").get("tool_use_id")
         tool_use_failed = payload.get("type") == "tool_use_failed" or payload.get("tool_use_failed", False)
 
         if not tool_use_failed:
@@ -276,15 +276,15 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 }
             elif tool_name == "iterative_file_reader":
                 tool_response = {
-                    "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
-                    "eof_reached": tool_response["data"]["eof_reached"],
+                    "file_content_with_line_numbers": ChunkInfo(**tool_response["response"]["chunk"]).get_xml(),
+                    "eof_reached": tool_response["response"]["eof_reached"],
                 }
             elif tool_name == "grep_search":
                 tool_response = {
                     "matched_contents": "".join(
                         [
                             f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
-                            for matched_block in tool_response["data"]
+                            for matched_block in tool_response["response"]
                         ]
                     ),
                 }
