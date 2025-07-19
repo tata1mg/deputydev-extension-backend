@@ -43,8 +43,8 @@ class ToolRequestManager:
         self.context_service = context_service
         self.tools = [
             GREP_SEARCH,
-            ITERATIVE_FILE_READER,
-            FILE_PATH_SEARCHER,
+            # ITERATIVE_FILE_READER,
+            # FILE_PATH_SEARCHER,
             PARSE_FINAL_RESPONSE,
             PR_REVIEW_PLANNER,
         ]
