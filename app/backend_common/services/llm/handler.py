@@ -7,6 +7,7 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
+from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.exception import RetryException
@@ -79,6 +80,8 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GEMINI_2_POINT_0_FLASH: Google,
         LLModels.GEMINI_2_POINT_5_FLASH: Google,
         LLModels.GPT_4_POINT_1: OpenAI,
+        LLModels.GPT_4_POINT_1_NANO: OpenAI,
+        LLModels.GPT_4_POINT_1_MINI: OpenAI,
         LLModels.GPT_O3_MINI: OpenAI,
     }
 
@@ -396,6 +399,7 @@ class LLMHandler(Generic[PromptFeatures]):
         search_web: bool = False,
         checker: CancellationChecker = None,
         parallel_tool_calls: bool = False,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -455,6 +459,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     stream=stream,
                     response_type=response_type,
                     parallel_tool_calls=parallel_tool_calls,
+                    text_format=text_format,
                 )
 
                 # start task for storing LLM message in DB
@@ -667,6 +672,10 @@ class LLMHandler(Generic[PromptFeatures]):
             if prompt_handler_instance
             else self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
         )
+        try:
+            text_format = prompt_handler.get_text_format()
+        except NotImplementedError:
+            text_format = None
 
         if llm_model not in self.model_to_provider_class_map:
             raise ValueError(f"LLM model {llm_model} not supported")
@@ -714,6 +723,7 @@ class LLMHandler(Generic[PromptFeatures]):
             search_web=search_web,
             checker=checker,
             parallel_tool_calls=parallel_tool_calls,
+            text_format=text_format,
         )
 
     async def store_tool_use_ressponse_in_db(
