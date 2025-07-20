@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Union
+from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Type, Union
 
 import httpx
 from deputydev_core.utils.singleton import Singleton
@@ -13,6 +13,7 @@ from openai.types.responses import (
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 from openai.types.shared_params.response_format_json_object import ResponseFormatJSONObject
 from openai.types.shared_params.response_format_text import ResponseFormatText
+from pydantic import BaseModel
 from torpedo import CONFIG
 
 config = CONFIG.config
@@ -37,9 +38,9 @@ class OpenAIServiceClient(metaclass=Singleton):
         self,
         conversation_messages: List[Dict[str, Any]],
         model: str,
-        tool_choice: Literal["none", "auto", "required"] = None,
+        tool_choice: Literal["none", "auto", "required"] = "none",
         tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Literal["text", "json_object"] = "json_object",
+        response_type: Literal["text", "json_object", "json_schema"] = "json_schema",
         response_schema: Any = None,
         response_format_name: Any = None,
         response_format_description: Any = None,
@@ -65,6 +66,38 @@ class OpenAIServiceClient(metaclass=Singleton):
             max_output_tokens=max_output_tokens,
         )
         # we need both message and output token now to returning full completion message
+        return response
+
+    async def get_llm_non_stream_response_api(  # noqa: ANN201
+        self,
+        conversation_messages: List[Dict[str, Any]],
+        model: str,
+        tool_choice: Literal["none", "auto", "required"] = "auto",
+        tools: Optional[List[Dict[str, Any]]] = None,
+        instructions: Optional[str] = None,
+        max_output_tokens: Optional[int] = None,
+        parallel_tool_calls: bool = False,
+        text_format: Optional[Type[BaseModel]] = None,
+        reasoning: Optional[Dict[str, Any]] = None,
+        temperature: Optional[float] = None,
+    ):
+        # Build the request payload, filtering out any None values
+        kwargs: Dict[str, Any] = {
+            "model": model,
+            "input": conversation_messages,
+            "tool_choice": tool_choice,
+            "tools": tools,
+            "instructions": instructions,
+            "max_output_tokens": max_output_tokens,
+            "parallel_tool_calls": parallel_tool_calls,
+            "temperature": temperature or 0.5,
+            "reasoning": reasoning or {},
+            "text_format": text_format,
+            "store": False,
+        }
+        request_args = {k: v for k, v in kwargs.items() if v is not None}
+
+        response = await self.__client.responses.parse(**request_args)
         return response
 
     async def get_llm_non_stream_response_chat_api(
