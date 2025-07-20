@@ -1,8 +1,9 @@
 import asyncio
 import json
-from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type, cast
 
 from deputydev_core.utils.app_logger import AppLogger
+from pydantic import BaseModel
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
@@ -634,6 +635,7 @@ class Anthropic(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         model_config = self._get_model_config(model)
         anthropic_client, model_identifier = await self._get_service_client_and_model_name(
