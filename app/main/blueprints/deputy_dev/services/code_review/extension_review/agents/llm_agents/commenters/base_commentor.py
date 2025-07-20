@@ -34,6 +34,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclas
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.tools_fallback import (
     EXCEPTION_RAISED_FALLBACK,
     NO_TOOL_USE_FALLBACK_PROMPT,
+    EXCEPTION_RAISED_FALLBACK_EXTENSION
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.tool_request_manager import (
@@ -150,7 +151,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         if request_type == "query":
             return await self._handle_query_request(session_id, payload)
-        elif request_type == "tool_use_response":
+        elif request_type == "tool_use_response" or request_type == "tool_use_failed":
             return await self._handle_tool_use_response(session_id, payload)
         else:
             raise ValueError(f"Invalid request type: {request_type}")
@@ -291,7 +292,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         else:
             if tool_name not in {"replace_in_file", "write_to_file"}:
                 error_response = {
-                    "error_message": EXCEPTION_RAISED_FALLBACK.format(
+                    "error_message": EXCEPTION_RAISED_FALLBACK_EXTENSION.format(
                         tool_name=tool_name,
                         error_type=tool_response.get("error_type", "Unknown"),
                         error_message=tool_response.get("error_message", "An error occurred while using the tool."),
