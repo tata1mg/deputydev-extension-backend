@@ -200,3 +200,17 @@ class ExtensionReviewManager:
             {comment.rationale if comment.rationale else ""}
         """)
         return query
+
+    async def cancel_review(self, review_id):
+        """Cancel an ongoing review."""
+        try:
+            review = await ExtensionReviewsRepository.db_get(filters={"id": review_id}, fetch_one=True)
+            if not review:
+                raise ValueError(f"Review with ID {review_id} not found")
+
+            # Update review status to 'Cancelled'
+            await ExtensionReviewsRepository.update_review(review_id, {"review_status": "Cancelled"})
+            return {"status": "Cancelled", "message": "Review cancelled successfully"}
+        except Exception as e:
+            logger.error(f"Error cancelling review {review_id}: {e}")
+            raise e
