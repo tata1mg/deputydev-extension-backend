@@ -67,18 +67,21 @@ class InlineEditGenerator:
         tools_to_use.append(REPLACE_IN_FILE)
 
         if payload.tool_use_response:
-            llm_response = await llm_handler.submit_tool_use_response(
+            llm_response = await llm_handler.submit_batch_tool_use_response(
                 session_id=payload.session_id,
-                tool_use_response=ToolUseResponseData(
-                    content=ToolUseResponseContent(
-                        tool_name=payload.tool_use_response.tool_name,
-                        tool_use_id=payload.tool_use_response.tool_use_id,
-                        response=payload.tool_use_response.response,
+                tool_use_responses=[
+                    ToolUseResponseData(
+                        content=ToolUseResponseContent(
+                            tool_name=payload.tool_use_response.tool_name,
+                            tool_use_id=payload.tool_use_response.tool_use_id,
+                            response=payload.tool_use_response.response,
+                        )
                     )
-                ),
+                ],
                 tools=tools_to_use,
-                tool_choice="required",
                 stream=False,
+                parallel_tool_calls=False,
+                tool_choice="required",
             )
 
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
