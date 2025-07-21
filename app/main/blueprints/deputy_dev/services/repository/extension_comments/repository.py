@@ -1,9 +1,11 @@
-from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews_comments import IdeReviewsComments
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from tortoise.query_utils import Prefetch
+from typing import List, Union
+from app.backend_common.repository.db import DB
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class ExtensionCommentRepository:
@@ -55,3 +57,19 @@ class ExtensionCommentRepository:
                     UserAgentCommentMapping(agent_id=agent.id, comment_id=comment_to_insert.id)
                 )
         await UserAgentCommentMapping.bulk_create(agent_comment_mappings)
+
+    @classmethod
+    async def db_get(
+            cls, filters, fetch_one=False, order_by=None
+    ) -> Union[IdeReviewsCommentDTO, List[IdeReviewsCommentDTO]]:
+        try:
+            review_data = await DB.by_filters(
+                model_name=IdeReviewsComments, where_clause=filters, fetch_one=fetch_one, order_by=order_by
+            )
+            if review_data and fetch_one:
+                return IdeReviewsCommentDTO(**review_data)
+            elif review_data:
+                return [IdeReviewsCommentDTO(**review) for review in review_data]
+        except Exception as ex:
+            AppLogger.log_error(f"Error fetching extension review: {filters}, ex: {ex}")
+            raise ex

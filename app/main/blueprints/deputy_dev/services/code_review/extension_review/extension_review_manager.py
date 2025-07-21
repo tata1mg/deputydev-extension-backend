@@ -6,7 +6,7 @@ from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
-
+import textwrap
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
@@ -54,6 +54,7 @@ from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
+from app.main.blueprints.deputy_dev.services.repository.extension_comments.repository import ExtensionCommentRepository
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.agent_factory import AgentFactory
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
@@ -175,3 +176,41 @@ class ExtensionReviewManager:
         for comment in comments:
             display_name = agent_result.display_name
             comment.bucket = "_".join(display_name.upper().split())
+
+    @classmethod
+    async def generate_comment_fix_query(cls, comment_id):
+        comment = await ExtensionCommentRepository.db_get({"id": comment_id}, fetch_one=True)
+        if not comment:
+            raise ValueError(f"Comment with ID {comment_id} not found")
+        query = textwrap.dedent(f"""
+            A reviewer has left a comment on file `{comment.file_path}` at line {comment.line_number}.
+
+            Please suggest a code change that addresses the comment accurately while preserving functionality 
+            and improving code quality. You have access to the full code, file context, and project structure — 
+            use this to guide your response.
+
+            Respond with:
+            1. The updated code block only.
+            2. A brief explanation (2–3 lines) describing what was changed and why.
+
+            Reviewer Comment:
+            {comment.title}
+            {comment.comment}
+            {comment.corrective_code if comment.corrective_code else ""}
+            {comment.rationale if comment.rationale else ""}
+        """)
+        return query
+
+    async def cancel_review(self, review_id):
+        """Cancel an ongoing review."""
+        try:
+            review = await ExtensionReviewsRepository.db_get(filters={"id": review_id}, fetch_one=True)
+            if not review:
+                raise ValueError(f"Review with ID {review_id} not found")
+
+            # Update review status to 'Cancelled'
+            await ExtensionReviewsRepository.update_review(review_id, {"review_status": "Cancelled"})
+            return {"status": "Cancelled", "message": "Review cancelled successfully"}
+        except Exception as e:
+            logger.error(f"Error cancelling review {review_id}: {e}")
+            raise e
