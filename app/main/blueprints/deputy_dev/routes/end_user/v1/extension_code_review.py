@@ -73,10 +73,18 @@ async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
 @validate_client_version
 @authenticate
 async def pre_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
-    data = request.json
-    processor = ExtensionReviewPreProcessor()
-    review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
-    return send_response(review_dto)
+    try:
+        data = request.json
+        processor = ExtensionReviewPreProcessor()
+        review_dto = await processor.pre_process_pr(
+            data, 
+            user_team_id=auth_data.user_team_id,
+            )
+        return send_response(review_dto)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise e
 
 
 @extension_code_review.route("/run-agent", methods=["POST"])
