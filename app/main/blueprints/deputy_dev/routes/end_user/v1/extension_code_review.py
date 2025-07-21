@@ -440,3 +440,28 @@ async def post_process_websocket_local(request: Request, ws) -> None:
 
     except Exception as e:
         AppLogger.log_error(f"Error in post-process WebSocket connection: {e}")
+
+
+@extension_code_review.route("/generate-comment-fix-query", methods=["GET"])
+@validate_client_version
+@authenticate
+async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kwargs):
+    """
+    Generate a query to fix a specific comment in the code review.
+
+    Query parameters:
+    - comment_id: The ID of the comment to fix
+    """
+    try:
+        query_params = request.request_params()
+        comment_id = query_params.get("comment_id")
+        if not comment_id:
+            raise ValueError("Missing required parameters: comment_id")
+
+        # Generate the fix query
+        manager = ExtensionReviewManager()
+        fix_query = await manager.generate_comment_fix_query(comment_id=comment_id,)
+        return send_response({"fix_query": fix_query})
+    except Exception as e:
+        AppLogger.log_error(f"Error generating fix query: {e}")
+        return send_response({"status": "ERROR", "message": str(e)})

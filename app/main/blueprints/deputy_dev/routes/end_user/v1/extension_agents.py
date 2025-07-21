@@ -45,7 +45,7 @@ async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
 async def create_agent(_request: Request, auth_data: AuthData, **kwargs):
     try:
         payload = _request.custom_json()
-        payload = AgentCreateParams(**payload, user_team_id=2)
+        payload = AgentCreateParams(**payload, user_team_id=auth_data.user_team_id)
         agent_manager = AgentManager()
         agent = await agent_manager.create_agent(payload)
         return send_response(agent)
