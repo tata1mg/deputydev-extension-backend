@@ -469,9 +469,8 @@ async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kw
 
 @extension_code_review.route("/cancel_review", methods=["GET"])
 @validate_client_version
-# @authenticate
-# async def cancel_review(request: Request, auth_data: AuthData, **kwargs):
-async def cancel_review(request: Request, **kwargs):
+@authenticate
+async def cancel_review(request: Request, auth_data: AuthData, **kwargs):
     """
     Generate a query to fix a specific comment in the code review.
 
