@@ -54,7 +54,6 @@ class OpenAIManager(BaseClient):
         team_id = get_context_value("team_id")
         if repo_name is None or team_id is None:
             logger.error("Missing repo_name or team_id for cache key!")
-            raise ValueError("Invalid context: repo_name or team_id is None")
         if team_id == 1:
             # TODO added this check for backward compatibility and needs to be removed
             prefix_key = repo_name
