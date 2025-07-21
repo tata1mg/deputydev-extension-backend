@@ -70,22 +70,19 @@ async def code_review_history(_request: Request, auth_data: AuthData, **kwargs):
 
 
 @extension_code_review.route("/pre-process", methods=["POST"])
-# @validate_client_version
-# @authenticate
-# async def pre_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
-async def pre_process_extension_review(request: Request, **kwargs):
+@validate_client_version
+@authenticate
+async def pre_process_extension_review(request: Request, auth_data: AuthData, **kwargs):
     data = request.json
     processor = ExtensionReviewPreProcessor()
-    # review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
-    review_dto = await processor.pre_process_pr(data, user_team_id=data.get("user_team_id"))
+    review_dto = await processor.pre_process_pr(data, user_team_id=auth_data.user_team_id)
     return send_response(review_dto)
 
 
 @extension_code_review.route("/run-agent", methods=["POST"])
-# @validate_client_version
-# @authenticate
-# async def run_extension_agent(request: Request, auth_data: AuthData, **kwargs):
-async def run_extension_agent(request: Request, **kwargs):
+@validate_client_version
+@authenticate
+async def run_extension_agent(request: Request, auth_data: AuthData, **kwargs):
     """
     Run an agent for extension code review.
 
@@ -116,8 +113,8 @@ async def run_extension_agent(request: Request, **kwargs):
 
 @extension_code_review.route("/legacy-post-process", methods=["POST"])
 @validate_client_version
-# @authenticate
-async def legacy_post_process_extension_review(request: Request, **kwargs):
+@authenticate
+async def legacy_post_process(request: Request, **kwargs):
     data = request.json
     processor = ExtensionReviewPostProcessor()
     await processor.post_process_pr(data, user_team_id=1)
