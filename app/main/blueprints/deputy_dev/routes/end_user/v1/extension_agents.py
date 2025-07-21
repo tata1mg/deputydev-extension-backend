@@ -32,6 +32,7 @@ async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
     - List of user agents associated with the user team
     """
     try:
+        # print("user_team_id", auth_data.user_team_id)
         agents_response = await AgentManager.get_or_create_agents(user_team_id=auth_data.user_team_id)
         return send_response({"agents": agents_response, "count": len(agents_response)})
     except Exception as e:
@@ -45,7 +46,7 @@ async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
 async def create_agent(_request: Request, auth_data: AuthData, **kwargs):
     try:
         payload = _request.custom_json()
-        payload = AgentCreateParams(**payload, user_team_id=2)
+        payload = AgentCreateParams(**payload, user_team_id=auth_data.user_team_id)
         agent_manager = AgentManager()
         agent = await agent_manager.create_agent(payload)
         return send_response(agent)
