@@ -460,8 +460,34 @@ async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kw
 
         # Generate the fix query
         manager = ExtensionReviewManager()
-        fix_query = await manager.generate_comment_fix_query(comment_id=comment_id,)
+        fix_query = await manager.generate_comment_fix_query(comment_id=comment_id)
         return send_response({"fix_query": fix_query})
+    except Exception as e:
+        AppLogger.log_error(f"Error generating fix query: {e}")
+        return send_response({"status": "ERROR", "message": str(e)})
+
+
+@extension_code_review.route("/cancel_review", methods=["GET"])
+@validate_client_version
+# @authenticate
+# async def cancel_review(request: Request, auth_data: AuthData, **kwargs):
+async def cancel_review(request: Request, **kwargs):
+    """
+    Generate a query to fix a specific comment in the code review.
+
+    Query parameters:
+    - comment_id: The ID of the comment to fix
+    """
+    try:
+        query_params = request.request_params()
+        review_id = query_params.get("review_id")
+        if not review_id:
+            raise ValueError("Missing required parameters: review_id")
+
+        # Generate the fix query
+        manager = ExtensionReviewManager()
+        data = await manager.cancel_review(review_id=review_id)
+        return send_response(data)
     except Exception as e:
         AppLogger.log_error(f"Error generating fix query: {e}")
         return send_response({"status": "ERROR", "message": str(e)})
