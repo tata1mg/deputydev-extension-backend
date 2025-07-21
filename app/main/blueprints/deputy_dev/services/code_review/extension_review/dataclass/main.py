@@ -53,3 +53,22 @@ class WebSocketMessage(BaseModel):
     agent_id: Optional[int] = None
     data: Dict[str, Any] = {}
     timestamp: Optional[str] = None
+
+
+class FileWiseChanges(BaseModel):
+    file_path: str
+    file_name: str
+    status: str
+    line_changes: Dict[str, int]
+    diff: str
+
+    
+class ReviewRequest(BaseModel):
+    repo_name: str
+    origin_url: str
+    source_branch: str
+    target_branch: str
+    source_commit: str
+    target_commit: str
+    diff_attachment_id: Optional[str] = None
+    file_wise_diff: List[FileWiseChanges]

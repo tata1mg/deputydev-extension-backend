@@ -1,6 +1,9 @@
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.caches.extension_review_cache import ExtensionReviewCache
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.backend_common.services.llm.dataclasses.main import ChatAttachmentDataWithObjectBytes
 from torpedo import CONFIG
 from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
@@ -21,7 +24,8 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.test_diff import diff
-
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import ReviewRequest
+from app.backend_common.models.dao.postgres.user_teams import UserTeams
 
 class ExtensionReviewPreProcessor:
     def __init__(self):
@@ -31,33 +35,49 @@ class ExtensionReviewPreProcessor:
         self.review_status = ExtensionReviewStatusTypes.IN_PROGRESS.value
         self.is_valid = True
 
+    async def _get_attachment_data_and_metadata(
+        self,
+        attachment_id: int,
+    ) -> ChatAttachmentDataWithObjectBytes:
+        """
+        Get attachment data and metadata
+        """
+
+        attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
+        if not attachment_data:
+            raise ValueError(f"Attachment with id {attachment_id} not found")
+
+        s3_key = attachment_data.s3_key
+        object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
+
+        return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
+    
     async def pre_process_pr(self, data: dict, user_team_id: int):
-        repo_name = data.get("repo_name")
-        repo_origin = data.get("repo_origin")
-        attachment_id = data.get("attachment_id")
-        source_branch = data.get("source_branch")
-        target_branch = data.get("target_branch")
+        review_request = ReviewRequest(**data)
+
+        # review_diff = self._get_attachment_data_and_metadata(attachment_id)
+
+        combined_diff = ""
+        for file in review_request.file_wise_diff:
+            combined_diff += file.diff
         
-        review_diff = diff
+        review_diff = combined_diff
 
         diff_handler = ExtensionDiffHandler(review_diff)
         loc = diff_handler.get_diff_loc()
         reviewed_files = diff_handler.get_files()
         token_count = diff_handler.get_diff_token_count()
 
-        self.extension_repo_dto = await RepoRepository.find_or_create_extension_repo(
-            repo_name=repo_name, repo_origin=repo_origin, team_id=5
-        )
 
-        user_team_dto = await UserTeamRepository.db_get(
-            {"team_id": self.extension_repo_dto.team_id, "is_owner": True}, fetch_one=True
+        self.extension_repo_dto = await RepoRepository.find_or_create_extension_repo(
+            repo_name=review_request.repo_name,
+             repo_origin=review_request.origin_url,
+             team_id=1
         )
-        if not user_team_dto or not user_team_dto.id:
-            raise Exception("Owner not found for the team")
 
         session = await MessageSessionsRepository.create_message_session(
             message_session_data=MessageSessionData(
-                user_team_id=user_team_dto.id,
+                user_team_id=user_team_id,
                 client=Clients.BACKEND,
                 client_version="1.0.0",
                 session_type="EXTENSION_REVIEW",
@@ -73,11 +93,13 @@ class ExtensionReviewPreProcessor:
             user_team_id=user_team_id,
             loc=loc,
             reviewed_files=reviewed_files,
-            diff_s3_url=diff_s3_url,
+            diff_s3_url="testing",
             session_id=self.session_id,
             meta_info={"tokens": token_count},
-            source_branch=source_branch,
-            target_branch=target_branch,
+            source_branch=review_request.source_branch,
+            target_branch=review_request.target_branch,
+            source_commit=review_request.source_commit,
+            target_commit=review_request.target_commit,
         )
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 
@@ -87,6 +109,7 @@ class ExtensionReviewPreProcessor:
         return {
             "review_id": self.review_dto.id,
             "session_id": self.session_id,
+            "repo_id": self.extension_repo_dto.id,
         }
 
     async def run_validation(self, review_diff: str, token_count: int):
