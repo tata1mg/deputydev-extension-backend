@@ -34,17 +34,10 @@ class ExtensionReviewPreProcessor:
     async def pre_process_pr(self, data: dict, user_team_id: int):
         repo_name = data.get("repo_name")
         repo_origin = data.get("repo_origin")
-        diff_s3_url = data.get("diff_s3_url")
+        attachment_id = data.get("attachment_id")
         source_branch = data.get("source_branch")
         target_branch = data.get("target_branch")
-
-        # s3_bucket = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_BUCKET"]
-        # s3_region = CONFIG.config["S3"]["EXTENSION_REVIEW_DIFF_REGION"]
-        # s3_client = AWSS3ServiceClient(bucket_name=s3_bucket, region_name=s3_region)
-        # TODO uncomment it
-
-        # review_diff_bytes = await s3_client.get_object(diff_s3_url)
-        # review_diff = review_diff_bytes.decode("utf-8")
+        
         review_diff = diff
 
         diff_handler = ExtensionDiffHandler(review_diff)
