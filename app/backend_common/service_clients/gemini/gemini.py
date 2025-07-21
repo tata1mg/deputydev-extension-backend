@@ -95,3 +95,7 @@ class GeminiServiceClient(metaclass=Singleton):
             raise
 
         return base_stream
+
+    async def get_tokens(self, content: str, model_name: str) -> int:
+        tokens = self.client.models.count_tokens(model=model_name, content=content)
+        return tokens

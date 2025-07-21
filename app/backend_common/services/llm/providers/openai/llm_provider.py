@@ -3,6 +3,7 @@ import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
+from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
 from openai.types.responses import Response
@@ -435,3 +436,9 @@ class OpenAI(BaseLLMProvider):
             )
 
         return None, None, None
+
+    async def get_tokens(self, content: str, model: LLModels) -> int:
+        tiktoken_client = TikToken()
+        token_count = tiktoken_client.count(text=content)
+
+        return token_count
