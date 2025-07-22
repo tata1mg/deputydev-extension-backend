@@ -6,6 +6,7 @@ GREP_SEARCH = ConversationTool(
     name="grep_search",
     description=textwrap.dedent(
         """
+        This is a built-in tool.
         Use git grep or standard grep to find exact pattern matches within files or directories.
 
         This tool searches for specific text patterns inside files within a given path. It supports both plain text and regular expression queries.
@@ -34,7 +35,11 @@ GREP_SEARCH = ConversationTool(
                 type="boolean",
                 description="If true, treats the query as a regular expression. If false, uses fixed string matching.",
             ),
+            "repo_path": JSONSchema(
+                type="string",
+                description="The absolute path to the root of the repository.",
+            ),
         },
-        required=["search_path", "query", "case_insensitive", "use_regex"],
+        required=["search_path", "query", "case_insensitive", "use_regex", "repo_path"],
     ),
 )

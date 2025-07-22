@@ -3,8 +3,13 @@ import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
 from google.genai import types as google_genai_types
 from torpedo.exceptions import BadRequestException
+
+from app.backend_common.caches.code_gen_tasks_cache import (
+    CodeGenTasksCache,
+)
 
 # Your existing DTOs and base class
 from app.backend_common.constants.constants import LLMProviders
@@ -15,7 +20,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     LLMUsage,
     MessageThreadActor,
     MessageThreadDTO,
-    MessageType,
     ResponseData,
     TextBlockContent,
     TextBlockData,
@@ -48,13 +52,17 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from app.main.blueprints.one_dev.utils.cancellation_checker import (
+    CancellationChecker,
+)
 
 
 class Google(BaseLLMProvider):
-    def __init__(self):
-        super().__init__(LLMProviders.GOOGLE.value)
+    def __init__(self, checker: Optional[CancellationChecker] = None) -> None:
+        super().__init__(LLMProviders.GOOGLE.value, checker=checker)
+        self._active_streams: Dict[str, AsyncIterator] = {}
 
-    async def get_conversation_turns(
+    async def get_conversation_turns(  # noqa: C901
         self,
         previous_responses: List[MessageThreadDTO],
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -69,16 +77,10 @@ class Google(BaseLLMProvider):
             List[Content]: The formatted conversation history for Gemini.
         """
         conversation_turns: List[google_genai_types.Content] = []
-        last_tool_use_request: bool = False
+        tool_requests: Dict[str, ToolUseRequestContent] = {}
+        tool_requests_order: List[str] = []
 
         for message in previous_responses:
-            if last_tool_use_request and not (
-                message.actor == MessageThreadActor.USER and message.message_type == MessageType.TOOL_RESPONSE
-            ):
-                # Remove the previous tool_use if it was not followed by a proper response
-                conversation_turns.pop()
-                last_tool_use_request = False
-
             role = (
                 ConversationRoleGemini.USER.value
                 if message.actor == MessageThreadActor.USER
@@ -95,22 +97,29 @@ class Google(BaseLLMProvider):
 
                 if isinstance(content_data, TextBlockContent):
                     parts.append(google_genai_types.Part.from_text(text=content_data.text))
-                    last_tool_use_request = False
 
                 elif isinstance(content_data, ToolUseResponseContent):
-                    if last_tool_use_request and conversation_turns and conversation_turns[-1].parts[-1].function_call:
-                        tool_response = google_genai_types.Part.from_function_response(
-                            name=content_data.tool_name, response=content_data.response
-                        )
-                        parts.append(tool_response)
-                        last_tool_use_request = False
-
+                    while len(tool_requests_order) > 0:
+                        if tool_requests_order[0] == content_data.tool_use_id:
+                            function_call = google_genai_types.Part.from_function_call(
+                                name=tool_requests[content_data.tool_use_id].tool_name,
+                                args=tool_requests[content_data.tool_use_id].tool_input,
+                            )
+                            conversation_turns.append(
+                                google_genai_types.Content(
+                                    role=ConversationRoleGemini.MODEL.value, parts=[function_call]
+                                )
+                            )
+                            tool_response = google_genai_types.Part.from_function_response(
+                                name=content_data.tool_name, response=content_data.response
+                            )
+                            parts.append(tool_response)
+                            tool_requests_order.pop(0)
+                            break
+                        tool_requests_order.pop(0)
                 elif isinstance(content_data, ToolUseRequestContent):
-                    function_call = google_genai_types.Part.from_function_call(
-                        name=content_data.tool_name, args=content_data.tool_input
-                    )
-                    parts.append(function_call)
-                    last_tool_use_request = True
+                    tool_requests[content_data.tool_use_id] = content_data
+                    tool_requests_order.append(content_data.tool_use_id)
 
                 elif isinstance(content_data, ExtendedThinkingContent):
                     continue
@@ -127,14 +136,12 @@ class Google(BaseLLMProvider):
                                 mime_type=attachment_data.attachment_metadata.file_type,
                             )
                         )
-                    last_tool_use_request = False
-
             if parts:
                 conversation_turns.append(google_genai_types.Content(role=role, parts=parts))
 
         return conversation_turns
 
-    async def build_llm_payload(
+    async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -206,12 +213,16 @@ class Google(BaseLLMProvider):
 
         # 4. Handle Tool Use Response (if provided for this specific call)
         if tool_use_response:
-            tool_response = google_genai_types.Part.from_function_response(
-                name=tool_use_response.content.tool_name,
-                response=tool_use_response.content.response,
+            contents.append(
+                google_genai_types.Content(
+                    parts=[
+                        google_genai_types.Part.from_function_response(
+                            name=tool_use_response.content.tool_name, response=tool_use_response.content.response
+                        )
+                    ],
+                    role=ConversationRoleGemini.USER.value,
+                )
             )
-            contents.append(google_genai_types.Content(parts=[tool_response], role=ConversationRoleGemini.USER.value))
-
         # 5. Handle Tools Definition
         tools = sorted(tools, key=lambda x: x.name) if tools else []
         formatted_tools = []
@@ -254,17 +265,19 @@ class Google(BaseLLMProvider):
         content_blocks: List[ResponseData] = []
         input_tokens = 0
         output_tokens = 0
+        cache_read_tokens = 0
 
         # Extract usage data
         if response.usage_metadata:
-            input_tokens = response.usage_metadata.prompt_token_count
             output_tokens = response.usage_metadata.candidates_token_count  # Sum across candidates if multiple
+            cache_read_tokens = response.usage_metadata.cached_content_token_count or 0
+            input_tokens = (response.usage_metadata.prompt_token_count or 0) - cache_read_tokens
 
         # Check for safety blocks or empty candidates
         if not response.candidates:
             # Handle cases where the response was blocked or no content generated
             # You might want to check response.prompt_feedback for block reasons
-            print(f"Warning: No candidates found in response. Feedback: {response.prompt_feedback}")
+            AppLogger.log_info(f"Warning: No candidates found in response. Feedback: {response.prompt_feedback}")
             # Return an empty or error response structure
             return NonStreamingResponse(content=[], usage=LLMUsage(input=input_tokens, output=output_tokens))
 
@@ -279,7 +292,9 @@ class Google(BaseLLMProvider):
         if candidate.safety_ratings:
             for rating in candidate.safety_ratings:
                 if rating.blocked:
-                    print(f"Warning: Response content blocked due to safety rating: {rating.category.name}")
+                    AppLogger.log_info(
+                        f"Warning: Response content blocked due to safety rating: {rating.category.name if rating.category else 'UNKNOWN'}"
+                    )
                     # Decide how to handle blocked content (e.g., return empty, raise error)
 
         # Extract content parts (text, function calls)
@@ -301,61 +316,81 @@ class Google(BaseLLMProvider):
 
         return NonStreamingResponse(
             content=content_blocks,
-            usage=LLMUsage(input=input_tokens or 0, output=output_tokens or 0),
+            usage=LLMUsage(input=input_tokens or 0, output=output_tokens or 0, cache_read=cache_read_tokens),
         )
 
-    async def _parse_streaming_response(
-        self, response: AsyncIterator[google_genai_types.GenerateContentResponse]
+    async def _parse_streaming_response(  # noqa: C901
+        self,
+        response: AsyncIterator[google_genai_types.GenerateContentResponse],
+        stream_id: Optional[str] = None,
+        session_id: Optional[int] = None,
     ) -> StreamingResponse:
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
-        streaming_completed = False
+        stream_id = stream_id or str(uuid.uuid4())
+        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
+        streaming_completed = asyncio.Event()
+
+        # Manual token counting for when final usage is not available
+
         accumulated_events = []
 
         async def stream_content() -> AsyncIterator[StreamingEvent]:
             nonlocal usage
             nonlocal streaming_completed
             nonlocal accumulated_events
-            current_running_block_type: Optional[ContentBlockCategory] = None
-            async for chunk in response:
-                try:
-                    event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
-                        chunk, current_running_block_type
-                    )
-                    if event_usage:
-                        usage += event_usage
-                    if event_blocks:
-                        current_running_block_type = event_block_category
-                        for event_block in event_blocks:
-                            accumulated_events.append(event_block)
-                            yield event_block
-                except Exception:
-                    # gracefully handle new events. See Anthropic docs here - https://docs.anthropic.com/en/api/messages-streaming#other-events
-                    pass
+            nonlocal session_id
 
-            streaming_completed = True
+            self._active_streams[stream_id] = response
+            current_running_block_type: Optional[ContentBlockCategory] = None
+            try:
+                async for chunk in response:
+                    if self.checker and self.checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
+                        raise asyncio.CancelledError()
+
+                    try:
+                        event_blocks, event_block_category, event_usage = await self._get_parsed_stream_event(
+                            chunk, current_running_block_type
+                        )
+                        if event_usage:
+                            usage += event_usage
+                        if event_blocks:
+                            current_running_block_type = event_block_category
+                            for event_block in event_blocks:
+                                # Manual token counting for streaming content
+                                accumulated_events.append(event_block)
+                                yield event_block
+                    except Exception:  # noqa: BLE001
+                        pass
+            except Exception as e:  # noqa: BLE001
+                AppLogger.log_error(f"Streaming Error in Goggle: {e}")
+            finally:
+                if self.checker:
+                    await self.checker.stop_monitoring()
+                streaming_completed.set()
+                await close_client()
 
         async def get_usage() -> LLMUsage:
             nonlocal usage
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-
+            await streaming_completed.wait()
             return usage
 
         async def get_accumulated_events() -> List[StreamingEvent]:
             nonlocal accumulated_events
             nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
+            await streaming_completed.wait()
             return accumulated_events
 
-        async def close_client():
-            nonlocal streaming_completed
-            while not streaming_completed:
-                await asyncio.sleep(0.1)
-            # TODO: close client
-
-        asyncio.create_task(close_client())
+        async def close_client() -> None:
+            try:
+                if stream_id in self._active_streams and streaming_completed:
+                    stream_iter = self._active_streams[stream_id]
+                    await stream_iter.aclose()
+                    del self._active_streams[stream_id]
+            except Exception as e:  # noqa: BLE001
+                AppLogger.log_error(f"Error closing Google LLM client for stream {stream_id}: {e}")
+            if stream_id in self._active_streams:
+                del self._active_streams[stream_id]
 
         return StreamingResponse(
             content=stream_content(),
@@ -364,66 +399,108 @@ class Google(BaseLLMProvider):
             accumulated_events=asyncio.create_task(get_accumulated_events()),
         )
 
-    async def _get_parsed_stream_event(
+    async def _get_parsed_stream_event(  # noqa: C901
         self,
         chunk: google_genai_types.GenerateContentResponse,
         current_running_block_type: Optional[ContentBlockCategory] = None,
     ) -> Tuple[List[Optional[StreamingEvent]], Optional[ContentBlockCategory], Optional[LLMUsage]]:
         event_blocks: List[StreamingEvent] = []
-        usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=0)
+        usage: LLMUsage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
         candidate = chunk.candidates[0]
-        part: google_genai_types.Part = candidate.content.parts[0]
-        # Block type is changing, so mark current running block end and start new block.
-        if current_running_block_type != ContentBlockCategory.TEXT_BLOCK and part.text:
-            if current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
-                event_block = ToolUseRequestEnd()
-                event_blocks.append(event_block)
-            event_block = TextBlockStart()
-            event_blocks.append(event_block)
-            current_running_block_type = ContentBlockCategory.TEXT_BLOCK
-        elif current_running_block_type != ContentBlockCategory.TOOL_USE_REQUEST and part.function_call:
-            if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
-                event_block = TextBlockEnd()
-                event_blocks.append(event_block)
-            function_call: google_genai_types.FunctionCall = part.function_call
-            event_block = ToolUseRequestStart(
-                content=ToolUseRequestStartContent(
-                    tool_name=function_call.name, tool_use_id=function_call.id or str(uuid.uuid4())
-                )
-            )
-            event_blocks.append(event_block)
-            current_running_block_type = ContentBlockCategory.TOOL_USE_REQUEST
-        # ============================================================================== #
 
-        # ============================ Add data of current block ======================= #
-        if part.text:
-            event_block = TextBlockDelta(content=TextBlockDeltaContent(text=part.text))
-            event_blocks.append(event_block)
-        elif part.function_call:
-            event_block = ToolUseRequestDelta(
-                content=ToolUseRequestDeltaContent(input_params_json_delta=json.dumps(part.function_call.args))
-            )
-            event_blocks.append(event_block)
+        # Process all parts instead of just the first one
+        parts = candidate.content.parts if candidate.content and candidate.content.parts else []
+
+        for i, part in enumerate(parts):
+            # Block type is changing, so mark current running block end and start new block.
+            if part.text and current_running_block_type != ContentBlockCategory.TEXT_BLOCK:
+                if current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+                    event_block = ToolUseRequestEnd()
+                    event_blocks.append(event_block)
+                event_block = TextBlockStart()
+                event_blocks.append(event_block)
+                current_running_block_type = ContentBlockCategory.TEXT_BLOCK
+            elif part.function_call:
+                # End previous block if needed
+                if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
+                    event_block = TextBlockEnd()
+                    event_blocks.append(event_block)
+                elif current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
+                    # End previous tool use request before starting a new one
+                    event_block = ToolUseRequestEnd()
+                    event_blocks.append(event_block)
+
+                # Start new tool use request for each function call
+                function_call: google_genai_types.FunctionCall = part.function_call
+                event_block = ToolUseRequestStart(
+                    content=ToolUseRequestStartContent(
+                        tool_name=function_call.name, tool_use_id=function_call.id or str(uuid.uuid4())
+                    )
+                )
+                event_blocks.append(event_block)
+
+                # Google provides complete function call args
+                args_json = "{}"
+                if part.function_call.args:
+                    if isinstance(part.function_call.args, str):
+                        # Validate if the string is already valid JSON
+                        try:
+                            json.loads(part.function_call.args)
+                            args_json = part.function_call.args
+                        except (json.JSONDecodeError, ValueError, TypeError) as e:
+                            # If not valid JSON, treat it as a plain string and wrap it properly
+                            AppLogger.log_warn(f"Invalid JSON in function call args, wrapping as string: {e}")
+                            try:
+                                args_json = json.dumps({"value": part.function_call.args})
+                            except (TypeError, ValueError) as wrap_error:
+                                AppLogger.log_error(f"Failed to wrap function call args as JSON: {wrap_error}")
+                                args_json = json.dumps({"error": "Invalid function arguments"})
+                    else:
+                        # Convert dict/object to JSON string
+                        try:
+                            args_json = json.dumps(part.function_call.args)
+                        except (TypeError, ValueError) as e:
+                            AppLogger.log_error(f"Error serializing function call args: {e}")
+                            args_json = json.dumps({"error": "Failed to serialize function arguments"})
+
+                event_block = ToolUseRequestDelta(content=ToolUseRequestDeltaContent(input_params_json_delta=args_json))
+                event_blocks.append(event_block)
+
+                # End this tool use request immediately
+                event_block = ToolUseRequestEnd()
+                event_blocks.append(event_block)
+                current_running_block_type = None
+
+            # ============================ Add data of current block ======================= #
+            if part.text:
+                event_block = TextBlockDelta(content=TextBlockDeltaContent(text=part.text))
+                event_blocks.append(event_block)
+                current_running_block_type = ContentBlockCategory.TEXT_BLOCK
+
+        # Handle finish reason at the end
         if candidate.finish_reason:
-            if chunk.usage_metadata.prompt_token_count or chunk.usage_metadata.candidates_token_count:
-                usage.input = chunk.usage_metadata.prompt_token_count
-                usage.output = chunk.usage_metadata.candidates_token_count
-            event_block = None
+            if chunk.usage_metadata:
+                usage.input = (chunk.usage_metadata.prompt_token_count or 0) - (
+                    chunk.usage_metadata.cached_content_token_count or 0
+                )
+                usage.output = chunk.usage_metadata.candidates_token_count or 0
+                usage.cache_read = chunk.usage_metadata.cached_content_token_count or 0
+
             if current_running_block_type == ContentBlockCategory.TEXT_BLOCK:
                 event_block = TextBlockEnd()
-            elif current_running_block_type == ContentBlockCategory.TOOL_USE_REQUEST:
-                event_block = ToolUseRequestEnd()
-            event_blocks.append(event_block)
+                event_blocks.append(event_block)
+            # Don't append None when current_running_block_type is not TEXT_BLOCK
 
         return event_blocks, current_running_block_type, usage
 
     async def call_service_client(
         self,
+        session_id: int,
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
         response_type: Optional[str] = None,
-        response_schema=None,
+        parallel_tool_calls: bool = True,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the Vertex AI service client.
@@ -442,6 +519,7 @@ class Google(BaseLLMProvider):
         vertex_model_name = model_config.get("NAME")
         max_output_tokens = model_config.get("MAX_TOKENS") or 8192
         client = GeminiServiceClient()
+        stream_id = str(uuid.uuid4())
 
         if stream:
             response = await client.get_llm_stream_response(
@@ -452,7 +530,7 @@ class Google(BaseLLMProvider):
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
             )
-            return await self._parse_streaming_response(response)
+            return await self._parse_streaming_response(response, stream_id, session_id)
         else:
             response = await client.get_llm_non_stream_response(
                 model_name=vertex_model_name,
