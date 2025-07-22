@@ -3,14 +3,45 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 REPLACE_IN_FILE = ConversationTool(
     name="replace_in_file",
     description="""This is a built-in tool. 
-    This is not meant to be run in parallel for the same file path.
-    Request to replace sections of content in an existing file using SEARCH/REPLACE blocks that define exact changes to specific parts of the file. 
+This is not meant to be run in parallel for the same file path.
+Request to replace sections of content in an existing file using SEARCH/REPLACE blocks that define exact changes to specific parts of the file. 
 This tool should be used when you need to make targeted changes to specific parts of a file.
 Make sure you give all search/replace blocks for a single file in a single request.
 The tool response will tell you if the changes were successful or not.
 If tool fails, first try reading the file using other tools like iterative file reader to check latest file content and then re-run the tool with the latest file content.
 
-    """,
+## Example 1: Requesting to make targeted edits to a file
+
+path: src/components/App.tsx
+diff:
+------- SEARCH
+import React from 'react';
+=======
+import React, { useState } from 'react';
++++++++ REPLACE
+
+------- SEARCH
+function handleSubmit() {
+  saveData();
+  setLoading(false);
+}
+
+=======
++++++++ REPLACE
+
+------- SEARCH
+return (
+  <div>
+=======
+function handleSubmit() {
+  saveData();
+  setLoading(false);
+}
+
+return (
+  <div>
++++++++ REPLACE
+""",
     input_schema=JSONSchema(
         type="object",
         properties={
