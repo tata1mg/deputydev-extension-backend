@@ -58,10 +58,6 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
 
             4. **Rationale Union**:
             - Consolidate multiple rationale into a single rationale .
-            
-            5. **Review Title Generation**:
-            - generate a clear, descriptive PR review title (max 15 words) summarizing the key issue fixed in this PR
-            
 
 
             ### Guidelines:
@@ -150,8 +146,6 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
             ### Format of Output:
             Return only validated comments with the following structure:
             ```JSON
-                {{
-                'title': '<A clear, descriptive PR review title (max 15 words) summarizing the key issue fixed in this PR',
                 'comments': [{{
                 'file_path': '<path of the file on which comment is being made, same as provided in input>',
                 'line_number' : <line on which comment is relevant. Return the exact value present in the input>,
@@ -167,13 +161,10 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                 'is_valid': <is_valid field value in input comment. It can be true, false or null. Return as it is as mentioned in input comment>,
                 'rationale': <A short combined rationale of all the comments>
                 }}]
-                }}
-                ```
+            ```
 
             ### Expected output example of provided input comments
             ```JSON
-            {{
-            'title': 'Replace Hardcoded Batch Size to Prevent DoS and Improve Efficiency'
             'comments': [
                 {{
                     "file_path": "app/services/cache.py",
@@ -212,7 +203,7 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                     "is_valid": true,
                     "rationale": "Duplicate method, poor structure, and broad exception reduce maintainability.",
                 }}
-            ]}}
+            ]
             ```
 
             PR Diff on which comments needs to be validated:
