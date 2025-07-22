@@ -242,10 +242,6 @@ class QuerySolver:
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-        use_absolute_path = compare_version(
-            client_data.client_version, "8.3.0", ">"
-        )  # remove after 9.0.0. force upgrade  # noqa: N806
-
         parallel_tool_use_enabled = compare_version(client_data.client_version, "8.4.0", ">=")
 
         # TODO: remove this after 9.0.0. force upgrade
@@ -301,7 +297,6 @@ class QuerySolver:
                 "shell": payload.shell,
                 "vscode_env": payload.vscode_env,
                 "repositories": payload.repositories,
-                "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade,
                 "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
