@@ -6,12 +6,12 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
-from .gemini_2_point_5_flash import Gemini2Point5FlashChunkReRankingPrompt
+from .gpt_4_point_1_mini import Gpt4Point1MiniChunkReRankingPrompt
 
 
 class ChunkReRankingPromptFactory(BaseFeaturePromptFactory):
     chunk_re_ranking_prompts = {
-        LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashChunkReRankingPrompt,
+        LLModels.GPT_4_POINT_1_MINI: Gpt4Point1MiniChunkReRankingPrompt,
     }
 
     @classmethod
