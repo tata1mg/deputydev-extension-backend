@@ -15,12 +15,22 @@ from .feature_prompts.comment_summarization.factory import (
 from .feature_prompts.comment_validation.factory import (
     CommentValidationPromptFactory,
 )
+from .feature_prompts.code_communication_comments_generation.factory import CodeCommunicationCommentsGenerationPromptFactory
+from .feature_prompts.code_maintainability_comments_generation.factory import CodeMaintainabilityCommentsGenerationPromptFactory
+from .feature_prompts.error_comments_generation.factory import ErrorCommentsGenerationPromptFactory
+from .feature_prompts.performance_optimization_comments_generation.factory import PerformanceOptimizationCommentsGenerationPromptFactory
+from .feature_prompts.security_comments_generation.factory import SecurityCommentsGenerationPromptFactory
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
     feature_prompt_factory_map: Dict[PromptFeatures, Type[BaseFeaturePromptFactory]] = {
         PromptFeatures.COMMENT_SUMMARIZATION: CommentSummarizationPromptFactory,
         PromptFeatures.COMMENT_VALIDATION: CommentValidationPromptFactory,
+        PromptFeatures.CODE_COMMUNICATION_COMMENTS_GENERATION: CodeCommunicationCommentsGenerationPromptFactory,
+        PromptFeatures.CODE_MAINTAINABILITY_COMMENTS_GENERATION: CodeMaintainabilityCommentsGenerationPromptFactory,
+        PromptFeatures.ERROR_COMMENTS_GENERATION: ErrorCommentsGenerationPromptFactory,
+        PromptFeatures.PERFORMANCE_OPTIMIZATION_COMMENTS_GENERATION: PerformanceOptimizationCommentsGenerationPromptFactory,
+        PromptFeatures.SECURITY_COMMENTS_GENERATION: SecurityCommentsGenerationPromptFactory,
     }
 
     @classmethod

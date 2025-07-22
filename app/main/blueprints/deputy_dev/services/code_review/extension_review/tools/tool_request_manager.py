@@ -12,7 +12,7 @@ from app.backend_common.utils.formatting import (
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
     ExtensionContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import (
     LLMCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.file_path_searcher import (
@@ -24,9 +24,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.grep_searc
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_final_response import (
-    PARSE_FINAL_RESPONSE,
-)
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.pr_review_planner import PR_REVIEW_PLANNER
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.tool_handler import (
     ExtensionToolHandlers,
@@ -174,14 +172,15 @@ class ToolRequestManager:
             )
 
         for comment in llm_comments:
-            # Extract comment fields with validation
-            required_fields = ["description", "file_path", "line_number", "confidence_score", "bucket", "rationale"]
+            required_fields = ["title", "tag", "description", "file_path", "line_number", "confidence_score", "bucket", "rationale"]
             for field in required_fields:
                 if comment.get(field) is None:
                     raise ValueError(f"The comment is missing required field: {field}")
 
             comments.append(
                 LLMCommentData(
+                    title=comment.get("title"),
+                    tag=comment.get("tag"),
                     comment=format_code_blocks(comment["description"]),
                     corrective_code=comment.get("corrective_code"),
                     file_path=comment["file_path"],
