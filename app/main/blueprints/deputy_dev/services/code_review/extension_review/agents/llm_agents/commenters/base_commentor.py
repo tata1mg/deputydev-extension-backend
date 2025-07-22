@@ -36,17 +36,13 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.
     NO_TOOL_USE_FALLBACK_PROMPT,
     EXCEPTION_RAISED_FALLBACK_EXTENSION
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_final_response import PARSE_FINAL_RESPONSE
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.tool_request_manager import (
     ToolRequestManager,
-)
-from app.main.blueprints.deputy_dev.services.setting.setting_service import (
-    SettingService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
     ExtensionContextService,
 )
-from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 
 
