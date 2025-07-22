@@ -46,7 +46,7 @@ PARSE_FINAL_RESPONSE = ConversationTool(
                             },
                             "line_number": {
                                 "type": "string",
-                                "description": "the line on which the comment is relevant. Extract this from the `<>` block at the start of each code snippet in the input. Return exactly the value labeled with “+”. Comments must be made only on added lines (“+”)",
+                                "description": "the line number on which the comment is relevant. Extract this from the `<>` block at the start of each line in the input. Return exactly the value labeled with “+”. E.g for <+24> return '24' Comments must be made only on added lines (“+”)",
                             },
                             "confidence_score": {
                                 "type": "number",

@@ -404,7 +404,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
             comment_dto = IdeReviewsCommentDTO(
                 review_id=review_id,
-                title="Code Review",
+                title=comment.title,
                 comment=comment.comment,
                 confidence_score=comment.confidence_score,
                 rationale=comment.rationale,
@@ -412,7 +412,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 file_path=comment.file_path,
                 line_hash="",  # If you have a way to compute line_hash, fill it here
                 line_number=int(comment.line_number),
-                tag="BUG",
+                tag=comment.tag,
                 is_valid=True,
                 agents=agents,
             )
