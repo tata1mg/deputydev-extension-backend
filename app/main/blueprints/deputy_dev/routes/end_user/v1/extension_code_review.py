@@ -33,7 +33,8 @@ from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.extension_multi_agent_review_manager import MultiAgentWebSocketManager
 
 from app.main.blueprints.one_dev.utils.session import get_valid_session_data
-from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import WebSocketMessage, MultiAgentReviewRequest
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import WebSocketMessage, \
+    MultiAgentReviewRequest, AgentRequestItem
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.post_proces_web_socket_manager import PostProcessWebSocketManager
 
 extension_code_review = Blueprint("ide_code_review", "/extension-code-review")
@@ -90,7 +91,7 @@ async def pre_process_extension_review(request: Request, auth_data: AuthData, **
 @extension_code_review.route("/run-agent", methods=["POST"])
 @validate_client_version
 @authenticate
-async def run_extension_agent(request: Request, auth_data: AuthData, **kwargs):
+async def run_extension_agent(request: Request, **kwargs):
     """
     Run an agent for extension code review.
 
@@ -104,19 +105,10 @@ async def run_extension_agent(request: Request, auth_data: AuthData, **kwargs):
     - For query type: Either tool request details or final result
     - For tool_use_response type: Either next tool request or final result
     """
-    try:
-        payload = request.json
-        result = await ExtensionReviewManager.review_diff(payload)
+    agent_request = AgentRequestItem(**request.json)
+    result = await ExtensionReviewManager.review_diff(agent_request)
+    return send_response(result)
 
-        return send_response(result)
-
-    except Exception as e:
-        AppLogger.log_error(f"Error in review_diff_endpoint: {e}")
-        return send_response(
-            {
-                "status": "SUCCESS",
-            }
-        )
 
 
 @extension_code_review.route("/legacy-post-process", methods=["POST"])
@@ -219,7 +211,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
             await manager.initialize_aws_client()
 
             # Process all agents
-            await manager.process_multi_agent_request(request.agents, local_testing_stream_buffer)
+            await manager.process_request(request.agents, local_testing_stream_buffer)
 
         except Exception as e:
             AppLogger.log_error(f"Error in process_multi_agent_review_task: {e}")
@@ -229,7 +221,8 @@ async def run_multi_agent_review(_request: Request, **kwargs):
                         WebSocketMessage(
                             type="STREAM_ERROR",
                             data={"message": f"Background task error: {str(e)}"}
-                        )
+                        ),
+                        local_testing_stream_buffer
                     )
                 except Exception as stream_error:
                     AppLogger.log_error(f"Error sending error message to stream: {stream_error}")

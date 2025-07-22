@@ -16,7 +16,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
 class PerformanceOptimizationAgent(BaseCommenterAgent):
     is_dual_pass = False
     prompt_features = [
-        PromptFeatures.PERFORMANCE_OPTIMIZATION_COMMENTS_GENERATION_PASS_1,
+        PromptFeatures.PERFORMANCE_OPTIMIZATION_COMMENTS_GENERATION,
     ]
     agent_type = AgentTypes.PERFORMANCE_OPTIMIZATION
 

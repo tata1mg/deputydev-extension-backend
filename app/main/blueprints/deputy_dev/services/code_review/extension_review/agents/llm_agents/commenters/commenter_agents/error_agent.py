@@ -16,7 +16,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
 class ErrorAgent(BaseCommenterAgent):
     is_dual_pass = False
     prompt_features = [
-        PromptFeatures.ERROR_COMMENTS_GENERATION_PASS_1,
+        PromptFeatures.ERROR_COMMENTS_GENERATION,
     ]
     agent_type = AgentTypes.ERROR
 

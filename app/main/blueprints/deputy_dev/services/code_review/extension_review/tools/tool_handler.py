@@ -1,52 +1,8 @@
-import os
-from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Optional
-
-from deputydev_core.services.embedding.pr_review_embedding_manager import (
-    PRReviewEmbeddingManager,
-)
-from deputydev_core.services.initialization.review_initialization_manager import (
-    ReviewInitialisationManager,
-)
-from deputydev_core.services.tools.file_path_search.dataclass.main import (
-    FilePathSearchPayload,
-)
-from deputydev_core.services.tools.file_path_search.file_path_search import (
-    FilePathSearch,
-)
-from deputydev_core.services.tools.focussed_snippet_search.dataclass.main import (
-    FocussedSnippetSearchParams,
-)
-from deputydev_core.services.tools.focussed_snippet_search.focussed_snippet_search import (
-    FocussedSnippetSearch,
-)
-from deputydev_core.services.tools.grep_search.dataclass.main import (
-    GrepSearchRequestParams,
-)
-from deputydev_core.services.tools.grep_search.grep_search import GrepSearch
-from deputydev_core.services.tools.iterative_file_reader.dataclass.main import (
-    IterativeFileReaderRequestParams,
-)
-from deputydev_core.services.tools.iterative_file_reader.iterative_file_reader import (
-    IterativeFileReader,
-)
-from deputydev_core.services.tools.relevant_chunks.dataclass.main import (
-    RelevantChunksParams,
-)
-from deputydev_core.services.tools.relevant_chunks.relevant_chunk import RelevantChunks
-from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.utils.constants.enums import ContextValueKeys
-from deputydev_core.utils.context_vars import get_context_value
-
-from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
-    OneDevReviewClient,
-)
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
     ExtensionContextService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.review_planner.review_planner import ReviewPlanner
-from app.main.blueprints.deputy_dev.services.code_review.common.utils.weaviate_client import get_weaviate_connection
-
 
 class ExtensionToolHandlers:
     """
@@ -89,8 +45,8 @@ class ExtensionToolHandlers:
             The tool response.
         """
         prompt_vars = {
-            "PULL_REQUEST_TITLE": "",
-            "PULL_REQUEST_DESCRIPTION": "",
+            "PULL_REQUEST_TITLE": "NA",
+            "PULL_REQUEST_DESCRIPTION": "NA",
             "PULL_REQUEST_DIFF": await context_service.get_pr_diff(append_line_no_info=True),
             "FOCUS_AREA": tool_input.get("review_focus", ""),
         }
