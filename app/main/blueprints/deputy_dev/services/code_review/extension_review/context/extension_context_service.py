@@ -1,5 +1,5 @@
 from app.backend_common.caches.extension_review_cache import ExtensionReviewCache
-from app.backend_common.utils.formatting import append_line_numbers, append_line_number_without_file_headers
+from app.backend_common.utils.formatting import append_line_numbers
 
 
 class ExtensionContextService:
