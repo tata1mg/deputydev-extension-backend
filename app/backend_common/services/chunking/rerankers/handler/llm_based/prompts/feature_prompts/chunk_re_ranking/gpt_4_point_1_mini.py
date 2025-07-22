@@ -47,7 +47,7 @@ class Gpt4Point1MiniChunkReRankingPrompt(BaseGpt4Point1MiniPrompt):
             {related_chunks_prompt}
 
             <important>
-            - Keep all the chunks relevant to the query.
+            - Keep all the chunks that are relevant to the user query, do not be too forceful in removing out chunks.
             - Do not remove chunks lightly; ensure no relevant chunk is missed.
             </important>
 
@@ -55,7 +55,7 @@ class Gpt4Point1MiniChunkReRankingPrompt(BaseGpt4Point1MiniPrompt):
 
             {json.dumps(SortedAndFilteredChunksSources.model_json_schema(), indent=2)}
 
-            Respond with only the JSON object, with key "chunks_source" containing a list of source identifiers.
+            Respond with only the JSON object, with key "chunks_source" containing a list of source identifiers. i.e. whatever is inside <source>chunks_source</source>
         """)
 
         system_message = "You are a codebase expert filtering and reranking code snippets."
