@@ -44,36 +44,37 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
         """
         try:
             formatted_result = await ExtensionReviewManager.review_diff(agent_request)
+            return WebSocketMessage(**formatted_result)
 
-            if formatted_result.get("status") == "ERROR":
-                return WebSocketMessage(
-                    type="AGENT_FAIL",
-                    agent_id=agent_request.agent_id,
-                    data={"message": formatted_result.get("message", "Unknown error occurred")}
-                )
-
-            result_type = formatted_result.get("type", "")
-            if result_type == "TOOL_USE_REQUEST":
-                return WebSocketMessage(
-                    type="TOOL_USE_REQUEST",
-                    agent_id=agent_request.agent_id,
-                    data={
-                        "tool_use_id": formatted_result.get("tool_use_id"),
-                        "tool_name": formatted_result.get("tool_name"),
-                        "tool_input": formatted_result.get("tool_input"),
-                    }
-                )
-            elif result_type in ["REVIEW_COMPLETE", "REVIEW_SUCCESS"]:
-                return WebSocketMessage(
-                    type="AGENT_COMPLETE",
-                    agent_id=agent_request.agent_id,
-                )
-            else:
-                # Default to complete for other successful cases
-                return WebSocketMessage(
-                    type="AGENT_COMPLETE",
-                    agent_id=agent_request.agent_id,
-                )
+            # if formatted_result.get("status") == "ERROR":
+            #     return WebSocketMessage(
+            #         type="AGENT_FAIL",
+            #         agent_id=agent_request.agent_id,
+            #         data={"message": formatted_result.get("message", "Unknown error occurred")}
+            #     )
+            #
+            # result_type = formatted_result.get("type", "")
+            # if result_type == "TOOL_USE_REQUEST":
+            #     return WebSocketMessage(
+            #         type="TOOL_USE_REQUEST",
+            #         agent_id=agent_request.agent_id,
+            #         data={
+            #             "tool_use_id": formatted_result.get("tool_use_id"),
+            #             "tool_name": formatted_result.get("tool_name"),
+            #             "tool_input": formatted_result.get("tool_input"),
+            #         }
+            #     )
+            # elif result_type in ["REVIEW_COMPLETE", "REVIEW_SUCCESS"]:
+            #     return WebSocketMessage(
+            #         type="AGENT_COMPLETE",
+            #         agent_id=agent_request.agent_id,
+            #     )
+            # else:
+            #     # Default to complete for other successful cases
+            #     return WebSocketMessage(
+            #         type="AGENT_COMPLETE",
+            #         agent_id=agent_request.agent_id,
+            #     )
 
         except Exception as e:
             AppLogger.log_error(f"Error executing agent task {agent_request.agent_id}: {e}")
@@ -185,6 +186,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                     asyncio.create_task(self.execute_and_stream_agent(agent, local_testing_stream_buffer))
                     for agent in cache_utilizing_agents
                 ]
+                print("cache_utilizing_results")
                 cache_utilizing_results = await asyncio.gather(*cache_utilizing_tasks, return_exceptions=True)
 
         except Exception as e:
@@ -213,7 +215,8 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                 )
 
             agent_ws_message = await self.execute_agent_task(agent_request)
-
+            print("Message")
+            print(agent_ws_message)
             await self.push_to_connection_stream(
                 agent_ws_message, local_testing_stream_buffer
             )
