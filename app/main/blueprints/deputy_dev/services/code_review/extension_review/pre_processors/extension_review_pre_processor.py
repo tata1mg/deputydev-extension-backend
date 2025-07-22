@@ -63,9 +63,10 @@ class ExtensionReviewPreProcessor:
         
         review_diff = combined_diff
 
+        reviewed_files = [file.file_path for file in review_request.file_wise_diff]
+
         diff_handler = ExtensionDiffHandler(review_diff)
         loc = diff_handler.get_diff_loc()
-        reviewed_files = diff_handler.get_files()
         token_count = diff_handler.get_diff_token_count()
 
 
