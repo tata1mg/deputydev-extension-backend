@@ -143,7 +143,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         await manager.initialize_aws_client()
         await manager.push_to_connection_stream(
             WebSocketMessage(
-                type="STREAM_ERROR",
+                type="AGENT_FAIL",
                 data={
                     "error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value,
                     "upgrade_version": upgrade_version,
@@ -170,7 +170,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         await manager.initialize_aws_client()
         await manager.push_to_connection_stream(
             WebSocketMessage(
-                type="STREAM_ERROR",
+                type="AGENT_FAIL",
                 data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
             )
         )
@@ -219,7 +219,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
                 try:
                     await manager.push_to_connection_stream(
                         WebSocketMessage(
-                            type="STREAM_ERROR",
+                            type="AGENT_FAIL",
                             data={"message": f"Background task error: {str(e)}"}
                         ),
                         local_testing_stream_buffer
