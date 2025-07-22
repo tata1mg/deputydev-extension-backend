@@ -1,5 +1,8 @@
 import json
 from typing import Any, Dict, List, Optional
+
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestData,
@@ -41,8 +44,8 @@ class ToolRequestManager:
         self.context_service = context_service
         self.tools = [
             GREP_SEARCH,
-            # ITERATIVE_FILE_READER,
-            # FILE_PATH_SEARCHER,
+            ITERATIVE_FILE_READER,
+            FILE_PATH_SEARCHER,
             PARSE_FINAL_RESPONSE,
             PR_REVIEW_PLANNER,
         ]
@@ -177,18 +180,24 @@ class ToolRequestManager:
                 if comment.get(field) is None:
                     raise ValueError(f"The comment is missing required field: {field}")
 
-            comments.append(
-                LLMCommentData(
-                    title=comment.get("title"),
-                    tag=comment.get("tag"),
-                    comment=format_code_blocks(comment["description"]),
-                    corrective_code=comment.get("corrective_code"),
-                    file_path=comment["file_path"],
-                    line_number=comment["line_number"],
-                    confidence_score=float(comment["confidence_score"]),
-                    bucket=format_comment_bucket_name(comment["bucket"]),
-                    rationale=comment["rationale"],
+
+            try:
+                comments.append(
+                    LLMCommentData(
+                        title=comment.get("title"),
+                        tag=comment.get("tag"),
+                        comment=format_code_blocks(comment["description"]),
+                        corrective_code=comment.get("corrective_code"),
+                        file_path=comment["file_path"],
+                        line_number=comment["line_number"],
+                        confidence_score=float(comment["confidence_score"]),
+                        bucket=format_comment_bucket_name(comment["bucket"]),
+                        rationale=comment["rationale"],
+                    )
                 )
-            )
+            except (ValueError, TypeError) as e:
+                AppLogger.log_warn(f"Comment Validation Faileds: {comment}: {e}")
+                continue
+
 
         return {"comments": comments}
