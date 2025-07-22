@@ -5,6 +5,8 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 CREATE_NEW_WORKSPACE = ConversationTool(
     name="create_new_workspace",
     description=textwrap.dedent("""
+        This is a built-in tool.
+        This tool should not be run in parallel with any tool. This must be given as a single tool request.
         Assist the user in scaffolding a brand-new workspace based on a high-level project request.
         Given a natural-language query (e.g. “Create a Next.js blog with TypeScript” or “Start a Vite React dashboard”, etc.),
         
@@ -21,19 +23,17 @@ CREATE_NEW_WORKSPACE = ConversationTool(
         - Freely use other tools to complete the task.
         """),
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": textwrap.dedent(
-                        "A clear and concise description of the workspace or project the user wants to create. "
-                        "This is a natural language request like 'Create a Next.js blog with TypeScript' or "
-                        "'Start a Vite React project for a dashboard UI'."
-                    ),
-                },
-            },
-            "required": ["query"],
-        }
+        type="object",
+        properties={
+            "query": JSONSchema(
+                type="string",
+                description=textwrap.dedent(
+                    "A clear and concise description of the workspace or project the user wants to create. "
+                    "This is a natural language request like 'Create a Next.js blog with TypeScript' or "
+                    "'Start a Vite React project for a dashboard UI'."
+                ),
+            ),
+        },
+        required=["query"],
     ),
 )

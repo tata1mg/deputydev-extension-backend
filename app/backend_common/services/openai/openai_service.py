@@ -23,7 +23,7 @@ EMBEDDING_TOKEN_LIMIT = ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"]
 
 
 class OpenAIManager(BaseClient):
-    def __init__(self):
+    def __init__(self) -> None:
         self.tiktoken_client = TikToken()
 
     async def __call_embedding(self, batch: List[str]) -> np.ndarray:
@@ -49,9 +49,11 @@ class OpenAIManager(BaseClient):
             logger.info(f"Embedding: {normalized_dim}")
         return normalized_dim, response.usage.prompt_tokens
 
-    def get_cache_prefix(self):
-        repo_name = identifier.get(None)
+    def get_cache_prefix(self) -> str:
+        repo_name: Optional[str] = identifier.get(None)
         team_id = get_context_value("team_id")
+        if repo_name is None or team_id is None:
+            logger.error("Missing repo_name or team_id for cache key!")
         if team_id == 1:
             # TODO added this check for backward compatibility and needs to be removed
             prefix_key = repo_name
@@ -73,7 +75,6 @@ class OpenAIManager(BaseClient):
         try:
             new_embeddings, input_tokens = await self.__call_embedding(batch)
         except requests.exceptions.Timeout as e:
-            print(f"Timeout error occurred while embedding: {e}")
             AppLogger.log_error(f"Timeout error occurred while embedding: {e}")
         except Exception as e:
             AppLogger.log_warn(e)
@@ -119,7 +120,7 @@ class OpenAIManager(BaseClient):
             for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
                 if cache_value:
                     embeddings[i] = np.array(json.loads(cache_value))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(e)
 
         batch = [text for i, text in enumerate(batch) if embeddings[i] is None]
@@ -148,6 +149,6 @@ class OpenAIManager(BaseClient):
                     }
                 )
             embeddings = np.array(embeddings)
-        except Exception:
+        except Exception:  # noqa: BLE001
             logger.error("Failed to store embeddings in cache, returning without storing")
         return embeddings, input_tokens

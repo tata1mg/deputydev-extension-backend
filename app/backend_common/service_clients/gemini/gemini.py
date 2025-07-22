@@ -2,15 +2,17 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 
 from deputydev_core.utils.singleton import Singleton
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 from google.oauth2 import service_account
 from torpedo import CONFIG
+
+from app.backend_common.service_clients.exceptions import GeminiThrottledError
 
 config = CONFIG.config
 
 
 class GeminiServiceClient(metaclass=Singleton):
-    def __init__(self):
+    def __init__(self) -> None:
         credentials_dict = {
             "type": config["VERTEX"].get("type"),
             "project_id": config["VERTEX"].get("project_id"),
@@ -38,13 +40,13 @@ class GeminiServiceClient(metaclass=Singleton):
 
     async def get_llm_non_stream_response(
         self,
-        model_name,
+        model_name: str,
         contents: List[types.Content],
         system_instruction: types.Part = None,
         tools: List[types.Tool] = None,
         response_schema: Optional[Dict[str, Any]] = None,
         temperature: float = 0.5,
-        tool_config=None,
+        tool_config=None,  # noqa: ANN001
         response_mime_type: str = "text/plain",
         max_output_tokens: int = 8192,
     ) -> types.GenerateContentResponse:
@@ -64,26 +66,32 @@ class GeminiServiceClient(metaclass=Singleton):
 
     async def get_llm_stream_response(
         self,
-        model_name,
+        model_name: str,
         contents: List[types.Content],
         system_instruction: types.Part = None,
         tools: List[types.Tool] = None,
         response_schema: Optional[Dict[str, Any]] = None,
         temperature: float = 0.5,
-        tool_config=None,
+        tool_config=None,  # noqa: ANN001
         response_mime_type: str = "text/plain",
         max_output_tokens: int = 8192,
     ) -> AsyncIterator[types.GenerateContentResponse]:
-        data = await self.client.aio.models.generate_content_stream(
-            model=model_name,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                tools=tools,
-                temperature=temperature,
-                response_mime_type=response_mime_type,
-                response_schema=response_schema,
-                max_output_tokens=max_output_tokens,
-            ),
-        )
-        return data
+        try:
+            base_stream = await self.client.aio.models.generate_content_stream(
+                model=model_name,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    tools=tools,
+                    temperature=temperature,
+                    response_mime_type=response_mime_type,
+                    response_schema=response_schema,
+                    max_output_tokens=max_output_tokens,
+                ),
+            )
+        except errors.APIError as e:
+            if e.code == 429:
+                raise GeminiThrottledError(model=model_name, retry_after=None, detail=str(e)) from e
+            raise
+
+        return base_stream

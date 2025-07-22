@@ -18,6 +18,7 @@ class MessageThread(Base):
         "prompt_type",
         "prompt_category",
         "call_chain_category",
+        "metadata",
         "created_at",
         "updated_at",
     }
@@ -35,6 +36,7 @@ class MessageThread(Base):
     prompt_type = fields.TextField()
     prompt_category = fields.TextField()
     call_chain_category = fields.TextField()
+    metadata = fields.JSONField(null=True)
 
     class Meta:
         table = "message_threads"
