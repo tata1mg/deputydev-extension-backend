@@ -19,7 +19,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.file_editor import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
@@ -27,6 +26,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_read
 from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
     RELATED_CODE_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.task_completed import TASK_COMPLETION
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
@@ -67,18 +67,21 @@ class InlineEditGenerator:
         tools_to_use.append(REPLACE_IN_FILE)
 
         if payload.tool_use_response:
-            llm_response = await llm_handler.submit_tool_use_response(
+            llm_response = await llm_handler.submit_batch_tool_use_response(
                 session_id=payload.session_id,
-                tool_use_response=ToolUseResponseData(
-                    content=ToolUseResponseContent(
-                        tool_name=payload.tool_use_response.tool_name,
-                        tool_use_id=payload.tool_use_response.tool_use_id,
-                        response=payload.tool_use_response.response,
+                tool_use_responses=[
+                    ToolUseResponseData(
+                        content=ToolUseResponseContent(
+                            tool_name=payload.tool_use_response.tool_name,
+                            tool_use_id=payload.tool_use_response.tool_use_id,
+                            response=payload.tool_use_response.response,
+                        )
                     )
-                ),
+                ],
                 tools=tools_to_use,
-                tool_choice="required",
                 stream=False,
+                parallel_tool_calls=False,
+                tool_choice="required",
             )
 
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):

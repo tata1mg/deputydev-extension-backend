@@ -3,6 +3,7 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
     name="focused_snippets_searcher",
     description="""
+        This is a built-in tool.
         Searches the codebase for specific code definitions or snippets based on a given class name, function name, or file name.
         View the content of a code item node, such as a class or a function in a file using a fully qualified code item name.
         Use this tool to retrieve relevant code snippets that contain or define the specified search terms.
@@ -47,34 +48,35 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
         Use this tool whenever you need precise code snippets related to specific elements in the codebase.
     """,
     input_schema=JSONSchema(
-        **{
-            "type": "object",
-            "properties": {
-                "search_terms": {
-                    "type": "array",
-                    "description": "A list of search terms, each containing a keyword, its type, and an optional file path.",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "keyword": {
-                                "type": "string",
-                                "description": "The search keyword, which can be a class, function, or file name whose content needs to be searched.",
-                            },
-                            "type": {
-                                "type": "string",
-                                "description": "Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'.",
-                            },
-                            "file_path": {
-                                "type": "string",
-                                "description": "The file path where the search term is located (optional).",
-                            },
-                        },
-                        "required": ["keyword", "type"],
+        type="object",
+        properties={
+            "search_terms": JSONSchema(
+                type="array",
+                description="A list of search terms, each containing a keyword, its type, and an optional file path.",
+                items=JSONSchema(
+                    type="object",
+                    properties={
+                        "keyword": JSONSchema(
+                            type="string",
+                            description="The search keyword, which can be a class, function, or file name whose content needs to be searched.",
+                        ),
+                        "type": JSONSchema(
+                            type="string",
+                            description="Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'.",
+                        ),
+                        "file_path": JSONSchema(
+                            type="string",
+                            description="The file path where the search term is located (optional).",
+                        ),
                     },
-                }
-            },
-            "required": ["search_terms"],
-            "additionalProperties": False,
-        }
+                    required=["keyword", "type"],
+                ),
+            ),
+            "repo_path": JSONSchema(
+                type="string",
+                description="Expects absolute path of the repository",
+            ),
+        },
+        required=["search_terms", "repo_path"],
     ),
 )

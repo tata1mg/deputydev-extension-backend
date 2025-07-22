@@ -34,6 +34,17 @@ class DetailedFocusItem(BaseModel):
     url: Optional[str] = ""
 
 
+class DirectoryEntry(BaseModel):
+    name: str
+    type: str
+
+
+class DetailedDirectoryItem(BaseModel):
+    path: str
+    value: Optional[str] = None
+    structure: Optional[List[DirectoryEntry]] = None
+
+
 class Url(BaseModel):
     value: str
     url: str
@@ -71,23 +82,33 @@ class Attachment(BaseModel):
     attachment_id: int
 
 
+class Repository(BaseModel):
+    repo_path: str
+    repo_name: str
+    root_directory_context: str
+    is_working_repository: bool
+
+
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
     focus_items: List[DetailedFocusItem] = []
+    directory_items: Optional[List[DetailedDirectoryItem]] = None
     write_mode: bool = False
     session_id: int
     tool_use_failed: Optional[bool] = None
+    batch_tool_responses: Optional[List[ToolUseResponseInput]] = None
     tool_use_response: Optional[ToolUseResponseInput] = None
     previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
-    user_team_id: Optional[int] = None
-    session_type: Optional[str] = None
-    urls: Optional[List[Url]] = []
+    user_team_id: int
+    session_type: str
+    urls: List[Url] = []
     os_name: Optional[str] = None
     shell: Optional[str] = None
     vscode_env: Optional[str] = None
+    repositories: Optional[List[Repository]] = None
     search_web: Optional[bool] = False
-    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    llm_model: Optional[LLMModel] = None
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
     is_embedding_done: Optional[bool] = True

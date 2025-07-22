@@ -38,7 +38,7 @@ class MessageThreadsRepository:
         session_id: int,
         call_chain_category: MessageCallChainCategory,
         content_hashes: List[str] = [],
-        prompt_type: Optional[str] = None,
+        prompt_types: List[str] = [],
     ) -> List[MessageThreadDTO]:
         try:
             filters: Dict[str, Union[List[str], int, str]] = {
@@ -47,8 +47,8 @@ class MessageThreadsRepository:
             }
             if content_hashes:
                 filters["data_hash__in"] = content_hashes
-            if prompt_type:
-                filters["prompt_type"] = prompt_type
+            if prompt_types:
+                filters["prompt_type__in"] = prompt_types
             message_threads = await DB.by_filters(
                 model_name=MessageThread,
                 where_clause=filters,
@@ -59,7 +59,7 @@ class MessageThreadsRepository:
                 return []
             return [MessageThreadDTO(**message_thread) for message_thread in message_threads]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching message_threads from db for session_id filters : {session_id}, ex: {ex}"
             )
@@ -87,6 +87,7 @@ class MessageThreadsRepository:
                         prompt_type=message_thread.prompt_type,
                         prompt_category=message_thread.prompt_category,
                         call_chain_category=message_thread.call_chain_category,
+                        metadata=message_thread.metadata,
                     )
                 )
             )
@@ -104,7 +105,7 @@ class MessageThreadsRepository:
                 message_thread_data.model_dump(mode="json") for message_thread_data in message_thread_datas
             ]
             return await DB.bulk_create(MessageThread, message_threads)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while creating message_thread in db for message_thread_data : {message_thread_datas}, ex: {ex}"
             )
@@ -127,7 +128,7 @@ class MessageThreadsRepository:
             message_threads = [MessageThreadDTO(**message_thread) for message_thread in message_threads]
             message_threads.sort(key=lambda x: message_thread_ids.index(x.id))
             return message_threads
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching message_threads from db for message_thread_ids filters : {message_thread_ids}, ex: {ex}"
             )
@@ -145,6 +146,6 @@ class MessageThreadsRepository:
                     "message_type": MessageType.QUERY.value,
                 },
             )
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"error occurred while fetching user queries count for session_ids: {session_ids}, ex: {ex}")
             return 0

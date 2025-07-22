@@ -328,12 +328,21 @@
         "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
         "SECRET_ACCESS_KEY": "DUMMY_SECRET_ACCESS_KEY",
         "SESSION_TOKEN": "",
-        "AWS_REGION": "us-west-2",
         "BEDROCK_SERVICE_NAME": "bedrock-runtime",
         "BEDROCK_READ_TIMEOUT": 1000,
         "ENDPOINT_URL": null
     },
     "AWS_S3_BUCKET": {
+        "AWS_BUCKET_NAME": "deputydev",
+        "AWS_REGION": "ap-south-1"
+    },
+    "AWS_CLOUDFRONT": {
+        "DISTRIBUTION_URL": "",
+        "KEY_PAIR_ID": "",
+        "SIGNED_URL_EXPIRY": 1800,
+        "PRIVATE_KEY": ""
+    },
+    "AWS_S3_BINARY_BUCKET": {
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
@@ -347,7 +356,19 @@
             "VERSION": "bedrock-2023-05-31",
             "INPUT_TOKENS_LIMIT": 130000,
             "PROMPT_CACHING_SUPPORTED": false,
-            "STREAM_BATCH_SIZE": 10
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER_CONFIG": {
+                "REGION_AND_IDENTIFIER_LIST": [
+                    {
+                        "AWS_REGION": "us-west-2",
+                        "MODEL_IDENTIFIER": ""
+                    },
+                    {
+                        "AWS_REGION": "ap-south-1",
+                        "MODEL_IDENTIFIER": ""
+                    }
+                ]
+            }
         },
         "CLAUDE_4_SONNET": {
             "ACCESS_KEY": "",
@@ -357,7 +378,19 @@
             "PROMPT_CACHING_SUPPORTED": true,
             "PROVIDER": "ANTHROPIC",
             "VERSION": "bedrock-2023-05-31",
-            "STREAM_BATCH_SIZE": 10
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER_CONFIG": {
+                "REGION_AND_IDENTIFIER_LIST": [
+                    {
+                        "AWS_REGION": "us-west-2",
+                        "MODEL_IDENTIFIER": "us.anthropic.claude-sonnet-4-20250514-v1:0"
+                    },
+                    {
+                        "AWS_REGION": "ap-south-1",
+                        "MODEL_IDENTIFIER": "apac.anthropic.claude-sonnet-4-20250514-v1:0"
+                    }
+                ]
+            }
         },
         "CLAUDE_4_SONNET_THINKING": {
             "ACCESS_KEY": "",
@@ -371,7 +404,19 @@
                 "BUDGET_TOKENS": 5000
             },
             "VERSION": "bedrock-2023-05-31",
-            "STREAM_BATCH_SIZE": 10
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER_CONFIG": {
+                "REGION_AND_IDENTIFIER_LIST": [
+                    {
+                        "AWS_REGION": "us-west-2",
+                        "MODEL_IDENTIFIER": "us.anthropic.claude-sonnet-4-20250514-v1:0"
+                    },
+                    {
+                        "AWS_REGION": "ap-south-1",
+                        "MODEL_IDENTIFIER": "apac.anthropic.claude-sonnet-4-20250514-v1:0"
+                    }
+                ]
+            }
         },
         "GEMINI_2_POINT_5_PRO": {
             "NAME": "gemini-2.5-pro-preview-03-25",
@@ -402,7 +447,19 @@
             "VERSION": "",
             "INPUT_TOKENS_LIMIT": 130000,
             "THINKING_BUDGET_TOKENS": 5000,
-            "PROMPT_CACHING_SUPPORTED": false
+            "PROMPT_CACHING_SUPPORTED": false,
+            "PROVIDER_CONFIG": {
+                "REGION_AND_IDENTIFIER_LIST": [
+                    {
+                        "AWS_REGION": "us-west-2",
+                        "MODEL_IDENTIFIER": ""
+                    },
+                    {
+                        "AWS_REGION": "ap-south-1",
+                        "MODEL_IDENTIFIER": ""
+                    }
+                ]
+            }
         },
         "GEMINI_2_POINT_0_FLASH": {
             "NAME": "gemini-2.0-flash",
@@ -523,37 +580,40 @@
             "CHUNKING_ENABLED": true
         },
         "USE_GRACE_PERIOD_FOR_EMBEDDING": true,
-        "PRESIGNED_URL_EXPIRY": 1800,
         "FILE": {
             "latest": {
                 "darwin": {
                     "arm64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     },
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 },
                 "linux": {
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": ""
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 },
                 "win32": {
                     "x64": {
-                        "download_link": "",
                         "directory": "",
                         "service_path": "",
-                        "s3_key": "" 
+                        "s3_key": "",
+                        "file_checksum": "",
+                        "file_path": ""
                     }
                 }
             }
@@ -639,7 +699,6 @@
         "INSERT": 120
     },
     "DEFAULT_EXTENSION_SETTINGS": {
-        "default_mode": "ask",
         "terminal_settings": {
             "enable_yolo_mode": false,
             "command_deny_list": [
@@ -695,6 +754,10 @@
         "IMAGE_FOLDER_PATH": "chat_images",
         "MAX_FILES": 5
     },
-    "ALLOWED_PR_REVIEW_RETRIES": 3,
-    "EXTENSION_REPOS_ENCRYPTION_PASSWORD": ""
+    "BINARY_UPLOAD": {
+        "PRESIGNED_URL_EXPIRY": 3600,
+        "CACHE_CONTROL": "max-age=7776000",
+        "AUTH_KEY": ""
+    },
+    "ALLOWED_PR_REVIEW_RETRIES": 3
 }
