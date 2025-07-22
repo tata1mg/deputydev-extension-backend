@@ -305,12 +305,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa : C901
         system_message = self.get_system_prompt()
-        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
-        file_path_example = (
-            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
-            if use_absolute_path
-            else "src/tools/grep_search.py"
-        )
+
         focus_chunks_message = ""
         if self.params.get("focus_items"):
             focus_chunks_message = "The user has asked to focus on the following\n"
@@ -408,7 +403,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             - Never use phrases like "previous code", "existing function", etc. in diffs.
             - All explanations go into `"content"` under `"type": "text"`.
             - All code goes into `"code"` under `"type": "code_block"`.
-            - If you use a `"file_path"` in a code block, use an exact string like `"{file_path_example}"`.
+            - If you use a `"file_path"` in a code block, use an exact string like `"/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"`.
             </response_formatting_rules>
             
             {self.tool_usage_guidelines(is_write_mode=False)}
