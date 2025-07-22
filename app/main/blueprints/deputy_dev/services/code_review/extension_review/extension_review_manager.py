@@ -94,20 +94,22 @@ class ExtensionReviewManager:
                 # Tool use request - frontend needs to process tool
                 return {
                     "type": "TOOL_USE_REQUEST",
-                    "tool_name": agent_result_dict["tool_name"],
-                    "tool_input": agent_result_dict["tool_input"],
-                    "tool_use_id": agent_result_dict["tool_use_id"],
+                    "data": {
+                        "tool_name": agent_result_dict["tool_name"],
+                        "tool_input": agent_result_dict["tool_input"],
+                        "tool_use_id": agent_result_dict["tool_use_id"],
+                    },
                     "agent_id": agent_id,
                 }
             elif agent_result_dict.get("status") == "success":
                 return {
-                    "type": "REVIEW_COMPLETE",
+                    "type": "AGENT_COMPLETE",
                     "agent_id": agent_id,
                 }
             elif agent_result_dict.get("status") == "error":
                 return {
                     "type": "AGENT_FAIL",
-                    "message": agent_result_dict.get("message", "An error occurred"),
+                    "data": {"message": agent_result_dict.get("message", "An error occurred")},
                     "agent_id": agent_id,
                 }
 
