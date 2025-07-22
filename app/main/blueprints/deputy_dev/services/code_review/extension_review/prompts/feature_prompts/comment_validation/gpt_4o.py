@@ -43,6 +43,9 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         - If the `corrective_code` and the comment description provided in the comment is already implemented or closely resembles the existing code in the PR diff, mark the comment as invalid.
         - Prioritize correctness over verbosity
         - Keep rationale as the source of truth. It might have some info which might not be visible in PR diff.
+        
+        ### Review Title Generation:
+            - generate a clear, descriptive PR review title (max 15 words) summarizing the key issue fixed in this PR
 
         ### Input Comments that needs to be validated: 
         ${self.params["COMMENTS"]}
@@ -95,7 +98,8 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
 
         ###Expected output example 
         ```JSON
-        comments: [
+        'title': '<A clear, descriptive PR review title (max 15 words) summarizing the key issue fixed in this PR',
+        'comments': [
             {{
                 "file_path": "src/app.py",
                 "tag": "Suggestion",
@@ -120,7 +124,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         ]
         ```
 
-        PR Diff on which comments needs to be validated:
+        Validate comments against the PR diff and generate a review title based on the changes:
         <pr_diff>{self.params["PR_DIFF"]}</pr_diff>
 
 
