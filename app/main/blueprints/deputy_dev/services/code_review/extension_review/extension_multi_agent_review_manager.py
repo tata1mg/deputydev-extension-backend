@@ -1,13 +1,10 @@
 import asyncio
-import json
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from deputydev_core.utils.app_logger import AppLogger
-from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
-    AWSAPIGatewayServiceClient,
-    SocketClosedException,
-)
+
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import (
     AgentRequestItem,
     AgentTaskResult,
@@ -16,10 +13,11 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.datacl
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.extension_review_manager import \
     ExtensionReviewManager
-from deputydev_core.utils.config_manager import ConfigManager
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.base_websocket_manager import BaseWebSocketManager
+from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 
 
-class MultiAgentWebSocketManager:
+class MultiAgentWebSocketManager(BaseWebSocketManager):
     """
     Manages multi-agent websocket communication for extension review.
     Handles parallel agent execution and real-time result streaming.
@@ -30,49 +28,9 @@ class MultiAgentWebSocketManager:
         self.review_id = review_id
         self.is_local = is_local
         self.connection_id_gone = False
-        self.aws_client: Optional[AWSAPIGatewayServiceClient] = None
-        self.local_testing_stream_buffer: Dict[str, List[str]] = {}
 
-    async def initialize_aws_client(self):
-        """Initialize AWS WebSocket client."""
-        if not self.is_local:
-            self.aws_client = AWSAPIGatewayServiceClient()
-            await self.aws_client.init_client(
-                endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}"
-            )
+        super().__init__(connection_id, is_local)
 
-    async def push_to_connection_stream(self, message: WebSocketMessage, local_testing_stream_buffer) -> None:
-        """
-        Push message to WebSocket connection.
-
-        Args:
-            message: WebSocket message to send
-        """
-        if self.connection_id_gone:
-            return
-
-        # Add timestamp to message
-        message.timestamp = datetime.utcnow().isoformat()
-        message_data = message.model_dump(mode="json")
-
-        try:
-            if self.is_local:
-                # Local testing - use buffer
-                local_testing_stream_buffer.setdefault(self.connection_id, []).append(
-                    json.dumps(message_data)
-                )
-            else:
-                # AWS WebSocket
-                if self.aws_client:
-                    await self.aws_client.post_to_connection(
-                        connection_id=self.connection_id,
-                        message=json.dumps(message_data),
-                    )
-        except SocketClosedException:
-            self.connection_id_gone = True
-            AppLogger.log_warning(f"WebSocket connection {self.connection_id} closed")
-        except Exception as e:
-            AppLogger.log_error(f"Error pushing to WebSocket {self.connection_id}: {e}")
 
     async def execute_agent_task(self, agent_request: AgentRequestItem) -> AgentTaskResult:
         """
@@ -85,85 +43,44 @@ class MultiAgentWebSocketManager:
             AgentTaskResult: Result of agent execution
         """
         try:
-            # Convert AgentRequestItem to payload format expected by review_diff
-            payload = {
-                "agent_id": agent_request.agent_id,
-                "review_id": self.review_id,
-                "type": agent_request.type.value,
-            }
+            formatted_result = await ExtensionReviewManager.review_diff(agent_request)
 
-            # Add tool_use_response if present
-            if agent_request.tool_use_response:
-                payload["tool_use_response"] = {
-                    "tool_name": agent_request.tool_use_response.tool_name,
-                    "tool_use_id": agent_request.tool_use_response.tool_use_id,
-                    "response": agent_request.tool_use_response.response,
-                }
-
-            # Call ExtensionReviewManager.review_diff directly
-            formatted_result = await ExtensionReviewManager.review_diff(payload)
-
-            # Determine status from formatted result
-            event_type = self.determine_event_type(formatted_result)
-
-            # Extract agent information from formatted result or use defaults
-            agent_name = formatted_result.get("agent_name", "unknown")
-            agent_type = formatted_result.get("agent_type", "unknown")
-            tokens_data = formatted_result.get("tokens_data", {})
-            model = formatted_result.get("model", "")
-            display_name = formatted_result.get("display_name", "")
-            error_message = None
-
-            # Handle error case
             if formatted_result.get("status") == "ERROR":
-                event_type = "AGENT_FAIL"
-                error_message = formatted_result.get("message", "Unknown error occurred")
+                return WebSocketMessage(
+                    type="AGENT_FAIL",
+                    agent_id=agent_request.agent_id,
+                    data={"message": formatted_result.get("message", "Unknown error occurred")}
+                )
 
-            return AgentTaskResult(
-                agent_id=agent_request.agent_id,
-                agent_name=agent_name,
-                agent_type=agent_type,
-                status=event_type,
-                result=formatted_result,
-                tokens_data=tokens_data,
-                model=model,
-                display_name=display_name,
-                error_message=error_message
-            )
+            result_type = formatted_result.get("type", "")
+            if result_type == "TOOL_USE_REQUEST":
+                return WebSocketMessage(
+                    type="TOOL_USE_REQUEST",
+                    agent_id=agent_request.agent_id,
+                    data={
+                        "tool_use_id": formatted_result.get("tool_use_id"),
+                        "tool_name": formatted_result.get("tool_name"),
+                        "tool_input": formatted_result.get("tool_input"),
+                    }
+                )
+            elif result_type in ["REVIEW_COMPLETE", "REVIEW_SUCCESS"]:
+                return WebSocketMessage(
+                    type="AGENT_COMPLETE",
+                    agent_id=agent_request.agent_id,
+                )
+            else:
+                # Default to complete for other successful cases
+                return WebSocketMessage(
+                    type="AGENT_COMPLETE",
+                    agent_id=agent_request.agent_id,
+                )
 
         except Exception as e:
             AppLogger.log_error(f"Error executing agent task {agent_request.agent_id}: {e}")
-            return AgentTaskResult(
-                agent_id=agent_request.agent_id,
-                agent_name="unknown",
-                agent_type="unknown",
-                status="error",
-                result={},
-                error_message=str(e)
-            )
-
-    def format_agent_result_to_ws_message(self, result: AgentTaskResult) -> WebSocketMessage:
-        if result.status == "TOOL_USE_REQUEST":
-            return WebSocketMessage(
-                type="TOOL_USE_REQUEST",
-                agent_id=result.agent_id,
-                data={
-                    "tool_use_id": result.result.get("tool_use_id"),
-                    "tool_name": result.result.get("tool_name"),
-                    "tool_input": result.result.get("tool_input"),
-                }
-            )
-        elif result.status == "AGENT_COMPLETE":
-            return WebSocketMessage(
-                type="AGENT_COMPLETE",
-                agent_id=result.agent_id,
-                data=result.result  # or filter as needed
-            )
-        elif result.status == "AGENT_ERROR":
             return WebSocketMessage(
                 type="AGENT_FAIL",
-                agent_id=result.agent_id,
-                data={"message": result.error_message or "Unknown error"}
+                agent_id=agent_request.agent_id,
+                data={"message": str(e)}
             )
 
     def determine_event_type(self, formatted_result: Dict[str, Any]) -> str:
@@ -187,37 +104,32 @@ class MultiAgentWebSocketManager:
         elif result_type == "REVIEW_ERROR":
             return "AGENT_ERROR"
         else:
-            return "AGENT_COMPLETE"  # Default to success for other cases
+            return "AGENT_COMPLETE"
 
-    async def process_multi_agent_request(self, agents: List[AgentRequestItem], local_testing_stream_buffer) -> None:
+
+    async def process_request(self, agents: List[AgentRequestItem], local_testing_stream_buffer) -> None:
         """
         Process multiple agent requests in parallel and stream results.
 
+        For single agent: runs directly
+        For multiple agents: implements cache establishing/utilizing pattern
+
         Args:
             agents: List of agent requests to process
+            local_testing_stream_buffer: Buffer for local testing streams
         """
         try:
-            # Create tasks for all agents
-            tasks = []
-            for agent_request in agents:
-                task = asyncio.create_task(
-                    self._execute_and_stream_agent(agent_request, local_testing_stream_buffer)
-                )
-                tasks.append(task)
-
-            # Wait for all tasks to complete
-            completed_tasks = await asyncio.gather(*tasks, return_exceptions=True)
-
-            # Count successful completions (exceptions won't be counted)
-            successful_completions = sum(1 for result in completed_tasks if not isinstance(result, Exception))
-
+            if len(agents) == 1:
+                await self.execute_and_stream_agent(agents[0], local_testing_stream_buffer)
+            else:
+                await self._process_multiple_agents_with_cache_pattern(agents, local_testing_stream_buffer)
 
         except Exception as e:
             AppLogger.log_error(f"Error in process_multi_agent_request: {e}")
             await self.push_to_connection_stream(
                 WebSocketMessage(
-                    type="STREAM_ERROR",
-                    data={"message": f"Multi-agent processing error: {str(e)}"}
+                    type="AGENT_FAIL",
+                    data={"message": f"Agent processing error: {str(e)}"}
                 ), local_testing_stream_buffer
             )
         finally:
@@ -225,7 +137,66 @@ class MultiAgentWebSocketManager:
             if self.aws_client:
                 await self.aws_client.close()
 
-    async def _execute_and_stream_agent(self, agent_request: AgentRequestItem, local_testing_stream_buffer) -> None:
+    async def _process_multiple_agents_with_cache_pattern(self, agents: List[AgentRequestItem],
+                                                          local_testing_stream_buffer) -> None:
+        """
+        Process multiple agents using cache establishing/utilizing pattern.
+
+        Cache establishing agents (SECURITY, CODE_MAINTAINABILITY) run first,
+        followed by cache utilizing agents (all others).
+
+        Args:
+            agents: List of agent requests to process
+            local_testing_stream_buffer: Buffer for local testing streams
+        """
+        try:
+            agent_ids = [agent.agent_id for agent in agents]
+
+            user_agents: List[UserAgentDTO] = await UserAgentRepository.db_get(
+                filters={"id__in": agent_ids, "is_deleted": False}
+            )
+
+            if not user_agents:
+                AppLogger.log_warn(f"No valid user agents found for IDs: {agent_ids}")
+                return
+
+            agent_id_to_name = {user_agent.id: user_agent.agent_name for user_agent in user_agents}
+
+            cache_establishing_agents = []
+            cache_utilizing_agents = []
+
+            for agent_request in agents:
+                agent_name = agent_id_to_name.get(agent_request.agent_id)
+
+                if agent_name in [AgentTypes.SECURITY.value, AgentTypes.CODE_MAINTAINABILITY.value]:
+                    cache_establishing_agents.append(agent_request)
+                else:
+                    cache_utilizing_agents.append(agent_request)
+
+            if cache_establishing_agents:
+                cache_establishing_tasks = [
+                    asyncio.create_task(self.execute_and_stream_agent(agent, local_testing_stream_buffer))
+                    for agent in cache_establishing_agents
+                ]
+                cache_establishing_results = await asyncio.gather(*cache_establishing_tasks, return_exceptions=True)
+
+            if cache_utilizing_agents:
+                cache_utilizing_tasks = [
+                    asyncio.create_task(self.execute_and_stream_agent(agent, local_testing_stream_buffer))
+                    for agent in cache_utilizing_agents
+                ]
+                cache_utilizing_results = await asyncio.gather(*cache_utilizing_tasks, return_exceptions=True)
+
+        except Exception as e:
+            AppLogger.log_error(f"Error in _process_multiple_agents_with_cache_pattern: {e}")
+            await self.push_to_connection_stream(
+                WebSocketMessage(
+                    type="AGENT_FAIL",
+                    data={"message": f"Multi-agent processing error: {str(e)}"}
+                ), local_testing_stream_buffer
+            )
+
+    async def execute_and_stream_agent(self, agent_request: AgentRequestItem, local_testing_stream_buffer) -> None:
         """
         Execute single agent and stream its result.
 
@@ -241,37 +212,21 @@ class MultiAgentWebSocketManager:
                     ), local_testing_stream_buffer
                 )
 
-            # Execute agent task using review_diff
-            result = await self.execute_agent_task(agent_request)
+            agent_ws_message = await self.execute_agent_task(agent_request)
 
-            ws_message = self.format_agent_result_to_ws_message(result)
-
-            # Stream the result
             await self.push_to_connection_stream(
-                ws_message, local_testing_stream_buffer
+                agent_ws_message, local_testing_stream_buffer
             )
 
         except Exception as e:
             AppLogger.log_error(f"Error executing and streaming agent {agent_request.agent_id}: {e}")
-            # Stream error result
             await self.push_to_connection_stream(
                 WebSocketMessage(
                     type="AGENT_FAIL",
                     agent_id=agent_request.agent_id,
                     data={
-                        "agent_id": agent_request.agent_id,
-                        "status": "error",
-                        "error_message": str(e),
-                        "result": {}
+                        "message": str(e),
                     }
                 ), local_testing_stream_buffer
             )
 
-    def get_local_stream_data(self) -> List[str]:
-        """Get local stream data for testing."""
-        return self.local_testing_stream_buffer.get(self.connection_id, [])
-
-    def clear_local_stream_data(self) -> None:
-        """Clear local stream data for testing."""
-        if self.connection_id in self.local_testing_stream_buffer:
-            del self.local_testing_stream_buffer[self.connection_id]

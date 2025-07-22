@@ -48,11 +48,13 @@ class AgentTaskResult(BaseModel):
 
 
 class WebSocketMessage(BaseModel):
-    """WebSocket message structure for agent responses."""
-    type: str  # "AGENT_RESULT", "STREAM_ERROR", "STREAM_START", "STREAM_END"
+    """WebSocket message structure specifically for agent execution results."""
+    type: str
     agent_id: Optional[int] = None
-    data: Dict[str, Any] = {}
+    data: Optional[Dict[str, Any]] = {}
     timestamp: Optional[str] = None
+
+
 
 
 class FileWiseChanges(BaseModel):
