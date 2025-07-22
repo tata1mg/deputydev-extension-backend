@@ -16,7 +16,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
 class SecurityAgent(BaseCommenterAgent):
     is_dual_pass = False
     prompt_features = [
-        PromptFeatures.SECURITY_COMMENTS_GENERATION_PASS_1,
+        PromptFeatures.SECURITY_COMMENTS_GENERATION,
     ]
     agent_type = AgentTypes.SECURITY
 

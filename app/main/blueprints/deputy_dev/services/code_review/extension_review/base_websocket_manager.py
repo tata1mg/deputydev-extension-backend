@@ -79,25 +79,6 @@ class BaseWebSocketManager(ABC):
             local_testing_stream_buffer
         )
 
-    async def send_start_message(self, local_testing_stream_buffer: Dict[str, List[str]]) -> None:
-        """Send start message to websocket connection."""
-        await self.push_to_connection_stream(
-            WebSocketMessage(
-                type="STREAM_START",
-                data={"message": "Processing started"}
-            ),
-            local_testing_stream_buffer
-        )
-
-    async def send_end_message(self, local_testing_stream_buffer: Dict[str, List[str]]) -> None:
-        """Send end message to websocket connection."""
-        await self.push_to_connection_stream(
-            WebSocketMessage(
-                type="STREAM_END",
-                data={"message": "Processing completed"}
-            ),
-            local_testing_stream_buffer
-        )
 
     async def cleanup(self) -> None:
         """Clean up AWS client and other resources."""

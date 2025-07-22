@@ -25,7 +25,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.comments.dataclasses.main import (
     LLMCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
@@ -36,17 +36,13 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.
     NO_TOOL_USE_FALLBACK_PROMPT,
     EXCEPTION_RAISED_FALLBACK_EXTENSION
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_final_response import PARSE_FINAL_RESPONSE
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.tools.tool_request_manager import (
     ToolRequestManager,
-)
-from app.main.blueprints.deputy_dev.services.setting.setting_service import (
-    SettingService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.context.extension_context_service import (
     ExtensionContextService,
 )
-from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 
 
@@ -73,10 +69,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             "confidence_score": user_agent_dto.confidence_score,
         }
 
-        # self.agent_name = SettingService.helper.predefined_name_to_custom_name(self.agent_name)
-        # self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
-        # self.agent_id = self.agent_setting.get("agent_id")
-        # self.display_name = self.agent_setting.get("display_name")
         self.tool_request_manager = ToolRequestManager(context_service=self.context_service)
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
@@ -93,27 +85,11 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             last_pass_comments_str = json.dumps([comment.model_dump(mode="json") for comment in last_pass_comments])
 
         return {
-            "PULL_REQUEST_TITLE": "",
-            "PULL_REQUEST_DESCRIPTION": "",
             "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
-            "REVIEW_COMMENTS_BY_JUNIOR_DEVELOPER": last_pass_comments_str,
-            "USER_STORY": "",
-            "PRODUCT_RESEARCH_DOCUMENT": "",
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
             "AGENT_OBJECTIVE": self.agent_setting.get("objective", ""),
             "CUSTOM_PROMPT": self.agent_setting.get("custom_prompt") or "",
-            "BUCKET": self.agent_setting.get("display_name"),
-            "REPO_INFO_PROMPT": "",
             "AGENT_NAME": self.agent_type.value,
-        }
-
-    def get_additional_info_prompt(self, tokens_info, reflection_iteration):
-        return {
-            "key": self.agent_name,
-            "comment_confidence_score": self.agent_setting.get("confidence_score"),
-            "model": self.model,
-            "tokens": tokens_info,
-            "reflection_iteration": reflection_iteration,
         }
 
     def get_display_name(self):
@@ -235,33 +211,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         if not tool_response:
             raise ValueError("tool_use_response is required in payload")
 
-        # if payload.get("tool_use_response").get("tool_name") == "focused_snippets_searcher":
-        #     tool_response = {
-        #         "chunks": [
-        #             ChunkInfo(**chunk).get_xml()
-        #             for search_response in payload.get("tool_use_response").get("response")["batch_chunks_search"]["response"]
-        #             for chunk in search_response["chunks"]
-        #         ],
-        #     }
-        #
-        # if payload.get("tool_use_response").get("tool_name") == "iterative_file_reader":
-        #     tool_response = {
-        #         "file_content_with_line_numbers": ChunkInfo(**payload.get("tool_use_response").get("response")["data"]["chunk"]).get_xml(),
-        #         "eof_reached": payload.get("tool_use_response").get("response")["data"]["eof_reached"],
-        #     }
-        #
-        # if payload.get("tool_use_response").get("tool_name") == "grep_search":
-        #     tool_response = {
-        #         "matched_contents": "".join(
-        #             [
-        #                 f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
-        #                 for matched_block in payload.get("tool_use_response").get("response")["data"]
-        #             ]
-        #         ),
-        #     }
-
-        # Convert to ToolUseResponseData
-        # tool_response = tool_use_response.get("response")
         tool_name = payload.get("tool_use_response").get("tool_name")
         tool_use_id = payload.get("tool_use_response").get("tool_use_id")
         tool_use_failed = payload.get("type") == "tool_use_failed" or payload.get("tool_use_failed", False)
@@ -309,16 +258,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             )
         )
 
-
-        # tool_use_response = ToolUseResponseData(
-        #     content=ToolUseResponseContent(
-        #         tool_name=tool_use_response["tool_name"],
-        #         tool_use_id=tool_use_response["tool_use_id"],
-        #         response="**Just call parse_final_response tool and provide the Final COMMENTS.**",
-        #         # response=tool_use_response["response"],
-        #     )
-        # )
-
         # Get tools and prompt handler
         prompt_vars = await self.required_prompt_variables()
         prompt_feature = self.prompt_features[0]  # Use first prompt feature for tool responses
@@ -363,8 +302,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         if self.tool_request_manager.is_final_response(llm_response):
             try:
                 final_response = self.tool_request_manager.extract_final_response(llm_response)
-                # Save to DB and return success
-                # TODO Save comments
+
                 await self._save_comments_to_db(final_response)
                 return AgentRunResult(
                     agent_result={"status": "success", "message": "Review completed successfully"},
