@@ -141,6 +141,7 @@ class MessageThreadData(BaseModel):
     llm_model: LLModels
     usage: Optional[LLMUsage] = None
     call_chain_category: MessageCallChainCategory
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class MessageThreadDTO(MessageThreadData):

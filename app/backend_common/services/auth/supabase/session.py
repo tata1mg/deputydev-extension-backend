@@ -13,8 +13,6 @@ from app.backend_common.services.auth.supabase.client import SupabaseClient
 
 
 class SupabaseSession:
-    supabase = SupabaseClient.get_instance()
-
     @classmethod
     async def update_session_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -71,10 +69,10 @@ class SupabaseSession:
         supabase_session_id = headers.get("X-Supabase-Session-Id")
         if not supabase_session_id:
             raise ValueError("No supabase session ID found")
-
+        supabase_client = SupabaseClient.get_public_instance()
         try:
             response = (
-                cls.supabase.table("external_sessions")
+                supabase_client.table("external_sessions")
                 .select("*")
                 .eq("supabase_session_id", supabase_session_id)
                 .single()

@@ -1,9 +1,7 @@
 import json
-from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Tuple
 from datetime import datetime, timezone
-from app.main.blueprints.deputy_dev.models.dto import pr
 from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.constants.auth import AuthStatus
 from jwt import ExpiredSignatureError, InvalidTokenError
