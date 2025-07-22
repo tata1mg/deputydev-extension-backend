@@ -49,7 +49,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
                 llm_response = await llm_handler.start_llm_query(
                     session_id=self.session_id,
                     prompt_feature=PromptFeatures.CHUNK_RE_RANKING,
-                    llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
+                    llm_model=LLModels.GPT_4_POINT_1_MINI,
                     prompt_vars={
                         "query": query,
                         "focus_chunks": render_snippet_array(focus_chunks),
@@ -65,12 +65,16 @@ class LLMBasedChunkReranker(BaseChunkReranker):
             except Exception as e:  # noqa: BLE001
                 AppLogger.log_warn(f"LLM reranking call Attempt {attempt + 1} failed: {e}")
                 await asyncio.sleep(1)  # Optional: add a delay before retrying
-
         # Calculate the duration
         duration = time.perf_counter() - start_time
         AppLogger.log_info(f"Time taken for llm reranking: {duration:.2f} seconds")
-        if response:
-            filtered_chunks: List[str] = response.parsed_content[0]["filtered_chunks"]
-            return self.get_chunks_from_denotation(related_codebase_chunks + focus_chunks, filtered_chunks)
-
-        return []
+        if response and response.parsed_content and isinstance(response.parsed_content, list):
+            try:
+                chunks_source: List[str] = response.parsed_content[0]["chunks_source"]
+            except (IndexError, KeyError, TypeError) as e:
+                AppLogger.log_error(f"Malformed parsed_content in LLM response: {response.parsed_content}, error: {e}")
+                return []
+            return self.get_chunks_from_denotation(related_codebase_chunks + focus_chunks, chunks_source)
+        else:
+            AppLogger.log_warn("Empty or invalid LLM response: No reranked chunks found")
+            return []
