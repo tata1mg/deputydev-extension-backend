@@ -28,6 +28,12 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+    ChatHistoryHandler,
+)
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
+    PreviousChatPayload,
+)
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
     CustomQuerySolverAgent,
@@ -120,6 +126,24 @@ class QuerySolver:
             for response in all_previous_responses
             if response.query_id in previous_query_ids or response.id in previous_query_ids
         ]
+
+    async def get_relevant_chat_history_ids(self, session_id: int, query: str, llm_model: str) -> List[int]:
+        """
+        Fetch relevant chat history IDs for the given query.
+        """
+        try:
+            chat_handler = ChatHistoryHandler(
+                PreviousChatPayload(query=query, session_id=session_id), llm_model=llm_model
+            )
+            response = await chat_handler.get_relevant_previous_chats()
+
+            if response and "chats" in response:
+                history_ids = [chat["id"] for chat in response["chats"]]
+                return history_ids
+
+            return []
+        except Exception:  # noqa : BLE001
+            return []
 
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
         existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
@@ -265,9 +289,10 @@ class QuerySolver:
                 )
             )
 
-            previous_responses = await self.get_previous_message_thread_ids(
-                payload.session_id, payload.previous_query_ids
+            relevant_history_ids = await self.get_relevant_chat_history_ids(
+                session_id=payload.session_id, query=payload.query, llm_model=payload.llm_model.value
             )
+            previous_responses = await self.get_previous_message_thread_ids(payload.session_id, relevant_history_ids)
             last_query_message = await self.get_last_query_message_for_session(payload.session_id)
             all_custom_agents = await self._generate_dynamic_query_solver_agents()
             agent_selector = QuerySolverAgentSelector(

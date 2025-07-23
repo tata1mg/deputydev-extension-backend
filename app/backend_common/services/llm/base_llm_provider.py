@@ -75,3 +75,18 @@ class BaseLLMProvider(ABC):
             Any: The raw response from the LLM.
         """
         raise NotImplementedError()
+
+    async def get_tokens(
+        self,
+        content: str,
+        model: LLModels,
+    ) -> int:
+        """
+        Gets Token count for each model for chat summary reranking
+        Args:
+            content (str): Content whose token count is returned
+            model(LLModels): The LLM model to use
+        Returns:
+            int: Token Count of content
+        """
+        raise NotImplementedError()
