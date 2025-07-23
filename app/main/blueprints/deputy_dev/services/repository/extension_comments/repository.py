@@ -33,6 +33,13 @@ class ExtensionCommentRepository:
     async def update_comments(cls, comment_ids, data):
         if comment_ids and data:
             await IdeReviewsComments.filter(id__in=comment_ids).update(**data)
+    
+    @classmethod
+    async def update_comment(cls, comment_id, data):
+        if comment_id and data:
+            print("comment_id", comment_id)
+            print("data", data)
+            await IdeReviewsComments.filter(id=comment_id).update(**data)
 
     @classmethod
     async def insert_comments(cls, comments: list[IdeReviewsCommentDTO]):

@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, validator
 from enum import Enum
-
+from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
 
 class RequestType(str, Enum):
     """Request types for multi-agent review API."""
@@ -74,3 +74,13 @@ class ReviewRequest(BaseModel):
     target_commit: str
     diff_attachment_id: Optional[str] = None
     file_wise_diff: List[FileWiseChanges]
+
+
+class CommentUpdateRequest(BaseModel):
+    id: int
+    comment_status: IdeReviewCommentStatus
+
+class GetRepoIdRequest(BaseModel):
+    repo_name: str
+    origin_url: str
+    
