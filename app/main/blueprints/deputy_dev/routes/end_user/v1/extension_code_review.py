@@ -79,7 +79,7 @@ async def pre_process_extension_review(request: Request, auth_data: AuthData, **
         data = request.json
         processor = ExtensionReviewPreProcessor()
         review_dto = await processor.pre_process_pr(
-            data, 
+            data,
             user_team_id=auth_data.user_team_id,
             )
         return send_response(review_dto)
@@ -504,7 +504,7 @@ async def update_comment_status(request: Request, auth_data: AuthData, **kwargs)
     """
     try:
         query_params = request.request_params()
-        comment_id = query_params.get("id")
+        comment_id = query_params.get("comment_id")
         status = query_params.get("status")
         comment_update_request = CommentUpdateRequest(id=comment_id, comment_status=status)
         if not comment_id:
