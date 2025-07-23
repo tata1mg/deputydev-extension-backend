@@ -1,4 +1,5 @@
 import asyncio
+import json
 from typing import Dict, List, Tuple
 
 from deputydev_core.utils.config_manager import ConfigManager
@@ -39,12 +40,16 @@ class ChatHistoryHandler:
 
     def _get_entire_chat_content(self, chat: PreviousChats) -> str:
         # Get responses for this chat
-        responses = self._get_responses_data_for_previous_chats(chat.id)
-        responses_text = "\n".join(responses) if responses else ""
+        responses_approx_text = self._get_approx_responses_text(chat.id)
+
+        query_approx_text = ""
+        for query_id, (query_message_thread, _non_query_message_threads, _query_summary) in self.data_map.items():
+            if query_id == chat.id:
+                query_approx_text = json.dumps(query_message_thread.message_data[0].content.model_dump(mode="json"))
 
         # Combine query, summary, and responses
-        chat_content = f"Query: {chat.query}\nSummary: {chat.summary}\nResponses: {responses_text}"
-        return chat_content
+        chat_content_approx = responses_approx_text + query_approx_text
+        return chat_content_approx
 
     def _estimate_chats_character_count(self, chats: List[PreviousChats]) -> int:
         total_chars = 0
@@ -62,10 +67,10 @@ class ChatHistoryHandler:
 
         # Get character limits from config
         char_limit_high = ConfigManager.configs["LLM_MODELS"][self.current_model.value]["LIMITS"][
-            "CHARACTER_LIMIT_HIGH"
+            "UNSAFE_HISTORY_CHARACTER_LIMIT"
         ]
         char_limit_safe = ConfigManager.configs["LLM_MODELS"][self.current_model.value]["LIMITS"][
-            "CHARACTER_LIMIT_SAFE"
+            "SAFE_HISTORY_CHARACTER_LIMIT"
         ]
 
         # If above character limit, surely rerank
@@ -79,6 +84,7 @@ class ChatHistoryHandler:
         # If in between, count tokens of entire chat and then decide
         return RerankerDecision.NEED_TO_CHECK_TOKENS
 
+    # TODO: This is a temp workaround, need to make this better and handle via the specific prompt handlers
     async def filter_chat_summaries(self) -> List[int]:
         if not self.previous_chats:
             return []
@@ -98,7 +104,7 @@ class ChatHistoryHandler:
 
         else:  # RerankerDecision.NEED_TO_CHECK_TOKENS case
             # Get precise token count and make decision
-            token_limit = ConfigManager.configs["LLM_MODELS"][self.current_model]["LIMITS"]["CHARACTER_LIMIT_SAFE"]
+            token_limit = ConfigManager.configs["LLM_MODELS"][self.current_model]["LIMITS"]["SAFE_HISTORY_TOKEN_LIMIT"]
             complete_content: str = ""
             for chat in self.previous_chats:
                 complete_content += self._get_entire_chat_content(chat)
@@ -137,17 +143,15 @@ class ChatHistoryHandler:
             else:
                 continue
 
-    def _get_responses_data_for_previous_chats(self, query_id: int) -> List[str]:
+    def _get_approx_responses_text(self, query_id: int) -> str:
         _query_message_thread, non_query_message_threads, _query_summary = self.data_map[query_id]
-        responses: List[str] = []
+        message_data_text: str = ""
         for message_thread in non_query_message_threads:
-            if (
-                message_thread.message_data
-                and message_thread.message_data[0]
-                and isinstance(message_thread.message_data[0], TextBlockData)
-            ):
-                responses.append(message_thread.message_data[0].content.text)
-        return responses
+            if message_thread.message_data:
+                message_data_text = json.dumps(
+                    [message_data.model_dump(mode="json") for message_data in message_thread.message_data]
+                )
+        return message_data_text
 
     async def get_relevant_previous_chats(self) -> List[MessageThreadDTO]:
         # Fetch both query summaries and message threads concurrently
