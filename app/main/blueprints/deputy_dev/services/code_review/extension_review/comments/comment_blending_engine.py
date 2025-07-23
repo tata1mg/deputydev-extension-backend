@@ -42,14 +42,15 @@ class CommentBlendingEngine:
         self.MAX_RETRIES = 2
         self.agent_results: Dict[str, list[LLMCommentData]] = {}
         self.session_id = session_id
+        self.review_title = "Code Quality and Functionality Review"
 
     async def blend_comments(self) -> tuple[list[ParsedCommentData], dict[str, list], str]:
         # this function can contain other operations in future
         self.apply_agent_confidence_score_limit()
         await self.validate_comments()
-        review_title = await self.process_all_comments()
+        await self.process_all_comments()
         self.filtered_comments.extend(self.invalid_comments)
-        return self.filtered_comments, self.agent_results, review_title
+        return self.filtered_comments, self.agent_results, self.review_title
 
     def apply_agent_confidence_score_limit(self) -> None:
         """
@@ -125,6 +126,7 @@ class CommentBlendingEngine:
                     raise ValueError("Agent result is None")
 
                 self.filtered_comments = self.extract_validated_comments(agent_result.agent_result)
+                self.review_title = agent_result.agent_result.get("title")
                 return
 
             except json.JSONDecodeError as e:
@@ -253,7 +255,6 @@ class CommentBlendingEngine:
             )
             agent_result = await comment_summarization_agent.run_agent(session_id=self.session_id)
             self.agent_results[agent_result.agent_name] = agent_result
-            review_title = agent_result.agent_result["title"]
             if agent_result.prompt_tokens_exceeded:  # Case when we exceed tokens of gpt
                 return
 
@@ -280,4 +281,4 @@ class CommentBlendingEngine:
                     )
                 )
             self.filtered_comments = processed_comments
-            return review_title
+            return
