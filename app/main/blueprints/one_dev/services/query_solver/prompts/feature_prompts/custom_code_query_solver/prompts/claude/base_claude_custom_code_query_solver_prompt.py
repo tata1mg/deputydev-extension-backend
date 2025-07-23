@@ -26,13 +26,6 @@ class BaseClaudeQuerySolverPrompt:
         self.params = params
 
     def get_system_prompt(self) -> str:
-        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
-        file_path = "use absolute path here" if use_absolute_path else "relative file path here"
-        file_path_example = (
-            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
-            if use_absolute_path
-            else "src/tools/grep_search.py"
-        )
         if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(f"""
                 You are DeputyDev, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
@@ -63,7 +56,7 @@ class BaseClaudeQuerySolverPrompt:
                 Usage: 
                 <code_block>
                 <programming_language>programming Language name</programming_language>
-                <file_path>{file_path}</file_path>
+                <file_path>use absolute path here</file_path>
                 <is_diff>false(always false)</is_diff>
                 code here
                 </code_block>
@@ -72,7 +65,7 @@ class BaseClaudeQuerySolverPrompt:
                 ## Example of code block:
                 <code_block>
                 <programming_language>python</programming_language>
-                <file_path>{file_path_example}</file_path>
+                <file_path>/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py</file_path>
                 <is_diff>false</is_diff>
                 def some_function():
                     return "Hello, World!"
