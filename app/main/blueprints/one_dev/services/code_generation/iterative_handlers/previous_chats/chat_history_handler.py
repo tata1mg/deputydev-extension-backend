@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 
 from deputydev_core.utils.config_manager import ConfigManager
 
@@ -31,11 +31,11 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 
 
 class ChatHistoryHandler:
-    def __init__(self, previous_chat_payload: PreviousChatPayload, llm_model: str) -> None:
+    def __init__(self, previous_chat_payload: PreviousChatPayload, llm_model: LLModels) -> None:
         self.payload = previous_chat_payload
         self.previous_chats: List[PreviousChats] = []
         self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO]] = {}
-        self.current_model: str = llm_model
+        self.current_model: LLModels = llm_model
 
     def _get_entire_chat_content(self, chat: PreviousChats) -> str:
         # Get responses for this chat
@@ -61,8 +61,12 @@ class ChatHistoryHandler:
         total_chars = self._estimate_chats_character_count(chats)
 
         # Get character limits from config
-        char_limit_high = ConfigManager.configs["LLM_MODELS"][self.current_model]["LIMITS"]["CHARACTER_LIMIT_HIGH"]
-        char_limit_safe = ConfigManager.configs["LLM_MODELS"][self.current_model]["LIMITS"]["CHARACTER_LIMIT_SAFE"]
+        char_limit_high = ConfigManager.configs["LLM_MODELS"][self.current_model.value]["LIMITS"][
+            "CHARACTER_LIMIT_HIGH"
+        ]
+        char_limit_safe = ConfigManager.configs["LLM_MODELS"][self.current_model.value]["LIMITS"][
+            "CHARACTER_LIMIT_SAFE"
+        ]
 
         # If above character limit, surely rerank
         if total_chars >= char_limit_high:
@@ -99,7 +103,7 @@ class ChatHistoryHandler:
             for chat in self.previous_chats:
                 complete_content += self._get_entire_chat_content(chat)
             handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
-            precise_token_count = await handler.get_token_count(complete_content, LLModels(self.current_model))
+            precise_token_count = await handler.get_token_count(complete_content, self.current_model)
             if precise_token_count <= token_limit:
                 # We can fit all chats within the limit
                 return [chat.id for chat in self.previous_chats]
@@ -145,22 +149,17 @@ class ChatHistoryHandler:
                 responses.append(message_thread.message_data[0].content.text)
         return responses
 
-    async def get_relevant_previous_chats(self) -> Dict[str, List[Dict[str, Union[str, int, List[str]]]]]:
+    async def get_relevant_previous_chats(self) -> List[MessageThreadDTO]:
         # Fetch both query summaries and message threads concurrently
-        gathered_result = await asyncio.gather(
-            *[
-                QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
-                MessageThreadsRepository.get_message_threads_for_session(
-                    session_id=self.payload.session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
-                ),
-            ]
+        all_session_query_summaries, all_query_message_threads = await asyncio.gather(
+            QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
+            MessageThreadsRepository.get_message_threads_for_session(
+                session_id=self.payload.session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
+            ),
         )
 
-        all_session_query_summaries: List[QuerySummaryDTO] = gathered_result[0]  # type: ignore
-        all_query_message_threads: List[MessageThreadDTO] = gathered_result[1]  # type: ignore
-
         if not all_session_query_summaries:
-            return {"chats": []}
+            return []
 
         # Sort and limit to latest 10 queries
         all_session_query_summaries.sort(key=lambda x: x.query_id, reverse=False)
@@ -191,16 +190,10 @@ class ChatHistoryHandler:
         # this will keep max 5 most relevant chats
         filtered_query_ids = await self.filter_chat_summaries()
 
-        if not filtered_query_ids:
-            return {"chats": []}
-        response: List[Dict[str, Union[str, int, List[str]]]] = []
-        for chat in self.previous_chats:
-            if chat.id in filtered_query_ids:
-                response.append(
-                    {
-                        "id": chat.id,
-                        "response": self._get_responses_data_for_previous_chats(chat.id),
-                        "query": chat.query,
-                    }
-                )
-        return {"chats": response}
+        all_query_message_threads.sort(key=lambda x: x.id, reverse=False)
+
+        return [
+            response
+            for response in all_query_message_threads
+            if response.query_id in filtered_query_ids or response.id in filtered_query_ids
+        ]
