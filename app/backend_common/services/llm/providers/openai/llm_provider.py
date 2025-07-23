@@ -305,7 +305,7 @@ class OpenAI(BaseLLMProvider):
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
-        response_type: Literal["text", "json_object", "json_schema"] = "text",
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         parallel_tool_calls: bool = True,
         text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
@@ -318,6 +318,8 @@ class OpenAI(BaseLLMProvider):
         Returns:
             str: The response from the GPT model.
         """
+        if not response_type:
+            response_type = "text"
         model_config = self._get_model_config(model)
         stream_id = str(uuid.uuid4())
         if stream:

@@ -279,8 +279,9 @@ class BaseGeminiCodeQuerySolverPrompt:
             Also, please use the tools provided to you to help you with the task.
 
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
+            Even if the chat is just talking, then also provide summary                          
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+            Send the summary like <summary>what was done</summary>
 
             Here is the user's query for editing - {self.params.get("query")}
             """)
@@ -354,8 +355,9 @@ class BaseGeminiCodeQuerySolverPrompt:
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
+            Even if the chat is just talking, then also provide summary 
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+            Send the summary like <summary>what was done</summary>
 
             User Query: {self.params.get("query")}
             """)
