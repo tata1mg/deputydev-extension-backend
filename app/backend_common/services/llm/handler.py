@@ -1056,3 +1056,7 @@ class LLMHandler(Generic[PromptFeatures]):
             stream=stream,
             parallel_tool_calls=False,
         )
+
+    async def get_token_count(self, content: str, llm_model: LLModels) -> int:
+        provider = self.model_to_provider_class_map[llm_model]()
+        return await provider.get_tokens(content=content, model=llm_model)
