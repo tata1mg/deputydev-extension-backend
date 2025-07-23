@@ -1,8 +1,9 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Type
 
 from deputydev_core.utils.config_manager import ConfigManager
+from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -63,6 +64,7 @@ class BaseLLMProvider(ABC):
         stream: bool = False,
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the LLM service client.

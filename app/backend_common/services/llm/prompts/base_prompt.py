@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional, Type
 
 from pydantic import BaseModel
 
@@ -39,4 +39,8 @@ class BasePrompt(ABC):
     @classmethod
     @abstractmethod
     async def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[BaseModel]:
+        raise NotImplementedError("This method must be implemented in the child class")
+
+    @classmethod
+    def get_text_format(cls) -> Type[BaseModel]:
         raise NotImplementedError("This method must be implemented in the child class")
