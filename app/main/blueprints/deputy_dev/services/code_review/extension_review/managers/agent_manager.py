@@ -53,7 +53,7 @@ class AgentManager:
         """
         # Implementation to create an agent
         agent = UserAgentDTO(
-            agent_name=agent_params.name,
+            agent_name=agent_params.agent_name,
             display_name=agent_params.name,
             user_team_id=agent_params.user_team_id,
             custom_prompt=agent_params.custom_prompt,
