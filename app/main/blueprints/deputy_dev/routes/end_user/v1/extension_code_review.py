@@ -36,6 +36,7 @@ from app.main.blueprints.one_dev.utils.session import get_valid_session_data
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import WebSocketMessage, \
     MultiAgentReviewRequest, AgentRequestItem
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.post_proces_web_socket_manager import PostProcessWebSocketManager
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import CommentUpdateRequest, GetRepoIdRequest
 
 extension_code_review = Blueprint("ide_code_review", "/extension-code-review")
 
@@ -488,4 +489,46 @@ async def cancel_review(request: Request, auth_data: AuthData, **kwargs):
         return send_response(data)
     except Exception as e:
         AppLogger.log_error(f"Error generating fix query: {e}")
+        return send_response({"status": "ERROR", "message": str(e)})
+
+
+@extension_code_review.route("/update-comment-status", methods=["POST"])
+@validate_client_version
+@authenticate
+async def update_comment_status(request: Request, auth_data: AuthData, **kwargs):
+    """
+    Generate a query to fix a specific comment in the code review.
+
+    Query parameters:
+    - comment_id: The ID of the comment to fix
+    """
+    try:
+        query_params = request.request_params()
+        comment_id = query_params.get("id")
+        status = query_params.get("status")
+        comment_update_request = CommentUpdateRequest(id=comment_id, comment_status=status)
+        if not comment_id:
+            raise ValueError("Missing required parameters: comment_id")
+
+        # Generate the fix query
+        manager = ExtensionCodeReviewHistoryManager()
+        data = await manager.update_comment_status(comment_update_request)
+        return send_response(data)
+    except Exception as e:
+        AppLogger.log_error(f"Error updating comment status: {e}")
+        return send_response({"status": "ERROR", "message": str(e)})
+
+
+@extension_code_review.route("/get-repo-id", methods=["GET"])
+@validate_client_version
+@authenticate
+async def get_repo_id(request: Request, auth_data: AuthData, **kwargs):
+    try:
+        query_params = request.request_params()
+        data = GetRepoIdRequest(**query_params)
+        processor = ExtensionReviewPreProcessor()
+        repo_dto = await processor.get_repo_id(data, auth_data.user_team_id)
+        return send_response({"repo_id": repo_dto.id})
+    except Exception as e:
+        AppLogger.log_error(f"Error getting repo id: {e}")
         return send_response({"status": "ERROR", "message": str(e)})
