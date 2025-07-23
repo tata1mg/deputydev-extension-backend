@@ -550,7 +550,7 @@ class Google(BaseLLMProvider):
         model: LLModels,
     ) -> int:
         model_config = self._get_model_config(model)  # Get your internal config
-        vertex_model_name = model_config.get("NAME")
+        vertex_model_name = model_config["NAME"]
         client = GeminiServiceClient()
         tokens = await client.get_tokens(content, vertex_model_name)
         return tokens
