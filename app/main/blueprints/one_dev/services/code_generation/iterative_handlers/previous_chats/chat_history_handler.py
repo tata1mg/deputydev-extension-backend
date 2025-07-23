@@ -104,7 +104,9 @@ class ChatHistoryHandler:
 
         else:  # RerankerDecision.NEED_TO_CHECK_TOKENS case
             # Get precise token count and make decision
-            token_limit = ConfigManager.configs["LLM_MODELS"][self.current_model]["LIMITS"]["SAFE_HISTORY_TOKEN_LIMIT"]
+            token_limit = ConfigManager.configs["LLM_MODELS"][self.current_model.value]["LIMITS"][
+                "SAFE_HISTORY_TOKEN_LIMIT"
+            ]
             complete_content: str = ""
             for chat in self.previous_chats:
                 complete_content += self._get_entire_chat_content(chat)
