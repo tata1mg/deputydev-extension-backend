@@ -6,8 +6,8 @@ from app.backend_common.models.dto.message_thread_dto import LLModels, MessageDa
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
 
-class BaseGpt4Point1Prompt(BasePrompt):
-    model_name = LLModels.GPT_4_POINT_1
+class BaseGpt4Point1MiniPrompt(BasePrompt):
+    model_name = LLModels.GPT_4_POINT_1_MINI
 
     @classmethod
     def get_parsed_response_blocks(cls, response_block: List[MessageData]) -> List[Dict[str, Any]]:

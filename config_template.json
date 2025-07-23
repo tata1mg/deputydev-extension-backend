@@ -446,7 +446,21 @@
         },
         "GPT_4_POINT_1": {
             "NAME": "gpt-4.1",
-            "PROVIDER": "GOOGLE",
+            "PROVIDER": "OPENAI",
+            "MAX_TOKENS": 20000,
+            "INPUT_TOKENS_LIMIT": 200000,
+            "STREAM_BATCH_SIZE": 10
+        },
+        "GPT_4_POINT_1_MINI": {
+            "NAME": "gpt-4.1-mini",
+            "PROVIDER": "OPENAI",
+            "MAX_TOKENS": 20000,
+            "INPUT_TOKENS_LIMIT": 200000,
+            "STREAM_BATCH_SIZE": 10
+        },
+        "GPT_4_POINT_1_NANO": {
+            "NAME": "gpt-4.1-nano",
+            "PROVIDER": "OPENAI",
             "MAX_TOKENS": 20000,
             "INPUT_TOKENS_LIMIT": 200000,
             "STREAM_BATCH_SIZE": 10,
