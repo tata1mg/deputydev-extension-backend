@@ -20,8 +20,8 @@ class UserQueryEnhancer:
         enhanced_query = None
 
         for response in parsed_llm_response:
-            if response.get("enhanced_query"):
-                enhanced_query = response["enhanced_query"]
+            if response.get("enhanced_prompt"):
+                enhanced_query = response["enhanced_prompt"]
                 break
 
         return {
