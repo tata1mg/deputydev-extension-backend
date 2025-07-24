@@ -144,7 +144,7 @@ class BaseGeminiCodeQuerySolverPrompt:
                 """.format(
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
-                    )
+                    ),
                 )
             )
         else:
