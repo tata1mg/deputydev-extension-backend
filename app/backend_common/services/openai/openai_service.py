@@ -52,8 +52,6 @@ class OpenAIManager(BaseClient):
     def get_cache_prefix(self) -> str:
         repo_name: Optional[str] = identifier.get(None)
         team_id = get_context_value("team_id")
-        if repo_name is None or team_id is None:
-            logger.error("Missing repo_name or team_id for cache key!")
         if team_id == 1:
             # TODO added this check for backward compatibility and needs to be removed
             prefix_key = repo_name
