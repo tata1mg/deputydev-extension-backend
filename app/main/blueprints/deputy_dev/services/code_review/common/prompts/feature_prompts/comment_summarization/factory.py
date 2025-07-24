@@ -6,11 +6,11 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
-from .gpt_4o import GPT4OCommentSummarizationPrompt
+from .gpt_4_point_1 import GPT4Point1CommentSummarizationPrompt
 
 
 class CommentSummarizationPromptFactory(BaseFeaturePromptFactory):
-    prompts = {LLModels.GPT_4O: GPT4OCommentSummarizationPrompt}
+    prompts = {LLModels.GPT_4_POINT_1: GPT4Point1CommentSummarizationPrompt}
 
     @classmethod
     def get_prompt(cls, model_name: LLModels) -> Type[BasePrompt]:
