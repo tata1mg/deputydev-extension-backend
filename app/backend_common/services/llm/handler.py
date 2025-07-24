@@ -164,6 +164,7 @@ class LLMHandler(Generic[PromptFeatures]):
         llm_model: LLModels,
         query_id: int,
         call_chain_category: MessageCallChainCategory,
+        previous_responses: List[MessageThreadDTO],
     ) -> None:
         response_to_use: NonStreamingResponse
         if llm_response.type == LLMCallResponseTypes.STREAMING:
@@ -178,7 +179,8 @@ class LLMHandler(Generic[PromptFeatures]):
             actor=MessageThreadActor.ASSISTANT,
             query_id=query_id,
             message_type=MessageType.RESPONSE,
-            conversation_chain=[],
+            conversation_chain=[message.id for message in previous_responses]
+            + ([query_id] if query_id not in [message.id for message in previous_responses] else []),
             message_data=data_to_store,
             data_hash=data_hash,
             llm_model=llm_model,
@@ -467,6 +469,7 @@ class LLMHandler(Generic[PromptFeatures]):
                         llm_model=llm_model,
                         query_id=query_id,
                         call_chain_category=call_chain_category,
+                        previous_responses=previous_responses,
                     )
                 )
 
@@ -788,8 +791,7 @@ class LLMHandler(Generic[PromptFeatures]):
         detected_llm: Optional[LLModels] = None
         detected_prompt_handler: Optional[BasePrompt] = None
         main_query_id: int = 0
-        selected_prev_query_ids = []
-        tool_use_request_message_ids = []
+        tool_use_request_message_ids: List[int] = []
 
         # Get tool use IDs from responses
         tool_use_ids = {resp.content.tool_use_id for resp in tool_use_responses}
@@ -800,14 +802,13 @@ class LLMHandler(Generic[PromptFeatures]):
                     tool_use_request_message_ids.append(message.id)
                     if not detected_llm:
                         detected_llm = message.llm_model
-                        if message.message_type == MessageType.QUERY:
-                            main_query_id = message.id
-                            selected_prev_query_ids = message.conversation_chain
-                        elif message.query_id:
+                    if not main_query_id:
+                        if message.query_id:
                             main_query_id = message.query_id
                         else:
                             raise ValueError("Main query id not found")
 
+                    if not detected_prompt_handler:
                         detected_prompt_handler = self.prompt_handler_map.get_prompt(
                             model_name=detected_llm, feature=self.prompt_features(message.prompt_type)
                         )(prompt_vars)
@@ -820,15 +821,18 @@ class LLMHandler(Generic[PromptFeatures]):
 
         # Find the latest tool use request message ID for context
         latest_message_id = max(tool_use_request_message_ids)
+        latest_message = next(
+            (message for message in session_messages if message.id == latest_message_id),
+            None,
+        )
+
+        if not latest_message:
+            raise ValueError("Latest message not found")
 
         conversation_chain_messages = [
             message
             for message in session_messages
-            if message.id <= latest_message_id
-            and (
-                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
-                or not selected_prev_query_ids
-            )
+            if ((message.id in latest_message.conversation_chain) or message.id in tool_use_request_message_ids)
         ]
         # Store all tool responses in DB
         storage_tasks = [
@@ -929,7 +933,6 @@ class LLMHandler(Generic[PromptFeatures]):
         detected_llm: Optional[LLModels] = None
         tool_use_request_message_id = None
         detected_prompt_handler: Optional[BasePrompt] = None
-        selected_prev_query_ids = []
         main_query_id: int = 0
         for message in filtered_messages:
             for data in message.message_data:
@@ -938,10 +941,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     and data.content.tool_use_id == tool_use_response.content.tool_use_id
                 ):
                     tool_use_request_message_id = message.id
-                    if message.message_type == MessageType.QUERY:
-                        main_query_id = message.id
-                        selected_prev_query_ids = message.conversation_chain
-                    elif message.query_id:
+                    if message.query_id:
                         main_query_id = message.query_id
                     else:
                         raise ValueError("Main query id not found")
@@ -960,14 +960,18 @@ class LLMHandler(Generic[PromptFeatures]):
         if not detected_prompt_handler:
             raise ValueError("Prompt handler not found for prompt type")
 
+        tool_use_request_message = next(
+            (message for message in session_messages if message.id == tool_use_request_message_id),
+            None,
+        )
+
+        if not tool_use_request_message:
+            raise ValueError("No tool use request message found")
+
         conversation_chain_messages = [
             message
             for message in session_messages
-            if message.id <= tool_use_request_message_id
-            and (
-                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
-                or not selected_prev_query_ids
-            )
+            if message.id in tool_use_request_message.conversation_chain or message.id == tool_use_request_message.id
         ]
 
         await self.store_tool_use_ressponse_in_db(
