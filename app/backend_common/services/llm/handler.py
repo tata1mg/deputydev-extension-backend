@@ -79,6 +79,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GEMINI_2_POINT_5_PRO: Google,
         LLModels.GEMINI_2_POINT_0_FLASH: Google,
         LLModels.GEMINI_2_POINT_5_FLASH: Google,
+        LLModels.GEMINI_2_POINT_5_FLASH_LITE: Google,
         LLModels.GPT_4_POINT_1: OpenAI,
         LLModels.GPT_4_POINT_1_NANO: OpenAI,
         LLModels.GPT_4_POINT_1_MINI: OpenAI,
