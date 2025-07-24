@@ -1,10 +1,11 @@
 import asyncio
 import json
 import uuid
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type
 
 from deputydev_core.utils.app_logger import AppLogger
 from google.genai import types as google_genai_types
+from pydantic import BaseModel
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.caches.code_gen_tasks_cache import (
@@ -362,7 +363,7 @@ class Google(BaseLLMProvider):
                     except Exception:  # noqa: BLE001
                         pass
             except Exception as e:  # noqa: BLE001
-                AppLogger.log_error(f"Streaming Error in Goggle: {e}")
+                AppLogger.log_error(f"Streaming Error in Google: {e}")
             finally:
                 if self.checker:
                     await self.checker.stop_monitoring()
@@ -501,6 +502,7 @@ class Google(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the Vertex AI service client.
@@ -541,3 +543,14 @@ class Google(BaseLLMProvider):
                 max_output_tokens=max_output_tokens,
             )
             return self._parse_non_streaming_response(response)
+
+    async def get_tokens(
+        self,
+        content: str,
+        model: LLModels,
+    ) -> int:
+        model_config = self._get_model_config(model)  # Get your internal config
+        vertex_model_name = model_config["NAME"]
+        client = GeminiServiceClient()
+        tokens = await client.get_tokens(content, vertex_model_name)
+        return tokens

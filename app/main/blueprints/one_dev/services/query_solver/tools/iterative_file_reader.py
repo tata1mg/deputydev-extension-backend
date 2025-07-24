@@ -20,6 +20,7 @@ ITERATIVE_FILE_READER = ConversationTool(
         If unsure about the range of lines to read, it is recommended to start with a summary, i.e. not providing `start_line` and `end_line` parameters, which will return a summary of the file.
 
         The response will EXPLICITLY mention if the end of the file is reached or not.
+        Make sure to NOT run this tool for a directory
     """),
     input_schema=JSONSchema(
         type="object",
