@@ -58,9 +58,9 @@ class AgentFactory:
         AgentTypes.ERROR: LLModels.CLAUDE_3_POINT_7_SONNET,
         AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_3_POINT_7_SONNET,
         AgentTypes.SECURITY: LLModels.CLAUDE_3_POINT_7_SONNET,
-        AgentTypes.PR_SUMMARY: LLModels.GPT_4O,
-        AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4O,
-        AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4O,
+        AgentTypes.PR_SUMMARY: LLModels.GPT_4_POINT_1,
+        AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4_POINT_1,
+        AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4_POINT_1,
         AgentTypes.CUSTOM_COMMENTER_AGENT: LLModels.CLAUDE_3_POINT_7_SONNET
     }
 

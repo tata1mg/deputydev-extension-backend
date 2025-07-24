@@ -9,13 +9,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
-    BaseGPT4OPrompt,
+    BaseGPT4POINT1Prompt,
 )
 
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 
 
-class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
+class GPT4Point1CommentSummarizationPrompt(BaseGPT4POINT1Prompt):
     prompt_type = PromptFeatures.COMMENT_SUMMARIZATION.value
     prompt_category = PromptCategories.CODE_REVIEW.value
     response_type = "json_object"
