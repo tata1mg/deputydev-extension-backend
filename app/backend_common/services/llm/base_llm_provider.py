@@ -1,8 +1,9 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Type
 
 from deputydev_core.utils.config_manager import ConfigManager
+from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -63,6 +64,7 @@ class BaseLLMProvider(ABC):
         stream: bool = False,
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the LLM service client.
@@ -73,5 +75,20 @@ class BaseLLMProvider(ABC):
             response_type (str): The type of response expected ("text", "json").
         Returns:
             Any: The raw response from the LLM.
+        """
+        raise NotImplementedError()
+
+    async def get_tokens(
+        self,
+        content: str,
+        model: LLModels,
+    ) -> int:
+        """
+        Gets Token count for each model for chat summary reranking
+        Args:
+            content (str): Content whose token count is returned
+            model(LLModels): The LLM model to use
+        Returns:
+            int: Token Count of content
         """
         raise NotImplementedError()

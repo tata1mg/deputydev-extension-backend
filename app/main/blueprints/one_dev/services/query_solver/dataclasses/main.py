@@ -138,7 +138,7 @@ class InlineEditInput(BaseModel):
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
     relevant_chunks: List[Any] = []
-    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_7_SONNET
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805

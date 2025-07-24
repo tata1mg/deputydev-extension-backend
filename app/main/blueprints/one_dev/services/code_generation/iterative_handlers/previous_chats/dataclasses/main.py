@@ -1,4 +1,12 @@
+from enum import Enum
+
 from pydantic import BaseModel
+
+
+class RerankerDecision(Enum):
+    SAFE_TO_HANDLE = "SAFE_TO_HANDLE"
+    UNSAFE_TO_HANDLE = "UNSAFE_TO_HANDLE"
+    NEED_TO_CHECK_TOKENS = "NEED_TO_CHECK_TOKENS"
 
 
 class PreviousChatPayload(BaseModel):
