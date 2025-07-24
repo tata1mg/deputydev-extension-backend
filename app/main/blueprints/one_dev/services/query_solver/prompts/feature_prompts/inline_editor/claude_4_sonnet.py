@@ -36,11 +36,11 @@ class Claude4InlineEditorPrompt(BaseClaude4SonnetPromptHandler):
             - path: (required) The path of the file to modify relative to the current working directory
             - diff: (required) One or more SEARCH/REPLACE blocks following this exact format:
 
-            <<<<<<< SEARCH
+            ------- SEARCH
             [exact content to find]
             =======
             [new content to replace with]
-            >>>>>>> REPLACE
+            +++++++ REPLACE
 
             
 
@@ -49,11 +49,11 @@ class Claude4InlineEditorPrompt(BaseClaude4SonnetPromptHandler):
             tool name: replace_in_file
             path: File path here
             diff:
-            <<<<<<< SEARCH
+            ------- SEARCH
             [exact content to find]
             =======
             [new content to replace with]
-            >>>>>>> REPLACE
+            +++++++ REPLACE
 
             ## focused_snippets_searcher
             Description: Search the codebase for specific code definitions or snippets based on a given class name, function name, or file name. View the content of a code item node, such as a class or a function in a file using a fully qualified code item name. Use this tool to retrieve relevant code snippets that contain or define the specified search terms. You can provide multiple search terms at once, and the tool will return the most relevant code snippets for each. The search can be good for finding specific code snippets related to a class, function, or file in the codebase, and therefore should ideally be used to search for specific code snippets rather than general code search queries. Also, it works best when there is ground truth in the search term, i.e. the search term is valid class, function or file name in the codebase (for eg. search terms directly picked from the relevant code snippets). If search term is not valid in the codebase, it would basically work as a lexical search and return the code snippets containing the search term or containing similar terms.
@@ -80,22 +80,22 @@ class Claude4InlineEditorPrompt(BaseClaude4SonnetPromptHandler):
             tool name: replace_in_file
             path: src/components/App.tsx
             diff:
-            <<<<<<< SEARCH
+            ------- SEARCH
             import React from 'react';
             =======
             import React, { useState } from 'react';
-            >>>>>>> REPLACE
+            +++++++ REPLACE
 
-            <<<<<<< SEARCH
+            ------- SEARCH
             function handleSubmit() {
             saveData();
             setLoading(false);
             }
 
             =======
-            >>>>>>> REPLACE
+            +++++++ REPLACE
 
-            <<<<<<< SEARCH
+            ------- SEARCH
             return (
             <div>
             =======
@@ -106,7 +106,7 @@ class Claude4InlineEditorPrompt(BaseClaude4SonnetPromptHandler):
 
             return (
             <div>
-            >>>>>>> REPLACE
+            +++++++ REPLACE
 
 
             ## Example 2: Requesting to search for specific code snippets
