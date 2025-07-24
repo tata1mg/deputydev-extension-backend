@@ -51,7 +51,7 @@ class BaseGeminiCodeQuerySolverPrompt:
 
                 1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
                 2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                3. {parallel_tool_use_guidelines}
+                3. If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
                 4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
                 5. Information about whether the tool succeeded or failed, along with any reasons for failure.
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
@@ -154,9 +154,6 @@ class BaseGeminiCodeQuerySolverPrompt:
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
                     ),
-                    parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
-                    if self.params.get("parallel_tool_use_enabled", True)
-                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.",
                 )
             )
         else:
@@ -220,14 +217,11 @@ class BaseGeminiCodeQuerySolverPrompt:
                 
                 {tool_use_capabilities_resolution_guidelines}
 
-                {parallel_tool_use_guidelines}
+                If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
                 """.format(
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=False
-                    ),
-                    parallel_tool_use_guidelines="If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result."
-                    if self.params.get("parallel_tool_use_enabled", True)
-                    else "If multiple actions are needed, use one tool at a time per message to accomplish the task iteratively, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result. The system does not support parallel tool calls",
+                    )
                 )
             )
 
