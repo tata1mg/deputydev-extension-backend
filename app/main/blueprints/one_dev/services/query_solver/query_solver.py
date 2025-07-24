@@ -384,7 +384,7 @@ class QuerySolver:
             llm_inputs = agent_instance.get_llm_inputs(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_5_SONNET),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
                 previous_messages=None,
             )
 
