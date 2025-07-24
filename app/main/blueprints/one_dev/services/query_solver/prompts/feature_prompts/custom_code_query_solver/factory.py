@@ -5,7 +5,7 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.claude_3_point_5_sonnet_handler import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.claude_3_point_7_sonnet_handler import (
     Claude3Point7CustomCodeQuerySolverPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.claude_4_sonnet_handler import (

@@ -1,8 +1,10 @@
 import asyncio
 import json
-from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type, cast
 
+from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
+from pydantic import BaseModel
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
@@ -633,6 +635,7 @@ class Anthropic(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         model_config = self._get_model_config(model)
         anthropic_client, model_identifier = await self._get_service_client_and_model_name(
@@ -649,3 +652,9 @@ class Anthropic(BaseLLMProvider):
                 llm_payload=llm_payload, model=model_identifier
             )
             return await self._parse_streaming_response(response, async_bedrock_client, model_config, session_id)
+
+    async def get_tokens(self, content: str, model: LLModels) -> int:
+        tiktoken_client = TikToken()
+        token_count = tiktoken_client.count(text=content)
+
+        return token_count

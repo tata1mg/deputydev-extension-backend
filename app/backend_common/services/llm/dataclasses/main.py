@@ -82,7 +82,6 @@ class JSONSchema(BaseModel):
 
     class Config:
         populate_by_name = True  # Allows snake_case or camelCase during input
-        allow_population_by_field_name = True  # Backward compatibility
 
 
 class ConversationTool(BaseModel):

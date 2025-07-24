@@ -25,13 +25,6 @@ class BaseGeminiCodeQuerySolverPrompt:
         self.params = params
 
     def get_system_prompt(self) -> str:
-        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
-        file_path = "absolute file path here" if use_absolute_path else "relative file path here"
-        file_path_example = (
-            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
-            if use_absolute_path
-            else "src/tools/grep_search.py"
-        )
         if self.params.get("write_mode") is True:
             system_message = textwrap.dedent(
                 """
@@ -66,7 +59,7 @@ class BaseGeminiCodeQuerySolverPrompt:
                 Usage: 
                 <code_block>
                 <programming_language>programming Language name</programming_language>
-                <file_path>{file_path_code_block}</file_path>
+                <file_path>use absolute path here</file_path>
                 <is_diff>false(always false)</is_diff>
                 code here
                 </code_block>
@@ -75,7 +68,7 @@ class BaseGeminiCodeQuerySolverPrompt:
                 ## Example of code block:
                 <code_block>
                 <programming_language>python</programming_language>
-                <file_path>{file_path_example}</file_path>
+                <file_path>/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py</file_path>
                 <is_diff>false</is_diff>
                 def some_function():
                     return "Hello, World!"
@@ -149,8 +142,6 @@ class BaseGeminiCodeQuerySolverPrompt:
                 4. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
                 """.format(
-                    file_path_code_block=file_path,
-                    file_path_example=file_path_example,
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
                     ),
@@ -228,12 +219,6 @@ class BaseGeminiCodeQuerySolverPrompt:
         return system_message
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
-        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
-        file_path_example = (
-            "//Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"
-            if use_absolute_path
-            else "src/tools/grep_search.py"
-        )
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
@@ -274,7 +259,7 @@ class BaseGeminiCodeQuerySolverPrompt:
             General structure of code block:
             <code_block>
             <programming_language>python</programming_language>
-            <file_path>{file_path_example}</file_path>
+            <file_path>/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py</file_path>
             <is_diff>false(always)</is_diff>
             def some_function():
                 return "Hello, World!"
@@ -288,8 +273,9 @@ class BaseGeminiCodeQuerySolverPrompt:
             Also, please use the tools provided to you to help you with the task.
 
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
+            Even if the chat is just talking, then also provide summary                          
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+            Send the summary like <summary>what was done</summary>
 
             Here is the user's query for editing - {self.params.get("query")}
             """)
@@ -308,7 +294,7 @@ class BaseGeminiCodeQuerySolverPrompt:
             General structure of code block:
             <code_block>
             <programming_language>python</programming_language>
-            <file_path>{file_path_example}</file_path>
+            <file_path>/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py</file_path>
             <is_diff>false</is_diff>
             def some_function():
                 return "Hello, World!"
@@ -363,8 +349,9 @@ class BaseGeminiCodeQuerySolverPrompt:
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
+            Even if the chat is just talking, then also provide summary 
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+            Send the summary like <summary>what was done</summary>
 
             User Query: {self.params.get("query")}
             """)
