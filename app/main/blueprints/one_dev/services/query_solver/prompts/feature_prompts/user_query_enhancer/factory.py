@@ -5,13 +5,13 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.claude_3_point_5_sonnet import (
-    Claude3Point5UserQueryEnhancerPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.claude_3_point_7_sonnet import (
+    Claude3Point7UserQueryEnhancerPrompt,
 )
 
 
 class UserQueryEnhancerPromptFactory(BaseFeaturePromptFactory):
-    user_query_enhancer_prompts = {LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5UserQueryEnhancerPrompt}
+    user_query_enhancer_prompts = {LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7UserQueryEnhancerPrompt}
 
     @classmethod
     def get_prompt(cls, model_name: LLModels) -> Type[BasePrompt]:

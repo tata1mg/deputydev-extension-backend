@@ -54,8 +54,10 @@ class Url(BaseModel):
 
 class LLMModel(Enum):
     CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
+    CLAUDE_3_POINT_7_SONNET = "CLAUDE_3_POINT_7_SONNET"
     GEMINI_2_POINT_5_PRO = "GEMINI_2_POINT_5_PRO"
     GEMINI_2_POINT_5_FLASH = "GEMINI_2_POINT_5_FLASH"
+    GEMINI_2_POINT_5_FLASH_LITE = "GEMINI_2_POINT_5_FLASH_LITE"
     GPT_4_POINT_1 = "GPT_4_POINT_1"
     CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
     CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
@@ -136,7 +138,7 @@ class InlineEditInput(BaseModel):
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
     relevant_chunks: List[Any] = []
-    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_5_SONNET
+    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_7_SONNET
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805

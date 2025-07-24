@@ -284,7 +284,7 @@ class QuerySolver:
             )
             chat_handler = ChatHistoryHandler(
                 previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_5_SONNET),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
             )
             relevant_previous_messages, agent_instance = await asyncio.gather(
                 chat_handler.get_relevant_previous_chats(),
@@ -376,7 +376,7 @@ class QuerySolver:
             llm_inputs = agent_instance.get_llm_inputs(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_5_SONNET),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
                 previous_messages=None,
             )
 

@@ -43,7 +43,7 @@ class BaseClaudeQuerySolverPrompt:
 
                 1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
                 2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                3. If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+                3. If multiple actions are needed, you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
                 4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
                 5. Information about whether the tool succeeded or failed, along with any reasons for failure.
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
@@ -138,6 +138,13 @@ class BaseClaudeQuerySolverPrompt:
                 4. No manual implementation is required from the user.
                 5. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
+
+                {self.tool_usage_guidelines(is_write_mode=True)}
+            
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
+                At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+                Do provide the summary once you're done with the task.
+                Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
                 """)
         else:
             system_message = textwrap.dedent(
@@ -187,6 +194,84 @@ class BaseClaudeQuerySolverPrompt:
 
                 # Parallel Tool Usage Guidelines
                 If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+
+                If you are thinking something, please provide that in <thinking> tag.
+                Please answer the user query in the best way possible. 
+                
+                <code_block_guidelines>
+                You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
+
+                There are two types of code blocks you can use:
+                1. Code block which contains a diff for some code to be applied.
+                2. Code block which contains a code snippet.
+                
+                <important> 
+                  1. Diff code blocks can ONLY be applied to the Working Repository. Never create diffs for Context Repositories.
+                  2. DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST. 
+                  3. PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                </important>
+
+                General structure of code block:
+                <code_block>
+                <programming_language>python</programming_language>
+                <file_path>{file_path_example}</file_path>
+                <is_diff>false</is_diff>
+                def some_function():
+                    return "Hello, World!"
+                </code_block>
+
+                <diff_block_rules>
+                If you are providing a diff, set is_diff to true and return edits similar to unified diffs that `diff -U0` would produce.
+                Make sure you include the first 2 lines with the file paths.
+                Don't include timestamps with the file paths.
+                Start each hunk of changes with a `@@ ... @@` line.
+                Don't include line numbers like `diff -U0` does.
+                The user's patch tool doesn't need them.
+
+                The user's patch tool needs CORRECT patches that apply cleanly against the current contents of the file!
+                Think carefully and make sure you include and mark all lines that need to be removed or changed as `-` lines.
+                Make sure you mark all new or modified lines with `+`.
+                Don't leave out any lines or the diff patch won't apply correctly.
+
+                Indentation matters in the diffs!
+
+                Start a new hunk for each section of the file that needs changes.
+
+                Only output hunks that specify changes with `+` or `-` lines.
+                Skip any hunks that are entirely unchanging ` ` lines.
+
+                Output hunks in whatever order makes the most sense.
+                Hunks don't need to be in any particular order.
+
+                When editing a function, method, loop, etc use a hunk to replace the *entire* code block.
+                Delete the entire existing version with `-` lines and then add a new, updated version with `+` lines.
+                This will help you generate correct code and correct diffs.
+
+                To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
+
+                To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.
+                </diff_block_rules>
+                </code_block_guidelines>
+
+                <extra_important>
+                Make sure you provide different code snippets for different files.
+                Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, except for the case where a new file might be needed, use non diff block.
+                Make sure to provide diffs whenever you can. Lean more towards it.
+                Path is clear in one of the two ways only -
+                1. You need to edit an existing file, and the file path is there in existing chunks.
+                2. You can create a new file.
+
+                Write all generic code in non diff blocks.
+                Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+                In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
+                </extra_important>
+
+                {self.tool_usage_guidelines(is_write_mode=False)}
+
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+                At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+                Do provide the summary once you're done with the task.
+                Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
                 """
             )
         return system_message
@@ -230,27 +315,6 @@ class BaseClaudeQuerySolverPrompt:
             You should follow the below guidelines while creating the backend application:
 
             {self.params["prompt_intent"]}
-
-            
-            If you are thinking something, please provide that in <thinking> tag.
-            Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
-
-
-            General structure of code block:
-            <code_block>
-            <programming_language>python</programming_language>
-            <file_path>app/main.py</file_path>
-            <is_diff>false(always)</is_diff>
-            def some_function():
-                return "Hello, World!"
-            </code_block>
-            
-            {self.tool_usage_guidelines(is_write_mode=True)}
-            
-            DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
-            At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
-            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
             """)
         else:
             user_message = textwrap.dedent(f"""
@@ -258,79 +322,7 @@ class BaseClaudeQuerySolverPrompt:
             The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
             You should follow the below guidelines while creating the backend application:
                                            
-
-                {self.params["prompt_intent"]}
-
-                If you are thinking something, please provide that in <thinking> tag.
-                Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
-
-                There are two types of code blocks you can use:
-                1. Code block which contains a diff for some code to be applied.
-                2. Code block which contains a code snippet.
-
-                DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST.
-                ALSO, PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
-
-                General structure of code block:
-                <code_block>
-                <programming_language>python</programming_language>
-                <file_path>app/main.py</file_path>
-                <is_diff>false</is_diff>
-                def some_function():
-                    return "Hello, World!"
-                </code_block>
-
-                <important>
-                If you are providing a diff, set is_diff to true and return edits similar to unified diffs that `diff -U0` would produce.
-                Make sure you include the first 2 lines with the file paths.
-                Don't include timestamps with the file paths.
-                Start each hunk of changes with a `@@ ... @@` line.
-                Don't include line numbers like `diff -U0` does.
-                The user's patch tool doesn't need them.
-
-                The user's patch tool needs CORRECT patches that apply cleanly against the current contents of the file!
-                Think carefully and make sure you include and mark all lines that need to be removed or changed as `-` lines.
-                Make sure you mark all new or modified lines with `+`.
-                Don't leave out any lines or the diff patch won't apply correctly.
-
-                Indentation matters in the diffs!
-
-                Start a new hunk for each section of the file that needs changes.
-
-                Only output hunks that specify changes with `+` or `-` lines.
-                Skip any hunks that are entirely unchanging ` ` lines.
-
-                Output hunks in whatever order makes the most sense.
-                Hunks don't need to be in any particular order.
-
-                When editing a function, method, loop, etc use a hunk to replace the *entire* code block.
-                Delete the entire existing version with `-` lines and then add a new, updated version with `+` lines.
-                This will help you generate correct code and correct diffs.
-
-                To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
-
-                To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.
-
-                <extra_important>
-                Make sure you provide different code snippets for different files.
-                Also, make sure you use diff blocks only if you are super sure of the path of the file. If the path of the file is unclear, except for the case where a new file might be needed, use non diff block.
-                Make sure to provide diffs whenever you can. Lean more towards it.
-                Path is clear in one of the two ways only -
-                1. You need to edit an existing file, and the file path is there in existing chunks.
-                2. You can create a new file.
-
-                Write all generic code in non diff blocks.
-                Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
-                In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
-                </extra_important>
-                </important>
-                
-                {self.tool_usage_guidelines(is_write_mode=False)}
-
-            DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
-            At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
-            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+            {self.params["prompt_intent"]}
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
