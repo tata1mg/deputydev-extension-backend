@@ -81,7 +81,6 @@ class AgentManager:
         if db_agent.is_custom_agent:
             if not agent.custom_prompt:
                 raise BadRequestException("For custom agent custom prompt is required")
-            agent.agent_name = agent_params.name
             agent.display_name = agent_params.name
 
         updated_agent = await UserAgentRepository.db_update({"id": agent.id}, agent.model_dump(exclude_unset=True))
