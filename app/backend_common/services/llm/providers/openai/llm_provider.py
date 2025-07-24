@@ -1,12 +1,14 @@
 import asyncio
 import json
 import uuid
-from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type
 
+from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
 from openai.types.responses import Response
 from openai.types.responses.response_stream_event import ResponseStreamEvent
+from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,
@@ -247,14 +249,65 @@ class OpenAI(BaseLLMProvider):
             ),
         )
 
+    def _parse_non_streaming_response_new(self, response: Response) -> NonStreamingResponse:
+        """
+        Parses the response from GPT or similar LLM models into your internal schema.
+        """
+        non_streaming_content_blocks: List[ResponseData] = []
+
+        for block in response.output:
+            if block.type == "message":
+                for content_piece in getattr(block, "content", []):
+                    if getattr(content_piece, "type", None) == "output_text":
+                        non_streaming_content_blocks.append(
+                            TextBlockData(content=TextBlockContent(text=content_piece.text))
+                        )
+            elif block.type == "function_call":
+                # Prefer parsed_arguments if available
+                if getattr(block, "parsed_arguments", None) is not None:
+                    tool_input = block.parsed_arguments
+                    # If it's a pydantic object, convert to dict
+                    if hasattr(tool_input, "model_dump"):
+                        tool_input = tool_input.model_dump()
+                    elif hasattr(tool_input, "dict"):  # For older pydantic
+                        tool_input = tool_input.dict()
+                else:
+                    tool_input = json.loads(block.arguments)
+                non_streaming_content_blocks.append(
+                    ToolUseRequestData(
+                        content=ToolUseRequestContent(
+                            tool_input=tool_input,
+                            tool_name=block.name,
+                            tool_use_id=block.call_id,
+                        )
+                    )
+                )
+            # All other block types are silently skipped
+
+        usage_obj = (
+            LLMUsage(
+                input=response.usage.input_tokens - getattr(response.usage.input_tokens_details, "cached_tokens", 0),
+                output=response.usage.output_tokens,
+                cache_read=getattr(response.usage.input_tokens_details, "cached_tokens", 0),
+            )
+            if getattr(response, "usage", None)
+            else LLMUsage(input=0, output=0)
+        )
+
+        return NonStreamingResponse(
+            content=non_streaming_content_blocks,
+            usage=usage_obj,
+        )
+
     async def call_service_client(
         self,
         session_id: int,
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
-        response_type: Literal["text", "json_object", "json_schema"] = None,
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenAI service client.
@@ -281,6 +334,18 @@ class OpenAI(BaseLLMProvider):
                 parallel_tool_calls=parallel_tool_calls,
             )
             return await self._parse_streaming_response(response, stream_id, session_id)
+        if response_type == "text":
+            response = await OpenAIServiceClient().get_llm_non_stream_response_api(
+                conversation_messages=llm_payload["conversation_messages"],
+                model=model_config["NAME"],
+                tool_choice=llm_payload["tool_choice"],
+                tools=llm_payload["tools"],
+                instructions=llm_payload["system_message"],
+                max_output_tokens=model_config["MAX_TOKENS"],
+                parallel_tool_calls=parallel_tool_calls,
+                text_format=text_format,
+            )
+            return self._parse_non_streaming_response_new(response)
         else:
             response = await OpenAIServiceClient().get_llm_non_stream_response(
                 conversation_messages=llm_payload["conversation_messages"],
@@ -435,3 +500,9 @@ class OpenAI(BaseLLMProvider):
             )
 
         return None, None, None
+
+    async def get_tokens(self, content: str, model: LLModels) -> int:
+        tiktoken_client = TikToken()
+        token_count = tiktoken_client.count(text=content)
+
+        return token_count

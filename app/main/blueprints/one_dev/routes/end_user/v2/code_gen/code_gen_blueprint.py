@@ -288,6 +288,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                 "retry_after": ex.retry_after,
                 "message": "This chat is currently being throttled. You can wait, or switch to a different model.",
                 "detail": ex.detail,
+                "region": getattr(ex, "region", None),
             }
             await push_to_connection_stream(error_data)
 
