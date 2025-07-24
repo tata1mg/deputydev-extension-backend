@@ -186,12 +186,11 @@ class Anthropic(BaseLLMProvider):
             previous_responses, attachment_data_task_map
         )
 
-        # remove last block from the messages if not tool response and last block is tool use request
         if prompt and prompt.cached_message:
             cached_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
             )
-            if cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+            if cache_config.conversation and model_config["PROMPT_CACHING_SUPPORTED"]:
                 cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
             messages.append(cached_message)
 
