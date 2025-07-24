@@ -246,8 +246,6 @@ class QuerySolver:
             client_data.client_version, "8.3.0", ">"
         )  # remove after 9.0.0. force upgrade  # noqa: N806
 
-        parallel_tool_use_enabled = compare_version(client_data.client_version, "8.4.0", ">=")
-
         # TODO: remove this after 9.0.0. force upgrade
         if payload.query is None and payload.batch_tool_responses is None and payload.tool_use_response is not None:
             payload.batch_tool_responses = [payload.tool_use_response]
@@ -302,7 +300,6 @@ class QuerySolver:
                 "vscode_env": payload.vscode_env,
                 "repositories": payload.repositories,
                 "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade,
-                "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
             model_to_use = LLModels(payload.llm_model.value)
@@ -323,7 +320,7 @@ class QuerySolver:
                 session_id=payload.session_id,
                 save_to_redis=save_to_redis,
                 checker=task_checker,
-                parallel_tool_calls=parallel_tool_use_enabled,
+                parallel_tool_calls=True,
                 prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
                 metadata={
                     "agent_name": agent_instance.agent_name,
@@ -338,7 +335,6 @@ class QuerySolver:
                 "vscode_env": payload.vscode_env,
                 "write_mode": payload.write_mode,
                 "deputy_dev_rules": payload.deputy_dev_rules,
-                "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
             tool_responses = []
@@ -395,7 +391,7 @@ class QuerySolver:
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
-                parallel_tool_calls=parallel_tool_use_enabled,
+                parallel_tool_calls=True,
             )
 
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
