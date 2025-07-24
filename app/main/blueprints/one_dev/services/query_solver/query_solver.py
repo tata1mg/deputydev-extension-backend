@@ -302,7 +302,6 @@ class QuerySolver:
                 "shell": payload.shell,
                 "vscode_env": payload.vscode_env,
                 "repositories": payload.repositories,
-                "parallel_tool_use_enabled": True,
             }
 
             model_to_use = LLModels(payload.llm_model.value)
@@ -341,7 +340,6 @@ class QuerySolver:
                 "vscode_env": payload.vscode_env,
                 "write_mode": payload.write_mode,
                 "deputy_dev_rules": payload.deputy_dev_rules,
-                "parallel_tool_use_enabled": True,  # remove after 9.0.0. force upgrade
             }
 
             tool_responses: List[ToolUseResponseData] = []
