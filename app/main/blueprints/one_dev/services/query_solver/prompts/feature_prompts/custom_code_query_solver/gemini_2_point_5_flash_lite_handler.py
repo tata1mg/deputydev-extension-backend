@@ -9,27 +9,27 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_7_sonnet_prompt_handler import (
-    BaseClaude3Point7SonnetPromptHandler,
+from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_lite_prompt_handler import (
+    BaseGemini2Point5FlashLitePromptHandler,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.claude.code_block.claude_3_point_7_code_block_parser import (
-    Claude3Point7CodeBlockParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.gemini.code_block.gemini_2_point_5_flash_lite_code_block_parser import (
+    Gemini2Point5FlashLiteCodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.claude.summary.claude_3_point_7_summary_parser import (
-    Claude3Point7SummaryParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.gemini.summary.gemini_2_point_5_flash_lite_summary_parser import (
+    Gemini2Point5FlashLiteSummaryParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.claude.thinking.claude_3_point_7_thinking_parser import (
-    Claude3Point7ThinkingParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.gemini.thinking.gemini_2_point_5_flash_lite_thinking_parser import (
+    Gemini2Point5FlashLiteThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.prompts.claude.claude_3_point_7_sonnet_custom_code_query_solver_prompt import (
-    Claude3Point7CustomCodeQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.prompts.gemini.gemini_2_point_5_flash_custom_code_query_solver_prompt import (
+    Gemini2Point5FlashCustomCodeQuerySolverPrompt,
 )
 
 
-class Claude3Point7CustomCodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPromptHandler):
+class Gemini2Point5FlashLiteCustomCodeQuerySolverPromptHandler(BaseGemini2Point5FlashLitePromptHandler):
     prompt_type = "CUSTOM_CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Claude3Point7CustomCodeQuerySolverPrompt
+    prompt_class = Gemini2Point5FlashCustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
@@ -48,14 +48,18 @@ class Claude3Point7CustomCodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPro
         return cls.prompt_class.get_parsed_response_blocks(response_block)
 
     @classmethod
-    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    def get_parsed_result(cls, llm_response: NonStreamingResponse) -> List[Dict[str, Any]]:
         return cls.prompt_class.get_parsed_result(llm_response)
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Claude3Point7ThinkingParser(), Claude3Point7CodeBlockParser(), Claude3Point7SummaryParser()],
+            parsers=[
+                Gemini2Point5FlashLiteThinkingParser(),
+                Gemini2Point5FlashLiteCodeBlockParser(),
+                Gemini2Point5FlashLiteSummaryParser(),
+            ],
         )
 
     @classmethod
