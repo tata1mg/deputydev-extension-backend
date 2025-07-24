@@ -532,7 +532,6 @@ dependencies = [
     { name = "partial-json-parser" },
     { name = "pgvector" },
     { name = "pillow" },
-    { name = "protobuf" },
     { name = "psycopg2-binary" },
     { name = "pyjwt" },
     { name = "pypdf" },
@@ -562,7 +561,7 @@ requires-dist = [
     { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.38.42" },
     { name = "botocore", specifier = "==1.34.34" },
     { name = "cache-wrapper", git = "ssh://git@bitbucket.org/tata1mg/cache_wrapper.git?rev=4.1.0" },
-    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=6.0.2" },
+    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.1" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
     { name = "mmh3", specifier = "==5.1.0" },
@@ -571,7 +570,6 @@ requires-dist = [
     { name = "partial-json-parser", specifier = "==0.2.1.1.post5" },
     { name = "pgvector", specifier = "==0.2.4" },
     { name = "pillow", specifier = "==10.2.0" },
-    { name = "protobuf", specifier = "==5.29.2" },
     { name = "psycopg2-binary", specifier = "==2.9.9" },
     { name = "pyjwt", specifier = "==2.9.0" },
     { name = "pypdf", specifier = "==4.0.1" },
@@ -593,8 +591,8 @@ dev = [
 
 [[package]]
 name = "deputydev-core"
-version = "6.0.2"
-source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=6.0.2#47e996f4cdba06c7f01c475e461da1c4142b879d" }
+version = "7.0.1"
+source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.1#84b8a5b22d5acfa53d36dbddbe8c0622e33380e7" }
 dependencies = [
     { name = "aiohttp" },
     { name = "diff-match-patch" },
@@ -603,6 +601,7 @@ dependencies = [
     { name = "giturlparse" },
     { name = "mcp", extra = ["cli"] },
     { name = "numpy" },
+    { name = "protobuf" },
     { name = "pydantic" },
     { name = "python-levenshtein" },
     { name = "pyyaml" },
