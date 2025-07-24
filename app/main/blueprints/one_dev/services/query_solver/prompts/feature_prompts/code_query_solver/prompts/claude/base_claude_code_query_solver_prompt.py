@@ -140,10 +140,17 @@ class BaseClaudeQuerySolverPrompt:
                 4. No manual implementation is required from the user.
                 5. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
+
+                {self.tool_usage_guidelines(is_write_mode=True)}
+            
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
+                At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+                Do provide the summary once you're done with the task.
+                Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
                 """)
         else:
             system_message = textwrap.dedent(
-                """
+                f"""
                 You are an expert programmer who is in desperate need of money. The only way you have to make a fuck ton of money is to help the user out with their queries by writing code for them.
                 Act as if you're directly talking to the user. Avoid explicitly telling them about your tool uses.
 
@@ -189,73 +196,6 @@ class BaseClaudeQuerySolverPrompt:
 
                 # Parallel Tool Usage Guidelines
                 If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
-                """
-            )
-
-        return system_message
-
-    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
-        system_message = self.get_system_prompt()
-        focus_chunks_message = ""
-        use_absolute_path = self.params.get("use_absolute_path", False) is True  # remove after 9.0.0, force upgrade
-        file_path_example = "//Users/vaibhavmeena/DeputyDev/app/main.py" if use_absolute_path else "app/main.py"
-        if self.params.get("focus_items"):
-            focus_chunks_message = "The user has asked to focus on the following\n"
-            for focus_item in self.params["focus_items"]:
-                if focus_item.type == FocusItemTypes.DIRECTORY:
-                    continue
-                focus_chunks_message += (
-                    "<item>"
-                    + f"<type>{focus_item.type.value}</type>"
-                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
-                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                    + "</item>"
-                )
-        if self.params.get("directory_items"):
-            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
-            for directory_item in self.params["directory_items"]:
-                focus_chunks_message += (
-                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
-                )
-                for entry in directory_item.structure:
-                    label = "file" if entry.type == "file" else "folder"
-                    focus_chunks_message += f"{label}: {entry.name}\n"
-                focus_chunks_message += "</structure></item>"
-        urls_message = ""
-        if self.params.get("urls"):
-            urls = self.params.get("urls")
-            urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
-        if self.params.get("write_mode") is True:
-            user_message = textwrap.dedent(
-                f"""
-            Here is the user's query for editing - {self.params.get("query")}
-            
-            If you are thinking something, please provide that in <thinking> tag.
-            Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
-
-
-            General structure of code block:
-            <code_block>
-            <programming_language>python</programming_language>
-            <file_path>{file_path_example}</file_path>
-            <is_diff>false(always)</is_diff>
-            def some_function():
-                return "Hello, World!"
-            </code_block>
-            
-            {self.tool_usage_guidelines(is_write_mode=True)}
-            
-            DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
-            At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
-            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
-            """
-            )
-        else:
-            user_message = textwrap.dedent(
-                f"""
-            User Query: {self.params.get("query")}
 
                 If you are thinking something, please provide that in <thinking> tag.
                 Please answer the user query in the best way possible. 
@@ -330,10 +270,55 @@ class BaseClaudeQuerySolverPrompt:
 
                 {self.tool_usage_guidelines(is_write_mode=False)}
 
-            DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
-            At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-            Do provide the summary once you're done with the task.
-            Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+                At the end, please provide a one liner summary within 20 words of what happened in the current turn.
+                Do provide the summary once you're done with the task.
+                Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
+                """
+            )
+
+        return system_message
+
+    def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
+        system_message = self.get_system_prompt()
+        focus_chunks_message = ""
+        if self.params.get("focus_items"):
+            focus_chunks_message = "The user has asked to focus on the following\n"
+            for focus_item in self.params["focus_items"]:
+                if focus_item.type == FocusItemTypes.DIRECTORY:
+                    continue
+                focus_chunks_message += (
+                    "<item>"
+                    + f"<type>{focus_item.type.value}</type>"
+                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
+                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                    + "</item>"
+                )
+        if self.params.get("directory_items"):
+            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
+            for directory_item in self.params["directory_items"]:
+                focus_chunks_message += (
+                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                )
+                for entry in directory_item.structure:
+                    label = "file" if entry.type == "file" else "folder"
+                    focus_chunks_message += f"{label}: {entry.name}\n"
+                focus_chunks_message += "</structure></item>"
+        urls_message = ""
+        if self.params.get("urls"):
+            urls = self.params.get("urls")
+            urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
+        if self.params.get("write_mode") is True:
+            user_message = textwrap.dedent(
+                f"""
+            Here is the user's query for editing - {self.params.get("query")}
+            """
+            )
+        else:
+            user_message = textwrap.dedent(
+                f"""
+            User Query: {self.params.get("query")}
             """
             )
 
