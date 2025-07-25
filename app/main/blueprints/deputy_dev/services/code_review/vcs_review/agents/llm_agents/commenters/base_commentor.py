@@ -192,9 +192,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                             )
                         )
                         # Submit the error feedback to the LLM
-                        current_response = await self.llm_handler.submit_tool_use_response(
+                        current_response = await self.llm_handler.submit_batch_tool_use_response(
                             session_id=session_id,
-                            tool_use_response=tool_use_response,
+                            tool_use_responses=[tool_use_response],
                             tools=tools_to_use,
                             prompt_type=prompt_handler.prompt_type,
                         )
@@ -218,9 +218,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     )
 
                     # Submit the tool use response to the LLM
-                    current_response = await self.llm_handler.submit_tool_use_response(
+                    current_response = await self.llm_handler.submit_batch_tool_use_response(
                         session_id=session_id,
-                        tool_use_response=tool_use_response,
+                        tool_use_responses=[tool_use_response],
                         tools=tools_to_use,
                         prompt_type=prompt_handler.prompt_type,
                     )

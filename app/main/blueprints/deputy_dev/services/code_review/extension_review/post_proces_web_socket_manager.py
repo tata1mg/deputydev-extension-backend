@@ -41,7 +41,7 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
             # Extract required data
             review_id = request_data.get("review_id")
             print("post process review id", request_data.get("user_team_id"))
-            user_team_id = 3
+            user_team_id = request_data.get("user_team_id")
             print("post process user team id", user_team_id)
 
 
