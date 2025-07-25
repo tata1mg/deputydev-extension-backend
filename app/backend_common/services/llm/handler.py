@@ -840,6 +840,12 @@ class LLMHandler(Generic[PromptFeatures]):
         if not latest_message:
             raise ValueError("Latest message not found")
 
+        count_of_same_query_ids = len(
+            [message for message in filtered_messages if message.query_id == latest_message.query_id]
+        )
+        if count_of_same_query_ids > 40:
+            raise Exception("Too many messages in same chat. Try a new chat.")
+
         conversation_chain_messages = [
             message
             for message in session_messages
