@@ -114,7 +114,7 @@ class OpenAI(BaseLLMProvider):
             messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
 
         if prompt and prompt.user_message:
-            user_message = {"role": "user", "content": prompt.user_message}
+            user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
             if attachments:
                 for attachment in attachments:
                     if attachment.attachment_id not in attachment_data_task_map:
