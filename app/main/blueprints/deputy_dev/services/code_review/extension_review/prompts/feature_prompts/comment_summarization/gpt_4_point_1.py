@@ -9,13 +9,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
-    BaseGPT4OPrompt,
+    BaseGPT4POINT1Prompt,
 )
 
-from ...dataclasses.main import PromptFeatures
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 
 
-class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
+class GPT4Point1CommentSummarizationPrompt(BaseGPT4POINT1Prompt):
     prompt_type = PromptFeatures.COMMENT_SUMMARIZATION.value
     prompt_category = PromptCategories.CODE_REVIEW.value
     response_type = "json_object"
@@ -55,8 +55,8 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
 
             3. **Corrective Code Union**:
             - Consolidate all corrective code snippets provided, combining relevant parts to form a unified corrective code block that addresses all feedback. Ensure the corrective code retains functionality and addresses issues highlighted by all buckets.
-            
-            3. **Rationale Union**:
+
+            4. **Rationale Union**:
             - Consolidate multiple rationale into a single rationale .
 
 
@@ -76,20 +76,28 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
             [
                 {{
                 "file_path": "app/services/cache.py",
-                "line_number": "+138",
+                "line_number": 138,
+                "line_hash":"75fdddd19961586137cae24da95e3514",
+                "titles": [
+                    "Hardcoded batch size (100) could lead to DoS",
+                    "Fixed batch size needs optimization"
+                ]
                 "comments": [
-                    "Security: Hardcoded batch size (100) could lead to DoS",
-                    "Performance: Fixed batch size needs optimization"
+                    "Security: The batch size is hardcoded to 100, which could be exploited to cause a Denial of 
+                    Service (DoS) by forcing the system to process large or inefficient batches without control.",
+                    "Performance": The current implementation uses a fixed batch size, which may not be optimal under 
+                    varying load conditions and can lead to inefficient resource utilization or potential bottlenecks."
                 ],
                 "buckets": [
-                    {{"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
-                    {{"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}}
+                    {{"name": "SECURITY", "agent_id": 50}},
+                    {{"name": "PERFORMANCE", "agent_id": 24]}}
                 ],
+                "tags": ["Suggestion", "Suggestion"]
                 "corrective_code": [
                     "BATCH_SIZE = config.get('REDIS_BATCH_SIZE', 100)",
                     "batch_size = max(100, min(1000, total_embeddings // 10))"
                 ],
-                "model": "Claude_3.5_Sonet",
+                "model": "Claude_3.5_Sonnet",
                 "agent": "SECURITY",
                 "confidence_score": 0.95,
                 "is_valid": true,
@@ -100,17 +108,24 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                 }},
                 {{
                 "file_path": "example/class.py",
-                "line_number": "42",
+                "line_number": 42,
+                "line_hash":"75fdddd19961586137bvc24da95e3514",
+                "titles": [
+                    "Dry principal violated",
+                    "Maintenance challenges due to bad code structure",
+                    "Need better error handling"
+                ]
                 "comments": [
-                    "MAINTAINABILITY: Duplicated method violates DRY principle",
-                    "CODE_ROBUSTNESS: Code structure leads to maintenance challenges",
-                    "RUNTIME_ERROR: Unique error handling approach needed"
+                    "MAINTAINABILITY: Duplicated method violates DRY principle.....more descriptive",
+                    "CODE_ROBUSTNESS: Code structure leads to maintenance challenges.....more descriptive",
+                    "RUNTIME_ERROR: Unique error handling approach needed.....more descriptive"
                 ],
                 "buckets": [
-                    {{"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
-                    {{"name": "CODE_ROBUSTNESS", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}},
-                    {{"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}}
+                    {{"name": "MAINTAINABILITY", "agent_id": 31}},
+                    {{"name": "CODE_ROBUSTNESS", "agent_id": 35]}},
+                    {{"name": "RUNTIME_ERROR", "agent_id": 22]}}
                 ],
+                "tags": ["Suggestion", "Suggestion", "Bug"]
                 "corrective_code": [
                     "# Refactor to remove duplication",
                     "# Improve error handling strategy",
@@ -131,31 +146,37 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
             ### Format of Output:
             Return only validated comments with the following structure:
             ```JSON
-                comments: [{{
+                'comments': [{{
                 'file_path': '<path of the file on which comment is being made, same as provided in input>',
-                'line_number' : <line on which comment is relevant. Return the exact value present with label `+` or `-` as present in the input>,
+                'line_number' : <line on which comment is relevant. Return the exact value present in the input>,
+                'line_hash': <line_hash of line on which comment is relevant. Return the exact value present in the input>,
+                'title': '<A single summarized title>'
                 'comment': '<A single summarized comment for all the comments. Make bucket wise bullets in summary>',
                 'corrective_code': '<Intelligently union of combined Corrective code for all the comments provided as a string. Strictly merge and provide corrective code only if input comments has corrective_code present inside comment>',
                 'confidence_score': '<confidence_score field value in input comment>;,
                 'buckets': <This is list of buckets [{{"name": <Bucket Name in which the comment falls. Keep it same as given in input comment>, "agent_id": <Id of the agent the comment is given by, Keep it same as given in input comment>}}]>,
+                'tag': <If blending comments with tag Bug or Suggestion, prioritize Bug if any are Bug.>
                 'model': <model field value in input comment>,
                 'agent': <agent field value in input comment>,
                 'is_valid': <is_valid field value in input comment. It can be true, false or null. Return as it is as mentioned in input comment>,
                 'rationale': <A short combined rationale of all the comments>
                 }}]
-                ```
+            ```
 
             ### Expected output example of provided input comments
             ```JSON
-            comments: [
+            'comments': [
                 {{
                     "file_path": "app/services/cache.py",
-                    "line_number": "+138",
+                    "line_number": 138,
+                    "line_hash":"75fdddd19961586137cae24da95e3514",
+                    "title": "Hardcoded Batch Size (100) Risks DoS and Needs Optimization"
                     "comment": "- **SECURITY**: Hardcoded batch size (100) poses potential DoS risk through memory exhaustion\\n- **PERFORMANCE**: Implement dynamic batch sizing for optimal Redis operations",
                     "buckets": [
-                        {{"name": "SECURITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
-                        {{"name": "PERFORMANCE", "agent_id": "36b9b529-3ad4-4ddf-9a12-8537ea9765a8"]}}
+                        {{"name": "SECURITY", "agent_id": 50}},
+                        {{"name": "PERFORMANCE", "agent_id": 24]}}
                     ],
+                    "tag": "Suggestion",
                     "corrective_code": "# Configure dynamic batch size with security limits\nMAX_BATCH_SIZE = config.get('REDIS_MAX_BATCH_SIZE', 1000)\nMIN_BATCH_SIZE = config.get('REDIS_MIN_BATCH_SIZE', 100)\n\nbatch_size = max(MIN_BATCH_SIZE, min(MAX_BATCH_SIZE, total_embeddings // 10))\n\nfor i in range(0, len(cache_keys), batch_size):\n    batch = cache_keys[i:i + batch_size]",
                     "is_valid": true,
                     "confidence_score": 0.95,
@@ -166,12 +187,14 @@ class GPT4OCommentSummarizationPrompt(BaseGPT4OPrompt):
                 }},
                 {{
                     "file_path": "example/class.py",
-                    "line_number": "42",
+                    "line_number": 42,
+                    "line_hash":"75fdddd19961586137bvc24da95e3514",
                     "comment": "- **MAINTAINABILITY**: Duplicated method violates DRY principle and introduces maintenance challenges\\n- **RUNTIME_ERROR**: Unique error handling approach needed",
                     "buckets": [
-                        {{"name": "MAINTAINABILITY", "agent_id": "c62142f5-3992-476d-9131-bf85e1beffb7"}},
-                        {{"name": "RUNTIME_ERROR", "agent_id": "5932a405-96cb-4508-bfd4-443397583f95"]}}
+                        {{"name": "MAINTAINABILITY", "agent_id": 31}},
+                        {{"name": "RUNTIME_ERROR", "agent_id": 22]}}
                     ]
+                    "tag": "Bug",
                     "corrective_code": "Intelligently combine: # Refactor to remove duplication and standardize method implementation and Implement comprehensive error handling strategy",
                     "is_valid": true,
                     "confidence_score": 0.95,

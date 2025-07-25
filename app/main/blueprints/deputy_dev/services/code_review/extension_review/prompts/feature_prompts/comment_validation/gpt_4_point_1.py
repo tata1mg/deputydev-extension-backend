@@ -9,13 +9,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     UserAndSystemMessages,
 )
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
-    BaseGPT4OPrompt,
+    BaseGPT4POINT1Prompt,
 )
 
-from ...dataclasses.main import PromptFeatures
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 
 
-class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
+class GPT4Point1CommentValidationPrompt(BaseGPT4POINT1Prompt):
     prompt_type = PromptFeatures.COMMENT_VALIDATION.value
     prompt_category = PromptCategories.CODE_REVIEW.value
     response_type = "json_object"
@@ -43,6 +43,9 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         - If the `corrective_code` and the comment description provided in the comment is already implemented or closely resembles the existing code in the PR diff, mark the comment as invalid.
         - Prioritize correctness over verbosity
         - Keep rationale as the source of truth. It might have some info which might not be visible in PR diff.
+        
+        ### Review Title Generation:
+            - generate a clear, descriptive PR review title (max 15 words) summarizing the key issue fixed in this PR
 
         ### Input Comments that needs to be validated: 
         ${self.params["COMMENTS"]}
@@ -55,7 +58,9 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         [
             {{
                 "file_path": "src/app.py",
-                "line_number": +42,
+                "tag": "Suggestion",
+                "line_hash": "75fdddd19961586137cae24da95e3514"
+                "line_number": 42,
                 "comment": "Consider refactoring this function to improve readability.",
                 "confidence_score": 0.85,
                 "corrective_code": "def my_function(...): pass",
@@ -64,6 +69,8 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
             }},
             {{
                 "file_path": "src/utils.py",
+                "tag": "Suggestion",
+                "line_hash": "75fdddd19961586137dfd24da95e3514",
                 "line_number": 27,
                 "comment": "Replace '==' with 'is' for comparison.",
                 "confidence_score": 0.92,
@@ -78,7 +85,9 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         ```JSON
             comments: [{{
             'file_path': '<path of the file on which comment is being made, same as provided in input>',
-            'line_number' : <line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present with label `+` or `-` as present in the input>,
+            'tag': '<Same tag as provided in input>'
+            'line_hash': <Same line hash as provided in input>
+            'line_number' : <line on which comment is relevant. get this value from `<>` block at each code start in input. Return the exact value present in the input>,
             'comment': '<Same comment as provided in input comment>',
             'corrective_code': '<Corrective code for the comment suggested. Same as provide in input>',
             'is_valid': <boolean value telling whether the comment is actually relevant or not>,
@@ -89,10 +98,13 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
 
         ###Expected output example 
         ```JSON
-        comments: [
+        'title': '<A clear, descriptive PR review title (max 15 words) summarizing the key issue fixed in this PR',
+        'comments': [
             {{
                 "file_path": "src/app.py",
-                "line_number": +42,
+                "tag": "Suggestion",
+                "line_hash": "75fdddd19961586137cae24da95e3514"
+                "line_number": 42,
                 "comment": "Consider refactoring this function to improve readability.",
                 "corrective_code": "def my_function(...): pass"
                 "is_valid": true,
@@ -101,6 +113,8 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
             }},
             {{
                 "file_path": "src/utils.py",
+                "tag": "Suggestion",
+                "line_hash": "75fdddd19961586137dfd24da95e3514"
                 "line_number": 27,
                 "comment": "Replace '==' with 'is' for comparison.",
                 "is_valid": false,
@@ -110,7 +124,7 @@ class GPT4OCommentValidationPrompt(BaseGPT4OPrompt):
         ]
         ```
 
-        PR Diff on which comments needs to be validated:
+        Validate comments against the PR diff and generate a review title based on the changes:
         <pr_diff>{self.params["PR_DIFF"]}</pr_diff>
 
 

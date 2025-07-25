@@ -18,6 +18,7 @@ from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.code_communication_agent import (
     CodeCommunicationAgent,
 )
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.custom_agent import CustomAgent
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.commenters.commenter_agents.code_maintainability_agent import (
     CodeMaintainabilityAgent,
 )
@@ -62,8 +63,9 @@ class AgentFactory:
         AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_3_POINT_7_SONNET,
         AgentTypes.SECURITY: LLModels.CLAUDE_3_POINT_7_SONNET,
         AgentTypes.PR_SUMMARY: LLModels.GPT_4O,
-        AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4O,
-        AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4O,
+        AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4_POINT_1,
+        AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4_POINT_1,
+        AgentTypes.CUSTOM_COMMENTER_AGENT: LLModels.CLAUDE_3_POINT_7_SONNET
     }
 
     code_review_agents = {
@@ -73,6 +75,7 @@ class AgentFactory:
         AgentTypes.PERFORMANCE_OPTIMIZATION: PerformanceOptimizationAgent,
         AgentTypes.SECURITY: SecurityAgent,
         # AgentTypes.PR_SUMMARY: PRSummarizerAgent,
+        AgentTypes.CUSTOM_COMMENTER_AGENT: CustomAgent,
     }
 
     review_finalization_agents = {

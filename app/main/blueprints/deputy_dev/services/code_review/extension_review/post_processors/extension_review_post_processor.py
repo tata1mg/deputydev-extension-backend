@@ -46,7 +46,7 @@ class ExtensionReviewPostProcessor:
             llm_handler=llm_handler,
         )
         filtered_comments, agent_results, review_title = await comment_blending_service.blend_comments()
-        valid_comment_ids = set([comment.id for comment in filtered_comments if comment.id])
+        valid_comment_ids = set([comment.id for comment in filtered_comments if comment.id and comment.is_valid])
         invalid_comment_ids = [comment.id for comment in comments if comment.id not in valid_comment_ids]
         await ExtensionCommentRepository.update_comments(invalid_comment_ids, {"is_valid": False})
         comments_to_insert = []
