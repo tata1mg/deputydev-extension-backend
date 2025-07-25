@@ -61,6 +61,7 @@ class LLMModel(Enum):
     GPT_4_POINT_1 = "GPT_4_POINT_1"
     CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
     CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
+    GPT_4O = "GPT_4O"
 
 
 class ToolMetadataTypes(Enum):

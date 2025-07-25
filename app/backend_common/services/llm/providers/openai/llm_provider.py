@@ -114,7 +114,7 @@ class OpenAI(BaseLLMProvider):
             messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
 
         if prompt and prompt.user_message:
-            user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
+            user_message = {"role": "user", "content": prompt.user_message}
             if attachments:
                 for attachment in attachments:
                     if attachment.attachment_id not in attachment_data_task_map:
@@ -386,6 +386,7 @@ class OpenAI(BaseLLMProvider):
                         raise asyncio.CancelledError()
                     try:
                         event_block, _event_block_category, event_usage = await self._get_parsed_stream_event(event)
+
                         if event_usage:
                             usage += event_usage
                         if event_block:
