@@ -267,9 +267,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         tools_to_use = self.get_tools_for_review(prompt_handler)
 
         # Submit the tool use response to the LLM
-        current_response = await self.llm_handler.submit_tool_use_response(
+        current_response = await self.llm_handler.submit_batch_tool_use_response(
             session_id=session_id,
-            tool_use_response=tool_use_response,
+            tool_use_responses=[tool_use_response],
             tools=tools_to_use,
             prompt_type=prompt_handler.prompt_type,
         )
@@ -338,9 +338,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         response=review_plan,
                     )
                 )
-                current_response = await self.llm_handler.submit_tool_use_response(
+                current_response = await self.llm_handler.submit_batch_tool_use_response(
                     session_id=session_id,
-                    tool_use_response=tool_use_response,
+                    tool_use_responses=[tool_use_response],
                     tools=tools_to_use,
                     prompt_type=prompt_handler.prompt_type,
                 )

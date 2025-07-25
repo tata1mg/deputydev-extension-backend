@@ -158,12 +158,16 @@ async def run_multi_agent_review(_request: Request, **kwargs):
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
 
-    if not is_local:
-        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
 
+    try:
         auth_data, _ = await get_auth_data(_request)
+    except Exception:  # noqa: BLE001
+        auth_error = True
+        auth_data = None
+
 
 
     if not is_local and (auth_error or not auth_data):
@@ -334,13 +338,15 @@ async def post_process_extension_review(_request: Request, **kwargs):
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
 
-    if not is_local:
-        _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-        _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-        _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
 
-
+    try:
         auth_data, _ = await get_auth_data(_request)
+    except Exception:  # noqa: BLE001
+        auth_error = True
+        auth_data = None
 
     if not is_local and (auth_error or not auth_data):
         manager = PostProcessWebSocketManager(connection_id, is_local)
