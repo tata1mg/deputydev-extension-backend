@@ -26,6 +26,7 @@ from app.main.blueprints.deputy_dev.services.repository.extension_reviews.reposi
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.pre_processors.test_diff import diff
 from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import ReviewRequest
 from app.backend_common.models.dao.postgres.user_teams import UserTeams
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import GetRepoIdRequest
 
 class ExtensionReviewPreProcessor:
     def __init__(self):
@@ -52,6 +53,19 @@ class ExtensionReviewPreProcessor:
 
         return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
     
+    async def get_repo_id(self, request : GetRepoIdRequest, user_team_id: int):
+        user_team = await UserTeamRepository.db_get(filters={"id": user_team_id}, fetch_one=True)
+        if not user_team:
+            raise ValueError(f"User team with id {user_team_id} not found")
+        
+        repo_dto = await RepoRepository.find_or_create_extension_repo(
+            repo_name=request.repo_name,
+             repo_origin=request.origin_url,
+             team_id=user_team.team_id
+        )
+        return repo_dto
+
+        
     async def pre_process_pr(self, data: dict, user_team_id: int):
         review_request = ReviewRequest(**data)
 
@@ -69,11 +83,12 @@ class ExtensionReviewPreProcessor:
         loc = diff_handler.get_diff_loc()
         token_count = diff_handler.get_diff_token_count()
 
+        user_team = await UserTeamRepository.db_get(filters={"id": user_team_id}, fetch_one=True)
 
         self.extension_repo_dto = await RepoRepository.find_or_create_extension_repo(
             repo_name=review_request.repo_name,
              repo_origin=review_request.origin_url,
-             team_id=1
+             team_id=user_team.team_id
         )
 
         session = await MessageSessionsRepository.create_message_session(
