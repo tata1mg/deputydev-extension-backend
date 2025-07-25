@@ -6,11 +6,13 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 
-from .gpt_4_point_1 import GPT4Point1CommentSummarizationPrompt
+from .claude_3_point_7_sonnet import Claude3Point7CustomAgentCommentGenerationPrompt
 
 
-class CommentSummarizationPromptFactory(BaseFeaturePromptFactory):
-    prompts = {LLModels.GPT_4_POINT_1: GPT4Point1CommentSummarizationPrompt}
+class CustomCommentsGenerationPromptFactory(BaseFeaturePromptFactory):
+    prompts = {
+        LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CustomAgentCommentGenerationPrompt,
+    }
 
     @classmethod
     def get_prompt(cls, model_name: LLModels) -> Type[BasePrompt]:

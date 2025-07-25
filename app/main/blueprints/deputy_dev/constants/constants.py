@@ -264,3 +264,9 @@ CUSTOM_PROMPT_INSTRUCTIONS = """The above defined instructions are default and m
 
 User-provided instructions:
 """
+
+class IdeReviewCommentStatus(Enum):
+    REJECTED = "REJECTED"
+    ACCEPTED = "ACCEPTED"
+    RESOLVED = "RESOLVED"
+    NOT_REVIEWED = "NOT_REVIEWED"

@@ -6,6 +6,7 @@ class AgentCreateParams(BaseModel):
     name: str
     custom_prompt: str
     user_team_id: int
+    agent_name: str = "custom_commenter_agent"
 
 
 class AgentUpdateParams(BaseModel):

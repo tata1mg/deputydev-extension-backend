@@ -53,7 +53,7 @@ class AgentManager:
         """
         # Implementation to create an agent
         agent = UserAgentDTO(
-            agent_name=agent_params.name,
+            agent_name=agent_params.agent_name,
             display_name=agent_params.name,
             user_team_id=agent_params.user_team_id,
             custom_prompt=agent_params.custom_prompt,
@@ -81,7 +81,6 @@ class AgentManager:
         if db_agent.is_custom_agent:
             if not agent.custom_prompt:
                 raise BadRequestException("For custom agent custom prompt is required")
-            agent.agent_name = agent_params.name
             agent.display_name = agent_params.name
 
         updated_agent = await UserAgentRepository.db_update({"id": agent.id}, agent.model_dump(exclude_unset=True))
