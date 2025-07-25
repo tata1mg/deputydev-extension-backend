@@ -118,10 +118,9 @@ class OpenRouterServiceClient(metaclass=Singleton):
         # we need both message and output token now to returning full completion message
         return completion
 
-
     async def get_llm_stream_response(
         self,
-        conversation_messages:  List[ChatCompletionMessageParam],
+        conversation_messages: List[ChatCompletionMessageParam],
         model: str,
         tool_choice: Optional[Literal["none", "auto", "required"]] = None,
         tools: Optional[ChatCompletionToolParam] = None,
@@ -133,7 +132,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
         max_output_tokens: Optional[int] = None,
         parallel_tool_calls: bool = True,
     ) -> AsyncIterator[ResponseStreamEvent]:
-        stream_manager:ChatCompletion = await self.__client.chat.completions.create(
+        stream_manager: ChatCompletion = await self.__client.chat.completions.create(
             messages=conversation_messages,
             model=model,
             tool_choice=tool_choice,
