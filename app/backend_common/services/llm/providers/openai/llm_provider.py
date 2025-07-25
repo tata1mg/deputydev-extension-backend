@@ -386,6 +386,7 @@ class OpenAI(BaseLLMProvider):
                         raise asyncio.CancelledError()
                     try:
                         event_block, _event_block_category, event_usage = await self._get_parsed_stream_event(event)
+
                         if event_usage:
                             usage += event_usage
                         if event_block:
