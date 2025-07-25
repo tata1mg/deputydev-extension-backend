@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS user_agents (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS user_agents_user_team_id_agent_name_unique_active
-ON user_agents (user_team_id, agent_name)
+CREATE UNIQUE INDEX IF NOT EXISTS user_agents_user_team_id_display_name_unique_active
+ON user_agents (user_team_id, display_name)
 WHERE is_deleted = FALSE;
 
 -- migrate:down

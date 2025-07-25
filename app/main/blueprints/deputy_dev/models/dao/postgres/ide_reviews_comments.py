@@ -16,6 +16,7 @@ class IdeReviewsComments(Base):
         "line_hash",
         "line_number",
         "confidence_score",
+        "comment_status",
         "created_at",
         "updated_at",
     }
@@ -33,6 +34,7 @@ class IdeReviewsComments(Base):
     tag = fields.CharField(max_length=20, null=True)
     is_valid = fields.BooleanField(default=True)
     confidence_score = fields.FloatField()
+    comment_status = fields.TextField(null=True)
     # status = fields.TextField()
 
     class Meta:
@@ -53,3 +55,4 @@ class IdeReviewsComments(Base):
         confidence_score = ("confidence_score",)
         created_at = ("created_at",)
         updated_at = ("updated_at",)
+        comment_status = ("comment_status",)

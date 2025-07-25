@@ -20,6 +20,7 @@ from .feature_prompts.code_maintainability_comments_generation.factory import Co
 from .feature_prompts.error_comments_generation.factory import ErrorCommentsGenerationPromptFactory
 from .feature_prompts.performance_optimization_comments_generation.factory import PerformanceOptimizationCommentsGenerationPromptFactory
 from .feature_prompts.security_comments_generation.factory import SecurityCommentsGenerationPromptFactory
+from .feature_prompts.custom_agent_comment_generation.factory import CustomCommentsGenerationPromptFactory
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
@@ -31,6 +32,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.ERROR_COMMENTS_GENERATION: ErrorCommentsGenerationPromptFactory,
         PromptFeatures.PERFORMANCE_OPTIMIZATION_COMMENTS_GENERATION: PerformanceOptimizationCommentsGenerationPromptFactory,
         PromptFeatures.SECURITY_COMMENTS_GENERATION: SecurityCommentsGenerationPromptFactory,
+        PromptFeatures.CUSTOM_AGENT_COMMENTS_GENERATION: CustomCommentsGenerationPromptFactory,
     }
 
     @classmethod

@@ -4,7 +4,11 @@ from app.main.blueprints.deputy_dev.models.dto.extension_review_dto import Exten
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
-
+from app.main.blueprints.deputy_dev.services.repository.extension_comments.repository import ExtensionCommentRepository
+from app.main.blueprints.deputy_dev.services.repository.review_agents_status.repository import ReviewAgentStatusRepository
+from deputydev_core.utils.app_logger import AppLogger
+from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
+from app.main.blueprints.deputy_dev.services.code_review.extension_review.dataclass.main import CommentUpdateRequest
 
 class ExtensionCodeReviewHistoryManager:
     async def fetch_reviews_by_filters(self, review_history_params: ReviewHistoryParams) -> List[Dict[str, Any]]:
@@ -50,6 +54,7 @@ class ExtensionCodeReviewHistoryManager:
             "line_hash",
             "line_number",
             "tag",
+            "comment_status"
         }
         for review in reviews:
             review_data = review.model_dump(mode="json", include=review_fields)
@@ -124,3 +129,17 @@ class ExtensionCodeReviewHistoryManager:
         except Exception as e:
             print(f"Error counting reviews: {str(e)}")
             return 0
+
+    @classmethod
+    async def update_comment_status(cls, comment_update_request: CommentUpdateRequest):
+        """Update the status of a comment."""
+        try:
+            comment = await ExtensionCommentRepository.db_get({"id": comment_update_request.id}, fetch_one=True)
+            if not comment:
+                raise ValueError(f"Comment with ID {comment_update_request.id} not found")
+
+            await ExtensionCommentRepository.update_comment(comment_update_request.id, {"comment_status": comment_update_request.comment_status.value})
+            return {"message": "Comment updated successfully"}
+        except Exception as e:
+            AppLogger.log_error(f"Error updating comment status {comment_update_request.id}: {e}")
+            raise e
