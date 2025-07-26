@@ -363,7 +363,7 @@ async def post_process_websocket_local(request: Request, ws) -> None:
 
                     # Send to post-process endpoint
                     await session.post(
-                        f"{self_host_url}/end_user/v1/extension-code-review/post-process",
+                        f"{self_host_url}/end_user/v1/ide-reviews/post-process",
                         headers={"connectionid": connection_id, "X-Is-Local": "true"},
                         json=payload,
                     )
