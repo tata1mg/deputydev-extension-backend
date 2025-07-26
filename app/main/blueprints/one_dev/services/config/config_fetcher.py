@@ -135,7 +135,7 @@ class ConfigFetcher:
             },
             "CODE_REVIEW": {
                 "MAX_DIFF_SIZE": ConfigManager.configs["BINARY"]["CODE_REVIEW"]["MAX_DIFF_SIZE_IN_CHARS"],
-            }
+            },
         },
         ConfigConsumer.VSCODE_EXT: {
             "RUDDER": {

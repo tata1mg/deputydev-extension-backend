@@ -1,10 +1,11 @@
-import asyncio
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
     SocketClosedException,
@@ -12,7 +13,6 @@ from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
     WebSocketMessage,
 )
-from deputydev_core.utils.config_manager import ConfigManager
 
 
 class BaseWebSocketManager(ABC):
@@ -35,7 +35,9 @@ class BaseWebSocketManager(ABC):
                 endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}"
             )
 
-    async def push_to_connection_stream(self, message: WebSocketMessage, local_testing_stream_buffer: Dict[str, List[str]]) -> None:
+    async def push_to_connection_stream(
+        self, message: WebSocketMessage, local_testing_stream_buffer: Dict[str, List[str]]
+    ) -> None:
         """
         Push message to WebSocket connection.
 
@@ -55,9 +57,7 @@ class BaseWebSocketManager(ABC):
                 print("message data")
                 print(message_data)
                 # Local testing - use buffer
-                local_testing_stream_buffer.setdefault(self.connection_id, []).append(
-                    json.dumps(message_data)
-                )
+                local_testing_stream_buffer.setdefault(self.connection_id, []).append(json.dumps(message_data))
             else:
                 # AWS WebSocket
                 if self.aws_client:
@@ -74,13 +74,8 @@ class BaseWebSocketManager(ABC):
     async def send_error_message(self, error_message: str, local_testing_stream_buffer: Dict[str, List[str]]) -> None:
         """Send error message to websocket connection."""
         await self.push_to_connection_stream(
-            WebSocketMessage(
-                type="STREAM_ERROR",
-                data={"message": error_message}
-            ),
-            local_testing_stream_buffer
+            WebSocketMessage(type="STREAM_ERROR", data={"message": error_message}), local_testing_stream_buffer
         )
-
 
     async def cleanup(self) -> None:
         """Clean up AWS client and other resources."""
@@ -88,7 +83,9 @@ class BaseWebSocketManager(ABC):
             await self.aws_client.close()
 
     @abstractmethod
-    async def process_request(self, request_data: Dict[str, Any], local_testing_stream_buffer: Dict[str, List[str]]) -> None:
+    async def process_request(
+        self, request_data: Dict[str, Any], local_testing_stream_buffer: Dict[str, List[str]]
+    ) -> None:
         """
         Abstract method to process the specific request.
         Must be implemented by subclasses.

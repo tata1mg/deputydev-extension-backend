@@ -1,13 +1,13 @@
 from typing import Any, Dict
 
-
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.claude_3_point_5_sonnet_comment_creation import BaseClaude3Point5SonnetCommentCreationPrompt as CommonBaseClaude3Point5SonnetCommentCreationPrompt
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.claude_3_point_5_sonnet_comment_creation import (
+    BaseClaude3Point5SonnetCommentCreationPrompt as CommonBaseClaude3Point5SonnetCommentCreationPrompt,
+)
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(CommonBaseClaude3Point5SonnetCommentCreationPrompt):
     disable_tools = False
     disable_caching = False
-
 
     @classmethod
     def get_user_cached_message_template(cls, params: Dict[str, Any]) -> str:

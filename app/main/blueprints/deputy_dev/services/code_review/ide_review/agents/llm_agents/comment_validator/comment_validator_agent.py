@@ -1,24 +1,22 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     ParsedCommentData,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
-    IdeReviewContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
+    IdeReviewContextService,
 )
 
 

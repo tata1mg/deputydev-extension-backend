@@ -1,21 +1,21 @@
-from typing import List, Union, Optional
+from collections import defaultdict
+from typing import List, Union
+
 from sanic.log import logger
+from tortoise.query_utils import Prefetch
+
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews import IdeReviews
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews_comments import IdeReviewsComments
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
 from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
-from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
-from tortoise.query_utils import Prefetch
-from collections import defaultdict
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 
 
 class ExtensionReviewsRepository:
     @classmethod
-    async def db_get(
-        cls, filters, fetch_one=False, order_by=None
-    ) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
+    async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
         try:
             review_data = await DB.by_filters(
                 model_name=IdeReviews, where_clause=filters, fetch_one=fetch_one, order_by=order_by

@@ -9,18 +9,25 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
     BasePromptFeatureFactory,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
+
+from .feature_prompts.code_communication_comments_generation.factory import (
+    CodeCommunicationCommentsGenerationPromptFactory,
+)
+from .feature_prompts.code_maintainability_comments_generation.factory import (
+    CodeMaintainabilityCommentsGenerationPromptFactory,
+)
 from .feature_prompts.comment_summarization.factory import (
     CommentSummarizationPromptFactory,
 )
 from .feature_prompts.comment_validation.factory import (
     CommentValidationPromptFactory,
 )
-from .feature_prompts.code_communication_comments_generation.factory import CodeCommunicationCommentsGenerationPromptFactory
-from .feature_prompts.code_maintainability_comments_generation.factory import CodeMaintainabilityCommentsGenerationPromptFactory
-from .feature_prompts.error_comments_generation.factory import ErrorCommentsGenerationPromptFactory
-from .feature_prompts.performance_optimization_comments_generation.factory import PerformanceOptimizationCommentsGenerationPromptFactory
-from .feature_prompts.security_comments_generation.factory import SecurityCommentsGenerationPromptFactory
 from .feature_prompts.custom_agent_comment_generation.factory import CustomCommentsGenerationPromptFactory
+from .feature_prompts.error_comments_generation.factory import ErrorCommentsGenerationPromptFactory
+from .feature_prompts.performance_optimization_comments_generation.factory import (
+    PerformanceOptimizationCommentsGenerationPromptFactory,
+)
+from .feature_prompts.security_comments_generation.factory import SecurityCommentsGenerationPromptFactory
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):

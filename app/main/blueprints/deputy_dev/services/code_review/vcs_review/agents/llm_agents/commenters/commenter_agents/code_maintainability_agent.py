@@ -7,7 +7,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
-
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.base_commentor import (
     BaseCommenterAgent,
 )

@@ -4,10 +4,6 @@ from typing import Any, Dict, List, Optional
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
-from torpedo import CONFIG
-from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
-from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -19,31 +15,33 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
+from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
-)
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
-    LLMCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.tools_fallback import (
-    EXCEPTION_RAISED_FALLBACK,
-    NO_TOOL_USE_FALLBACK_PROMPT,
-    EXCEPTION_RAISED_FALLBACK_EXTENSION
+    EXCEPTION_RAISED_FALLBACK_EXTENSION,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_request_manager import (
-    ToolRequestManager,
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
+    LLMCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.parse_final_response import (
+    PARSE_FINAL_RESPONSE,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_request_manager import (
+    ToolRequestManager,
+)
+from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):

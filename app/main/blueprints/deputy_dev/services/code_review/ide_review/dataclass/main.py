@@ -1,11 +1,14 @@
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, validator
 from enum import Enum
-from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
-from app.main.blueprints.deputy_dev.constants.constants import ReviewType
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel
+
+from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus, ReviewType
+
 
 class RequestType(str, Enum):
     """Request types for multi-agent review API."""
+
     QUERY = "query"
     TOOL_USE_RESPONSE = "tool_use_response"
     TOOL_USE_FAILED = "tool_use_failed"
@@ -13,6 +16,7 @@ class RequestType(str, Enum):
 
 class ToolUseResponseData(BaseModel):
     """Tool use response data structure."""
+
     tool_name: str
     tool_use_id: str
     response: Any
@@ -20,6 +24,7 @@ class ToolUseResponseData(BaseModel):
 
 class AgentRequestItem(BaseModel):
     """Individual agent request item in the multi-agent payload."""
+
     agent_id: int
     review_id: int
     type: RequestType
@@ -28,15 +33,16 @@ class AgentRequestItem(BaseModel):
 
 class MultiAgentReviewRequest(BaseModel):
     """Multi-agent review request payload."""
+
     agents: List[AgentRequestItem]
     review_id: int
     connection_id: str
     user_team_id: Optional[int] = None
 
 
-
 class AgentTaskResult(BaseModel):
     """Result from individual agent task execution."""
+
     agent_id: int
     agent_name: str
     agent_type: str
@@ -50,12 +56,11 @@ class AgentTaskResult(BaseModel):
 
 class WebSocketMessage(BaseModel):
     """WebSocket message structure specifically for agent execution results."""
+
     type: str
     agent_id: Optional[int] = None
     data: Optional[Dict[str, Any]] = {}
     timestamp: Optional[str] = None
-
-
 
 
 class FileWiseChanges(BaseModel):
@@ -65,7 +70,7 @@ class FileWiseChanges(BaseModel):
     line_changes: Dict[str, int]
     diff: str
 
-    
+
 class ReviewRequest(BaseModel):
     repo_name: str
     origin_url: str
@@ -82,7 +87,7 @@ class CommentUpdateRequest(BaseModel):
     id: int
     comment_status: IdeReviewCommentStatus
 
+
 class GetRepoIdRequest(BaseModel):
     repo_name: str
     origin_url: str
-    

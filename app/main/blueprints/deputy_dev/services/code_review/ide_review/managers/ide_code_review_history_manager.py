@@ -1,12 +1,15 @@
-from typing import List, Dict, Any, Optional
 from collections import defaultdict
-from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
-from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
-from app.backend_common.repository.db import DB
-from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
-from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
+from typing import Any, Dict, List, Optional
+
 from deputydev_core.utils.app_logger import AppLogger
+
+from app.backend_common.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
+from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import CommentUpdateRequest
+from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
+from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
+
 
 class IdeCodeReviewHistoryManager:
     async def fetch_reviews_by_filters(self, review_history_params: ReviewHistoryParams) -> List[Dict[str, Any]]:
@@ -52,7 +55,7 @@ class IdeCodeReviewHistoryManager:
             "line_hash",
             "line_number",
             "tag",
-            "comment_status"
+            "comment_status",
         }
         for review in reviews:
             review_data = review.model_dump(mode="json", include=review_fields)
@@ -136,7 +139,9 @@ class IdeCodeReviewHistoryManager:
             if not comment:
                 raise ValueError(f"Comment with ID {comment_update_request.id} not found")
 
-            await IdeCommentRepository.update_comment(comment_update_request.id, {"comment_status": comment_update_request.comment_status.value})
+            await IdeCommentRepository.update_comment(
+                comment_update_request.id, {"comment_status": comment_update_request.comment_status.value}
+            )
             return {"message": "Comment updated successfully"}
         except Exception as e:
             AppLogger.log_error(f"Error updating comment status {comment_update_request.id}: {e}")

@@ -1,13 +1,22 @@
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,
+)
+
+# from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
+#     PRSummarizerAgent,
+# )
+from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
+    ParsedAggregatedCommentData,
+    ParsedCommentData,
+)
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
+    PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.comment_summarizer.comment_summarizer_agent import (
     CommentSummarizerAgent,
@@ -15,12 +24,17 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_a
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.comment_validator.comment_validator_agent import (
     CommentValidatorAgent,
 )
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.base_commentor import (
+    BaseCommenterAgent,
+)
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.code_communication_agent import (
     CodeCommunicationAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.custom_agent import CustomAgent
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.code_maintainability_agent import (
     CodeMaintainabilityAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.custom_agent import (
+    CustomAgent,
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.error_agent import (
     ErrorAgent,
@@ -31,26 +45,14 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_a
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
 )
-
-# from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
-#     PRSummarizerAgent,
-# )
-from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
-    ParsedAggregatedCommentData,
-    ParsedCommentData,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
-    PromptFeatures,
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
 )
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.base_commentor import (
-    BaseCommenterAgent,
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 
 
@@ -65,7 +67,7 @@ class AgentFactory:
         AgentTypes.PR_SUMMARY: LLModels.GPT_4O,
         AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4_POINT_1,
         AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4_POINT_1,
-        AgentTypes.CUSTOM_COMMENTER_AGENT: LLModels.CLAUDE_3_POINT_7_SONNET
+        AgentTypes.CUSTOM_COMMENTER_AGENT: LLModels.CLAUDE_3_POINT_7_SONNET,
     }
 
     code_review_agents = {

@@ -19,7 +19,7 @@ blueprints = [
     console,
     setting,
     backfill,
-    ide_reviews_v1_bp
+    ide_reviews_v1_bp,
 ]  # onboarding flows,
 
 code_review_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
