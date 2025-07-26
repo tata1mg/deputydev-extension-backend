@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict
-from .user_agent_dto import UserAgentDTO
+
 from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
+
+from .user_agent_dto import UserAgentDTO
 
 
 class IdeReviewsCommentDTO(BaseModel):

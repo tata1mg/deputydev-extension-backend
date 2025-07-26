@@ -1,13 +1,11 @@
 from typing import Dict
 
-from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
-
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.base_commentor import (
     BaseCommenterAgent,
 )

@@ -13,9 +13,6 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     MultiAgentReflectionIteration,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agents_factory import (
-    AgentFactory,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,
@@ -23,14 +20,17 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.comment_blending_engine import (
     CommentBlendingEngine,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.factory import (
     PromptFeatureFactory,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agents_factory import (
+    AgentFactory,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 
 

@@ -12,12 +12,6 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
-    IdeReviewContextService,
-)
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
-    LLMCommentData,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
@@ -27,8 +21,16 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.grep_searc
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.iterative_file_reader import (
     ITERATIVE_FILE_READER,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.pr_review_planner import PR_REVIEW_PLANNER
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
+    LLMCommentData,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
+    IdeReviewContextService,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.parse_final_response import (
+    PARSE_FINAL_RESPONSE,
+)
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_handler import (
     ExtensionToolHandlers,
 )
@@ -175,11 +177,19 @@ class ToolRequestManager:
             )
 
         for comment in llm_comments:
-            required_fields = ["title", "tag", "description", "file_path", "line_number", "confidence_score", "bucket", "rationale"]
+            required_fields = [
+                "title",
+                "tag",
+                "description",
+                "file_path",
+                "line_number",
+                "confidence_score",
+                "bucket",
+                "rationale",
+            ]
             for field in required_fields:
                 if comment.get(field) is None:
                     raise ValueError(f"The comment is missing required field: {field}")
-
 
             try:
                 comments.append(
@@ -198,6 +208,5 @@ class ToolRequestManager:
             except (ValueError, TypeError) as e:
                 AppLogger.log_warn(f"Comment Validation Faileds: {comment}: {e}")
                 continue
-
 
         return {"comments": comments}

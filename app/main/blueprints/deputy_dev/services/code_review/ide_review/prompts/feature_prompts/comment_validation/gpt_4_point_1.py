@@ -11,7 +11,6 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
     BaseGPT4POINT1Prompt,
 )
-
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 
 

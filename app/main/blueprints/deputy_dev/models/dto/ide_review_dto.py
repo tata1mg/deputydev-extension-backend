@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from .ide_reviews_comment_dto import IdeReviewsCommentDTO
+from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict
-from app.main.blueprints.deputy_dev.constants.constants import ReviewType
+
+from .ide_reviews_comment_dto import IdeReviewsCommentDTO
+
 
 class IdeReviewDTO(BaseModel):
     id: Optional[int] = None

@@ -1,8 +1,10 @@
+from typing import List, Union
+
+from deputydev_core.utils.app_logger import AppLogger
+
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_agent_status import IdeReviewAgentStatus
 from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import ReviewAgentStatusDTO
-from typing import List, Union
-from app.backend_common.repository.db import DB
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class ReviewAgentStatusRepository:
@@ -21,7 +23,7 @@ class ReviewAgentStatusRepository:
 
     @classmethod
     async def db_get(
-            cls, filters, fetch_one=False, order_by=None
+        cls, filters, fetch_one=False, order_by=None
     ) -> Union[ReviewAgentStatusDTO, List[ReviewAgentStatusDTO]]:
         try:
             agent_status_data = await DB.by_filters(

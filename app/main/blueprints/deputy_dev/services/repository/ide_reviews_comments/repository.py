@@ -1,11 +1,13 @@
+from typing import List, Union
+
+from deputydev_core.utils.app_logger import AppLogger
+from tortoise.query_utils import Prefetch
+
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews_comments import IdeReviewsComments
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
-from tortoise.query_utils import Prefetch
-from typing import List, Union
-from app.backend_common.repository.db import DB
-from deputydev_core.utils.app_logger import AppLogger
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 
 
 class IdeCommentRepository:
@@ -33,7 +35,7 @@ class IdeCommentRepository:
     async def update_comments(cls, comment_ids, data):
         if comment_ids and data:
             await IdeReviewsComments.filter(id__in=comment_ids).update(**data)
-    
+
     @classmethod
     async def update_comment(cls, comment_id, data):
         if comment_id and data:
@@ -67,7 +69,7 @@ class IdeCommentRepository:
 
     @classmethod
     async def db_get(
-            cls, filters, fetch_one=False, order_by=None
+        cls, filters, fetch_one=False, order_by=None
     ) -> Union[IdeReviewsCommentDTO, List[IdeReviewsCommentDTO]]:
         try:
             review_data = await DB.by_filters(
