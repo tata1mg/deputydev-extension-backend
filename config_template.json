@@ -660,6 +660,10 @@
     "IS_RELATED_CODE_SEARCHER_ENABLED": true,
     "DD_HOST_WS": "ws://localhost:8084",
     "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
+    "CODE_REVIEW": {
+        "REVIEW_SOLVER_ENDPOINT": "/end_user/v1/extension-code-review/run-multi-agent-local-connection",
+        "POST_PROCESS_SOLVER_ENDPOINT": "/end_user/v1/extension-code-review/post-process-local-connection"
+    },
     "POLLING_MAX_ATTEMPTS": 3000,
     "ALLOWED_EMAILS": [],
     "VERTEX": {
