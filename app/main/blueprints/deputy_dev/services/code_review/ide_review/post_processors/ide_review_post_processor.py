@@ -1,16 +1,9 @@
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
-    PromptFeatures,
-)
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.factory import (
-    PromptFeatureFactory,
-)
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
-from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
-from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
-    IdeReviewContextService,
+from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
+    PromptFeatures,
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.comment_blending_engine import (
     CommentBlendingEngine,
@@ -18,8 +11,15 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.com
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
     LLMCommentData,
 )
-from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
+    IdeReviewContextService,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.factory import (
+    PromptFeatureFactory,
+)
+from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
+from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
+from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 
 
 class IdeReviewPostProcessor:
@@ -31,7 +31,7 @@ class IdeReviewPostProcessor:
         formatted_comments = cls.format_comments(comments)
         context_service = IdeReviewContextService(review_id=review_id)
         print("User team id", user_team_id)
-        user_agents = await UserAgentRepository.db_get({"user_team_id": user_team_id})
+        user_agents = await UserAgentRepository.db_get({"user_team_id": 3})
         print("User agents", user_agents)
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,

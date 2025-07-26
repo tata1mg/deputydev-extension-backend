@@ -1,8 +1,10 @@
-from typing import List, Union, Optional
+from typing import List, Optional, Union
+
 from sanic.log import logger
+
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agents import UserAgents
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
-from app.backend_common.repository.db import DB
 
 
 class UserAgentRepository:

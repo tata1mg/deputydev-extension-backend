@@ -1,28 +1,30 @@
+from deputydev_core.utils.app_logger import AppLogger
 from sanic import Blueprint
 from torpedo import CONFIG, Request, send_response
 
 from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.models.dto.ide_review_feedback_dto import IdeReviewFeedbackDTO
 from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
-from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.ide_review_feedback_payload import \
-    IdeReviewFeedbackPayload
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.ide_code_review_history_manager import \
-    IdeCodeReviewHistoryManager
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor import \
-    IdeReviewPreProcessor
-from app.main.blueprints.deputy_dev.services.repository.ide_review_feedbacks.repository import \
-    IdeReviewFeedbacksRepository
-from app.main.blueprints.one_dev.utils.client.client_validator import (
-    validate_client_version,
+from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.ide_review_feedback_payload import (
+    IdeReviewFeedbackPayload,
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager import (
     IdeReviewManager,
 )
-from deputydev_core.utils.app_logger import AppLogger
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.ide_code_review_history_manager import (
+    IdeCodeReviewHistoryManager,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor import (
+    IdeReviewPreProcessor,
+)
+from app.main.blueprints.deputy_dev.services.repository.ide_review_feedbacks.repository import (
+    IdeReviewFeedbacksRepository,
+)
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+)
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-
-
 
 ide_review = Blueprint("ide_review", "")
 
@@ -65,10 +67,11 @@ async def pre_process_extension_review(request: Request, auth_data: AuthData, **
         review_dto = await processor.pre_process_pr(
             data,
             user_team_id=auth_data.user_team_id,
-            )
+        )
         return send_response(review_dto)
     except Exception as e:
         import traceback
+
         print(traceback.print_exc())
         raise e
 
@@ -118,9 +121,7 @@ async def create_review_feedback(request: Request, auth_data: AuthData, review_i
         payload = IdeReviewFeedbackPayload(**request_data)
         # Create feedback DTO
         feedback_dto = IdeReviewFeedbackDTO(
-            review_id=review_id,
-            feedback_comment=payload.feedback_comment,
-            like=payload.like
+            review_id=review_id, feedback_comment=payload.feedback_comment, like=payload.like
         )
 
         # Insert feedback via repository

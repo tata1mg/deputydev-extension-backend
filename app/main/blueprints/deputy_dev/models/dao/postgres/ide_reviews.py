@@ -1,5 +1,7 @@
 from enum import Enum
+
 from tortoise import fields
+
 from app.backend_common.models.dao.postgres.base import Base
 
 
@@ -24,8 +26,7 @@ class IdeReviews(Base):
         "meta_info",
         "session_id",
         "diff_s3_url",
-        "review_type"
-        "created_at",
+        "review_typecreated_at",
         "updated_at",
     }
 

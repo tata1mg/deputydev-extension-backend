@@ -1,15 +1,15 @@
 from typing import List, Union
+
 from sanic.log import logger
+
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_feedback import IdeReviewFeedback
 from app.main.blueprints.deputy_dev.models.dto.ide_review_feedback_dto import IdeReviewFeedbackDTO
-from app.backend_common.repository.db import DB
 
 
 class IdeReviewFeedbacksRepository:
     @classmethod
-    async def db_get(
-        cls, filters, fetch_one=False
-    ) -> Union[IdeReviewFeedbackDTO, List[IdeReviewFeedbackDTO]]:
+    async def db_get(cls, filters, fetch_one=False) -> Union[IdeReviewFeedbackDTO, List[IdeReviewFeedbackDTO]]:
         try:
             data = await DB.by_filters(model_name=IdeReviewFeedback, where_clause=filters, fetch_one=fetch_one)
             if data and fetch_one:

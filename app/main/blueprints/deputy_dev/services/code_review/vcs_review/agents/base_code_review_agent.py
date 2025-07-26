@@ -16,11 +16,11 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
     AgentRunResult,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 
 
