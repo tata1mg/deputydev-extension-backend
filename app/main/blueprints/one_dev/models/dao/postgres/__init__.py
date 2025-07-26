@@ -3,13 +3,13 @@ __all__ = [
     "Job",
     "JobFeedback",
     "QuerySummaries",
-    "ExtensionFeedback",
+    "IdeFeedbacks",
     "Url",
     "ExtensionSetting",
     "QuerySolverAgent",
 ]
 
-from .extension_feedbacks import ExtensionFeedback
+from .ide_feedbacks import IdeFeedbacks
 from .extension_settings import ExtensionSetting
 from .job import Job
 from .job_feedback import JobFeedback

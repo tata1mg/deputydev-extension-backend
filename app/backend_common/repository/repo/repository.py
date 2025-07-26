@@ -7,8 +7,7 @@ from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.repository.db import DB
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
-import mmh3
-import hashlib
+from app.backend_common.utils import app_utils
 
 
 class RepoRepository:
@@ -60,7 +59,7 @@ class RepoRepository:
     @classmethod
     async def find_or_create_extension_repo(cls, repo_name: str, repo_origin: str, team_id: int):
         # repo_hash = mmh3.hash(repo_origin)
-        repo_hash = hashlib.sha256(repo_origin.encode()).hexdigest()
+        repo_hash = app_utils.hash_sha256(repo_origin)
         repo_dto = await cls.db_get(
             filters={"name": repo_name, "repo_hash": repo_hash, "team_id": team_id}, fetch_one=True
         )

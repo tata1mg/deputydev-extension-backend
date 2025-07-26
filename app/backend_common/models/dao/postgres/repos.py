@@ -25,7 +25,7 @@ class Repos(Base):
     scm = fields.CharField(null=True, max_length=1000)
     workspace_id = fields.BigIntField(null=True)
     scm_repo_id = fields.CharField(null=True, max_length=100)
-    repo_hash = fields.CharField(max_length=64)
+    repo_hash = fields.TextField()
 
     class Meta:
         table = "repos"

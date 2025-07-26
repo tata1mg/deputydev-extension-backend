@@ -1,0 +1,44 @@
+import json
+from typing import Any, Dict, List, Optional
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
+    AgentTypes,
+)
+from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
+    ParsedAggregatedCommentData,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
+    IdeReviewContextService,
+)
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
+    PromptFeatures,
+)
+
+
+class CommentSummarizerAgent(BaseCodeReviewAgent):
+    is_dual_pass = False
+    prompt_features = [
+        PromptFeatures.COMMENT_SUMMARIZATION,
+    ]
+    agent_type = AgentTypes.COMMENT_SUMMARIZATION
+
+    def __init__(
+        self,
+        context_service: IdeReviewContextService,
+        comments: List[ParsedAggregatedCommentData],
+        llm_handler: LLMHandler[PromptFeatures],
+        model: LLModels,
+    ):
+        self.comments = comments
+        super().__init__(context_service, llm_handler, model)
+
+    async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
+        return {
+            "COMMENTS": json.dumps([comment.model_dump(mode="json") for comment in self.comments]),
+            "PR_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
+        }

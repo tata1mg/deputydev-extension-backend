@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from .user_agent_dto import UserAgentDTO
+from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
 
 
 class IdeReviewsCommentDTO(BaseModel):
@@ -22,4 +23,4 @@ class IdeReviewsCommentDTO(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
-    comment_status: Optional[str] = None
+    comment_status: Optional[str] = IdeReviewCommentStatus.NOT_REVIEWED.value
