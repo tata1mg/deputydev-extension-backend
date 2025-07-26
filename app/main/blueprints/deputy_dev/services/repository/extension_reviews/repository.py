@@ -1,9 +1,9 @@
 from typing import List, Union, Optional
 from sanic.log import logger
-from app.main.blueprints.deputy_dev.models.dao.postgres.extension_reviews import ExtensionReviews
+from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews import IdeReviews
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews_comments import IdeReviewsComments
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
-from app.main.blueprints.deputy_dev.models.dto.extension_review_dto import ExtensionReviewDTO
+from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
@@ -15,27 +15,27 @@ class ExtensionReviewsRepository:
     @classmethod
     async def db_get(
         cls, filters, fetch_one=False, order_by=None
-    ) -> Union[ExtensionReviewDTO, List[ExtensionReviewDTO]]:
+    ) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
         try:
             review_data = await DB.by_filters(
-                model_name=ExtensionReviews, where_clause=filters, fetch_one=fetch_one, order_by=order_by
+                model_name=IdeReviews, where_clause=filters, fetch_one=fetch_one, order_by=order_by
             )
             if review_data and fetch_one:
-                return ExtensionReviewDTO(**review_data)
+                return IdeReviewDTO(**review_data)
             elif review_data:
-                return [ExtensionReviewDTO(**review) for review in review_data]
+                return [IdeReviewDTO(**review) for review in review_data]
         except Exception as ex:
             logger.error(f"Error fetching extension review: {filters}, ex: {ex}")
             raise ex
 
     @classmethod
-    async def db_insert(cls, review_dto: ExtensionReviewDTO) -> ExtensionReviewDTO:
+    async def db_insert(cls, review_dto: IdeReviewDTO) -> IdeReviewDTO:
         try:
             payload = review_dto.dict()
             del payload["id"]
-            row = await DB.insert_row(ExtensionReviews, payload)
+            row = await DB.insert_row(IdeReviews, payload)
             row_dict = await row.to_dict()
-            return ExtensionReviewDTO(**row_dict)
+            return IdeReviewDTO(**row_dict)
         except Exception as ex:
             logger.error(f"Error inserting extension review: {review_dto.dict()}, ex: {ex}")
             raise ex
@@ -43,7 +43,7 @@ class ExtensionReviewsRepository:
     @classmethod
     async def find_or_create(
         cls, user_repo_id: int, reviewed_files: dict, loc: int, status: str, **kwargs
-    ) -> ExtensionReviewDTO:
+    ) -> IdeReviewDTO:
         # You may want to define what makes a review unique (e.g., user_repo_id + reviewed_files hash)
         filters = {"user_repo_id": user_repo_id, "reviewed_files": reviewed_files, "is_deleted": False}
         review_dto = await cls.db_get(filters=filters, fetch_one=True)
@@ -55,11 +55,11 @@ class ExtensionReviewsRepository:
                 "status": status,
                 **kwargs,
             }
-            review_dto = await cls.db_insert(ExtensionReviewDTO(**review_data))
+            review_dto = await cls.db_insert(IdeReviewDTO(**review_data))
         return review_dto
 
     @classmethod
-    async def fetch_reviews_history(cls, filters: dict, order_by: str = "-created_at") -> list[ExtensionReviewDTO]:
+    async def fetch_reviews_history(cls, filters: dict, order_by: str = "-created_at") -> list[IdeReviewDTO]:
         try:
             reviews = await cls._fetch_reviews_with_comments(filters, order_by)
             comment_ids = cls._extract_comment_ids(reviews)
@@ -71,16 +71,16 @@ class ExtensionReviewsRepository:
             raise ex
 
     @classmethod
-    async def _fetch_reviews_with_comments(cls, filters: dict, order_by: str) -> list[ExtensionReviews]:
+    async def _fetch_reviews_with_comments(cls, filters: dict, order_by: str) -> list[IdeReviews]:
         filtered_comments = IdeReviewsComments.filter(is_deleted=False, is_valid=True)
         return (
-            await ExtensionReviews.filter(**filters)
+            await IdeReviews.filter(**filters)
             .order_by(order_by)
             .prefetch_related(Prefetch("review_comments", queryset=filtered_comments))
         )
 
     @classmethod
-    def _extract_comment_ids(cls, reviews: list[ExtensionReviews]) -> list[int]:
+    def _extract_comment_ids(cls, reviews: list[IdeReviews]) -> list[int]:
         comment_ids = []
         for review in reviews:
             for comment in review.review_comments:
@@ -99,7 +99,7 @@ class ExtensionReviewsRepository:
         return comment_agents_map
 
     @classmethod
-    def _build_review_dtos(cls, reviews, comment_agents_map) -> list[ExtensionReviewDTO]:
+    def _build_review_dtos(cls, reviews, comment_agents_map) -> list[IdeReviewDTO]:
         review_dtos = []
         for review in reviews:
             comments_dto = []
@@ -109,7 +109,7 @@ class ExtensionReviewsRepository:
                     comment_dto = IdeReviewsCommentDTO(**dict(comment), agents=agents)
                     comments_dto.append(comment_dto)
 
-            review_dto = ExtensionReviewDTO(**dict(review))
+            review_dto = IdeReviewDTO(**dict(review))
             review_dto.comments = comments_dto
             review_dtos.append(review_dto)
         return review_dtos
@@ -117,4 +117,4 @@ class ExtensionReviewsRepository:
     @classmethod
     async def update_review(cls, review_id: int, data: dict) -> None:
         if data and review_id:
-            await ExtensionReviews.filter(id=review_id).update(**data)
+            await IdeReviews.filter(id=review_id).update(**data)

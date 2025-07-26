@@ -86,7 +86,7 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
 }
 
 
-class ExtensionReviewStatusTypes(Enum):
+class IdeReviewStatusTypes(Enum):
     IN_PROGRESS = "IN_PROGRESS"  # Eligible for experiment
     COMPLETED = "COMPLETED"  # Eligible for experiment
     REJECTED_LARGE_SIZE = "REJECTED_LARGE_SIZE"
@@ -270,3 +270,9 @@ class IdeReviewCommentStatus(Enum):
     ACCEPTED = "ACCEPTED"
     RESOLVED = "RESOLVED"
     NOT_REVIEWED = "NOT_REVIEWED"
+
+
+class ReviewType(Enum):
+    ALL = "ALL"
+    UNCOMMITTED = "UNCOMMITTED"
+    COMMITTED = "COMMITTED"
