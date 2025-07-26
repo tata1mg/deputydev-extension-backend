@@ -24,6 +24,7 @@ class ExtensionReviews(Base):
         "meta_info",
         "session_id",
         "diff_s3_url",
+        "review_type"
         "created_at",
         "updated_at",
     }
@@ -50,11 +51,19 @@ class ExtensionReviews(Base):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     session_id = fields.BigIntField(null=True)
+    review_type = fields.TextField()
 
     class Meta:
         table = "extension_reviews"
         indexes = (("repo_id",),)
         constraints = ["FOREIGN KEY (repo_id) REFERENCES repos(id)"]
+        indexes = [
+            ("review_type",),
+            ("user_team_id",),
+            ("repo_id",),
+            ("review_status",),
+            ("is_deleted",),
+        ]
 
     class Columns(Enum):
         id = ("id",)
@@ -78,3 +87,4 @@ class ExtensionReviews(Base):
         source_commit = ("source_commit",)
         target_commit = ("target_commit",)
         session_id = ("session_id",)
+        review_type = ("review_type",)

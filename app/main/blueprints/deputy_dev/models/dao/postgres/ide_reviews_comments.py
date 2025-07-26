@@ -22,7 +22,7 @@ class IdeReviewsComments(Base):
     }
 
     id = fields.BigIntField(pk=True)
-    review = fields.ForeignKeyField(model_name="dao.ExtensionReviews", related_name="review_comments")
+    review = fields.ForeignKeyField(model_name="dao.IdeReviews", related_name="review_comments")
     title = fields.TextField()
     comment = fields.TextField()
     rationale = fields.TextField(null=True)
@@ -35,7 +35,6 @@ class IdeReviewsComments(Base):
     is_valid = fields.BooleanField(default=True)
     confidence_score = fields.FloatField()
     comment_status = fields.TextField(null=True)
-    # status = fields.TextField()
 
     class Meta:
         table = "ide_reviews_comments"

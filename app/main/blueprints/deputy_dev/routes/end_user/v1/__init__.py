@@ -8,10 +8,9 @@ from app.main.blueprints.deputy_dev.routes.end_user.v1.backfill_missed_data impo
 )
 from app.main.blueprints.deputy_dev.routes.end_user.v1.code_review import smart_code
 from app.main.blueprints.deputy_dev.routes.end_user.v1.dashboard_routes import console
+from app.main.blueprints.deputy_dev.routes.end_user.v1.ide_reviews import ide_reviews_v1_bp
 from app.main.blueprints.deputy_dev.routes.end_user.v1.onboarding import onboarding_bp
 from app.main.blueprints.deputy_dev.routes.end_user.v1.setting import setting
-from app.main.blueprints.deputy_dev.routes.end_user.v1.extension_code_review import extension_code_review
-from app.main.blueprints.deputy_dev.routes.end_user.v1.extension_agents import agents
 
 blueprints = [
     smart_code,
@@ -20,8 +19,7 @@ blueprints = [
     console,
     setting,
     backfill,
-    extension_code_review,
-    agents,
+    ide_reviews_v1_bp
 ]  # onboarding flows,
 
 code_review_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")
