@@ -1,6 +1,6 @@
-from typing import List, Set
-from app.backend_common.utils.app_utils import get_token_count
 import re
+
+from app.backend_common.utils.app_utils import get_token_count
 
 
 class IdeDiffHandler:
@@ -23,7 +23,6 @@ class IdeDiffHandler:
             elif line.startswith("-") and not line.startswith("---"):
                 removed += 1
         return added + removed
-
 
     def get_diff_token_count(self) -> int:
         """

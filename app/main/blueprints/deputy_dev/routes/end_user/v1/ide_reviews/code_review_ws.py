@@ -1,35 +1,40 @@
 import asyncio
 import json
+import uuid
+from typing import Dict, List, Optional
 
+import aiohttp
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic import Blueprint
 from torpedo import CONFIG, Request, send_response
-from typing import Optional, Dict, List
 
 from app.backend_common.caches.websocket_connections_cache import WebsocketConnectionCache
-from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor import (
-    IdeReviewPostProcessor,
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
+    AgentRequestItem,
+    MultiAgentReviewRequest,
+    WebSocketMessage,
 )
-from app.main.blueprints.one_dev.utils.client.client_validator import (
-    validate_client_version, validate_version,
-)
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager import (
     IdeReviewManager,
 )
-from deputydev_core.utils.app_logger import AppLogger
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.multi_agent_review_manager import (
+    MultiAgentWebSocketManager,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_proces_web_socket_manager import (
+    PostProcessWebSocketManager,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor import (
+    IdeReviewPostProcessor,
+)
+from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+    validate_version,
+)
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.multi_agent_review_manager import MultiAgentWebSocketManager
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import WebSocketMessage, \
-    MultiAgentReviewRequest, AgentRequestItem
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_proces_web_socket_manager import PostProcessWebSocketManager
-import uuid
-import aiohttp
-from deputydev_core.utils.config_manager import ConfigManager
-
-
 
 ide_review_websocket = Blueprint("ide_review_websocket", "")
 
@@ -60,7 +65,6 @@ async def run_extension_agent(request: Request, **kwargs):
     return send_response(result)
 
 
-
 @ide_review_websocket.route("/legacy-post-process", methods=["POST"])
 @validate_client_version
 @authenticate
@@ -78,10 +82,9 @@ async def run_multi_agent_review(_request: Request, **kwargs):
 
     connection_data = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
-        return send_response({
-            "status": "ERROR",
-            "message": f"No connection data found for connection ID: {connection_id}"
-        })
+        return send_response(
+            {"status": "ERROR", "message": f"No connection data found for connection ID: {connection_id}"}
+        )
     client_data = ClientData(**connection_data["client_data"])
 
     # Validate client version
@@ -98,7 +101,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
                     "error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value,
                     "upgrade_version": upgrade_version,
                     **({"client_download_link": client_download_link} if client_download_link else {}),
-                }
+                },
             )
         )
         return send_response({"status": "INVALID_CLIENT_VERSION"})
@@ -117,15 +120,12 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         auth_error = True
         auth_data = None
 
-
-
     if not is_local and (auth_error or not auth_data):
         manager = MultiAgentWebSocketManager(connection_id, is_local)
         await manager.initialize_aws_client()
         await manager.push_to_connection_stream(
             WebSocketMessage(
-                type="AGENT_FAIL",
-                data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
+                type="AGENT_FAIL", data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
             )
         )
         return send_response({"status": "SESSION_EXPIRED"})
@@ -138,19 +138,12 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         if auth_data and not payload_dict.get("user_team_id"):
             payload_dict["user_team_id"] = auth_data.user_team_id
 
-
         multi_agent_request = MultiAgentReviewRequest(**payload_dict)
     except Exception as e:
         AppLogger.log_error(f"Invalid request payload: {e}")
-        return send_response({
-            "status": "ERROR",
-            "message": f"Invalid request payload: {str(e)}"
-        })
+        return send_response({"status": "ERROR", "message": f"Invalid request payload: {str(e)}"})
 
-    async def process_multi_agent_review_task(
-            request: MultiAgentReviewRequest,
-            is_local: bool = False
-    ) -> None:
+    async def process_multi_agent_review_task(request: MultiAgentReviewRequest, is_local: bool = False) -> None:
         """
         Background task to process multi-agent review requests.
 
@@ -172,22 +165,16 @@ async def run_multi_agent_review(_request: Request, **kwargs):
             if manager:
                 try:
                     await manager.push_to_connection_stream(
-                        WebSocketMessage(
-                            type="AGENT_FAIL",
-                            data={"message": f"Background task error: {str(e)}"}
-                        ),
-                        local_testing_stream_buffer
+                        WebSocketMessage(type="AGENT_FAIL", data={"message": f"Background task error: {str(e)}"}),
+                        local_testing_stream_buffer,
                     )
                 except Exception as stream_error:
                     AppLogger.log_error(f"Error sending error message to stream: {stream_error}")
 
     # Create and start background processing task
-    asyncio.create_task(
-        process_multi_agent_review_task(multi_agent_request, is_local)
-    )
+    asyncio.create_task(process_multi_agent_review_task(multi_agent_request, is_local))
 
     return send_response({"status": "SUCCESS"})
-
 
 
 @ide_review_websocket.websocket("/run-multi-agent-local-connection")
@@ -255,10 +242,9 @@ async def post_process_extension_review(_request: Request, **kwargs):
 
     connection_data = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
-        return send_response({
-            "status": "ERROR",
-            "message": f"No connection data found for connection ID: {connection_id}"
-        })
+        return send_response(
+            {"status": "ERROR", "message": f"No connection data found for connection ID: {connection_id}"}
+        )
     client_data = ClientData(**connection_data["client_data"])
 
     # Validate client version
@@ -274,9 +260,9 @@ async def post_process_extension_review(_request: Request, **kwargs):
                 data={
                     "error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value,
                     "upgrade_version": upgrade_version,
-                }
+                },
             ),
-            local_testing_stream_buffer
+            local_testing_stream_buffer,
         )
         return send_response({"status": "INVALID_CLIENT_VERSION"})
 
@@ -299,10 +285,9 @@ async def post_process_extension_review(_request: Request, **kwargs):
         await manager.initialize_aws_client()
         await manager.push_to_connection_stream(
             WebSocketMessage(
-                type="STREAM_ERROR",
-                data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
+                type="STREAM_ERROR", data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
             ),
-            local_testing_stream_buffer
+            local_testing_stream_buffer,
         )
         return send_response({"status": "SESSION_EXPIRED"})
 
@@ -316,10 +301,7 @@ async def post_process_extension_review(_request: Request, **kwargs):
 
     except Exception as e:
         AppLogger.log_error(f"Invalid request payload: {e}")
-        return send_response({
-            "status": "ERROR",
-            "message": f"Invalid request payload: {str(e)}"
-        })
+        return send_response({"status": "ERROR", "message": f"Invalid request payload: {str(e)}"})
 
     # Create and start background processing task
     async def process_post_process_task():
@@ -330,7 +312,6 @@ async def post_process_extension_review(_request: Request, **kwargs):
     asyncio.create_task(process_post_process_task())
 
     return send_response({"status": "SUCCESS"})
-
 
 
 @ide_review_websocket.websocket("/post-process-local-connection")
@@ -388,4 +369,3 @@ async def post_process_websocket_local(request: Request, ws) -> None:
 
     except Exception as e:
         AppLogger.log_error(f"Error in post-process WebSocket connection: {e}")
-

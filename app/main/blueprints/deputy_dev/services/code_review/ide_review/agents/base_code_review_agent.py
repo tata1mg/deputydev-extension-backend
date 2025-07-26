@@ -16,11 +16,11 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
     AgentRunResult,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
-    IdeReviewContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
+    IdeReviewContextService,
 )
 
 

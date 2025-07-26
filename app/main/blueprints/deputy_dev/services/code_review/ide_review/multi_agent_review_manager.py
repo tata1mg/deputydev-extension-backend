@@ -5,15 +5,14 @@ from deputydev_core.utils.app_logger import AppLogger
 
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import AgentTypes
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.base_websocket_manager import BaseWebSocketManager
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
     AgentRequestItem,
     AgentTaskResult,
-    WebSocketMessage,
     RequestType,
+    WebSocketMessage,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager import \
-    IdeReviewManager
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.base_websocket_manager import BaseWebSocketManager
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager import IdeReviewManager
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 
 
@@ -23,14 +22,13 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
     Handles parallel agent execution and real-time result streaming.
     """
 
-    def __init__(self, connection_id: str, review_id:int, is_local: bool = False):
+    def __init__(self, connection_id: str, review_id: int, is_local: bool = False):
         self.connection_id = connection_id
         self.review_id = review_id
         self.is_local = is_local
         self.connection_id_gone = False
 
         super().__init__(connection_id, is_local)
-
 
     async def execute_agent_task(self, agent_request: AgentRequestItem) -> AgentTaskResult:
         """
@@ -48,11 +46,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
 
         except Exception as e:
             AppLogger.log_error(f"Error executing agent task {agent_request.agent_id}: {e}")
-            return WebSocketMessage(
-                type="AGENT_FAIL",
-                agent_id=agent_request.agent_id,
-                data={"message": str(e)}
-            )
+            return WebSocketMessage(type="AGENT_FAIL", agent_id=agent_request.agent_id, data={"message": str(e)})
 
     def determine_event_type(self, formatted_result: Dict[str, Any]) -> str:
         """
@@ -77,7 +71,6 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
         else:
             return "AGENT_COMPLETE"
 
-
     async def process_request(self, agents: List[AgentRequestItem], local_testing_stream_buffer) -> None:
         """
         Process multiple agent requests in parallel and stream results.
@@ -98,18 +91,17 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
         except Exception as e:
             AppLogger.log_error(f"Error in process_multi_agent_request: {e}")
             await self.push_to_connection_stream(
-                WebSocketMessage(
-                    type="AGENT_FAIL",
-                    data={"message": f"Agent processing error: {str(e)}"}
-                ), local_testing_stream_buffer
+                WebSocketMessage(type="AGENT_FAIL", data={"message": f"Agent processing error: {str(e)}"}),
+                local_testing_stream_buffer,
             )
         finally:
             # Clean up AWS client
             if self.aws_client:
                 await self.aws_client.close()
 
-    async def _process_multiple_agents_with_cache_pattern(self, agents: List[AgentRequestItem],
-                                                          local_testing_stream_buffer) -> None:
+    async def _process_multiple_agents_with_cache_pattern(
+        self, agents: List[AgentRequestItem], local_testing_stream_buffer
+    ) -> None:
         """
         Process multiple agents using cache establishing/utilizing pattern.
 
@@ -162,10 +154,8 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
         except Exception as e:
             AppLogger.log_error(f"Error in _process_multiple_agents_with_cache_pattern: {e}")
             await self.push_to_connection_stream(
-                WebSocketMessage(
-                    type="AGENT_FAIL",
-                    data={"message": f"Multi-agent processing error: {str(e)}"}
-                ), local_testing_stream_buffer
+                WebSocketMessage(type="AGENT_FAIL", data={"message": f"Multi-agent processing error: {str(e)}"}),
+                local_testing_stream_buffer,
             )
 
     async def execute_and_stream_agent(self, agent_request: AgentRequestItem, local_testing_stream_buffer) -> None:
@@ -178,18 +168,13 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
         try:
             if agent_request.type == RequestType.QUERY:
                 await self.push_to_connection_stream(
-                    WebSocketMessage(
-                        type="AGENT_START",
-                        agent_id=agent_request.agent_id
-                    ), local_testing_stream_buffer
+                    WebSocketMessage(type="AGENT_START", agent_id=agent_request.agent_id), local_testing_stream_buffer
                 )
 
             agent_ws_message = await self.execute_agent_task(agent_request)
             print("Message")
             print(agent_ws_message)
-            await self.push_to_connection_stream(
-                agent_ws_message, local_testing_stream_buffer
-            )
+            await self.push_to_connection_stream(agent_ws_message, local_testing_stream_buffer)
 
         except Exception as e:
             AppLogger.log_error(f"Error executing and streaming agent {agent_request.agent_id}: {e}")
@@ -199,7 +184,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                     agent_id=agent_request.agent_id,
                     data={
                         "message": str(e),
-                    }
-                ), local_testing_stream_buffer
+                    },
+                ),
+                local_testing_stream_buffer,
             )
-

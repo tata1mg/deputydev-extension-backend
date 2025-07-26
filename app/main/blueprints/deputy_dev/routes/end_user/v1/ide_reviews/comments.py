@@ -1,20 +1,23 @@
+from deputydev_core.utils.app_logger import AppLogger
+from sanic import Blueprint
+from torpedo import CONFIG, Request, send_response
+
+from app.backend_common.utils.wrapper import exception_logger
+from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
+from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.ide_review_comment_feedback_payload import (
+    IdeReviewCommentFeedbackPayload,
+)
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import CommentUpdateRequest
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager import IdeReviewManager
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.ide_code_review_history_manager import \
-    IdeCodeReviewHistoryManager
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.ide_code_review_history_manager import (
+    IdeCodeReviewHistoryManager,
+)
 from app.main.blueprints.deputy_dev.services.repository.ide_review_comment_feedbacks.repository import (
     IdeReviewCommentFeedbacksRepository,
 )
-from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
-from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.ide_review_comment_feedback_payload import IdeReviewCommentFeedbackPayload
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import validate_client_version
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from sanic import Blueprint
-from torpedo import CONFIG, Request, send_response
-from app.backend_common.utils.wrapper import exception_logger
-from deputydev_core.utils.app_logger import AppLogger
-
 
 comments = Blueprint("comments", "/comments")
 
@@ -39,13 +42,11 @@ async def create_comment_feedback(request: Request, auth_data: AuthData, comment
         request_data = request.json or {}
         payload = IdeReviewCommentFeedbackPayload(**request_data)
         feedback_dto = IdeReviewCommentFeedbackDTO(
-            comment_id=comment_id,
-            feedback_comment=payload.feedback_comment,
-            like=payload.like
+            comment_id=comment_id, feedback_comment=payload.feedback_comment, like=payload.like
         )
         created_feedback = await IdeReviewCommentFeedbacksRepository.db_insert(feedback_dto)
         return send_response(created_feedback.model_dump(mode="json"))
-    
+
     except Exception as e:
         raise e
 
@@ -77,7 +78,6 @@ async def update_comment_status(request: Request, auth_data: AuthData, **kwargs)
         return send_response({"status": "ERROR", "message": str(e)})
 
 
-
 @comments.route("/<comment_id:int>/generate-fix-query", methods=["GET"])
 @validate_client_version
 @authenticate
@@ -101,4 +101,3 @@ async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kw
     except Exception as e:
         AppLogger.log_error(f"Error generating fix query: {e}")
         return send_response({"status": "ERROR", "message": str(e)})
-

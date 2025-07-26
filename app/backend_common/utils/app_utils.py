@@ -192,6 +192,6 @@ def safe_index(lst, item, default=None):
     except ValueError:
         return default
 
+
 def hash_sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", "ignore")).hexdigest()
-    

@@ -1,26 +1,29 @@
-from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
-from app.backend_common.repository.repo.repository import RepoRepository
-from app.backend_common.caches.ide_review_cache import IdeReviewCache
-from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
-from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
-from app.backend_common.services.llm.dataclasses.main import ChatAttachmentDataWithObjectBytes
-from app.backend_common.repository.user_teams.user_team_repository import (
-    UserTeamRepository,
-)
-from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
 from deputydev_core.utils.constants.enums import Clients
+
+from app.backend_common.caches.ide_review_cache import IdeReviewCache
+from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
-from app.main.blueprints.deputy_dev.helpers.ide_diff_handler import IdeDiffHandler
-from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
+from app.backend_common.repository.repo.repository import RepoRepository
+from app.backend_common.repository.user_teams.user_team_repository import (
+    UserTeamRepository,
+)
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.backend_common.services.llm.dataclasses.main import ChatAttachmentDataWithObjectBytes
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     IdeReviewStatusTypes,
 )
+from app.main.blueprints.deputy_dev.helpers.ide_diff_handler import IdeDiffHandler
+from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
+    GetRepoIdRequest,
+    ReviewRequest,
+)
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import ReviewRequest
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import GetRepoIdRequest
+
 
 class IdeReviewPreProcessor:
     def __init__(self):
@@ -46,20 +49,17 @@ class IdeReviewPreProcessor:
         object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
 
         return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
-    
-    async def get_repo_id(self, request : GetRepoIdRequest, user_team_id: int):
+
+    async def get_repo_id(self, request: GetRepoIdRequest, user_team_id: int):
         user_team = await UserTeamRepository.db_get(filters={"id": user_team_id}, fetch_one=True)
         if not user_team:
             raise ValueError(f"User team with id {user_team_id} not found")
-        
+
         repo_dto = await RepoRepository.find_or_create_extension_repo(
-            repo_name=request.repo_name,
-             repo_origin=request.origin_url,
-             team_id=user_team.team_id
+            repo_name=request.repo_name, repo_origin=request.origin_url, team_id=user_team.team_id
         )
         return repo_dto
 
-        
     async def pre_process_pr(self, data: dict, user_team_id: int):
         review_request = ReviewRequest(**data)
 
@@ -68,7 +68,7 @@ class IdeReviewPreProcessor:
         combined_diff = ""
         for file in review_request.file_wise_diff:
             combined_diff += file.diff
-        
+
         review_diff = combined_diff
 
         reviewed_files = [file.file_path for file in review_request.file_wise_diff]
@@ -80,9 +80,7 @@ class IdeReviewPreProcessor:
         user_team = await UserTeamRepository.db_get(filters={"id": user_team_id}, fetch_one=True)
 
         self.extension_repo_dto = await RepoRepository.find_or_create_extension_repo(
-            repo_name=review_request.repo_name,
-             repo_origin=review_request.origin_url,
-             team_id=user_team.team_id
+            repo_name=review_request.repo_name, repo_origin=review_request.origin_url, team_id=user_team.team_id
         )
 
         session = await MessageSessionsRepository.create_message_session(
@@ -110,7 +108,7 @@ class IdeReviewPreProcessor:
             target_branch=review_request.target_branch,
             source_commit=review_request.source_commit,
             target_commit=review_request.target_commit,
-            review_type=review_request.review_type.value
+            review_type=review_request.review_type.value,
         )
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 

@@ -1,33 +1,34 @@
+import textwrap
 from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo import CONFIG
-import textwrap
-from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import ReviewAgentStatusDTO
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import AgentRequestItem
-from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 
+from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
+from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import ReviewAgentStatusDTO
+from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentRunResult,
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.repository.review_agents_status.repository import \
-    ReviewAgentStatusRepository
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.factory import PromptFeatureFactory
-from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
-from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
-from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory import AgentFactory
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import AgentRequestItem
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.factory import PromptFeatureFactory
+from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
+from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
+from app.main.blueprints.deputy_dev.services.repository.review_agents_status.repository import (
+    ReviewAgentStatusRepository,
+)
+from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -60,25 +61,27 @@ class IdeReviewManager:
             user_agent_dto=user_agent_dto,
         )
 
-        agent_result = await agent.run_agent(session_id=extension_review_dto.session_id, payload=agent_request.model_dump(mode="python"))
+        agent_result = await agent.run_agent(
+            session_id=extension_review_dto.session_id, payload=agent_request.model_dump(mode="python")
+        )
 
         if request_type == "query":
             meta_info = {
-                "confidence_score": getattr(user_agent_dto, 'confidence_score', None),
+                "confidence_score": getattr(user_agent_dto, "confidence_score", None),
                 "display_name": user_agent_dto.display_name,
                 "agent_name": user_agent_dto.agent_name,
-                "custom_prompt": getattr(user_agent_dto, 'custom_prompt', None),
-                "exclusions": getattr(user_agent_dto, 'exclusions', None),
-                "inclusions": getattr(user_agent_dto, 'inclusions', None),
-                "objective": getattr(user_agent_dto, 'objective', None),
-                "is_custom_agent": getattr(user_agent_dto, 'is_custom_agent', False),
+                "custom_prompt": getattr(user_agent_dto, "custom_prompt", None),
+                "exclusions": getattr(user_agent_dto, "exclusions", None),
+                "inclusions": getattr(user_agent_dto, "inclusions", None),
+                "objective": getattr(user_agent_dto, "objective", None),
+                "is_custom_agent": getattr(user_agent_dto, "is_custom_agent", False),
             }
 
             agent_status = ReviewAgentStatusDTO(
                 review_id=review_id,
                 agent_id=agent_id,
                 meta_info=meta_info,
-                llm_model=None  # Will be updated after agent execution
+                llm_model=None,  # Will be updated after agent execution
             )
             await ReviewAgentStatusRepository.db_insert(agent_status)
 
@@ -123,7 +126,6 @@ class IdeReviewManager:
             AppLogger.log_warn(f"Invalid agent name: {user_agent_dto.agent_name}")
 
         return agent_and_init_params
-
 
     @staticmethod
     def _update_bucket_name(agent_result: AgentRunResult):
