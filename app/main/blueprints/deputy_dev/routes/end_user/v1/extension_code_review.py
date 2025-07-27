@@ -572,9 +572,9 @@ async def create_comment_feedback(request: Request, auth_data: AuthData, comment
             feedback_comment=payload.feedback_comment,
             like=payload.like
         )
-        created_feedback = await IdeReviewCommentFeedbacksRepository.db_insert(feedback_dto)
+        created_feedback = await IdeReviewCommentFeedbacksRepository.db_upsert(feedback_dto)
         return send_response(created_feedback.model_dump(mode="json"))
-    
+
     except Exception as e:
         raise e
 
