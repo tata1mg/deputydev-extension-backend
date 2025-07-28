@@ -80,7 +80,7 @@ class ReviewRequest(BaseModel):
     target_commit: str
     diff_attachment_id: Optional[str] = None
     file_wise_diff: List[FileWiseChanges]
-    review_type: Optional[ReviewType] = ReviewType.ALL
+    review_type: ReviewType
 
 
 class CommentUpdateRequest(BaseModel):

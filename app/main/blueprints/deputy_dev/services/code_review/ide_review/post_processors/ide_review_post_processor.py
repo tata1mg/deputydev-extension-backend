@@ -30,9 +30,7 @@ class IdeReviewPostProcessor:
         comments = await IdeCommentRepository.get_review_comments(review_id)
         formatted_comments = cls.format_comments(comments)
         context_service = IdeReviewContextService(review_id=review_id)
-        print("User team id", user_team_id)
-        user_agents = await UserAgentRepository.db_get({"user_team_id": 3})
-        print("User agents", user_agents)
+        user_agents = await UserAgentRepository.db_get({"user_team_id": user_team_id})
         llm_handler = LLMHandler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
