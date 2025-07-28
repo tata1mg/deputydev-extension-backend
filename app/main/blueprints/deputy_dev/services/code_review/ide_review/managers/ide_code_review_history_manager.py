@@ -44,7 +44,8 @@ class IdeCodeReviewHistoryManager:
     @classmethod
     def format_reviews(cls, reviews: list[IdeReviewDTO]) -> list[dict]:
         formatted_reviews = []
-        review_fields = {"id", "title", "execution_time_seconds", "review_datetime", "comments"}
+        review_fields = {"id", "title", "execution_time_seconds", "review_datetime", "comments", "feedback"}
+        feedback_fields = {"feedback_comment", "like"}
         comment_fields = {
             "id",
             "title",
@@ -56,6 +57,7 @@ class IdeCodeReviewHistoryManager:
             "line_number",
             "tag",
             "comment_status",
+            "feedback"
         }
         for review in reviews:
             review_data = review.model_dump(mode="json", include=review_fields)
@@ -64,10 +66,16 @@ class IdeCodeReviewHistoryManager:
             agent_data = {}
             review_data["tag_summary"] = defaultdict(int)
             review_data["comments"] = defaultdict(list)
+            review_data["feedback"] = (
+                review.feedback.model_dump(mode="json", include=feedback_fields) if review.feedback else None
+            )
             review_data["meta"] = {"file_count": 0, "comment_count": 0}
             for comment in review.comments:
                 review_data["meta"]["comment_count"] += 1
                 comment_data = comment.model_dump(mode="json", include=comment_fields)
+                comment_data["feedback"] = (
+                    comment.feedback.model_dump(mode="json", include=feedback_fields) if comment.feedback else None
+                )
                 comment_data["agent_ids"] = []
                 for agent in comment.agents:
                     agent_data[agent.id] = {"name": agent.agent_name, "display_name": agent.display_name}
@@ -123,7 +131,7 @@ class IdeCodeReviewHistoryManager:
                 else:
                     return 0
 
-            count = await DB.count_by_filters(model_name="dao.ExtensionReviews", filters=where_clause)
+            count = await DB.count_by_filters(model_name="dao.IdeReviews", filters=where_clause)
 
             return count
 
