@@ -4,6 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 from .ide_reviews_comment_dto import IdeReviewsCommentDTO
+from .ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
 
 
 class IdeReviewDTO(BaseModel):
@@ -22,6 +23,7 @@ class IdeReviewDTO(BaseModel):
     fail_message: Optional[str] = None
     review_datetime: Optional[datetime] = None
     comments: Optional[List[IdeReviewsCommentDTO]] = []
+    feedback: Optional[IdeReviewCommentFeedbackDTO] = None
     is_deleted: bool = False
     deletion_datetime: Optional[datetime] = None
     meta_info: Optional[dict] = None
