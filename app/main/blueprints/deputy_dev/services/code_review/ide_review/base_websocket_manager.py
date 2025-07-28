@@ -32,7 +32,7 @@ class BaseWebSocketManager(ABC):
         if not self.is_local:
             self.aws_client = AWSAPIGatewayServiceClient()
             await self.aws_client.init_client(
-                endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT']}"
+                endpoint=f"{ConfigManager.configs['AWS_API_GATEWAY']['CODE_REVIEW_WEBSOCKET_WEBHOOK_ENDPOINT']}"
             )
 
     async def push_to_connection_stream(
