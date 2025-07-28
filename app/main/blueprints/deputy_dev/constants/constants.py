@@ -275,5 +275,5 @@ class IdeReviewCommentStatus(Enum):
 
 class ReviewType(Enum):
     ALL = "ALL"
-    UNCOMMITTED = "UNCOMMITTED"
-    COMMITTED = "COMMITTED"
+    UNCOMMITTED = "UNCOMMITTED_ONLY"
+    COMMITTED = "COMMITTED_ONLY"
