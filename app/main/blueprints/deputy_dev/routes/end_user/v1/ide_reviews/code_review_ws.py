@@ -109,7 +109,6 @@ async def run_multi_agent_review(_request: Request, **kwargs):
     # Authenticate user (with fallback for local testing)
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
-    _request.json = _request.json["body"]
 
     _request.headers["Authorization"] = f"""Bearer {_request.json["body"].get("auth_token", "")}"""
     _request.headers["X-Session-ID"] = str(_request.json["body"].get("session_id", ""))
@@ -269,7 +268,6 @@ async def post_process_extension_review(_request: Request, **kwargs):
     # Authenticate user (with fallback for local testing)
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
-    _request.json = _request.json["body"]
 
     _request.headers["Authorization"] = f"""Bearer {_request.json["body"].get("auth_token", "")}"""
     _request.headers["X-Session-ID"] = str(_request.json["body"].get("session_id", ""))
