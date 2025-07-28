@@ -78,7 +78,7 @@ async def update_comment_status(request: Request, auth_data: AuthData, **kwargs)
         return send_response({"status": "ERROR", "message": str(e)})
 
 
-@comments.route("/<comment_id:int>/generate-fix-query", methods=["GET"])
+@comments.route("/generate-fix-query", methods=["GET"])
 @validate_client_version
 @authenticate
 async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kwargs):
