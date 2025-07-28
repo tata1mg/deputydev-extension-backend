@@ -43,7 +43,7 @@ config = CONFIG.config
 local_testing_stream_buffer: Dict[str, List[str]] = {}
 
 
-@ide_review_websocket.route("/run-agent", methods=["POST"])
+@ide_review_websocket.route("/legacy-run-agent", methods=["POST"])
 @validate_client_version
 @authenticate
 async def run_extension_agent(request: Request, **kwargs):
@@ -75,10 +75,10 @@ async def legacy_post_process(request: Request, **kwargs):
     return send_response({"status": "SUCCESS"})
 
 
-@ide_review_websocket.route("/run-multi-agent", methods=["POST"])
+@ide_review_websocket.route("/run-agent", methods=["POST"])
 async def run_multi_agent_review(_request: Request, **kwargs):
-    connection_id: str = _request.headers.get("connectionid")  # type: ignore
-    is_local: bool = _request.headers.get("X-Is-Local") == "true"
+    connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
+    is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 
     connection_data = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
@@ -109,10 +109,11 @@ async def run_multi_agent_review(_request: Request, **kwargs):
     # Authenticate user (with fallback for local testing)
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
+    _request.json = _request.json["body"]
 
-    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+    _request.headers["Authorization"] = f"""Bearer {_request.json["body"].get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json["body"].get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json["body"].get("session_type", ""))
 
     try:
         auth_data, _ = await get_auth_data(_request)
@@ -131,7 +132,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         return send_response({"status": "SESSION_EXPIRED"})
 
     try:
-        payload_dict = _request.json
+        payload_dict = _request.json["body"]
         if "connection_id" not in payload_dict:
             payload_dict["connection_id"] = connection_id
 
@@ -207,7 +208,7 @@ async def multi_agent_websocket_local(request: Request, ws) -> None:
 
                     # Send to multi-agent endpoint
                     await session.post(
-                        f"{self_host_url}/end_user/v1/ide-reviews/run-multi-agent",
+                        f"{self_host_url}/end_user/v1/ide-reviews/run-agent",
                         headers={"connectionid": connection_id, "X-Is-Local": "true"},
                         json=payload,
                     )
@@ -236,8 +237,8 @@ async def multi_agent_websocket_local(request: Request, ws) -> None:
 
 @ide_review_websocket.route("/post-process", methods=["POST"])
 async def post_process_extension_review(_request: Request, **kwargs):
-    connection_id: str = _request.headers.get("connectionid")  # type: ignore
-    is_local: bool = _request.headers.get("X-Is-Local") == "true"
+    connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
+    is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 
     connection_data = await WebsocketConnectionCache.get(connection_id)
     if connection_data is None:
@@ -268,10 +269,11 @@ async def post_process_extension_review(_request: Request, **kwargs):
     # Authenticate user (with fallback for local testing)
     auth_data: Optional[AuthData] = None
     auth_error: bool = False
+    _request.json = _request.json["body"]
 
-    _request.headers["Authorization"] = f"""Bearer {_request.json.get("auth_token", "")}"""
-    _request.headers["X-Session-ID"] = str(_request.json.get("session_id", ""))
-    _request.headers["X-Session-Type"] = str(_request.json.get("session_type", ""))
+    _request.headers["Authorization"] = f"""Bearer {_request.json["body"].get("auth_token", "")}"""
+    _request.headers["X-Session-ID"] = str(_request.json["body"].get("session_id", ""))
+    _request.headers["X-Session-Type"] = str(_request.json["body"].get("session_type", ""))
 
     try:
         auth_data, _ = await get_auth_data(_request)
@@ -291,7 +293,7 @@ async def post_process_extension_review(_request: Request, **kwargs):
         return send_response({"status": "SESSION_EXPIRED"})
 
     try:
-        payload_dict = _request.json
+        payload_dict = _request.json["body"]
         if "connection_id" not in payload_dict:
             payload_dict["connection_id"] = connection_id
 
