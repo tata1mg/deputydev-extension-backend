@@ -10,7 +10,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
-from app.backend_common.exception import RetryException
+from app.backend_common.exception import InputTokenLimitExceededException, RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ExtendedThinkingContent,
@@ -60,6 +60,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from app.backend_common.services.llm.token_counter import token_counter
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
@@ -453,6 +454,10 @@ class LLMHandler(Generic[PromptFeatures]):
                     search_web=search_web,
                     disable_caching=disable_caching,
                 )
+
+                # Validate token limit for the actual payload content
+                await token_counter.validate_payload_token_limit(llm_payload, client, llm_model)
+
                 if checker and checker.is_cancelled():
                     raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
@@ -491,6 +496,9 @@ class LLMHandler(Generic[PromptFeatures]):
                     llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
+            except InputTokenLimitExceededException:
+                # Don't retry for token limit exceeded, immediately raise
+                raise
             except LLMThrottledError as e:
                 AppLogger.log_warn(
                     f"LLM Throttled Error: {e}, retrying {i + 1}/{max_retry} after {e.retry_after} seconds"
