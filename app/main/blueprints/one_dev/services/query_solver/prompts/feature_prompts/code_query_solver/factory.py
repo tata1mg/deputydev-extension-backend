@@ -5,6 +5,9 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
     BaseFeaturePromptFactory,
 )
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_3_point_5_sonnet_handler import (
+    Claude3Point5CodeQuerySolverPromptHandler,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_3_point_7_sonnet_handler import (
     Claude3Point7CodeQuerySolverPromptHandler,
 )
@@ -31,6 +34,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
     code_query_solver_prompts: Dict[LLModels, Type[BasePrompt]] = {
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CodeQuerySolverPromptHandler,
+        LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_PRO: Gemini2Point5ProCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH_LITE: Gemini2Point5FlashLiteCodeQuerySolverPromptHandler,
