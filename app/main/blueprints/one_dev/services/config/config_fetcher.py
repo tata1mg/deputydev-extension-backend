@@ -11,29 +11,31 @@ ConfigManager.configs
 
 
 class ConfigFetcher:
-    essential_configs = {
-        ConfigConsumer.CLI: {
-            "NUMBER_OF_WORKERS": 1,
-            "HOST_AND_TIMEOUT": {
-                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
-                "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
+    @classmethod
+    def _get_essential_configs(cls) -> Dict[Any, Any]:
+        return {
+            ConfigConsumer.CLI: {
+                "NUMBER_OF_WORKERS": 1,
+                "HOST_AND_TIMEOUT": {
+                    "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
+                    "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
+                },
+                "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
             },
-            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
-        },
-        ConfigConsumer.VSCODE_EXT: {
-            "NUMBER_OF_WORKERS": 1,
-            "HOST_AND_TIMEOUT": {
-                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
-                "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
+            ConfigConsumer.VSCODE_EXT: {
+                "NUMBER_OF_WORKERS": 1,
+                "HOST_AND_TIMEOUT": {
+                    "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
+                    "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
+                },
+                "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
+                "BINARY": {},
+                "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
+                "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
+                "POLLING_MAX_ATTEMPTS": ConfigManager.configs["POLLING_MAX_ATTEMPTS"],
+                "LLM_MODELS": cls._model_token_limits(ConfigManager.configs["CODE_GEN_LLM_MODELS"]),
             },
-            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
-            "BINARY": {},
-            "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
-            "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
-            "POLLING_MAX_ATTEMPTS": ConfigManager.configs["POLLING_MAX_ATTEMPTS"],
-            "LLM_MODELS": ConfigManager.configs["CODE_GEN_LLM_MODELS"],
-        },
-    }
+        }
 
     main_configs = {
         ConfigConsumer.CLI: {
@@ -158,8 +160,9 @@ class ConfigFetcher:
         cls, params: ConfigParams, config_type: ConfigType, client_data: ClientData
     ) -> Dict[str, Any]:
         if config_type == ConfigType.ESSENTIAL:
-            if params.consumer in cls.essential_configs:
-                config = cls.essential_configs[params.consumer]
+            essential_configs = cls._get_essential_configs()
+            if params.consumer in essential_configs:
+                config = essential_configs[params.consumer]
                 if params.consumer == ConfigConsumer.VSCODE_EXT:
                     await cls.add_vscode_ext_config(
                         config, params=params, config_type=config_type, client_data=client_data
@@ -199,6 +202,29 @@ class ConfigFetcher:
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],
             }
+
+    @classmethod
+    def _model_token_limits(cls, models: list) -> list:
+        """
+        Enhance the CODE_GEN_LLM_MODELS with token limits from LLM_MODELS configuration
+        """
+        enhanced_models = []
+        llm_models_config = ConfigManager.configs.get("LLM_MODELS", {})
+
+        for model in models:
+            enhanced_model = model.copy()
+            model_name = model.get("name")
+
+            if model_name and model_name in llm_models_config:
+                model_config = llm_models_config[model_name]
+                enhanced_model["input_token_limit"] = model_config.get("INPUT_TOKENS_LIMIT", 100000)
+            else:
+                # Default token limit if not found
+                enhanced_model["input_token_limit"] = 100000
+
+            enhanced_models.append(enhanced_model)
+
+        return enhanced_models
 
     @classmethod
     async def _generate_signed_url_for_binary(cls, s3_key: str) -> str:
