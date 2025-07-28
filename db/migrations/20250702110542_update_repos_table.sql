@@ -16,7 +16,7 @@ CREATE INDEX repo_hash_in_repos ON repos (repo_hash);
 
 
 -- migrate:down
-ROP INDEX IF EXISTS repo_hash_in_repos;
+DROP INDEX IF EXISTS repo_hash_in_repos;
 
 ALTER TABLE repos
 DROP COLUMN repo_hash;
