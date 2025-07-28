@@ -54,8 +54,6 @@ class BaseWebSocketManager(ABC):
 
         try:
             if self.is_local:
-                print("message data")
-                print(message_data)
                 # Local testing - use buffer
                 local_testing_stream_buffer.setdefault(self.connection_id, []).append(json.dumps(message_data))
             else:

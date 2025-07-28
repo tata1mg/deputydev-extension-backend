@@ -216,7 +216,6 @@ async def multi_agent_websocket_local(request: Request, ws) -> None:
                     while True:
                         if local_testing_stream_buffer.get(connection_id):
                             data = local_testing_stream_buffer[connection_id].pop(0)
-                            print("WS Data: ", data)
                             await ws.send(data)
 
                             # Check if stream ended

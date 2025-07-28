@@ -36,8 +36,6 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
     authorization_header: str = request.headers.get("Authorization")
     use_grace_period: bool = False
     enable_grace_period: bool = False
-    print(authorization_header)
-    print(request.headers)
     bypass_token = CONFIG.config.get("REVIEW_AUTH_TOKEN")
     if authorization_header and bypass_token and authorization_header.split(" ")[1].strip() == bypass_token:
         session_id = request.headers.get("X-Session-ID")
