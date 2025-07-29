@@ -2,16 +2,16 @@ import asyncio
 from typing import List, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
-from sanic.log import logger
-from torpedo import CONFIG
-
-from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
 from deputydev_core.services.embedding.base_embedding_manager import (
     BaseEmbeddingManager,
 )
 from deputydev_core.services.tiktoken.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
+from numpy.typing import NDArray
+from sanic.log import logger
+from torpedo import CONFIG
+
+from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
 
 config = CONFIG.config
 

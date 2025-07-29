@@ -1,9 +1,10 @@
 from typing import List, Union
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_agent_status import IdeReviewAgentStatus
 from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import ReviewAgentStatusDTO
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class ReviewAgentStatusRepository:

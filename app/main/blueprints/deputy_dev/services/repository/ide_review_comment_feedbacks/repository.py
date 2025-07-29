@@ -34,10 +34,7 @@ class IdeReviewCommentFeedbacksRepository:
             raise ex
 
     @classmethod
-    async def db_upsert(
-        cls,
-        feedback_dto: IdeReviewCommentFeedbackDTO
-    ) -> IdeReviewCommentFeedbackDTO:
+    async def db_upsert(cls, feedback_dto: IdeReviewCommentFeedbackDTO) -> IdeReviewCommentFeedbackDTO:
         """
         Update an existing feedback for a comment or insert a new one if it doesn't exist.
         The method checks for an existing feedback using the comment_id.
@@ -61,15 +58,12 @@ class IdeReviewCommentFeedbacksRepository:
                     row=IdeReviewCommentFeedbacks,
                     model_name=IdeReviewCommentFeedbacks,
                     where_clause={"id": existing.id},
-                    payload=payload
+                    payload=payload,
                 )
                 updated = await cls.db_get(filters={"id": existing.id}, fetch_one=True)
                 return updated
             return await cls.db_insert(feedback_dto)
 
         except Exception as ex:
-            logger.error(
-                f"Error upserting ide_review_comment_feedback: {feedback_dto.model_dump()}, "
-                f"ex: {ex}"
-            )
+            logger.error(f"Error upserting ide_review_comment_feedback: {feedback_dto.model_dump()}, ex: {ex}")
             raise ex

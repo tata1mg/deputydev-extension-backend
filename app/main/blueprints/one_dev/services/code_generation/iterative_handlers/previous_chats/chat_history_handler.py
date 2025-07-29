@@ -2,6 +2,8 @@ import asyncio
 import json
 from typing import Dict, List, Tuple
 
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
@@ -27,7 +29,6 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
-from deputydev_core.utils.config_manager import ConfigManager
 
 
 class ChatHistoryHandler:

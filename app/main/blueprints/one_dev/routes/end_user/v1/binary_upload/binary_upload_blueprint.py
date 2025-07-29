@@ -1,11 +1,11 @@
 from typing import Any
 
+from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint
 from torpedo import Request, send_response
 from torpedo.exceptions import HTTPRequestException
 
 from app.backend_common.services.binary_file_upload.binary_file_upload import BinaryFileUpload
-from deputydev_core.utils.config_manager import ConfigManager
 
 binary_upload_v1_bp = Blueprint("binary_upload_v1_bp", url_prefix="/binary-upload")
 

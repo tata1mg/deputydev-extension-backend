@@ -1,5 +1,6 @@
 import re
 
+from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 
 from app.backend_common.services.repo.repo_factory import RepoFactory
@@ -14,7 +15,6 @@ from app.main.blueprints.deputy_dev.utils import (
     get_vcs_auth_handler,
     update_payload_with_jwt_data,
 )
-from deputydev_core.utils.context_vars import get_context_value
 
 
 class IssueCodeGenerationManager:

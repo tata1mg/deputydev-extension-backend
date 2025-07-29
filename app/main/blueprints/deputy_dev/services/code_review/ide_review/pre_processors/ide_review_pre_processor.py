@@ -1,3 +1,5 @@
+from deputydev_core.utils.constants.enums import Clients
+
 from app.backend_common.caches.ide_review_cache import IdeReviewCache
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
@@ -21,7 +23,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.ma
     ReviewRequest,
 )
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
-from deputydev_core.utils.constants.enums import Clients
 
 
 class IdeReviewPreProcessor:

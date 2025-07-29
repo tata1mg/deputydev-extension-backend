@@ -1,6 +1,8 @@
 import asyncio
 from typing import Any, Dict, List
 
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     ToolUseResponseContent,
@@ -30,7 +32,6 @@ from app.main.blueprints.one_dev.services.repository.code_generation_job.main im
     JobService,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from deputydev_core.utils.config_manager import ConfigManager
 
 from .prompts.factory import PromptFeatureFactory
 

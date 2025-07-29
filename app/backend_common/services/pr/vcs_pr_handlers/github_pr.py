@@ -1,5 +1,7 @@
 from typing import List
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
@@ -12,8 +14,6 @@ from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.github_repo import GithubRepo
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value, set_context_values
 
 
 class GithubPR(BasePR):

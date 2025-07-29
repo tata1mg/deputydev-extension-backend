@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.app_logger import AppLogger
 from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
@@ -20,8 +22,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclas
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from deputydev_core.services.tiktoken import TikToken
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class BaseCodeReviewAgent(ABC):

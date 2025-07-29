@@ -1,6 +1,10 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.constants.enums import Clients
+from deputydev_core.utils.context_vars import set_context_values
+
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.repository.message_sessions.repository import (
@@ -32,9 +36,6 @@ from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseCom
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.constants.enums import Clients
-from deputydev_core.utils.context_vars import set_context_values
 
 
 class PRSummaryManager(BasePRReviewManager):

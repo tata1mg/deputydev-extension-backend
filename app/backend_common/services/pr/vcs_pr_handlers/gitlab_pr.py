@@ -1,5 +1,6 @@
 from typing import List
 
+from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 from torpedo.exceptions import BadRequestException
 
@@ -13,7 +14,6 @@ from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.services.repo.gitlab_repo import GitlabRepo
-from deputydev_core.utils.context_vars import get_context_value
 
 
 class GitlabPR(BasePR):

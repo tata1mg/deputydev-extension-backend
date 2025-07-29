@@ -1,3 +1,4 @@
+from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
 
 from app.backend_common.constants.constants import VCSTypes
@@ -8,7 +9,6 @@ from app.backend_common.utils.app_utils import (
 from app.main.blueprints.deputy_dev.constants.constants import GithubActions
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import remove_special_char
-from deputydev_core.utils.context_vars import set_context_values
 
 
 class ChatWebhook:

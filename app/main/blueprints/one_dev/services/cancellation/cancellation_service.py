@@ -1,4 +1,5 @@
 import xxhash
+from deputydev_core.utils.app_logger import AppLogger
 
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,
@@ -22,7 +23,6 @@ from app.main.blueprints.one_dev.models.dto.query_summaries import (
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class CancellationService:
