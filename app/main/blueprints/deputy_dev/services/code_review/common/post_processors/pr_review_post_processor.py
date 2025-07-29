@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.repository.db import DB
@@ -36,8 +38,6 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
 
 config = CONFIG.config
 

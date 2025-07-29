@@ -19,9 +19,7 @@ from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDT
 
 class ExtensionReviewsRepository:
     @classmethod
-    async def db_get(
-        cls, filters, fetch_one=False, order_by=None
-    ) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
+    async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
         try:
             review_data = await DB.by_filters(
                 model_name=IdeReviews, where_clause=filters, fetch_one=fetch_one, order_by=order_by
@@ -140,7 +138,9 @@ class ExtensionReviewsRepository:
 
             review_dto = IdeReviewDTO(**dict(review))
             review_dto.comments = comments_dto
-            review_dto.feedback = IdeReviewFeedbackDTO(**dict(review.review_feedback[0])) if review.review_feedback else None
+            review_dto.feedback = (
+                IdeReviewFeedbackDTO(**dict(review.review_feedback[0])) if review.review_feedback else None
+            )
             review_dtos.append(review_dto)
         return review_dtos
 

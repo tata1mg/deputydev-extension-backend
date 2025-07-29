@@ -2,6 +2,7 @@ import json
 import textwrap
 from typing import Any, List, Type
 
+from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
@@ -10,7 +11,6 @@ from app.backend_common.services.llm.dataclasses.main import NonStreamingRespons
 from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1_mini import (
     BaseGpt4Point1MiniPrompt,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 from ...dataclasses.main import PromptFeatures
 

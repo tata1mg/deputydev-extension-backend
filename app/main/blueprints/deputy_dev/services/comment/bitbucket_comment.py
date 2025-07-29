@@ -1,3 +1,4 @@
+from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -10,7 +11,6 @@ from app.main.blueprints.deputy_dev.services.comment.helpers.bitbucket_comment_h
     BitbucketCommentHelper,
 )
 from app.main.blueprints.deputy_dev.utils import format_chat_comment_thread_comment
-from deputydev_core.utils.app_logger import AppLogger
 
 config = CONFIG.config
 

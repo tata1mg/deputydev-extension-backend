@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
     LLMMeta,
@@ -22,7 +24,6 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dif
 from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
     get_chunks_by_file_total_lines,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 from ...prompts.dataclasses.main import PromptFeatures
 from ...prompts.factory import PromptFeatureFactory

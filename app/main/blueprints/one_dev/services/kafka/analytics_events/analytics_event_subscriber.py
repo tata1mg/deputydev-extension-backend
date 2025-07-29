@@ -1,12 +1,13 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.analytics_events_dto import AnalyticsEventsData
 from app.backend_common.repository.analytics_events.repository import AnalyticsEventsRepository
 from app.backend_common.repository.message_sessions.repository import MessageSessionsRepository
 from app.main.blueprints.one_dev.services.kafka.analytics_events.dataclasses.kafka_analytics_events import (
     KafkaAnalyticsEventMessage,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 from ..base_kafka_subscriber import BaseKafkaSubscriber
 

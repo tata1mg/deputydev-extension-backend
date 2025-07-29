@@ -1,6 +1,8 @@
 import json
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestData,
@@ -32,7 +34,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.parse_
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_handler import (
     ExtensionToolHandlers,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class ToolRequestManager:

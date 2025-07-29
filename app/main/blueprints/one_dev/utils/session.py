@@ -2,6 +2,7 @@
 from functools import wraps
 from typing import Any, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
@@ -14,7 +15,6 @@ from app.backend_common.repository.message_sessions.repository import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from deputydev_core.utils.app_logger import AppLogger
 
 
 async def get_stored_session(session_id: Optional[int] = None) -> Optional[MessageSessionDTO]:

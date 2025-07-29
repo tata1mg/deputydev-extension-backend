@@ -1,11 +1,12 @@
 from typing import Any, Dict, List
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.base_websocket_manager import BaseWebSocketManager
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import WebSocketMessage
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor import (
     IdeReviewPostProcessor,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class PostProcessWebSocketManager(BaseWebSocketManager):
