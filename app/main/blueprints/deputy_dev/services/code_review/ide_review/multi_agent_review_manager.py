@@ -141,15 +141,14 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                     asyncio.create_task(self.execute_and_stream_agent(agent, local_testing_stream_buffer))
                     for agent in cache_establishing_agents
                 ]
-                cache_establishing_results = await asyncio.gather(*cache_establishing_tasks, return_exceptions=True)
+                await asyncio.gather(*cache_establishing_tasks, return_exceptions=True)
 
             if cache_utilizing_agents:
                 cache_utilizing_tasks = [
                     asyncio.create_task(self.execute_and_stream_agent(agent, local_testing_stream_buffer))
                     for agent in cache_utilizing_agents
                 ]
-                print("cache_utilizing_results")
-                cache_utilizing_results = await asyncio.gather(*cache_utilizing_tasks, return_exceptions=True)
+                await asyncio.gather(*cache_utilizing_tasks, return_exceptions=True)
 
         except Exception as e:
             AppLogger.log_error(f"Error in _process_multiple_agents_with_cache_pattern: {e}")
@@ -172,8 +171,6 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                 )
 
             agent_ws_message = await self.execute_agent_task(agent_request)
-            print("Message")
-            print(agent_ws_message)
             await self.push_to_connection_stream(agent_ws_message, local_testing_stream_buffer)
 
         except Exception as e:

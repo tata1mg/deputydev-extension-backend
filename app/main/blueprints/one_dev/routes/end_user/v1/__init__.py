@@ -20,7 +20,6 @@ from .websocket_connection.websocket_connection_blueprint import (
 blueprints = [
     auth_v1_bp,
     config_v1_bp,
-    history_v1_bp,
     repos_v1_bp,
     code_gen_v1_bp,
     chunks_v1_bp,
@@ -32,5 +31,6 @@ blueprints = [
     extension_settings_v1_bp,
     file_upload_v1_bp,
     binary_upload_v1_bp,
+    history_v1_bp,
 ]
 common_v1_bp = Blueprint.group(*blueprints, url_prefix="v1")

@@ -21,7 +21,7 @@ class AnalyticsEvents(Base):
 
     id = fields.IntField(primary_key=True)
     event_id = fields.UUIDField(null=True)
-    session_id = fields.IntField()
+    session_id = fields.IntField(null=True)
     event_type = fields.TextField()
     event_data = fields.JSONField(null=False)
     client_version = fields.TextField()
