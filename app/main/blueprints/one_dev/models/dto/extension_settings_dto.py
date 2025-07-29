@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
@@ -12,7 +12,6 @@ class TerminalSettings(BaseModel):
 
 
 class Settings(BaseModel):
-    default_mode: Optional[str] = None  # remove after 9.0.0 force upgradde
     terminal_settings: TerminalSettings
 
 

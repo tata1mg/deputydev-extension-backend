@@ -7,6 +7,7 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, 
 import xxhash
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
+from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.exception import RetryException
@@ -78,7 +79,10 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GEMINI_2_POINT_5_PRO: Google,
         LLModels.GEMINI_2_POINT_0_FLASH: Google,
         LLModels.GEMINI_2_POINT_5_FLASH: Google,
+        LLModels.GEMINI_2_POINT_5_FLASH_LITE: Google,
         LLModels.GPT_4_POINT_1: OpenAI,
+        LLModels.GPT_4_POINT_1_NANO: OpenAI,
+        LLModels.GPT_4_POINT_1_MINI: OpenAI,
         LLModels.GPT_O3_MINI: OpenAI,
     }
 
@@ -164,6 +168,7 @@ class LLMHandler(Generic[PromptFeatures]):
         llm_model: LLModels,
         query_id: int,
         call_chain_category: MessageCallChainCategory,
+        previous_responses: List[MessageThreadDTO],
     ) -> None:
         response_to_use: NonStreamingResponse
         if llm_response.type == LLMCallResponseTypes.STREAMING:
@@ -178,7 +183,8 @@ class LLMHandler(Generic[PromptFeatures]):
             actor=MessageThreadActor.ASSISTANT,
             query_id=query_id,
             message_type=MessageType.RESPONSE,
-            conversation_chain=[],
+            conversation_chain=[message.id for message in previous_responses]
+            + ([query_id] if query_id not in [message.id for message in previous_responses] else []),
             message_data=data_to_store,
             data_hash=data_hash,
             llm_model=llm_model,
@@ -397,6 +403,7 @@ class LLMHandler(Generic[PromptFeatures]):
         search_web: bool = False,
         checker: CancellationChecker = None,
         parallel_tool_calls: bool = False,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -456,6 +463,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     stream=stream,
                     response_type=response_type,
                     parallel_tool_calls=parallel_tool_calls,
+                    text_format=text_format,
                 )
 
                 # start task for storing LLM message in DB
@@ -468,6 +476,7 @@ class LLMHandler(Generic[PromptFeatures]):
                         llm_model=llm_model,
                         query_id=query_id,
                         call_chain_category=call_chain_category,
+                        previous_responses=previous_responses,
                     )
                 )
 
@@ -668,6 +677,10 @@ class LLMHandler(Generic[PromptFeatures]):
             if prompt_handler_instance
             else self.prompt_handler_map.get_prompt(model_name=llm_model, feature=prompt_feature)(prompt_vars)
         )
+        try:
+            text_format = prompt_handler.get_text_format()
+        except NotImplementedError:
+            text_format = None
 
         if llm_model not in self.model_to_provider_class_map:
             raise ValueError(f"LLM model {llm_model} not supported")
@@ -715,6 +728,7 @@ class LLMHandler(Generic[PromptFeatures]):
             search_web=search_web,
             checker=checker,
             parallel_tool_calls=parallel_tool_calls,
+            text_format=text_format,
         )
 
     async def store_tool_use_ressponse_in_db(
@@ -789,8 +803,7 @@ class LLMHandler(Generic[PromptFeatures]):
         detected_llm: Optional[LLModels] = None
         detected_prompt_handler: Optional[BasePrompt] = None
         main_query_id: int = 0
-        selected_prev_query_ids = []
-        tool_use_request_message_ids = []
+        tool_use_request_message_ids: List[int] = []
 
         # Get tool use IDs from responses
         tool_use_ids = {resp.content.tool_use_id for resp in tool_use_responses}
@@ -801,14 +814,13 @@ class LLMHandler(Generic[PromptFeatures]):
                     tool_use_request_message_ids.append(message.id)
                     if not detected_llm:
                         detected_llm = message.llm_model
-                        if message.message_type == MessageType.QUERY:
-                            main_query_id = message.id
-                            selected_prev_query_ids = message.conversation_chain
-                        elif message.query_id:
+                    if not main_query_id:
+                        if message.query_id:
                             main_query_id = message.query_id
                         else:
                             raise ValueError("Main query id not found")
 
+                    if not detected_prompt_handler:
                         detected_prompt_handler = self.prompt_handler_map.get_prompt(
                             model_name=detected_llm, feature=self.prompt_features(message.prompt_type)
                         )(prompt_vars)
@@ -821,15 +833,24 @@ class LLMHandler(Generic[PromptFeatures]):
 
         # Find the latest tool use request message ID for context
         latest_message_id = max(tool_use_request_message_ids)
+        latest_message = next(
+            (message for message in session_messages if message.id == latest_message_id),
+            None,
+        )
+
+        if not latest_message:
+            raise ValueError("Latest message not found")
+
+        count_of_same_query_ids = len(
+            [message for message in filtered_messages if message.query_id == latest_message.query_id]
+        )
+        if count_of_same_query_ids > 40:
+            raise Exception("Too many messages in same chat. Try a new chat.")
 
         conversation_chain_messages = [
             message
             for message in session_messages
-            if message.id <= latest_message_id
-            and (
-                (message.id in selected_prev_query_ids or message.query_id in selected_prev_query_ids)
-                or not selected_prev_query_ids
-            )
+            if ((message.id in latest_message.conversation_chain) or message.id in tool_use_request_message_ids)
         ]
         # Store all tool responses in DB
         storage_tasks = [
@@ -946,3 +967,7 @@ class LLMHandler(Generic[PromptFeatures]):
             stream=stream,
             parallel_tool_calls=False,
         )
+
+    async def get_token_count(self, content: str, llm_model: LLModels) -> int:
+        provider = self.model_to_provider_class_map[llm_model]()
+        return await provider.get_tokens(content=content, model=llm_model)
