@@ -109,7 +109,7 @@ class ToolHandlers:
         """
         tool_input["repo_path"] = get_context_value("repo_path")
         if isinstance(tool_input["query"], str):
-            tool_input["query"] = [tool_input["query"]]
+            tool_input["search_term"] = tool_input["query"]
         payload = GrepSearchRequestParams(**tool_input)
         grep_search_results = await GrepSearch(repo_path=payload.repo_path).perform_grep_search(
             directory_path=payload.directory_path,
