@@ -14,7 +14,6 @@ from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
@@ -37,6 +36,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.pr_review_
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.tool_handlers import (
     ToolHandlers,
 )
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
 
 
 class ToolRequestManager:

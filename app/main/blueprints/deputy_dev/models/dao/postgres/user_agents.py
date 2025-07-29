@@ -1,6 +1,8 @@
 from enum import Enum
+
 from tortoise import fields
 from tortoise_wrapper.db import CITextField
+
 from app.backend_common.models.dao.postgres.base import Base
 
 

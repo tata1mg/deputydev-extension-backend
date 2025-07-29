@@ -6,9 +6,6 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agents_factory import (
-    AgentFactory,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,
@@ -18,14 +15,17 @@ from app.main.blueprints.deputy_dev.services.code_review.common.comments.datacla
     ParsedAggregatedCommentData,
     ParsedCommentData,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agents_factory import (
+    AgentFactory,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
