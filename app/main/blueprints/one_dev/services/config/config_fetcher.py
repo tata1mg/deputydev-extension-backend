@@ -146,7 +146,6 @@ class ConfigFetcher:
             "VSCODE_IGNORE_FILES": {"EXCLUDE_DIRS": [], "EXCLUDE_EXTS": []},
             "VSCODE_LOGS_RETENTION_DAYS": 7,
             "CHAT_PAYLOAD_MAX_SIZE": ConfigManager.configs["CHAT_PAYLOAD_MAX_SIZE"],
-            # TODO: remove after 7.0.0 force upgrade
             "CHAT_IMAGE_UPLOAD": {
                 "MAX_BYTES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["MAX_BYTES"],
                 "SUPPORTED_MIMETYPES": ConfigManager.configs["CHAT_IMAGE_UPLOAD"]["SUPPORTED_MIMETYPES"],
@@ -201,7 +200,6 @@ class ConfigFetcher:
                 file_config["download_link"] = await cls._generate_signed_url_for_binary(s3_key)
             base_config["BINARY"] = {
                 **file_config,
-                "password": ConfigManager.configs["BINARY"]["PASSWORD"],  # remove after 9.0.0 force upgrade
                 "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],
                 "max_init_retry": ConfigManager.configs["BINARY"]["MAX_INIT_RETRY"],
                 "max_alive_retry": ConfigManager.configs["BINARY"]["MAX_ALIVE_RETRY"],

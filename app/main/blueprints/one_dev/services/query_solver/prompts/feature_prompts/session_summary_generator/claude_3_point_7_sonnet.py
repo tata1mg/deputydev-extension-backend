@@ -12,19 +12,19 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
-    BaseClaude3Point5SonnetPromptHandler,
+from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_7_sonnet_prompt_handler import (
+    BaseClaude3Point7SonnetPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
 
 
-class Claude3Point5SessionSummaryGeneratorPrompt(BaseClaude3Point5SonnetPromptHandler):
+class Claude3Point7SessionSummaryGeneratorPrompt(BaseClaude3Point7SonnetPromptHandler):
     prompt_type = "SESSION_SUMMARY_GENERATOR"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> str:
