@@ -18,27 +18,27 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
     BaseCodeReviewAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
 )
-from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
-from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import (
+from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.tools_fallback import (
     EXCEPTION_RAISED_FALLBACK,
     NO_TOOL_USE_FALLBACK_PROMPT,
 )
-from app.main.blueprints.deputy_dev.services.code_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
-from app.main.blueprints.deputy_dev.services.code_review.tools.tool_request_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_final_response import PARSE_FINAL_RESPONSE
+from app.main.blueprints.deputy_dev.services.code_review.common.tools.tool_request_manager import (
     ToolRequestManager,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
