@@ -1,8 +1,7 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from pydantic import BaseModel
 
 
 class RerankingInput(BaseModel):

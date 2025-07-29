@@ -3,6 +3,8 @@ import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type
 
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
 from openai.types.responses import Response
 from openai.types.responses.response_stream_event import ResponseStreamEvent
@@ -56,8 +58,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-from deputydev_core.services.tiktoken import TikToken
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class OpenAI(BaseLLMProvider):

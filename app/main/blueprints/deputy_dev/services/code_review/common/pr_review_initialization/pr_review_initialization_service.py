@@ -2,6 +2,12 @@ import asyncio
 import traceback
 from concurrent.futures import ProcessPoolExecutor
 
+from deputydev_core.services.initialization.review_initialization_manager import (
+    ReviewInitialisationManager,
+    WeaviateSyncAndAsyncClients,
+)
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.constants.enums import ContextValueKeys
 from sanic import Sanic
 
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
@@ -11,12 +17,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.utils.weaviate_c
     ReviewWeaviateSyncAndAsyncClients,
     get_weaviate_connection,
 )
-from deputydev_core.services.initialization.review_initialization_manager import (
-    ReviewInitialisationManager,
-    WeaviateSyncAndAsyncClients,
-)
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.constants.enums import ContextValueKeys
 
 
 class PRReviewInitializationService:

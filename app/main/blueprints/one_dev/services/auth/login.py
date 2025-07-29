@@ -1,13 +1,13 @@
 import json
 from typing import Any, Dict
 
+from deputydev_core.utils.constants.auth import AuthStatus
 from jwt import ExpiredSignatureError, InvalidTokenError
 
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from deputydev_core.utils.constants.auth import AuthStatus
 
 
 class Login:

@@ -1,6 +1,7 @@
 from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Type, Union
 
 import httpx
+from deputydev_core.utils.singleton import Singleton
 from openai import AsyncOpenAI
 from openai._streaming import AsyncStream
 from openai.types.chat import ChatCompletion
@@ -14,8 +15,6 @@ from openai.types.shared_params.response_format_json_object import ResponseForma
 from openai.types.shared_params.response_format_text import ResponseFormatText
 from pydantic import BaseModel
 from torpedo import CONFIG
-
-from deputydev_core.utils.singleton import Singleton
 
 config = CONFIG.config
 

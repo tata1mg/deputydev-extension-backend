@@ -1,6 +1,10 @@
 import json
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     ToolUseResponseContent,
@@ -38,9 +42,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_r
     ToolRequestManager,
 )
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):

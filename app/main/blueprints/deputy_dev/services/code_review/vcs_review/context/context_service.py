@@ -1,5 +1,14 @@
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.chunker.handlers.non_vector_db_chunker import (
+    NonVectorDBChunker,
+)
+from deputydev_core.services.chunking.chunking_manager import ChunkingManger
+from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
+from deputydev_core.services.search.dataclasses.main import SearchTypes
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import MAX_RELEVANT_CHUNKS
@@ -22,15 +31,6 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import is_path_included
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.services.chunking.chunker.handlers.non_vector_db_chunker import (
-    NonVectorDBChunker,
-)
-from deputydev_core.services.chunking.chunking_manager import ChunkingManger
-from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
-from deputydev_core.services.search.dataclasses.main import SearchTypes
-from deputydev_core.services.tiktoken import TikToken
-from deputydev_core.utils.context_vars import get_context_value
 
 
 class ContextService:

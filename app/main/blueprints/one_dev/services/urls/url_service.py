@@ -1,5 +1,7 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
@@ -16,7 +18,6 @@ from app.main.blueprints.one_dev.services.urls.prompts.dataclasses.main import (
 from app.main.blueprints.one_dev.services.urls.prompts.factory import (
     PromptFeatureFactory,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class UrlService:

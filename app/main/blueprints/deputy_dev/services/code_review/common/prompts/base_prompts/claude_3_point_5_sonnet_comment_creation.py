@@ -2,6 +2,8 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List, Tuple
 
+from deputydev_core.utils.context_vars import get_context_value
+
 from app.backend_common.exception.exception import ParseException
 from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
@@ -21,7 +23,6 @@ from app.backend_common.utils.formatting import (
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
-from deputydev_core.utils.context_vars import get_context_value
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPromptHandler):

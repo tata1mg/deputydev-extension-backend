@@ -2,6 +2,8 @@ import asyncio
 import json
 from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type, cast
 
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
@@ -67,8 +69,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-from deputydev_core.services.tiktoken import TikToken
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class Anthropic(BaseLLMProvider):
