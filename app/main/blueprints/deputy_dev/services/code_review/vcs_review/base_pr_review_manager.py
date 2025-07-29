@@ -1,3 +1,5 @@
+from deputydev_core.utils.context_vars import set_context_values
+
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -7,7 +9,6 @@ from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
-from deputydev_core.utils.context_vars import set_context_values
 
 
 class BasePRReviewManager:

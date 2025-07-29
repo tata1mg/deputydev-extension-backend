@@ -3,9 +3,8 @@ from __future__ import annotations
 from enum import Enum
 
 from aiohttp import BasicAuth
-from torpedo import CONFIG
-
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
+from torpedo import CONFIG
 
 
 class GrantType(str, Enum):

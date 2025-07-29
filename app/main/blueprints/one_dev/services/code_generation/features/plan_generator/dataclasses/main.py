@@ -1,9 +1,10 @@
 from typing import Optional
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+
 from app.main.blueprints.one_dev.services.code_generation.features.dataclass.main import (
     BaseCodeGenFeaturePayload,
 )
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 
 class CodePlanGenerationInput(BaseCodeGenFeaturePayload):

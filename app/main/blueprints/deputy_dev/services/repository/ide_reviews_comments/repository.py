@@ -1,5 +1,6 @@
 from typing import List, Union
 
+from deputydev_core.utils.app_logger import AppLogger
 from tortoise.query_utils import Prefetch
 
 from app.backend_common.repository.db import DB
@@ -7,7 +8,6 @@ from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews_comments imp
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class IdeCommentRepository:

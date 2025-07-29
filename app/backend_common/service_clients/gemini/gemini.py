@@ -1,12 +1,12 @@
 from typing import Any, AsyncIterator, Dict, List, Optional
 
+from deputydev_core.utils.singleton import Singleton
 from google import genai
 from google.genai import errors, types
 from google.oauth2 import service_account
 from torpedo import CONFIG
 
 from app.backend_common.service_clients.exceptions import GeminiThrottledError
-from deputydev_core.utils.singleton import Singleton
 
 config = CONFIG.config
 

@@ -1,5 +1,7 @@
 import asyncio
 
+from deputydev_core.services.chunking.chunker.base_chunker import FileChunkCreator
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from sanic import Blueprint, Sanic
 from sanic.log import logger
 from torpedo import CONFIG, Request, send_response
@@ -20,8 +22,6 @@ from app.main.blueprints.deputy_dev.services.repository.pr.backfill_data_manager
 from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
     StatsCollectionTrigger,
 )
-from deputydev_core.services.chunking.chunker.base_chunker import FileChunkCreator
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
 

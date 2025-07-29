@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Tuple
 
+from deputydev_core.utils.constants.auth import AuthStatus
+from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import CONFIG, Request
 from torpedo.exceptions import BadRequestException
@@ -22,8 +24,6 @@ from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import get_stored_session
-from deputydev_core.utils.constants.auth import AuthStatus
-from deputydev_core.utils.context_value import ContextValue
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:

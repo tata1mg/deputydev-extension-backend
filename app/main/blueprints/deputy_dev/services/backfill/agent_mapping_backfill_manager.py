@@ -1,6 +1,8 @@
 import re
 from typing import Any, Dict
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dao.postgres import Repos
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.pr_factory import PRFactory
@@ -18,7 +20,6 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler, get_workspace
-from deputydev_core.utils.app_logger import AppLogger
 
 BucketMapping = {
     "Security": [

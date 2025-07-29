@@ -1,6 +1,7 @@
 import json
 from typing import Any, AsyncIterator, Dict, List, Type
 
+from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
@@ -18,7 +19,6 @@ from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItemTypes,
 )
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class SortedAndFilteredIntents(BaseModel):
