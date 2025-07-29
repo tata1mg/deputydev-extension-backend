@@ -28,6 +28,12 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+    ChatHistoryHandler,
+)
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
+    PreviousChatPayload,
+)
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
     CustomQuerySolverAgent,
@@ -57,7 +63,6 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.version import compare_version
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
@@ -102,24 +107,6 @@ class QuerySolver:
 
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
-
-    async def get_previous_message_thread_ids(self, session_id: int, previous_query_ids: List[int]) -> List[int]:
-        all_previous_responses = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
-        )
-        all_previous_responses.sort(key=lambda x: x.id, reverse=False)
-
-        if not all_previous_responses:
-            return []
-
-        if not previous_query_ids:
-            return [response.id for response in all_previous_responses]
-
-        return [
-            response.id
-            for response in all_previous_responses
-            if response.query_id in previous_query_ids or response.id in previous_query_ids
-        ]
 
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
         existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
@@ -219,9 +206,7 @@ class QuerySolver:
             AppLogger.log_error(f"Error occurred while fetching last query message for session {session_id}: {ex}")
             return None
 
-    async def _get_agent_instance_by_name(
-        self, agent_name: str, all_agents: List[QuerySolverAgent]
-    ) -> QuerySolverAgent:
+    def _get_agent_instance_by_name(self, agent_name: str, all_agents: List[QuerySolverAgent]) -> QuerySolverAgent:
         """
         Get the agent instance by its name.
         """
@@ -230,46 +215,15 @@ class QuerySolver:
                 return agent
         return DefaultQuerySolverAgentInstance
 
-    async def solve_query(
-        self,
-        payload: QuerySolverInput,
-        client_data: ClientData,
-        save_to_redis: bool = False,
-        task_checker: Optional[CancellationChecker] = None,
-    ) -> AsyncIterator[BaseModel]:
-        llm_handler = LLMHandler(
-            prompt_factory=PromptFeatureFactory,
-            prompt_features=PromptFeatures,
-            cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
+    async def _get_query_solver_agent_instance(
+        self, payload: QuerySolverInput, llm_handler: LLMHandler[PromptFeatures]
+    ) -> QuerySolverAgent:
+        all_custom_agents, last_query_message = await asyncio.gather(
+            self._generate_dynamic_query_solver_agents(), self.get_last_query_message_for_session(payload.session_id)
         )
-        use_absolute_path = compare_version(
-            client_data.client_version, "8.3.0", ">"
-        )  # remove after 9.0.0. force upgrade  # noqa: N806
-
-        parallel_tool_use_enabled = compare_version(client_data.client_version, "8.4.0", ">=")
-
-        # TODO: remove this after 9.0.0. force upgrade
-        if payload.query is None and payload.batch_tool_responses is None and payload.tool_use_response is not None:
-            payload.batch_tool_responses = [payload.tool_use_response]
+        agent_instance: QuerySolverAgent
 
         if payload.query:
-            asyncio.create_task(
-                self._generate_session_summary(
-                    session_id=payload.session_id,
-                    query=payload.query,
-                    focus_items=payload.focus_items,
-                    directory_items=payload.directory_items,
-                    llm_handler=llm_handler,
-                    user_team_id=payload.user_team_id,
-                    session_type=payload.session_type,
-                )
-            )
-
-            previous_responses = await self.get_previous_message_thread_ids(
-                payload.session_id, payload.previous_query_ids
-            )
-            last_query_message = await self.get_last_query_message_for_session(payload.session_id)
-            all_custom_agents = await self._generate_dynamic_query_solver_agents()
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
                 focus_items=payload.focus_items,
@@ -287,8 +241,55 @@ class QuerySolver:
                 if all_custom_agents
                 else DefaultQuerySolverAgentInstance
             )
-            if not agent_instance:
-                raise ValueError("No suitable agent found for the query.")
+        else:
+            agent_name = (
+                last_query_message.metadata.get("agent_name")
+                if last_query_message and last_query_message.metadata
+                else None
+            )
+            agent_instance: QuerySolverAgent = self._get_agent_instance_by_name(
+                agent_name=agent_name or DefaultQuerySolverAgentInstance.agent_name,
+                all_agents=[*await self._generate_dynamic_query_solver_agents(), DefaultQuerySolverAgentInstance],
+            )
+        return agent_instance
+
+    async def solve_query(
+        self,
+        payload: QuerySolverInput,
+        client_data: ClientData,
+        save_to_redis: bool = False,
+        task_checker: Optional[CancellationChecker] = None,
+    ) -> AsyncIterator[BaseModel]:
+        llm_handler = LLMHandler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+            cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
+        )
+
+        # TODO: remove this after 9.0.0. force upgrade
+        if payload.query is None and payload.batch_tool_responses is None and payload.tool_use_response is not None:
+            payload.batch_tool_responses = [payload.tool_use_response]
+
+        if payload.query:
+            asyncio.create_task(
+                self._generate_session_summary(
+                    session_id=payload.session_id,
+                    query=payload.query,
+                    focus_items=payload.focus_items,
+                    directory_items=payload.directory_items,
+                    llm_handler=llm_handler,
+                    user_team_id=payload.user_team_id,
+                    session_type=payload.session_type,
+                )
+            )
+            chat_handler = ChatHistoryHandler(
+                previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+            )
+            relevant_previous_messages, agent_instance = await asyncio.gather(
+                chat_handler.get_relevant_previous_chats(),
+                self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler),
+            )
 
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
@@ -301,13 +302,14 @@ class QuerySolver:
                 "shell": payload.shell,
                 "vscode_env": payload.vscode_env,
                 "repositories": payload.repositories,
-                "use_absolute_path": use_absolute_path,  # remove after 9.0.0. force upgrade,
-                "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
             model_to_use = LLModels(payload.llm_model.value)
             llm_inputs = agent_instance.get_llm_inputs(
-                payload=payload, _client_data=client_data, llm_model=model_to_use, previous_messages=previous_responses
+                payload=payload,
+                _client_data=client_data,
+                llm_model=model_to_use,
+                previous_messages=[message.id for message in relevant_previous_messages],
             )
 
             prompt_vars_to_use = {**prompt_vars_to_use, **llm_inputs.extra_prompt_vars}
@@ -323,7 +325,7 @@ class QuerySolver:
                 session_id=payload.session_id,
                 save_to_redis=save_to_redis,
                 checker=task_checker,
-                parallel_tool_calls=parallel_tool_use_enabled,
+                parallel_tool_calls=True,
                 prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
                 metadata={
                     "agent_name": agent_instance.agent_name,
@@ -338,10 +340,9 @@ class QuerySolver:
                 "vscode_env": payload.vscode_env,
                 "write_mode": payload.write_mode,
                 "deputy_dev_rules": payload.deputy_dev_rules,
-                "parallel_tool_use_enabled": parallel_tool_use_enabled,  # remove after 9.0.0. force upgrade
             }
 
-            tool_responses = []
+            tool_responses: List[ToolUseResponseData] = []
             for resp in payload.batch_tool_responses:
                 if not payload.tool_use_failed:
                     response_data = self._format_tool_response(resp)
@@ -371,20 +372,11 @@ class QuerySolver:
                     )
                 )
 
-            last_query_message = await self.get_last_query_message_for_session(payload.session_id)
-            agent_name = (
-                last_query_message.metadata.get("agent_name")
-                if last_query_message and last_query_message.metadata
-                else None
-            )
-            agent_instance: QuerySolverAgent = await self._get_agent_instance_by_name(
-                agent_name=agent_name or DefaultQuerySolverAgentInstance.agent_name,
-                all_agents=[*await self._generate_dynamic_query_solver_agents(), DefaultQuerySolverAgentInstance],
-            )
+            agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
             llm_inputs = agent_instance.get_llm_inputs(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_5_SONNET),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
                 previous_messages=None,
             )
 
@@ -395,7 +387,7 @@ class QuerySolver:
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
-                parallel_tool_calls=parallel_tool_use_enabled,
+                parallel_tool_calls=True,
             )
 
             return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)

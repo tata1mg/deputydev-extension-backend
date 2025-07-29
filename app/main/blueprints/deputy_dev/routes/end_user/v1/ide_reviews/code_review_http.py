@@ -70,9 +70,6 @@ async def pre_process_extension_review(request: Request, auth_data: AuthData, **
         )
         return send_response(review_dto)
     except Exception as e:
-        import traceback
-
-        print(traceback.print_exc())
         raise e
 
 
