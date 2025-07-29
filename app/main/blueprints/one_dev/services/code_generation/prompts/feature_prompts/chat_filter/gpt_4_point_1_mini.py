@@ -1,7 +1,6 @@
 import json
 from typing import Any, AsyncIterator, Dict, List, Type
 
-from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
@@ -19,6 +18,7 @@ from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChats,
 )
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class SortedAndFilteredChatIDs(BaseModel):

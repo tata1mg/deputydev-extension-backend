@@ -3,9 +3,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
-
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
     SocketClosedException,
@@ -13,6 +10,8 @@ from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
     WebSocketMessage,
 )
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class BaseWebSocketManager(ABC):

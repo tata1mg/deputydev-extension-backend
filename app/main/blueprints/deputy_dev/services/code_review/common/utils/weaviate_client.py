@@ -1,12 +1,13 @@
 from typing import Optional
 
+from sanic import Sanic
+
 from deputydev_core.services.initialization.review_initialization_manager import ReviewInitialisationManager
 from deputydev_core.services.repository.dataclasses.main import (
     WeaviateSyncAndAsyncClients,
 )
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.weaviate import weaviate_connection
-from sanic import Sanic
 
 
 class ReviewWeaviateSyncAndAsyncClients(WeaviateSyncAndAsyncClients):

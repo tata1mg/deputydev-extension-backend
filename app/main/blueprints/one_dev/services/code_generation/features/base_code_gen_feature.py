@@ -2,9 +2,6 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, TypeVar
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.config_manager import ConfigManager
-
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
     LLMBasedChunkReranker,
 )
@@ -17,6 +14,8 @@ from app.main.blueprints.one_dev.services.code_generation.features.dataclass.mai
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.config_manager import ConfigManager
 
 PayloadType = TypeVar("PayloadType", bound=BaseCodeGenFeaturePayload)
 

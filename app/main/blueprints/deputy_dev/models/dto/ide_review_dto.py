@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from .ide_reviews_comment_dto import IdeReviewsCommentDTO
 from .ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
+from .ide_reviews_comment_dto import IdeReviewsCommentDTO
 
 
 class IdeReviewDTO(BaseModel):

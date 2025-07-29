@@ -2,11 +2,6 @@ import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import toml
-from deputydev_core.utils.context_vars import (
-    context_var,
-    get_context_value,
-    set_context_values,
-)
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.services.repo.base_repo import BaseRepo
@@ -24,6 +19,11 @@ from app.main.blueprints.deputy_dev.services.setting.setting_validator import (
 from app.main.blueprints.deputy_dev.utils import (
     get_workspace,
     update_payload_with_jwt_data,
+)
+from deputydev_core.utils.context_vars import (
+    context_var,
+    get_context_value,
+    set_context_values,
 )
 
 

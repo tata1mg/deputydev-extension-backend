@@ -1,10 +1,6 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -18,14 +14,8 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
@@ -41,10 +31,20 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_fina
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.tool_request_manager import (
     ToolRequestManager,
 )
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
+)
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import repo_meta_info_prompt
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):

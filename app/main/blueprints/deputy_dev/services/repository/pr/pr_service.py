@@ -1,7 +1,5 @@
 from typing import Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 from tortoise.exceptions import IntegrityError
 
@@ -13,6 +11,8 @@ from app.backend_common.repository.repo.repository import RepoRepository
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
 from app.main.blueprints.deputy_dev.models.dao.postgres import PullRequests
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class PRService:

@@ -3,7 +3,6 @@ import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type
 
-from deputydev_core.utils.app_logger import AppLogger
 from google.genai import types as google_genai_types
 from pydantic import BaseModel
 from torpedo.exceptions import BadRequestException
@@ -56,6 +55,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import A
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class Google(BaseLLMProvider):

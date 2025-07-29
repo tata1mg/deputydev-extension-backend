@@ -2,7 +2,6 @@
 from functools import wraps
 from typing import Any, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
@@ -15,6 +14,7 @@ from app.backend_common.repository.message_sessions.repository import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from deputydev_core.utils.app_logger import AppLogger
 
 
 async def get_stored_session(session_id: Optional[int] = None) -> Optional[MessageSessionDTO]:
@@ -27,7 +27,7 @@ async def get_stored_session(session_id: Optional[int] = None) -> Optional[Messa
     try:
         session = await MessageSessionsRepository.get_by_id(session_id=session_id)
         return session
-    except Exception as _ex:
+    except Exception as _ex:  # noqa: BLE001
         AppLogger.log_error(f"Error occurred while fetching session from DB: {str(_ex)}")
         return None
 
@@ -65,7 +65,7 @@ async def get_valid_session_data(
                 if not session_type or not isinstance(session_type, str) or not session_type.strip():
                     raise BadRequestException("Invalid session type provided while creating a new session")
                 valid_session_data = await create_new_session(session_type, client_data, auth_data)
-            except Exception as _ex:
+            except Exception as _ex:  # noqa: BLE001
                 AppLogger.log_error(f"Error occurred while creating a new session: {str(_ex)}")
                 raise BadRequestException(f"Failed to create a new session: {str(_ex)}")
         else:

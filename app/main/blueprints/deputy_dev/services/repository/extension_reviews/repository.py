@@ -5,16 +5,16 @@ from sanic.log import logger
 from tortoise.query_utils import Prefetch
 
 from app.backend_common.repository.db import DB
+from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_comment_feedbacks import IdeReviewCommentFeedbacks
+from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_feedback import IdeReviewFeedback
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews import IdeReviews
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_reviews_comments import IdeReviewsComments
 from app.main.blueprints.deputy_dev.models.dao.postgres.user_agent_comment_mapping import UserAgentCommentMapping
+from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
 from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
+from app.main.blueprints.deputy_dev.models.dto.ide_review_feedback_dto import IdeReviewFeedbackDTO
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
-from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
-from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_comment_feedbacks import IdeReviewCommentFeedbacks
-from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_feedback import IdeReviewFeedback
-from app.main.blueprints.deputy_dev.models.dto.ide_review_feedback_dto import IdeReviewFeedbackDTO
 
 
 class ExtensionReviewsRepository:
