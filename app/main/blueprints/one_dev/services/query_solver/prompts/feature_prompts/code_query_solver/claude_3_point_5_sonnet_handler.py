@@ -31,7 +31,7 @@ class Claude3Point5CodeQuerySolverPromptHandler(BaseClaude3Point5SonnetPromptHan
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Claude3Point5CodeQuerySolverPrompt
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.prompt = self.prompt_class(params)
 

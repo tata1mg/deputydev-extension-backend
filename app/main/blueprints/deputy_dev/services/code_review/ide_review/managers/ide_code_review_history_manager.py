@@ -37,8 +37,7 @@ class IdeCodeReviewHistoryManager:
             return history
 
         except Exception as e:
-            # Log the error and return empty list
-            print(f"Error fetching reviews: {str(e)}")
+            AppLogger.log_error(f"Error fetching reviews: {str(e)}")
             return []
 
     @classmethod
@@ -136,7 +135,7 @@ class IdeCodeReviewHistoryManager:
             return count
 
         except Exception as e:
-            print(f"Error counting reviews: {str(e)}")
+            AppLogger.log_error(f"Error counting reviews: {str(e)}")
             return 0
 
     @classmethod

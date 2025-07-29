@@ -1,8 +1,10 @@
 import asyncio
 import json
-from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type, cast
 
+from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
+from pydantic import BaseModel
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
@@ -186,12 +188,11 @@ class Anthropic(BaseLLMProvider):
             previous_responses, attachment_data_task_map
         )
 
-        # remove last block from the messages if not tool response and last block is tool use request
         if prompt and prompt.cached_message:
             cached_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
             )
-            if cache_config.conversation and tools and model_config["PROMPT_CACHING_SUPPORTED"]:
+            if cache_config.conversation and model_config["PROMPT_CACHING_SUPPORTED"]:
                 cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
             messages.append(cached_message)
 
@@ -634,6 +635,7 @@ class Anthropic(BaseLLMProvider):
         stream: bool = False,
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
+        text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         model_config = self._get_model_config(model)
         anthropic_client, model_identifier = await self._get_service_client_and_model_name(
@@ -650,3 +652,9 @@ class Anthropic(BaseLLMProvider):
                 llm_payload=llm_payload, model=model_identifier
             )
             return await self._parse_streaming_response(response, async_bedrock_client, model_config, session_id)
+
+    async def get_tokens(self, content: str, model: LLModels) -> int:
+        tiktoken_client = TikToken()
+        token_count = tiktoken_client.count(text=content)
+
+        return token_count
