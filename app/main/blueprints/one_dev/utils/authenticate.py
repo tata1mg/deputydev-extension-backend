@@ -1,9 +1,10 @@
 import json
+from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Tuple
-from datetime import datetime, timezone
-from deputydev_core.utils.context_value import ContextValue
+
 from deputydev_core.utils.constants.auth import AuthStatus
+from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import CONFIG, Request
 from torpedo.exceptions import BadRequestException
@@ -35,8 +36,6 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
     authorization_header: str = request.headers.get("Authorization")
     use_grace_period: bool = False
     enable_grace_period: bool = False
-    print(authorization_header)
-    print(request.headers)
     bypass_token = CONFIG.config.get("REVIEW_AUTH_TOKEN")
     if authorization_header and bypass_token and authorization_header.split(" ")[1].strip() == bypass_token:
         session_id = request.headers.get("X-Session-ID")

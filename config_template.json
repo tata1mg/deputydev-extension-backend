@@ -535,7 +535,8 @@
     "AWS_API_GATEWAY": {
         "HOST": "https://sample.com",
         "AWS_REGION": "ap-south-1",
-        "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
+        "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production",
+        "CODE_REVIEW_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
     },
     "BINARY": {
         "WEAVIATE": {
@@ -661,8 +662,8 @@
     "DD_HOST_WS": "ws://localhost:8084",
     "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
     "CODE_REVIEW": {
-        "REVIEW_SOLVER_ENDPOINT": "/end_user/v1/extension-code-review/run-multi-agent-local-connection",
-        "POST_PROCESS_SOLVER_ENDPOINT": "/end_user/v1/extension-code-review/post-process-local-connection"
+        "REVIEW_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/run-multi-agent-local-connection",
+        "POST_PROCESS_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/post-process-local-connection"
     },
     "POLLING_MAX_ATTEMPTS": 3000,
     "ALLOWED_EMAILS": [],

@@ -2,7 +2,7 @@ from typing import Optional
 
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import get_context_value, set_context_values
+from deputydev_core.utils.context_vars import set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
