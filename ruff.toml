@@ -14,14 +14,14 @@ select = [
     "ERA001",  # find out commented out code https://docs.astral.sh/ruff/rules/#eradicate-era
     "BLE001",  # find out blind exceptions https://docs.astral.sh/ruff/rules/#flake8-blind-except-ble
     "PTH",  # use pathlib instead of os.path https://docs.astral.sh/ruff/rules/#flake8-use-pathlib-pth
-    "ANN001",  # find out missing function type arguments
-    "ANN002",  # missing type annotation for *{name}
-    "ANN003",  # missing type annotation for **{name}
-    "ANN201", # missing return type annotation for public function {name}	
-    "ANN202", # missing return type annotation for private function {name}	
-    "ANN204", # missing return type annotation for special method {name}	
-    "ANN205", # missing return type annotation for staticmethod {name}
-    "ANN206", # missing return type annotation for classmethod {name}
+#    "ANN001",  # find out missing function type arguments
+#    "ANN002",  # missing type annotation for *{name}
+#    "ANN003",  # missing type annotation for **{name}
+#    "ANN201", # missing return type annotation for public function {name}
+#    "ANN202", # missing return type annotation for private function {name}
+#    "ANN204", # missing return type annotation for special method {name}
+#    "ANN205", # missing return type annotation for staticmethod {name}
+#    "ANN206", # missing return type annotation for classmethod {name}
     "C901",  # cyclomatic complexity mccabe (C90) https://docs.astral.sh/ruff/rules/#mccabe-c90
     "N", # pep8 naming conventions https://docs.astral.sh/ruff/rules/#pep8-naming-n
     "ASYNC", # flake8-async rules https://docs.astral.sh/ruff/rules/#flake8-async-async

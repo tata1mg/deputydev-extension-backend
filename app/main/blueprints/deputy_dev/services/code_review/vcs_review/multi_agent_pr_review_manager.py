@@ -1,9 +1,6 @@
 import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
-from deputydev_core.services.tiktoken import TikToken
-from deputydev_core.utils.config_manager import ConfigManager
-
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.pr.base_pr import BasePR
@@ -32,6 +29,8 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agent
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class MultiAgentPRReviewManager:

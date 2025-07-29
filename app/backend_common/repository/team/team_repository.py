@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, Union
 
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.backend_common.models.dao.postgres.teams import Teams
 from app.backend_common.models.dto.team_dto import TeamDTO
 from app.backend_common.repository.db import DB
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class TeamRepository:

@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Tuple
 
-from deputydev_core.utils.constants.auth import AuthStatus
-from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import CONFIG, Request
 from torpedo.exceptions import BadRequestException
@@ -24,6 +22,8 @@ from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import get_stored_session
+from deputydev_core.utils.constants.auth import AuthStatus
+from deputydev_core.utils.context_value import ContextValue
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
@@ -50,7 +50,7 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
         payload: Dict[str, Any] = request.custom_json() if request.method == "POST" else request.request_params()
         use_grace_period = payload.get("use_grace_period") or False
         enable_grace_period = payload.get("enable_grace_period") or False
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     if not authorization_header:
         raise Exception("Authorization header is missing")
@@ -77,7 +77,7 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
         response_headers = {"new_session_data": refresh_session_data[0]}
     except InvalidTokenError:
         raise BadRequestException("Invalid token")
-    except Exception:
+    except Exception:  # noqa: BLE001
         raise BadRequestException(AuthStatus.NOT_VERIFIED.value)
 
     # Extract the email from the user response
@@ -145,7 +145,7 @@ def authenticate(func: Any) -> Any:
             auth_data, response_headers = await get_auth_data(request)
             kwargs["response_headers"] = response_headers
             ContextValue.set("response_headers", response_headers)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             raise BadRequestException(str(ex), sentry_raise=False)
         return await func(request, client_data=client_data, auth_data=auth_data, **kwargs)
 

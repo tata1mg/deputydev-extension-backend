@@ -1,10 +1,10 @@
 import requests
-from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo.exceptions import HTTPRequestException
 
 from app.backend_common.service_clients.base_scm_client import BaseSCMClient
 from app.backend_common.services.credentials import AuthHandler
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class GitlabRepoClient(BaseSCMClient):

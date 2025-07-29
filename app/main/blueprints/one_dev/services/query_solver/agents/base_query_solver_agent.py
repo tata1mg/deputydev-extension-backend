@@ -1,8 +1,6 @@
 from abc import ABC
 from typing import List, Optional, Type
 
-from deputydev_core.utils.config_manager import ConfigManager
-
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.dataclasses.main import (
@@ -47,6 +45,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class QuerySolverAgent(ABC):

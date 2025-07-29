@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import HTTPRequestException
 
 from app.backend_common.constants.constants import VCSFailureMessages
 from app.backend_common.services.credentials import AuthHandler
+from deputydev_core.utils.app_logger import AppLogger
 
 from ..base_scm_client import BaseSCMClient
 

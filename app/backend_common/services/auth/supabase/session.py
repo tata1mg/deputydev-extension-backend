@@ -1,7 +1,6 @@
 import json
 from typing import Any, Dict
 
-from deputydev_core.utils.constants.auth import AuthStatus
 from postgrest.exceptions import APIError
 
 from app.backend_common.repository.users.user_repository import UserRepository
@@ -10,6 +9,7 @@ from app.backend_common.services.auth.session_encryption_service import (
 )
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from deputydev_core.utils.constants.auth import AuthStatus
 
 
 class SupabaseSession:

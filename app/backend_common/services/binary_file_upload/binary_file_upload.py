@@ -1,6 +1,5 @@
-from deputydev_core.utils.config_manager import ConfigManager
-
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class BinaryFileUpload:

@@ -2,7 +2,6 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Literal, Optional, Type
 
-from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -19,6 +18,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class BaseLLMProvider(ABC):

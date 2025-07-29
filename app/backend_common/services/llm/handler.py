@@ -5,8 +5,6 @@ from enum import Enum
 from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar, Union, cast
 
 import xxhash
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
@@ -62,6 +60,8 @@ from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 

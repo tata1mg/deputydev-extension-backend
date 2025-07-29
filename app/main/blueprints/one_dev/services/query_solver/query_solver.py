@@ -1,8 +1,6 @@
 import asyncio
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -63,6 +61,8 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.app_logger import AppLogger
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory

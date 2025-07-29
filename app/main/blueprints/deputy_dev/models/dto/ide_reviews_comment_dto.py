@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
-from .ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
+
 from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
 
+from .ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
 from .user_agent_dto import UserAgentDTO
 
 
