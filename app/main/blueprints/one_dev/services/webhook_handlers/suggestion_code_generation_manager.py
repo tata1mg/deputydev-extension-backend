@@ -19,7 +19,7 @@ class SuggestionCodeGenerationManager:
     PR_URL_PATTERN = r"(https?://[^\s]+)"
 
     @classmethod
-    async def process_suggestion(cls, comment_payload: ChatRequest, vcs_type):
+    async def process_suggestion(cls, comment_payload: ChatRequest, vcs_type: str):
         """Handle suggestion command"""
         # Get PR details for branch information
         repo_service = await cls.initialize_repo(comment_payload, vcs_type)
@@ -59,7 +59,7 @@ class SuggestionCodeGenerationManager:
             repo_service.delete_local_repo()
 
     @classmethod
-    def build_suggestion_query(cls, pr_diff, comment_payload):
+    def build_suggestion_query(cls, pr_diff, comment_payload: ChatRequest) -> str:
         user_suggestion = comment_payload.comment.raw[len("#suggestion") :].strip()
         return f"""
         User Query: {user_suggestion}
@@ -71,7 +71,7 @@ class SuggestionCodeGenerationManager:
         """
 
     @classmethod
-    async def initialize_repo(cls, comment_payload: ChatRequest, vcs_type) -> BaseRepo:
+    async def initialize_repo(cls, comment_payload: ChatRequest, vcs_type: str) -> BaseRepo:
         auth_handler = await get_vcs_auth_handler(comment_payload.repo.workspace_id, vcs_type)
         return await PRFactory.pr(
             vcs_type=vcs_type,

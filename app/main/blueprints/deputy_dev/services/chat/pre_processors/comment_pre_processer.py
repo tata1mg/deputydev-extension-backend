@@ -1,7 +1,7 @@
 from enum import Enum
 
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
-from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.main.blueprints.deputy_dev.constants.constants import (
     ChatTypes,

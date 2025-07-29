@@ -7,7 +7,7 @@ class FileUploadPostInput(BaseModel):
     file_name: str
     file_size: Annotated[int, Field(ge=1, le=5 * 1024 * 1024)]
     file_type: Literal["image/jpeg", "image/jpg", "image/png", "image/webp", "application/json"]
-    folder: Literal["image", "payload"] = "image"
+    folder: Literal["image", "payload", "review_diff"] = "image"
 
 
 class FileUploadGetInput(BaseModel):
