@@ -1,7 +1,6 @@
-from deputydev_core.utils.context_vars import get_context_value
-
 from app.backend_common.service_clients.confluence.page import Page
 from app.main.blueprints.deputy_dev.utils import get_auth_handler
+from deputydev_core.utils.context_vars import get_context_value
 
 from .confluence_helper import ConfluenceHelper
 

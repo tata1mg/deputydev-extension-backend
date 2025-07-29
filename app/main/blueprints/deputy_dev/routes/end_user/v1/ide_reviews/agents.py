@@ -1,4 +1,3 @@
-from deputydev_core.utils.app_logger import AppLogger
 from pydantic import ValidationError
 from sanic import Blueprint
 from torpedo import CONFIG, Request, send_response
@@ -13,6 +12,7 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from deputydev_core.utils.app_logger import AppLogger
 
 agents = Blueprint("agents", "/agents")
 

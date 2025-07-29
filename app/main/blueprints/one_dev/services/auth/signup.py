@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
-from deputydev_core.utils.constants.enums import Clients
 from torpedo import CONFIG
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
@@ -20,6 +19,7 @@ from app.backend_common.models.request.onboarding import SignUpRequest
 from app.backend_common.repository.referral_codes.repository import ReferralCodesRepository
 from app.backend_common.repository.user_teams.user_team_repository import UserTeamRepository
 from app.backend_common.repository.users.user_repository import UserRepository
+from deputydev_core.utils.constants.enums import Clients
 
 
 class SignUp:

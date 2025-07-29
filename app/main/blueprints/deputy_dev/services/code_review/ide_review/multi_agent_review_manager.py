@@ -1,8 +1,6 @@
 import asyncio
 from typing import Any, Dict, List
 
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import AgentTypes
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.base_websocket_manager import BaseWebSocketManager
@@ -14,6 +12,7 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.ma
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager import IdeReviewManager
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class MultiAgentWebSocketManager(BaseWebSocketManager):

@@ -1,7 +1,5 @@
 from typing import Any, Dict, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
@@ -14,6 +12,7 @@ from app.main.blueprints.one_dev.services.web_search.dataclasses.main import (
     PromptFeatures,
 )
 from app.main.blueprints.one_dev.services.web_search.factory import PromptFeatureFactory
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class WebSearchService:

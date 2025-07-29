@@ -1,8 +1,5 @@
 from typing import Any, Dict, Optional
 
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-from deputydev_core.utils.context_vars import get_context_value
-
 from app.backend_common.constants.constants import PRStatus
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
@@ -22,6 +19,8 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.cont
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class PRSummarizerAgent(BaseCodeReviewAgent):

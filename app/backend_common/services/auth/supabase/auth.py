@@ -3,13 +3,13 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 
 import jwt
-from deputydev_core.utils.jwt_handler import JWTHandler
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from deputydev_core.utils.jwt_handler import JWTHandler
 
 
 class SupabaseAuth:
