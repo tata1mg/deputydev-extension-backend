@@ -2,7 +2,7 @@ from sanic.log import logger
 
 from app.backend_common.models.dto.pr.bitbucket_pr import BitbucketPrModel
 from app.backend_common.models.dto.pr.github_pr import GitHubPrModel
-from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.service_clients.github.github_repo_client import (
     GithubRepoClient,
