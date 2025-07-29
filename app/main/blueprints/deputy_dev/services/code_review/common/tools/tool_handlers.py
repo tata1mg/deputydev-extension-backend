@@ -41,9 +41,9 @@ from deputydev_core.utils.context_vars import get_context_value
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
 from app.main.blueprints.deputy_dev.services.code_review.common.review_planner.review_planner import ReviewPlanner
 from app.main.blueprints.deputy_dev.services.code_review.common.utils.weaviate_client import get_weaviate_connection
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
 
 
 class ToolHandlers:
