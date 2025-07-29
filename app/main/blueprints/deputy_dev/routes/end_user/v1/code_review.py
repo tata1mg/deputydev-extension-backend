@@ -10,10 +10,10 @@ from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,
 )
-from app.main.blueprints.deputy_dev.services.code_review.code_review_trigger import (
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.code_review_trigger import (
     CodeReviewTrigger,
 )
-from app.main.blueprints.deputy_dev.services.code_review.pr_review_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pr_review_manager import (
     PRReviewManager,
 )
 from app.main.blueprints.deputy_dev.services.repository.pr.backfill_data_manager import (
