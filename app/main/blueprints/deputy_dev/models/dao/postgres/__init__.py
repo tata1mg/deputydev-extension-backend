@@ -11,6 +11,13 @@ __all__ = [
     "Configurations",
     "Tokens",
     "Agents",
+    "IdeReviewsComments",
+    "IdeReviewCommentFeedbacks",
+    "IdeReviews",
+    "UserAgents",
+    "UserAgentCommentMapping",
+    "IdeReviewAgentStatus",
+    "IdeReviewFeedback",
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos
@@ -22,6 +29,13 @@ from .buckets import Buckets
 from .configurations import Configurations
 from .experiments import Experiments
 from .feedbacks import Feedbacks
+from .ide_review_agent_status import IdeReviewAgentStatus
+from .ide_review_comment_feedbacks import IdeReviewCommentFeedbacks
+from .ide_review_feedback import IdeReviewFeedback
+from .ide_reviews import IdeReviews
+from .ide_reviews_comments import IdeReviewsComments
 from .integrations import Integrations
 from .pr_comments import PRComments
 from .pull_requests import PullRequests
+from .user_agent_comment_mapping import UserAgentCommentMapping
+from .user_agents import UserAgents
