@@ -19,8 +19,6 @@ class IdeReviewCommentFeedbacks(Base):
     comment = fields.ForeignKeyField(model_name="dao.IdeReviewsComments", related_name="comment_feedback")
     feedback_comment = fields.TextField(null=True)
     like = fields.BooleanField(null=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = "ide_review_comment_feedbacks"

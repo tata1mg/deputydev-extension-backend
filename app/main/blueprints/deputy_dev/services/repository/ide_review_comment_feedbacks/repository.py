@@ -32,3 +32,44 @@ class IdeReviewCommentFeedbacksRepository:
         except Exception as ex:
             logger.error(f"Error inserting ide_review_comment_feedback: {feedback_dto.dict()}, ex: {ex}")
             raise ex
+
+    @classmethod
+    async def db_upsert(
+        cls,
+        feedback_dto: IdeReviewCommentFeedbackDTO
+    ) -> IdeReviewCommentFeedbackDTO:
+        """
+        Update an existing feedback for a comment or insert a new one if it doesn't exist.
+        The method checks for an existing feedback using the comment_id.
+
+        Args:
+            feedback_dto: The feedback DTO containing the data to upsert.
+                        Must include a valid comment_id.
+
+        Returns:
+            IdeReviewCommentFeedbackDTO: The created or updated feedback as a DTO.
+
+        Raises:
+            Exception: If there's an error during the upsert operation.
+        """
+        try:
+            payload = feedback_dto.model_dump()
+            del payload["id"]
+            existing = await cls.db_get(filters={"comment_id": feedback_dto.comment_id}, fetch_one=True)
+            if existing:
+                await DB.update_by_filters(
+                    row=IdeReviewCommentFeedbacks,
+                    model_name=IdeReviewCommentFeedbacks,
+                    where_clause={"id": existing.id},
+                    payload=payload
+                )
+                updated = await cls.db_get(filters={"id": existing.id}, fetch_one=True)
+                return updated
+            return await cls.db_insert(feedback_dto)
+
+        except Exception as ex:
+            logger.error(
+                f"Error upserting ide_review_comment_feedback: {feedback_dto.model_dump()}, "
+                f"ex: {ex}"
+            )
+            raise ex
