@@ -3,20 +3,20 @@ from typing import Any, Dict, List, Optional
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     ParsedAggregatedCommentData,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 
 

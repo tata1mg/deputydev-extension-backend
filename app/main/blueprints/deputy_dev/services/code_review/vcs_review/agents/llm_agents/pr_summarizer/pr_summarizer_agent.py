@@ -7,17 +7,17 @@ from app.backend_common.constants.constants import PRStatus
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.constants.constants import FeatureFlows, TokenTypes
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
     PromptFeatures,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
+    ContextService,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,

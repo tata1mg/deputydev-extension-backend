@@ -213,9 +213,7 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Message thread
         """
-        full_user_message = (
-                (prompt_rendered_messages.cached_message or "") + prompt_rendered_messages.user_message
-        )
+        full_user_message = (prompt_rendered_messages.cached_message or "") + prompt_rendered_messages.user_message
         data_hash = xxhash.xxh64(full_user_message).hexdigest()
         message_data: List[Union[FileBlockData, TextBlockData]] = [
             TextBlockData(
@@ -892,7 +890,6 @@ class LLMHandler(Generic[PromptFeatures]):
             checker=checker,
             parallel_tool_calls=parallel_tool_calls,
         )
-
 
     async def submit_feedback_response(
         self,

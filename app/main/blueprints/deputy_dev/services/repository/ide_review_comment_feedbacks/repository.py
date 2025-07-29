@@ -1,8 +1,10 @@
 from typing import List, Union
+
 from sanic.log import logger
+
+from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.models.dao.postgres.ide_review_comment_feedbacks import IdeReviewCommentFeedbacks
 from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
-from app.backend_common.repository.db import DB
 
 
 class IdeReviewCommentFeedbacksRepository:
