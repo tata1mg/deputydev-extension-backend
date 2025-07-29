@@ -66,7 +66,7 @@ class QuerySolverAgentSelector:
         selected_intent = await self.llm_handler.start_llm_query(
             prompt_vars=prompt_vars,
             session_id=self.session_id,
-            llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
+            llm_model=LLModels.GPT_4_POINT_1_MINI,
             prompt_feature=PromptFeatures.INTENT_SELECTOR,
         )
 
