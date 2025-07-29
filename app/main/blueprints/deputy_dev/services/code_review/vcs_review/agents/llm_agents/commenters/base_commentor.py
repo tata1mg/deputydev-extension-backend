@@ -17,28 +17,29 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from app.main.blueprints.deputy_dev.services.code_review.agents.base_code_review_agent import (
+    BaseCodeReviewAgent,
+)
+from app.main.blueprints.deputy_dev.services.code_review.agents.dataclasses.main import (
     AgentRunResult,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.context.context_service import (
+    ContextService,
+)
+from app.main.blueprints.deputy_dev.services.code_review.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
+from app.main.blueprints.deputy_dev.services.code_review.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.tools_fallback import (
+from app.main.blueprints.deputy_dev.services.code_review.tools.constants.tools_fallback import (
     EXCEPTION_RAISED_FALLBACK,
     NO_TOOL_USE_FALLBACK_PROMPT,
 )
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.parse_final_response import PARSE_FINAL_RESPONSE
-from app.main.blueprints.deputy_dev.services.code_review.common.tools.tool_request_manager import (
+from app.main.blueprints.deputy_dev.services.code_review.tools.parse_final_response import PARSE_FINAL_RESPONSE
+from app.main.blueprints.deputy_dev.services.code_review.tools.tool_request_manager import (
     ToolRequestManager,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
 )
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
@@ -56,7 +57,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         is_reflection_enabled: bool,
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
-    ):
+    ) -> None:
         super().__init__(context_service, is_reflection_enabled, llm_handler, model)
         self.agent_name = SettingService.helper.predefined_name_to_custom_name(self.agent_name)
         self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
@@ -94,7 +95,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             "AGENT_NAME": self.agent_type.value,
         }
 
-    def get_additional_info_prompt(self, tokens_info, reflection_iteration):
+    def get_additional_info_prompt(self, tokens_info: Any, reflection_iteration: Any) -> Dict[str, Any]:
         return {
             "key": self.agent_name,
             "comment_confidence_score": self.agent_setting.get("confidence_score"),
@@ -103,7 +104,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             "reflection_iteration": reflection_iteration,
         }
 
-    def get_display_name(self):
+    def get_display_name(self) -> str:
         return self.agent_setting.get("display_name")
 
     async def run_agent(self, session_id: int) -> AgentRunResult:
@@ -175,7 +176,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         final_response = self.tool_request_manager.extract_final_response(current_response)
                         last_pass_result = final_response
                         break
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         AppLogger.log_error(f"Error processing parse_final_response Retrying with LLM : {e}")
                         # Create a tool use response with error feedback
                         tool_use_response = ToolUseResponseData(
@@ -217,15 +218,16 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         current_response, session_id
                     )
 
-                    # Submit the tool use response to the LLM
-                    current_response = await self.llm_handler.submit_batch_tool_use_response(
-                        session_id=session_id,
-                        tool_use_responses=[tool_use_response],
-                        tools=tools_to_use,
-                        prompt_type=prompt_handler.prompt_type,
-                    )
+                    if tool_use_response:
+                        # Submit the tool use response to the LLM
+                        current_response = await self.llm_handler.submit_batch_tool_use_response(
+                            session_id=session_id,
+                            tool_use_responses=[tool_use_response],
+                            tools=tools_to_use,
+                            prompt_type=prompt_handler.prompt_type,
+                        )
 
-                    iteration_count += 1
+                        iteration_count += 1
 
             if iteration_count >= max_iterations:
                 AppLogger.log_error(
@@ -243,7 +245,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             display_name=self.get_display_name(),
         )
 
-    def get_tools_for_review(self, prompt_handler) -> List[ConversationTool]:
+    def get_tools_for_review(self, prompt_handler: BasePrompt) -> List[ConversationTool]:
         """
         Get the appropriate tools for the review based on whether tools are disabled.
 
