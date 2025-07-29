@@ -225,7 +225,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             elif tool_name == "iterative_file_reader":
                 tool_response = {
                     "file_content_with_line_numbers": ChunkInfo(**tool_response["response"]["data"]["chunk"]).get_xml(),
-                    "eof_reached": tool_response["response"]["eof_reached"],
+                    "eof_reached": tool_response["response"]["data"]["eof_reached"],
                 }
             elif tool_name == "grep_search":
                 tool_response = {
