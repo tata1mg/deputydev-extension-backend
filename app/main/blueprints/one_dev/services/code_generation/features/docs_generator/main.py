@@ -1,7 +1,5 @@
 from typing import List
 
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.main import (
     LLMMeta,
@@ -26,6 +24,7 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.dif
 from app.main.blueprints.one_dev.services.code_generation.utils.utils import (
     get_response_code_lines,
 )
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 
 from ...prompts.dataclasses.main import PromptFeatures
 from ...prompts.factory import PromptFeatureFactory

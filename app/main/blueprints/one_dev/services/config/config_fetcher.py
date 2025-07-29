@@ -1,11 +1,10 @@
 from typing import Any, Dict
 
-from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.utils.constants.enums import ConfigConsumer
-
 from app.backend_common.service_clients.aws.services.cloudfront import AWSCloudFrontServiceClient
 from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigParams, ConfigType
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.constants.enums import ConfigConsumer
 
 ConfigManager.configs
 

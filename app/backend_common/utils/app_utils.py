@@ -4,9 +4,10 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import mmh3
-from deputydev_core.services.tiktoken import TikToken
 from sanic.log import logger
 from torpedo import CONFIG, Task, TaskExecutor
+
+from deputydev_core.services.tiktoken import TikToken
 
 
 def service_client_wrapper(service_name):

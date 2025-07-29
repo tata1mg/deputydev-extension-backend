@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import typing as t
 
-from deputydev_core.utils.context_value import ContextValue
 from sanic import response
 from sanic.log import error_logger
 from torpedo.constants.errors import (
@@ -17,6 +16,8 @@ from torpedo.request import TorpedoRequest
 from torpedo.types import ErrorResponseDict
 from torpedo.utils import capture_exception, name
 from typing_extensions import override
+
+from deputydev_core.utils.context_value import ContextValue
 
 ############################
 # import tortoise excpetions

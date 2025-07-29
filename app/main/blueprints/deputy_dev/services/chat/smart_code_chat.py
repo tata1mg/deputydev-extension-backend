@@ -1,4 +1,3 @@
-from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -56,6 +55,7 @@ from app.main.blueprints.deputy_dev.utils import (
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
 )
+from deputydev_core.utils.context_vars import set_context_values
 
 config = CONFIG.config
 

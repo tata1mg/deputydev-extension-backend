@@ -1,8 +1,9 @@
 from enum import Enum
 from typing import Optional
 
-from deputydev_core.utils.constants.enums import ConfigConsumer
 from pydantic import BaseModel
+
+from deputydev_core.utils.constants.enums import ConfigConsumer
 
 
 class ConfigType(Enum):

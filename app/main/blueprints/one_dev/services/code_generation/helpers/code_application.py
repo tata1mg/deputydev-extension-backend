@@ -1,10 +1,10 @@
 from typing import Dict, List, Optional, Tuple
 
-from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
 
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
+from deputydev_core.utils.context_vars import set_context_values
 
 
 class CodeApplicationHandler:

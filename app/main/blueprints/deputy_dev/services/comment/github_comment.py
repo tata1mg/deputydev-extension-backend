@@ -1,5 +1,3 @@
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -17,6 +15,8 @@ from app.main.blueprints.deputy_dev.utils import (
     format_chat_comment_thread_comment,
     format_comment,
 )
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
 
 config = CONFIG.config
 

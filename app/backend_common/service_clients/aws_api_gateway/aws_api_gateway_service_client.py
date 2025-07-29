@@ -1,9 +1,10 @@
 from typing import Optional
 
 from aiobotocore.session import AioSession
+from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
+
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
-from types_aiobotocore_apigatewaymanagementapi import ApiGatewayManagementApiClient
 
 
 class SocketClosedException(Exception):

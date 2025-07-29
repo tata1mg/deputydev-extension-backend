@@ -1,8 +1,6 @@
 import asyncio
 from typing import Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
@@ -11,6 +9,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.utils.app_logger import AppLogger
 
 from .prompts.dataclasses.main import PromptFeatures
 from .prompts.factory import PromptFeatureFactory
