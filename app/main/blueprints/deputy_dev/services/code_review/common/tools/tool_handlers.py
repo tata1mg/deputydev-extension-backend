@@ -109,7 +109,7 @@ class ToolHandlers:
         """
         tool_input["repo_path"] = get_context_value("repo_path")
         if isinstance(tool_input["query"], str):
-            tool_input["query"] = [tool_input["query"]]
+            tool_input["search_term"] = tool_input["query"]
         payload = GrepSearchRequestParams(**tool_input)
         grep_search_results = await GrepSearch(repo_path=payload.repo_path).perform_grep_search(
             directory_path=payload.directory_path,
@@ -146,7 +146,7 @@ class ToolHandlers:
         tool_input["repo_path"] = get_context_value("repo_path")
         payload = IterativeFileReaderRequestParams(**tool_input)
         file_content, eof_reached = await IterativeFileReader(
-            file_path=os.path.join(payload.repo_path, payload.file_path),
+            file_path=os.path.join(payload.repo_path, payload.file_path),  # noqa: PTH118
             repo_path=payload.repo_path,  # noqa: PTH118
         ).read_lines(start_line=payload.start_line, end_line=payload.end_line)
         response = {

@@ -17,13 +17,11 @@ FILE_PATH_SEARCHER = ConversationTool(
                     "type": "string",
                     "description": "The complete path of the directory",
                 },
-                "search_terms": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                    },
-                    "description": "The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
-                },
+                "search_terms":  JSONSchema(
+                    type="array",
+                    items=JSONSchema(type="string"),
+                    description="The search terms to search for in the file paths. If not provided, all files in the directory will be listed",
+                ),
             },
             "required": ["directory"],
         }
