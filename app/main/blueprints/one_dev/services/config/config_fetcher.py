@@ -30,6 +30,8 @@ class ConfigFetcher:
             "BINARY": {},
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
+            "REVIEW_SOLVER_ENDPOINT": ConfigManager.configs["CODE_REVIEW"]["REVIEW_SOLVER_ENDPOINT"],
+            "REVIEW_POST_PROCESS_SOLVER_ENDPOINT": ConfigManager.configs["CODE_REVIEW"]["POST_PROCESS_SOLVER_ENDPOINT"],
             "POLLING_MAX_ATTEMPTS": ConfigManager.configs["POLLING_MAX_ATTEMPTS"],
             "LLM_MODELS": ConfigManager.configs["CODE_GEN_LLM_MODELS"],
         },
@@ -130,6 +132,9 @@ class ConfigFetcher:
                     "VALIDATE_CONTENT_UPDATION"
                 ],
                 "BATCH_SIZE": ConfigManager.configs["BINARY"]["URL_CONTENT_READER"]["BATCH_SIZE"],
+            },
+            "CODE_REVIEW": {
+                "MAX_DIFF_SIZE": ConfigManager.configs["BINARY"]["CODE_REVIEW"]["MAX_DIFF_SIZE_IN_CHARS"],
             },
         },
         ConfigConsumer.VSCODE_EXT: {
