@@ -620,7 +620,8 @@
     "AWS_API_GATEWAY": {
         "HOST": "https://sample.com",
         "AWS_REGION": "ap-south-1",
-        "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
+        "CODE_GEN_WEBSOCKET_WEBHOOK_ENDPOINT": "/production",
+        "CODE_REVIEW_WEBSOCKET_WEBHOOK_ENDPOINT": "/production"
     },
     "BINARY": {
         "WEAVIATE": {
@@ -721,6 +722,9 @@
             "SERVER_CONNECTION_TIMEOUT": 10000,
             "TOOL_RESPONSE_TIMEOUT": 5,
             "BUFFER_SIZE": 10000
+        },
+        "CODE_REVIEW": {
+            "MAX_DIFF_SIZE_IN_CHARS": 400000
         }
     },
     "CLIENT_DOWNLOAD_LINKS": {
@@ -742,6 +746,10 @@
     "IS_RELATED_CODE_SEARCHER_ENABLED": true,
     "DD_HOST_WS": "ws://localhost:8084",
     "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
+    "CODE_REVIEW": {
+        "REVIEW_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/run-multi-agent-local-connection",
+        "POST_PROCESS_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/post-process-local-connection"
+    },
     "POLLING_MAX_ATTEMPTS": 3000,
     "ALLOWED_EMAILS": [],
     "VERTEX": {

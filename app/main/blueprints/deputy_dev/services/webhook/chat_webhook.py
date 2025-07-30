@@ -9,6 +9,7 @@ from app.backend_common.utils.app_utils import (
 from app.main.blueprints.deputy_dev.constants.constants import GithubActions
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import remove_special_char
+from .webhook_utils import should_skip_trayalabs_request
 
 
 class ChatWebhook:
@@ -38,6 +39,8 @@ class ChatWebhook:
     @classmethod
     async def parse_payload(cls, payload):
         vcs_type = payload.get("vcs_type")
+        if should_skip_trayalabs_request(payload):
+            return None
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:

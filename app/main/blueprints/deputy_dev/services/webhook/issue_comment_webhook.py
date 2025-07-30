@@ -6,12 +6,15 @@ from app.main.blueprints.deputy_dev.models.issue_comment_request import (
     IssueCommentRequest,
 )
 from app.main.blueprints.deputy_dev.utils import remove_special_char
+from .webhook_utils import should_skip_trayalabs_request
 
 
 class IssueCommentWebhook:
     @classmethod
     async def parse_payload(cls, request_payload) -> Optional[IssueCommentRequest]:
         """Parse issue comment webhook payload"""
+        if should_skip_trayalabs_request(request_payload):
+            return None
         if request_payload.get("vcs_type") == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_issue_payload(request_payload)
         # Add support for other VCS types here
