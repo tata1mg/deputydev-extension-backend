@@ -554,3 +554,52 @@ class Google(BaseLLMProvider):
         client = GeminiServiceClient()
         tokens = await client.get_tokens(content, vertex_model_name)
         return tokens
+
+    def _extract_payload_content_for_token_counting(self, llm_payload: Dict[str, Any]) -> str:  # noqa : C901
+        """
+        Extract the relevant content from LLM payload that will be sent to the LLM for token counting.
+        This handles Google's payload structure.
+        """
+        content_parts = []
+
+        try:
+            # Google structure: system_instruction + contents array
+            if "system_instruction" in llm_payload and llm_payload["system_instruction"]:
+                # system_instruction is a Part object, extract text
+                if hasattr(llm_payload["system_instruction"], "text"):
+                    content_parts.append(llm_payload["system_instruction"].text)
+
+            if "contents" in llm_payload:
+                for content in llm_payload["contents"]:
+                    if hasattr(content, "parts"):
+                        for part in content.parts:
+                            if hasattr(part, "text") and part.text:
+                                content_parts.append(part.text)
+                            elif hasattr(part, "function_response"):
+                                content_parts.append(str(part.function_response))
+
+            # Include tools information for token counting if present
+            if "tools" in llm_payload and llm_payload["tools"]:
+                try:
+                    # Handle Google's Tool objects which are not JSON serializable
+                    tools_text_parts = []
+                    for tool in llm_payload["tools"]:
+                        if hasattr(tool, "function_declarations"):
+                            for func_decl in tool.function_declarations:
+                                if hasattr(func_decl, "name"):
+                                    tools_text_parts.append(func_decl.name)
+                                if hasattr(func_decl, "description"):
+                                    tools_text_parts.append(func_decl.description)
+                    if tools_text_parts:
+                        content_parts.append(" ".join(tools_text_parts))
+                except Exception as e:  # noqa : BLE001
+                    AppLogger.log_warn(f"Error processing tools for token counting: {e}")
+                    # Skip tools if they can't be processed
+                    pass
+
+        except Exception as e:  # noqa : BLE001
+            AppLogger.log_warn(f"Error extracting payload content for token counting: {e}")
+            # Fallback: return a simple placeholder instead of trying to serialize non-serializable objects
+            return "Unable to extract content for token counting"
+
+        return "\n".join(content_parts)
