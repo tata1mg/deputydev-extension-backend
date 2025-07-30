@@ -255,7 +255,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         if session_data:
             await CodeGenTasksCache.set_session_data(payload.session_id, session_data)
 
-    async def solve_query() -> None:
+    async def solve_query() -> None:  # noqa : C901
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
@@ -309,6 +309,31 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             AppLogger.log_error(
                 f"Input token limit exceeded: model={ex.model_name}, tokens={ex.current_tokens}/{ex.max_tokens}"
             )
+
+            # Get available models with higher token limits
+            better_models = []
+
+            try:
+                code_gen_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
+                llm_models_config = ConfigManager.configs.get("LLM_MODELS", {})
+                current_model_limit = ex.max_tokens
+
+                for model in code_gen_models:
+                    model_name = model.get("name")
+                    if model_name and model_name != ex.model_name and model_name in llm_models_config:
+                        model_config = llm_models_config[model_name]
+                        model_token_limit = model_config.get("INPUT_TOKENS_LIMIT", 100000)
+
+                        if model_token_limit > current_model_limit:
+                            enhanced_model = model.copy()
+                            enhanced_model["input_token_limit"] = model_token_limit
+                            better_models.append(enhanced_model)
+
+                # Sort by token limit (highest first)
+                better_models.sort(key=lambda m: m.get("input_token_limit", 0), reverse=True)
+
+            except Exception as model_error:  # noqa : BLE001
+                AppLogger.log_error(f"Error fetching better models: {model_error}")
             error_data: Dict[str, Any] = {
                 "type": "STREAM_ERROR",
                 "status": "INPUT_TOKEN_LIMIT_EXCEEDED",
@@ -316,9 +341,11 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                 "current_tokens": ex.current_tokens,
                 "max_tokens": ex.max_tokens,
                 "query": payload.query,
-                "message": f"Your input is too long for {get_model_display_name(ex.model_name)}. Please reduce the content or switch to a model with higher capacity.",
+                "message": f"Your message exceeds the context window supported by {get_model_display_name(ex.model_name)}. Try switching to a model with a higher context window to proceed.",
                 "detail": ex.detail,
+                "better_models": better_models,
             }
+
             await push_to_connection_stream(error_data)
 
         except asyncio.CancelledError as ex:

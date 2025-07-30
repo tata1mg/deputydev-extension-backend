@@ -505,5 +505,46 @@ class OpenAI(BaseLLMProvider):
     async def get_tokens(self, content: str, model: LLModels) -> int:
         tiktoken_client = TikToken()
         token_count = tiktoken_client.count(text=content)
-
         return token_count
+
+    def _extract_payload_content_for_token_counting(self, llm_payload: Dict[str, Any]) -> str:  # noqa : C901
+        """
+        Extract the relevant content from LLM payload that will be sent to the LLM for token counting.
+        This handles OpenAI's payload structure.
+        """
+        content_parts = []
+
+        try:
+            # OpenAI structure: system_message + conversation_messages
+            if "system_message" in llm_payload and llm_payload["system_message"]:
+                content_parts.append(llm_payload["system_message"])
+
+            if "conversation_messages" in llm_payload:
+                for message in llm_payload["conversation_messages"]:
+                    if isinstance(message, dict):
+                        if "content" in message:
+                            if isinstance(message["content"], str):
+                                content_parts.append(message["content"])
+                            elif isinstance(message["content"], list):
+                                for content in message["content"]:
+                                    if isinstance(content, dict) and content.get("type") == "input_text":
+                                        content_parts.append(content.get("text", ""))
+                        elif message.get("type") == "function_call_output" and "output" in message:
+                            content_parts.append(str(message["output"]))
+
+            # Include tools information for token counting if present
+            if "tools" in llm_payload and llm_payload["tools"]:
+                try:
+                    tools_content = json.dumps(llm_payload["tools"])
+                    content_parts.append(tools_content)
+                except Exception as e:  # noqa : BLE001
+                    AppLogger.log_warn(f"Error processing tools for token counting: {e}")
+                    # Skip tools if they can't be processed
+                    pass
+
+        except Exception as e:  # noqa : BLE001
+            AppLogger.log_warn(f"Error extracting payload content for token counting: {e}")
+            # Fallback: return a simple placeholder instead of trying to serialize non-serializable objects
+            return "Unable to extract content for token counting"
+
+        return "\n".join(content_parts)
