@@ -59,7 +59,7 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
                     local_testing_stream_buffer,
                 )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Error in post-process request: {e}")
                 await self.push_to_connection_stream(
                     WebSocketMessage(type="POST_PROCESS_ERROR", data={"message": f"Post-processing failed: {str(e)}"}),
@@ -84,7 +84,7 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
         """
         try:
             await self.process_request(request_data, local_testing_stream_buffer)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error in process_post_process_task: {e}")
             await self.send_error_message(f"Background task error: {str(e)}", local_testing_stream_buffer)
         finally:
