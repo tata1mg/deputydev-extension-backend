@@ -1,20 +1,17 @@
+import asyncio
 import json
 from abc import ABC, abstractmethod
-from datetime import datetime
-import asyncio
-from typing import Any, Dict, List, Optional, AsyncContextManager
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, AsyncContextManager, Dict, List, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
-    AWSAPIGatewayServiceClient,
-    SocketClosedException,
-)
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
-    WebSocketMessage,
-)
+    AWSAPIGatewayServiceClient, SocketClosedException)
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import \
+    WebSocketMessage
 
 
 class BaseWebSocketManager(ABC):
@@ -23,7 +20,7 @@ class BaseWebSocketManager(ABC):
     Provides common functionality for AWS websocket connections and local testing.
     """
 
-    def __init__(self, connection_id: str, is_local: bool = False):
+    def __init__(self, connection_id: str, is_local: bool = False) -> None:
         self.connection_id = connection_id
         self.is_local = is_local
         self.connection_id_gone = False
@@ -69,9 +66,11 @@ class BaseWebSocketManager(ABC):
                     )
         except SocketClosedException:
             self.connection_id_gone = True
-            AppLogger.log_warn(f"WebSocket connection {self.connection_id} closed")
+            AppLogger.log_error(f"WebSocket connection {self.connection_id} closed")
+            raise
         except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error pushing to WebSocket {self.connection_id}: {e}")
+            raise
 
     async def send_error_message(self, error_message: str, local_testing_stream_buffer: Dict[str, List[str]]) -> None:
         """Send error message to websocket connection."""
