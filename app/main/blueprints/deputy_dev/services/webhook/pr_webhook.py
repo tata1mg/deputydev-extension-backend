@@ -7,6 +7,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     GitlabActions,
 )
+from .webhook_utils import should_skip_trayalabs_request
 
 
 class PRWebhook:
@@ -17,6 +18,8 @@ class PRWebhook:
     @classmethod
     async def parse_payload(cls, payload):
         vcs_type = payload.get("vcs_type")
+        if should_skip_trayalabs_request(payload):
+            return None
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
