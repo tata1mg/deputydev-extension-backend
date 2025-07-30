@@ -86,6 +86,15 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
 }
 
 
+class IdeReviewStatusTypes(Enum):
+    IN_PROGRESS = "IN_PROGRESS"  # Eligible for experiment
+    COMPLETED = "COMPLETED"  # Eligible for experiment
+    REJECTED_LARGE_SIZE = "REJECTED_LARGE_SIZE"
+    REJECTED_NO_DIFF = "REJECTED_NO_DIFF"
+    REJECTED_INVALID_REQUEST = "REJECTED_INVALID_REQUEST"
+    FAILED = "FAILED"
+
+
 class LLMCommentTypes(Enum):
     FINE_TUNED_COMMENTS = "finetuned_comments"
     FOUNDATION_COMMENTS = "foundation_comments"
@@ -255,3 +264,16 @@ CUSTOM_PROMPT_INSTRUCTIONS = """The above defined instructions are default and m
 
 User-provided instructions:
 """
+
+
+class IdeReviewCommentStatus(Enum):
+    REJECTED = "REJECTED"
+    ACCEPTED = "ACCEPTED"
+    RESOLVED = "RESOLVED"
+    NOT_REVIEWED = "NOT_REVIEWED"
+
+
+class ReviewType(Enum):
+    ALL = "ALL"
+    UNCOMMITTED = "UNCOMMITTED_ONLY"
+    COMMITTED = "COMMITTED_ONLY"

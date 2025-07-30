@@ -35,6 +35,8 @@ class IssueCodeGenerationManager:
         payload = update_payload_with_jwt_data(query_params, payload)
 
         issue_comment_payload = await IssueCommentWebhook.parse_payload(payload)
+        if not issue_comment_payload:
+            return
 
         comment = issue_comment_payload.issue_comment.strip()
         command_type = cls.get_command_type(comment)

@@ -1,5 +1,5 @@
 from app.backend_common.constants.constants import VCSTypes
-from app.backend_common.repository.repo.repo_repository import RepoRepository
+from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.repository.workspace.main import WorkspaceService
 from app.backend_common.services.credentials.factory import AuthHandlerFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
