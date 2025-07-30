@@ -60,7 +60,6 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
-from app.backend_common.services.llm.token_counter import token_counter
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
@@ -456,7 +455,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 )
 
                 # Validate token limit for the actual payload content
-                await token_counter.validate_payload_token_limit(llm_payload, client, llm_model)
+                await client.validate_token_limit_before_call(llm_payload, llm_model)
 
                 if checker and checker.is_cancelled():
                     raise asyncio.CancelledError()
