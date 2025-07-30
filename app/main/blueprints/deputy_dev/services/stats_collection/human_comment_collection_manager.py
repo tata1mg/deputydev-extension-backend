@@ -50,5 +50,7 @@ class HumanCommentCollectionManager(StatsCollectionBase):
 
     async def generate_old_payload(self):
         self.payload = await HumanCommentWebhook.parse_payload(self.payload)
+        if not self.payload:
+            return
         self.payload = self.payload.dict()
         self.scm_pr_id = self.payload.get("scm_pr_id")
