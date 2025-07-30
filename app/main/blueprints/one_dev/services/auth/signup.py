@@ -57,7 +57,7 @@ class SignUp:
         signup_payload: SignUpRequest,
         referral_code_data: Optional[ReferralCodeDTO] = None,
         email_verification: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         async with in_transaction(connection_name="default"):
             try:
                 user = await Users.get(email=signup_payload.email)
@@ -138,57 +138,13 @@ class SignUp:
                         "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
                         "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
                     }
-                elif domain == CONFIG.config["ORG_INFO"]["TBO"]["domain"]:
-                    return {
-                        "team_id": CONFIG.config["ORG_INFO"]["TBO"]["team_id"],
-                        "org_name": CONFIG.config["ORG_INFO"]["TBO"]["org_name"],
-                    }
-                elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
-                    return {
-                        "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
-                        "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
-                    }
-                elif domain == CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["domain"]:
-                    return {
-                        "team_id": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["team_id"],
-                        "org_name": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["org_name"],
-                    }
-                elif domain == CONFIG.config["ORG_INFO"]["ROZANA"]["domain"]:
-                    return {
-                        "team_id": CONFIG.config["ORG_INFO"]["ROZANA"]["team_id"],
-                        "org_name": CONFIG.config["ORG_INFO"]["ROZANA"]["org_name"],
-                    }
 
         if domain == CONFIG.config["ORG_INFO"]["TATA_1MG"]["domain"]:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["TATA_1MG"]["team_id"],
                 "org_name": CONFIG.config["ORG_INFO"]["TATA_1MG"]["org_name"],
             }
-        elif domain == CONFIG.config["ORG_INFO"]["TRAYA"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["TRAYA"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["TRAYA"]["org_name"],
-            }
-        elif domain == CONFIG.config["ORG_INFO"]["TBO"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["TBO"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["TBO"]["org_name"],
-            }
-        elif domain == CONFIG.config["ORG_INFO"]["CARATLANE"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["CARATLANE"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["CARATLANE"]["org_name"],
-            }
-        elif domain == CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["HSV_DIGITAL"]["org_name"],
-            }
-        elif domain == CONFIG.config["ORG_INFO"]["ROZANA"]["domain"]:
-            return {
-                "team_id": CONFIG.config["ORG_INFO"]["ROZANA"]["team_id"],
-                "org_name": CONFIG.config["ORG_INFO"]["ROZANA"]["org_name"],
-            }
+
         elif email in CONFIG.config["ALLOWED_EMAILS"]:
             return {
                 "team_id": CONFIG.config["ORG_INFO"]["DEPUTYDEV_PRIVATE"]["team_id"],
