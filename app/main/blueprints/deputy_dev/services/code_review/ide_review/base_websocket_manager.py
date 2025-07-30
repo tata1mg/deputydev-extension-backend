@@ -1,7 +1,9 @@
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+import asyncio
+from typing import Any, Dict, List, Optional, AsyncContextManager
+from contextlib import asynccontextmanager
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
@@ -26,6 +28,8 @@ class BaseWebSocketManager(ABC):
         self.is_local = is_local
         self.connection_id_gone = False
         self.aws_client: Optional[AWSAPIGatewayServiceClient] = None
+        self._progress_task: Optional[asyncio.Task] = None
+        self._should_stop_progress = False
 
     async def initialize_aws_client(self):
         """Initialize AWS WebSocket client."""
@@ -65,7 +69,7 @@ class BaseWebSocketManager(ABC):
                     )
         except SocketClosedException:
             self.connection_id_gone = True
-            AppLogger.log_warning(f"WebSocket connection {self.connection_id} closed")
+            AppLogger.log_warn(f"WebSocket connection {self.connection_id} closed")
         except Exception as e:
             AppLogger.log_error(f"Error pushing to WebSocket {self.connection_id}: {e}")
 
@@ -89,3 +93,60 @@ class BaseWebSocketManager(ABC):
         Must be implemented by subclasses.
         """
         pass
+
+    async def send_progress_updates(self, local_testing_stream_buffer: Dict[str, List[str]],
+                                     interval: int = 10) -> None:
+        """
+        Send periodic IN_PROGRESS messages while a task is running.
+
+        Args:
+            local_testing_stream_buffer: Buffer for local testing
+            interval: Interval in seconds between progress updates
+        """
+        try:
+            while not self._should_stop_progress:
+                if self.connection_id_gone:
+                    break
+
+                await self.push_to_connection_stream(
+                    WebSocketMessage(
+                        type="IN_PROGRESS",
+                    ),
+                    local_testing_stream_buffer
+                )
+
+                try:
+                    await asyncio.sleep(interval)
+                except asyncio.CancelledError:
+                    break
+
+        except asyncio.CancelledError:
+            AppLogger.log_info(f"Progress updates cancelled for connection {self.connection_id}")
+        except Exception as e:
+            AppLogger.log_error(f"Error sending progress updates for connection {self.connection_id}: {e}")
+
+    @asynccontextmanager
+    async def progress_context(self, local_testing_stream_buffer: Dict[str, List[str]], interval: int = 10) -> \
+    AsyncContextManager[None]:
+        """
+        Context manager for handling progress updates during request processing.
+
+        Args:
+            local_testing_stream_buffer: Buffer for local testing
+            interval: Interval in seconds between progress updates
+        """
+        self._should_stop_progress = False
+        self._progress_task = asyncio.create_task(
+            self.send_progress_updates(local_testing_stream_buffer, interval)
+        )
+
+        try:
+            yield
+        finally:
+            self._should_stop_progress = True
+            if self._progress_task and not self._progress_task.done():
+                self._progress_task.cancel()
+                try:
+                    await self._progress_task
+                except asyncio.CancelledError:
+                    pass
