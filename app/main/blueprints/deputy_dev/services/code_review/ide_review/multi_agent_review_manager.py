@@ -82,24 +82,24 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
             agents: List of agent requests to process
             local_testing_stream_buffer: Buffer for local testing streams
         """
-        try:
-            if len(agents) == 1:
-                await self.execute_and_stream_agent(agents[0], local_testing_stream_buffer)
-            else:
-                await self._process_multiple_agents_with_cache_pattern(agents, local_testing_stream_buffer)
+        async with self.progress_context(local_testing_stream_buffer):
+            try:
+                if len(agents) == 1:
+                    await self.execute_and_stream_agent(agents[0], local_testing_stream_buffer)
+                else:
+                    await self.process_multiple_agents_with_cache_pattern(agents, local_testing_stream_buffer)
 
-        except Exception as e:
-            AppLogger.log_error(f"Error in process_multi_agent_request: {e}")
-            await self.push_to_connection_stream(
-                WebSocketMessage(type="AGENT_FAIL", data={"message": f"Agent processing error: {str(e)}"}),
-                local_testing_stream_buffer,
-            )
-        finally:
-            # Clean up AWS client
-            if self.aws_client:
-                await self.aws_client.close()
+            except Exception as e:
+                AppLogger.log_error(f"Error in process_multi_agent_request: {e}")
+                await self.push_to_connection_stream(
+                    WebSocketMessage(type="AGENT_FAIL", data={"message": f"Agent processing error: {str(e)}"}),
+                    local_testing_stream_buffer,
+                )
+            finally:
+                if self.aws_client:
+                    await self.aws_client.close()
 
-    async def _process_multiple_agents_with_cache_pattern(
+    async def process_multiple_agents_with_cache_pattern(
         self, agents: List[AgentRequestItem], local_testing_stream_buffer
     ) -> None:
         """
