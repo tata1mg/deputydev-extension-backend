@@ -15,7 +15,7 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
     Handles streaming of post-processing results.
     """
 
-    def __init__(self, connection_id: str, is_local: bool = False):
+    def __init__(self, connection_id: str, is_local: bool = False) -> None:
         super().__init__(connection_id, is_local)
 
     async def process_request(

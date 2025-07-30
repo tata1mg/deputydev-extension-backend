@@ -22,7 +22,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
     Handles parallel agent execution and real-time result streaming.
     """
 
-    def __init__(self, connection_id: str, review_id: int, is_local: bool = False):
+    def __init__(self, connection_id: str, review_id: int, is_local: bool = False) -> None:
         self.connection_id = connection_id
         self.review_id = review_id
         self.is_local = is_local
@@ -44,7 +44,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
             formatted_result = await IdeReviewManager.review_diff(agent_request)
             return WebSocketMessage(**formatted_result)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error executing agent task {agent_request.agent_id}: {e}")
             return WebSocketMessage(type="AGENT_FAIL", agent_id=agent_request.agent_id, data={"message": str(e)})
 
@@ -71,7 +71,9 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
         else:
             return "AGENT_COMPLETE"
 
-    async def process_request(self, agents: List[AgentRequestItem], local_testing_stream_buffer) -> None:
+    async def process_request(
+        self, agents: List[AgentRequestItem], local_testing_stream_buffer: Dict[str, List[str]]
+    ) -> None:
         """
         Process multiple agent requests in parallel and stream results.
 
@@ -89,7 +91,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                 else:
                     await self.process_multiple_agents_with_cache_pattern(agents, local_testing_stream_buffer)
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Error in process_multi_agent_request: {e}")
                 await self.push_to_connection_stream(
                     WebSocketMessage(type="AGENT_FAIL", data={"message": f"Agent processing error: {str(e)}"}),
@@ -100,7 +102,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                     await self.aws_client.close()
 
     async def process_multiple_agents_with_cache_pattern(
-        self, agents: List[AgentRequestItem], local_testing_stream_buffer
+        self, agents: List[AgentRequestItem], local_testing_stream_buffer: Dict[str, List[str]]
     ) -> None:
         """
         Process multiple agents using cache establishing/utilizing pattern.
@@ -150,19 +152,22 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
                 ]
                 await asyncio.gather(*cache_utilizing_tasks, return_exceptions=True)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error in _process_multiple_agents_with_cache_pattern: {e}")
             await self.push_to_connection_stream(
                 WebSocketMessage(type="AGENT_FAIL", data={"message": f"Multi-agent processing error: {str(e)}"}),
                 local_testing_stream_buffer,
             )
 
-    async def execute_and_stream_agent(self, agent_request: AgentRequestItem, local_testing_stream_buffer) -> None:
+    async def execute_and_stream_agent(
+        self, agent_request: AgentRequestItem, local_testing_stream_buffer: Dict[str, List[str]]
+    ) -> None:
         """
         Execute single agent and stream its result.
 
         Args:
             agent_request: Agent request to execute
+            local_testing_stream_buffer: Buffer for local testing streams
         """
         try:
             if agent_request.type == RequestType.QUERY:
@@ -173,7 +178,7 @@ class MultiAgentWebSocketManager(BaseWebSocketManager):
             agent_ws_message = await self.execute_agent_task(agent_request)
             await self.push_to_connection_stream(agent_ws_message, local_testing_stream_buffer)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error executing and streaming agent {agent_request.agent_id}: {e}")
             await self.push_to_connection_stream(
                 WebSocketMessage(
