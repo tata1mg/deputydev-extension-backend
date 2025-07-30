@@ -15,7 +15,7 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
     Handles streaming of post-processing results.
     """
 
-    def __init__(self, connection_id: str, is_local: bool = False):
+    def __init__(self, connection_id: str, is_local: bool = False) -> None:
         super().__init__(connection_id, is_local)
 
     async def process_request(
@@ -28,50 +28,49 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
             request_data: Post-process request data
             local_testing_stream_buffer: Buffer for local testing
         """
-        try:
-            # Send start message
-            await self.push_to_connection_stream(
-                WebSocketMessage(type="POST_PROCESS_START", data={"message": "Post-processing started"}),
-                local_testing_stream_buffer,
-            )
+        async with self.progress_context(local_testing_stream_buffer):
+            try:
+                # Send start message
+                await self.push_to_connection_stream(
+                    WebSocketMessage(type="POST_PROCESS_START", data={"message": "Post-processing started"}),
+                    local_testing_stream_buffer,
+                )
 
-            # Extract required data
-            review_id = request_data.get("review_id")
-            user_team_id = request_data.get("user_team_id")
+                review_id = request_data.get("review_id")
+                user_team_id = request_data.get("user_team_id")
 
-            if not review_id:
-                raise ValueError("review_id is required for post-processing")
+                if not review_id:
+                    raise ValueError("review_id is required for post-processing")
 
-            processor = IdeReviewPostProcessor()
+                processor = IdeReviewPostProcessor()
 
-            # Execute post processing
-            result = await processor.post_process_pr(request_data, user_team_id=user_team_id)
+                result = await processor.post_process_pr(request_data, user_team_id=user_team_id)
 
-            # Send completion message
-            await self.push_to_connection_stream(
-                WebSocketMessage(
-                    type="POST_PROCESS_COMPLETE",
-                    data={
-                        "message": "Post-processing completed successfully",
-                        "result": result or {"status": "SUCCESS"},
-                        "progress": 100,
-                    },
-                ),
-                local_testing_stream_buffer,
-            )
+                # Send completion message
+                await self.push_to_connection_stream(
+                    WebSocketMessage(
+                        type="POST_PROCESS_COMPLETE",
+                        data={
+                            "message": "Post-processing completed successfully",
+                            "result": result or {"status": "SUCCESS"},
+                            "progress": 100,
+                        },
+                    ),
+                    local_testing_stream_buffer,
+                )
 
-        except Exception as e:
-            AppLogger.log_error(f"Error in post-process request: {e}")
-            await self.push_to_connection_stream(
-                WebSocketMessage(type="POST_PROCESS_ERROR", data={"message": f"Post-processing failed: {str(e)}"}),
-                local_testing_stream_buffer,
-            )
-        finally:
-            # Send end message
-            await self.push_to_connection_stream(
-                WebSocketMessage(type="STREAM_END", data={"message": "Post-processing stream ended"}),
-                local_testing_stream_buffer,
-            )
+            except Exception as e:  # noqa: BLE001
+                AppLogger.log_error(f"Error in post-process request: {e}")
+                await self.push_to_connection_stream(
+                    WebSocketMessage(type="POST_PROCESS_ERROR", data={"message": f"Post-processing failed: {str(e)}"}),
+                    local_testing_stream_buffer,
+                )
+            finally:
+                # Send end message
+                await self.push_to_connection_stream(
+                    WebSocketMessage(type="STREAM_END", data={"message": "Post-processing stream ended"}),
+                    local_testing_stream_buffer,
+                )
 
     async def process_post_process_task(
         self, request_data: Dict[str, Any], local_testing_stream_buffer: Dict[str, List[str]]
@@ -85,7 +84,7 @@ class PostProcessWebSocketManager(BaseWebSocketManager):
         """
         try:
             await self.process_request(request_data, local_testing_stream_buffer)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error in process_post_process_task: {e}")
             await self.send_error_message(f"Background task error: {str(e)}", local_testing_stream_buffer)
         finally:

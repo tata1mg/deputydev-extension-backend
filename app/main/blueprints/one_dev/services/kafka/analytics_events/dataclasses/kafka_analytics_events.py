@@ -9,7 +9,7 @@ from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
 
 class KafkaAnalyticsEventMessage(BaseModel):
     event_id: Optional[str] = None
-    session_id: int
+    session_id: Optional[int] = None
     event_type: str
     client_version: str
     client: Clients
