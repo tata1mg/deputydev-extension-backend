@@ -90,7 +90,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             "instructions": instructions,
             "max_output_tokens": max_output_tokens,
             "parallel_tool_calls": parallel_tool_calls,
-            "temperature": temperature or 0.5,
             "reasoning": reasoning or {},
             "text_format": text_format,
             "store": False,
@@ -117,7 +116,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             model=model,
             response_format=response_format,
             messages=conversation_messages,
-            temperature=0.5,
         )
 
         # we need both message and output token now to returning full completion message

@@ -55,7 +55,7 @@ class DB(ORMWrapper):
             order_by=order_by,
             only=only,
         )
-        results = [await result.to_dict() for result in results] if results else []
+        results = [dict(result) for result in results] if results else []
         if results and fetch_one:
             return results[0]
         return results
