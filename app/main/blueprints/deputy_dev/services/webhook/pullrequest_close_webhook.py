@@ -4,6 +4,7 @@ from app.backend_common.utils.app_utils import (
     get_vcs_repo_name_slug,
 )
 from app.main.blueprints.deputy_dev.models.pr_close_request import PRCloseRequest
+
 from .webhook_utils import should_skip_trayalabs_request
 
 
