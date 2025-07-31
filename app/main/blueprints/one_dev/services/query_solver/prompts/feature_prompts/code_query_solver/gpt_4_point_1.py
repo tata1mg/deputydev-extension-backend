@@ -414,6 +414,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 2. DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST. 
                 3. PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
                 4. If you're creating a new file, provide a diff block ALWAYS
+                5. Use absolute path in file_path
             </important>
             </code_block_guidelines>
             
