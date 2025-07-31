@@ -1,6 +1,6 @@
 import pytest
 
-from app.main.blueprints.deputy_dev.services.code_review.helpers.pr_score_helper import (
+from app.main.blueprints.deputy_dev.services.code_review.common.helpers.pr_score_helper import (
     PRScoreHelper,
 )
 

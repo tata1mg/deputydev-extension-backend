@@ -52,6 +52,8 @@ class StatsCollectionTrigger:
             parsed_payload = await PullRequestCloseWebhook.parse_payload(payload)
         elif stats_type == MetaStatCollectionTypes.PR_APPROVAL_TIME.value:
             parsed_payload = await PRApprovalWebhook.parse_payload(payload)
+        if not parsed_payload:
+            return
         if stats_type and await self.is_pr_created_post_onboarding(parsed_payload, vcs_type):
             data = {"payload": parsed_payload.dict(), "vcs_type": vcs_type, "stats_type": stats_type}
             if not is_request_from_blocked_repo(data["payload"].get("repo_name")):

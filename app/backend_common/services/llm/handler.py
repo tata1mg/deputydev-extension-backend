@@ -219,11 +219,12 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Message thread
         """
-        data_hash = xxhash.xxh64(prompt_rendered_messages.user_message).hexdigest()
+        full_user_message = (prompt_rendered_messages.cached_message or "") + prompt_rendered_messages.user_message
+        data_hash = xxhash.xxh64(full_user_message).hexdigest()
         message_data: List[Union[FileBlockData, TextBlockData]] = [
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
-                content=TextBlockContent(text=prompt_rendered_messages.user_message),
+                content=TextBlockContent(text=full_user_message),
                 content_vars=prompt_vars if prompt_vars else None,
             )
         ]
