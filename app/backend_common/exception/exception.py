@@ -10,7 +10,17 @@ class ParseException(Exception):  # noqa : N818
         super().__init__(f"Parsing error: {self.message}")
 
 
-class RefreshTokenFailedError(Exception):
+class InvalidIntegrationClient(Exception):  # noqa: N818
+    """
+    Exception raised for invalid integration client errors.
+    """
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(f"Invalid Integration Client: {self.message}")
+
+
+class RefreshTokenFailed(Exception):  # noqa: N818
     """
     Exception raised when refreshing tokens fails.
     """
