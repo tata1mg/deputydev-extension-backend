@@ -19,7 +19,7 @@ from .base import SCM, Integration
 class Gitlab(Integration, SCM):
     __name__ = "gitlab"
 
-    def __init__(self, auth_handler: GitlabAuthHandler | None = None):
+    def __init__(self, auth_handler: GitlabAuthHandler | None = None) -> None:
         self.auth_handler: GitlabAuthHandler | None = auth_handler
         self.client: GitlabGroupClient | None = None
 

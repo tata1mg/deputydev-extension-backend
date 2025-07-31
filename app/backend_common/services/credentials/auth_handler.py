@@ -11,7 +11,7 @@ from tortoise.exceptions import DoesNotExist
 from app.backend_common.constants.constants import TokenableType, TokenType
 from app.backend_common.exception.exception import CredentialsError
 from app.backend_common.models.dao.postgres.tokens import Tokens
-from app.backend_common.services.workspace.encryption_service import EncryptionService
+from app.backend_common.services.encryption.encryption_service import EncryptionService
 
 _TOKEN_STORE: ContextVar[Dict[str, Any]] = ContextVar("token_store", default={})
 """Task-local token store."""
