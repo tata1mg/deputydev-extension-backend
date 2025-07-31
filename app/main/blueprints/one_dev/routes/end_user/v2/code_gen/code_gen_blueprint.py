@@ -311,7 +311,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             )
 
             # Get available models with higher token limits
-            better_models = []
+            better_models: List[Dict[str, Any]] = []
 
             try:
                 code_gen_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
