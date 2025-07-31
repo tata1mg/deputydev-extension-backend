@@ -10,7 +10,7 @@ class ParseException(Exception):  # noqa : N818
         super().__init__(f"Parsing error: {self.message}")
 
 
-class RefreshTokenFailed(Exception):  # noqa : N818
+class RefreshTokenFailedError(Exception):
     """
     Exception raised when refreshing tokens fails.
     """
@@ -18,16 +18,6 @@ class RefreshTokenFailed(Exception):  # noqa : N818
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(f"Error Refreshing Tokens: {self.message}")
-
-
-class InvalidIntegrationClient(Exception):  # noqa : N818
-    """
-    Exception raised for invalid integration client errors.
-    """
-
-    def __init__(self, message: str) -> None:
-        self.message = message
-        super().__init__(f"Invalid Integration Client: {self.message}")
 
 
 class CredentialsError(Exception):
@@ -80,7 +70,7 @@ class RateLimitError(Exception):
         super().__init__(f"Rate limit error: {self.message}")
 
 
-class InputTokenLimitExceededException(Exception):  # noqa : N818
+class InputTokenLimitExceededError(Exception):
     """
     Raised when input tokens exceed the model's token limit.
     """

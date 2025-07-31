@@ -114,7 +114,7 @@ class BaseLLMProvider(ABC):
         try:
             from deputydev_core.utils.app_logger import AppLogger
 
-            from app.backend_common.exception.exception import InputTokenLimitExceededException
+            from app.backend_common.exception.exception import InputTokenLimitExceededError
 
             # Extract content from payload
             payload_content = self._extract_payload_content_for_token_counting(llm_payload)
@@ -128,14 +128,14 @@ class BaseLLMProvider(ABC):
             AppLogger.log_debug(f"Token validation for {model.value}: {token_count}/{token_limit} tokens")
 
             if token_count > token_limit:
-                raise InputTokenLimitExceededException(
+                raise InputTokenLimitExceededError(
                     model_name=model.value,
                     current_tokens=token_count,
                     max_tokens=token_limit,
                     detail=f"LLM payload has {token_count} tokens, exceeding limit of {token_limit} for model {model.value}",
                 )
 
-        except InputTokenLimitExceededException:
+        except InputTokenLimitExceededError:
             # Re-raise token limit exceptions as-is
             raise
         except Exception as e:  # noqa : BLE001

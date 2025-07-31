@@ -10,7 +10,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
-from app.backend_common.exception import InputTokenLimitExceededException, RetryException
+from app.backend_common.exception import InputTokenLimitExceededError, RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ExtendedThinkingContent,
@@ -496,7 +496,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
-            except InputTokenLimitExceededException:
+            except InputTokenLimitExceededError:
                 # Don't retry for token limit exceeded, immediately raise
                 raise
             except LLMThrottledError as e:
