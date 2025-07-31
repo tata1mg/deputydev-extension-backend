@@ -218,6 +218,7 @@ class BaseClaudeQuerySolverPrompt:
                   1. Diff code blocks can ONLY be applied to the Working Repository. Never create diffs for Context Repositories.
                   2. DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST. 
                   3. PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                  4. If you're creating a new file, provide a diff block ALWAYS
                 </important>
 
                 General structure of code block:
@@ -270,7 +271,8 @@ class BaseClaudeQuerySolverPrompt:
                 1. You need to edit an existing file, and the file path is there in existing chunks.
                 2. You can create a new file.
 
-                Write all generic code in non diff blocks.
+                Write all generic code in non diff blocks which you want to explain to the user,
+                For changing existing files, or existing code, provide diff blocks. Make sure diff blocks are preferred.
                 Never use phrases like "existing code", "previous code" etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
                 In diff blocks, make sure to add imports, dependencies, and other necessary code. Just don't try to change import order or add unnecessary imports.
                 </extra_important>
