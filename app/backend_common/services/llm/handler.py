@@ -10,7 +10,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
-from app.backend_common.exception import RetryException
+from app.backend_common.exception.exception import InputTokenLimitExceededError, RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ExtendedThinkingContent,
@@ -454,6 +454,10 @@ class LLMHandler(Generic[PromptFeatures]):
                     search_web=search_web,
                     disable_caching=disable_caching,
                 )
+
+                # Validate token limit for the actual payload content
+                await client.validate_token_limit_before_call(llm_payload, llm_model)
+
                 if checker and checker.is_cancelled():
                     raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
@@ -492,6 +496,9 @@ class LLMHandler(Generic[PromptFeatures]):
                     llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
+            except InputTokenLimitExceededError:
+                # Don't retry for token limit exceeded, immediately raise
+                raise
             except LLMThrottledError as e:
                 AppLogger.log_warn(
                     f"LLM Throttled Error: {e}, retrying {i + 1}/{max_retry} after {e.retry_after} seconds"
