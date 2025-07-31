@@ -375,13 +375,23 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
             ALSO, PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
 
             General structure of code block:
+            Usage: 
+            <code_block>
+            <programming_language>programming Language name</programming_language>
+            <file_path>use absolute path here</file_path>
+            <is_diff>boolean</is_diff>
+            code here
+            </code_block>
+
+
+            ## Example of code block:
             <code_block>
             <programming_language>python</programming_language>
-            <file_path>app/main.py</file_path>
-            <is_diff>false</is_diff>
-            def some_function():
-                return "Hello, World!"
+            <file_path>/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py</file_path>
+            <is_diff>true</is_diff>
+            udiff content
             </code_block>
+
                                            
             <important> 
                 1. Diff code blocks can ONLY be applied to the Working Repository. Never create diffs for Context Repositories.
