@@ -17,7 +17,7 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
-from app.backend_common.exception.exception import InputTokenLimitExceededException
+from app.backend_common.exception.exception import InputTokenLimitExceededError
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
@@ -305,7 +305,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
             }
             await push_to_connection_stream(error_data)
 
-        except InputTokenLimitExceededException as ex:
+        except InputTokenLimitExceededError as ex:
             AppLogger.log_error(
                 f"Input token limit exceeded: model={ex.model_name}, tokens={ex.current_tokens}/{ex.max_tokens}"
             )

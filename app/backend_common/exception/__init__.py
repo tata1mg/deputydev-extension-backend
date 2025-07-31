@@ -1,3 +1,7 @@
-__all__ = ["RetryException", "RefreshTokenFailed", "InvalidIntegrationClient", "InputTokenLimitExceededException"]
+__all__ = ["RetryException", "RefreshTokenFailedError", "InputTokenLimitExceededError"]
 
-from .exception import InputTokenLimitExceededException, InvalidIntegrationClient, RefreshTokenFailed, RetryException
+from .exception import (
+    InputTokenLimitExceededError,
+    RefreshTokenFailedError,
+    RetryException,
+)

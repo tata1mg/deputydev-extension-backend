@@ -1,18 +1,21 @@
 from __future__ import annotations
 
-import typing as t
+from typing import Any, Dict
 
+from deputydev_core.clients.http.adapters.http_response_adapter import (
+    AiohttpToRequestsAdapter,
+)
 from deputydev_core.clients.http.base_http_client import BaseHTTPClient
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 
-from app.backend_common.exception import RefreshTokenFailed
+from app.backend_common.exception import RefreshTokenFailedError
 from app.backend_common.exception.exception import RateLimitError
 from app.backend_common.services.credentials import AuthHandler
 
 
 class BaseSCMClient(BaseHTTPClient):
-    def __init__(self, auth_handler: AuthHandler):
+    def __init__(self, auth_handler: AuthHandler) -> None:
         super().__init__()
         self.auth_handler: AuthHandler = auth_handler
         self.workspace_token_headers = None
@@ -23,10 +26,10 @@ class BaseSCMClient(BaseHTTPClient):
         url: str,
         params: dict | None = None,
         headers: dict | None = None,
-        data: t.Any = None,
-        json: t.Any = None,
+        data: Any = None,
+        json: Any = None,
         skip_auth_headers: bool = False,
-    ):
+    ) -> AiohttpToRequestsAdapter:
         # -- prep headers --
         headers = headers or {}
         if not skip_auth_headers:
@@ -57,7 +60,7 @@ class BaseSCMClient(BaseHTTPClient):
             )
 
             if response.status_code == 401:
-                raise RefreshTokenFailed("Forbidden error even after refreshed token")
+                raise RefreshTokenFailedError("Forbidden error even after refreshed token")
         elif response.status_code == 429:
             raise RateLimitError("VCS rate limit breached")
 
@@ -76,7 +79,7 @@ class BaseSCMClient(BaseHTTPClient):
         }
         return headers
 
-    async def get_ws_token_headers(self):
+    async def get_ws_token_headers(self) -> Dict[str, str]:
         if not self.workspace_token_headers:
             dd_workspace_id = get_context_value("dd_workspace_id")
             workspace_token = await AuthHandler.get_workspace_access_token(dd_workspace_id)
