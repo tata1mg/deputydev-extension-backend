@@ -9,7 +9,7 @@ from deputydev_core.clients.http.base_http_client import BaseHTTPClient
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 
-from app.backend_common.exception import RefreshTokenFailedError
+from app.backend_common.exception import RefreshTokenFailed
 from app.backend_common.exception.exception import RateLimitError
 from app.backend_common.services.credentials import AuthHandler
 
@@ -60,7 +60,7 @@ class BaseSCMClient(BaseHTTPClient):
             )
 
             if response.status_code == 401:
-                raise RefreshTokenFailedError("Forbidden error even after refreshed token")
+                raise RefreshTokenFailed("Forbidden error even after refreshed token")
         elif response.status_code == 429:
             raise RateLimitError("VCS rate limit breached")
 

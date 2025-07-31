@@ -10,7 +10,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
-from app.backend_common.exception import InputTokenLimitExceededError, RetryException
+from app.backend_common.exception.exception import InputTokenLimitExceededError, RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ExtendedThinkingContent,
