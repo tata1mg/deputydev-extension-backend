@@ -17,6 +17,7 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
+from app.backend_common.exception.exception import InputTokenLimitExceededError
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
@@ -45,17 +46,29 @@ from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor i
 from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer import (
     UserQueryEnhancer,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
-)
-from app.main.blueprints.one_dev.utils.client.client_validator import (
+
+
+def get_model_display_name(model_name: str) -> str:
+    """Get the display name for a model from the configuration."""
+    try:
+        chat_models = ConfigManager.configs.get("CHAT_LLM_MODELS", [])
+        for model in chat_models:
+            if model.get("name") == model_name:
+                return model.get("display_name", model_name)
+        return model_name
+    except Exception:  # noqa : BLE001
+        return model_name
+
+
+from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data  # noqa : E402
+from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker  # noqa : E402
+from app.main.blueprints.one_dev.utils.client.client_validator import (  # noqa : E402
     validate_client_version,
     validate_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import (
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData  # noqa : E402
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData  # noqa : E402
+from app.main.blueprints.one_dev.utils.session import (  # noqa : E402
     ensure_session_id,
     get_valid_session_data,
 )
@@ -242,7 +255,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
         if session_data:
             await CodeGenTasksCache.set_session_data(payload.session_id, session_data)
 
-    async def solve_query() -> None:
+    async def solve_query() -> None:  # noqa : C901
         nonlocal payload
         nonlocal connection_id
         nonlocal client_data
@@ -290,6 +303,49 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                 "detail": ex.detail,
                 "region": getattr(ex, "region", None),
             }
+            await push_to_connection_stream(error_data)
+
+        except InputTokenLimitExceededError as ex:
+            AppLogger.log_error(
+                f"Input token limit exceeded: model={ex.model_name}, tokens={ex.current_tokens}/{ex.max_tokens}"
+            )
+
+            # Get available models with higher token limits
+            better_models: List[Dict[str, Any]] = []
+
+            try:
+                code_gen_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
+                llm_models_config = ConfigManager.configs.get("LLM_MODELS", {})
+                current_model_limit = ex.max_tokens
+
+                for model in code_gen_models:
+                    model_name = model.get("name")
+                    if model_name and model_name != ex.model_name and model_name in llm_models_config:
+                        model_config = llm_models_config[model_name]
+                        model_token_limit = model_config.get("INPUT_TOKENS_LIMIT", 100000)
+
+                        if model_token_limit > current_model_limit:
+                            enhanced_model = model.copy()
+                            enhanced_model["input_token_limit"] = model_token_limit
+                            better_models.append(enhanced_model)
+
+                # Sort by token limit (highest first)
+                better_models.sort(key=lambda m: m.get("input_token_limit", 0), reverse=True)
+
+            except Exception as model_error:  # noqa : BLE001
+                AppLogger.log_error(f"Error fetching better models: {model_error}")
+            error_data: Dict[str, Any] = {
+                "type": "STREAM_ERROR",
+                "status": "INPUT_TOKEN_LIMIT_EXCEEDED",
+                "model": ex.model_name,
+                "current_tokens": ex.current_tokens,
+                "max_tokens": ex.max_tokens,
+                "query": payload.query,
+                "message": f"Your message exceeds the context window supported by {get_model_display_name(ex.model_name)}. Try switching to a model with a higher context window to proceed.",
+                "detail": ex.detail,
+                "better_models": better_models,
+            }
+
             await push_to_connection_stream(error_data)
 
         except asyncio.CancelledError as ex:
