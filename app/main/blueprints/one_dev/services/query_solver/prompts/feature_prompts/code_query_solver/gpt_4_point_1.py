@@ -401,6 +401,14 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             
             Do NOT use diff blocks if:
             - File path is unclear or not yet created (use full snippets instead).
+                                           
+            <important> 
+                1. Diff code blocks can ONLY be applied to the Working Repository. Never create diffs for Context Repositories.
+                2. DO NOT PROVIDE DIFF CODE BLOCKS UNTIL YOU HAVE EXACT CURRENT CHANGES TO APPLY THE DIFF AGAINST. 
+                3. PREFER PROVIDING DIFF CODE BLOCKS WHENEVER POSSIBLE.
+                4. If you're creating a new file, provide a diff block ALWAYS
+                5. Use absolute path in file_path
+            </important>
             </code_block_guidelines>
             
             <response_formatting_rules>
