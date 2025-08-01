@@ -144,9 +144,6 @@ class BaseClaudeQuerySolverPrompt:
                 {self.tool_usage_guidelines(is_write_mode=True)}
             
                 DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
-                At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-                Do provide the summary once you're done with the task.
-                Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
                 """)
         else:
             system_message = textwrap.dedent(
@@ -278,9 +275,6 @@ class BaseClaudeQuerySolverPrompt:
                 {self.tool_usage_guidelines(is_write_mode=False)}
 
                 DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
-                At the end, please provide a one liner summary within 20 words of what happened in the current turn.
-                Do provide the summary once you're done with the task.
-                Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
                 """
             )
 

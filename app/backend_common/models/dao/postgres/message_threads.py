@@ -21,6 +21,7 @@ class MessageThread(Base):
         "metadata",
         "created_at",
         "updated_at",
+        "cost",
     }
 
     id = fields.IntField(primary_key=True)
@@ -37,6 +38,7 @@ class MessageThread(Base):
     prompt_category = fields.TextField()
     call_chain_category = fields.TextField()
     metadata = fields.JSONField(null=True)
+    cost = fields.FloatField(null=True)
 
     class Meta:
         table = "message_threads"

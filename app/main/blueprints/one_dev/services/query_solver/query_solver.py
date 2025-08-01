@@ -23,6 +23,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
+    StreamingEventType,
     StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
@@ -47,13 +48,12 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
+    TaskCompletionBlock,
+    TaskCompletionContent,
     ToolUseResponseInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
-    StreamingContentBlockType,
 )
 from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
@@ -108,6 +108,47 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
+    async def _generate_query_summary(
+        self,
+        session_id: int,
+        query_id: int,
+        llm_handler: LLMHandler[PromptFeatures],
+        user_team_id: int,
+        session_type: str,
+    ) -> tuple[Optional[str], bool]:  # Always return a tuple
+        current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
+        if not current_session:
+            AppLogger.log_error(f"Session with ID {session_id} not found for query summary generation.")
+            return None, False
+        all_messages = await MessageThreadsRepository.get_message_threads_for_session(
+            session_id=session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
+        )
+        # filter messages to be from current query only
+        filtered_queries = [msg.id for msg in all_messages if msg.query_id == query_id]
+        if query_id not in filtered_queries:
+            filtered_queries.insert(0, query_id)
+        # then generate a more detailed summary using LLM
+        llm_response = await llm_handler.start_llm_query(
+            prompt_feature=PromptFeatures.QUERY_SUMMARY_GENERATOR,
+            llm_model=LLModels.GPT_4_POINT_1_NANO,
+            prompt_vars={},
+            previous_responses=filtered_queries,
+            tools=[],
+            stream=False,
+            session_id=session_id,
+            call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
+        )
+
+        if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("Expected NonStreamingParsedLLMCallResponse")
+        query_summary = llm_response.parsed_content[0].summary or ""
+        query_status = (
+            llm_response.parsed_content[0].success if hasattr(llm_response.parsed_content[0], "success") else True
+        )
+
+        asyncio.create_task(self._update_query_summary(query_id, query_summary, session_id))
+        return query_summary, query_status
+
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
         existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
         if existing_summary:
@@ -125,13 +166,20 @@ class QuerySolver:
             )
 
     async def get_final_stream_iterator(
-        self, llm_response: ParsedLLMCallResponse, session_id: int
+        self,
+        llm_response: ParsedLLMCallResponse,
+        session_id: int,
+        llm_handler: LLMHandler[PromptFeatures],
+        user_team_id: int,
+        session_type: str,
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
+        tool_use_detected: bool = False
 
         async def _streaming_content_block_generator() -> AsyncIterator[BaseModel]:
             nonlocal llm_response
             nonlocal query_summary
+            nonlocal tool_use_detected
             if not isinstance(llm_response, StreamingParsedLLMCallResponse):
                 raise ValueError("Expected StreamingParsedLLMCallResponse")
 
@@ -147,23 +195,47 @@ class QuerySolver:
                     raise asyncio.CancelledError("Task cancelled in QuerySolver")
 
                 if data_block.type in [
-                    StreamingContentBlockType.SUMMARY_BLOCK_START,
-                    StreamingContentBlockType.SUMMARY_BLOCK_DELTA,
-                    StreamingContentBlockType.SUMMARY_BLOCK_END,
+                    StreamingEventType.TOOL_USE_REQUEST_START,
+                    StreamingEventType.TOOL_USE_REQUEST_DELTA,
+                    StreamingEventType.TOOL_USE_REQUEST_END,
                 ]:
-                    if data_block.type == StreamingContentBlockType.SUMMARY_BLOCK_DELTA:
-                        query_summary = (query_summary or "") + data_block.content.summary_delta
+                    tool_use_detected = True
 
-                    elif data_block.type == StreamingContentBlockType.SUMMARY_BLOCK_END and query_summary:
-                        asyncio.create_task(
-                            self._update_query_summary(llm_response.query_id, query_summary, session_id)
-                        )
-
-                else:
-                    yield data_block
+                yield data_block
 
             # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
             await llm_response.llm_response_storage_task
+
+            # Conditionally generate query summary only if no tool use was detected
+            if not tool_use_detected:
+                task = asyncio.create_task(
+                    self._generate_query_summary(
+                        session_id=session_id,
+                        query_id=llm_response.query_id,
+                        llm_handler=llm_handler,
+                        user_team_id=user_team_id,
+                        session_type=session_type,
+                    )
+                )
+                done, pending = await asyncio.wait([task], timeout=5.0)
+
+                if task in done:
+                    query_summary, success = task.result()
+                else:
+                    AppLogger.log_info(
+                        f"Query summary generation timed out after 5 seconds, Query id: {llm_response.query_id}"
+                    )
+                    query_summary = None
+                    success = True
+
+                yield TaskCompletionBlock(
+                    content=TaskCompletionContent(
+                        query_id=llm_response.query_id,
+                        success=success,
+                        summary=query_summary,
+                    ),
+                    type="TASK_COMPLETION",
+                )
 
         return _streaming_content_block_generator()
 
@@ -331,7 +403,13 @@ class QuerySolver:
                     "agent_name": agent_instance.agent_name,
                 },
             )
-            return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
+            return await self.get_final_stream_iterator(
+                llm_response,
+                session_id=payload.session_id,
+                llm_handler=llm_handler,
+                user_team_id=payload.user_team_id,
+                session_type=payload.session_type,
+            )
 
         elif payload.batch_tool_responses:
             prompt_vars: Dict[str, Any] = {
@@ -390,7 +468,13 @@ class QuerySolver:
                 parallel_tool_calls=True,
             )
 
-            return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
+            return await self.get_final_stream_iterator(
+                llm_response,
+                session_id=payload.session_id,
+                llm_handler=llm_handler,
+                user_team_id=payload.user_team_id,
+                session_type=payload.session_type,
+            )
 
         else:
             raise ValueError("Invalid input")
