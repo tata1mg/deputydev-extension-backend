@@ -18,7 +18,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input impo
     ASK_USER_INPUT,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.create_new_workspace import (
-    CREATE_NEW_WORKSPACE,
+    get_create_new_workspace_tool,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.execute_command import (
     EXECUTE_COMMAND,
@@ -88,17 +88,19 @@ class QuerySolverAgent(ABC):
             ITERATIVE_FILE_READER,
             GREP_SEARCH,
             EXECUTE_COMMAND,
-            CREATE_NEW_WORKSPACE,
             PUBLIC_URL_CONTENT_READER,
         ]
-
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
             tools_to_use.append(RELATED_CODE_SEARCHER)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
         if payload.write_mode:
+            tools_to_use.append(get_create_new_workspace_tool(write_mode=True))
             tools_to_use.append(REPLACE_IN_FILE)
             tools_to_use.append(WRITE_TO_FILE)
+        if not payload.write_mode:
+            tools_to_use.append(get_create_new_workspace_tool(write_mode=False))
+
         return tools_to_use
 
     def get_all_client_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
