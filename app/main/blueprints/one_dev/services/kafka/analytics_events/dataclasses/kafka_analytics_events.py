@@ -5,9 +5,10 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel, field_validator
 
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
+from enum import Enum
 
 
-class EventTypes:
+class EventTypes(Enum):
     COMMENT_BOX_VIEW = "COMMENT_BOX_VIEW"
     FIX_WITH_DD = "FIX_WITH_DD"
     ACCEPTED = "ACCEPTED"
