@@ -7,10 +7,26 @@ from pydantic import BaseModel, field_validator
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
 
 
+class EventTypes:
+    COMMENT_BOX_VIEW = "COMMENT_BOX_VIEW"
+    FIX_WITH_DD = "FIX_WITH_DD"
+    ACCEPTED = "ACCEPTED"
+    APPLIED = "APPLIED"
+    COPIED = "COPIED"
+    GENERATED = "GENERATED"
+    INVALID_DIFF = "INVALID_DIFF"
+    TOOL_USE_REQUEST_APPROVED = "TOOL_USE_REQUEST_APPROVED"
+    TOOL_USE_REQUEST_AUTO_APPROVED = "TOOL_USE_REQUEST_AUTO_APPROVED"
+    TOOL_USE_REQUEST_COMPLETED = "TOOL_USE_REQUEST_COMPLETED"
+    TOOL_USE_REQUEST_FAILED = "TOOL_USE_REQUEST_FAILED"
+    TOOL_USE_REQUEST_INITIATED = "TOOL_USE_REQUEST_INITIATED"
+    TOOL_USE_REQUEST_REJECTED = "TOOL_USE_REQUEST_REJECTED"
+
+
 class KafkaAnalyticsEventMessage(BaseModel):
     event_id: Optional[str] = None
     session_id: Optional[int] = None
-    event_type: str
+    event_type: EventTypes
     client_version: str
     client: Clients
     timestamp: datetime
