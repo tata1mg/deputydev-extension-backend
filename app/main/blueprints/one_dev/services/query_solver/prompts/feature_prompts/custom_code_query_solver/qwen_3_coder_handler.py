@@ -9,24 +9,24 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.openrouter_models.prompts.base_prompts.base_kimi_k2 import (
-    BaseKimiK2Prompt,
+from app.backend_common.services.llm.providers.openrouter_models.prompts.base_prompts.base_qwen_3_coder import (
+    BaseQwen3CoderPrompt,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.kimi_k2_code_block_parser import (
-    KimiK2CodeBlockParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.openrouter_models.code_block.qwen_3_coder_code_block_parser import (
+    Qwen3CoderCodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
-    KimiK2ThinkingParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.openrouter_models.thinking.qwen_3_coder_thinking_parser import (
+    Qwen3CoderThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_code_query_solver_prompt import (
-    KimiK2QuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.prompts.qwen.qwen_3_coder_custom_code_query_solver_prompt import (
+    Qwen3CoderCustomCodeQuerySolverPrompt,
 )
 
 
-class KimiK2QuerySolverPromptHandler(BaseKimiK2Prompt):
-    prompt_type = "CODE_QUERY_SOLVER"
+class Qwen3CoderCustomCodeQuerySolverPromptHandler(BaseQwen3CoderPrompt):
+    prompt_type = "CUSTOM_CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = KimiK2QuerySolverPrompt
+    prompt_class = Qwen3CoderCustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
@@ -52,7 +52,7 @@ class KimiK2QuerySolverPromptHandler(BaseKimiK2Prompt):
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[KimiK2CodeBlockParser(), KimiK2ThinkingParser()],
+            parsers=[Qwen3CoderCodeBlockParser(), Qwen3CoderThinkingParser()],
         )
 
     @classmethod
