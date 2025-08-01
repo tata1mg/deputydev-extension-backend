@@ -8,7 +8,8 @@ from app.backend_common.repository.message_sessions.repository import MessageSes
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
 from app.main.blueprints.one_dev.services.kafka.analytics_events.dataclasses.kafka_analytics_events import (
-    KafkaAnalyticsEventMessage, EventTypes,
+    KafkaAnalyticsEventMessage,
+    EventTypes,
 )
 
 from ..base_kafka_subscriber import BaseKafkaSubscriber
@@ -32,7 +33,7 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
 
             user_team_id = None
             if analytics_event_message.event_type in [EventTypes.COMMENT_BOX_VIEW, EventTypes.FIX_WITH_DD]:
-                comment_id = analytics_event_message.event_data.get('comment_id')
+                comment_id = analytics_event_message.event_data.get("comment_id")
                 if not comment_id:
                     raise ValueError(f"comment_id is required for event_type '{analytics_event_message.event_type}'")
 
@@ -40,7 +41,6 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
                 if not user_team_id:
                     raise ValueError(f"Could not determine user_team_id from comment_id {comment_id}")
             else:
-
                 message_session_dto = await MessageSessionsRepository.get_by_id(analytics_event_message.session_id)
                 user_team_id = message_session_dto.user_team_id
                 if not message_session_dto:
@@ -51,7 +51,7 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
                 user_team_id=user_team_id,
             )
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             raise ValueError(f"Error processing error analytics event message: {str(ex)}")
 
     async def _process_message(self, message: Any) -> None:
@@ -63,7 +63,7 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
                 AppLogger.log_warn(f"Skipping duplicate or invalid analytics event: {event_data}")
                 return
             await AnalyticsEventsRepository.save_analytics_event(analytics_event_data)
-        except Exception as _ex:
+        except Exception as _ex:  # noqa: BLE001
             AppLogger.log_error(
                 f"Error processing analytics event message from Kafka: {str(_ex)}. Message: {str(event_data)}"
             )
@@ -79,20 +79,16 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
             user_team_id if found, None otherwise
         """
         try:
-            comment = await IdeCommentRepository.db_get(
-                filters={"id": comment_id, "is_deleted": False},
-                fetch_one=True
-            )
+            comment = await IdeCommentRepository.db_get(filters={"id": comment_id, "is_deleted": False}, fetch_one=True)
             if not comment:
                 raise ValueError(f"Comment with ID {comment_id} not found or deleted.")
 
             review = await ExtensionReviewsRepository.db_get(
-                filters={"id": comment.review_id, "is_deleted": False},
-                fetch_one=True
+                filters={"id": comment.review_id, "is_deleted": False}, fetch_one=True
             )
             if not review:
                 raise ValueError(f"Review with ID {comment.review_id} not found or deleted.")
 
             return review.user_team_id
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             raise ValueError(f"Error fetching user_team_id from comment_id {comment_id}: {str(ex)}")
