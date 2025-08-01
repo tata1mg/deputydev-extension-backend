@@ -11,7 +11,7 @@ class AgentManager:
             agent_name="security",
             display_name="Security",
             is_custom_agent=False,
-            objective="Responsibility of this agent is checking security issues.",
+            objective="Detects insecure code patterns and flags potential vulnerabilities to help you write safer, more secure code.",
         ),
         UserAgentDTO(
             agent_name="code_communication",
@@ -24,19 +24,19 @@ class AgentManager:
             agent_name="performance_optimisation",
             display_name="Performance Optimization",
             is_custom_agent=False,
-            objective="Responsibility of this agent is checking performance issues.",
+            objective="Identifies inefficient code patterns and suggests optimizations to boost performance and reduce resource usage.",
         ),
         UserAgentDTO(
             agent_name="code_maintainability",
             display_name="Code Maintainability",
             is_custom_agent=False,
-            objective="Responsibility of this agent is checking code maintainability issues.",
+            objective="Analyzes code for maintainability issues and flags patterns that may hurt long-term readability, structure, or reuse.",
         ),
         UserAgentDTO(
             agent_name="error",
             display_name="Error",
             is_custom_agent=False,
-            objective="Responsibility of this agent is checking errors in code.",
+            objective="Flags code patterns likely to cause runtime errors, helping you catch issues early and ship safer code.",
         ),
     ]
 
