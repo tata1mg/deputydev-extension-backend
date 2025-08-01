@@ -92,3 +92,63 @@ class BaseLLMProvider(ABC):
             int: Token Count of content
         """
         raise NotImplementedError()
+
+    def get_model_token_limit(self, model: LLModels) -> int:
+        """Get the input token limit for a specific model."""
+        try:
+            from deputydev_core.utils.config_manager import ConfigManager
+
+            model_config = ConfigManager.configs["LLM_MODELS"][model.value]
+            return model_config["INPUT_TOKENS_LIMIT"]
+        except KeyError:
+            from deputydev_core.utils.app_logger import AppLogger
+
+            AppLogger.log_warn(f"Token limit not found for model {model.value}, using default 100000")
+            return 100000  # Conservative default
+
+    async def validate_token_limit_before_call(self, llm_payload: Dict[str, Any], model: LLModels) -> None:
+        """
+        Validate if the LLM payload is within token limits using the provider's get_tokens method.
+        Raises InputTokenLimitExceededException if limit is exceeded.
+        """
+        try:
+            from deputydev_core.utils.app_logger import AppLogger
+
+            from app.backend_common.exception.exception import InputTokenLimitExceededError
+
+            # Extract content from payload
+            payload_content = self._extract_payload_content_for_token_counting(llm_payload)
+
+            # Count tokens using the provider's get_tokens method
+            token_count = await self.get_tokens(content=payload_content, model=model)
+
+            # Get model token limit
+            token_limit = self.get_model_token_limit(model)
+
+            AppLogger.log_debug(f"Token validation for {model.value}: {token_count}/{token_limit} tokens")
+
+            if token_count > token_limit:
+                raise InputTokenLimitExceededError(
+                    model_name=model.value,
+                    current_tokens=token_count,
+                    max_tokens=token_limit,
+                    detail=f"LLM payload has {token_count} tokens, exceeding limit of {token_limit} for model {model.value}",
+                )
+
+        except InputTokenLimitExceededError:
+            # Re-raise token limit exceptions as-is
+            raise
+        except Exception as e:  # noqa : BLE001
+            from deputydev_core.utils.app_logger import AppLogger
+
+            AppLogger.log_error(f"Error validating token limit for model {model.value}: {e}")
+            # Don't block the request if token validation fails, just log the error
+            pass
+
+    @abstractmethod
+    def _extract_payload_content_for_token_counting(self, llm_payload: Dict[str, Any]) -> str:
+        """
+        Extract the relevant content from LLM payload that will be sent to the LLM for token counting.
+        This handles different provider payload structures.
+        """
+        raise NotImplementedError("Must implement _extract_payload_content_for_token_counting in subclass")
