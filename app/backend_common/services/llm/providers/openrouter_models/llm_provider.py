@@ -6,6 +6,7 @@ from functools import reduce
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Type
 
 from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
 from openai.types.chat import ChatCompletionChunk
 from openai.types.responses import Response
@@ -286,7 +287,7 @@ class OpenRouter(BaseLLMProvider):
         model: LLModels,
         stream: bool = False,
         response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
-        parallel_tool_calls: bool = True,
+        parallel_tool_calls: bool = False,
         text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:
         """
@@ -522,3 +523,50 @@ class OpenRouter(BaseLLMProvider):
 
     async def get_tokens(self, content: str, model: LLModels) -> int:
         return TikToken().count(text=content)
+
+    def _extract_payload_content_for_token_counting(self, llm_payload: Dict[str, Any]) -> str:  # noqa : C901
+        """
+        Extract the relevant content from LLM payload that will be sent to the LLM for token counting.
+        This handles OpenRouter's payload structure and includes handling for multipart content and attachments.
+        """
+        content_parts = []
+
+        try:
+            # OpenRouter structure: messages
+            if "messages" in llm_payload:
+                for message in llm_payload["messages"]:
+                    if isinstance(message, dict):
+                        # If message has 'content', check if it's a string or a list (multipart content)
+                        if "content" in message:
+                            if isinstance(message["content"], str):
+                                content_parts.append(message["content"])
+                            elif isinstance(message["content"], list):
+                                # Iterate through multipart content, which may include text and image parts
+                                for content in message["content"]:
+                                    if isinstance(content, dict):
+                                        # For text parts
+                                        if content.get("type") == "text":
+                                            content_parts.append(content.get("text", ""))
+                                        # For image URL parts (base64 encoded)
+                                        elif content.get("type") == "image_url":
+                                            content_parts.append(content.get("image_url", {}).get("url", ""))
+                        # If it's a tool response message, append the tool output
+                        elif message.get("type") == "function_call_output" and "output" in message:
+                            content_parts.append(str(message["output"]))
+
+            # Include tools information for token counting if present
+            if "tools" in llm_payload and llm_payload["tools"]:
+                try:
+                    tools_content = json.dumps(llm_payload["tools"])
+                    content_parts.append(tools_content)
+                except Exception as e:  # noqa : BLE001
+                    AppLogger.log_warn(f"Error processing tools for token counting: {e}")
+                    # Skip tools if they can't be processed
+                    pass
+
+        except Exception as e:  # noqa : BLE001
+            AppLogger.log_warn(f"Error extracting payload content for token counting: {e}")
+            # Fallback: return a simple placeholder instead of trying to serialize non-serializable objects
+            return "Unable to extract content for token counting"
+
+        return "\n".join(content_parts)
