@@ -195,7 +195,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                                 }}
                             }}
                         }},
-                        "summary": {{"type": "string"}}
                     }}
                 }}
                 <response_schema>
@@ -308,7 +307,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                                 "additionalProperties": false
                             }}
                         }},
-                        "summary": {{"type": "string"}}
                     }}
                 }}
                 <response_schema>
@@ -377,16 +375,11 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             {self.tool_usage_guidelines(is_write_mode=True)}
 
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
-            
-            <summary_rule>
-            At the end, include a summary (max 20 words) under the "summary" key. (IMPORTANT)
-            Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
-            </summary_rule>
 
             Here is the user's query for editing - {self.params.get("query")}. 
             
             Important instructions:
-            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input
+            - Please make sure flow is not interrupted in between, and use ask_user_input tool for any user input.
             """)
         else:
             user_message = textwrap.dedent(f"""
@@ -422,10 +415,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             
             {self.tool_usage_guidelines(is_write_mode=False)}
             
-            <summary_rule>
-            At the end, include a summary (max 20 words) under the "summary" key.
-            Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
-            </summary_rule>
             
             User Query: {self.params.get("query")}. 
             

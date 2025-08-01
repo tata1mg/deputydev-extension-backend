@@ -60,6 +60,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from app.backend_common.services.llm.providers.openrouter_models.llm_provider import OpenRouter
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
@@ -84,6 +85,8 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GPT_4_POINT_1_NANO: OpenAI,
         LLModels.GPT_4_POINT_1_MINI: OpenAI,
         LLModels.GPT_O3_MINI: OpenAI,
+        LLModels.OPENROUTER_KIMI_K2: OpenRouter,
+        LLModels.OPENROUTER_QWEN_3_CODER: OpenRouter,
     }
 
     def __init__(
@@ -157,6 +160,7 @@ class LLMHandler(Generic[PromptFeatures]):
             type=LLMCallResponseTypes.NON_STREAMING,
             content=non_streaming_content_blocks,
             usage=await llm_response.usage,
+            cost=await llm_response.cost if llm_response.cost else None,
         )
 
     async def store_llm_response_in_db(
@@ -191,6 +195,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_type=prompt_type,
             prompt_category=prompt_category,
             usage=response_to_use.usage,
+            cost=response_to_use.cost,
             call_chain_category=call_chain_category,
         )
         await MessageThreadsRepository.create_message_thread(message_thread)
@@ -309,6 +314,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 content=llm_response.content,
                 parsed_content=parsed_stream,
                 usage=llm_response.usage,
+                cost=llm_response.cost,
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
@@ -323,6 +329,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 content=llm_response.content,
                 parsed_content=parsed_content,
                 usage=llm_response.usage,
+                cost=llm_response.cost,
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
@@ -398,7 +405,7 @@ class LLMHandler(Generic[PromptFeatures]):
         feedback: str = None,
         max_retry: int = MAX_LLM_RETRIES,
         stream: bool = False,
-        response_type: Optional[str] = None,
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         attachments: List[Attachment] = [],
         search_web: bool = False,
         checker: CancellationChecker = None,

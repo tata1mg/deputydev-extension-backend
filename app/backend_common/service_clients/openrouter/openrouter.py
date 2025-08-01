@@ -1,165 +1,177 @@
-from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Type, Union
+from __future__ import annotations
+
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, TypedDict
 
 import httpx
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.singleton import Singleton
 from openai import AsyncOpenAI
 from openai._streaming import AsyncStream
-from openai.types.chat import ChatCompletion, ChatCompletionMessageParam, ChatCompletionToolParam
-from openai.types.responses import (
-    Response,
-    ResponseFormatTextJSONSchemaConfigParam,
-    ResponseInputParam,
-    ResponsesModel,
-    ResponseTextConfigParam,
+from openai.types.chat import (
+    ChatCompletion,
+    ChatCompletionMessageParam,
+    ChatCompletionToolParam,
 )
 from openai.types.responses.response_stream_event import ResponseStreamEvent
-from openai.types.shared_params.response_format_json_object import ResponseFormatJSONObject
-from openai.types.shared_params.response_format_text import ResponseFormatText
-from pydantic import BaseModel
+
+
+class FunctionDict(TypedDict):
+    name: str
+
+
+class FunctionToolChoice(TypedDict):
+    type: Literal["function"]
+    function: FunctionDict
+
+
+ToolChoice = Literal["none"] | Literal["auto"] | FunctionToolChoice
+
+ResponseType = Optional[Literal["text", "json_object", "json_schema"]]
 
 
 class OpenRouterServiceClient(metaclass=Singleton):
+    """
+    Thin wrapper around OpenRouter's OpenAI‑compatible API.
+
+    Use `chat()` for one‑shot requests and `stream_chat()` for SSE‑style
+    token streaming.
+    """
+
     def __init__(self) -> None:
-        self.__client = AsyncOpenAI(
-            base_url=ConfigManager.configs["OPENROUTER"]["BASE_URL"] or "https://openrouter.ai/api/v1",
-            api_key=ConfigManager.configs["OPENROUTER"]["API_KEY"],
-            timeout=ConfigManager.configs["OPENROUTER"]["TIMEOUT"],
+        cfg = ConfigManager.configs["OPENROUTER"]
+        self._client = AsyncOpenAI(
+            base_url=cfg.get("BASE_URL", "https://openrouter.ai/api/v1"),
+            api_key=cfg["API_KEY"],
             http_client=httpx.AsyncClient(
-                timeout=ConfigManager.configs["OPENROUTER"]["TIMEOUT"],
+                timeout=cfg.get("TIMEOUT", 60),
                 limits=httpx.Limits(
-                    max_connections=1000,
-                    max_keepalive_connections=100,
+                    max_connections=cfg.get("MAX_CONN", 1000),
+                    max_keepalive_connections=cfg.get("MAX_KEEPALIVE", 100),
                     keepalive_expiry=20,
                 ),
             ),
         )
 
+    # ---------- public helpers ------------------------------------------------
     async def get_llm_non_stream_response(
         self,
-        conversation_messages: List[Dict[str, Any]],
+        *,
         model: str,
-        tool_choice: Literal["none", "auto", "required"] = "none",
-        tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Literal["text", "json_object", "json_schema"] = "json_schema",
-        response_schema: Any = None,
-        response_format_name: Any = None,
-        response_format_description: Any = None,
-        instructions: str = None,
-        max_output_tokens: str = None,
-        parallel_tool_calls: bool = True,
-    ) -> Response:
-        response_type = self._get_response_type(
-            response_type=response_type,
-            response_schema=response_schema,
-            schema_name=response_format_name,
-            schema_description=response_format_description,
-        )
-        response = await self.__client.responses.create(
-            input=conversation_messages,
-            model=model,
-            tool_choice=tool_choice,
-            tools=tools,
-            stream=False,
-            text=response_type,
-            parallel_tool_calls=parallel_tool_calls,
-            instructions=instructions,
-            max_output_tokens=max_output_tokens,
-        )
-        # we need both message and output token now to returning full completion message
-        return response
-
-    async def get_llm_non_stream_response_api(  # noqa: ANN201
-        self,
-        conversation_messages: List[Dict[str, Any]],
-        model: str,
-        tool_choice: Literal["none", "auto", "required"] = "auto",
-        tools: Optional[List[Dict[str, Any]]] = None,
-        instructions: Optional[str] = None,
-        max_output_tokens: Optional[int] = None,
-        parallel_tool_calls: bool = False,
-        text_format: Optional[Type[BaseModel]] = None,
-        reasoning: Optional[Dict[str, Any]] = None,
+        models: Optional[List[str]] = None,
+        max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
-    ):
-        # Build the request payload, filtering out any None values
-        kwargs: Dict[str, Any] = {
-            "model": model,
-            "input": conversation_messages,
-            "tool_choice": tool_choice,
-            "tools": tools,
-            "instructions": instructions,
-            "max_output_tokens": max_output_tokens,
-            "parallel_tool_calls": parallel_tool_calls,
-            "temperature": temperature or 0.5,
-            "reasoning": reasoning or {},
-            "text_format": text_format,
-            "store": False,
-        }
-        request_args = {k: v for k, v in kwargs.items() if v is not None}
-
-        response = await self.__client.responses.parse(**request_args)
-        return response
-
-    async def get_llm_non_stream_response_chat_api(
-        self,
         conversation_messages: List[ChatCompletionMessageParam],
-        model: str,
-        tool_choice: Optional[str] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Literal["text", "json_object"] = "json_object",
+        tools: Optional[List[ChatCompletionToolParam]] = None,
+        parallel_tool_calls: bool = False,
+        tool_choice: ToolChoice = "none",
+        transformation: Optional[List[str]] = None,
+        reasoning: Optional[Dict[str, Any]] = None,
+        provider: Optional[Dict[str, Any]] = None,
+        response_format: Optional[Literal["text", "json_object", "json_schema"]] = None,
+        structured_outputs: Optional[bool] = None,
+        **extra: Any,
     ) -> ChatCompletion:
-        completion = await self.__client.chat.completions.create(
+        """
+        Send a chat completion. Returns the full `ChatCompletion` object.
+        Extra kwargs are forwarded verbatim to OpenAI for future-proofing.
+        """
+        kwargs = self._build_common_kwargs(
             model=model,
             messages=conversation_messages,
-            temperature=0.5,
+            tools=tools,
+            tool_choice=tool_choice,
+            parallel_tool_calls=parallel_tool_calls,
+            stream=False,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            transformation=transformation,
+            reasoning=reasoning,
+            provider=provider,
+            response_format=response_format,
+            structured_outputs=structured_outputs,
+            **extra,
         )
 
-        # we need both message and output token now to returning full completion message
-        return completion
+        response: ChatCompletion = await self._client.chat.completions.create(**kwargs)  # type: ignore[arg-type]
+        return response
 
     async def get_llm_stream_response(
         self,
-        conversation_messages: List[ChatCompletionMessageParam],
+        *,
         model: str,
-        tool_choice: Optional[Literal["none", "auto", "required"]] = None,
-        tools: Optional[ChatCompletionToolParam] = None,
-        response_type: Literal["text", "json_object"] = "json_object",
-        response_schema: Any = None,
-        response_format_name: Any = None,
-        response_format_description: Any = None,
-        instructions: Optional[str] = None,
-        max_output_tokens: Optional[int] = None,
-        parallel_tool_calls: bool = True,
+        models: Optional[List[str]] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        messages: List[ChatCompletionMessageParam],
+        tools: Optional[List[ChatCompletionToolParam]] = None,
+        tool_choice: ToolChoice = "none",
+        transformation: Optional[List[str]] = None,
+        reasoning: Optional[Dict[str, Any]] = None,
+        provider: Optional[Dict[str, Any]] = None,
+        response_format: ResponseType = "text",
+        structured_outputs: Optional[bool] = None,
+        **extra: Any,
     ) -> AsyncIterator[ResponseStreamEvent]:
-        stream_manager: ChatCompletion = await self.__client.chat.completions.create(
-            messages=conversation_messages,
+        """
+        Convenience alias that always streams.
+        """
+        kwargs = self._build_common_kwargs(
             model=model,
-            tool_choice=tool_choice,
+            messages=messages,
             tools=tools,
-            # stream=True,
-            # text=response_type,
-            # parallel_tool_calls=parallel_tool_calls,
-            # instructions=instructions,
-            # max_output_tokens=max_output_tokens,
+            tool_choice=tool_choice,
+            stream=True,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            transformation=transformation,
+            reasoning=reasoning,
+            provider=provider,
+            response_format=response_format,
+            structured_outputs=structured_outputs,
+            **extra,
         )
-        return stream_manager.__stream__()
 
-    def _get_response_type(
-        self, response_type: Any, response_schema: Any = None, schema_name: Any = None, schema_description: Any = None
-    ) -> ResponseTextConfigParam:
-        if response_type == "json_schema":
-            return ResponseTextConfigParam(
-                format=ResponseFormatTextJSONSchemaConfigParam(
-                    name=schema_name,
-                    schema=response_schema,
-                    type=response_type,
-                    description=schema_description,
-                )
-            )
-        elif response_type == "text":
-            return ResponseTextConfigParam(format=ResponseFormatText(type=response_type))
-        elif response_type == "json_object":
-            return ResponseTextConfigParam(format=ResponseFormatJSONObject(type=response_type))
-        else:
-            raise ValueError("Invalid response type")
+        # type: ignore[arg-type]
+        response: AsyncStream[ResponseStreamEvent] = await self._client.chat.completions.create(**kwargs)
+        return response.__stream__()
+
+    @staticmethod
+    def _build_common_kwargs(
+        *,
+        model: str,
+        messages: List[ChatCompletionMessageParam],
+        tools: Optional[List[ChatCompletionToolParam]],
+        tool_choice: ToolChoice,
+        parallel_tool_calls: bool,
+        stream: bool,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        transformation: Optional[List[str]] = None,
+        reasoning: Optional[Dict[str, Any]] = None,
+        provider: Optional[Dict[str, Any]] = None,
+        response_format: Optional[str] = None,
+        structured_outputs: Optional[bool] = None,
+        **extra: Any,
+    ) -> Dict[str, Any]:
+        base: Dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            "tools": tools,
+            "tool_choice": "auto",
+            "parallel_tool_calls": parallel_tool_calls,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "transformation": transformation,
+            "reasoning": reasoning,
+            "provider": provider,
+            "response_format": {"type": response_format} if response_format and response_format != "text" else None,
+            "structured_outputs": structured_outputs,
+            "stream_options": {"include_usage": True},  # <-- Hardcoded usage block
+        }
+
+        # Add any remaining extra fields (future-proofing)
+        base.update(extra)
+
+        # Remove keys with None values to slim the payload
+        return {k: v for k, v in base.items() if v is not None}

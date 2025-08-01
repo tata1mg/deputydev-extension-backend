@@ -408,7 +408,6 @@ class Google(BaseLLMProvider):
         event_blocks: List[StreamingEvent] = []
         usage: LLMUsage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
         candidate = chunk.candidates[0]
-
         # Process all parts instead of just the first one
         parts = candidate.content.parts if candidate.content and candidate.content.parts else []
 
