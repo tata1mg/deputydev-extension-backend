@@ -100,9 +100,7 @@ def ensure_session_id(auto_create: bool = False) -> Any:
                 "session_id": valid_session_data.id,
             }
             # Proceed to the wrapped function
-            return await func(
-                _request,  *args, **kwargs
-            )
+            return await func(_request, *args, **kwargs)
 
         return wrapper
 
