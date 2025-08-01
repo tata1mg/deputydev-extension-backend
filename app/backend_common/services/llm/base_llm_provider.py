@@ -62,7 +62,7 @@ class BaseLLMProvider(ABC):
         llm_payload: Dict[str, Any],
         model: LLModels,
         stream: bool = False,
-        response_type: Optional[str] = None,
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         parallel_tool_calls: bool = True,
         text_format: Optional[Type[BaseModel]] = None,
     ) -> UnparsedLLMCallResponse:

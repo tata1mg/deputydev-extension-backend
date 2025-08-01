@@ -38,6 +38,7 @@ class ConversationRole(Enum):
 class ConversationRoleGemini(Enum):
     USER = "user"
     MODEL = "model"
+    TOOL = "tool"
 
 
 class ConversationTurn(BaseModel):
@@ -232,6 +233,7 @@ class StreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.STREAMING] = LLMCallResponseTypes.STREAMING
     content: AsyncIterator[StreamingEvent]
     usage: Task[LLMUsage]
+    cost: Optional[Task[Optional[float]]] = None
     accumulated_events: Task[List[StreamingEvent]]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -241,6 +243,7 @@ class NonStreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.NON_STREAMING] = LLMCallResponseTypes.NON_STREAMING
     content: List[ResponseData]
     usage: LLMUsage
+    cost: Optional[float] = None
 
 
 UnparsedLLMCallResponse = Annotated[

@@ -480,6 +480,29 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 0
             }
         },
+        "OPENROUTER_KIMI_K2": {
+            "NAME": "moonshotai/kimi-k2",
+            "MAX_TOKENS": 8192,
+            "TEMPERATURE": 0.7,
+            "PROVIDER": "OPENROUTER",
+            "STREAM_BATCH_SIZE": 10,
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
+                "SAFE_HISTORY_TOKEN_LIMIT": 0
+            }
+        },
+        "OPENROUTER_QWEN_3_CODER": {
+            "NAME": "moonshotai/kimi-k2",
+            "MAX_TOKENS": 8192,
+            "TEMPERATURE": 0.7,
+            "STREAM_BATCH_SIZE": 30,
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
+                "SAFE_HISTORY_TOKEN_LIMIT": 0
+            }
+        },
         "GPT_4O": {
             "NAME": "gpt-4o-mini",
             "PROVIDER": "OPENAI",
@@ -766,6 +789,10 @@
         "universe_domain": "",
         "location": ""
     },
+    "OPENROUTER": {
+        "BASE_URL": "https://openrouter.ai/api/v1",
+        "API_KEY": ""
+    },
     "MAX_REVIEW_TOOL_ITERATIONS": 25,
     "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
@@ -836,6 +863,18 @@
             "display_name": "Gemini 2.5 Flash Lite",
             "name": "GEMINI_2_POINT_5_FLASH_LITE",
             "provider": "GOOGLE"
+        },
+        {
+            "id": 7,
+            "display_name": "Qwen 3 Coder",
+            "name": "OPENROUTER_QWEN_3_CODER",
+            "provider": "OPENROUTER"
+        },
+        {
+            "id": 8,
+            "display_name": "Kimi K2",
+            "name": "OPENROUTER_KIMI_K2",
+            "provider": "OPENROUTER"
         }
     ],
     "LLM_MAX_RETRY": 2,
