@@ -72,7 +72,6 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
     async def get_user_team_id_from_comment_id(self, comment_id: int) -> Optional[int]:
         """
         Get user_team_id by fetching comment details and then review details.
-
         Args:
             comment_id: The ID of the comment from event_data
 
@@ -80,7 +79,6 @@ class AnalyticsEventSubscriber(BaseKafkaSubscriber):
             user_team_id if found, None otherwise
         """
         try:
-            # Get comment details to fetch review_id
             comment = await IdeCommentRepository.db_get(
                 filters={"id": comment_id, "is_deleted": False},
                 fetch_one=True
