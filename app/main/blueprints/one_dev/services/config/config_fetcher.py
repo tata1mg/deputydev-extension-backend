@@ -197,7 +197,7 @@ class ConfigFetcher:
             file_config = original_config.copy()
             file_config.pop("s3_key", None)
             if s3_key:
-                file_config["download_link"] = await cls._generate_signed_url_for_binary(s3_key)
+                file_config["download_link"] = "abc.com"  # Placeholder for actual download link
             base_config["BINARY"] = {
                 **file_config,
                 "port_range": ConfigManager.configs["BINARY"]["PORT_RANGE"],

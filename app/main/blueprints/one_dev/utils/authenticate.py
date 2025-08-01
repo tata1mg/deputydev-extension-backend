@@ -139,14 +139,21 @@ def authenticate(func: Any) -> Any:
     """
 
     @wraps(func)
-    async def wrapper(request: Request, client_data: ClientData, **kwargs: Any) -> Any:
+    async def wrapper(request: Request, *args, **kwargs: Any) -> Any:
         try:
             # Get the auth data
+            client_data: ClientData = kwargs.get("client_data")
             auth_data, response_headers = await get_auth_data(request)
             kwargs["response_headers"] = response_headers
             ContextValue.set("response_headers", response_headers)
         except Exception as ex:  # noqa: BLE001
             raise BadRequestException(str(ex), sentry_raise=False)
-        return await func(request, client_data=client_data, auth_data=auth_data, **kwargs)
+        kwargs = {
+            **kwargs,
+            "auth_data": auth_data,
+            "client_data": client_data,
+        }
+
+        return await func(request, *args, **kwargs)
 
     return wrapper
