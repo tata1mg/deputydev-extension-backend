@@ -815,7 +815,7 @@
         },
         {
             "id": 3,
-            "display_name": "Gpt 4.1",
+            "display_name": "GPT-4.1",
             "name": "GPT_4_POINT_1",
             "provider": "OPENAI"
         },
