@@ -9,16 +9,11 @@ from app.backend_common.models.dto.message_thread_dto import (
     TextBlockData,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    UserAndSystemMessages,
-)
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    FocusItemTypes,
-)
+from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItemTypes
 
 
-class BaseClaudeQuerySolverPrompt:
+class BaseQwenCustomCodeQuerySolverPrompt:
     prompt_type = "CUSTOM_CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
@@ -325,43 +320,44 @@ class BaseClaudeQuerySolverPrompt:
         if self.params.get("urls"):
             urls = self.params.get("urls")
             urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
-
         if self.params.get("write_mode") is True:
-            user_message = textwrap.dedent(f"""
+            user_message = textwrap.dedent(
+                f"""
             Here is the user's query for editing - {self.params.get("query")}
-
-            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
-            You should follow the below guidelines while creating the backend application:
-
-            {self.params["prompt_intent"]}
-            """)
+            """
+            )
         else:
-            user_message = textwrap.dedent(f"""
+            user_message = textwrap.dedent(
+                f"""
             User Query: {self.params.get("query")}
-            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
-            You should follow the below guidelines while creating the backend application:
-                                           
-            {self.params["prompt_intent"]}
-            """)
+            """
+            )
 
         if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             ====
             SYSTEM INFORMATION:
 
             Operating System: {self.params.get("os_name")}
             Default Shell: {self.params.get("shell")}
             ====
-            """)
+            """
+            )
         if self.params.get("vscode_env"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             ====
             Below is the information about the current vscode environment:
             {self.params.get("vscode_env")}
             ====
-            """)
+            """
+            )
+        if self.params.get("repositories"):
+            user_message += textwrap.dedent(self.get_repository_context())
         if self.params.get("deputy_dev_rules"):
-            user_message += textwrap.dedent(f"""
+            user_message += textwrap.dedent(
+                f"""
             Here are some more user provided rules and information that you can take reference from:
             <important>
             Follow these guidelines while using user provided rules or information:
@@ -373,7 +369,8 @@ class BaseClaudeQuerySolverPrompt:
             <user_rules_or_info>
             {self.params.get("deputy_dev_rules")}
             </user_rules_or_info>
-            """)
+            """
+            )
 
         if focus_chunks_message:
             user_message = focus_chunks_message + "\n" + user_message
@@ -384,6 +381,49 @@ class BaseClaudeQuerySolverPrompt:
             user_message=user_message,
             system_message=system_message,
         )
+
+    def get_repository_context(self) -> str:
+        working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
+        context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
+        context_repos_str = ""
+        for index, context_repo in enumerate(context_repos):
+            context_repos_str += f"""
+              <context_repository_{index + 1}>
+                <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
+                <repo_name>{context_repo.repo_name}</repo_name>
+                <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
+              </context_repository_{index + 1}>
+            """
+
+        return f"""
+        ====
+        <repository_context>
+          You are working with two types of repositories:
+          <working_repository>
+            <purpose>The primary repository where you will make changes and apply modifications</purpose>
+            <access_level>Full read/write access</access_level>
+            <allowed_operations>All read and write operations</allowed_operations>
+            <restrictions>No restrictions</restrictions>
+            <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
+            <repo_name>{working_repo.repo_name}</repo_name>
+            <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
+          </working_repository>
+          <context_repositories>
+            <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
+            <access_level>Read-only access</access_level>
+            <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
+            <restrictions>
+              1. NO write operations allowed
+              2. NO file creation or modification
+              3. NO diff application
+            </restrictions>
+            <list_of_context_repositories>
+                {context_repos_str}
+            </list_of_context_repositories>
+          </context_repositories>
+        </repository_context>
+        ====
+        """
 
     def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_specific_guidelines = ""
@@ -432,6 +472,27 @@ class BaseClaudeQuerySolverPrompt:
                 <guideline>Provide clear reasoning when tool selection choices are not immediately obvious</guideline>
                 <guideline>Optimize for efficiency - specialized tools typically require fewer API calls and provide cleaner results</guideline>
               </behavioral_guidelines>
+              
+              <repo_specific_guidelines>
+                When using provided tools:
+    
+                For Working Repository:
+                Use all available tools including read and write operations
+                Apply diffs and create files as needed
+                Make actual code changes here
+                
+                
+                For Context Repositories:
+                Use only read-based tools (file reading, directory listing, etc.)
+                Never attempt write operations on context repos
+                If you need to reference code from context repos, copy patterns/examples to working repo
+                
+                
+                Repository Identification:
+                Always identify which repository you're working with
+                Clearly state when switching between working repo and context repos
+                Mention the repository type when providing file paths
+              </repo_specific_guidelines>
             </tool_usage_guidelines>
         """
 
@@ -456,7 +517,12 @@ class BaseClaudeQuerySolverPrompt:
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
             elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
-                final_content.append({"type": "THINKING_BLOCK", "content": {"text": block.content.thinking}})
+                final_content.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": block.content.thinking},
+                    }
+                )
 
         return final_content, tool_use_map
 
@@ -516,7 +582,12 @@ class BaseClaudeQuerySolverPrompt:
                 code_block_info = cls.extract_code_block_info(code_block_string)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
             elif match.re.pattern == thinking_pattern:
-                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+                result.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": match.group(1).strip()},
+                    }
+                )
 
             last_end = end_index
 
@@ -573,7 +644,12 @@ class BaseClaudeQuerySolverPrompt:
             diff = "\n".join(code_lines)
 
         return (
-            {"language": language, "file_path": file_path, "code": code, "is_diff": is_diff}
+            {
+                "language": language,
+                "file_path": file_path,
+                "code": code,
+                "is_diff": is_diff,
+            }
             if not is_diff
             else {
                 "language": language,

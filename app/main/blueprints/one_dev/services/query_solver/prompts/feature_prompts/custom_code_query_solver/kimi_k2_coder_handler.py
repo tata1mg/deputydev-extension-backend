@@ -12,21 +12,21 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.openrouter_models.prompts.base_prompts.base_kimi_k2 import (
     BaseKimiK2Prompt,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.kimi_k2_code_block_parser import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.openrouter_models.code_block.kimi_k2_code_block_parser import (
     KimiK2CodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
     KimiK2ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_code_query_solver_prompt import (
-    KimiK2QuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.prompts.kimi.kimi_k2_custom_code_query_solver_prompt import (
+    KimiK2CustomQuerySolverPrompt,
 )
 
 
-class KimiK2QuerySolverPromptHandler(BaseKimiK2Prompt):
-    prompt_type = "CODE_QUERY_SOLVER"
+class KimiK2CustomCodeQuerySolverPromptHandler(BaseKimiK2Prompt):
+    prompt_type = "CUSTOM_CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = KimiK2QuerySolverPrompt
+    prompt_class = KimiK2CustomQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
