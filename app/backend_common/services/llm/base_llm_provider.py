@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Literal, Optional, Type
 
+from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
@@ -96,13 +97,9 @@ class BaseLLMProvider(ABC):
     def get_model_token_limit(self, model: LLModels) -> int:
         """Get the input token limit for a specific model."""
         try:
-            from deputydev_core.utils.config_manager import ConfigManager
-
             model_config = ConfigManager.configs["LLM_MODELS"][model.value]
             return model_config["INPUT_TOKENS_LIMIT"]
         except KeyError:
-            from deputydev_core.utils.app_logger import AppLogger
-
             AppLogger.log_warn(f"Token limit not found for model {model.value}, using default 100000")
             return 100000  # Conservative default
 
