@@ -15,6 +15,9 @@ from app.backend_common.services.llm.providers.openrouter_models.prompts.base_pr
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.qwen_3_coder_code_block_parser import (
     Qwen3CoderCodeBlockParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.qwen_3_coder_thinking_parser import (
+    Qwen3CoderThinkingParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.qwen.qwen_3_coder_code_query_solver_prompt import (
     Qwen3CoderQuerySolverPrompt,
 )
@@ -49,7 +52,7 @@ class Qwen3CoderQuerySolverPromptHandler(BaseQwen3CoderPrompt):
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Qwen3CoderCodeBlockParser()],
+            parsers=[Qwen3CoderCodeBlockParser(), Qwen3CoderThinkingParser()],
         )
 
     @classmethod

@@ -136,6 +136,13 @@ class OpenRouterServiceClient(metaclass=Singleton):
         return response.__stream__()
 
     @staticmethod
+    def _build_extra_body(provider: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        extra_body: Optional[Dict[str, Any]] = {}
+        if provider is not None:
+            extra_body["provider"] = provider
+        return extra_body or None
+
+    @staticmethod
     def _build_common_kwargs(
         *,
         model: str,
@@ -158,13 +165,13 @@ class OpenRouterServiceClient(metaclass=Singleton):
             "messages": messages,
             "stream": stream,
             "tools": tools,
-            "tool_choice": "auto",
+            "tool_choice": tool_choice,
             "parallel_tool_calls": parallel_tool_calls,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "transformation": transformation,
             "reasoning": reasoning,
-            "provider": provider,
+            "extra_body": OpenRouterServiceClient._build_extra_body(provider),
             "response_format": {"type": response_format} if response_format and response_format != "text" else None,
             "structured_outputs": structured_outputs,
             "stream_options": {"include_usage": True},  # <-- Hardcoded usage block

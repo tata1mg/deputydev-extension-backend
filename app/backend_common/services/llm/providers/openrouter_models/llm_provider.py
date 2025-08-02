@@ -160,6 +160,7 @@ class OpenRouter(BaseLLMProvider):
                     "content": json.dumps(tool_use_response.content.response),
                 }
             )
+        messages = self.filter_empty_assistant_messages(messages)
         return {
             "model": model_config["NAME"],
             "tool_choice": tool_choice,
@@ -280,6 +281,19 @@ class OpenRouter(BaseLLMProvider):
             ),
         )
 
+    def filter_empty_assistant_messages(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Removes empty assistant messages (content None or empty string)
+        immediately after an assistant message with tool_calls.
+        """
+        filtered: List[Dict[str, Any]] = []
+        for i, msg in enumerate(messages):
+            if msg.get("role") == "assistant" and (msg.get("content") is None or str(msg.get("content")).strip() == ""):
+                if i > 0 and messages[i - 1].get("role") == "assistant" and messages[i - 1].get("tool_calls"):
+                    continue  # skip this empty assistant message
+            filtered.append(msg)
+        return filtered
+
     async def call_service_client(
         self,
         session_id: int,
@@ -340,185 +354,175 @@ class OpenRouter(BaseLLMProvider):
         session_id: Optional[int] = None,
         model_config: Dict[str, Any] = {},
     ) -> StreamingResponse:
-        import uuid
-
-        from app.backend_common.services.llm.dataclasses.main import (
-            LLMUsage,
-            StreamingResponse,
-        )
-
         stream_id = stream_id or str(uuid.uuid4())
         usage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
-        cost: Optional[float] = None
-        completed = asyncio.Event()
-        accumulated: List[StreamingEvent] = []
-        text_open = False
+        streaming_completed = asyncio.Event()
+        accumulated_events: List[StreamingEvent] = []
+        streaming_cost: Optional[float] = None
 
         async def stream_content() -> AsyncIterator[StreamingEvent]:  # noqa: C901
-            nonlocal usage, completed, accumulated, text_open, cost
+            nonlocal usage, streaming_completed, accumulated_events, streaming_cost, session_id
             self._active_streams[stream_id] = response
-            nonlocal session_id
 
             buffer: List[StreamingEvent] = []
-            non_combinable = {TextBlockStart, TextBlockEnd, ToolUseRequestStart, ToolUseRequestEnd}
-            batch = model_config.get("STREAM_BATCH_SIZE", 1)
+            non_combinable_types = {TextBlockStart, TextBlockEnd, ToolUseRequestStart, ToolUseRequestEnd}
+            batch_size = model_config.get("STREAM_BATCH_SIZE", 1)
 
-            tool_open: dict[str, bool] = defaultdict(bool)
-            cur_tool_id: Optional[str] = None  # id of the currently “open” tool
-            cur_tool_name: Optional[str] = None
+            tool_usage_state: dict[str, bool] = defaultdict(bool)
+            current_tool_id: Optional[str] = None
+            current_tool_name: Optional[str] = None
+            text_block_open = False
 
-            async for chunk in response:
-                # ---------- cancellation ----------
-                if self.checker and self.checker.is_cancelled():
-                    await CodeGenTasksCache.cleanup_session_data(session_id)
-                    raise asyncio.CancelledError()
+            try:
+                async for chunk in response:
+                    # Cancellation check
+                    if self.checker and self.checker.is_cancelled():
+                        await CodeGenTasksCache.cleanup_session_data(session_id)
+                        raise asyncio.CancelledError()
 
-                # ---------- usage ----------
-                if chunk.usage:
-                    details = chunk.usage.prompt_tokens_details
-                    cached = getattr(details, "cached_tokens", 0) if details else 0
-                    p = chunk.usage.prompt_tokens or 0
-                    c = chunk.usage.completion_tokens or 0
-                    usage += LLMUsage(input=p - cached, output=c, cache_read=cached)
-                    # ---------- cost ----------
-                    if chunk.usage.cost is not None:  # type: ignore
-                        cost = chunk.usage.cost  # type: ignore
-                    continue
+                    # Usage and cost handling
+                    if chunk.usage:
+                        details = chunk.usage.prompt_tokens_details
+                        cached_tokens = getattr(details, "cached_tokens", 0) if details else 0
+                        prompt_tokens = chunk.usage.prompt_tokens or 0
+                        completion_tokens = chunk.usage.completion_tokens or 0
+                        usage += LLMUsage(
+                            input=prompt_tokens - cached_tokens, output=completion_tokens, cache_read=cached_tokens
+                        )
+                        if chunk.usage.cost is not None:
+                            streaming_cost = chunk.usage.cost
+                        continue
 
-                delta = chunk.choices[0].delta or {}
-                finish_reason = chunk.choices[0].finish_reason
-                text_part = delta.content or ""
-                calls = getattr(delta, "tool_calls", []) or []
+                    delta = chunk.choices[0].delta or {}
+                    finish_reason = chunk.choices[0].finish_reason
+                    text_part = delta.content or ""
+                    tool_calls = getattr(delta, "tool_calls", []) or []
 
-                # ---------- tool‑call handling ----------
-                if calls:
-                    # Close text block if open
-                    if text_open:
+                    # Tool-call event handling
+                    if tool_calls:
+                        if text_block_open:
+                            if buffer:
+                                yield reduce(lambda a, b: a + b, buffer)
+                                buffer.clear()
+                            end_event = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
+                            accumulated_events.append(end_event)
+                            yield end_event
+                            text_block_open = False
+
+                        for tool_call in tool_calls:
+                            tool_id = tool_call.id or current_tool_id
+                            tool_name = tool_call.function.name or current_tool_name
+                            arguments = tool_call.function.arguments or ""
+
+                            if tool_call.id and tool_call.function.name:
+                                if current_tool_id and tool_usage_state[current_tool_id]:
+                                    end_event = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
+                                    accumulated_events.append(end_event)
+                                    yield end_event
+                                    tool_usage_state[current_tool_id] = False
+
+                                current_tool_id, current_tool_name = tool_id, tool_name
+                                start_event = ToolUseRequestStart(
+                                    type=StreamingEventType.TOOL_USE_REQUEST_START,
+                                    content=ToolUseRequestStartContent(
+                                        tool_name=current_tool_name, tool_use_id=current_tool_id
+                                    ),
+                                )
+                                accumulated_events.append(start_event)
+                                yield start_event
+                                tool_usage_state[current_tool_id] = True
+
+                            if arguments and current_tool_id and tool_usage_state[current_tool_id]:
+                                delta_event = ToolUseRequestDelta(
+                                    type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
+                                    content=ToolUseRequestDeltaContent(input_params_json_delta=arguments),
+                                )
+                                accumulated_events.append(delta_event)
+                                yield delta_event
+
+                        if finish_reason == "tool_calls" and current_tool_id and tool_usage_state[current_tool_id]:
+                            end_event = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
+                            accumulated_events.append(end_event)
+                            yield end_event
+                            tool_usage_state[current_tool_id] = False
+                            current_tool_id = current_tool_name = None
+
+                        continue
+
+                    # If switching from tool-call to text
+                    if current_tool_id and tool_usage_state[current_tool_id]:
+                        end_event = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
+                        accumulated_events.append(end_event)
+                        yield end_event
+                        tool_usage_state[current_tool_id] = False
+                        current_tool_id = current_tool_name = None
+
+                    # Text block streaming
+                    if text_part and not text_block_open:
+                        start_event = TextBlockStart(type=StreamingEventType.TEXT_BLOCK_START)
                         if buffer:
                             yield reduce(lambda a, b: a + b, buffer)
                             buffer.clear()
-                        end_evt = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
-                        accumulated.append(end_evt)
-                        yield end_evt
-                        text_open = False
+                        accumulated_events.append(start_event)
+                        text_block_open = True
+                        yield start_event
 
-                    for tc in calls:
-                        tid = tc.id or cur_tool_id  # id may be None on deltas
-                        tname = tc.function.name or cur_tool_name
-                        args = tc.function.arguments or ""
+                    if text_part:
+                        delta_event = TextBlockDelta(
+                            type=StreamingEventType.TEXT_BLOCK_DELTA,
+                            content=TextBlockDeltaContent(text=text_part),
+                        )
+                        accumulated_events.append(delta_event)
+                        if buffer and (type(buffer[0]) in non_combinable_types or len(buffer) >= batch_size):
+                            yield reduce(lambda a, b: a + b, buffer)
+                            buffer.clear()
+                        buffer.append(delta_event)
 
-                        # ----- header -----
-                        if tc.id and tc.function.name:
-                            # close currently‑open tool if switching
-                            if cur_tool_id and tool_open[cur_tool_id]:
-                                end_evt = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
-                                accumulated.append(end_evt)
-                                yield end_evt
-                                tool_open[cur_tool_id] = False
+                    # End text block on "stop"
+                    if finish_reason == "stop" and text_block_open:
+                        if buffer:
+                            yield reduce(lambda a, b: a + b, buffer)
+                            buffer.clear()
+                        end_event = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
+                        accumulated_events.append(end_event)
+                        yield end_event
+                        text_block_open = False
 
-                            # open new tool
-                            cur_tool_id, cur_tool_name = tid, tname
-                            start_evt = ToolUseRequestStart(
-                                type=StreamingEventType.TOOL_USE_REQUEST_START,
-                                content=ToolUseRequestStartContent(tool_name=cur_tool_name, tool_use_id=cur_tool_id),
-                            )
-                            accumulated.append(start_evt)
-                            yield start_evt
-                            tool_open[cur_tool_id] = True
-
-                        # ----- argument delta -----
-                        if args and cur_tool_id and tool_open[cur_tool_id]:
-                            delta_evt = ToolUseRequestDelta(
-                                type=StreamingEventType.TOOL_USE_REQUEST_DELTA,
-                                content=ToolUseRequestDeltaContent(input_params_json_delta=args),
-                            )
-                            accumulated.append(delta_evt)
-                            yield delta_evt
-
-                    # If the model ended this turn with tool calls, close the tool now
-                    if finish_reason == "tool_calls" and cur_tool_id and tool_open[cur_tool_id]:
-                        end_evt = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
-                        accumulated.append(end_evt)
-                        yield end_evt
-                        tool_open[cur_tool_id] = False
-                        cur_tool_id = cur_tool_name = None
-
-                    continue  # consume next chunk
-
-                # ---------- switch from tool back to text ----------
-                if cur_tool_id and tool_open[cur_tool_id]:
-                    end_evt = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
-                    accumulated.append(end_evt)
-                    yield end_evt
-                    tool_open[cur_tool_id] = False
-                    cur_tool_id = cur_tool_name = None
-
-                # ---------- text streaming ----------
-                if text_part and not text_open:
-                    st = TextBlockStart(type=StreamingEventType.TEXT_BLOCK_START)
+                # Stream cleanup
+                if text_block_open:
                     if buffer:
                         yield reduce(lambda a, b: a + b, buffer)
                         buffer.clear()
-                    accumulated.append(st)
-                    text_open = True
-                    yield st
+                    end_event = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
+                    accumulated_events.append(end_event)
+                    yield end_event
 
-                if text_part:
-                    td = TextBlockDelta(
-                        type=StreamingEventType.TEXT_BLOCK_DELTA,
-                        content=TextBlockDeltaContent(text=text_part),
-                    )
-                    accumulated.append(td)
-                    if buffer and (type(buffer[0]) in non_combinable or len(buffer) >= batch):
-                        yield reduce(lambda a, b: a + b, buffer)
-                        buffer.clear()
-                    buffer.append(td)
+                if current_tool_id and tool_usage_state[current_tool_id]:
+                    end_event = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
+                    accumulated_events.append(end_event)
+                    yield end_event
 
-                # ---------- “stop” finish for text ----------
-                if finish_reason == "stop" and text_open:
-                    if buffer:
-                        yield reduce(lambda a, b: a + b, buffer)
-                        buffer.clear()
-                    end_evt = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
-                    accumulated.append(end_evt)
-                    yield end_evt
-                    text_open = False
+            finally:
+                streaming_completed.set()
 
-            # ---------- end‑of‑stream cleanup ----------
-            if text_open:
-                if buffer:
-                    yield reduce(lambda a, b: a + b, buffer)
-                    buffer.clear()
-                end_evt = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
-                accumulated.append(end_evt)
-                yield end_evt
-
-            if cur_tool_id and tool_open[cur_tool_id]:
-                end_evt = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
-                accumulated.append(end_evt)
-                yield end_evt
-
-            completed.set()
-
-        # build response
         async def get_usage() -> LLMUsage:
-            await completed.wait()
+            await streaming_completed.wait()
             return usage
 
         async def get_cost() -> Optional[float]:
-            await completed.wait()
-            return cost
+            await streaming_completed.wait()
+            return streaming_cost
 
-        async def get_accumulated() -> List[StreamingEvent]:
-            await completed.wait()
-            return accumulated
+        async def get_accumulated_events() -> List[StreamingEvent]:
+            await streaming_completed.wait()
+            return accumulated_events
 
         return StreamingResponse(
             content=stream_content(),
             usage=asyncio.create_task(get_usage()),
             cost=asyncio.create_task(get_cost()),
             type=LLMCallResponseTypes.STREAMING,
-            accumulated_events=asyncio.create_task(get_accumulated()),
+            accumulated_events=asyncio.create_task(get_accumulated_events()),
         )
 
     async def get_tokens(self, content: str, model: LLModels) -> int:
