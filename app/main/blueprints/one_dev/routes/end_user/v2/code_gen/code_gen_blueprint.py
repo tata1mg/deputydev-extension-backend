@@ -2,7 +2,7 @@ import asyncio
 import json
 import uuid
 from typing import Any, Dict, List, Optional
-
+from sanic.server.websockets.impl import WebsocketImplProtocol
 import aiohttp
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
@@ -485,7 +485,7 @@ async def sse_websocket(request: Request, ws: Any) -> None:
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def solve_user_query_ws(_request: Request, ws, **kwargs: Any) -> None:
+async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kwargs: Any) -> None:
     client_data: ClientData = kwargs.get("client_data")
     auth_data: AuthData = kwargs.get("auth_data")
     session_id: int = kwargs.get("session_id")
@@ -502,7 +502,7 @@ async def solve_user_query_ws(_request: Request, ws, **kwargs: Any) -> None:
         except asyncio.CancelledError:
             pass
 
-    # Start a background task to send pings every 20 seconds
+    # Start a background task to send pings every 25 seconds
     pinger_task = None
     try:
         pinger_task = asyncio.create_task(start_pinger())
@@ -601,7 +601,9 @@ async def solve_user_query_ws(_request: Request, ws, **kwargs: Any) -> None:
 
                 asyncio.create_task(solve_query())
     except Exception as error:
-        pass
+        if pinger_task:
+            pinger_task.cancel()
+        raise error
     finally:
         if pinger_task:
             pinger_task.cancel()
