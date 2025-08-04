@@ -1,8 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
+from typing_extensions import Annotated, Literal
 
 
 class ActorType(str, Enum):
@@ -11,24 +12,46 @@ class ActorType(str, Enum):
 
 
 class MessageType(str, Enum):
-    QUERY = "QUERY"
-    RESPONSE = "RESPONSE"
-    TOOL_RESPONSE = "TOOL_RESPONSE"
-    TOOL_REQUEST = "TOOL_REQUEST"
+    TEXT = "TEXT"
+    TOOL_USE = "TOOL_USE"
+    INFO = "INFO"
+
+
+class TextMessageData(BaseModel):
+    message_type: Literal["TEXT"] = "TEXT"
+    text: str
+    attachments: Optional[Dict[str, Any]] = None
+
+
+class ToolUseMessageData(BaseModel):
+    message_type: Literal["TOOL_USE"] = "TOOL_USE"
+    tool_use_id: str
+    tool_name: str
+    tool_response: Dict[str, Any]
+
+
+class InfoMessageData(BaseModel):
+    message_type: Literal["INFO"] = "INFO"
+    info: Dict[str, Any]
+
+
+MessageData = Annotated[
+    Union[TextMessageData, ToolUseMessageData, InfoMessageData], Field(discriminator="message_type")
+]
 
 
 class AgentChatData(BaseModel):
     session_id: int
     actor: ActorType
     message_type: MessageType
-    query_id: Optional[int] = None
-    query_text: Optional[str] = None
-    attachments: Optional[Dict[str, Any]] = None
-    selected_code_snippets: Optional[Dict[str, Any]] = None
-    tool_name: Optional[str] = None
-    tool_use_id: Optional[str] = None
-    tool_input: Optional[Dict[str, Any]] = None
+    message_data: MessageData
     metadata: Dict[str, Any]
+
+    @validator("message_data")
+    def validate_message_data_consistency(self, v: MessageData, values: Dict[str, Any]) -> MessageData:
+        if "message_type" in values and v.message_type != values["message_type"].value:
+            raise ValueError("message_data.message_type must match message_type field")
+        return v
 
 
 class AgentChatDTO(AgentChatData):
@@ -44,11 +67,5 @@ class AgentChatCreateRequest(AgentChatData):
 class AgentChatUpdateRequest(BaseModel):
     actor: Optional[ActorType] = None
     message_type: Optional[MessageType] = None
-    query_id: Optional[int] = None
-    query_text: Optional[str] = None
-    attachments: Optional[Dict[str, Any]] = None
-    selected_code_snippets: Optional[Dict[str, Any]] = None
-    tool_name: Optional[str] = None
-    tool_use_id: Optional[str] = None
-    tool_input: Optional[Dict[str, Any]] = None
+    message_data: Optional[MessageData] = None
     metadata: Optional[Dict[str, Any]] = None
