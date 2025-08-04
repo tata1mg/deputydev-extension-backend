@@ -5,6 +5,7 @@ from typing import Annotated, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 from app.backend_common.services.llm.dataclasses.main import (
+    MalformedToolUseRequest,
     TextBlockDelta,
     TextBlockEnd,
     TextBlockStart,
@@ -24,6 +25,7 @@ class StreamingContentBlockType(Enum):
     SUMMARY_BLOCK_START = "SUMMARY_BLOCK_START"
     SUMMARY_BLOCK_DELTA = "SUMMARY_BLOCK_DELTA"
     SUMMARY_BLOCK_END = "SUMMARY_BLOCK_END"
+    MALFORMED_TOOL_USE_REQUEST = "MALFORMED_TOOL_USE_REQUEST"
 
 
 # CODE_BLOCK CONTENTS
@@ -120,6 +122,7 @@ StreamingContentBlock = Annotated[
         ToolUseRequestStart,
         ToolUseRequestDelta,
         ToolUseRequestEnd,
+        MalformedToolUseRequest,
         ThinkingBlockStart,
         ThinkingBlockDelta,
         ThinkingBlockEnd,

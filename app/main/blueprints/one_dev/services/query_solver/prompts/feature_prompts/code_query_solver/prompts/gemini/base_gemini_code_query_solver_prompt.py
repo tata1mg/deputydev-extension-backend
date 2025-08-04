@@ -49,15 +49,14 @@ class BaseGeminiCodeQuerySolverPrompt:
 
                 # Tool Use Guidelines
 
-                1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
-                2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                3. If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
-                4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
-                5. Information about whether the tool succeeded or failed, along with any reasons for failure.
-                6. New terminal output in reaction to the changes, which you may need to consider or act upon.
-                7. Any other relevant feedback or information related to the tool use.
-                8. Please do not include line numbers at the beginning of lines in the search and replace blocks when using the replace_in_file tool. (IMPORTANT)
-                9. Before using replace_in_file or write_to_file tools, send a small text to user telling you are doing these changes etc. (IMPORTANT)
+                1. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
+                2. If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+                3. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
+                4. Information about whether the tool succeeded or failed, along with any reasons for failure.
+                5. New terminal output in reaction to the changes, which you may need to consider or act upon.
+                6. Any other relevant feedback or information related to the tool use.
+                7. Please do not include line numbers at the beginning of lines in the search and replace blocks when using the replace_in_file tool. (IMPORTANT)
+                8. Before using replace_in_file or write_to_file tools, send a small text to user telling you are doing these changes etc. (IMPORTANT)
 
                 {tool_use_capabilities_resolution_guidelines}
 
@@ -266,7 +265,6 @@ class BaseGeminiCodeQuerySolverPrompt:
 
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(f"""
-            If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
 
 
@@ -291,7 +289,6 @@ class BaseGeminiCodeQuerySolverPrompt:
             """)
         else:
             user_message = textwrap.dedent(f"""
-            If you are thinking something, please provide that in <thinking> tag.
             Please answer the user query in the best way possible. You can add code blocks in the given format within <code_block> tag if you know you have enough context to provide code snippets.
 
             There are two types of code blocks you can use:

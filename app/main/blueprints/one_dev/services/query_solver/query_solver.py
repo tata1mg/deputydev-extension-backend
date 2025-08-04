@@ -63,6 +63,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from app.main.blueprints.one_dev.utils.tool_response_parser import LLMResponseFormatter
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
@@ -198,6 +199,7 @@ class QuerySolver:
                     StreamingEventType.TOOL_USE_REQUEST_START,
                     StreamingEventType.TOOL_USE_REQUEST_DELTA,
                     StreamingEventType.TOOL_USE_REQUEST_END,
+                    StreamingEventType.MALFORMED_TOOL_USE_REQUEST,
                 ]:
                     tool_use_detected = True
 
@@ -217,7 +219,7 @@ class QuerySolver:
                         session_type=session_type,
                     )
                 )
-                done, pending = await asyncio.wait([task], timeout=5.0)
+                done, pending = await asyncio.wait([task], timeout=5.0)  # pyright: ignore[reportUnusedVariable]
 
                 if task in done:
                     query_summary, success = task.result()
@@ -493,19 +495,11 @@ class QuerySolver:
             }
 
         if tool_use_response.tool_name == "iterative_file_reader":
-            return {
-                "file_content_with_line_numbers": ChunkInfo(**tool_response["data"]["chunk"]).get_xml(),
-                "eof_reached": tool_response["data"]["eof_reached"],
-            }
+            markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["data"])
+            return {"Tool Response": markdown}
 
         if tool_use_response.tool_name == "grep_search":
-            return {
-                "matched_contents": "".join(
-                    [
-                        f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
-                        for matched_block in tool_response["data"]
-                    ]
-                ),
-            }
+            markdown = LLMResponseFormatter.format_grep_tool_response(tool_response)
+            return {"Tool Response": markdown}
 
         return tool_response if tool_response else {}

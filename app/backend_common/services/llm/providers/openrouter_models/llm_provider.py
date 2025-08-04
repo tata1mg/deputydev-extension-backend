@@ -126,7 +126,6 @@ class OpenRouter(BaseLLMProvider):
 
         if previous_responses:
             messages.extend(await self.get_conversation_turns(previous_responses, attachment_data_task_map))
-
         # user
         if prompt and prompt.user_message:
             # collect any image attachments
@@ -186,12 +185,49 @@ class OpenRouter(BaseLLMProvider):
         for message in previous_responses:
             role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
             message_datas = list(message.message_data)
+            pending_tool_calls: List[Dict[str, Any]] = []
+
+            def flush_tool_calls() -> None:
+                nonlocal pending_tool_calls
+                if pending_tool_calls:
+                    conversation_turns.append(
+                        {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": pending_tool_calls,
+                        }
+                    )
+                    pending_tool_calls = []
+
             for message_data in message_datas:
                 content_data = message_data.content
+
+                # Ignore extended thinking entirely and DO NOT flush here
+                if isinstance(content_data, ExtendedThinkingContent):
+                    continue
+
+                # 1) Collect assistant tool use requests (supports parallel tool calls)
+                if role == ConversationRole.ASSISTANT and isinstance(content_data, ToolUseRequestContent):
+                    pending_tool_calls.append(
+                        {
+                            "id": content_data.tool_use_id,
+                            "type": "function",
+                            "function": {
+                                "name": content_data.tool_name,
+                                "arguments": json.dumps(content_data.tool_input),
+                            },
+                        }
+                    )
+                    continue  # keep collecting consecutive ToolUseRequestContent
+
+                # Anything else: first flush any pending tool calls to preserve order
+                flush_tool_calls()
+
+                # 2) Plain text
                 if isinstance(content_data, TextBlockContent):
                     conversation_turns.append({"role": role.value, "content": content_data.text})
 
-                # 2) embedded images in earlier user turns
+                # 3) Embedded images (earlier user turns)
                 elif hasattr(content_data, "attachment_id"):
                     attachment_id = content_data.attachment_id
                     if attachment_id not in attachment_data_task_map:
@@ -209,25 +245,7 @@ class OpenRouter(BaseLLMProvider):
                             }
                         )
 
-                # 3) an in‑flight function call request by the assistant
-                elif isinstance(content_data, ToolUseRequestContent):
-                    conversation_turns.append(
-                        {
-                            "role": "assistant",
-                            "content": None,
-                            "tool_calls": [
-                                {
-                                    "id": content_data.tool_use_id,
-                                    "type": "function",
-                                    "function": {
-                                        "name": content_data.tool_name,
-                                        "arguments": json.dumps(content_data.tool_input),
-                                    },
-                                }
-                            ],
-                        }
-                    )
-                # 3) the tool’s response to that call
+                # 4) Tool outputs (responses)
                 elif isinstance(content_data, ToolUseResponseContent):
                     conversation_turns.append(
                         {
@@ -238,8 +256,10 @@ class OpenRouter(BaseLLMProvider):
                         }
                     )
 
-                elif isinstance(content_data, ExtendedThinkingContent):
-                    continue
+                # (else: silently ignore unknown content types)
+
+            # End of this message: flush any remaining parallel tool calls
+            flush_tool_calls()
 
         return conversation_turns
 
@@ -328,6 +348,7 @@ class OpenRouter(BaseLLMProvider):
                 response_format=response_type,
                 structured_outputs=llm_payload.get("structured_outputs", None),
                 parallel_tool_calls=parallel_tool_calls,
+                session_id=session_id,
             )
             return await self._parse_streaming_response(response, stream_id, session_id, model_config)
         else:
