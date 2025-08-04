@@ -568,6 +568,7 @@ async def solve_user_query_ws(_request: Request, ws, **kwargs: Any) -> None:
                         if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
                             await CodeGenTasksCache.cleanup_session_data(payload.session_id)
                             await ws.send(json.dumps({"type": "QUERY_COMPLETE"}))
+                            await ws.send(json.dumps({"type": "REQUEST_COMPLETED"}))
 
                         await ws.send(json.dumps({"type": "STREAM_END"}))
 
