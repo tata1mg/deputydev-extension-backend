@@ -27,7 +27,8 @@ class ToolUseMessageData(BaseModel):
     message_type: Literal["TOOL_USE"] = "TOOL_USE"
     tool_use_id: str
     tool_name: str
-    tool_response: Dict[str, Any]
+    tool_input: Dict[str, Any]
+    tool_response: Optional[Dict[str, Any]] = None
 
 
 class InfoMessageData(BaseModel):

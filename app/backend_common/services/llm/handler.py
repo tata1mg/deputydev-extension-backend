@@ -169,7 +169,7 @@ class LLMHandler(Generic[PromptFeatures]):
         query_id: int,
         call_chain_category: MessageCallChainCategory,
         previous_responses: List[MessageThreadDTO],
-    ) -> None:
+    ) -> NonStreamingResponse:
         response_to_use: NonStreamingResponse
         if llm_response.type == LLMCallResponseTypes.STREAMING:
             response_to_use = await self.get_non_streaming_response_from_streaming_response(llm_response)
@@ -194,6 +194,7 @@ class LLMHandler(Generic[PromptFeatures]):
             call_chain_category=call_chain_category,
         )
         await MessageThreadsRepository.create_message_thread(message_thread)
+        return response_to_use
 
     async def store_llm_query_in_db(
         self,
