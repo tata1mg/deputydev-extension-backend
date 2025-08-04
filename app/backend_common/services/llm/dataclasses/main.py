@@ -258,7 +258,7 @@ class ParsedLLMCallResponseCommon(BaseModel):
 class StreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, StreamingResponse):
     parsed_content: AsyncIterator[Any]
     query_id: int
-    llm_response_storage_task: asyncio.Task[None]
+    llm_response_storage_task: asyncio.Task[NonStreamingResponse]
 
 
 class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse):
