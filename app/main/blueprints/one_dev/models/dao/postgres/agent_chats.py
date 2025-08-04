@@ -1,3 +1,5 @@
+from enum import Enum
+
 from tortoise import fields
 from tortoise_wrapper.db import CITextField
 
@@ -10,13 +12,7 @@ class AgentChats(Base):
         "session_id",
         "actor",
         "message_type",
-        "query_id",
-        "query_text",
-        "attachments",
-        "selected_code_snippets",
-        "tool_name",
-        "tool_use_id",
-        "tool_input",
+        "message_data",
         "metadata",
         "created_at",
         "updated_at",
@@ -25,14 +21,8 @@ class AgentChats(Base):
     id = fields.IntField(primary_key=True)
     session_id = fields.IntField(null=False)
     actor = CITextField(max_length=16, null=False)
-    message_type = CITextField(max_length=32, null=False)
-    query_id = fields.ForeignKeyField("models.AgentChats", null=True, related_name="responses")
-    query_text = fields.TextField(null=True)
-    attachments = fields.JSONField(null=True)
-    selected_code_snippets = fields.JSONField(null=True)
-    tool_name = fields.TextField(null=True)
-    tool_use_id = fields.TextField(null=True)
-    tool_input = fields.JSONField(null=True)
+    message_type = CITextField(max_length=16, null=False)
+    message_data = fields.JSONField(null=False)
     metadata = fields.JSONField(null=False)
 
     class Meta:
@@ -41,5 +31,14 @@ class AgentChats(Base):
             ("session_id",),
             ("actor",),
             ("message_type",),
-            ("query_id",),
         )
+
+    class Columns(Enum):
+        id = ("id",)
+        session_id = ("session_id",)
+        actor = ("actor",)
+        message_type = ("message_type",)
+        message_data = ("message_data",)
+        metadata = ("metadata",)
+        created_at = ("created_at",)
+        updated_at = ("updated_at",)
