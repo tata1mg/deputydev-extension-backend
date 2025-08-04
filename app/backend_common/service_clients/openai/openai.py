@@ -162,6 +162,7 @@ class OpenAIServiceClient(metaclass=Singleton):
             parallel_tool_calls=parallel_tool_calls,
             instructions=instructions,
             max_output_tokens=max_output_tokens,
+            extra_body={"prompt_cache_key": f"{model}_X"},
         )
         return stream_manager.__stream__()
 
