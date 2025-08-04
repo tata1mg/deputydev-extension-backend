@@ -5,6 +5,8 @@ from app.backend_common.utils.app_utils import (
 )
 from app.main.blueprints.deputy_dev.models.pr_close_request import PRCloseRequest
 
+from .webhook_utils import should_skip_trayalabs_request
+
 
 class PullRequestCloseWebhook:
     @classmethod
@@ -20,6 +22,8 @@ class PullRequestCloseWebhook:
             Tuple[int, str, str]: A tuple containing PR ID, creation time, and stats_collection time.
         """
         vcs_type = payload.get("vcs_type")
+        if should_skip_trayalabs_request(payload):
+            return None
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.__parse_bitbucket_payload(payload)
         elif vcs_type == VCSTypes.github.value:
