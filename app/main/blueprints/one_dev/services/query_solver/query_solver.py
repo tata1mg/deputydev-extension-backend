@@ -27,6 +27,12 @@ from app.backend_common.services.llm.dataclasses.main import (
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
+from app.main.blueprints.one_dev.models.dto.agent_chats import (
+    ActorType,
+    AgentChatCreateRequest,
+    TextMessageData,
+)
+from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
     ChatHistoryHandler,
@@ -55,6 +61,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     StreamingContentBlockType,
 )
+from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
@@ -124,7 +131,7 @@ class QuerySolver:
                 )
             )
 
-    async def get_final_stream_iterator(
+    async def _get_final_stream_iterator(
         self, llm_response: ParsedLLMCallResponse, session_id: int
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
@@ -186,7 +193,7 @@ class QuerySolver:
 
         return agent_classes
 
-    async def get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
+    async def _get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
         """
         Get the last query message for the session.
         """
@@ -219,7 +226,7 @@ class QuerySolver:
         self, payload: QuerySolverInput, llm_handler: LLMHandler[PromptFeatures]
     ) -> QuerySolverAgent:
         all_custom_agents, last_query_message = await asyncio.gather(
-            self._generate_dynamic_query_solver_agents(), self.get_last_query_message_for_session(payload.session_id)
+            self._generate_dynamic_query_solver_agents(), self._get_last_query_message_for_session(payload.session_id)
         )
         agent_instance: QuerySolverAgent
 
@@ -271,7 +278,18 @@ class QuerySolver:
             payload.batch_tool_responses = [payload.tool_use_response]
 
         if payload.query:
-            asyncio.create_task(
+            # store query in DB
+            await AgentChatsRepository.create_chat(
+                chat_data=AgentChatCreateRequest(
+                    session_id=payload.session_id,
+                    actor=ActorType.USER,
+                    message_data=TextMessageData(text=payload.query),
+                    message_type=ChatMessageType.TEXT,
+                    metadata={},
+                )
+            )
+
+            _summary_task = asyncio.create_task(
                 self._generate_session_summary(
                     session_id=payload.session_id,
                     query=payload.query,
@@ -331,7 +349,7 @@ class QuerySolver:
                     "agent_name": agent_instance.agent_name,
                 },
             )
-            return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
+            return await self._get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.batch_tool_responses:
             prompt_vars: Dict[str, Any] = {
@@ -390,7 +408,7 @@ class QuerySolver:
                 parallel_tool_calls=True,
             )
 
-            return await self.get_final_stream_iterator(llm_response, session_id=payload.session_id)
+            return await self._get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         else:
             raise ValueError("Invalid input")
