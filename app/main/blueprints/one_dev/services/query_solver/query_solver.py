@@ -10,6 +10,8 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadDTO,
     MessageType,
+    TextBlockData,
+    ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
 )
@@ -131,7 +133,7 @@ class QuerySolver:
             None,
         )
 
-        if not selected_tool_use_chat:
+        if not selected_tool_use_chat or not isinstance(selected_tool_use_chat.message_data, ToolUseMessageData):
             raise Exception("tool use request not found")
 
         await AgentChatsRepository.update_chat(
@@ -141,6 +143,7 @@ class QuerySolver:
                     tool_use_id=selected_tool_use_chat.message_data.tool_use_id,
                     tool_response=tool_response.response,
                     tool_name=selected_tool_use_chat.message_data.tool_name,
+                    tool_input=selected_tool_use_chat.message_data.tool_input,
                 )
             ),
         )
@@ -161,7 +164,7 @@ class QuerySolver:
                 )
             )
 
-    async def _get_final_stream_iterator(
+    async def _get_final_stream_iterator(  # noqa: C901
         self, llm_response: ParsedLLMCallResponse, session_id: int
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
@@ -200,7 +203,34 @@ class QuerySolver:
                     yield data_block
 
             # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
-            await llm_response.llm_response_storage_task
+            accumulated_response = await llm_response.llm_response_storage_task
+            for content_data in accumulated_response.content:
+                if isinstance(content_data, TextBlockData):
+                    await AgentChatsRepository.create_chat(
+                        chat_data=AgentChatCreateRequest(
+                            session_id=session_id,
+                            actor=ActorType.ASSISTANT,
+                            message_data=TextMessageData(text=content_data.content.text),
+                            message_type=ChatMessageType.TEXT,
+                            metadata={},
+                        )
+                    )
+                elif isinstance(content_data, ToolUseRequestData):
+                    await AgentChatsRepository.create_chat(
+                        chat_data=AgentChatCreateRequest(
+                            session_id=session_id,
+                            actor=ActorType.ASSISTANT,
+                            message_data=ToolUseMessageData(
+                                tool_use_id=content_data.content.tool_use_id,
+                                tool_name=content_data.content.tool_name,
+                                tool_input=content_data.content.tool_input,
+                            ),
+                            message_type=ChatMessageType.TOOL_USE,
+                            metadata={},
+                        )
+                    )
+
+            # store data in agent_chats
 
         return _streaming_content_block_generator()
 
