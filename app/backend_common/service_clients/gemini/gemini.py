@@ -46,7 +46,7 @@ class GeminiServiceClient(metaclass=Singleton):
         tools: List[types.Tool] = None,
         response_schema: Optional[Dict[str, Any]] = None,
         temperature: float = 0.5,
-        tool_config=None,  # noqa: ANN001
+        tool_config: Optional[types.ToolConfig] = None,
         response_mime_type: str = "text/plain",
         max_output_tokens: int = 8192,
     ) -> types.GenerateContentResponse:
@@ -68,13 +68,14 @@ class GeminiServiceClient(metaclass=Singleton):
         self,
         model_name: str,
         contents: List[types.Content],
+        temperature: float,
+        thinking_budget_tokens: int,
+        max_output_tokens: int,
+        tool_config: Optional[types.ToolConfig] = None,
         system_instruction: types.Part = None,
         tools: List[types.Tool] = None,
         response_schema: Optional[Dict[str, Any]] = None,
-        temperature: float = 0.5,
-        tool_config=None,  # noqa: ANN001
         response_mime_type: str = "text/plain",
-        max_output_tokens: int = 8192,
     ) -> AsyncIterator[types.GenerateContentResponse]:
         try:
             base_stream = await self.client.aio.models.generate_content_stream(
@@ -86,6 +87,9 @@ class GeminiServiceClient(metaclass=Singleton):
                     temperature=temperature,
                     response_mime_type=response_mime_type,
                     response_schema=response_schema,
+                    thinking_config=types.ThinkingConfig(
+                        include_thoughts=False, thinking_budget=thinking_budget_tokens
+                    ),
                     max_output_tokens=max_output_tokens,
                 ),
             )
