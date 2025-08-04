@@ -30,7 +30,9 @@ from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,
+    AgentChatUpdateRequest,
     TextMessageData,
+    ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
@@ -114,6 +116,34 @@ class QuerySolver:
 
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
+
+    async def _store_tool_response_in_chat_chain(self, tool_response: ToolUseResponseInput, sesison_id: int) -> None:
+        # store query in DB
+        tool_use_chats = await AgentChatsRepository.get_chats_by_message_type_and_session(
+            message_type=ChatMessageType.TOOL_USE, session_id=sesison_id
+        )
+        selected_tool_use_chat = next(
+            (
+                chat
+                for chat in tool_use_chats
+                if getattr(chat.message_data, "tool_use_id", None) == tool_response.tool_use_id
+            ),
+            None,
+        )
+
+        if not selected_tool_use_chat:
+            raise Exception("tool use request not found")
+
+        await AgentChatsRepository.update_chat(
+            chat_id=selected_tool_use_chat.id,
+            update_data=AgentChatUpdateRequest(
+                message_data=ToolUseMessageData(
+                    tool_use_id=selected_tool_use_chat.message_data.tool_use_id,
+                    tool_response=tool_response.response,
+                    tool_name=selected_tool_use_chat.message_data.tool_name,
+                )
+            ),
+        )
 
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
         existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
@@ -352,6 +382,13 @@ class QuerySolver:
             return await self._get_final_stream_iterator(llm_response, session_id=payload.session_id)
 
         elif payload.batch_tool_responses:
+            await asyncio.gather(
+                *[
+                    self._store_tool_response_in_chat_chain(tool_resp, payload.session_id)
+                    for tool_resp in payload.batch_tool_responses
+                ]
+            )
+
             prompt_vars: Dict[str, Any] = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
