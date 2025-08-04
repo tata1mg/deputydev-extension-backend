@@ -328,7 +328,7 @@ class BaseClaudeQuerySolverPrompt:
 
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(f"""
-            Here is the user's query for editing - {self.params.get("query")}
+            Here is the user's query for task - {self.params.get("query")}
 
             The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
             You should follow the below guidelines while creating the backend application:
