@@ -81,7 +81,7 @@ class OpenAI(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[ConversationTurn] = []
+        previous_conversation_turns: List[ConversationTurn] = [],
     ) -> Dict[str, Any]:
         """
         Formats the conversation for OpenAI's GPT model.
