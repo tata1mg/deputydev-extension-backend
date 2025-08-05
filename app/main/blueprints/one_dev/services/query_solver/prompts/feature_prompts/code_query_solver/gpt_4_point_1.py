@@ -145,7 +145,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     ]
                 }
 
-                send this in below JSON format:
+                send this in the JSON format given in instructions:
 
                 **Response Schema**
                 Adhere to given schema:
@@ -190,7 +190,36 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     }}
                 }}
                 <response_schema>
+
+                You are expected to answer the user query in a structured JSON format, adhering to the given schema.
+
+                If you are thinking something, please provide that with thinking key.
+                Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
                 """
+                + f"""<file_editing_guidelines>
+                First explain the changes you are going to make in the file to user in text blocks.
+                If you need to edit a file, please please use the tool replace_in_file.
+                If you need to create a new file, please use the tool write_to_file.
+                If you need to run a command, please use the tool execute_command. 
+                Do not use execute_command tool reading files, instead use the file_path_searcher, grep_search and iterative_file_reader tools.
+                Do not use execute_command tool for creating or modifying files, instead use the replace_in_file or write_to_file tool.                                                                        
+                </file_editing_guidelines>
+
+                <extra_important>
+                Do not send the diff in code block for replacing in file.
+                Do not send is_diff true code blocks after modying the file with replace_in_file or write_to_file. NEVER.
+                only normal code blocks with is_diff false are allowed.
+                User doesn't want to see the diff or the code you updated so no need to show them in code_block, editing via tool is enough.
+                </extra_important>
+
+                {self.tool_usage_guidelines(is_write_mode=True)}
+
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
+
+                <summary_rule>
+                At the end, include a summary (max 20 words) under the "summary" key. (IMPORTANT)
+                Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
+                </summary_rule>"""
             )
         else:
             system_message = textwrap.dedent(
@@ -294,7 +323,38 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                     }}
                 }}
                 <response_schema>
-                """
+
+                You are expected to answer the user query in a structured JSON format, adhering to the given schema.
+
+            <code_block_guidelines>
+            There are two types of code blocks you can use:
+            1. Code block with a full snippet (set "is_diff": false)
+            2. Code block with a unified diff (set "is_diff": true) — preferred where applicable
+            
+            Use diff-style code blocks only if:
+            - You are certain about the current file path and line structure.
+            - You include full, clean diffs as per `diff -U0` rules:
+            - Start with: `--- path/to/file.py` and `+++ path/to/file.py`
+            - Use `@@ ... @@` hunk headers
+            - Mark lines to remove with `-` and lines to add with `+`
+            - Indentation and spacing must be exact
+            - Do not include unchanged lines
+            
+            Do NOT use diff blocks if:
+            - File path is unclear or not yet created (use full snippets instead).
+            </code_block_guidelines>
+            
+            <response_formatting_rules>
+            - Always provide output as a JSON object following the schema.
+            - Do NOT wrap the output in XML or markdown.
+            - Always alternate between text and code blocks if an explanation is needed.
+            - Never use phrases like "previous code", "existing function", etc. in diffs.
+            - All explanations go into `"content"` under `"type": "text"`.
+            - All code goes into `"code"` under `"type": "code_block"`.
+            - If you use a `"file_path"` in a code block, use an exact string like `"/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"`.
+            </response_formatting_rules>
+            """
+                + f"{self.tool_usage_guidelines(is_write_mode=False)}"
             )
 
         return system_message
@@ -335,36 +395,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(f"""
-            You are expected to answer the user query in a structured JSON format, adhering to the given schema.
-
-            If you are thinking something, please provide that with thinking key.
-            Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
-
-            <file_editing_guidelines>
-            First explain the changes you are going to make in the file to user in text blocks.
-            If you need to edit a file, please please use the tool replace_in_file.
-            If you need to create a new file, please use the tool write_to_file.
-            If you need to run a command, please use the tool execute_command. 
-            Do not use execute_command tool reading files, instead use the file_path_searcher, grep_search and iterative_file_reader tools.
-            Do not use execute_command tool for creating or modifying files, instead use the replace_in_file or write_to_file tool.                                                                        
-            </file_editing_guidelines>
-                                           
-            <extra_important>
-            Do not send the diff in code block for replacing in file.
-            Do not send is_diff true code blocks after modying the file with replace_in_file or write_to_file. NEVER.
-            only normal code blocks with is_diff false are allowed.
-            User doesn't want to see the diff or the code you updated so no need to show them in code_block, editing via tool is enough.
-            </extra_important>
-                                           
-            {self.tool_usage_guidelines(is_write_mode=True)}
-
-            DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
-            
-            <summary_rule>
-            At the end, include a summary (max 20 words) under the "summary" key. (IMPORTANT)
-            Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
-            </summary_rule>
-
             Here is the user's query for editing - {self.params.get("query")}. 
             
             Important instructions:
@@ -372,38 +402,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             """)
         else:
             user_message = textwrap.dedent(f"""
-            You are expected to answer the user query in a structured JSON format, adhering to the given schema.
-
-            <code_block_guidelines>
-            There are two types of code blocks you can use:
-            1. Code block with a full snippet (set "is_diff": false)
-            2. Code block with a unified diff (set "is_diff": true) — preferred where applicable
-            
-            Use diff-style code blocks only if:
-            - You are certain about the current file path and line structure.
-            - You include full, clean diffs as per `diff -U0` rules:
-            - Start with: `--- path/to/file.py` and `+++ path/to/file.py`
-            - Use `@@ ... @@` hunk headers
-            - Mark lines to remove with `-` and lines to add with `+`
-            - Indentation and spacing must be exact
-            - Do not include unchanged lines
-            
-            Do NOT use diff blocks if:
-            - File path is unclear or not yet created (use full snippets instead).
-            </code_block_guidelines>
-            
-            <response_formatting_rules>
-            - Always provide output as a JSON object following the schema.
-            - Do NOT wrap the output in XML or markdown.
-            - Always alternate between text and code blocks if an explanation is needed.
-            - Never use phrases like "previous code", "existing function", etc. in diffs.
-            - All explanations go into `"content"` under `"type": "text"`.
-            - All code goes into `"code"` under `"type": "code_block"`.
-            - If you use a `"file_path"` in a code block, use an exact string like `"/Users/vaibhavmeena/DeputyDev/src/tools/grep_search.py"`.
-            </response_formatting_rules>
-            
-            {self.tool_usage_guidelines(is_write_mode=False)}
-            
             <summary_rule>
             At the end, include a summary (max 20 words) under the "summary" key.
             Do NOT prefix it with any phrases. Just place it in the "summary" key as a raw string.
