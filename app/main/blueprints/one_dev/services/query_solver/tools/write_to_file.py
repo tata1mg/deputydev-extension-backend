@@ -1,11 +1,13 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 WRITE_TO_FILE = ConversationTool(
     name="write_to_file",
-    description="""
-        This is a built-in tool. This should not be called in parallel for same file path.
+    description=textwrap.dedent("""
         Request to write content to a file at the specified path. If the file exists, it will be overwritten with the provided content. If the file doesn't exist, it will be created. This tool will automatically create any directories needed to write the file.
-    """,
+        This is a built-in tool. This should not be called in parallel for same file path.
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={
