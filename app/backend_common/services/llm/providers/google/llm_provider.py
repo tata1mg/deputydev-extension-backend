@@ -36,6 +36,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
+    MalformedToolUseRequest,
+    MalformedToolUseRequestContent,
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingEvent,
@@ -408,9 +410,30 @@ class Google(BaseLLMProvider):
         event_blocks: List[StreamingEvent] = []
         usage: LLMUsage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
         candidate = chunk.candidates[0]
-
         # Process all parts instead of just the first one
         parts = candidate.content.parts if candidate.content and candidate.content.parts else []
+
+        # Handle malformed function call first
+        if candidate.finish_reason == "MALFORMED_FUNCTION_CALL":
+            AppLogger.log_warn("Malformed function call detected in model response.")
+
+            event_blocks.append(
+                MalformedToolUseRequest(
+                    content=MalformedToolUseRequestContent(
+                        reason="Model returned a malformed function call",
+                        raw_payload=candidate.finish_message or "No message provided",
+                    )
+                )
+            )
+
+            # Still extract token usage if available
+            if chunk.usage_metadata:
+                usage.input = (chunk.usage_metadata.prompt_token_count or 0) - (
+                    chunk.usage_metadata.cached_content_token_count or 0
+                )
+                usage.output = chunk.usage_metadata.candidates_token_count or 0
+                usage.cache_read = chunk.usage_metadata.cached_content_token_count or 0
+            return event_blocks, None, usage
 
         for i, part in enumerate(parts):
             # Block type is changing, so mark current running block end and start new block.
@@ -519,7 +542,9 @@ class Google(BaseLLMProvider):
         """
         model_config = self._get_model_config(model)  # Get your internal config
         vertex_model_name = model_config.get("NAME")
-        max_output_tokens = model_config.get("MAX_TOKENS") or 8192
+        max_output_tokens = model_config.get("MAX_TOKENS") or 16384
+        thinking_budget_tokens = model_config.get("THINKING_BUDGET_TOKENS", 4096)
+        temperature = model_config.get("TEMPERATURE", 0.5)
         client = GeminiServiceClient()
         stream_id = str(uuid.uuid4())
 
@@ -531,6 +556,8 @@ class Google(BaseLLMProvider):
                 tool_config=llm_payload.get("tool_config"),
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
+                temperature=temperature,
+                thinking_budget_tokens=thinking_budget_tokens,
             )
             return await self._parse_streaming_response(response, stream_id, session_id)
         else:
@@ -554,3 +581,52 @@ class Google(BaseLLMProvider):
         client = GeminiServiceClient()
         tokens = await client.get_tokens(content, vertex_model_name)
         return tokens
+
+    def _extract_payload_content_for_token_counting(self, llm_payload: Dict[str, Any]) -> str:  # noqa : C901
+        """
+        Extract the relevant content from LLM payload that will be sent to the LLM for token counting.
+        This handles Google's payload structure.
+        """
+        content_parts = []
+
+        try:
+            # Google structure: system_instruction + contents array
+            if "system_instruction" in llm_payload and llm_payload["system_instruction"]:
+                # system_instruction is a Part object, extract text
+                if hasattr(llm_payload["system_instruction"], "text"):
+                    content_parts.append(llm_payload["system_instruction"].text)
+
+            if "contents" in llm_payload:
+                for content in llm_payload["contents"]:
+                    if hasattr(content, "parts"):
+                        for part in content.parts:
+                            if hasattr(part, "text") and part.text:
+                                content_parts.append(part.text)
+                            elif hasattr(part, "function_response"):
+                                content_parts.append(str(part.function_response))
+
+            # Include tools information for token counting if present
+            if "tools" in llm_payload and llm_payload["tools"]:
+                try:
+                    # Handle Google's Tool objects which are not JSON serializable
+                    tools_text_parts = []
+                    for tool in llm_payload["tools"]:
+                        if hasattr(tool, "function_declarations"):
+                            for func_decl in tool.function_declarations:
+                                if hasattr(func_decl, "name"):
+                                    tools_text_parts.append(func_decl.name)
+                                if hasattr(func_decl, "description"):
+                                    tools_text_parts.append(func_decl.description)
+                    if tools_text_parts:
+                        content_parts.append(" ".join(tools_text_parts))
+                except Exception as e:  # noqa : BLE001
+                    AppLogger.log_warn(f"Error processing tools for token counting: {e}")
+                    # Skip tools if they can't be processed
+                    pass
+
+        except Exception as e:  # noqa : BLE001
+            AppLogger.log_warn(f"Error extracting payload content for token counting: {e}")
+            # Fallback: return a simple placeholder instead of trying to serialize non-serializable objects
+            return "Unable to extract content for token counting"
+
+        return "\n".join(content_parts)

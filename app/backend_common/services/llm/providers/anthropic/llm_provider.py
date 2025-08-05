@@ -656,5 +656,48 @@ class Anthropic(BaseLLMProvider):
     async def get_tokens(self, content: str, model: LLModels) -> int:
         tiktoken_client = TikToken()
         token_count = tiktoken_client.count(text=content)
-
         return token_count
+
+    def _extract_payload_content_for_token_counting(self, llm_payload: Dict[str, Any]) -> str:  # noqa : C901
+        """
+        Extract the relevant content from LLM payload that will be sent to the LLM for token counting.
+        This handles Anthropic's payload structure.
+        """
+        content_parts = []
+
+        try:
+            # Anthropic structure: system message + messages array
+            if "system" in llm_payload:
+                if isinstance(llm_payload["system"], str):
+                    content_parts.append(llm_payload["system"])
+                elif isinstance(llm_payload["system"], list):
+                    for item in llm_payload["system"]:
+                        if isinstance(item, dict) and "text" in item:
+                            content_parts.append(item["text"])
+
+            if "messages" in llm_payload:
+                for message in llm_payload["messages"]:
+                    if "content" in message:
+                        for content in message["content"]:
+                            if isinstance(content, dict):
+                                if content.get("type") == "text" and "text" in content:
+                                    content_parts.append(content["text"])
+                                elif content.get("type") == "tool_result" and "content" in content:
+                                    content_parts.append(str(content["content"]))
+
+            # Include tools information for token counting if present
+            if "tools" in llm_payload and llm_payload["tools"]:
+                try:
+                    tools_content = json.dumps(llm_payload["tools"])
+                    content_parts.append(tools_content)
+                except Exception as e:  # noqa : BLE001
+                    AppLogger.log_warn(f"Error processing tools for token counting: {e}")
+                    # Skip tools if they can't be processed
+                    pass
+
+        except Exception as e:  # noqa : BLE001
+            AppLogger.log_warn(f"Error extracting payload content for token counting: {e}")
+            # Fallback: return a simple placeholder instead of trying to serialize non-serializable objects
+            return "Unable to extract content for token counting"
+
+        return "\n".join(content_parts)

@@ -10,7 +10,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
-from app.backend_common.exception import RetryException
+from app.backend_common.exception.exception import InputTokenLimitExceededError, RetryException
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ExtendedThinkingContent,
@@ -60,6 +60,7 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from app.backend_common.services.llm.providers.openrouter_models.llm_provider import OpenRouter
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
@@ -84,6 +85,8 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GPT_4_POINT_1_NANO: OpenAI,
         LLModels.GPT_4_POINT_1_MINI: OpenAI,
         LLModels.GPT_O3_MINI: OpenAI,
+        LLModels.OPENROUTER_KIMI_K2: OpenRouter,
+        LLModels.OPENROUTER_QWEN_3_CODER: OpenRouter,
     }
 
     def __init__(
@@ -157,6 +160,7 @@ class LLMHandler(Generic[PromptFeatures]):
             type=LLMCallResponseTypes.NON_STREAMING,
             content=non_streaming_content_blocks,
             usage=await llm_response.usage,
+            cost=await llm_response.cost if llm_response.cost else None,
         )
 
     async def store_llm_response_in_db(
@@ -191,6 +195,7 @@ class LLMHandler(Generic[PromptFeatures]):
             prompt_type=prompt_type,
             prompt_category=prompt_category,
             usage=response_to_use.usage,
+            cost=response_to_use.cost,
             call_chain_category=call_chain_category,
         )
         await MessageThreadsRepository.create_message_thread(message_thread)
@@ -219,11 +224,12 @@ class LLMHandler(Generic[PromptFeatures]):
         Returns:
             :return: Message thread
         """
-        data_hash = xxhash.xxh64(prompt_rendered_messages.user_message).hexdigest()
+        full_user_message = (prompt_rendered_messages.cached_message or "") + prompt_rendered_messages.user_message
+        data_hash = xxhash.xxh64(full_user_message).hexdigest()
         message_data: List[Union[FileBlockData, TextBlockData]] = [
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
-                content=TextBlockContent(text=prompt_rendered_messages.user_message),
+                content=TextBlockContent(text=full_user_message),
                 content_vars=prompt_vars if prompt_vars else None,
             )
         ]
@@ -308,6 +314,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 content=llm_response.content,
                 parsed_content=parsed_stream,
                 usage=llm_response.usage,
+                cost=llm_response.cost,
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
@@ -322,6 +329,7 @@ class LLMHandler(Generic[PromptFeatures]):
                 content=llm_response.content,
                 parsed_content=parsed_content,
                 usage=llm_response.usage,
+                cost=llm_response.cost,
                 model_used=prompt_handler.model_name,
                 prompt_vars={},
                 prompt_id=prompt_handler.prompt_type,
@@ -397,7 +405,7 @@ class LLMHandler(Generic[PromptFeatures]):
         feedback: str = None,
         max_retry: int = MAX_LLM_RETRIES,
         stream: bool = False,
-        response_type: Optional[str] = None,
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         attachments: List[Attachment] = [],
         search_web: bool = False,
         checker: CancellationChecker = None,
@@ -453,6 +461,10 @@ class LLMHandler(Generic[PromptFeatures]):
                     search_web=search_web,
                     disable_caching=disable_caching,
                 )
+
+                # Validate token limit for the actual payload content
+                await client.validate_token_limit_before_call(llm_payload, llm_model)
+
                 if checker and checker.is_cancelled():
                     raise asyncio.CancelledError()
                 llm_response = await client.call_service_client(
@@ -491,6 +503,9 @@ class LLMHandler(Generic[PromptFeatures]):
                     llm_response_storage_task=llm_response_storage_task,
                 )
                 return parsed_response
+            except InputTokenLimitExceededError:
+                # Don't retry for token limit exceeded, immediately raise
+                raise
             except LLMThrottledError as e:
                 AppLogger.log_warn(
                     f"LLM Throttled Error: {e}, retrying {i + 1}/{max_retry} after {e.retry_after} seconds"
@@ -839,6 +854,12 @@ class LLMHandler(Generic[PromptFeatures]):
 
         if not latest_message:
             raise ValueError("Latest message not found")
+
+        count_of_same_query_ids = len(
+            [message for message in filtered_messages if message.query_id == latest_message.query_id]
+        )
+        if count_of_same_query_ids > 40:
+            raise Exception("Too many messages in same chat. Try a new chat.")
 
         conversation_chain_messages = [
             message

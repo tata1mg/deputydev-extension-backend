@@ -16,7 +16,7 @@ from .base import SCM, Integration
 class Github(Integration, SCM):
     __name__ = "github"
 
-    def __init__(self, auth_handler: GithubAuthHandler | None = None):
+    def __init__(self, auth_handler: GithubAuthHandler | None = None) -> None:
         self.auth_handler: GithubAuthHandler | None = auth_handler
         self.client: GithubClient | None = None
 
@@ -53,7 +53,7 @@ class Github(Integration, SCM):
 
             await self.mark_connected(integration_row)
 
-    async def get_workspace(self, installation_id):
+    async def get_workspace(self, installation_id) -> dict:
         response = await GithubOAuthClient.get_installation(installation_id=installation_id)
         account = response["account"]
 
