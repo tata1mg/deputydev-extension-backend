@@ -5,4 +5,4 @@ from app.backend_common.services.llm.providers.openrouter_models.prompts.base_pr
 
 
 class BaseKimiK2Prompt(BaseOpenrouterModelPromptHandler):
-    model_name = LLModels.OPENROUTER_KIMI_K2
+    model_name = LLModels.KIMI_K2
