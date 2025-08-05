@@ -181,16 +181,14 @@ class Anthropic(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[ConversationTurn] = []
+        previous_conversation_turns: List[ConversationTurn] = [],
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
 
         messages: List[ConversationTurn] = []
         if previous_responses and not previous_conversation_turns:
-            messages = await self.get_conversation_turns(
-                previous_responses, attachment_data_task_map
-            )
+            messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
         elif previous_conversation_turns:
             messages = previous_conversation_turns
 
