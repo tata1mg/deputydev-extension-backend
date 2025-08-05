@@ -1,15 +1,17 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 RELATED_CODE_SEARCHER = ConversationTool(
     name="related_code_searcher",
-    description="""
+    description=textwrap.dedent("""
         This is a built-in tool.
 
         Searches the repository for relevant code snippets based on the given query.
         This tool does a vector + lexical hybrid search on the chunks on the entire repository and then returns the ones which are relevant to the query.
         This tool also optionally takes a list of paths to limit the scope of the search.
         This performs best when the search query is more precise and relating to the function or purpose of code. Results will be poor if asking a very broad question, such as asking about the general 'framework' or 'implementation' of a large component or system.
-    """,
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={
