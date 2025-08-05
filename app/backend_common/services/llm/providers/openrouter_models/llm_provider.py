@@ -1,3 +1,4 @@
+# TODO : REFACTOR: This file is long, needs refactoring.
 import asyncio
 import json
 import uuid
@@ -362,9 +363,9 @@ class OpenRouter(BaseLLMProvider):
                 reasoning=model_config["REASONING"],
                 provider=model_config["PROVIDER"],
                 response_format=response_type,
-                instructions=llm_payload["system_message"],
                 structured_outputs=llm_payload["structured_outputs"],
                 parallel_tool_calls=parallel_tool_calls,
+                session_id=session_id,
             )
             return self._parse_non_streaming_response(response)
 
