@@ -37,28 +37,21 @@ class LLMResponseFormatter:
 
         header = "\n".join(header_lines)
 
-        # --- Add line numbers manually if not a summary ---
-        if not was_summary:
-            lines = raw_content.splitlines()
-            line_number_width = len(str(end))  # Padding width
-            numbered_lines = [f"{str(i + start).rjust(line_number_width)}: {line}" for i, line in enumerate(lines)]
-            formatted_content = "\n".join(numbered_lines)
-        else:
-            formatted_content = raw_content  # Summary already has line numbers
+        formatted_content = raw_content
 
         # --- Content block ---
         if formatted_content:
             content_block = f"\n\n```\n{formatted_content}\n```"
         else:
-            content_block = "\n\n _No content read from the file._"
+            content_block = "\n\n No content read from the file."
 
         # --- Footer note ---
         if was_summary:
-            footer = "\n\n _Note: The file was too large to load completely, so a summary was provided instead._"
+            footer = "\n\n Note: The file was too large to load completely, so a summary was provided instead."
         elif eof_reached:
-            footer = "\n\n _You have reached the end of the file._"
+            footer = "\n\n You have reached the end of the file."
         else:
-            footer = "\n\n _This is a partial read; more content may follow._"
+            footer = "\n\n This is a partial read; more content may follow."
 
         return f"{header}{content_block}{footer}"
 
@@ -87,17 +80,15 @@ class LLMResponseFormatter:
             f"- Case: **{case}**",
             f"- Scope: `{directory_path}`",
             f"- Results: **{total_hits}**"
-            + (
-                " _(truncated at 50 results — try refining your search for more precision)_" if total_hits >= 50 else ""
-            ),
+            + (" (truncated at 50 results — try refining your search for more precision)" if total_hits >= 50 else ""),
         ]
         header = "\n".join(header_lines)
 
         # --- Empty results case ---
         if total_hits == 0:
-            return f"{header}\n\n_No matches found._"
+            return f"{header}\n\nNo matches found."
 
-        note = "\n_Note: A `*` in the gutter marks a matched line._"  # Legend for matched lines
+        note = "\nNote: A `*` in the gutter marks a matched line."  # Legend for matched lines
         # --- Per-result sections ---
         sections: List[str] = []
         for idx, item in enumerate(results, start=1):
@@ -120,15 +111,16 @@ class LLMResponseFormatter:
 
             # Number and lightly highlight matched lines
             lines = raw_content.splitlines()
-            line_number_width = max(1, len(str(end)))
             matched_set = set(matched_lines)
 
             # Legend: "*" marks matched lines in the gutter
-            numbered_lines: List[str] = []
+
+            # No line numbers, just mark matched lines with "*"
+            guttered_lines: List[str] = []
             for i, line in enumerate(lines):
                 ln = start + i
                 marker = "*" if ln in matched_set else " "
-                numbered_lines.append(f"{str(ln).rjust(line_number_width)}{marker} {line}")
+                guttered_lines.append(f"{marker}   {line}")
 
             section_header = [
                 f"#### Result {idx} — `{file_path}`",
@@ -136,7 +128,7 @@ class LLMResponseFormatter:
                 f"- Matched lines: {', '.join(map(str, matched_lines)) if matched_lines else '—'}",
             ]
             section = "\n".join(section_header)
-            joined_lines = "\n".join(numbered_lines)
+            joined_lines = "\n".join(guttered_lines)
             code_block = f"\n```\n{joined_lines}\n```"
 
             sections.append(section + code_block)
