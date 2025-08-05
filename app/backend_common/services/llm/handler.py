@@ -412,7 +412,7 @@ class LLMHandler(Generic[PromptFeatures]):
         checker: CancellationChecker = None,
         parallel_tool_calls: bool = False,
         text_format: Optional[Type[BaseModel]] = None,
-        previous_conversation_turns: List[ConversationTurn] = []
+        previous_conversation_turns: List[ConversationTurn] = [],
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
