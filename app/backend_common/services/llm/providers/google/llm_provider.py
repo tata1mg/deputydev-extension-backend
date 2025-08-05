@@ -35,6 +35,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRoleGemini,
     ConversationTool,
+    ConversationTurn,
     LLMCallResponseTypes,
     MalformedToolUseRequest,
     MalformedToolUseRequestContent,
@@ -144,6 +145,18 @@ class Google(BaseLLMProvider):
 
         return conversation_turns
 
+    async def _get_google_content_from_conversation_turns(self, conversation_turns: List[ConversationTurn]) -> List[google_genai_types.Content]:
+        contents_arr = List[google_genai_types.Content] = []
+
+        for turn in conversation_turns:
+            # case of user message
+            
+
+
+        return contents_arr
+
+
+
     async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
@@ -160,6 +173,7 @@ class Google(BaseLLMProvider):
         ),
         search_web: bool = False,
         disable_caching: bool = False,
+        previous_conversation_turns: List[ConversationTurn] = []
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -189,9 +203,16 @@ class Google(BaseLLMProvider):
             system_instruction = google_genai_types.Part.from_text(text=prompt.system_message)
 
         # 2. Process Conversation History (previous_responses)
-        contents: List[google_genai_types.Content] = await self.get_conversation_turns(
-            previous_responses, attachment_data_task_map
-        )
+        contents: List[google_genai_types.Content] = []
+
+        if previous_responses and not previous_conversation_turns:
+            contents = await self.get_conversation_turns(
+                previous_responses, attachment_data_task_map
+            )
+        elif previous_conversation_turns:
+            contents = await self._get_google_content_from_conversation_turns(
+
+            )
 
         # 3. Handle Current User Prompt
         user_parts: List[google_genai_types.Part] = []

@@ -412,6 +412,7 @@ class LLMHandler(Generic[PromptFeatures]):
         checker: CancellationChecker = None,
         parallel_tool_calls: bool = False,
         text_format: Optional[Type[BaseModel]] = None,
+        previous_conversation_turns: List[ConversationTurn] = []
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -461,6 +462,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     attachment_data_task_map=attachment_data_task_map,
                     search_web=search_web,
                     disable_caching=disable_caching,
+                    previous_conversation_turns=previous_conversation_turns,
                 )
 
                 # Validate token limit for the actual payload content
@@ -664,7 +666,8 @@ class LLMHandler(Generic[PromptFeatures]):
         attachments: List[Attachment] = [],
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
-        previous_responses: Union[List[int], List[ConversationTurn]] = [],
+        previous_responses: List[int] = [],
+        previous_conversation_turns: List[ConversationTurn] = [],
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
@@ -744,6 +747,7 @@ class LLMHandler(Generic[PromptFeatures]):
             checker=checker,
             parallel_tool_calls=parallel_tool_calls,
             text_format=text_format,
+            previous_conversation_turns=previous_conversation_turns,
         )
 
     async def store_tool_use_ressponse_in_db(

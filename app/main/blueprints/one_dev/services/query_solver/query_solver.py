@@ -187,7 +187,7 @@ class QuerySolver:
             llm_response.parsed_content[0].success if hasattr(llm_response.parsed_content[0], "success") else True
         )
 
-        asyncio.create_task(self._update_query_summary(query_id, query_summary, session_id))
+        _summary_creation_task = asyncio.create_task(self._update_query_summary(query_id, query_summary, session_id))
         return query_summary, query_status
 
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
