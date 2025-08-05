@@ -83,6 +83,7 @@ class MessageThreadsRepository:
                         message_type=message_thread.message_type,
                         conversation_chain=message_thread.conversation_chain,
                         usage=message_thread.usage,
+                        cost=message_thread.cost,
                         llm_model=message_thread.llm_model,
                         prompt_type=message_thread.prompt_type,
                         prompt_category=message_thread.prompt_category,

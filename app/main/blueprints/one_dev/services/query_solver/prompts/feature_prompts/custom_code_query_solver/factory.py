@@ -26,6 +26,12 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.gpt_4_point_1 import (
     Gpt4Point1Prompt,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.kimi_k2_coder_handler import (
+    KimiK2CustomCodeQuerySolverPromptHandler,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.qwen_3_coder_handler import (
+    Qwen3CoderCustomCodeQuerySolverPromptHandler,
+)
 
 
 class CustomCodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
@@ -37,6 +43,8 @@ class CustomCodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.GPT_4_POINT_1: Gpt4Point1Prompt,
         LLModels.CLAUDE_4_SONNET: Claude4CustomCodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_KIMI_K2: KimiK2CustomCodeQuerySolverPromptHandler,
     }
 
     @classmethod

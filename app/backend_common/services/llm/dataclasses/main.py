@@ -38,6 +38,7 @@ class ConversationRole(Enum):
 class ConversationRoleGemini(Enum):
     USER = "user"
     MODEL = "model"
+    TOOL = "tool"
 
 
 class ConversationTurn(BaseModel):
@@ -114,6 +115,7 @@ class StreamingEventType(Enum):
     EXTENDED_THINKING_BLOCK_START = "EXTENDED_THINKING_BLOCK_START"
     EXTENDED_THINKING_BLOCK_END = "EXTENDED_THINKING_BLOCK_END"
     EXTENDED_THINKING_BLOCK_DELTA = "EXTENDED_THINKING_BLOCK_DELTA"
+    MALFORMED_TOOL_USE_REQUEST = "MALFORMED_TOOL_USE_REQUEST"
 
 
 # TOOL_USE_REQUEST BLOCK CONTENTS
@@ -173,6 +175,16 @@ class ToolUseRequestEnd(BaseModel):
     type: Literal[StreamingEventType.TOOL_USE_REQUEST_END] = StreamingEventType.TOOL_USE_REQUEST_END
 
 
+class MalformedToolUseRequestContent(BaseModel):
+    reason: Optional[str] = None
+    raw_payload: Optional[str] = None
+
+
+class MalformedToolUseRequest(BaseModel):
+    type: Literal[StreamingEventType.MALFORMED_TOOL_USE_REQUEST] = StreamingEventType.MALFORMED_TOOL_USE_REQUEST
+    content: MalformedToolUseRequestContent
+
+
 class ExtendedThinkingBlockStart(BaseModel):
     type: Literal[StreamingEventType.EXTENDED_THINKING_BLOCK_START] = StreamingEventType.EXTENDED_THINKING_BLOCK_START
 
@@ -209,7 +221,8 @@ class ExtendedThinkingBlockEnd(BaseModel):
 
 TextBlockEvents = Annotated[Union[TextBlockStart, TextBlockDelta, TextBlockEnd], Field(discriminator="type")]
 ToolUseRequestEvents = Annotated[
-    Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd], Field(discriminator="type")
+    Union[ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd, MalformedToolUseRequest],
+    Field(discriminator="type"),
 ]
 ExtendedThinkingEvents = Annotated[
     Union[ExtendedThinkingBlockStart, ExtendedThinkingBlockDelta, ExtendedThinkingBlockEnd], Field(discriminator="type")
@@ -232,6 +245,7 @@ class StreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.STREAMING] = LLMCallResponseTypes.STREAMING
     content: AsyncIterator[StreamingEvent]
     usage: Task[LLMUsage]
+    cost: Optional[Task[Optional[float]]] = None
     accumulated_events: Task[List[StreamingEvent]]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -241,6 +255,7 @@ class NonStreamingResponse(BaseModel):
     type: Literal[LLMCallResponseTypes.NON_STREAMING] = LLMCallResponseTypes.NON_STREAMING
     content: List[ResponseData]
     usage: LLMUsage
+    cost: Optional[float] = None
 
 
 UnparsedLLMCallResponse = Annotated[
