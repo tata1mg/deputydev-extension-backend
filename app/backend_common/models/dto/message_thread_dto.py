@@ -99,6 +99,8 @@ class LLModels(Enum):
     GPT_4_POINT_1_MINI = "GPT_4_POINT_1_MINI"
     GPT_4_POINT_1_NANO = "GPT_4_POINT_1_NANO"
     GPT_O3_MINI = "GPT_O3_MINI"
+    OPENROUTER_KIMI_K2 = "OPENROUTER_KIMI_K2"
+    OPENROUTER_QWEN_3_CODER = "OPENROUTER_QWEN_3_CODER"
 
 
 class LLMUsage(BaseModel):
@@ -145,6 +147,7 @@ class MessageThreadData(BaseModel):
     usage: Optional[LLMUsage] = None
     call_chain_category: MessageCallChainCategory
     metadata: Optional[Dict[str, Any]] = None
+    cost: Optional[float] = None
 
 
 class MessageThreadDTO(MessageThreadData):

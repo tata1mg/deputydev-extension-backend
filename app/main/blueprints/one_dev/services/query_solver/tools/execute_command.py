@@ -1,8 +1,10 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 EXECUTE_COMMAND = ConversationTool(
     name="execute_command",
-    description="""
+    description=textwrap.dedent("""
         This is a built-in tool.
         Multiple instances of this tool should not be run in parallel.
         Executes a CLI command in the current working directory of the project.
@@ -32,7 +34,7 @@ EXECUTE_COMMAND = ConversationTool(
         
         The tool will return the terminal output in response.
         
-    """,
+        """),
     input_schema=JSONSchema(
         **{
             "type": "object",

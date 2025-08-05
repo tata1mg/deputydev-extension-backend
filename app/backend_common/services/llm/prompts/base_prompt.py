@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Optional, Type
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Type
 
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ class BasePrompt(ABC):
     model_name: LLModels
     prompt_type: str
     prompt_category: str
-    response_type: str = "text"
+    response_type: Optional[Literal["text", "json_object", "json_schema"]] = "text"
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
