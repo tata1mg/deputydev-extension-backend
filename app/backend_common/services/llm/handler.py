@@ -85,8 +85,8 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GPT_4_POINT_1_NANO: OpenAI,
         LLModels.GPT_4_POINT_1_MINI: OpenAI,
         LLModels.GPT_O3_MINI: OpenAI,
-        LLModels.OPENROUTER_KIMI_K2: OpenRouter,
-        LLModels.OPENROUTER_QWEN_3_CODER: OpenRouter,
+        LLModels.KIMI_K2: OpenRouter,
+        LLModels.QWEN_3_CODER: OpenRouter,
     }
 
     def __init__(

@@ -43,8 +43,8 @@ class CustomCodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.GPT_4_POINT_1: Gpt4Point1Prompt,
         LLModels.CLAUDE_4_SONNET: Claude4CustomCodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_KIMI_K2: KimiK2CustomCodeQuerySolverPromptHandler,
+        LLModels.QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
+        LLModels.KIMI_K2: KimiK2CustomCodeQuerySolverPromptHandler,
     }
 
     @classmethod
