@@ -75,7 +75,6 @@ class Gpt4Point1MiniRelevantChatFilterPrompt(BaseGpt4Point1MiniPrompt):
 
             """
         system_message = "You are an expert in curating conversational history. Your task is to filter, select, and rerank chat messages provided for a user query, ensuring that only the most relevant conversations are retained as context for answering the user's question."
-
         return UserAndSystemMessages(user_message=user_message, system_message=system_message)
 
     @classmethod

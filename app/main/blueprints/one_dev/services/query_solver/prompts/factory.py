@@ -23,6 +23,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.i
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.intent_selector.factory import (
     IntentSelectorPromptFactory,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.query_summary_generator.factory import (
+    QuerySummaryGeneratorPromptFactory,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.session_summary_generator.factory import (
     SessionSummaryGeneratorPromptFactory,
 )
@@ -43,6 +46,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
         PromptFeatures.INTENT_SELECTOR: IntentSelectorPromptFactory,
         PromptFeatures.CUSTOM_CODE_QUERY_SOLVER: CustomCodeQuerySolverPromptFactory,
+        PromptFeatures.QUERY_SUMMARY_GENERATOR: QuerySummaryGeneratorPromptFactory,
     }
 
     @classmethod
