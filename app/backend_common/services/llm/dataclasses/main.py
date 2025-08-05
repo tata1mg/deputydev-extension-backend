@@ -45,6 +45,7 @@ class ConversationTurn(BaseModel):
     role: ConversationRole
     content: Union[str, List[Dict[str, Any]]]
 
+
 class JSONSchemaType(Enum):
     NULL = "null"
     BOOLEAN = "boolean"
