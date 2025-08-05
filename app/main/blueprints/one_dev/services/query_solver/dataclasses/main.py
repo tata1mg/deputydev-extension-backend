@@ -61,6 +61,8 @@ class LLMModel(Enum):
     GPT_4_POINT_1 = "GPT_4_POINT_1"
     CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
     CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
+    OPENROUTER_QWEN_3_CODER = "OPENROUTER_QWEN_3_CODER"
+    OPENROUTER_KIMI_K2 = "OPENROUTER_KIMI_K2"
 
 
 class ToolMetadataTypes(Enum):
@@ -165,6 +167,17 @@ class ResponseMetadataContent(BaseModel):
 
 class ResponseMetadataBlock(BaseModel):
     content: ResponseMetadataContent
+    type: str
+
+
+class TaskCompletionContent(BaseModel):
+    query_id: int
+    success: bool = True
+    summary: Optional[str] = None
+
+
+class TaskCompletionBlock(BaseModel):
+    content: TaskCompletionContent
     type: str
 
 

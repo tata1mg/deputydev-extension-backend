@@ -17,9 +17,9 @@ select = [
     "ANN001",  # find out missing function type arguments
     "ANN002",  # missing type annotation for *{name}
     "ANN003",  # missing type annotation for **{name}
-    "ANN201", # missing return type annotation for public function {name}	
-    "ANN202", # missing return type annotation for private function {name}	
-    "ANN204", # missing return type annotation for special method {name}	
+    "ANN201", # missing return type annotation for public function {name}
+    "ANN202", # missing return type annotation for private function {name}
+    "ANN204", # missing return type annotation for special method {name}
     "ANN205", # missing return type annotation for staticmethod {name}
     "ANN206", # missing return type annotation for classmethod {name}
     "C901",  # cyclomatic complexity mccabe (C90) https://docs.astral.sh/ruff/rules/#mccabe-c90
