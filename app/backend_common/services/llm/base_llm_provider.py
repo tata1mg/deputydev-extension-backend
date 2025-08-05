@@ -14,6 +14,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationTool,
+    ConversationTurn,
     PromptCacheConfig,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
@@ -44,6 +45,7 @@ class BaseLLMProvider(ABC):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
+        previous_conversation_turns: List[ConversationTurn] = []
     ) -> Dict[str, Any]:
         """
         Formats the conversation as required by the specific LLM.
