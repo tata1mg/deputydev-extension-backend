@@ -35,7 +35,7 @@ class ChatHistoryHandler:
     def __init__(self, previous_chat_payload: PreviousChatPayload, llm_model: LLModels) -> None:
         self.payload = previous_chat_payload
         self.previous_chats: List[PreviousChats] = []
-        self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO]] = {}
+        self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO | None]] = {}
         self.current_model: LLModels = llm_model
 
     def _get_entire_chat_content(self, chat: PreviousChats) -> str:
@@ -133,8 +133,8 @@ class ChatHistoryHandler:
         # create a map of query_id to message
         non_query_message_threads: List[MessageThreadDTO] = []
         for message_thread in all_message_threads:
-            if message_thread.message_type == MessageType.QUERY and query_id_to_summary_map.get(message_thread.id):
-                self.data_map[message_thread.id] = (message_thread, [], query_id_to_summary_map[message_thread.id])
+            if message_thread.message_type == MessageType.QUERY:
+                self.data_map[message_thread.id] = (message_thread, [], query_id_to_summary_map.get(message_thread.id))
             else:
                 non_query_message_threads.append(message_thread)
 
@@ -164,9 +164,6 @@ class ChatHistoryHandler:
             ),
         )
 
-        if not all_session_query_summaries:
-            return []
-
         # Sort and limit to latest 10 queries
         all_session_query_summaries.sort(key=lambda x: x.query_id, reverse=False)
         if len(all_session_query_summaries) > 10:
@@ -184,9 +181,11 @@ class ChatHistoryHandler:
             ):
                 self.previous_chats.append(
                     PreviousChats(
-                        id=query_summary.query_id,
+                        id=query_message_thread.id,
                         query=query_message_thread.message_data[0].content_vars["query"],
-                        summary=query_summary.summary,
+                        summary=query_summary.summary
+                        if query_summary
+                        else query_message_thread.message_data[0].content_vars["query"][:1000],
                     )
                 )
 

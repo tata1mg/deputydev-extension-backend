@@ -1,8 +1,10 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
     name="focused_snippets_searcher",
-    description="""
+    description=textwrap.dedent("""
         This is a built-in tool.
         Searches the codebase for specific code definitions or snippets based on a given class name, function name, or file name.
         View the content of a code item node, such as a class or a function in a file using a fully qualified code item name.
@@ -46,7 +48,7 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
         - The second search term looks for the **function** named `serialize_feeds_data` across the entire codebase.
 
         Use this tool whenever you need precise code snippets related to specific elements in the codebase.
-    """,
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={

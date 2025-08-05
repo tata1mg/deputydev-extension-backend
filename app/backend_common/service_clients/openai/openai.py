@@ -40,7 +40,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         model: str,
         tool_choice: Literal["none", "auto", "required"] = "none",
         tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Literal["text", "json_object", "json_schema"] = "json_schema",
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = "json_schema",
         response_schema: Any = None,
         response_format_name: Any = None,
         response_format_description: Any = None,
@@ -90,7 +90,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             "instructions": instructions,
             "max_output_tokens": max_output_tokens,
             "parallel_tool_calls": parallel_tool_calls,
-            "temperature": temperature or 0.5,
             "reasoning": reasoning or {},
             "text_format": text_format,
             "store": False,
@@ -106,7 +105,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         model: str,
         tool_choice: Optional[str] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Literal["text", "json_object"] = "json_object",
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = "json_object",
     ) -> ChatCompletion:
         # THIS WILL BE DEPRECATED DO NOT USE THIS.
         if response_type == "text":
@@ -117,7 +116,6 @@ class OpenAIServiceClient(metaclass=Singleton):
             model=model,
             response_format=response_format,
             messages=conversation_messages,
-            temperature=0.5,
         )
 
         # we need both message and output token now to returning full completion message
@@ -140,7 +138,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         model: str,
         tool_choice: Literal["none", "auto", "required"] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Literal["text", "json_object"] = "json_object",
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = "json_object",
         response_schema: Any = None,
         response_format_name: Any = None,
         response_format_description: Any = None,

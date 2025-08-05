@@ -1,6 +1,6 @@
 from torpedo import CONFIG
 
-from app.backend_common.services.workspace.encryption_service import EncryptionService
+from app.backend_common.services.encryption.encryption_service import EncryptionService
 
 
 class SessionEncryptionService(EncryptionService):
