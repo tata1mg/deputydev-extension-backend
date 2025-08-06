@@ -49,7 +49,8 @@ async def review_pr_in_sync(_request: Request, **kwargs):
     payload["request_id"] = request_id
 
     logger.info("Whitelisted request: {}".format(payload))
-    await PRReviewManager.handle_event(payload)
+    # await PRReviewManager.handle_event(payload)
+    await PRReviewManager.handle_non_reviewable_request(payload)
     return send_response(f"Processing Started with Request ID : {request_id}")
 
 

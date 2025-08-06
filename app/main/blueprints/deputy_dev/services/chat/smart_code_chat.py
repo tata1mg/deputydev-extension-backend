@@ -102,7 +102,7 @@ class SmartCodeChatManager:
             return
 
         if request_type == CommentTypes.REVIEW.value:
-            await CodeReviewTrigger.perform_review(payload, query_params)
+            await CodeReviewTrigger.perform_review(payload, query_params, is_manual_review=True)
             return
 
         # Bot comments
