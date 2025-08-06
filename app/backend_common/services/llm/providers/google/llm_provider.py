@@ -168,6 +168,17 @@ class Google(BaseLLMProvider):
                         mime_type=turn_content.image_mimetype,
                     )
                 )
+        return google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=parts)
+
+    def _get_google_content_from_assistant_conversation_turn(
+        self, conversation_turn: AssistantConversationTurn
+    ) -> google_genai_types.Content:
+        
+        parts: List[google_genai_types.Part] = []
+        for turn_content in conversation_turn.content:
+            if isinstance(turn_content, UnifiedTextConversationTurnContent):
+                parts.append(google_genai_types.Part.from_text(text=turn_content.text))
+
             if isinstance(turn_content, UnifiedToolRequestConversationTurnContent):
                 parts.append(
                     google_genai_types.Part.from_function_call(
@@ -175,17 +186,7 @@ class Google(BaseLLMProvider):
                         args=turn_content.tool_input,
                     )
                 )
-        return google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=parts)
-
-    def _get_google_content_from_assistant_conversation_turn(
-        self, conversation_turn: AssistantConversationTurn
-    ) -> google_genai_types.Content:
-        return google_genai_types.Content(
-            role=ConversationRoleGemini.MODEL.value,
-            parts=[
-                google_genai_types.Part.from_text(text=turn_content.text) for turn_content in conversation_turn.content
-            ],
-        )
+        return google_genai_types.Content(role=ConversationRoleGemini.MODEL.value, parts=parts)
 
     def _get_google_content_from_tool_conversation_turn(
         self, conversation_turn: ToolConversationTurn

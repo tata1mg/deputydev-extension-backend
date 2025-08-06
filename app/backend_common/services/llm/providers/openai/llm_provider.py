@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type
@@ -6,7 +7,16 @@ from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Typ
 from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
 from openai.types import responses
-from openai.types.responses import Response
+from openai.types.responses import (
+    EasyInputMessageParam,
+    Response,
+    ResponseFunctionToolCallParam,
+    ResponseInputContentParam,
+    ResponseInputImageParam,
+    ResponseInputItemParam,
+    ResponseInputTextParam,
+)
+from openai.types.responses.response_input_item_param import FunctionCallOutput, Message
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 from pydantic import BaseModel
 
@@ -36,7 +46,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
-    ConversationTurn,
     LLMCallResponseTypes,
     NonStreamingResponse,
     PromptCacheConfig,
@@ -55,7 +64,15 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import AssistantConversationTurn, UnifiedConversationTurn, UserConversationTurn
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedImageConversationTurnContent,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UserConversationTurn,
+)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
@@ -68,65 +85,82 @@ class OpenAI(BaseLLMProvider):
         self._active_streams: Dict[str, AsyncIterator] = {}
         self.anthropic_client = None
 
-    def _get_google_content_from_user_conversation_turn(
+    def _get_openai_response_item_param_from_user_conversation_turn(
         self, conversation_turn: UserConversationTurn
-    ) -> google_genai_types.Content:
-        parts: List[google_genai_types.Part] = []
+    ) -> ResponseInputItemParam:
+        response_input_content_list: List[ResponseInputContentParam] = []
         for turn_content in conversation_turn.content:
             if isinstance(turn_content, UnifiedTextConversationTurnContent):
-                parts.append(google_genai_types.Part.from_text(text=turn_content.text))
+                response_input_content_list.append(
+                    ResponseInputTextParam(
+                        text=turn_content.text,
+                        type="input_text"
+                    )
+                )
 
             if isinstance(turn_content, UnifiedImageConversationTurnContent):
-                parts.append(
-                    google_genai_types.Part.from_bytes(
-                        data=turn_content.bytes_data,
-                        mime_type=turn_content.image_mimetype,
+                response_input_content_list.append(
+                    ResponseInputImageParam(
+                        detail="auto",
+                        type="input_image",
+                        file_id=None,
+                        image_url=f"data:{turn_content.image_mimetype};base64,{base64.b64encode(turn_content.bytes_data).decode('utf-8')}"
                     )
                 )
-            if isinstance(turn_content, UnifiedToolRequestConversationTurnContent):
-                parts.append(
-                    google_genai_types.Part.from_function_call(
-                        name=turn_content.tool_name,
-                        args=turn_content.tool_input,
-                    )
-                )
-        return google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=parts)
 
-    def _get_google_content_from_assistant_conversation_turn(
+
+
+        return Message(
+                        content=response_input_content_list,
+                        role="user"
+                    )
+
+    def _get_openai_response_item_param_from_assistant_conversation_turn(
         self, conversation_turn: AssistantConversationTurn
-    ) -> google_genai_types.Content:
-        return google_genai_types.Content(
-            role=ConversationRoleGemini.MODEL.value,
-            parts=[
-                google_genai_types.Part.from_text(text=turn_content.text) for turn_content in conversation_turn.content
-            ],
-        )
-
-    def _get_google_content_from_tool_conversation_turn(
-        self, conversation_turn: ToolConversationTurn
-    ) -> google_genai_types.Content:
-        return google_genai_types.Content(
-            role=ConversationRoleGemini.USER.value,
-            parts=[
-                google_genai_types.Part.from_function_response(
-                    name=turn_content.tool_name, response=turn_content.tool_use_response
+    ) -> List[ResponseInputItemParam]:
+        final_input_params: List[ResponseInputItemParam] = []
+        for turn_content in conversation_turn.content:
+            if isinstance(turn_content, UnifiedTextConversationTurnContent):
+                final_input_params.append(
+                    EasyInputMessageParam(
+                        role="assistant",
+                        content=turn_content.text
+                    )
                 )
-                for turn_content in conversation_turn.content
-            ],
-        )
 
-    async def _get_openai_conversation_messages_from_conversation_turns(
+            if isinstance(turn_content, UnifiedToolRequestConversationTurnContent):
+                # append the tool call
+                final_input_params.append(ResponseFunctionToolCallParam(
+                    type="function_call",
+                    call_id=turn_content.tool_use_id,
+                    name=turn_content.tool_name,
+                    arguments=json.dumps(turn_content.tool_input, sort_keys=True)
+                ))
+
+
+        return final_input_params
+
+    def _get_openai_response_item_param_from_tool_conversation_turn(
+        self, conversation_turn: ToolConversationTurn
+    ) -> List[ResponseInputItemParam]:
+        return [FunctionCallOutput(
+            call_id=turn_content.tool_use_id,
+            type="function_call_output",
+            output=json.dumps(turn_content.tool_use_response)
+        ) for turn_content in conversation_turn.content]
+
+    async def _get_openai_response_input_params_from_conversation_turns(
         self, conversation_turns: List[UnifiedConversationTurn]
-    ) -> List[google_genai_types.Content]:
-        contents_arr: List[google_genai_types.Content] = []
+    ) -> List[ResponseInputItemParam]:
+        contents_arr: List[ResponseInputItemParam] = []
 
         for turn in conversation_turns:
             if isinstance(turn, UserConversationTurn):
-                contents_arr.append(self._get_google_content_from_user_conversation_turn(conversation_turn=turn))
+                contents_arr.append(self._get_openai_response_item_param_from_user_conversation_turn(conversation_turn=turn))
             elif isinstance(turn, AssistantConversationTurn):
-                contents_arr.append(self._get_google_content_from_assistant_conversation_turn(conversation_turn=turn))
+                contents_arr.extend(self._get_openai_response_item_param_from_assistant_conversation_turn(conversation_turn=turn))
             else:
-                contents_arr.append(self._get_google_content_from_tool_conversation_turn(conversation_turn=turn))
+                contents_arr.extend(self._get_openai_response_item_param_from_tool_conversation_turn(conversation_turn=turn))
 
         return contents_arr
 
