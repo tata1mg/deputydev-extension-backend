@@ -48,6 +48,7 @@ class PrStatusTypes(Enum):
     ALREADY_REVIEWED = "ALREADY_REVIEWED"  # This is not representing db state, used to post affirmation reply msg
     FEATURES_DISABLED = "FEATURES_DISABLED"  # This is not representing db state, used to post affirmation reply msg
     SUMMARY_DISABLED = "SUMMARY_DISABLED"  # This is not representing db state, used to post affirmation reply msg
+    SKIPPED_AUTO_REVIEW = "SKIPPED_AUTO_REVIEW"
 
 
 REJECTED_STATUS_TYPES = [
@@ -83,6 +84,7 @@ PR_REVIEW_POST_AFFIRMATION_MESSAGES = {
     PrStatusTypes.SUMMARY_DISABLED.value: "PR summary is currently disabled in your repository/organization settings. To enable these features, please update your settings.",
     PrStatusTypes.EXHAUSTED_RETRIES_LIMIT.value: "Maximum number of review retries has been exceeded for this PR. Please contact support if you need further assistance.",
     PrStatusTypes.REJECTED_ALREADY_DECLINED.value: "This PR is declined. If you still want to review it, review using our #review feature by commenting #review on PR",
+    PrStatusTypes.SKIPPED_AUTO_REVIEW.value: "Auto-review is disabled for this PR — comment #review for a full review or #summary for a quick summary."
 }
 
 
