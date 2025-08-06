@@ -26,30 +26,52 @@ class UnifiedToolRequestConversationTurnContent(BaseModel):
     type: Literal[UnifiedConversationTurnContentType.TOOL_REQUEST] = UnifiedConversationTurnContentType.TOOL_REQUEST
     tool_use_id: str
     tool_name: str
+    tool_input: Dict[str, Any]
 
 
 class UnifiedToolResponseConversationTurnContent(BaseModel):
     type: Literal[UnifiedConversationTurnContentType.TOOL_RESPONSE] = UnifiedConversationTurnContentType.TOOL_RESPONSE
     tool_use_response: Dict[str, Any]
+    tool_name: str
+    tool_use_id: str
 
 
 class UnifiedImageConversationTurnContent(BaseModel):
     type: Literal[UnifiedConversationTurnContentType.IMAGE] = UnifiedConversationTurnContentType.IMAGE
-    base64_data: str
+    bytes_data: bytes
     image_mimetype: str
 
 
-UnifiedConversationTurnContent = Annotated[
+UnifiedUserConversationTurnContent = Annotated[
     Union[
         UnifiedTextConversationTurnContent,
         UnifiedImageConversationTurnContent,
         UnifiedToolRequestConversationTurnContent,
-        UnifiedToolResponseConversationTurnContent,
     ],
     Field(discriminator="type"),
 ]
 
 
-class UnifiedConversationTurn(BaseModel):
-    role: UnifiedConversationRole
-    content: List[UnifiedConversationTurnContent]
+class ToolConversationTurn(BaseModel):
+    role: Literal[UnifiedConversationRole.TOOL] = UnifiedConversationRole.TOOL
+    content: List[UnifiedToolResponseConversationTurnContent]
+
+
+class UserConversationTurn(BaseModel):
+    role: Literal[UnifiedConversationRole.USER] = UnifiedConversationRole.USER
+    content: List[UnifiedUserConversationTurnContent]
+
+
+class AssistantConversationTurn(BaseModel):
+    role: Literal[UnifiedConversationRole.ASSISTANT] = UnifiedConversationRole.ASSISTANT
+    content: List[UnifiedTextConversationTurnContent]
+
+
+UnifiedConversationTurn = Annotated[
+    Union[
+        ToolConversationTurn,
+        UserConversationTurn,
+        AssistantConversationTurn,
+    ],
+    Field(discriminator="role"),
+]
