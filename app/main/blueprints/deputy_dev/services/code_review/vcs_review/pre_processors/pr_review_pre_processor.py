@@ -30,7 +30,8 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     ExperimentStatusTypes,
     FeatureFlows,
     PRReviewExperimentSet,
-    PrStatusTypes, PR_REVIEW_POST_AFFIRMATION_MESSAGES,
+    PrStatusTypes,
+    PR_REVIEW_POST_AFFIRMATION_MESSAGES,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
@@ -400,18 +401,14 @@ class PRReviewPreProcessor:
         """Create comment notifying about skipped auto-review."""
         await self.comment_service.create_pr_comment(
             comment=PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.SKIPPED_AUTO_REVIEW.value],
-            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW")
+            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW"),
         )
 
     async def create_non_reviewable_pr_entry(self, data: Dict[str, Any]) -> Optional[PullRequestDTO]:
         """Create DB entry for non-reviewable PR similar to pre_processor logic."""
         try:
-            setting = await self.fetch_setting()  # noqa : F841
             pr_model = self.pr_service.pr_model()
-            repo_dto = await RepoRepository.find_or_create_with_workspace_id(
-                pr_model.scm_workspace_id(), pr_model
-            )
-
+            repo_dto = await RepoRepository.find_or_create_with_workspace_id(pr_model.scm_workspace_id(), pr_model)
             if not repo_dto:
                 return None
 
@@ -420,8 +417,6 @@ class PRReviewPreProcessor:
             )
             if not user_team_dto or not user_team_dto.id:
                 raise Exception("Owner not found for the team")
-
-            pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
             loc_changed = await self.pr_service.get_loc_changed_count()
 
             pr_model.meta_info = {
@@ -429,7 +424,6 @@ class PRReviewPreProcessor:
                 "team_id": repo_dto.team_id,
                 "workspace_id": repo_dto.workspace_id,
                 "repo_id": repo_dto.id,
-                "tokens": pr_diff_token_count,
             }
 
             pr_dto_data = {
@@ -437,7 +431,6 @@ class PRReviewPreProcessor:
                 "pr_state": pr_model.scm_state(),
                 "loc_changed": loc_changed,
             }
-
             pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
             if not pr_dto:
                 return

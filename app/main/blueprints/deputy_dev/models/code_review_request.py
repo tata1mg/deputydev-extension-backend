@@ -13,3 +13,4 @@ class CodeReviewRequest(BaseModel):
     workspace_id: str
     workspace_slug: str
     pr_review_start_time: Optional[str] = None
+    is_review_enabled: bool = False
