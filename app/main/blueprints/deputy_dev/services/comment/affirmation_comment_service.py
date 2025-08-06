@@ -59,10 +59,10 @@ class AffirmationService:
         """Clear the affirmation comment cache"""
         await AffirmationCache.delete([self.cache_key])
 
-    async def create_initial_comment(self) -> None:
+    async def create_initial_comment(self, message: str) -> None:
         """Create initial affirmation comment and store its ID in cache"""
         comment_response = await self.comment_service.create_pr_comment(
-            PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.IN_PROGRESS.value],
+            message,
             config.get("FEATURE_MODELS").get("PR_REVIEW"),
         )
 

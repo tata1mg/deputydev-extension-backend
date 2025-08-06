@@ -71,6 +71,8 @@ class PRReviewManager(BasePRReviewManager):
         try:
             CodeReviewRequest(**data)
             logger.info("Received MessageQueue Message: {}".format(data))
+            if not data.get("is_review_enabled"):
+                return await PRReviewManager.handle_non_reviewable_request(data)
             await cls.process_pr_review(data=data)
             AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
@@ -365,4 +367,3 @@ class PRReviewManager(BasePRReviewManager):
         for comment in comments:
             display_name = agent_result.display_name
             comment.bucket = "_".join(display_name.upper().split())
-
