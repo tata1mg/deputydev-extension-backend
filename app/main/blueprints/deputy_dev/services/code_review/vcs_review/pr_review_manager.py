@@ -15,10 +15,11 @@ from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
-    PrStatusTypes,
+    PrStatusTypes, PR_REVIEW_POST_AFFIRMATION_MESSAGES,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
+from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentRunResult,
@@ -54,6 +55,9 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from app.backend_common.models.dto.user_team_dto import UserTeamDTO
+from app.backend_common.repository.repo.repository import RepoRepository
+from app.backend_common.repository.user_teams.user_team_repository import UserTeamRepository
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -77,6 +81,98 @@ class PRReviewManager(BasePRReviewManager):
         except Exception as e:
             AppLogger.log_error(f"Unable to review PR: {e}")
             raise
+
+    @classmethod
+    async def handle_non_reviewable_request(cls, data: Dict[str, Any]) -> None:
+        """Handle non-reviewable requests by creating appropriate notifications and DB entries.
+
+        Args:
+            data (Dict[str, Any]): Dictionary containing necessary data for processing the request.
+        """
+        try:
+            repo_service, pr_service, comment_service = await cls.initialise_services(data)
+            pr_diff_handler = PRDiffHandler(pr_service)
+            affirmation_service = AffirmationService(data, comment_service)
+
+            pre_processor = PRReviewPreProcessor(
+                repo_service=repo_service,
+                pr_service=pr_service,
+                comment_service=comment_service,
+                affirmation_service=affirmation_service,
+                pr_diff_handler=pr_diff_handler,
+            )
+            await pre_processor.handle_non_reviewable_request(data)
+
+        except Exception as ex:
+            AppLogger.log_error(f"Error while processing non-reviewable request: {ex}")
+            raise ex
+
+    @classmethod
+    async def notify_non_reviewable_request(cls, comment_service: BaseComment) -> None:
+        """Create comment notifying about skipped auto-review."""
+        await comment_service.create_pr_comment(
+            comment=PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.SKIPPED_AUTO_REVIEW.value],
+            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW")
+        )
+
+    @classmethod
+    async def create_non_reviewable_pr_entry(
+            cls,
+            repo_service: BaseRepo,
+            pr_service: BasePR,
+            pr_diff_handler: PRDiffHandler,
+            data: Dict[str, Any]
+    ) -> Optional[PullRequestDTO]:
+        """Create DB entry for non-reviewable PR similar to pre_processor logic."""
+
+        try:
+            # Fetch repo and workspace info
+            pr_model = pr_service.pr_model()
+            repo_dto = await RepoRepository.find_or_create_with_workspace_id(
+                pr_model.scm_workspace_id(), pr_model
+            )
+
+            if not repo_dto:
+                return None
+
+            user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
+                {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
+            )
+            if not user_team_dto or not user_team_dto.id:
+                raise Exception("Owner not found for the team")
+
+            # Get PR diff token count and loc changed
+            pr_diff_token_count = await pr_diff_handler.get_pr_diff_token_count()
+            loc_changed = await pr_service.get_loc_changed_count()
+
+            # Set meta info with SKIPPED_AUTO_REVIEW status
+            pr_model.meta_info = {
+                "review_status": PrStatusTypes.SKIPPED_AUTO_REVIEW.value,
+                "team_id": repo_dto.team_id,
+                "workspace_id": repo_dto.workspace_id,
+                "repo_id": repo_dto.id,
+                "tokens": pr_diff_token_count,
+            }
+
+            # Create new PR entry
+            pr_dto_data = {
+                **pr_model.get_pr_info(),
+                "pr_state": pr_model.scm_state(),
+                "loc_changed": loc_changed,
+            }
+
+            pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
+            if not pr_dto:
+                AppLogger.log_warn("Failed to create PR entry - possibly already exists")
+                return None
+
+            return pr_dto
+
+        except Exception as ex:
+            AppLogger.log_error(f"Error creating non-reviewable PR entry: {ex}")
+            raise ex
+
+
 
     @staticmethod
     def set_identifier(value: str):
@@ -339,3 +435,4 @@ class PRReviewManager(BasePRReviewManager):
         for comment in comments:
             display_name = agent_result.display_name
             comment.bucket = "_".join(display_name.upper().split())
+

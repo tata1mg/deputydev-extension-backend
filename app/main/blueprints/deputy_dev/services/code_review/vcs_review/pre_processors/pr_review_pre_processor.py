@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 
+from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.context_vars import set_context_values
@@ -28,7 +29,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     ExperimentStatusTypes,
     FeatureFlows,
     PRReviewExperimentSet,
-    PrStatusTypes,
+    PrStatusTypes, PR_REVIEW_POST_AFFIRMATION_MESSAGES,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
@@ -84,18 +85,18 @@ class PRReviewPreProcessor:
             is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
         )
         ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
-        # pr_state = self.pr_model.scm_state()
-        # # Declined and not raised by #review
-        # already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
-        #
-        # if already_declined or not self.is_reviewable_based_on_settings(setting):
-        #     self.is_valid = False
-        #     if already_declined:
-        #         self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
-        #     else:
-        #         self.review_status = PrStatusTypes.FEATURES_DISABLED.value
-        #     await self.run_validations()
-        #     return False, self.pr_dto
+        pr_state = self.pr_model.scm_state()
+        # Declined and not raised by #review
+        already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
+
+        if already_declined or not self.is_reviewable_based_on_settings(setting):
+            self.is_valid = False
+            if already_declined:
+                self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
+            else:
+                self.review_status = PrStatusTypes.FEATURES_DISABLED.value
+            await self.run_validations()
+            return False, self.pr_dto
 
         await self.insert_pr_record(repo_dto)
         await self.run_validations()
@@ -380,3 +381,68 @@ class PRReviewPreProcessor:
         if not is_repo_cloned:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value
+
+    async def handle_non_reviewable_request(self, data: Dict[str, Any]) -> None:
+        """Handle non-reviewable requests by creating appropriate notifications and DB entries.
+
+        Args:
+            data (Dict[str, Any]): Dictionary containing necessary data for processing the request.
+        """
+        try:
+            await self.notify_non_reviewable_request()
+            await self.create_non_reviewable_pr_entry(data)
+        except Exception as ex:
+            AppLogger.log_error(f"Error while processing non-reviewable request: {ex}")
+            raise ex
+
+    async def notify_non_reviewable_request(self) -> None:
+        """Create comment notifying about skipped auto-review."""
+        await self.comment_service.create_pr_comment(
+            comment=PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.SKIPPED_AUTO_REVIEW.value],
+            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW")
+        )
+
+    async def create_non_reviewable_pr_entry(self, data: Dict[str, Any]) -> Optional[PullRequestDTO]:
+        """Create DB entry for non-reviewable PR similar to pre_processor logic."""
+        try:
+            setting = await self.fetch_setting()
+            pr_model = self.pr_service.pr_model()
+            repo_dto = await RepoRepository.find_or_create_with_workspace_id(
+                pr_model.scm_workspace_id(), pr_model
+            )
+
+            if not repo_dto:
+                return None
+
+            user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
+                {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
+            )
+            if not user_team_dto or not user_team_dto.id:
+                raise Exception("Owner not found for the team")
+
+            pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
+            loc_changed = await self.pr_service.get_loc_changed_count()
+
+            pr_model.meta_info = {
+                "review_status": PrStatusTypes.SKIPPED_AUTO_REVIEW.value,
+                "team_id": repo_dto.team_id,
+                "workspace_id": repo_dto.workspace_id,
+                "repo_id": repo_dto.id,
+                "tokens": pr_diff_token_count,
+            }
+
+            pr_dto_data = {
+                **pr_model.get_pr_info(),
+                "pr_state": pr_model.scm_state(),
+                "loc_changed": loc_changed,
+            }
+
+            pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
+            if not pr_dto:
+                return
+
+            return pr_dto
+
+        except Exception as ex:
+            AppLogger.log_error(f"Error creating non-reviewable PR entry: {ex}")
+            raise ex
