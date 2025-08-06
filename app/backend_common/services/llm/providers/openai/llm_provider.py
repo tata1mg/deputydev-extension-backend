@@ -91,12 +91,7 @@ class OpenAI(BaseLLMProvider):
         response_input_content_list: List[ResponseInputContentParam] = []
         for turn_content in conversation_turn.content:
             if isinstance(turn_content, UnifiedTextConversationTurnContent):
-                response_input_content_list.append(
-                    ResponseInputTextParam(
-                        text=turn_content.text,
-                        type="input_text"
-                    )
-                )
+                response_input_content_list.append(ResponseInputTextParam(text=turn_content.text, type="input_text"))
 
             if isinstance(turn_content, UnifiedImageConversationTurnContent):
                 response_input_content_list.append(
@@ -104,16 +99,11 @@ class OpenAI(BaseLLMProvider):
                         detail="auto",
                         type="input_image",
                         file_id=None,
-                        image_url=f"data:{turn_content.image_mimetype};base64,{base64.b64encode(turn_content.bytes_data).decode('utf-8')}"
+                        image_url=f"data:{turn_content.image_mimetype};base64,{base64.b64encode(turn_content.bytes_data).decode('utf-8')}",
                     )
                 )
 
-
-
-        return Message(
-                        content=response_input_content_list,
-                        role="user"
-                    )
+        return Message(content=response_input_content_list, role="user")
 
     def _get_openai_response_item_param_from_assistant_conversation_turn(
         self, conversation_turn: AssistantConversationTurn
@@ -121,33 +111,32 @@ class OpenAI(BaseLLMProvider):
         final_input_params: List[ResponseInputItemParam] = []
         for turn_content in conversation_turn.content:
             if isinstance(turn_content, UnifiedTextConversationTurnContent):
-                final_input_params.append(
-                    EasyInputMessageParam(
-                        role="assistant",
-                        content=turn_content.text
-                    )
-                )
+                final_input_params.append(EasyInputMessageParam(role="assistant", content=turn_content.text))
 
             if isinstance(turn_content, UnifiedToolRequestConversationTurnContent):
                 # append the tool call
-                final_input_params.append(ResponseFunctionToolCallParam(
-                    type="function_call",
-                    call_id=turn_content.tool_use_id,
-                    name=turn_content.tool_name,
-                    arguments=json.dumps(turn_content.tool_input, sort_keys=True)
-                ))
-
+                final_input_params.append(
+                    ResponseFunctionToolCallParam(
+                        type="function_call",
+                        call_id=turn_content.tool_use_id,
+                        name=turn_content.tool_name,
+                        arguments=json.dumps(turn_content.tool_input, sort_keys=True),
+                    )
+                )
 
         return final_input_params
 
     def _get_openai_response_item_param_from_tool_conversation_turn(
         self, conversation_turn: ToolConversationTurn
     ) -> List[ResponseInputItemParam]:
-        return [FunctionCallOutput(
-            call_id=turn_content.tool_use_id,
-            type="function_call_output",
-            output=json.dumps(turn_content.tool_use_response)
-        ) for turn_content in conversation_turn.content]
+        return [
+            FunctionCallOutput(
+                call_id=turn_content.tool_use_id,
+                type="function_call_output",
+                output=json.dumps(turn_content.tool_use_response),
+            )
+            for turn_content in conversation_turn.content
+        ]
 
     async def _get_openai_response_input_params_from_conversation_turns(
         self, conversation_turns: List[UnifiedConversationTurn]
@@ -156,15 +145,21 @@ class OpenAI(BaseLLMProvider):
 
         for turn in conversation_turns:
             if isinstance(turn, UserConversationTurn):
-                contents_arr.append(self._get_openai_response_item_param_from_user_conversation_turn(conversation_turn=turn))
+                contents_arr.append(
+                    self._get_openai_response_item_param_from_user_conversation_turn(conversation_turn=turn)
+                )
             elif isinstance(turn, AssistantConversationTurn):
-                contents_arr.extend(self._get_openai_response_item_param_from_assistant_conversation_turn(conversation_turn=turn))
+                contents_arr.extend(
+                    self._get_openai_response_item_param_from_assistant_conversation_turn(conversation_turn=turn)
+                )
             else:
-                contents_arr.extend(self._get_openai_response_item_param_from_tool_conversation_turn(conversation_turn=turn))
+                contents_arr.extend(
+                    self._get_openai_response_item_param_from_tool_conversation_turn(conversation_turn=turn)
+                )
 
         return contents_arr
 
-    async def build_llm_payload(
+    async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
         attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
@@ -209,10 +204,14 @@ class OpenAI(BaseLLMProvider):
             formatted_tools = sorted(formatted_tools, key=lambda x: x["name"])
             tool_choice = tool_choice if tool_choice else "auto"
 
-        if previous_responses:
+        if previous_responses and not previous_conversation_turns:
             messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
+        elif previous_conversation_turns:
+            messages = await self._get_openai_response_input_params_from_conversation_turns(
+                conversation_turns=previous_conversation_turns
+            )
 
-        if prompt and prompt.user_message:
+        if prompt and prompt.user_message and not previous_conversation_turns:
             user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
             if attachments:
                 for attachment in attachments:
@@ -228,7 +227,7 @@ class OpenAI(BaseLLMProvider):
                         )
             messages.append(user_message)
 
-        if tool_use_response:
+        if tool_use_response and not previous_conversation_turns:
             tool_response = {
                 "type": "function_call_output",
                 "call_id": tool_use_response.content.tool_use_id,
