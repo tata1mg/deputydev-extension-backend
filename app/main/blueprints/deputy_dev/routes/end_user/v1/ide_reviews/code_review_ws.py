@@ -46,7 +46,7 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 @ide_review_websocket.route("/legacy-run-agent", methods=["POST"])
 @validate_client_version
 @authenticate
-async def run_extension_agent(request: Request, **kwargs):
+async def run_extension_agent(request: Request, **kwargs):  # noqa: ANN201
     """
     Run an agent for extension code review.
 
@@ -68,7 +68,7 @@ async def run_extension_agent(request: Request, **kwargs):
 @ide_review_websocket.route("/legacy-post-process", methods=["POST"])
 @validate_client_version
 @authenticate
-async def legacy_post_process(request: Request, **kwargs):
+async def legacy_post_process(request: Request, **kwargs):  # noqa: ANN201
     data = request.json
     processor = IdeReviewPostProcessor()
     await processor.post_process_pr(data, user_team_id=1)
@@ -116,7 +116,8 @@ async def run_multi_agent_review(_request: Request, **kwargs):
 
     try:
         auth_data, _ = await get_auth_data(_request)
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        AppLogger.log_error(f"Unable to Authenticate user: Error: {e}")
         auth_error = True
         auth_data = None
 
@@ -126,7 +127,8 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         await manager.push_to_connection_stream(
             WebSocketMessage(
                 type="AGENT_FAIL", data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
-            )
+            ),
+            local_testing_stream_buffer,
         )
         return send_response({"status": "SESSION_EXPIRED"})
 
@@ -235,7 +237,7 @@ async def multi_agent_websocket_local(request: Request, ws) -> None:
 
 
 @ide_review_websocket.route("/post-process", methods=["POST"])
-async def post_process_extension_review(_request: Request, **kwargs):
+async def post_process_extension_review(_request: Request, **kwargs):  # noqa: ANN201
     connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
     is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 
