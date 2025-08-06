@@ -38,7 +38,6 @@ from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
-    ConversationTurn,
     LLMCallResponseTypes,
     NonStreamingResponse,
     PromptCacheConfig,
@@ -57,6 +56,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
@@ -83,7 +83,7 @@ class OpenRouter(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[ConversationTurn] = [],
+        previous_conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         """XP
         Formats the conversation for OpenRouter's GPT model.
