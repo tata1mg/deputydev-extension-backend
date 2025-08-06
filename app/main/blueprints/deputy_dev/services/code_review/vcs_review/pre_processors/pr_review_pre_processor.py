@@ -9,6 +9,7 @@ from torpedo import CONFIG
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
+from app.backend_common.models.dto.workspace_dto import WorkspaceDTO
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
@@ -57,7 +58,7 @@ class PRReviewPreProcessor:
         comment_service: BaseComment,
         affirmation_service: AffirmationService,
         pr_diff_handler: PRDiffHandler,
-    ):
+    ) -> None:
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.comment_service = comment_service
@@ -109,19 +110,19 @@ class PRReviewPreProcessor:
         """Check if the PR is reviewable based on settings."""
         return setting["code_review_agent"]["enable"] or setting["pr_summary"]["enable"]
 
-    async def fetch_setting(self):
+    async def fetch_setting(self) -> Dict[str, Any]:
         workspace_dto = await self.fetch_workspace()
         setting = await SettingService(self.repo_service, workspace_dto.team_id).build()
         return setting
 
-    async def fetch_workspace(self):
+    async def fetch_workspace(self) -> WorkspaceDTO:
         workspace_dto = await WorkspaceService.find(
             scm_workspace_id=self.pr_model.scm_workspace_id(), scm=self.pr_model.scm_type()
         )
         set_context_values(workspace_id=workspace_dto.id, team_id=workspace_dto.team_id)
         return workspace_dto
 
-    def get_is_reviewable_request(self, experiment_set):
+    def get_is_reviewable_request(self, experiment_set) -> bool:
         # if PR is eligible of experiment
         if ExperimentService.is_eligible_for_experiment() and experiment_set == PRReviewExperimentSet.ReviewTest.value:
             return True
@@ -131,7 +132,7 @@ class PRReviewPreProcessor:
             return True
         return False
 
-    async def insert_pr_record(self, repo_dto):
+    async def insert_pr_record(self, repo_dto) -> None:
         self.pr_dto = await self.process_pr_record(repo_dto)
         if self.pr_dto:
             set_context_values(team_id=self.pr_dto.team_id)
