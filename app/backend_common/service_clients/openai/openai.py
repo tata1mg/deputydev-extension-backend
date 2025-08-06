@@ -16,7 +16,7 @@ from openai.types.shared_params.response_format_text import ResponseFormatText
 from openai.types.shared_params.responses_model import ResponsesModel
 
 
-from openai.types.responses import ResponseInputParam
+from openai.types.responses import ResponseInputParam, ResponseInputItemParam
 from openai.types.responses.response_create_params import ToolChoice
 from pydantic import BaseModel
 from torpedo import CONFIG
@@ -140,7 +140,7 @@ class OpenAIServiceClient(metaclass=Singleton):
 
     def _create_valid_responses_params(
         self,
-        conversation_messages: ResponseInputParam,
+        conversation_messages: List[ResponseInputItemParam],
         model: ResponsesModel,
         response_text_config: ResponseTextConfigParam,
         tool_choice: Optional[ToolChoice] = None,
@@ -184,7 +184,7 @@ class OpenAIServiceClient(metaclass=Singleton):
 
     async def get_llm_stream_response(
         self,
-        conversation_messages: ResponseInputParam,
+        conversation_messages: List[ResponseInputItemParam],
         model: ResponsesModel,
         tool_choice: Optional[ToolChoice] = None,
         tools: Optional[List[Dict[str, Any]]] = None,

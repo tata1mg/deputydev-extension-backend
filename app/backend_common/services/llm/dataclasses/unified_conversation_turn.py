@@ -46,11 +46,18 @@ UnifiedUserConversationTurnContent = Annotated[
     Union[
         UnifiedTextConversationTurnContent,
         UnifiedImageConversationTurnContent,
-        UnifiedToolRequestConversationTurnContent,
     ],
     Field(discriminator="type"),
 ]
 
+
+UnifiedAssistantConversationTurnContent = Annotated[
+    Union[
+        UnifiedTextConversationTurnContent,
+        UnifiedToolRequestConversationTurnContent,
+    ],
+    Field(discriminator="type"),
+]
 
 class ToolConversationTurn(BaseModel):
     role: Literal[UnifiedConversationRole.TOOL] = UnifiedConversationRole.TOOL
@@ -64,7 +71,7 @@ class UserConversationTurn(BaseModel):
 
 class AssistantConversationTurn(BaseModel):
     role: Literal[UnifiedConversationRole.ASSISTANT] = UnifiedConversationRole.ASSISTANT
-    content: List[UnifiedTextConversationTurnContent]
+    content: List[UnifiedAssistantConversationTurnContent]
 
 
 UnifiedConversationTurn = Annotated[
