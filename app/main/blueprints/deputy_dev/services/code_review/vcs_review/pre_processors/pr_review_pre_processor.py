@@ -27,7 +27,6 @@ from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
 )
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
-    PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     PR_SIZE_TOO_BIG_MESSAGE,
     ExperimentStatusTypes,
     FeatureFlows,
@@ -392,18 +391,10 @@ class PRReviewPreProcessor:
             data (Dict[str, Any]): Dictionary containing necessary data for processing the request.
         """
         try:
-            await self.notify_non_reviewable_request()
             await self.create_non_reviewable_pr_entry(data)
         except Exception as ex:
             AppLogger.log_error(f"Error while processing non-reviewable request: {ex}")
             raise ex
-
-    async def notify_non_reviewable_request(self) -> None:
-        """Create comment notifying about skipped auto-review."""
-        await self.comment_service.create_pr_comment(
-            comment=PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.SKIPPED_AUTO_REVIEW.value],
-            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW"),
-        )
 
     async def create_non_reviewable_pr_entry(self, data: Dict[str, Any]) -> Optional[PullRequestDTO]:
         """Create DB entry for non-reviewable PR similar to pre_processor logic."""
