@@ -6,6 +6,7 @@ from app.main.blueprints.deputy_dev.models.issue_comment_request import (
     IssueCommentRequest,
 )
 from app.main.blueprints.deputy_dev.utils import remove_special_char
+
 from .webhook_utils import should_skip_trayalabs_request
 
 

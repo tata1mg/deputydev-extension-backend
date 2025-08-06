@@ -6,6 +6,7 @@ from app.backend_common.utils.app_utils import (
 from app.main.blueprints.deputy_dev.models.human_comment_request import (
     HumanCommentRequest,
 )
+
 from .webhook_utils import should_skip_trayalabs_request
 
 
