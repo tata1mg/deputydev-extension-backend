@@ -104,7 +104,7 @@ class CodeReviewTrigger:
         return await cls.__process_review_request(code_review_request, is_skipped_auto_review_request)
 
     @classmethod
-    async def __notify_pr_review_initiation(cls, payload):  # Private method
+    async def __notify_pr_review_initiation(cls, payload: dict) -> None:  # Private method
         repo_name, pr_id, workspace, scm_workspace_id, repo_id, workspace_slug, vcs_type = (
             payload.get("repo_name"),
             payload.get("pr_id"),

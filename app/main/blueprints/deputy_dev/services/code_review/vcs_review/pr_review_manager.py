@@ -141,11 +141,9 @@ class PRReviewManager(BasePRReviewManager):
             if not user_team_dto or not user_team_dto.id:
                 raise Exception("Owner not found for the team")
 
-            # Get PR diff token count and loc changed
             pr_diff_token_count = await pr_diff_handler.get_pr_diff_token_count()
             loc_changed = await pr_service.get_loc_changed_count()
 
-            # Set meta info with SKIPPED_AUTO_REVIEW status
             pr_model.meta_info = {
                 "review_status": PrStatusTypes.SKIPPED_AUTO_REVIEW.value,
                 "team_id": repo_dto.team_id,
@@ -175,7 +173,7 @@ class PRReviewManager(BasePRReviewManager):
 
 
     @staticmethod
-    def set_identifier(value: str):
+    def set_identifier(value: str) -> None:
         """Set repo_name or any other value to the contextvar identifier
 
         Args:
