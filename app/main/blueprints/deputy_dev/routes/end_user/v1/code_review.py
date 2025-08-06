@@ -30,7 +30,7 @@ config = CONFIG.config
 
 @smart_code.route("/", methods=["POST"])
 @exception_logger
-async def publish_code_review(_request: Request, **kwargs):
+async def publish_code_review(_request: Request, **kwargs):  # noqa: ANN201
     payload = _request.custom_json()
     headers = _request.headers
     query_params = _request.request_params()
@@ -42,7 +42,7 @@ async def publish_code_review(_request: Request, **kwargs):
 
 # For testing directly on local without queue, not used in PRODUCTION
 @smart_code.route("/without_queue", methods=["POST"])
-async def review_pr_in_sync(_request: Request, **kwargs):
+async def review_pr_in_sync(_request: Request, **kwargs):  # noqa: ANN201
     payload = _request.custom_json()
     headers = _request.headers
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
@@ -55,7 +55,7 @@ async def review_pr_in_sync(_request: Request, **kwargs):
 
 @smart_code.route("/chat", methods=["POST"])
 @exception_logger
-async def chat_assistance_api(_request: Request, **kwargs):
+async def chat_assistance_api(_request: Request, **kwargs):  # noqa: ANN201
     payload = _request.custom_json()
     query_params = _request.request_params()
     headers = _request.headers
@@ -68,7 +68,7 @@ async def chat_assistance_api(_request: Request, **kwargs):
 
 @smart_code.route("/stats-collection", methods=["POST"])
 @exception_logger
-async def compute_pr_close_metrics(_request: Request, **kwargs):
+async def compute_pr_close_metrics(_request: Request, **kwargs):  # noqa: ANN201
     logger.info("Request received for stats-collection")
     payload = _request.custom_json()
     query_params = _request.request_params()
@@ -79,7 +79,7 @@ async def compute_pr_close_metrics(_request: Request, **kwargs):
 # The below url is temporary to carter the merge flow, once the "/stats-collection" url is integrated,
 # the API below will be deprecated.
 @smart_code.route("/merge", methods=["POST"])
-async def compute_merge_metrics(_request: Request, **kwargs):
+async def compute_merge_metrics(_request: Request, **kwargs):  # noqa: ANN201
     payload = _request.custom_json()
     query_params = _request.request_params()
     await StatsCollectionTrigger().select_stats_and_publish(payload=payload, query_params=query_params)
@@ -89,7 +89,7 @@ async def compute_merge_metrics(_request: Request, **kwargs):
 # The route defined below acts like a script, which when called upon is used to backfill data.
 # These are supposed to be one time activity, so please use this route accordingly
 @smart_code.route("/backfill_pr_data", methods=["POST"])
-async def update_pr_data(_request: Request, **kwargs):
+async def update_pr_data(_request: Request, **kwargs):  # noqa: ANN201
     query_params = _request.request_params()
     app = Sanic.get_app(CONFIG.config["NAME"])
     if query_params.get("type") == "pr_state_experiments_update":
@@ -104,7 +104,7 @@ async def update_pr_data(_request: Request, **kwargs):
 
 
 @smart_code.route("/test_chunking", methods=["POST"])
-async def test_chunking(_request: Request, **kwargs):
+async def test_chunking(_request: Request, **kwargs):  # noqa: ANN201
     payload = _request.custom_json()
     headers = _request.headers
     request_id = headers.get("X-REQUEST-ID", "No request_id found")
