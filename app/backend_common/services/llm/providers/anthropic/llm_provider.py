@@ -62,6 +62,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
@@ -181,7 +182,7 @@ class Anthropic(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[ConversationTurn] = [],
+        previous_conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
