@@ -22,6 +22,9 @@ from app.main.blueprints.deputy_dev.utils import (
     is_request_from_blocked_repo,
     update_payload_with_jwt_data,
 )
+from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pr_review_manager import (
+    PRReviewManager,
+)
 
 config = CONFIG.config
 
@@ -54,7 +57,7 @@ class CodeReviewTrigger:
             raise BadRequestException(f"Invalid PR review request with error {ex.errors()}")
 
     @classmethod
-    async def __process_review_request(cls, code_review_request: CodeReviewRequest):  # Private method
+    async def __process_review_request(cls, code_review_request: CodeReviewRequest, is_skipped_auto_review_request: bool):  # Private method
         """
         Validates the repository and pushes the request to the appropriate queue.
         Args:
@@ -62,6 +65,9 @@ class CodeReviewTrigger:
         Returns:
             str: Acknowledgment message indicating processing status.
         """
+        if is_skipped_auto_review_request:
+            await PRReviewManager.handle_non_reviewable_request(code_review_request.dict())
+            return
         if not is_request_from_blocked_repo(code_review_request.repo_name):
             logger.info("Whitelisted request: {}".format(code_review_request))
             await cls.__notify_pr_review_initiation(code_review_request.dict())
@@ -75,23 +81,27 @@ class CodeReviewTrigger:
             )
             return f"Currently we are not serving: {code_review_request.repo_name}"
 
+
+
     @classmethod
-    async def perform_review(cls, payload: dict, query_params: dict):
+    async def perform_review(cls, payload: dict, query_params: dict, is_manual_review: bool = True):
         """
         Triggers code review
         Args:
             payload (dict): payload from webhook or
-            query_params (dict): request quaer params: contains a jwt token
+            query_params (dict): request query params: contains a jwt token
+            is_manual_review (bool): if manual review
         Returns:
             PR review acknowledgments
         """
+        is_skipped_auto_review_request = is_manual_review or config.get("AUTO_REVIEW_ENABLED")
         pr_review_start_time = datetime.now(timezone.utc)
         payload["pr_review_start_time"] = pr_review_start_time.isoformat()
         code_review_request = await cls.__preprocess_review_payload(payload, query_params)
         if not code_review_request:
             return
 
-        return await cls.__process_review_request(code_review_request)
+        return await cls.__process_review_request(code_review_request, is_skipped_auto_review_request)
 
     @classmethod
     async def __notify_pr_review_initiation(cls, payload):  # Private method
