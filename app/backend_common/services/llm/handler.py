@@ -53,6 +53,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
     BasePromptFeatureFactory,
@@ -412,7 +413,7 @@ class LLMHandler(Generic[PromptFeatures]):
         checker: CancellationChecker = None,
         parallel_tool_calls: bool = False,
         text_format: Optional[Type[BaseModel]] = None,
-        previous_conversation_turns: List[ConversationTurn] = [],
+        previous_conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> ParsedLLMCallResponse:
         """
         Fetch LLM response and parse it with retry logic
@@ -667,7 +668,7 @@ class LLMHandler(Generic[PromptFeatures]):
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
         previous_responses: List[int] = [],
-        previous_conversation_turns: List[ConversationTurn] = [],
+        previous_conversation_turns: List[UnifiedConversationTurn] = [],
         stream: bool = False,
         call_chain_category: MessageCallChainCategory = MessageCallChainCategory.CLIENT_CHAIN,
         search_web: bool = False,
