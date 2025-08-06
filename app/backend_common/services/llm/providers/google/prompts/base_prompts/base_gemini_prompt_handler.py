@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import MessageData
 from app.backend_common.services.llm.dataclasses.main import (
+    MalformedToolUseRequest,
     StreamingEvent,
     StreamingEventType,
     TextBlockDelta,
@@ -32,7 +33,7 @@ class BaseGeminiPromptHandler(BasePrompt):
         raise NotImplementedError("This method must be implemented in the child class")
 
     @classmethod
-    async def parse_streaming_text_block_events(
+    async def parse_streaming_text_block_events(  # noqa: C901
         cls, events: AsyncIterator[StreamingEvent], parsers: List[BaseGoogleTextDeltaParser]
     ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
         xml_tags_to_paraser_map = {parser.xml_tag: parser for parser in parsers}
@@ -55,6 +56,7 @@ class BaseGeminiPromptHandler(BasePrompt):
                 isinstance(event, ToolUseRequestStart)
                 or isinstance(event, ToolUseRequestEnd)
                 or isinstance(event, ToolUseRequestDelta)
+                or isinstance(event, MalformedToolUseRequest)
             ):
                 yield event
                 continue

@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
 from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import (
@@ -68,6 +68,7 @@ class QuerySolverAgentSelector:
             session_id=self.session_id,
             llm_model=LLModels.GPT_4_POINT_1_MINI,
             prompt_feature=PromptFeatures.INTENT_SELECTOR,
+            call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
         )
 
         if not isinstance(selected_intent, NonStreamingParsedLLMCallResponse):
