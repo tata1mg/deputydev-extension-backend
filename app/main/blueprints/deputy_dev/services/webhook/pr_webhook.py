@@ -7,6 +7,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     GitlabActions,
 )
+
 from .webhook_utils import should_skip_trayalabs_request
 
 

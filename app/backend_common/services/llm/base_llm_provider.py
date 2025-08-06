@@ -14,7 +14,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.llm.dataclasses.main import (
     ChatAttachmentDataWithObjectBytes,
     ConversationTool,
-    ConversationTurn,
     PromptCacheConfig,
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
