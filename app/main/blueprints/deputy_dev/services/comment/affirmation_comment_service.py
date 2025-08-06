@@ -3,7 +3,6 @@ from torpedo import CONFIG
 from app.main.blueprints.deputy_dev.caches.affirmation import AffirmationCache
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
-    PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 
@@ -11,7 +10,7 @@ config = CONFIG.config
 
 
 class AffirmationService:
-    def __init__(self, data: dict, comment_service: BaseComment):
+    def __init__(self, data: dict, comment_service: BaseComment) -> None:
         self.comment_service = comment_service
         self.cache_key = (
             f"AFFIRMATION_COMMENT_{data['workspace']}_{data['repo_name']}_{data['pr_id']}_{data['request_id']}"
