@@ -1,3 +1,4 @@
+from typing import Optional
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.utils.app_utils import (
     get_gitlab_workspace_slug,
@@ -16,7 +17,7 @@ class PRWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload):
+    async def parse_payload(cls, payload: dict) -> Optional[dict]:
         vcs_type = payload.get("vcs_type")
         if should_skip_trayalabs_request(payload):
             return None
@@ -29,12 +30,14 @@ class PRWebhook:
             return parsed_payload
 
     @classmethod
-    def __parse_bitbucket_payload(cls, bitbucket_payload):
+    def __parse_bitbucket_payload(cls, bitbucket_payload: dict) -> Optional[dict]:
         """
         Generates servable payload from bitbucket payload
         """
         pr_id = bitbucket_payload["pullrequest"]["id"]
         repo_name = get_vcs_repo_name_slug(bitbucket_payload["repository"]["full_name"])
+        html_url = bitbucket_payload["repository"]["links"]["html"]["href"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
         request_id = bitbucket_payload["request_id"]
         workspace = bitbucket_payload["repository"]["workspace"]["name"]
         workspace_slug = bitbucket_payload["repository"]["workspace"]["slug"]
@@ -45,6 +48,7 @@ class PRWebhook:
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
+            "repo_origin": repo_origin,
             "request_id": request_id,
             "workspace": workspace,
             "workspace_id": scm_workspace_id,
@@ -55,7 +59,7 @@ class PRWebhook:
         }
 
     @classmethod
-    def __parse_github_payload(cls, github_payload):
+    def __parse_github_payload(cls, github_payload: dict) -> Optional[dict]:
         """
         Generates servable payload from github payload
         """
@@ -67,6 +71,8 @@ class PRWebhook:
 
         pr_id = github_payload["pull_request"]["number"]
         repo_name = get_vcs_repo_name_slug(github_payload["pull_request"]["head"]["repo"]["full_name"])
+        html_url = github_payload["repository"]["html_url"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
         request_id = github_payload["request_id"]
         workspace = github_payload["organization"]["login"]
         workspace_slug = github_payload["organization"]["login"]
@@ -77,6 +83,7 @@ class PRWebhook:
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
+            "repo_origin": repo_origin,
             "request_id": request_id,
             "workspace": workspace,
             "workspace_id": scm_workspace_id,
@@ -87,7 +94,7 @@ class PRWebhook:
         }
 
     @classmethod
-    def __parse_github_issue_comment_payload(cls, payload):
+    def __parse_github_issue_comment_payload(cls, payload: dict) -> Optional[dict]:
         """
         Parse GitHub issue comment payload for PR conversation comments
         Only handles comments created on PR conversation
@@ -100,10 +107,13 @@ class PRWebhook:
         pr_url = payload["issue"]["pull_request"]["url"]
         pr_id = pr_url.split("/")[-1]
         pr_review_start_time = payload.get("pr_review_start_time")
+        html_url = payload["repository"]["html_url"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
 
         return {
             "pr_id": int(pr_id),
             "repo_name": get_vcs_repo_name_slug(payload["repository"]["full_name"]),
+            "repo_origin": repo_origin,
             "request_id": payload["request_id"],
             "workspace": payload["organization"]["login"],
             "workspace_id": str(payload.get("scm_workspace_id")),
@@ -114,7 +124,7 @@ class PRWebhook:
         }
 
     @classmethod
-    async def __parse_gitlab_payload(cls, gitlab_payload):
+    async def __parse_gitlab_payload(cls, gitlab_payload: dict) -> Optional[dict]:
         """
         Generates servable payload from gitlab merge request (MR) payload
         """
@@ -122,9 +132,11 @@ class PRWebhook:
             gitlab_payload.get("object_kind") == "merge_request"
             and gitlab_payload.get("object_attributes", {}).get("state") != GitlabActions.OPENED.value
         ):
-            return
+            return None
         pr_id = gitlab_payload["object_attributes"]["iid"]
         repo_name = get_vcs_repo_name_slug(gitlab_payload["project"]["path_with_namespace"])
+        html_url = gitlab_payload["project"]["web_url"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
         request_id = gitlab_payload["request_id"]
         workspace = gitlab_payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(gitlab_payload["project"]["path_with_namespace"])
@@ -137,6 +149,7 @@ class PRWebhook:
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
+            "repo_origin": repo_origin,
             "request_id": str(request_id),
             "workspace": workspace,
             "workspace_id": scm_workspace_id,
