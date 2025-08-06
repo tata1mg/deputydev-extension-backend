@@ -71,6 +71,7 @@ class PRReviewManager(BasePRReviewManager):
         try:
             CodeReviewRequest(**data)
             logger.info("Received MessageQueue Message: {}".format(data))
+            set_context_values(repo_origin=data.get("repo_origin"))
             if not data.get("is_review_enabled"):
                 return await PRReviewManager.handle_non_reviewable_request(data)
             await cls.process_pr_review(data=data)
