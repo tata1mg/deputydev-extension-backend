@@ -5,4 +5,4 @@ from app.backend_common.services.llm.providers.openrouter_models.prompts.base_pr
 
 
 class BaseQwen3CoderPrompt(BaseOpenrouterModelPromptHandler):
-    model_name = LLModels.OPENROUTER_QWEN_3_CODER
+    model_name = LLModels.QWEN_3_CODER

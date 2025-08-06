@@ -38,7 +38,6 @@ class ConversationRole(Enum):
 class ConversationRoleGemini(Enum):
     USER = "user"
     MODEL = "model"
-    TOOL = "tool"
 
 
 class ConversationTurn(BaseModel):

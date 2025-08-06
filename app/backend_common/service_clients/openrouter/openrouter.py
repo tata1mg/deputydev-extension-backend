@@ -57,6 +57,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
         self,
         *,
         model: str,
+        session_id: int,
         models: Optional[List[str]] = None,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
@@ -69,7 +70,6 @@ class OpenRouterServiceClient(metaclass=Singleton):
         provider: Optional[Dict[str, Any]] = None,
         response_format: Optional[Literal["text", "json_object", "json_schema"]] = None,
         structured_outputs: Optional[bool] = None,
-        **extra: Any,
     ) -> ChatCompletion:
         """
         Send a chat completion. Returns the full `ChatCompletion` object.
@@ -89,7 +89,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
             provider=provider,
             response_format=response_format,
             structured_outputs=structured_outputs,
-            **extra,
+            session_id=session_id,
         )
 
         response: ChatCompletion = await self._client.chat.completions.create(**kwargs)  # type: ignore[arg-type]
@@ -110,8 +110,8 @@ class OpenRouterServiceClient(metaclass=Singleton):
         provider: Optional[Dict[str, Any]] = None,
         response_format: ResponseType = "text",
         structured_outputs: Optional[bool] = None,
+        parallel_tool_calls: bool = False,
         session_id: int,
-        **extra: Any,
     ) -> AsyncIterator[ResponseStreamEvent]:
         """
         Convenience alias that always streams.
@@ -130,7 +130,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
             response_format=response_format,
             structured_outputs=structured_outputs,
             session_id=session_id,
-            **extra,
+            parallel_tool_calls=parallel_tool_calls,
         )
 
         # type: ignore[arg-type]
@@ -147,13 +147,13 @@ class OpenRouterServiceClient(metaclass=Singleton):
 
     @staticmethod
     def _build_common_kwargs(
-        *,
         model: str,
         messages: List[ChatCompletionMessageParam],
         tools: Optional[List[ChatCompletionToolParam]],
         tool_choice: ToolChoice,
         parallel_tool_calls: bool,
         stream: bool,
+        session_id: int,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         transformation: Optional[List[str]] = None,
@@ -161,8 +161,6 @@ class OpenRouterServiceClient(metaclass=Singleton):
         provider: Optional[Dict[str, Any]] = None,
         response_format: Optional[str] = None,
         structured_outputs: Optional[bool] = None,
-        session_id: int,
-        **extra: Any,
     ) -> Dict[str, Any]:
         base: Dict[str, Any] = {
             "model": model,
@@ -184,9 +182,6 @@ class OpenRouterServiceClient(metaclass=Singleton):
                 "X-Title": "DeputyDev: AI Powered Developer Assistant",
             },
         }
-
-        # Add any remaining extra fields (future-proofing)
-        base.update(extra)
 
         # Remove keys with None values to slim the payload
         return {k: v for k, v in base.items() if v is not None}

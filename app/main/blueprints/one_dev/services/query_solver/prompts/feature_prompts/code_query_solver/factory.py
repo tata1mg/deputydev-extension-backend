@@ -47,8 +47,8 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.GPT_4_POINT_1: Gpt4Point1Prompt,
         LLModels.CLAUDE_4_SONNET: Claude4CodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_QWEN_3_CODER: Qwen3CoderQuerySolverPromptHandler,
-        LLModels.OPENROUTER_KIMI_K2: KimiK2QuerySolverPromptHandler,
+        LLModels.QWEN_3_CODER: Qwen3CoderQuerySolverPromptHandler,
+        LLModels.KIMI_K2: KimiK2QuerySolverPromptHandler,
     }
 
     @classmethod
