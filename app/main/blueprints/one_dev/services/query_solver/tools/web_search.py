@@ -1,8 +1,10 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 WEB_SEARCH = ConversationTool(
     name="web_search",
-    description="""
+    description=textwrap.dedent("""
         This is a built-in tool.
         Performs a real-time, AI-powered web search using a **detailed, natural language prompt** that includes relevant context such as code snippets, error messages, intent, or technology stack.
 
@@ -31,7 +33,7 @@ WEB_SEARCH = ConversationTool(
 
         Example Input:
         "I'm getting 'psycopg2.OperationalError: could not connect to server' when running Django with Postgres in Docker Compose. I suspect it's due to race condition on startup. Please find a 2024-recommended solution or wait-for-it script alternatives."
-    """,
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={
