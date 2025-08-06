@@ -1,13 +1,14 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.models.dto.workspace_dto import WorkspaceDTO
 from app.backend_common.repository.message_sessions.repository import (
@@ -26,11 +27,12 @@ from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
 )
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
+    PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     PR_SIZE_TOO_BIG_MESSAGE,
     ExperimentStatusTypes,
     FeatureFlows,
     PRReviewExperimentSet,
-    PrStatusTypes, PR_REVIEW_POST_AFFIRMATION_MESSAGES,
+    PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
@@ -122,7 +124,7 @@ class PRReviewPreProcessor:
         set_context_values(workspace_id=workspace_dto.id, team_id=workspace_dto.team_id)
         return workspace_dto
 
-    def get_is_reviewable_request(self, experiment_set) -> bool:
+    def get_is_reviewable_request(self, experiment_set: str) -> bool:
         # if PR is eligible of experiment
         if ExperimentService.is_eligible_for_experiment() and experiment_set == PRReviewExperimentSet.ReviewTest.value:
             return True
@@ -132,18 +134,18 @@ class PRReviewPreProcessor:
             return True
         return False
 
-    async def insert_pr_record(self, repo_dto) -> None:
+    async def insert_pr_record(self, repo_dto: RepoDTO) -> None:
         self.pr_dto = await self.process_pr_record(repo_dto)
         if self.pr_dto:
             set_context_values(team_id=self.pr_dto.team_id)
 
-    async def fetch_repo(self):
+    async def fetch_repo(self) -> RepoDTO:
         repo_dto = await RepoRepository.find_or_create_with_workspace_id(
             self.pr_model.scm_workspace_id(), self.pr_model
         )
         return repo_dto
 
-    async def process_pr_record(self, repo_dto) -> Optional[PullRequestDTO]:
+    async def process_pr_record(self, repo_dto: RepoDTO) -> Optional[PullRequestDTO]:
         """Process PR record creation/update logic"""
         if not repo_dto:
             return None
@@ -342,7 +344,7 @@ class PRReviewPreProcessor:
                 self.is_valid = False
                 self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
 
-    async def get_experiment_set(self) -> None:
+    async def get_experiment_set(self) -> str:
         if not ExperimentService.is_eligible_for_experiment() or not self.is_valid:
             return
         experiment_info = await ExperimentService.db_get({"repo_id": self.pr_dto.repo_id, "pr_id": self.pr_dto.id})
@@ -400,28 +402,22 @@ class PRReviewPreProcessor:
         """Create comment notifying about skipped auto-review."""
         await self.comment_service.create_pr_comment(
             comment=PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.SKIPPED_AUTO_REVIEW.value],
-            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW")
+            model=config.get("FEATURE_MODELS", {}).get("PR_REVIEW"),
         )
 
     async def create_non_reviewable_pr_entry(self, data: Dict[str, Any]) -> Optional[PullRequestDTO]:
         """Create DB entry for non-reviewable PR similar to pre_processor logic."""
         try:
-            setting = await self.fetch_setting()  # noqa : F841
             pr_model = self.pr_service.pr_model()
-            repo_dto = await RepoRepository.find_or_create_with_workspace_id(
-                pr_model.scm_workspace_id(), pr_model
-            )
-
+            repo_dto = await RepoRepository.find_or_create_with_workspace_id(pr_model.scm_workspace_id(), pr_model)
             if not repo_dto:
-                return None
+                return
 
             user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
                 {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
             )
             if not user_team_dto or not user_team_dto.id:
                 raise Exception("Owner not found for the team")
-
-            pr_diff_token_count = await self.pr_diff_handler.get_pr_diff_token_count()
             loc_changed = await self.pr_service.get_loc_changed_count()
 
             pr_model.meta_info = {
@@ -429,7 +425,6 @@ class PRReviewPreProcessor:
                 "team_id": repo_dto.team_id,
                 "workspace_id": repo_dto.workspace_id,
                 "repo_id": repo_dto.id,
-                "tokens": pr_diff_token_count,
             }
 
             pr_dto_data = {
@@ -437,11 +432,7 @@ class PRReviewPreProcessor:
                 "pr_state": pr_model.scm_state(),
                 "loc_changed": loc_changed,
             }
-
             pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
-            if not pr_dto:
-                return
-
             return pr_dto
 
         except Exception as ex:
