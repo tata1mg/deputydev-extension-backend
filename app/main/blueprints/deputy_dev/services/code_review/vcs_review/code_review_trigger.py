@@ -83,7 +83,7 @@ class CodeReviewTrigger:
 
 
     @classmethod
-    async def perform_review(cls, payload: dict, query_params: dict, is_manual_review: bool = True):
+    async def perform_review(cls, payload: dict, query_params: dict, is_manual_review: bool = False):
         """
         Triggers code review
         Args:
