@@ -15,7 +15,7 @@ from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.log_time import log_time
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
-    PrStatusTypes, PR_REVIEW_POST_AFFIRMATION_MESSAGES,
+    PrStatusTypes,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
@@ -55,9 +55,6 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
-from app.backend_common.models.dto.user_team_dto import UserTeamDTO
-from app.backend_common.repository.repo.repository import RepoRepository
-from app.backend_common.repository.user_teams.user_team_repository import UserTeamRepository
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -252,8 +249,8 @@ class PRReviewManager(BasePRReviewManager):
         session_id: int,
         execution_start_time: datetime,
         data: Dict[str, Any],
-        affirmation_service,
-        pr_dto,
+        affirmation_service: AffirmationService,
+        pr_dto: PullRequestDTO,
     ) -> Tuple[Optional[List[Dict[str, Any]]], Dict[str, Any], Dict[str, Any], bool]:
         """Post-process agent results to generate final comments and metadata.
 
@@ -362,7 +359,7 @@ class PRReviewManager(BasePRReviewManager):
         ).post_process_pr(pr_dto, final_comments, agents_tokens, is_large_pr, meta_info_to_save)
 
     @staticmethod
-    def _update_bucket_name(agent_result: AgentRunResult):
+    def _update_bucket_name(agent_result: AgentRunResult) -> None:
         """Update bucket names for agent result comments."""
         comments = agent_result.agent_result["comments"]
         for comment in comments:
