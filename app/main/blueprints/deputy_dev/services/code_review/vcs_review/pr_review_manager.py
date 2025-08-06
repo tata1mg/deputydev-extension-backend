@@ -71,6 +71,8 @@ class PRReviewManager(BasePRReviewManager):
         try:
             CodeReviewRequest(**data)
             logger.info("Received MessageQueue Message: {}".format(data))
+            if not data.get("is_review_enabled"):
+                return await PRReviewManager.handle_non_reviewable_request(data)
             await cls.process_pr_review(data=data)
             AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
@@ -130,7 +132,7 @@ class PRReviewManager(BasePRReviewManager):
         pre_processor = None
 
         try:
-            tokens_data, execution_start_time = None, datetime.now()
+            execution_start_time = datetime.now()
             pre_processor = PRReviewPreProcessor(
                 repo_service=repo_service,
                 pr_service=pr_service,
@@ -184,7 +186,7 @@ class PRReviewManager(BasePRReviewManager):
             repo_service.delete_local_repo()
 
     @classmethod
-    def check_no_pr_comments(cls, llm_response):
+    def check_no_pr_comments(cls, llm_response: List) -> bool:
         return not llm_response
 
     @classmethod
@@ -194,9 +196,9 @@ class PRReviewManager(BasePRReviewManager):
         repo_service: BaseRepo,
         comment_service: BaseComment,
         pr_service: BasePR,
-        prompt_version,
+        prompt_version: str,
         pr_diff_handler: PRDiffHandler,
-    ):
+    ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         valid_agents_and_init_params = cls.get_valid_agents_and_init_params_for_review()
         non_error_results, is_large_pr = await MultiAgentPRReviewManager(
             repo_service, pr_service, pr_diff_handler, session_id, prompt_version
@@ -238,7 +240,7 @@ class PRReviewManager(BasePRReviewManager):
         return valid_agents
 
     @classmethod
-    async def post_process_review_results(
+    async def post_process_review_results(  # noqa: C901
         cls,
         agent_results: List[AgentRunResult],
         is_large_pr: bool,
@@ -365,4 +367,3 @@ class PRReviewManager(BasePRReviewManager):
         for comment in comments:
             display_name = agent_result.display_name
             comment.bucket = "_".join(display_name.upper().split())
-
