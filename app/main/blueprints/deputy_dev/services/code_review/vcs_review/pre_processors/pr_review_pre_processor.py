@@ -298,7 +298,7 @@ class PRReviewPreProcessor:
             len(commit.get("parents", [])) > 1 for commit in commits[current_commit_index:last_review_commit_index]
         )
 
-    async def run_validations(self):
+    async def run_validations(self) -> None:
         self.validate_pr_state_for_review()
 
         if self.is_valid:
@@ -311,12 +311,12 @@ class PRReviewPreProcessor:
                 await self.update_pr_status(self.pr_dto)
             await self.process_invalid_prs()
 
-    async def process_invalid_prs(self):
+    async def process_invalid_prs(self) -> None:
         await self.affirmation_service.create_affirmation_reply(
             message_type=self.review_status, commit_id=self.pr_model.commit_id()
         )
 
-    async def validate_pr_diff(self):
+    async def validate_pr_diff(self) -> None:
         pr_diff = await self.pr_diff_handler.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
@@ -331,7 +331,7 @@ class PRReviewPreProcessor:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
 
-    def validate_pr_state_for_review(self):
+    def validate_pr_state_for_review(self) -> None:
         pr_state = self.pr_model.scm_state()
         if ExperimentService.is_eligible_for_experiment():
             if pr_state == PRStatus.MERGED.value:
@@ -341,7 +341,7 @@ class PRReviewPreProcessor:
                 self.is_valid = False
                 self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
 
-    async def get_experiment_set(self):
+    async def get_experiment_set(self) -> None:
         if not ExperimentService.is_eligible_for_experiment() or not self.is_valid:
             return
         experiment_info = await ExperimentService.db_get({"repo_id": self.pr_dto.repo_id, "pr_id": self.pr_dto.id})
@@ -354,7 +354,7 @@ class PRReviewPreProcessor:
             await self.update_pr_experiment_status(self.pr_dto.id, ExperimentStatusTypes.COMPLETED.value)
         return experiment_set
 
-    async def update_pr_status(self, pr_dto):
+    async def update_pr_status(self, pr_dto: PullRequestDTO) -> None:
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
         await PRService.db_update(
@@ -367,13 +367,13 @@ class PRReviewPreProcessor:
             filters={"id": pr_dto.id},
         )
 
-    async def update_pr_experiment_status(self, pr_id, status):
+    async def update_pr_experiment_status(self, pr_id: int, status: str) -> None:
         await ExperimentService.db_update(
             payload={"review_status": status},
             filters={"pr_id": pr_id},
         )
 
-    async def validate_repo_clone(self):
+    async def validate_repo_clone(self) -> None:
         _, is_repo_cloned, self.repo_path = await self.repo_service.clone_branch(
             self.pr_service.branch_name, "code_review"
         )  # return code 128 signifies bad request to github
@@ -405,7 +405,7 @@ class PRReviewPreProcessor:
     async def create_non_reviewable_pr_entry(self, data: Dict[str, Any]) -> Optional[PullRequestDTO]:
         """Create DB entry for non-reviewable PR similar to pre_processor logic."""
         try:
-            setting = await self.fetch_setting()
+            setting = await self.fetch_setting()  # noqa : F841
             pr_model = self.pr_service.pr_model()
             repo_dto = await RepoRepository.find_or_create_with_workspace_id(
                 pr_model.scm_workspace_id(), pr_model
