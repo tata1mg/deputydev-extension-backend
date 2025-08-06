@@ -91,9 +91,9 @@ class CodeReviewTrigger:
         pr_review_start_time = datetime.now(timezone.utc)
         payload["pr_review_start_time"] = pr_review_start_time.isoformat()
         code_review_request = await cls.__preprocess_review_payload(payload, query_params)
-        code_review_request.is_review_enabled = is_review_enabled
         if not code_review_request:
             return
+        code_review_request.is_review_enabled = is_review_enabled
 
         return await cls.__process_review_request(code_review_request)
 
