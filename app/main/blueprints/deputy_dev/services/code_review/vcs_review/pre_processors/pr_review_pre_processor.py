@@ -3,11 +3,12 @@ from typing import Optional, Dict, Any
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values
+from deputydev_core.utils.context_vars import set_context_values, get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
 from app.backend_common.models.dto.workspace_dto import WorkspaceDTO
 from app.backend_common.repository.message_sessions.repository import (
@@ -123,7 +124,7 @@ class PRReviewPreProcessor:
         set_context_values(workspace_id=workspace_dto.id, team_id=workspace_dto.team_id)
         return workspace_dto
 
-    def get_is_reviewable_request(self, experiment_set) -> bool:
+    def get_is_reviewable_request(self, experiment_set: str) -> bool:
         # if PR is eligible of experiment
         if ExperimentService.is_eligible_for_experiment() and experiment_set == PRReviewExperimentSet.ReviewTest.value:
             return True
@@ -133,18 +134,18 @@ class PRReviewPreProcessor:
             return True
         return False
 
-    async def insert_pr_record(self, repo_dto) -> None:
+    async def insert_pr_record(self, repo_dto: RepoDTO) -> None:
         self.pr_dto = await self.process_pr_record(repo_dto)
         if self.pr_dto:
             set_context_values(team_id=self.pr_dto.team_id)
 
-    async def fetch_repo(self):
+    async def fetch_repo(self) -> RepoDTO:
         repo_dto = await RepoRepository.find_or_create_with_workspace_id(
             self.pr_model.scm_workspace_id(), self.pr_model
         )
         return repo_dto
 
-    async def process_pr_record(self, repo_dto) -> Optional[PullRequestDTO]:
+    async def process_pr_record(self, repo_dto: RepoDTO) -> Optional[PullRequestDTO]:
         """Process PR record creation/update logic"""
         if not repo_dto:
             return None
@@ -343,7 +344,7 @@ class PRReviewPreProcessor:
                 self.is_valid = False
                 self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
 
-    async def get_experiment_set(self) -> None:
+    async def get_experiment_set(self) -> str:
         if not ExperimentService.is_eligible_for_experiment() or not self.is_valid:
             return
         experiment_info = await ExperimentService.db_get({"repo_id": self.pr_dto.repo_id, "pr_id": self.pr_dto.id})
