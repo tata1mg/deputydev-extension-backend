@@ -77,7 +77,7 @@ class CodeReviewTrigger:
             return f"Currently we are not serving: {code_review_request.repo_name}"
 
     @classmethod
-    async def perform_review(cls, payload: dict, query_params: dict, is_manual_review: bool = False)-> Optional[str]:
+    async def perform_review(cls, payload: dict, query_params: dict, is_manual_review: bool = False) -> Optional[str]:
         """
         Triggers code review
         Args:
