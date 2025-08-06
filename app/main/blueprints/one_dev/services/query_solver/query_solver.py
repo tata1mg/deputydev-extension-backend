@@ -154,13 +154,7 @@ class QuerySolver:
         session_id: int,
         query_id: int,
         llm_handler: LLMHandler[PromptFeatures],
-        user_team_id: int,
-        session_type: str,
     ) -> tuple[Optional[str], bool]:  # Always return a tuple
-        current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
-        if not current_session:
-            AppLogger.log_error(f"Session with ID {session_id} not found for query summary generation.")
-            return None, False
         all_messages = await MessageThreadsRepository.get_message_threads_for_session(
             session_id=session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
         )
@@ -187,7 +181,7 @@ class QuerySolver:
             llm_response.parsed_content[0].success if hasattr(llm_response.parsed_content[0], "success") else True
         )
 
-        _summary_creation_task = asyncio.create_task(self._update_query_summary(query_id, query_summary, session_id))
+        _summary_updation_task = asyncio.create_task(self._update_query_summary(query_id, query_summary, session_id))
         return query_summary, query_status
 
     async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
@@ -282,11 +276,9 @@ class QuerySolver:
                         session_id=session_id,
                         query_id=llm_response.query_id,
                         llm_handler=llm_handler,
-                        user_team_id=user_team_id,
-                        session_type=session_type,
                     )
                 )
-                done, pending = await asyncio.wait([task], timeout=5.0)  # pyright: ignore[reportUnusedVariable]
+                done, _pending = await asyncio.wait([task], timeout=5.0)
 
                 if task in done:
                     query_summary, success = task.result()
