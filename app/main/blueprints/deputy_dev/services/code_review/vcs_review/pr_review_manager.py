@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
 from torpedo import CONFIG
@@ -55,6 +53,8 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import set_context_values
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -186,7 +186,7 @@ class PRReviewManager(BasePRReviewManager):
             repo_service.delete_local_repo()
 
     @classmethod
-    def check_no_pr_comments(cls, llm_response) -> bool:
+    def check_no_pr_comments(cls, llm_response: List) -> bool:
         return not llm_response
 
     @classmethod
@@ -198,7 +198,7 @@ class PRReviewManager(BasePRReviewManager):
         pr_service: BasePR,
         prompt_version: str,
         pr_diff_handler: PRDiffHandler,
-    ):
+    ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         valid_agents_and_init_params = cls.get_valid_agents_and_init_params_for_review()
         non_error_results, is_large_pr = await MultiAgentPRReviewManager(
             repo_service, pr_service, pr_diff_handler, session_id, prompt_version
