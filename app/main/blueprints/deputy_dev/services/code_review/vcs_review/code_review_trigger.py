@@ -55,7 +55,7 @@ class CodeReviewTrigger:
             raise BadRequestException(f"Invalid PR review request with error {ex.errors()}")
 
     @classmethod
-    async def __process_review_request(cls, code_review_request: CodeReviewRequest):  # Private method
+    async def __process_review_request(cls, code_review_request: CodeReviewRequest) -> str:  # Private method
         """
         Validates the repository and pushes the request to the appropriate queue.
         Args:
@@ -107,7 +107,7 @@ class CodeReviewTrigger:
             payload.get("repo_id"),
             payload.get("workspace_slug"),
             payload.get("vcs_type"),
-            payload.get("is_review_enabled", False),
+            payload.get("is_review_enabled"),
         )
         auth_handler = await get_vcs_auth_handler(scm_workspace_id, vcs_type)
         comment_service = await CommentFactory.initialize(
