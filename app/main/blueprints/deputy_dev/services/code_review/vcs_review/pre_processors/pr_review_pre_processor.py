@@ -1,9 +1,5 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
-from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values, get_context_value
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
@@ -27,12 +23,12 @@ from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
 )
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
+    PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     PR_SIZE_TOO_BIG_MESSAGE,
     ExperimentStatusTypes,
     FeatureFlows,
     PRReviewExperimentSet,
     PrStatusTypes,
-    PR_REVIEW_POST_AFFIRMATION_MESSAGES,
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
@@ -47,6 +43,10 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
+from deputydev_core.utils.context_value import ContextValue
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 
 config = CONFIG.config
 one_dev_review_client = OneDevReviewClient()
@@ -411,7 +411,7 @@ class PRReviewPreProcessor:
             pr_model = self.pr_service.pr_model()
             repo_dto = await RepoRepository.find_or_create_with_workspace_id(pr_model.scm_workspace_id(), pr_model)
             if not repo_dto:
-                return None
+                return
 
             user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
                 {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
@@ -433,9 +433,6 @@ class PRReviewPreProcessor:
                 "loc_changed": loc_changed,
             }
             pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
-            if not pr_dto:
-                return
-
             return pr_dto
 
         except Exception as ex:
