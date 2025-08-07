@@ -139,9 +139,7 @@ class QuerySolverAgent(ABC):
         tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
-    def _convert_text_agent_chat_to_conversation_turn(
-        self, agent_chat: AgentChatDTO
-    ) -> UnifiedConversationTurn:
+    def _convert_text_agent_chat_to_conversation_turn(self, agent_chat: AgentChatDTO) -> UnifiedConversationTurn:
         """
         Convert AgentChatDTO object to UnifiedConversationTurn object for text messages.
         :param agent_chat: AgentChatDTO object containing the chat data.
@@ -155,7 +153,7 @@ class QuerySolverAgent(ABC):
             )
 
         content = UnifiedTextConversationTurnContent(
-            type= UnifiedConversationTurnContentType.TEXT,
+            type=UnifiedConversationTurnContentType.TEXT,
             text=agent_chat.message_data.text,
         )
 
@@ -169,7 +167,6 @@ class QuerySolverAgent(ABC):
                 role=UnifiedConversationRole.ASSISTANT,
                 content=[content],
             )
-
 
     def _convert_tool_use_agent_chat_to_conversation_turn(
         self, agent_chat: AgentChatDTO
@@ -220,15 +217,15 @@ class QuerySolverAgent(ABC):
 
         return all_conversation_turns
 
-
-
-    def _convert_agent_chats_to_conversation_turns(self, agent_chats: List[AgentChatDTO]) -> List[UnifiedConversationTurn]:
+    def _convert_agent_chats_to_conversation_turns(
+        self, agent_chats: List[AgentChatDTO]
+    ) -> List[UnifiedConversationTurn]:
         """
         Convert AgentChatDTO objects to UnifiedConversationTurn objects.
         :param agent_chats: List of AgentChatDTO objects.
         :return: List of UnifiedConversationTurn objects.
         """
-        
+
         conversation_turns: List[UnifiedConversationTurn] = []
 
         for agent_chat in agent_chats:
@@ -272,5 +269,5 @@ class QuerySolverAgent(ABC):
         return LLMHandlerInputs(
             tools=tools,
             prompt=self.prompt_factory.get_prompt(model_name=llm_model),
-            messages=await self._get_conversation_turns(payload, _client_data)
+            messages=await self._get_conversation_turns(payload, _client_data),
         )
