@@ -57,7 +57,7 @@ class AgentChatsRepository:
         try:
             payload = chat_data.model_dump(mode="json")
             created_chat = await DB.create(AgentChats, payload)
-            return AgentChatDTO(**created_chat)
+            return AgentChatDTO(**await created_chat.to_dict())
         except Exception as ex:
             logger.error(f"Error occurred while creating agent chat for session_id: {chat_data.session_id}, ex: {ex}")
             raise ex
