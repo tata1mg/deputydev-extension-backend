@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any, AsyncIterator, Dict, List, Optional
+from uuid import uuid4
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
@@ -28,12 +29,12 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingEventType,
     StreamingParsedLLMCallResponse,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,
+    AgentChatDTO,
     AgentChatUpdateRequest,
     TextMessageData,
     ToolUseMessageData,
@@ -115,7 +116,9 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
-    async def _store_tool_response_in_chat_chain(self, tool_response: ToolUseResponseInput, sesison_id: int) -> None:
+    async def _store_tool_response_in_chat_chain(
+        self, tool_response: ToolUseResponseInput, sesison_id: int
+    ) -> AgentChatDTO:
         # store query in DB
         tool_use_chats = await AgentChatsRepository.get_chats_by_message_type_and_session(
             message_type=ChatMessageType.TOOL_USE, session_id=sesison_id
@@ -132,7 +135,7 @@ class QuerySolver:
         if not selected_tool_use_chat or not isinstance(selected_tool_use_chat.message_data, ToolUseMessageData):
             raise Exception("tool use request not found")
 
-        await AgentChatsRepository.update_chat(
+        updated_chat = await AgentChatsRepository.update_chat(
             chat_id=selected_tool_use_chat.id,
             update_data=AgentChatUpdateRequest(
                 message_data=ToolUseMessageData(
@@ -143,6 +146,9 @@ class QuerySolver:
                 )
             ),
         )
+        if not updated_chat:
+            raise Exception("Failed to update tool use chat with response")
+        return updated_chat
 
     async def _generate_query_summary(
         self,
@@ -202,6 +208,8 @@ class QuerySolver:
         llm_handler: LLMHandler[PromptFeatures],
         user_team_id: int,
         session_type: str,
+        query_id: str,
+        previous_queries: List[int],
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
         tool_use_detected: bool = False
@@ -245,6 +253,8 @@ class QuerySolver:
                             message_data=TextMessageData(text=content_data.content.text),
                             message_type=ChatMessageType.TEXT,
                             metadata={},
+                            query_id=query_id,
+                            previous_queries=previous_queries,
                         )
                     )
                 elif isinstance(content_data, ToolUseRequestData):
@@ -259,6 +269,8 @@ class QuerySolver:
                             ),
                             message_type=ChatMessageType.TOOL_USE,
                             metadata={},
+                            query_id=query_id,
+                            previous_queries=previous_queries,
                         )
                     )
 
@@ -381,19 +393,6 @@ class QuerySolver:
             )
         return agent_instance
 
-    async def _get_conversation_turns(self, payload: QuerySolverInput) -> List[UnifiedConversationTurn]:
-        """
-        Get conversation turns for the current session.
-        """
-        try:
-            conversation_turns = await MessageThreadsRepository.get_conversation_turns_for_session(
-                session_id=self.session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
-            )
-            return conversation_turns
-        except Exception as ex:
-            AppLogger.log_error(f"Error occurred while fetching conversation turns for session {self.session_id}: {ex}")
-            return []
-
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -407,12 +406,9 @@ class QuerySolver:
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
 
-        # TODO: remove this after 9.0.0. force upgrade
-        if payload.query is None and payload.batch_tool_responses is None and payload.tool_use_response is not None:
-            payload.batch_tool_responses = [payload.tool_use_response]
-
         if payload.query:
             # store query in DB
+            generated_query_id = uuid4().hex
             await AgentChatsRepository.create_chat(
                 chat_data=AgentChatCreateRequest(
                     session_id=payload.session_id,
@@ -420,6 +416,8 @@ class QuerySolver:
                     message_data=TextMessageData(text=payload.query),
                     message_type=ChatMessageType.TEXT,
                     metadata={},
+                    query_id=generated_query_id,
+                    previous_queries=[],
                 )
             )
 
@@ -434,14 +432,8 @@ class QuerySolver:
                     session_type=payload.session_type,
                 )
             )
-            # chat_handler = ChatHistoryHandler(
-            #     previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
-            #     llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
-            # )
-            # relevant_previous_messages, agent_instance = await asyncio.gather(
-            #     chat_handler.get_relevant_previous_chats(),
-            #     self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler),
-            # )
+
+            agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
 
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
@@ -457,11 +449,10 @@ class QuerySolver:
             }
 
             model_to_use = LLModels(payload.llm_model.value)
-            llm_inputs = agent_instance.get_llm_inputs(
+            llm_inputs = await agent_instance.get_llm_inputs(
                 payload=payload,
                 _client_data=client_data,
                 llm_model=model_to_use,
-                previous_messages=[message.id for message in relevant_previous_messages],
             )
 
             prompt_vars_to_use = {**prompt_vars_to_use, **llm_inputs.extra_prompt_vars}
@@ -471,7 +462,7 @@ class QuerySolver:
                 llm_model=model_to_use,
                 prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
-                previous_responses=llm_inputs.previous_messages,
+                conversation_turns=llm_inputs.messages,
                 tools=llm_inputs.tools,
                 stream=True,
                 session_id=payload.session_id,
@@ -489,10 +480,12 @@ class QuerySolver:
                 llm_handler=llm_handler,
                 user_team_id=payload.user_team_id,
                 session_type=payload.session_type,
+                query_id=generated_query_id,
+                previous_queries=[],
             )
 
         elif payload.batch_tool_responses:
-            await asyncio.gather(
+            inserted_tool_responses = await asyncio.gather(
                 *[
                     self._store_tool_response_in_chat_chain(tool_resp, payload.session_id)
                     for tool_resp in payload.batch_tool_responses
@@ -538,21 +531,22 @@ class QuerySolver:
                 )
 
             agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
-            llm_inputs = agent_instance.get_llm_inputs(
+            llm_inputs = await agent_instance.get_llm_inputs(
                 payload=payload,
                 _client_data=client_data,
                 llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
-                previous_messages=None,
             )
 
-            llm_response = await llm_handler.submit_batch_tool_use_response(
+            llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
-                tool_use_responses=tool_responses,
                 tools=llm_inputs.tools,
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
                 parallel_tool_calls=True,
+                prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+                conversation_turns=llm_inputs.messages,
             )
 
             return await self.get_final_stream_iterator(
@@ -561,6 +555,8 @@ class QuerySolver:
                 llm_handler=llm_handler,
                 user_team_id=payload.user_team_id,
                 session_type=payload.session_type,
+                query_id=inserted_tool_responses[0].query_id,
+                previous_queries=inserted_tool_responses[0].previous_queries,
             )
 
         else:

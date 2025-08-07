@@ -43,7 +43,7 @@ MessageData = Annotated[
 
 class AgentChatData(BaseModel):
     session_id: int
-    query_id: int
+    query_id: str
     actor: ActorType
     message_type: MessageType
     message_data: MessageData
