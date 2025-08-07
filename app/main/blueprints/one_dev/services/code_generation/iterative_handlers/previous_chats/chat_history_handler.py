@@ -183,7 +183,6 @@ class ChatHistoryHandler:
 
         return all_relevant_agent_chats
 
-
     async def get_relevant_previous_agent_chats_for_tool_response_submission(self) -> List[AgentChatDTO]:
         # tool responses to submit
         tool_response_ids = [tool_response.tool_use_id for tool_response in self.payload.batch_tool_responses or []]
@@ -197,7 +196,7 @@ class ChatHistoryHandler:
             )
 
         tool_use_ids_in_previous_chats: List[str] = []
-        tool_use_chats = all_agent_chats[-len(tool_response_ids):]
+        tool_use_chats = all_agent_chats[-len(tool_response_ids) :]
         for tool_use_chat in tool_use_chats:
             if not isinstance(tool_use_chat.message_data, ToolUseMessageData):
                 raise ValueError(
@@ -206,9 +205,7 @@ class ChatHistoryHandler:
             tool_use_ids_in_previous_chats.append(tool_use_chat.message_data.tool_use_id)
 
         if set(tool_response_ids) != set(tool_use_ids_in_previous_chats):
-            raise ValueError(
-                "Tool response IDs do not match with the tool use IDs in the previous chats."
-            )
+            raise ValueError("Tool response IDs do not match with the tool use IDs in the previous chats.")
 
         # Filter chats based on specific query IDs
         relevant_agent_chats = [
