@@ -8,13 +8,26 @@ from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationRole,
+    UnifiedConversationTurn,
+    UnifiedConversationTurnContentType,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from app.main.blueprints.one_dev.models.dto.agent_chats import (
+    ActorType,
+    AgentChatDTO,
+    TextMessageData,
+    ToolUseMessageData,
+)
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
     ChatHistoryHandler,
-)
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
-    PreviousChatPayload,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
@@ -126,19 +139,124 @@ class QuerySolverAgent(ABC):
         tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
+    def _convert_text_agent_chat_to_conversation_turn(
+        self, agent_chat: AgentChatDTO
+    ) -> UnifiedConversationTurn:
+        """
+        Convert AgentChatDTO object to UnifiedConversationTurn object for text messages.
+        :param agent_chat: AgentChatDTO object containing the chat data.
+        :param actor: The role of the actor (USER or ASSISTANT).
+        :return: UnifiedConversationTurn object.
+        """
+
+        if not isinstance(agent_chat.message_data, TextMessageData):
+            raise ValueError(
+                f"Expected message_data to be of type TextMessageData, got {type(agent_chat.message_data)}"
+            )
+
+        content = UnifiedTextConversationTurnContent(
+            type= UnifiedConversationTurnContentType.TEXT,
+            text=agent_chat.message_data.text,
+        )
+
+        if agent_chat.actor == ActorType.USER:
+            return UserConversationTurn(
+                role=UnifiedConversationRole.USER,
+                content=[content],
+            )
+        else:
+            return AssistantConversationTurn(
+                role=UnifiedConversationRole.ASSISTANT,
+                content=[content],
+            )
+
+
+    def _convert_tool_use_agent_chat_to_conversation_turn(
+        self, agent_chat: AgentChatDTO
+    ) -> List[UnifiedConversationTurn]:
+        """
+        Convert AgentChatDTO object to UnifiedConversationTurn object for tool use messages.
+        :param agent_chat: AgentChatDTO object containing the chat data.
+        :return: UnifiedConversationTurn object.
+        """
+
+        if not isinstance(agent_chat.message_data, ToolUseMessageData):
+            raise ValueError(
+                f"Expected message_data to be of type ToolUseMessageData, got {type(agent_chat.message_data)}"
+            )
+
+        all_conversation_turns: List[UnifiedConversationTurn] = []
+
+        # append the tool request turn
+        all_conversation_turns.append(
+            AssistantConversationTurn(
+                role=UnifiedConversationRole.ASSISTANT,
+                content=[
+                    UnifiedToolRequestConversationTurnContent(
+                        type=UnifiedConversationTurnContentType.TOOL_REQUEST,
+                        tool_use_id=agent_chat.message_data.tool_use_id,
+                        tool_name=agent_chat.message_data.tool_name,
+                        tool_input=agent_chat.message_data.tool_input,
+                    )
+                ],
+            )
+        )
+
+        # append the tool response turn
+        if agent_chat.message_data.tool_response:
+            all_conversation_turns.append(
+                ToolConversationTurn(
+                    role=UnifiedConversationRole.TOOL,
+                    content=[
+                        UnifiedToolResponseConversationTurnContent(
+                            type=UnifiedConversationTurnContentType.TOOL_RESPONSE,
+                            tool_use_id=agent_chat.message_data.tool_use_id,
+                            tool_name=agent_chat.message_data.tool_name,
+                            tool_use_response=agent_chat.message_data.tool_response,
+                        )
+                    ],
+                )
+            )
+
+        return all_conversation_turns
+
+
+
+    def _convert_agent_chats_to_conversation_turns(self, agent_chats: List[AgentChatDTO]) -> List[UnifiedConversationTurn]:
+        """
+        Convert AgentChatDTO objects to UnifiedConversationTurn objects.
+        :param agent_chats: List of AgentChatDTO objects.
+        :return: List of UnifiedConversationTurn objects.
+        """
+        
+        conversation_turns: List[UnifiedConversationTurn] = []
+
+        for agent_chat in agent_chats:
+            if agent_chat.message_type == "TEXT":
+                conversation_turns.append(self._convert_text_agent_chat_to_conversation_turn(agent_chat))
+            elif agent_chat.message_type == "TOOL_USE":
+                conversation_turns.extend(self._convert_tool_use_agent_chat_to_conversation_turn(agent_chat))
+
+        return conversation_turns
+
     async def _get_conversation_turns(
         self, payload: QuerySolverInput, _client_data: ClientData
     ) -> List[UnifiedConversationTurn]:
         # first, we need to get the previous history of messages in case of a new query
 
+        previous_chat_queries: List[AgentChatDTO] = []
+        chat_handler = ChatHistoryHandler(
+            previous_chat_payload=payload,
+            llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+        )
         if payload.query:
-            chat_handler = ChatHistoryHandler(
-                previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
-            )
-            previous_chat_queries = await chat_handler.get_relevant_previous_agent_chats()
+            previous_chat_queries = await chat_handler.get_relevant_previous_agent_chats_for_new_query()
+        else:
+            previous_chat_queries = await chat_handler.get_relevant_previous_agent_chats_for_tool_response_submission()
 
-    def get_llm_inputs(
+        return self._convert_agent_chats_to_conversation_turns(previous_chat_queries)
+
+    async def get_llm_inputs(
         self,
         payload: QuerySolverInput,
         _client_data: ClientData,
@@ -154,5 +272,5 @@ class QuerySolverAgent(ABC):
         return LLMHandlerInputs(
             tools=tools,
             prompt=self.prompt_factory.get_prompt(model_name=llm_model),
-            previous_messages=previous_messages if previous_messages else [],
+            messages=await self._get_conversation_turns(payload, _client_data)
         )
