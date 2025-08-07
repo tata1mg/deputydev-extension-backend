@@ -25,7 +25,7 @@ from deputydev_core.services.tools.grep_search.dataclass.main import (
 )
 from deputydev_core.services.tools.grep_search.grep_search import GrepSearch
 from deputydev_core.services.tools.iterative_file_reader.dataclass.main import (
-    IterativeFileReaderRequestParams,
+    IterativeFileReaderRequestParams, IterativeFileReaderResponse,
 )
 from deputydev_core.services.tools.iterative_file_reader.iterative_file_reader import (
     IterativeFileReader,
@@ -44,6 +44,7 @@ from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
 from app.main.blueprints.deputy_dev.services.code_review.common.review_planner.review_planner import ReviewPlanner
 from app.main.blueprints.deputy_dev.services.code_review.common.utils.weaviate_client import get_weaviate_connection
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
+from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 
 
 class ToolHandlers:
@@ -108,6 +109,8 @@ class ToolHandlers:
             The tool response.
         """
         tool_input["repo_path"] = get_context_value("repo_path")
+        #TODO Update key name in tool defination to directory_path or update GrepSearchRequestParams
+        tool_input["directory_path"] = tool_input["search_path"]
         if isinstance(tool_input["query"], str):
             tool_input["search_term"] = tool_input["query"]
         payload = GrepSearchRequestParams(**tool_input)
@@ -145,17 +148,16 @@ class ToolHandlers:
         """
         tool_input["repo_path"] = get_context_value("repo_path")
         payload = IterativeFileReaderRequestParams(**tool_input)
-        file_content, eof_reached = await IterativeFileReader(
+
+        response: IterativeFileReaderResponse = await IterativeFileReader(
             file_path=os.path.join(payload.repo_path, payload.file_path),  # noqa: PTH118
             repo_path=payload.repo_path,  # noqa: PTH118
         ).read_lines(start_line=payload.start_line, end_line=payload.end_line)
-        response = {
-            "data": {
-                "chunk": file_content.model_dump(mode="json"),
-                "eof_reached": eof_reached,
-            },
-        }
-        return response
+        #TODO: Update response that comes from vscode by using same key eof that is present in IterativeFileReaderResponse
+        response = response.model_dump(mode="json")
+        response["eof_reached"] = response["eof"]
+        markdown = LLMResponseFormatter.format_iterative_file_reader_response(response)
+        return {"tool_response": markdown}
 
     @staticmethod
     async def handle_focused_snippets_searcher(
