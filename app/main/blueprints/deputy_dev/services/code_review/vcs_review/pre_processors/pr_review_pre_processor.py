@@ -1,13 +1,16 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
-from deputydev_core.utils.context_vars import set_context_values
+from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
+from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
+from app.backend_common.models.dto.workspace_dto import WorkspaceDTO
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
@@ -56,7 +59,7 @@ class PRReviewPreProcessor:
         comment_service: BaseComment,
         affirmation_service: AffirmationService,
         pr_diff_handler: PRDiffHandler,
-    ):
+    ) -> None:
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.comment_service = comment_service
@@ -84,18 +87,18 @@ class PRReviewPreProcessor:
             is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
         )
         ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
-        # pr_state = self.pr_model.scm_state()
-        # # Declined and not raised by #review
-        # already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
-        #
-        # if already_declined or not self.is_reviewable_based_on_settings(setting):
-        #     self.is_valid = False
-        #     if already_declined:
-        #         self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
-        #     else:
-        #         self.review_status = PrStatusTypes.FEATURES_DISABLED.value
-        #     await self.run_validations()
-        #     return False, self.pr_dto
+        pr_state = self.pr_model.scm_state()
+        # Declined and not raised by #review
+        already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")
+
+        if already_declined or not self.is_reviewable_based_on_settings(setting):
+            self.is_valid = False
+            if already_declined:
+                self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
+            else:
+                self.review_status = PrStatusTypes.FEATURES_DISABLED.value
+            await self.run_validations()
+            return False, self.pr_dto
 
         await self.insert_pr_record(repo_dto)
         await self.run_validations()
@@ -108,19 +111,19 @@ class PRReviewPreProcessor:
         """Check if the PR is reviewable based on settings."""
         return setting["code_review_agent"]["enable"] or setting["pr_summary"]["enable"]
 
-    async def fetch_setting(self):
+    async def fetch_setting(self) -> Dict[str, Any]:
         workspace_dto = await self.fetch_workspace()
         setting = await SettingService(self.repo_service, workspace_dto.team_id).build()
         return setting
 
-    async def fetch_workspace(self):
+    async def fetch_workspace(self) -> WorkspaceDTO:
         workspace_dto = await WorkspaceService.find(
             scm_workspace_id=self.pr_model.scm_workspace_id(), scm=self.pr_model.scm_type()
         )
         set_context_values(workspace_id=workspace_dto.id, team_id=workspace_dto.team_id)
         return workspace_dto
 
-    def get_is_reviewable_request(self, experiment_set):
+    def get_is_reviewable_request(self, experiment_set: str) -> bool:
         # if PR is eligible of experiment
         if ExperimentService.is_eligible_for_experiment() and experiment_set == PRReviewExperimentSet.ReviewTest.value:
             return True
@@ -130,18 +133,18 @@ class PRReviewPreProcessor:
             return True
         return False
 
-    async def insert_pr_record(self, repo_dto):
+    async def insert_pr_record(self, repo_dto: RepoDTO) -> None:
         self.pr_dto = await self.process_pr_record(repo_dto)
         if self.pr_dto:
             set_context_values(team_id=self.pr_dto.team_id)
 
-    async def fetch_repo(self):
+    async def fetch_repo(self) -> RepoDTO:
         repo_dto = await RepoRepository.find_or_create_with_workspace_id(
             self.pr_model.scm_workspace_id(), self.pr_model
         )
         return repo_dto
 
-    async def process_pr_record(self, repo_dto) -> Optional[PullRequestDTO]:
+    async def process_pr_record(self, repo_dto: RepoDTO) -> Optional[PullRequestDTO]:
         """Process PR record creation/update logic"""
         if not repo_dto:
             return None
@@ -297,7 +300,7 @@ class PRReviewPreProcessor:
             len(commit.get("parents", [])) > 1 for commit in commits[current_commit_index:last_review_commit_index]
         )
 
-    async def run_validations(self):
+    async def run_validations(self) -> None:
         self.validate_pr_state_for_review()
 
         if self.is_valid:
@@ -310,12 +313,12 @@ class PRReviewPreProcessor:
                 await self.update_pr_status(self.pr_dto)
             await self.process_invalid_prs()
 
-    async def process_invalid_prs(self):
+    async def process_invalid_prs(self) -> None:
         await self.affirmation_service.create_affirmation_reply(
             message_type=self.review_status, commit_id=self.pr_model.commit_id()
         )
 
-    async def validate_pr_diff(self):
+    async def validate_pr_diff(self) -> None:
         pr_diff = await self.pr_diff_handler.get_effective_pr_diff()
         if pr_diff == PR_NOT_FOUND:
             self.is_valid = False
@@ -330,7 +333,7 @@ class PRReviewPreProcessor:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
 
-    def validate_pr_state_for_review(self):
+    def validate_pr_state_for_review(self) -> None:
         pr_state = self.pr_model.scm_state()
         if ExperimentService.is_eligible_for_experiment():
             if pr_state == PRStatus.MERGED.value:
@@ -340,7 +343,7 @@ class PRReviewPreProcessor:
                 self.is_valid = False
                 self.review_status = PrStatusTypes.REJECTED_ALREADY_DECLINED.value
 
-    async def get_experiment_set(self):
+    async def get_experiment_set(self) -> str:
         if not ExperimentService.is_eligible_for_experiment() or not self.is_valid:
             return
         experiment_info = await ExperimentService.db_get({"repo_id": self.pr_dto.repo_id, "pr_id": self.pr_dto.id})
@@ -353,7 +356,7 @@ class PRReviewPreProcessor:
             await self.update_pr_experiment_status(self.pr_dto.id, ExperimentStatusTypes.COMPLETED.value)
         return experiment_set
 
-    async def update_pr_status(self, pr_dto):
+    async def update_pr_status(self, pr_dto: PullRequestDTO) -> None:
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
         await PRService.db_update(
@@ -366,13 +369,13 @@ class PRReviewPreProcessor:
             filters={"id": pr_dto.id},
         )
 
-    async def update_pr_experiment_status(self, pr_id, status):
+    async def update_pr_experiment_status(self, pr_id: int, status: str) -> None:
         await ExperimentService.db_update(
             payload={"review_status": status},
             filters={"pr_id": pr_id},
         )
 
-    async def validate_repo_clone(self):
+    async def validate_repo_clone(self) -> None:
         _, is_repo_cloned, self.repo_path = await self.repo_service.clone_branch(
             self.pr_service.branch_name, "code_review"
         )  # return code 128 signifies bad request to github
@@ -380,3 +383,49 @@ class PRReviewPreProcessor:
         if not is_repo_cloned:
             self.is_valid = False
             self.review_status = PrStatusTypes.REJECTED_CLONING_FAILED_WITH_128.value
+
+    async def handle_non_reviewable_request(self, data: Dict[str, Any]) -> None:
+        """Handle non-reviewable requests by creating appropriate notifications and DB entries.
+
+        Args:
+            data (Dict[str, Any]): Dictionary containing necessary data for processing the request.
+        """
+        try:
+            await self.create_non_reviewable_pr_entry(data)
+        except Exception as ex:
+            AppLogger.log_error(f"Error while processing non-reviewable request: {ex}")
+            raise ex
+
+    async def create_non_reviewable_pr_entry(self, data: Dict[str, Any]) -> Optional[PullRequestDTO]:
+        """Create DB entry for non-reviewable PR similar to pre_processor logic."""
+        try:
+            pr_model = self.pr_service.pr_model()
+            repo_dto = await RepoRepository.find_or_create_with_workspace_id(pr_model.scm_workspace_id(), pr_model)
+            if not repo_dto:
+                return
+
+            user_team_dto: UserTeamDTO = await UserTeamRepository.db_get(
+                {"team_id": repo_dto.team_id, "is_owner": True}, fetch_one=True
+            )
+            if not user_team_dto or not user_team_dto.id:
+                raise Exception("Owner not found for the team")
+            loc_changed = await self.pr_service.get_loc_changed_count()
+
+            pr_model.meta_info = {
+                "review_status": PrStatusTypes.SKIPPED_AUTO_REVIEW.value,
+                "team_id": repo_dto.team_id,
+                "workspace_id": repo_dto.workspace_id,
+                "repo_id": repo_dto.id,
+            }
+
+            pr_dto_data = {
+                **pr_model.get_pr_info(),
+                "pr_state": pr_model.scm_state(),
+                "loc_changed": loc_changed,
+            }
+            pr_dto = await PRService.db_insert(PullRequestDTO(**pr_dto_data))
+            return pr_dto
+
+        except Exception as ex:
+            AppLogger.log_error(f"Error creating non-reviewable PR entry: {ex}")
+            raise ex
