@@ -63,7 +63,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.tool_response_parser import LLMResponseFormatter
+from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
