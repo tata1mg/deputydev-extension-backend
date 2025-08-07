@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class CodeReviewRequest(BaseModel):
     pr_id: int
     repo_name: str
+    repo_origin: str
     request_id: str
     workspace: str
     prompt_version: str
