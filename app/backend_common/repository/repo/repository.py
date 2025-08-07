@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Dict, List, Union
 
 from sanic.log import logger
 
@@ -13,7 +13,7 @@ from deputydev_core.utils.context_vars import get_context_value
 
 class RepoRepository:
     @classmethod
-    async def db_get(cls, filters: dict, fetch_one=False) -> Union[RepoDTO, List[RepoDTO]]:
+    async def db_get(cls, filters: Dict, fetch_one: bool=False) -> Union[RepoDTO, List[RepoDTO]]:
         try:
             repo_data = await DB.by_filters(model_name=Repos, where_clause=filters, fetch_one=fetch_one)
             if repo_data and fetch_one:
