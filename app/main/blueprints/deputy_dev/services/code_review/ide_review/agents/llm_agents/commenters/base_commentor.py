@@ -15,6 +15,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
@@ -223,19 +224,11 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     ],
                 }
             elif tool_name == "iterative_file_reader":
-                tool_response = {
-                    "file_content_with_line_numbers": ChunkInfo(**tool_response["response"]["data"]["chunk"]).get_xml(),
-                    "eof_reached": tool_response["response"]["data"]["eof_reached"],
-                }
+                markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["data"])
+                tool_response= {"Tool Response": markdown}
             elif tool_name == "grep_search":
-                tool_response = {
-                    "matched_contents": "".join(
-                        [
-                            f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}<match_line>{matched_block['matched_line']}</match_line></match_obj>"
-                            for matched_block in tool_response["response"]
-                        ]
-                    ),
-                }
+                markdown = LLMResponseFormatter.format_grep_tool_response(tool_response)
+                tool_response = {"Tool Response": markdown}
         else:
             if tool_name not in {"replace_in_file", "write_to_file"}:
                 error_response = {
