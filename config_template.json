@@ -11,7 +11,8 @@
     "DD_BROWSER_HOST": "https://deputydev.ai",
     "SUPABASE": {
         "URL": "",
-        "KEY": ""
+        "KEY": "",
+        "JWT_SECRET_KEY": ""
     },
     "SESSION_ENCRYPTION_PASSWORD": "",
     "ORG_INFO": {
@@ -922,5 +923,6 @@
         "CACHE_CONTROL": "max-age=7776000",
         "AUTH_KEY": ""
     },
-    "ALLOWED_PR_REVIEW_RETRIES": 3
+    "ALLOWED_PR_REVIEW_RETRIES": 3,
+    "AUTO_REVIEW_ENABLED": true
 }
