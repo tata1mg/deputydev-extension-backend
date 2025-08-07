@@ -267,17 +267,17 @@ class Anthropic(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[UnifiedConversationTurn] = [],
+        conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
 
         messages: List[ConversationTurn] = []
-        if previous_responses and not previous_conversation_turns:
+        if previous_responses and not conversation_turns:
             messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
-        elif previous_conversation_turns:
+        elif conversation_turns:
             messages = self._get_anthropic_conversation_turns_from_conversation_turns(
-                conversation_turns=previous_conversation_turns
+                conversation_turns=conversation_turns
             )
 
         if prompt and prompt.cached_message:
@@ -289,7 +289,7 @@ class Anthropic(BaseLLMProvider):
             messages.append(cached_message)
 
         # add system and user messages to conversation
-        if prompt and prompt.user_message and not previous_conversation_turns:
+        if prompt and prompt.user_message and not conversation_turns:
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
@@ -314,7 +314,7 @@ class Anthropic(BaseLLMProvider):
             messages.append(user_message)
 
         # add tool result to conversation
-        if tool_use_response and not previous_conversation_turns:
+        if tool_use_response and not conversation_turns:
             tool_message = ConversationTurn(
                 role=ConversationRole.USER,
                 content=[

@@ -173,7 +173,7 @@ class OpenAI(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[UnifiedConversationTurn] = [],
+        conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         """
         Formats the conversation for OpenAI's GPT model.
@@ -204,14 +204,14 @@ class OpenAI(BaseLLMProvider):
             formatted_tools = sorted(formatted_tools, key=lambda x: x["name"])
             tool_choice = tool_choice if tool_choice else "auto"
 
-        if previous_responses and not previous_conversation_turns:
+        if previous_responses and not conversation_turns:
             messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
-        elif previous_conversation_turns:
+        elif conversation_turns:
             messages = await self._get_openai_response_input_params_from_conversation_turns(
-                conversation_turns=previous_conversation_turns
+                conversation_turns=conversation_turns
             )
 
-        if prompt and prompt.user_message and not previous_conversation_turns:
+        if prompt and prompt.user_message and not conversation_turns:
             user_message = {"role": "user", "content": [{"type": "input_text", "text": prompt.user_message}]}
             if attachments:
                 for attachment in attachments:
@@ -227,7 +227,7 @@ class OpenAI(BaseLLMProvider):
                         )
             messages.append(user_message)
 
-        if tool_use_response and not previous_conversation_turns:
+        if tool_use_response and not conversation_turns:
             tool_response = {
                 "type": "function_call_output",
                 "call_id": tool_use_response.content.tool_use_id,
