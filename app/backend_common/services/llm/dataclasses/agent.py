@@ -14,6 +14,5 @@ class LLMHandlerInputs(BaseModel):
     tool_choice: LLMToolChoice = LLMToolChoice.AUTO
     prompt: Type[BasePrompt]
     messages: List[UnifiedConversationTurn]
-
     # TODO: Move to user and system messages
     extra_prompt_vars: Dict[str, Any] = {}
