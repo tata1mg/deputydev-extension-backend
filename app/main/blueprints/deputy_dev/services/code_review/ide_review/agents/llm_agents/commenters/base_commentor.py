@@ -225,7 +225,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 }
             elif tool_name == "iterative_file_reader":
                 markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["data"])
-                tool_response= {"Tool Response": markdown}
+                tool_response = {"Tool Response": markdown}
             elif tool_name == "grep_search":
                 markdown = LLMResponseFormatter.format_grep_tool_response(tool_response)
                 tool_response = {"Tool Response": markdown}
