@@ -10,6 +10,8 @@ class AgentChats(Base):
     serializable_keys = {
         "id",
         "session_id",
+        "query_id",
+        "previous_queries",
         "actor",
         "message_type",
         "message_data",
@@ -20,13 +22,15 @@ class AgentChats(Base):
 
     id = fields.IntField(primary_key=True)
     session_id = fields.IntField(null=False)
+    query_id = fields.CharField(max_length=64, null=False)
+    previous_queries = fields.JSONField(null=False, default=list)
     actor = CITextField(max_length=16, null=False)
     message_type = CITextField(max_length=16, null=False)
     message_data = fields.JSONField(null=False)
     metadata = fields.JSONField(null=False)
 
     class Meta:
-        table = "chats"
+        table = "agent_chats"
         indexes = (
             ("session_id",),
             ("actor",),
@@ -36,6 +40,8 @@ class AgentChats(Base):
     class Columns(Enum):
         id = ("id",)
         session_id = ("session_id",)
+        query_id = ("query_id",)
+        previous_queries = ("previous_queries",)
         actor = ("actor",)
         message_type = ("message_type",)
         message_data = ("message_data",)
