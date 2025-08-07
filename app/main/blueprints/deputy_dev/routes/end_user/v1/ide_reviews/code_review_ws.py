@@ -77,7 +77,7 @@ async def legacy_post_process(request: Request, **kwargs: Any) -> ResponseDict |
 
 
 @ide_review_websocket.route("/run-agent", methods=["POST"])
-async def run_multi_agent_review(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:   # noqa: C901
+async def run_multi_agent_review(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:  # noqa: C901
     connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
     is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 
@@ -301,7 +301,7 @@ async def post_process_extension_review(_request: Request, **kwargs: Any) -> Res
         if auth_data and not payload_dict.get("user_team_id"):
             payload_dict["user_team_id"] = auth_data.user_team_id
 
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Invalid request payload: {e}")
         return send_response({"status": "ERROR", "message": f"Invalid request payload: {str(e)}"})
 
@@ -365,9 +365,9 @@ async def post_process_websocket_local(request: Request, ws: Websocket) -> None:
                         else:
                             await asyncio.sleep(0.2)
 
-                except Exception as e:   # noqa: BLE001
+                except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error in WebSocket connection: {e}")
                     break
 
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error in post-process WebSocket connection: {e}")
