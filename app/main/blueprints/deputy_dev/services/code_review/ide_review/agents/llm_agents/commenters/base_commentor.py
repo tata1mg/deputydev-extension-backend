@@ -1,9 +1,4 @@
-import json
 from typing import Any, Dict, List, Optional
-
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-from deputydev_core.utils.app_logger import AppLogger
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -15,6 +10,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
@@ -30,9 +26,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.constants.
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_code_review_agent import (
     BaseCodeReviewAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
-    LLMCommentData,
-)
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
@@ -43,6 +36,9 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_r
     ToolRequestManager,
 )
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):
@@ -55,7 +51,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
         user_agent_dto: Optional[UserAgentDTO] = None,
-    ):
+    ) -> None:
         super().__init__(context_service, llm_handler, model)
         self.agent_id = user_agent_dto.id
         self.agent_name = user_agent_dto.agent_name
@@ -78,11 +74,6 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         return render_snippet_array(agent_relevant_chunks)
 
     async def required_prompt_variables(self, last_pass_result: Optional[Any] = None) -> Dict[str, Optional[str]]:
-        last_pass_comments_str = ""
-        if last_pass_result:
-            last_pass_comments: List[LLMCommentData] = last_pass_result.get("comments") or []
-            last_pass_comments_str = json.dumps([comment.model_dump(mode="json") for comment in last_pass_comments])
-
         return {
             "PULL_REQUEST_DIFF": await self.context_service.get_pr_diff(append_line_no_info=True),
             "PR_DIFF_WITHOUT_LINE_NUMBER": await self.context_service.get_pr_diff(),
@@ -91,10 +82,10 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             "AGENT_NAME": self.agent_type.value,
         }
 
-    def get_display_name(self):
+    def get_display_name(self) -> str:
         return self.agent_setting.get("display_name")
 
-    def get_tools_for_review(self, prompt_handler) -> List[ConversationTool]:
+    def get_tools_for_review(self, prompt_handler: BasePrompt) -> List[ConversationTool]:
         """
         Get the appropriate tools for the review based on whether tools are disabled.
 
@@ -224,10 +215,10 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     ],
                 }
             elif tool_name == "iterative_file_reader":
-                markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["data"])
+                markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["response"]["data"])
                 tool_response = {"Tool Response": markdown}
             elif tool_name == "grep_search":
-                markdown = LLMResponseFormatter.format_grep_tool_response(tool_response)
+                markdown = LLMResponseFormatter.format_grep_tool_response(tool_response["response"])
                 tool_response = {"Tool Response": markdown}
         else:
             if tool_name not in {"replace_in_file", "write_to_file"}:
@@ -304,7 +295,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     tokens_data=tokens_data,
                     display_name=self.get_display_name(),
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Error processing parse_final_response: {e}")
                 return AgentRunResult(
                     agent_result={"status": "error", "message": f"Error processing final response: {str(e)}"},
@@ -338,7 +329,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 return await self._process_llm_response(
                     current_response, session_id, tools_to_use, prompt_handler, tokens_data
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Error processing pr_review_planner: {e}")
                 return AgentRunResult(
                     agent_result={"status": "error", "message": f"Error processing review planner: {str(e)}"},
@@ -375,7 +366,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             display_name=self.get_display_name(),
         )
 
-    async def _save_comments_to_db(self, final_response: dict):
+    async def _save_comments_to_db(self, final_response: dict) -> None:
         """
         Save the final LLM comments to the database as IdeReviewsCommentDTOs.
         """
