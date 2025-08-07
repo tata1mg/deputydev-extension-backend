@@ -19,13 +19,13 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
 )
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
-    PreviousChatPayload,
     PreviousChats,
     RerankerDecision,
 )
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.reranking.main import (
     LLMBasedChatFiltration,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
 from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
@@ -33,7 +33,7 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 
 
 class ChatHistoryHandler:
-    def __init__(self, previous_chat_payload: PreviousChatPayload, llm_model: LLModels) -> None:
+    def __init__(self, previous_chat_payload: QuerySolverInput, llm_model: LLModels) -> None:
         self.payload = previous_chat_payload
         self.previous_chats: List[PreviousChats] = []
         self.query_id_to_chats_and_summary_map: Dict[int, Tuple[List[AgentChatDTO], QuerySummaryDTO | None]] = {}
@@ -138,7 +138,7 @@ class ChatHistoryHandler:
             else:
                 self.query_id_to_chats_and_summary_map[agent_chat.query_id][0].append(agent_chat)
 
-    async def get_relevant_previous_agent_chats(self) -> List[AgentChatDTO]:
+    async def get_relevant_previous_agent_chats_for_new_query(self) -> List[AgentChatDTO]:
         # Fetch both query summaries and message threads concurrently, to save time in DB calls
         all_session_query_summaries, all_agent_chats = await asyncio.gather(
             QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
@@ -182,3 +182,36 @@ class ChatHistoryHandler:
                 all_relevant_agent_chats.extend(agent_chats)
 
         return all_relevant_agent_chats
+
+
+    async def get_relevant_previous_agent_chats_for_tool_response_submission(self) -> List[AgentChatDTO]:
+        # tool responses to submit
+        tool_response_ids = [tool_response.tool_use_id for tool_response in self.payload.batch_tool_responses or []]
+
+        all_agent_chats = await AgentChatsRepository.get_chats_by_session_id(session_id=self.payload.session_id)
+
+        # get the tool request from the last agent_chat
+        if not isinstance(all_agent_chats[-1].message_data, ToolUseMessageData):
+            raise ValueError(
+                f"Expected last message data to be of type ToolUseMessageData, got {type(all_agent_chats[-1].message_data)}"
+            )
+
+        tool_use_ids_in_previous_chats: List[str] = []
+        tool_use_chats = all_agent_chats[-len(tool_response_ids):]
+        for tool_use_chat in tool_use_chats:
+            if not isinstance(tool_use_chat.message_data, ToolUseMessageData):
+                raise ValueError(
+                    f"Expected tool use message data to be of type ToolUseMessageData, got {type(tool_use_chat.message_data)}"
+                )
+            tool_use_ids_in_previous_chats.append(tool_use_chat.message_data.tool_use_id)
+
+        if set(tool_response_ids) != set(tool_use_ids_in_previous_chats):
+            raise ValueError(
+                "Tool response IDs do not match with the tool use IDs in the previous chats."
+            )
+
+        # Filter chats based on specific query IDs
+        relevant_agent_chats = [
+            chat for chat in all_agent_chats if chat.query_id in tool_use_chats[-1].previous_queries
+        ]
+        return relevant_agent_chats
