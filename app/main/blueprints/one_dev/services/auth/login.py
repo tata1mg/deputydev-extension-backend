@@ -56,14 +56,13 @@ class Login:
             # refresh the current session
             try:
                 refresh_session_data, email, user_name = await SupabaseAuth.refresh_session(session_data)
-                await cls.verify_auth_token(refresh_session_data, enable_grace_period)
                 return {
                     "status": AuthStatus.EXPIRED.value,
                     "encrypted_session_data": refresh_session_data,
                     "user_email": email,
                     "user_name": user_name,
                 }
-            except Exception as _ex:
+            except Exception as _ex:  # noqa: BLE001
                 return {
                     "status": AuthStatus.NOT_VERIFIED.value,
                     "error_message": str(_ex),
@@ -73,7 +72,7 @@ class Login:
                 "status": AuthStatus.NOT_VERIFIED.value,
                 "error_message": "Invalid token format.",
             }
-        except Exception as _ex:
+        except Exception as _ex:  # noqa: BLE001
             return {
                 "status": AuthStatus.NOT_VERIFIED.value,
                 "error_message": str(_ex),
