@@ -6,17 +6,17 @@ from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
-    MessageCallChainCategory,
-    MessageThreadDTO,
-    MessageType,
-    TextBlockData,
-)
-from app.backend_common.repository.message_threads.repository import (
-    MessageThreadsRepository,
 )
 from app.backend_common.services.chunking.rerankers.handler.llm_based.prompts.dataclasses.main import PromptFeatures
 from app.backend_common.services.chunking.rerankers.handler.llm_based.prompts.factory import PromptFeatureFactory
 from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.one_dev.models.dto.agent_chats import (
+    ActorType,
+    AgentChatDTO,
+    MessageType,
+    TextMessageData,
+    ToolUseMessageData,
+)
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
     PreviousChatPayload,
@@ -26,6 +26,7 @@ from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.pre
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.reranking.main import (
     LLMBasedChatFiltration,
 )
+from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
@@ -35,26 +36,23 @@ class ChatHistoryHandler:
     def __init__(self, previous_chat_payload: PreviousChatPayload, llm_model: LLModels) -> None:
         self.payload = previous_chat_payload
         self.previous_chats: List[PreviousChats] = []
-        self.data_map: Dict[int, Tuple[MessageThreadDTO, List[MessageThreadDTO], QuerySummaryDTO | None]] = {}
+        self.query_id_to_chats_and_summary_map: Dict[int, Tuple[List[AgentChatDTO], QuerySummaryDTO | None]] = {}
         self.current_model: LLModels = llm_model
 
-    def _get_entire_chat_content(self, chat: PreviousChats) -> str:
-        # Get responses for this chat
-        responses_approx_text = self._get_approx_responses_text(chat.id)
-
-        query_approx_text = ""
-        for query_id, (query_message_thread, _non_query_message_threads, _query_summary) in self.data_map.items():
-            if query_id == chat.id:
-                query_approx_text = json.dumps(query_message_thread.message_data[0].content.model_dump(mode="json"))
-
-        # Combine query, summary, and responses
-        chat_content_approx = responses_approx_text + query_approx_text
-        return chat_content_approx
+    def _get_approx_chat_text(self, query_id: int) -> str:
+        agent_chats, _summary = self.query_id_to_chats_and_summary_map[query_id]
+        message_data_text: str = ""
+        for message_thread in agent_chats:
+            if isinstance(message_thread.message_data, TextMessageData) or isinstance(
+                message_thread.message_data, ToolUseMessageData
+            ):
+                message_data_text += json.dumps(message_thread.message_data.model_dump(mode="json"))
+        return message_data_text
 
     def _estimate_chats_character_count(self, chats: List[PreviousChats]) -> int:
         total_chars = 0
         for chat in chats:
-            chat_content = self._get_entire_chat_content(chat)
+            chat_content = self._get_approx_chat_text(chat.id)
             total_chars += len(chat_content)
         return total_chars
 
@@ -109,7 +107,7 @@ class ChatHistoryHandler:
             ]
             complete_content: str = ""
             for chat in self.previous_chats:
-                complete_content += self._get_entire_chat_content(chat)
+                complete_content += self._get_approx_chat_text(chat.id)
             handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
             precise_token_count = await handler.get_token_count(complete_content, self.current_model)
             if precise_token_count <= token_limit:
@@ -122,46 +120,29 @@ class ChatHistoryHandler:
                 )
                 return reranked_chat_ids
 
-    def _set_data_map(
-        self, all_message_threads: List[MessageThreadDTO], all_query_summaries: List[QuerySummaryDTO]
+    def _set_query_id_to_chats_and_summary_map(
+        self, all_agent_chats: List[AgentChatDTO], all_query_summaries: List[QuerySummaryDTO]
     ) -> None:
         # firstly create query_id to summary map
         query_id_to_summary_map: Dict[int, QuerySummaryDTO] = {}
         for query_summary in all_query_summaries:
             query_id_to_summary_map[query_summary.query_id] = query_summary
 
-        # create a map of query_id to message
-        non_query_message_threads: List[MessageThreadDTO] = []
-        for message_thread in all_message_threads:
-            if message_thread.message_type == MessageType.QUERY:
-                self.data_map[message_thread.id] = (message_thread, [], query_id_to_summary_map.get(message_thread.id))
-            else:
-                non_query_message_threads.append(message_thread)
-
-        # add non query message threads to the map
-        for message_thread in non_query_message_threads:
-            if message_thread.query_id and message_thread.query_id in self.data_map:
-                self.data_map[message_thread.query_id][1].append(message_thread)
-            else:
-                continue
-
-    def _get_approx_responses_text(self, query_id: int) -> str:
-        _query_message_thread, non_query_message_threads, _query_summary = self.data_map[query_id]
-        message_data_text: str = ""
-        for message_thread in non_query_message_threads:
-            if message_thread.message_data:
-                message_data_text = json.dumps(
-                    [message_data.model_dump(mode="json") for message_data in message_thread.message_data]
+        # create a map of query_id to agent chats with summaries
+        for agent_chat in all_agent_chats:
+            if agent_chat.actor == ActorType.USER and agent_chat.message_type == MessageType.TEXT:
+                self.query_id_to_chats_and_summary_map[agent_chat.query_id] = (
+                    [agent_chat],
+                    query_id_to_summary_map.get(agent_chat.id),
                 )
-        return message_data_text
+            else:
+                self.query_id_to_chats_and_summary_map[agent_chat.query_id][0].append(agent_chat)
 
-    async def get_relevant_previous_chats(self) -> List[MessageThreadDTO]:
-        # Fetch both query summaries and message threads concurrently
-        all_session_query_summaries, all_query_message_threads = await asyncio.gather(
+    async def get_relevant_previous_agent_chats(self) -> List[AgentChatDTO]:
+        # Fetch both query summaries and message threads concurrently, to save time in DB calls
+        all_session_query_summaries, all_agent_chats = await asyncio.gather(
             QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
-            MessageThreadsRepository.get_message_threads_for_session(
-                session_id=self.payload.session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
-            ),
+            AgentChatsRepository.get_chats_by_session_id(session_id=self.payload.session_id),
         )
 
         # Sort and limit to latest 10 queries
@@ -169,25 +150,24 @@ class ChatHistoryHandler:
         if len(all_session_query_summaries) > 10:
             all_session_query_summaries = all_session_query_summaries[-10:]
 
-        self._set_data_map(all_query_message_threads, all_session_query_summaries)
+        # now create a map of query_id to agent chats and summaries
+        self._set_query_id_to_chats_and_summary_map(all_agent_chats, all_session_query_summaries)
 
-        for _query_id, (query_message_thread, _non_query_message_threads, query_summary) in self.data_map.items():
-            if (
-                query_message_thread.message_data
-                and query_message_thread.message_data[0]
-                and isinstance(query_message_thread.message_data[0], TextBlockData)
-                and query_message_thread.message_data[0].content_vars
-                and query_message_thread.message_data[0].content_vars.get("query")
-            ):
-                self.previous_chats.append(
-                    PreviousChats(
-                        id=query_message_thread.id,
-                        query=query_message_thread.message_data[0].content_vars["query"],
-                        summary=query_summary.summary
-                        if query_summary
-                        else query_message_thread.message_data[0].content_vars["query"][:1000],
-                    )
+        for _query_id, (agent_chats, query_summary) in self.query_id_to_chats_and_summary_map.items():
+            query_agent_chat = agent_chats[0]
+            if not isinstance(query_agent_chat.message_data, TextMessageData):
+                raise ValueError(
+                    f"Expected query message data to be of type TextMessageData, got {type(query_agent_chat.message_data)}"
                 )
+
+            # Create a PreviousChats object for each query, to be used by reranking
+            self.previous_chats.append(
+                PreviousChats(
+                    id=query_agent_chat.query_id,
+                    query=query_agent_chat.message_data.text,
+                    summary=query_summary.summary if query_summary else query_agent_chat.message_data.text[:1000],
+                )
+            )
 
         # sort the previous chats based on query_id
         self.previous_chats.sort(key=lambda x: x.id, reverse=False)
@@ -195,10 +175,10 @@ class ChatHistoryHandler:
         # this will keep max 5 most relevant chats
         filtered_query_ids = await self.filter_chat_summaries()
 
-        all_query_message_threads.sort(key=lambda x: x.id, reverse=False)
+        all_relevant_agent_chats: List[AgentChatDTO] = []
+        for query_id in filtered_query_ids:
+            agent_chats, query_summary = self.query_id_to_chats_and_summary_map.get(query_id, ([], None))
+            if agent_chats:
+                all_relevant_agent_chats.extend(agent_chats)
 
-        return [
-            response
-            for response in all_query_message_threads
-            if response.query_id in filtered_query_ids or response.id in filtered_query_ids
-        ]
+        return all_relevant_agent_chats

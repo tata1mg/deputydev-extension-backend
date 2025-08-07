@@ -28,6 +28,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingEventType,
     StreamingParsedLLMCallResponse,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -39,12 +40,6 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
 )
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
-    ChatHistoryHandler,
-)
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
-    PreviousChatPayload,
-)
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
     CustomQuerySolverAgent,
@@ -386,6 +381,19 @@ class QuerySolver:
             )
         return agent_instance
 
+    async def _get_conversation_turns(self, payload: QuerySolverInput) -> List[UnifiedConversationTurn]:
+        """
+        Get conversation turns for the current session.
+        """
+        try:
+            conversation_turns = await MessageThreadsRepository.get_conversation_turns_for_session(
+                session_id=self.session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
+            )
+            return conversation_turns
+        except Exception as ex:
+            AppLogger.log_error(f"Error occurred while fetching conversation turns for session {self.session_id}: {ex}")
+            return []
+
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -426,14 +434,14 @@ class QuerySolver:
                     session_type=payload.session_type,
                 )
             )
-            chat_handler = ChatHistoryHandler(
-                previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
-            )
-            relevant_previous_messages, agent_instance = await asyncio.gather(
-                chat_handler.get_relevant_previous_chats(),
-                self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler),
-            )
+            # chat_handler = ChatHistoryHandler(
+            #     previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
+            #     llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+            # )
+            # relevant_previous_messages, agent_instance = await asyncio.gather(
+            #     chat_handler.get_relevant_previous_chats(),
+            #     self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler),
+            # )
 
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
