@@ -1,3 +1,5 @@
+from typing import Any, Dict, Optional
+
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.utils.app_utils import (
     get_gitlab_workspace_slug,
@@ -17,7 +19,7 @@ class PRWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload):
+    async def parse_payload(cls, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         vcs_type = payload.get("vcs_type")
         if should_skip_trayalabs_request(payload):
             return None
@@ -30,7 +32,7 @@ class PRWebhook:
             return parsed_payload
 
     @classmethod
-    def __parse_bitbucket_payload(cls, bitbucket_payload):
+    def __parse_bitbucket_payload(cls, bitbucket_payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates servable payload from bitbucket payload
         """
@@ -56,7 +58,7 @@ class PRWebhook:
         }
 
     @classmethod
-    def __parse_github_payload(cls, github_payload):
+    def __parse_github_payload(cls, github_payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates servable payload from github payload
         """
@@ -88,7 +90,7 @@ class PRWebhook:
         }
 
     @classmethod
-    def __parse_github_issue_comment_payload(cls, payload):
+    def __parse_github_issue_comment_payload(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parse GitHub issue comment payload for PR conversation comments
         Only handles comments created on PR conversation
@@ -115,7 +117,7 @@ class PRWebhook:
         }
 
     @classmethod
-    async def __parse_gitlab_payload(cls, gitlab_payload):
+    async def __parse_gitlab_payload(cls, gitlab_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Generates servable payload from gitlab merge request (MR) payload
         """
@@ -123,7 +125,7 @@ class PRWebhook:
             gitlab_payload.get("object_kind") == "merge_request"
             and gitlab_payload.get("object_attributes", {}).get("state") != GitlabActions.OPENED.value
         ):
-            return
+            return None
         pr_id = gitlab_payload["object_attributes"]["iid"]
         repo_name = get_vcs_repo_name_slug(gitlab_payload["project"]["path_with_namespace"])
         request_id = gitlab_payload["request_id"]
