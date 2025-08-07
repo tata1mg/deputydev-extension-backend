@@ -25,7 +25,8 @@ from deputydev_core.services.tools.grep_search.dataclass.main import (
 )
 from deputydev_core.services.tools.grep_search.grep_search import GrepSearch
 from deputydev_core.services.tools.iterative_file_reader.dataclass.main import (
-    IterativeFileReaderRequestParams, IterativeFileReaderResponse,
+    IterativeFileReaderRequestParams,
+    IterativeFileReaderResponse,
 )
 from deputydev_core.services.tools.iterative_file_reader.iterative_file_reader import (
     IterativeFileReader,
@@ -109,7 +110,7 @@ class ToolHandlers:
             The tool response.
         """
         tool_input["repo_path"] = get_context_value("repo_path")
-        #TODO Update key name in tool defination to directory_path or update GrepSearchRequestParams
+        # TODO Update key name in tool defination to directory_path or update GrepSearchRequestParams
         tool_input["directory_path"] = tool_input["search_path"]
         if isinstance(tool_input["query"], str):
             tool_input["search_term"] = tool_input["query"]
@@ -153,7 +154,7 @@ class ToolHandlers:
             file_path=os.path.join(payload.repo_path, payload.file_path),  # noqa: PTH118
             repo_path=payload.repo_path,  # noqa: PTH118
         ).read_lines(start_line=payload.start_line, end_line=payload.end_line)
-        #TODO: Update response that comes from vscode by using same key eof that is present in IterativeFileReaderResponse
+        # TODO: Update response that comes from vscode by using same key eof that is present in IterativeFileReaderResponse
         response = response.model_dump(mode="json")
         response["eof_reached"] = response["eof"]
         markdown = LLMResponseFormatter.format_iterative_file_reader_response(response)
