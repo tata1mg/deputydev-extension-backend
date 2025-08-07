@@ -218,8 +218,15 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["response"]["data"])
                 tool_response = {"Tool Response": markdown}
             elif tool_name == "grep_search":
-                markdown = LLMResponseFormatter.format_grep_tool_response(tool_response["response"])
-                tool_response = {"Tool Response": markdown}
+                tool_response = {
+                    "matched_contents": "".join(
+                        [
+                            f"<match_obj>{ChunkInfo(**matched_block['chunk_info']).get_xml()}"
+                            f"<match_line>{', '.join(map(str, matched_block['matched_line']))}</match_line></match_obj>"
+                            for matched_block in tool_response["response"]
+                        ]
+                    ),
+                }
         else:
             if tool_name not in {"replace_in_file", "write_to_file"}:
                 error_response = {
