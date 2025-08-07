@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Any, Dict, Optional
+
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.utils.app_utils import (
     get_gitlab_workspace_slug,
@@ -8,6 +9,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     GitlabActions,
 )
+
 from .webhook_utils import should_skip_trayalabs_request
 
 
@@ -17,7 +19,7 @@ class PRWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload: dict) -> Optional[dict]:
+    async def parse_payload(cls, payload: Dict) -> Optional[Dict[str, Any]]:
         vcs_type = payload.get("vcs_type")
         if should_skip_trayalabs_request(payload):
             return None
