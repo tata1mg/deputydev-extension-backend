@@ -1,8 +1,6 @@
 import asyncio
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -27,6 +25,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
 from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
@@ -63,7 +62,8 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.tool_response_parser import LLMResponseFormatter
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.app_logger import AppLogger
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
