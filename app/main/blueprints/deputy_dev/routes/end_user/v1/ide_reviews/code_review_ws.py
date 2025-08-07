@@ -1,14 +1,12 @@
 import asyncio
 import json
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
-from deputydev_core.utils.constants.error_codes import APIErrorCodes
-from sanic import Blueprint
+from sanic import Blueprint, Websocket, response
 from torpedo import CONFIG, Request, send_response
+from torpedo.types import ResponseDict
 
 from app.backend_common.caches.websocket_connections_cache import WebsocketConnectionCache
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
@@ -35,6 +33,9 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+from deputydev_core.utils.constants.error_codes import APIErrorCodes
 
 ide_review_websocket = Blueprint("ide_review_websocket", "")
 
@@ -46,7 +47,7 @@ local_testing_stream_buffer: Dict[str, List[str]] = {}
 @ide_review_websocket.route("/legacy-run-agent", methods=["POST"])
 @validate_client_version
 @authenticate
-async def run_extension_agent(request: Request, **kwargs):
+async def run_extension_agent(request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:
     """
     Run an agent for extension code review.
 
@@ -68,7 +69,7 @@ async def run_extension_agent(request: Request, **kwargs):
 @ide_review_websocket.route("/legacy-post-process", methods=["POST"])
 @validate_client_version
 @authenticate
-async def legacy_post_process(request: Request, **kwargs):
+async def legacy_post_process(request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:
     data = request.json
     processor = IdeReviewPostProcessor()
     await processor.post_process_pr(data, user_team_id=1)
@@ -76,7 +77,7 @@ async def legacy_post_process(request: Request, **kwargs):
 
 
 @ide_review_websocket.route("/run-agent", methods=["POST"])
-async def run_multi_agent_review(_request: Request, **kwargs):
+async def run_multi_agent_review(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:  # noqa: C901
     connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
     is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 
@@ -116,7 +117,8 @@ async def run_multi_agent_review(_request: Request, **kwargs):
 
     try:
         auth_data, _ = await get_auth_data(_request)
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        AppLogger.log_error(f"Unable to Authenticate user: Error: {e}")
         auth_error = True
         auth_data = None
 
@@ -126,7 +128,8 @@ async def run_multi_agent_review(_request: Request, **kwargs):
         await manager.push_to_connection_stream(
             WebSocketMessage(
                 type="AGENT_FAIL", data={"message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
-            )
+            ),
+            local_testing_stream_buffer,
         )
         return send_response({"status": "SESSION_EXPIRED"})
 
@@ -139,7 +142,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
             payload_dict["user_team_id"] = auth_data.user_team_id
 
         multi_agent_request = MultiAgentReviewRequest(**payload_dict)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Invalid request payload: {e}")
         return send_response({"status": "ERROR", "message": f"Invalid request payload: {str(e)}"})
 
@@ -160,7 +163,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
             # Process all agents
             await manager.process_request(request.agents, local_testing_stream_buffer)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error in process_multi_agent_review_task: {e}")
             if manager:
                 try:
@@ -168,7 +171,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
                         WebSocketMessage(type="AGENT_FAIL", data={"message": f"Background task error: {str(e)}"}),
                         local_testing_stream_buffer,
                     )
-                except Exception as stream_error:
+                except Exception as stream_error:  # noqa: BLE001
                     AppLogger.log_error(f"Error sending error message to stream: {stream_error}")
 
     # Create and start background processing task
@@ -178,7 +181,7 @@ async def run_multi_agent_review(_request: Request, **kwargs):
 
 
 @ide_review_websocket.websocket("/run-multi-agent-local-connection")
-async def multi_agent_websocket_local(request: Request, ws) -> None:
+async def multi_agent_websocket_local(request: Request, ws: Websocket) -> None:
     """Local testing WebSocket endpoint for multi-agent review."""
     try:
         async with aiohttp.ClientSession() as session:
@@ -226,16 +229,16 @@ async def multi_agent_websocket_local(request: Request, ws) -> None:
                         else:
                             await asyncio.sleep(0.2)
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error in WebSocket connection: {e}")
                     break
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error in multi-agent WebSocket connection: {e}")
 
 
 @ide_review_websocket.route("/post-process", methods=["POST"])
-async def post_process_extension_review(_request: Request, **kwargs):
+async def post_process_extension_review(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:
     connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
     is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 
@@ -298,12 +301,12 @@ async def post_process_extension_review(_request: Request, **kwargs):
         if auth_data and not payload_dict.get("user_team_id"):
             payload_dict["user_team_id"] = auth_data.user_team_id
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Invalid request payload: {e}")
         return send_response({"status": "ERROR", "message": f"Invalid request payload: {str(e)}"})
 
     # Create and start background processing task
-    async def process_post_process_task():
+    async def process_post_process_task() -> None:
         manager = PostProcessWebSocketManager(connection_id, is_local)
         await manager.initialize_aws_client()
         await manager.process_post_process_task(payload_dict, local_testing_stream_buffer)
@@ -314,7 +317,7 @@ async def post_process_extension_review(_request: Request, **kwargs):
 
 
 @ide_review_websocket.websocket("/post-process-local-connection")
-async def post_process_websocket_local(request: Request, ws) -> None:
+async def post_process_websocket_local(request: Request, ws: Websocket) -> None:
     """Local testing WebSocket endpoint for post-process."""
     try:
         async with aiohttp.ClientSession() as session:
@@ -362,9 +365,9 @@ async def post_process_websocket_local(request: Request, ws) -> None:
                         else:
                             await asyncio.sleep(0.2)
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error in WebSocket connection: {e}")
                     break
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error in post-process WebSocket connection: {e}")
