@@ -173,7 +173,6 @@ class Google(BaseLLMProvider):
     def _get_google_content_from_assistant_conversation_turn(
         self, conversation_turn: AssistantConversationTurn
     ) -> google_genai_types.Content:
-        
         parts: List[google_genai_types.Part] = []
         for turn_content in conversation_turn.content:
             if isinstance(turn_content, UnifiedTextConversationTurnContent):
@@ -232,7 +231,7 @@ class Google(BaseLLMProvider):
         ),
         search_web: bool = False,
         disable_caching: bool = False,
-        previous_conversation_turns: List[UnifiedConversationTurn] = [],
+        conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -264,12 +263,10 @@ class Google(BaseLLMProvider):
         # 2. Process Conversation History (previous_responses)
         contents: List[google_genai_types.Content] = []
 
-        if previous_responses and not previous_conversation_turns:
+        if previous_responses and not conversation_turns:
             contents = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
-        elif previous_conversation_turns:
-            contents = await self._get_google_content_from_conversation_turns(
-                conversation_turns=previous_conversation_turns
-            )
+        elif conversation_turns:
+            contents = await self._get_google_content_from_conversation_turns(conversation_turns=conversation_turns)
 
         # 3. Handle Current User Prompt
         user_parts: List[google_genai_types.Part] = []
@@ -289,11 +286,11 @@ class Google(BaseLLMProvider):
                         )
                     )
 
-        if user_parts and not previous_conversation_turns:
+        if user_parts and not conversation_turns:
             contents.append(google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=user_parts))
 
         # 4. Handle Tool Use Response (if provided for this specific call)
-        if tool_use_response and not previous_conversation_turns:
+        if tool_use_response and not conversation_turns:
             contents.append(
                 google_genai_types.Content(
                     parts=[
