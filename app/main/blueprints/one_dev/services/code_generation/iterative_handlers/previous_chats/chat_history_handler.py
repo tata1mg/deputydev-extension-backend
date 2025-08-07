@@ -39,6 +39,12 @@ class ChatHistoryHandler:
         self.query_id_to_chats_and_summary_map: Dict[int, Tuple[List[AgentChatDTO], QuerySummaryDTO | None]] = {}
         self.current_model: LLModels = llm_model
 
+    def _hash_query_id_to_int(self, query_id: str) -> int:
+        """
+        Convert a query ID string to an integer hash.
+        """
+        return hash(query_id) % (10**8)
+
     def _get_approx_chat_text(self, query_id: int) -> str:
         agent_chats, _summary = self.query_id_to_chats_and_summary_map[query_id]
         message_data_text: str = ""
@@ -131,12 +137,14 @@ class ChatHistoryHandler:
         # create a map of query_id to agent chats with summaries
         for agent_chat in all_agent_chats:
             if agent_chat.actor == ActorType.USER and agent_chat.message_type == MessageType.TEXT:
-                self.query_id_to_chats_and_summary_map[agent_chat.query_id] = (
+                self.query_id_to_chats_and_summary_map[self._hash_query_id_to_int(agent_chat.query_id)] = (
                     [agent_chat],
                     query_id_to_summary_map.get(agent_chat.id),
                 )
             else:
-                self.query_id_to_chats_and_summary_map[agent_chat.query_id][0].append(agent_chat)
+                self.query_id_to_chats_and_summary_map[self._hash_query_id_to_int(agent_chat.query_id)][0].append(
+                    agent_chat
+                )
 
     async def get_relevant_previous_agent_chats_for_new_query(self) -> List[AgentChatDTO]:
         # Fetch both query summaries and message threads concurrently, to save time in DB calls
@@ -153,7 +161,8 @@ class ChatHistoryHandler:
         # now create a map of query_id to agent chats and summaries
         self._set_query_id_to_chats_and_summary_map(all_agent_chats, all_session_query_summaries)
 
-        for _query_id, (agent_chats, query_summary) in self.query_id_to_chats_and_summary_map.items():
+        for query_id, (agent_chats, query_summary) in self.query_id_to_chats_and_summary_map.items():
+            query_id_int = self._hash_query_id_to_int(query_id)
             query_agent_chat = agent_chats[0]
             if not isinstance(query_agent_chat.message_data, TextMessageData):
                 raise ValueError(
@@ -163,7 +172,7 @@ class ChatHistoryHandler:
             # Create a PreviousChats object for each query, to be used by reranking
             self.previous_chats.append(
                 PreviousChats(
-                    id=query_agent_chat.query_id,
+                    id=query_id_int,
                     query=query_agent_chat.message_data.text,
                     summary=query_summary.summary if query_summary else query_agent_chat.message_data.text[:1000],
                 )

@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from typing_extensions import Annotated, Literal
 
 
@@ -48,13 +48,7 @@ class AgentChatData(BaseModel):
     message_type: MessageType
     message_data: MessageData
     metadata: Dict[str, Any]
-    previous_queries: List[int]
-
-    @validator("message_data")
-    def validate_message_data_consistency(self, v: MessageData, values: Dict[str, Any]) -> MessageData:
-        if "message_type" in values and v.message_type != values["message_type"].value:
-            raise ValueError("message_data.message_type must match message_type field")
-        return v
+    previous_queries: List[str]
 
 
 class AgentChatDTO(AgentChatData):
