@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 from typing_extensions import Annotated, Literal
@@ -43,10 +43,12 @@ MessageData = Annotated[
 
 class AgentChatData(BaseModel):
     session_id: int
+    query_id: int
     actor: ActorType
     message_type: MessageType
     message_data: MessageData
     metadata: Dict[str, Any]
+    previous_queries: List[int]
 
     @validator("message_data")
     def validate_message_data_consistency(self, v: MessageData, values: Dict[str, Any]) -> MessageData:
@@ -70,3 +72,4 @@ class AgentChatUpdateRequest(BaseModel):
     message_type: Optional[MessageType] = None
     message_data: Optional[MessageData] = None
     metadata: Optional[Dict[str, Any]] = None
+    previous_queries: Optional[List[int]] = None

@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Optional, Type
+from typing import List, Type
 
 from deputydev_core.utils.config_manager import ConfigManager
 
@@ -8,7 +8,14 @@ from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+    ChatHistoryHandler,
+)
+from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
+    PreviousChatPayload,
+)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
     MCPToolMetadata,
@@ -119,12 +126,23 @@ class QuerySolverAgent(ABC):
         tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
+    async def _get_conversation_turns(
+        self, payload: QuerySolverInput, _client_data: ClientData
+    ) -> List[UnifiedConversationTurn]:
+        # first, we need to get the previous history of messages in case of a new query
+
+        if payload.query:
+            chat_handler = ChatHistoryHandler(
+                previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
+                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+            )
+            previous_chat_queries = await chat_handler.get_relevant_previous_agent_chats()
+
     def get_llm_inputs(
         self,
         payload: QuerySolverInput,
         _client_data: ClientData,
         llm_model: LLModels,
-        previous_messages: Optional[List[int]] = None,
     ) -> LLMHandlerInputs:
         """
         Generate the inputs for the LLM handler based on the task and previous messages.

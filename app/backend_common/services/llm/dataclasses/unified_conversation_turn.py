@@ -59,6 +59,7 @@ UnifiedAssistantConversationTurnContent = Annotated[
     Field(discriminator="type"),
 ]
 
+
 class ToolConversationTurn(BaseModel):
     role: Literal[UnifiedConversationRole.TOOL] = UnifiedConversationRole.TOOL
     content: List[UnifiedToolResponseConversationTurnContent]
