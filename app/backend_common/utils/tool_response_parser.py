@@ -1,5 +1,3 @@
-# app/utils/llm_response_formatter.py
-
 from typing import Any, Dict, List
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
