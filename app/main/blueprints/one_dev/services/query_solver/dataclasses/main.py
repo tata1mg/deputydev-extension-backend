@@ -65,6 +65,12 @@ class LLMModel(Enum):
     KIMI_K2 = "KIMI_K2"
 
 
+class RetryReasons(Enum):
+    TOOL_USE_FAILED = "TOOL_USE_FAILED"
+    THROTTLED = "THROTTLED"
+    TOKEN_LIMIT_EXCEEDED = "TOKEN_LIMIT_EXCEEDED"
+
+
 class ToolMetadataTypes(Enum):
     MCP = "MCP"
 
@@ -116,6 +122,7 @@ class QuerySolverInput(BaseModel):
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
     is_embedding_done: Optional[bool] = True
+    retry_reason: Optional[RetryReasons] = None
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
