@@ -9,6 +9,7 @@ from typing_extensions import Annotated, Literal
 class ActorType(str, Enum):
     USER = "USER"
     ASSISTANT = "ASSISTANT"
+    SYSTEM = "SYSTEM"
 
 
 class MessageType(str, Enum):
