@@ -55,6 +55,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
+    RetryReasons,
     TaskCompletionBlock,
     TaskCompletionContent,
     ToolUseResponseInput,
@@ -393,6 +394,18 @@ class QuerySolver:
             )
         return agent_instance
 
+    def _get_model_change_text(
+        self, current_model: LLModels, new_model: LLModels, retry_reason: Optional[RetryReasons]
+    ) -> str:
+        if retry_reason == RetryReasons.TOOL_USE_FAILED:
+            return f"LLM model changed from {current_model} to {new_model} due to tool use failure."
+        elif retry_reason == RetryReasons.THROTTLED:
+            return f"LLM model changed from {current_model} to {new_model} due to throttling."
+        elif retry_reason == RetryReasons.TOKEN_LIMIT_EXCEEDED:
+            return f"LLM model changed from {current_model} to {new_model} due to token limit exceeded."
+        else:
+            return f"LLM model changed from {current_model} to {new_model} by the user."
+
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -407,8 +420,38 @@ class QuerySolver:
         )
 
         if payload.query:
-            # store query in DB
+            # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
+            current_session = await ExtensionSessionsRepository.get_by_id(
+                session_id=payload.session_id,
+            )
+
+            if not current_session:
+                raise ValueError(f"Session with ID {payload.session_id} not found.")
+
+            if not payload.llm_model:
+                raise ValueError("LLM model is required for query solving.")
+
+            if current_session.current_model != LLModels(payload.llm_model.value):
+                # Store a note in the chat about the model change
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=payload.session_id,
+                        actor=ActorType.SYSTEM,
+                        message_data=TextMessageData(
+                            text=self._get_model_change_text(
+                                current_model=current_session.current_model,
+                                new_model=LLModels(payload.llm_model.value),
+                                retry_reason=payload.retry_reason,
+                            )
+                        ),
+                        message_type=ChatMessageType.INFO,
+                        metadata={},
+                        query_id=generated_query_id,
+                        previous_queries=[],
+                    )
+                )
+
             await AgentChatsRepository.create_chat(
                 chat_data=AgentChatCreateRequest(
                     session_id=payload.session_id,
