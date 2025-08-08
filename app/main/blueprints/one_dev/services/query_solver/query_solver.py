@@ -37,6 +37,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     AgentChatCreateRequest,
     AgentChatDTO,
     AgentChatUpdateRequest,
+    InfoMessageData,
     TextMessageData,
     ToolUseMessageData,
 )
@@ -438,12 +439,14 @@ class QuerySolver:
                     chat_data=AgentChatCreateRequest(
                         session_id=payload.session_id,
                         actor=ActorType.SYSTEM,
-                        message_data=TextMessageData(
-                            text=self._get_model_change_text(
-                                current_model=current_session.current_model,
-                                new_model=LLModels(payload.llm_model.value),
-                                retry_reason=payload.retry_reason,
-                            )
+                        message_data=InfoMessageData(
+                            info={
+                                "text": self._get_model_change_text(
+                                    current_model=current_session.current_model,
+                                    new_model=LLModels(payload.llm_model.value),
+                                    retry_reason=payload.retry_reason,
+                                )
+                            }
                         ),
                         message_type=ChatMessageType.INFO,
                         metadata={},
