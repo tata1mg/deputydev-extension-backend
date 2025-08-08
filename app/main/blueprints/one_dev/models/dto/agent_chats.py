@@ -61,14 +61,22 @@ class TaskCompletionData(BaseModel):
     time_taken_seconds: Optional[float] = None
 
 
+class CodeBlockData(BaseModel):
+    message_type: Literal["CODE_BLOCK"] = "CODE_BLOCK"
+    code: str
+    language: str
+    diff: Optional[str] = None
+    file_path: Optional[str] = None
+
+
 MessageData = Annotated[
-    Union[TextMessageData, ToolUseMessageData, InfoMessageData, ThinkingInfoData, TaskCompletionData],
+    Union[TextMessageData, ToolUseMessageData, InfoMessageData, ThinkingInfoData, TaskCompletionData, CodeBlockData],
     Field(discriminator="message_type"),
 ]
 
 # ACTOR to data mapping. # noqa: ERA001
 # USER = TextMessageData  # noqa: ERA001
-# ASSISTANT = Union[ToolUseMessageData, ThinkingInfoData, TaskCompletionData]. # noqa: ERA001
+# ASSISTANT = Union[ToolUseMessageData, ThinkingInfoData, TaskCompletionData, CodeBlockData]. # noqa: ERA001
 # SYSTEM = InfoMessageData  # noqa: ERA001
 
 
