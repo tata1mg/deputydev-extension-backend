@@ -1,8 +1,6 @@
 import json
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestData,
@@ -37,6 +35,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.tool_handl
     ToolHandlers,
 )
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class ToolRequestManager:
@@ -44,7 +43,7 @@ class ToolRequestManager:
     Manages tool requests and responses for the code review flow.
     """
 
-    def __init__(self, context_service: ContextService):
+    def __init__(self, context_service: ContextService) -> None:
         self.context_service = context_service
         self.tools = [
             # RELATED_CODE_SEARCHER,
@@ -71,7 +70,7 @@ class ToolRequestManager:
         """
         return self.tools
 
-    async def process_tool_use_request(self, llm_response: Any, session_id: int) -> Optional[ToolUseResponseData]:
+    async def process_tool_use_request(self, llm_response: Any, session_id: int) -> Optional[List[ToolUseResponseData]]:
         """
         Process a tool use request from the LLM response.
 
@@ -83,6 +82,7 @@ class ToolRequestManager:
             The tool use response data if a tool was used, None otherwise.
         """
 
+        tool_responses = []
         for content_block in llm_response.parsed_content:
             if hasattr(content_block, "type") and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
                 tool_use_request = content_block
@@ -96,20 +96,22 @@ class ToolRequestManager:
                 # Process the tool request based on the tool name
                 try:
                     tool_response = await self._process_tool_request(tool_name, tool_input)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
                     tool_response = EXCEPTION_RAISED_FALLBACK.format(
                         tool_name=tool_name, tool_input=json.dumps(tool_input, indent=2), error_message=str(e)
                     )
 
-                return ToolUseResponseData(
-                    content=ToolUseResponseContent(
-                        tool_name=tool_name,
-                        tool_use_id=tool_use_id,
-                        response=tool_response,
+                tool_responses.append(
+                    ToolUseResponseData(
+                        content=ToolUseResponseContent(
+                            tool_name=tool_name,
+                            tool_use_id=tool_use_id,
+                            response=tool_response,
+                        )
                     )
                 )
-        return None
+        return tool_responses
 
     async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         handler = self._tool_handlers.get(tool_name)
