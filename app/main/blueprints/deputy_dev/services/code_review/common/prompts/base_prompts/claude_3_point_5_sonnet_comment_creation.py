@@ -2,8 +2,6 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List, Tuple
 
-from deputydev_core.utils.context_vars import get_context_value
-
 from app.backend_common.exception.exception import ParseException
 from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
@@ -23,6 +21,7 @@ from app.backend_common.utils.formatting import (
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPromptHandler):
@@ -142,7 +141,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         return base_format
 
     @classmethod
-    def is_corrective_code_enabled(cls, agent_name):
+    def is_corrective_code_enabled(cls, agent_name: str) -> bool:
         agents_config = get_context_value("setting")["code_review_agent"]["agents"]
 
         return agents_config[agent_name].get("is_corrective_code_enabled", False)
@@ -177,10 +176,14 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             """
 
     @classmethod
-    def get_tools_specific_system_message(cls, params):
+    def get_tools_specific_system_message(cls, params: Dict) -> str:
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.
+        
+        # Parallel Tool Usage Guidelines
+        - If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+        - If you choose to use the PR_REVIEW_PLANNER tool, you MUST NOT include any other tool calls in that same message.
         
         <tool_usage_strategy>
         Use tools strategically and efficiently to gather only the necessary context:
@@ -234,7 +237,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         return system_message
 
     @classmethod
-    def get_tools_configurable_system_message(cls, params) -> str:
+    def get_tools_configurable_system_message(cls, params: Dict) -> str:
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.
