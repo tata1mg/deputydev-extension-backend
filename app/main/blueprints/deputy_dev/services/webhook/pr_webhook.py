@@ -38,6 +38,8 @@ class PRWebhook:
         """
         pr_id = bitbucket_payload["pullrequest"]["id"]
         repo_name = get_vcs_repo_name_slug(bitbucket_payload["repository"]["full_name"])
+        html_url = bitbucket_payload["repository"]["links"]["html"]["href"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
         request_id = bitbucket_payload["request_id"]
         workspace = bitbucket_payload["repository"]["workspace"]["name"]
         workspace_slug = bitbucket_payload["repository"]["workspace"]["slug"]
@@ -48,6 +50,7 @@ class PRWebhook:
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
+            "repo_origin": repo_origin,
             "request_id": request_id,
             "workspace": workspace,
             "workspace_id": scm_workspace_id,
@@ -70,6 +73,8 @@ class PRWebhook:
 
         pr_id = github_payload["pull_request"]["number"]
         repo_name = get_vcs_repo_name_slug(github_payload["pull_request"]["head"]["repo"]["full_name"])
+        html_url = github_payload["repository"]["html_url"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
         request_id = github_payload["request_id"]
         workspace = github_payload["organization"]["login"]
         workspace_slug = github_payload["organization"]["login"]
@@ -80,6 +85,7 @@ class PRWebhook:
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
+            "repo_origin": repo_origin,
             "request_id": request_id,
             "workspace": workspace,
             "workspace_id": scm_workspace_id,
@@ -103,10 +109,13 @@ class PRWebhook:
         pr_url = payload["issue"]["pull_request"]["url"]
         pr_id = pr_url.split("/")[-1]
         pr_review_start_time = payload.get("pr_review_start_time")
+        html_url = payload["repository"]["html_url"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
 
         return {
             "pr_id": int(pr_id),
             "repo_name": get_vcs_repo_name_slug(payload["repository"]["full_name"]),
+            "repo_origin": repo_origin,
             "request_id": payload["request_id"],
             "workspace": payload["organization"]["login"],
             "workspace_id": str(payload.get("scm_workspace_id")),
@@ -128,6 +137,8 @@ class PRWebhook:
             return None
         pr_id = gitlab_payload["object_attributes"]["iid"]
         repo_name = get_vcs_repo_name_slug(gitlab_payload["project"]["path_with_namespace"])
+        html_url = gitlab_payload["project"]["web_url"]
+        repo_origin = html_url.replace("https://", "").lower() + ".git"
         request_id = gitlab_payload["request_id"]
         workspace = gitlab_payload["project"]["namespace"]
         workspace_slug = get_gitlab_workspace_slug(gitlab_payload["project"]["path_with_namespace"])
@@ -140,6 +151,7 @@ class PRWebhook:
         return {
             "pr_id": pr_id,
             "repo_name": repo_name,
+            "repo_origin": repo_origin,
             "request_id": str(request_id),
             "workspace": workspace,
             "workspace_id": scm_workspace_id,

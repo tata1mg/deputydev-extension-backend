@@ -30,6 +30,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     StreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
@@ -70,7 +71,6 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.tool_response_parser import LLMResponseFormatter
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
