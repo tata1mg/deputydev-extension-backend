@@ -100,7 +100,7 @@ class ExtensionSessionsRepository:
             # Return only the IDs of the extension sessions
             return [extension_session["session_id"] for extension_session in extension_sessions]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching extension_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
@@ -140,14 +140,14 @@ class ExtensionSessionsRepository:
                 return []
             return [ExtensionSessionDTO(**extension_session) for extension_session in extension_sessions]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching extension_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
             return []
 
     @classmethod
-    async def soft_delete_extension_session_by_id(cls, session_id: int, user_team_id: int):
+    async def soft_delete_extension_session_by_id(cls, session_id: int, user_team_id: int) -> None:
         try:
             # First check if the session belongs to the user
             extension_session = await DB.by_filters(
@@ -196,7 +196,9 @@ class ExtensionSessionsRepository:
             raise ex
 
     @classmethod
-    async def update_session_pinned_rank(cls, session_id: int, user_team_id: int, pinned_rank: int) -> None:
+    async def update_session_pinned_rank(
+        cls, session_id: int, user_team_id: int, pinned_rank: Optional[int] = None
+    ) -> None:
         try:
             # First check if the session belongs to the user
             extension_session = await DB.by_filters(
