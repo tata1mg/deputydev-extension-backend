@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Dict, List
+
 from sanic.log import logger
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
@@ -23,7 +25,7 @@ class Gitlab(Integration, SCM):
         self.auth_handler: GitlabAuthHandler | None = auth_handler
         self.client: GitlabGroupClient | None = None
 
-    async def integrate(self, payload: OnboardingRequest):
+    async def integrate(self, payload: OnboardingRequest) -> None:
         integration_row: Integrations = await self.get_integration(
             team_id=payload.team_id, client=payload.integration_client
         )
@@ -74,7 +76,7 @@ class Gitlab(Integration, SCM):
 
             await self.mark_connected(integration_row)
 
-    async def create_webhooks(self, group_id):
+    async def create_webhooks(self, group_id: str) -> None:
         set_hooks = await self.list_all_webhooks(group_id)
 
         filtered_hooks = []
@@ -106,7 +108,7 @@ class Gitlab(Integration, SCM):
 
         return filtered_hooks
 
-    def __hook_exists(self, new_webhook, set_hooks):
+    def __hook_exists(self, new_webhook: Dict[str, Any], set_hooks: List[Dict[str, Any]]) -> bool:
         for set_hook in set_hooks:
             url = set_hook["url"]
             new_url = self._prepare_url(new_webhook["URL"], vcs_type="gitlab")
@@ -116,7 +118,7 @@ class Gitlab(Integration, SCM):
 
         return False
 
-    def __prepare_events_dict(self, events_list: list[str]):
+    def __prepare_events_dict(self, events_list: List[str]) -> Dict[str, bool]:
         events = set(events_list)
 
         events_dict = {}
@@ -128,8 +130,8 @@ class Gitlab(Integration, SCM):
 
         return events_dict
 
-    async def list_all_workspaces(self):
-        resp = await self.client.get_all_groups()
+    async def list_all_workspaces(self) -> List[Dict[str, Any]]:
+        resp: List[Dict[str, Any]] = await self.client.get_all_groups()
         groups = resp
 
         result = []
@@ -144,8 +146,8 @@ class Gitlab(Integration, SCM):
 
         return result
 
-    async def list_all_webhooks(self, group_id):
-        resp = await self.client.get_group_webhooks(group_id)
+    async def list_all_webhooks(self, group_id: str) -> List[Dict[str, Any]]:
+        resp: List[Dict[str, Any]] = await self.client.get_group_webhooks(group_id)
         set_hooks = resp
 
         result = []

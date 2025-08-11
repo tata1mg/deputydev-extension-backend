@@ -13,10 +13,10 @@ from .base import Integration
 class Confluence(Integration):
     __name__ = "confluence"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.auth_handler: ConfluenceAuthHandler | None = None
 
-    async def integrate(self, payload: OnboardingRequest):
+    async def integrate(self, payload: OnboardingRequest) -> None:
         integration_row = await self.get_integration(payload.team_id, payload.integration_client)
 
         self.auth_handler: ConfluenceAuthHandler = ConfluenceAuthHandler(tokenable_id=integration_row.id)
@@ -36,7 +36,7 @@ class Confluence(Integration):
 
             await self.mark_connected(integration_row)
 
-    async def get_cloud_id(self, token) -> str:
+    async def get_cloud_id(self, token: str) -> str:
         response = await AtlassianOAuthClient.get_accessible_resources(token)
         cloud_id = response[0]["id"]
         return cloud_id
