@@ -2,8 +2,10 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.exceptions import ServerError
+from sanic.response import JSONResponse
 from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
+from torpedo.response import ResponseDict
 
 from app.main.blueprints.one_dev.services.web_search.web_search_service import (
     WebSearchService,
@@ -23,12 +25,14 @@ websearch_v1_bp = Blueprint("websearch_bp", url_prefix="/websearch")
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def websearch(_request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def websearch(
+    _request: Request, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+) -> ResponseDict | JSONResponse:
     payload = _request.json
     if not payload.get("descriptive_query"):
         raise BadRequestException("Missing descriptive query")
     try:
         response = await WebSearchService.web_search(session_id=session_id, query=payload.get("descriptive_query"))
         return send_response(response, headers=kwargs.get("response_headers"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         raise ServerError(f"Failed to search from web: {str(e)}")
