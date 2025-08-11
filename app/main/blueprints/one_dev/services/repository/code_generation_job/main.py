@@ -9,14 +9,16 @@ from app.main.blueprints.one_dev.models.dto.job import JobDTO
 
 class JobService:
     @classmethod
-    async def db_get(cls, filters: dict, fetch_one=False) -> Union[List[JobDTO], JobDTO]:
+    async def db_get(cls, filters: Dict[str, Any], fetch_one: bool = False) -> Union[List[JobDTO], JobDTO]:
         try:
             code_generation_jobs = await DB.by_filters(model_name=Job, where_clause=filters, fetch_one=False)
             if code_generation_jobs and fetch_one:
                 return JobDTO(**code_generation_jobs[0])
             elif code_generation_jobs:
                 return [JobDTO(**code_generation_job) for code_generation_job in code_generation_jobs]
-        except Exception as ex:
+            else:
+                raise ValueError("No job found")
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 "error occurred while fetching sessionchat details from db for sessionchat filters : {}, ex: {}".format(
                     filters, ex
