@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from ast import List
+from typing import Any, Dict
+
 from sanic.log import logger
 from tortoise.transactions import in_transaction
 
@@ -20,7 +23,7 @@ class Github(Integration, SCM):
         self.auth_handler: GithubAuthHandler | None = auth_handler
         self.client: GithubClient | None = None
 
-    async def integrate(self, payload: OnboardingRequest):
+    async def integrate(self, payload: OnboardingRequest) -> None:
         integration_row = await self.get_integration(team_id=payload.team_id, client=payload.integration_client)
 
         self.auth_handler = GithubAuthHandler()
@@ -53,7 +56,7 @@ class Github(Integration, SCM):
 
             await self.mark_connected(integration_row)
 
-    async def get_workspace(self, installation_id) -> dict:
+    async def get_workspace(self, installation_id: str) -> Dict[str, Any]:
         response = await GithubOAuthClient.get_installation(installation_id=installation_id)
         account = response["account"]
 
@@ -63,7 +66,7 @@ class Github(Integration, SCM):
             "scm_workspace_id": account["id"],
         }
 
-    async def create_webhooks(self, org_name: str, scm_workspace_id) -> list[dict]:
+    async def create_webhooks(self, org_name: str, scm_workspace_id: str) -> List[Dict[str, Any]]:
         set_hooks = await self.list_all_webhooks(org_name)
         filtered_hooks = []
         for webhook in self.WEBHOOKS_PAYLOAD:
@@ -89,7 +92,9 @@ class Github(Integration, SCM):
 
         return filtered_hooks
 
-    def __hook_exists(self, new_webhook: dict, set_hooks: list[dict], scm_workspace_id) -> bool:
+    def __hook_exists(
+        self, new_webhook: Dict[str, Any], set_hooks: List[Dict[str, Any]], scm_workspace_id: str
+    ) -> bool:
         #  check with all set hooks
         for set_hook in set_hooks:
             # only consider active hooks
@@ -106,5 +111,5 @@ class Github(Integration, SCM):
         response = await self.client.get_org_webhooks(org_name)
         return response
 
-    async def list_all_workspaces(self):
+    async def list_all_workspaces(self) -> List[Dict[str, Any]]:
         pass
