@@ -18,6 +18,7 @@ __all__ = [
     "UserAgentCommentMapping",
     "IdeReviewAgentStatus",
     "IdeReviewFeedback",
+    "ReviewAgentChats",
 ]
 
 from .......backend_common.models.dao.postgres.repos import Repos
@@ -37,5 +38,6 @@ from .ide_reviews_comments import IdeReviewsComments
 from .integrations import Integrations
 from .pr_comments import PRComments
 from .pull_requests import PullRequests
+from .review_agent_chats import ReviewAgentChats
 from .user_agent_comment_mapping import UserAgentCommentMapping
 from .user_agents import UserAgents
