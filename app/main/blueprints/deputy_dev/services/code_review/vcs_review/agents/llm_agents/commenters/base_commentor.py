@@ -168,8 +168,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 "MAX_REVIEW_TOOL_ITERATIONS"
             ]  # Limit the number of iterations to prevent infinite loops
             iteration_count = 0
+            user_and_system_messages = None
 
-            while iteration_count < max_iterations:
+            while iteration_count <= max_iterations:
                 # Check if parse_final_response tool is used
                 if self.tool_request_manager.is_final_response(current_response):
                     try:
@@ -220,16 +221,20 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
                     if tool_use_responses:
                         # Submit the tool use response to the LLM
+                        if iteration_count == max_iterations - 1:
+                            user_and_system_messages = prompt_handler.get_finalize_iteration_breached_prompt()
+
                         current_response = await self.llm_handler.submit_batch_tool_use_response(
                             session_id=session_id,
                             tool_use_responses=tool_use_responses,
                             tools=tools_to_use,
                             prompt_type=prompt_handler.prompt_type,
+                            user_and_system_messages=user_and_system_messages,
                         )
 
                         iteration_count += 1
 
-            if iteration_count >= max_iterations:
+            if iteration_count > max_iterations:
                 AppLogger.log_error(
                     f"Maximum number of iterations ({max_iterations}) reached for agent {self.agent_name}"
                 )

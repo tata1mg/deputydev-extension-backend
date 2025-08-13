@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List, Tuple
 
@@ -7,6 +8,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageData,
     ToolUseRequestData,
 )
+from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -286,3 +288,22 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             system_message = f"{system_message}\n{params['REPO_INFO_PROMPT']}"
 
         return system_message
+
+    @classmethod
+    def get_force_finalize_user_message(cls) -> str:
+        """
+        Returns a strong final-instruction message for the PR review agent
+        when the iteration limit is about to be reached.
+
+        The message instructs the LLM to stop using any further tools and
+        only call the `parse_final_Response` tool with the required comment structure.
+        """
+        return """
+            You are a Pull Request reviewer agent. 
+            With whatever information you currently have, review the diff now and provide final comments. 
+            Do NOT call any more tools. 
+            Only call the `parse_final_Response` tool, following its required comment structure.
+        """
+
+    def get_finalize_iteration_breached_prompt(self) -> Optional[UserAndSystemMessages]:
+        return None
