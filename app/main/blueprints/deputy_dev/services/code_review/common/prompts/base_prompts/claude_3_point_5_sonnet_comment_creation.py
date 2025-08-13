@@ -142,7 +142,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         return base_format
 
     @classmethod
-    def is_corrective_code_enabled(cls, agent_name):
+    def is_corrective_code_enabled(cls, agent_name: str) -> bool:
         agents_config = get_context_value("setting")["code_review_agent"]["agents"]
 
         return agents_config[agent_name].get("is_corrective_code_enabled", False)
@@ -177,7 +177,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             """
 
     @classmethod
-    def get_tools_specific_system_message(cls, params):
+    def get_tools_specific_system_message(cls, params: Dict[str, Any]) -> str:
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.
@@ -234,7 +234,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         return system_message
 
     @classmethod
-    def get_tools_configurable_system_message(cls, params) -> str:
+    def get_tools_configurable_system_message(cls, params: Dict[str, Any]) -> str:
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.

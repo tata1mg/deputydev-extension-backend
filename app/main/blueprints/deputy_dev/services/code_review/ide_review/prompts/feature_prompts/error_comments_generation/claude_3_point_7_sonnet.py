@@ -18,7 +18,7 @@ class Claude3Point5ErrorCommentsGenerationPrompt(BaseClaude3Point5SonnetCommentC
     prompt_category = PromptCategories.CODE_REVIEW.value
     model_name = LLModels.CLAUDE_3_POINT_7_SONNET
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.ERROR.value
 

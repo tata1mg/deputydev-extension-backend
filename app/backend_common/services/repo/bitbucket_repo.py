@@ -16,8 +16,8 @@ class BitbucketRepo(BaseRepo):
         workspace_id: str,
         auth_handler: AuthHandler,
         workspace_slug: str,
-        repo_id: str = None,
-    ):
+        repo_id: str | None = None,
+    ) -> None:
         super().__init__(
             vcs_type=VCSTypes.bitbucket.value,
             workspace=workspace,
@@ -36,14 +36,14 @@ class BitbucketRepo(BaseRepo):
         self.token = ""
 
     @staticmethod
-    def get_remote_host():
+    def get_remote_host() -> str:
         return "bitbucket.org"
 
-    async def get_repo_url(self):
+    async def get_repo_url(self) -> str:
         self.token = await self.auth_handler.access_token()
         return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
 
-    def get_remote_url_without_token(self):
+    def get_remote_url_without_token(self) -> str:
         return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
 
     async def is_pr_open_between_branches(
@@ -66,7 +66,7 @@ class BitbucketRepo(BaseRepo):
         pr_url = existing_pr["links"]["html"]["href"] if existing_pr else None
         return bool(existing_pr), pr_url
 
-    async def create_issue_comment(self, issue_id: str, comment: str):
+    async def create_issue_comment(self, issue_id: str, comment: str) -> None:
         await self.repo_client.create_issue_comment(issue_id, comment)
 
     def get_repo_actor(self) -> Actor:

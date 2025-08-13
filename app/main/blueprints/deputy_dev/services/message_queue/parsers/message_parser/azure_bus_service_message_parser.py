@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 
 from azure.servicebus import ServiceBusReceivedMessage
 
@@ -42,6 +43,6 @@ class AzureBusServiceMessageParser:
         return AzureBusServiceMessage(body=body, attributes=attributes, received_message=received_message)
 
     @staticmethod
-    def decompress(message):
-        data = b"".join(message).decode("utf-8")
+    def decompress(message: bytes) -> Dict[str, Any]:
+        data = message.decode("utf-8")
         return json.loads(data)

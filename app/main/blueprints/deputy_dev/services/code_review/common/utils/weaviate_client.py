@@ -12,7 +12,7 @@ from sanic import Sanic
 class ReviewWeaviateSyncAndAsyncClients(WeaviateSyncAndAsyncClients):
     """Enhanced Weaviate client with additional functionality for reconnection and initialization."""
 
-    async def ensure_connected(self):
+    async def ensure_connected(self) -> None:
         """Ensures connection to Weaviate is established, reinitializing if necessary."""
         if not await self.is_ready():
             weaviate_client = await ReviewInitialisationManager().initialize_vector_db()
@@ -45,6 +45,6 @@ async def get_weaviate_connection() -> Optional[ReviewWeaviateSyncAndAsyncClient
 
         return weaviate_client
 
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001
         AppLogger.log_error(f"Failed to get Weaviate connection: {ex}")
         return None

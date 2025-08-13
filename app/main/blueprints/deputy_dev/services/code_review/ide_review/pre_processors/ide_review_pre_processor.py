@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from deputydev_core.utils.constants.enums import Clients
 
 from app.backend_common.caches.ide_review_cache import IdeReviewCache
@@ -26,7 +28,7 @@ from app.main.blueprints.deputy_dev.services.repository.extension_reviews.reposi
 
 
 class IdeReviewPreProcessor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.extension_repo_dto = None
         self.session_id = None
         self.review_dto = None
@@ -50,7 +52,7 @@ class IdeReviewPreProcessor:
 
         return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
 
-    async def get_repo_id(self, request: GetRepoIdRequest, user_team_id: int):
+    async def get_repo_id(self, request: GetRepoIdRequest, user_team_id: int) -> int:
         user_team = await UserTeamRepository.db_get(filters={"id": user_team_id}, fetch_one=True)
         if not user_team:
             raise ValueError(f"User team with id {user_team_id} not found")
@@ -60,10 +62,8 @@ class IdeReviewPreProcessor:
         )
         return repo_dto
 
-    async def pre_process_pr(self, data: dict, user_team_id: int):
+    async def pre_process_pr(self, data: Dict[str, Any], user_team_id: int) -> None:
         review_request = ReviewRequest(**data)
-
-        # review_diff = self._get_attachment_data_and_metadata(attachment_id)
 
         combined_diff = ""
         for file in review_request.file_wise_diff:
@@ -113,7 +113,7 @@ class IdeReviewPreProcessor:
         self.review_dto = await ExtensionReviewsRepository.db_insert(review_dto)
 
         if self.is_valid:
-            a = await IdeReviewCache.set(key=str(self.review_dto.id), value=review_diff)
+            await IdeReviewCache.set(key=str(self.review_dto.id), value=review_diff)
 
         return {
             "review_id": self.review_dto.id,
@@ -121,7 +121,7 @@ class IdeReviewPreProcessor:
             "repo_id": self.extension_repo_dto.id,
         }
 
-    async def run_validation(self, review_diff: str, token_count: int):
+    async def run_validation(self, review_diff: str, token_count: int) -> None:
         """
         Run validations on the review diff, token count, based on setting, MAX_DIFF_TOKEN_LIMIT.
         """

@@ -4,7 +4,7 @@ from app.backend_common.utils.app_utils import get_token_count
 
 
 class IdeDiffHandler:
-    def __init__(self, pr_diff: str):
+    def __init__(self, pr_diff: str) -> None:
         self.pr_diff = pr_diff
         self.diff_git_re = re.compile(r"^diff --git a/(.+?) b/(.+)$")
 
