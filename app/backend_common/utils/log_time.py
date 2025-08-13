@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Union
+from typing import Any, Callable, Union
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.constants import TimeFormat
@@ -38,7 +38,7 @@ def get_time_difference(
         return time_difference
 
 
-def log_time(func):
+def log_time(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator to log the execution time of methods.
 
@@ -50,7 +50,7 @@ def log_time(func):
     """
 
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         """
         Wrapper function to log the start time, end time, and any exceptions raised during execution.
 

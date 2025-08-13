@@ -9,7 +9,7 @@ from app.backend_common.repository.db import DB
 
 class UserRepository:
     @classmethod
-    async def db_get(cls, filters: Dict[str, Any], fetch_one=False) -> Union[UserDTO, List[UserDTO]]:
+    async def db_get(cls, filters: Dict[str, Any], fetch_one: bool = False) -> Union[UserDTO, List[UserDTO]] | None:
         try:
             user_data = await DB.by_filters(model_name=Users, where_clause=filters, fetch_one=fetch_one)
             if user_data and fetch_one:

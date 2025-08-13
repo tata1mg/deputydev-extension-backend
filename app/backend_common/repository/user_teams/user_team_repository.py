@@ -9,7 +9,9 @@ from app.backend_common.repository.db import DB
 
 class UserTeamRepository:
     @classmethod
-    async def db_get(cls, filters: Dict[str, Any], fetch_one=False) -> Union[UserTeamDTO, List[UserTeamDTO]]:
+    async def db_get(
+        cls, filters: Dict[str, Any], fetch_one: bool = False
+    ) -> Union[UserTeamDTO, List[UserTeamDTO]] | None:
         try:
             user_team_data = await DB.by_filters(model_name=UserTeams, where_clause=filters, fetch_one=fetch_one)
             if user_team_data and fetch_one:

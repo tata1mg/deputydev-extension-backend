@@ -18,7 +18,7 @@ class WorkspaceService:
                 return WorkspaceDTO(**workspaces[0])
             elif workspaces:
                 return [WorkspaceDTO(**workspace) for workspace in workspaces]
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 "error occurred while fetching workspace details from db for workspace filters : {}, ex: {}".format(
                     filters, ex

@@ -1,4 +1,7 @@
+from typing import Dict, Type
+
 from app.backend_common.constants.constants import VCSTypes
+from app.backend_common.services.credentials.auth_handler import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.vcs_pr_handlers.bitbucket_pr import BitbucketPR
 from app.backend_common.services.pr.vcs_pr_handlers.github_pr import GithubPR
@@ -7,7 +10,7 @@ from app.backend_common.services.repo.base_repo import BaseRepo
 
 
 class PRFactory:
-    FACTORIES = {
+    FACTORIES: Dict[str, Type[BasePR]] = {
         VCSTypes.bitbucket.value: BitbucketPR,
         VCSTypes.github.value: GithubPR,
         VCSTypes.gitlab.value: GitlabPR,
@@ -17,14 +20,14 @@ class PRFactory:
     async def pr(
         cls,
         vcs_type: str,
-        workspace,
-        repo_name,
-        pr_id,
-        workspace_id,
-        auth_handler,
-        workspace_slug,
+        workspace: str,
+        repo_name: str,
+        pr_id: str,
+        workspace_id: str,
+        auth_handler: AuthHandler,
+        workspace_slug: str,
         repo_service: BaseRepo,
-        fetch_pr_details=False,
+        fetch_pr_details: bool = False,
     ) -> BasePR:
         if vcs_type not in cls.FACTORIES:
             raise ValueError("Incorrect vcs type passed")

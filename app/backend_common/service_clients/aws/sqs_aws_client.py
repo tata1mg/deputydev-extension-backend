@@ -1,3 +1,5 @@
+from typing import Any
+
 from aiobotocore.config import AioConfig  # type: ignore
 from aiobotocore.endpoint import MAX_POOL_CONNECTIONS  # type: ignore
 from aiobotocore.session import AioSession, ClientCreatorContext, get_session  # type: ignore
@@ -10,7 +12,12 @@ class AWSClient:
 
     @classmethod
     async def create_client(
-        cls, aws_service_name: str, region_name: str, aws_secret_access_key=None, aws_access_key_id=None, **kwargs
+        cls,
+        aws_service_name: str,
+        region_name: str,
+        aws_secret_access_key: str | None = None,
+        aws_access_key_id: str | None = None,
+        **kwargs: Any,
     ) -> ClientCreatorContext:
         try:
             session: AioSession = get_session()
@@ -37,5 +44,5 @@ class AWSClient:
             }
             client: ClientCreatorContext = session.create_client(**client_args)
             return client
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             raise Exception(AWSErrorMessages.AwsConnectionError.value.format(error=error))

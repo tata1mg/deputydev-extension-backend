@@ -42,7 +42,7 @@ class ToolRequestManager:
     This manager handles tool parsing and execution for the extension review system.
     """
 
-    def __init__(self, context_service: IdeReviewContextService):
+    def __init__(self, context_service: IdeReviewContextService) -> None:
         self.context_service = context_service
         self.tools = [
             GREP_SEARCH,

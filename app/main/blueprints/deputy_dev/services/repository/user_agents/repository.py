@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from sanic.log import logger
 
@@ -9,7 +9,9 @@ from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDT
 
 class UserAgentRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False, order_by="agent_name") -> Union[UserAgentDTO, List[UserAgentDTO]]:
+    async def db_get(
+        cls, filters: Dict[str, Any], fetch_one: bool = False, order_by: str = "agent_name"
+    ) -> Union[UserAgentDTO, List[UserAgentDTO]]:
         try:
             agent_data = await DB.by_filters(
                 model_name=UserAgents, where_clause=filters, fetch_one=fetch_one, order_by=order_by
@@ -35,7 +37,7 @@ class UserAgentRepository:
             raise ex
 
     @classmethod
-    async def db_update(cls, filters, payload) -> Optional[UserAgentDTO]:
+    async def db_update(cls, filters: Dict[str, Any], payload: Dict[str, Any]) -> Optional[UserAgentDTO]:
         try:
             payload.pop("id", None)
             await UserAgents.filter(**filters).update(**payload)
@@ -46,7 +48,7 @@ class UserAgentRepository:
             raise ex
 
     @classmethod
-    async def update_agent(cls, filters, payload):
+    async def update_agent(cls, filters: Dict[str, Any], payload: Dict[str, Any]) -> None:
         try:
             await UserAgents.filter(**filters).update(**payload)
             return
@@ -55,7 +57,7 @@ class UserAgentRepository:
             raise ex
 
     @classmethod
-    async def db_delete(cls, agent_id) -> None:
+    async def db_delete(cls, agent_id: int) -> None:
         try:
             await UserAgents.filter(id=agent_id).update(is_deleted=True)
         except Exception as ex:

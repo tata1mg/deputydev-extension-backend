@@ -25,15 +25,15 @@ class AuthHandler:
 
     _encryption_service: EncryptionService = EncryptionService
 
-    def __init__(self, tokenable_id: int):
+    def __init__(self, tokenable_id: int) -> None:
         self.tokenable_id = tokenable_id
 
     # --------------------------- implement in subclass -------------------------- #
 
-    async def _authorise(self, *args, **kwargs):
+    async def _authorise(self, *args: Any, **kwargs: Any) -> Tuple[str, datetime, str]:
         raise NotImplementedError
 
-    async def _refresh(self, *args, **kwargs):
+    async def _refresh(self, *args: Any, **kwargs: Any) -> Tuple[str, datetime, str]:
         raise NotImplementedError
 
     # -------------------------------- public apis ------------------------------- #

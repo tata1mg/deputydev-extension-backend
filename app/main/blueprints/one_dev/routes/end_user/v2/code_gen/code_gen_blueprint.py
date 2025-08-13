@@ -21,7 +21,7 @@ from app.backend_common.exception.exception import InputTokenLimitExceededError
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
-    SocketClosedException,
+    SocketClosedError,
 )
 from app.backend_common.service_clients.exceptions import (
     LLMThrottledError,
@@ -180,7 +180,7 @@ async def solve_user_query(_request: Request, **kwargs: Any) -> ResponseDict | r
                         connection_id=connection_id,
                         message=json.dumps(data),
                     )
-                except SocketClosedException:
+                except SocketClosedError:
                     connection_id_gone = True
 
     is_valid, upgrade_version, client_download_link = validate_version(

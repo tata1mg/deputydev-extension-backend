@@ -1,5 +1,8 @@
+from typing import Dict, Optional, Type
+
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.services.credentials import AuthHandler
+from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.bitbucket_comment import (
     BitbucketComment,
@@ -9,7 +12,7 @@ from app.main.blueprints.deputy_dev.services.comment.gitlab_comment import Gitla
 
 
 class CommentFactory:
-    FACTORIES = {
+    FACTORIES: Dict[str, Type[BaseComment]] = {
         VCSTypes.bitbucket.value: BitbucketComment,
         VCSTypes.github.value: GithubComment,
         VCSTypes.gitlab.value: GitlabComment,
@@ -19,13 +22,13 @@ class CommentFactory:
     async def initialize(
         cls,
         vcs_type: str,
-        workspace,
-        workspace_slug,
-        repo_name,
-        pr_id,
+        workspace: str,
+        workspace_slug: str,
+        repo_name: str,
+        pr_id: str,
         auth_handler: AuthHandler,
-        pr_details=None,
-        repo_id=None,
+        pr_details: Optional[PullRequestResponse] = None,
+        repo_id: Optional[int] = None,
     ) -> BaseComment:
         if vcs_type not in cls.FACTORIES:
             raise ValueError("Incorrect vcs type passed")

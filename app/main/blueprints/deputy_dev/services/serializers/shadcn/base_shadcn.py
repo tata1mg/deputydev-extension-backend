@@ -11,11 +11,11 @@ class BaseShadcn(ABC):
         interval_filter (str): The interval filter for the data.
     """
 
-    def __init__(self, raw_data: List[Dict[str, Any]], interval_filter: str):
+    def __init__(self, raw_data: List[Dict[str, Any]], interval_filter: str) -> None:
         self.raw_data = raw_data
         self.interval_filter = interval_filter
 
-    def process_raw_data(self):
+    def process_raw_data(self) -> List[Dict[str, Any]]:
         """
         Abstract method to process raw data.
 

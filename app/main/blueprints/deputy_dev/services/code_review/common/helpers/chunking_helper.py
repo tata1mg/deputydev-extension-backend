@@ -1,3 +1,7 @@
+from typing import Dict, List
+
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+
 from app.backend_common.constants.constants import MAX_RELEVANT_CHUNKS
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
@@ -7,11 +11,11 @@ from app.main.blueprints.deputy_dev.utils import is_path_included
 
 class ChunkingHelper:
     @classmethod
-    def agent_wise_relevant_chunks(cls, ranked_snippets_list):
+    def agent_wise_relevant_chunks(cls, ranked_snippets_list: List[ChunkInfo]) -> Dict[str, List[ChunkInfo]]:
         agents = SettingService.helper.get_uuid_wise_agents()
         remaining_agents = len(agents)
 
-        relevant_chunks = {agent_id: [] for agent_id in agents}
+        relevant_chunks: Dict[str, List[ChunkInfo]] = {agent_id: [] for agent_id in agents}
 
         for snippet in ranked_snippets_list:
             if remaining_agents == 0:
