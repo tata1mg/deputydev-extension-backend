@@ -17,7 +17,7 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
     prompt_type = PromptFeatures.PERFORMANCE_OPTIMIZATION_COMMENTS_GENERATION_PASS_1.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.PERFORMANCE_OPTIMIZATION.value
 
@@ -141,3 +141,8 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
         return UserAndSystemMessages(
             user_message=user_message, system_message=system_message, cached_message=cached_message
         )
+
+    def get_finalize_iteration_breached_prompt(self) -> UserAndSystemMessages:
+        user_message = self.get_force_finalize_user_message()
+        system_message = self.get_system_prompt()
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
