@@ -17,7 +17,7 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
     prompt_type = PromptFeatures.BUSINESS_LOGIC_VALIDATION_COMMENTS_GENERATION_PASS_1.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.BUSINESS_LOGIC_VALIDATION.value
 

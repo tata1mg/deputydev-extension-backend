@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from sanic.log import logger
 
@@ -9,7 +9,9 @@ from app.main.blueprints.deputy_dev.models.dto.ide_review_feedback_dto import Id
 
 class IdeReviewFeedbacksRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False) -> Union[IdeReviewFeedbackDTO, List[IdeReviewFeedbackDTO]]:
+    async def db_get(
+        cls, filters: Dict[str, Any], fetch_one: bool = False
+    ) -> Optional[Union[IdeReviewFeedbackDTO, List[IdeReviewFeedbackDTO]]]:
         try:
             data = await DB.by_filters(model_name=IdeReviewFeedback, where_clause=filters, fetch_one=fetch_one)
             if data and fetch_one:

@@ -20,7 +20,7 @@ class GPT4Point1CommentValidationPrompt(BaseGPT4POINT1Prompt):
     prompt_category = PromptCategories.CODE_REVIEW.value
     response_type = "json_object"
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_prompt(self) -> UserAndSystemMessages:

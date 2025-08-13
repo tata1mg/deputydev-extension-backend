@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from pydantic import ValidationError
 from sanic.log import logger
 
@@ -14,11 +16,11 @@ from app.main.blueprints.deputy_dev.services.webhook.pr_approval_webhook import 
 
 
 class PRApprovalTimeManager(StatsCollectionBase):
-    def __init__(self, payload, vcs_type):
+    def __init__(self, payload: Dict[str, Any], vcs_type: str) -> None:
         super().__init__(payload, vcs_type)
         self.stats_type = MetaStatCollectionTypes.PR_APPROVAL_TIME.value
 
-    def validate_payload(self):
+    def validate_payload(self) -> bool:
         """
         Validates the PRCloseRequest payload and raises BadRequestException if validation fails.
         """
@@ -29,7 +31,7 @@ class PRApprovalTimeManager(StatsCollectionBase):
             logger.error(f"Invalid pr approval request with error {ex}")
             return False
 
-    async def save_to_db(self, payload):
+    async def save_to_db(self, payload: Dict[str, Any]) -> None:
         await self.get_pr_from_db(payload)
         if not self.pr_dto:  # PR is raised before onboarding time
             return
@@ -39,6 +41,6 @@ class PRApprovalTimeManager(StatsCollectionBase):
             filters={"scm_pr_id": self.pr_dto.scm_pr_id, "repo_id": self.pr_dto.repo_id},
         )
 
-    async def generate_old_payload(self):
+    async def generate_old_payload(self) -> None:
         self.payload = await PRApprovalWebhook.parse_payload(self.payload)
         self.payload = self.payload.dict()

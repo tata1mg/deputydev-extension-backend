@@ -19,7 +19,7 @@ class GPT4Point1PRSummarizationPrompt(BaseGPT4POINT1Prompt):
     prompt_type = PromptFeatures.PR_SUMMARIZATION.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_prompt(self) -> UserAndSystemMessages:

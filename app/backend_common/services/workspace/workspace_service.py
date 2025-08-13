@@ -12,11 +12,11 @@ class WorkspaceService:
             workspace_data = await DB.by_filters(model_name=Workspaces, where_clause=filters, limit=1, fetch_one=True)
             if workspace_data:
                 return WorkspaceDTO(**workspace_data)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 "error occurred while fetching workspace details from db for workspace : {}, ex: {}".format(filters, ex)
             )
 
     @classmethod
-    async def find(cls, scm_workspace_id, scm) -> WorkspaceDTO:
+    async def find(cls, scm_workspace_id: str, scm: str) -> WorkspaceDTO:
         return await WorkspaceService.db_get(filters={"scm_workspace_id": scm_workspace_id, "scm": scm})

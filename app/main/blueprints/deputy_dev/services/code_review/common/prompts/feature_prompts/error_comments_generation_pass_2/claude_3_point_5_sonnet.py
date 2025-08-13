@@ -17,7 +17,7 @@ class Claude3Point5ErrorCommentsGenerationPass2Prompt(BaseClaude3Point5SonnetCom
     prompt_type = PromptFeatures.ERROR_COMMENTS_GENERATION_PASS_2.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.ERROR.value
 
