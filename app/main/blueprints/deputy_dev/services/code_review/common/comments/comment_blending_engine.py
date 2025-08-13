@@ -40,7 +40,7 @@ class CommentBlendingEngine:
         context_service: ContextService,
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
-    ):
+    ) -> None:
         self.llm_comments = llm_comments
         self.llm_handler = llm_handler
         self.llm_confidence_score_limit = self.get_confidence_score_limit()
@@ -122,7 +122,7 @@ class CommentBlendingEngine:
                 validated_comments.append(comment)
         return validated_comments
 
-    async def validate_comments(self):
+    async def validate_comments(self) -> None:
         """
         Validates each filtered comment against the PR diff using LLM.
         """
@@ -163,7 +163,7 @@ class CommentBlendingEngine:
                     f"Retry {attempt + 1}/{self.MAX_RETRIES}: Timeout error in comments Re-Validation call {str(timeout_err)}"
                 )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_warn(f"Retry {attempt + 1}/{self.MAX_RETRIES}  comments Re-Validation call: {str(e)}")
 
             if attempt == self.MAX_RETRIES - 1:

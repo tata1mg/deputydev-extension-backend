@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from sanic.log import logger
 
@@ -10,7 +10,7 @@ from app.main.blueprints.deputy_dev.models.dto.user_agent_comment_mapping_dto im
 class UserAgentCommentMappingRepository:
     @classmethod
     async def db_get(
-        cls, filters, fetch_one=False, order_by=None
+        cls, filters: Dict[str, Any], fetch_one: bool = False, order_by: Optional[str] = None
     ) -> Union[UserAgentCommentMappingDTO, List[UserAgentCommentMappingDTO]]:
         try:
             data = await DB.by_filters(
@@ -37,7 +37,7 @@ class UserAgentCommentMappingRepository:
             raise ex
 
     @classmethod
-    async def db_update(cls, filters, payload) -> Optional[UserAgentCommentMappingDTO]:
+    async def db_update(cls, filters: Dict[str, Any], payload: Dict[str, Any]) -> Optional[UserAgentCommentMappingDTO]:
         try:
             await DB.update_by_filters(UserAgentCommentMapping, filters, payload)
             updated = await cls.db_get(filters, fetch_one=True)

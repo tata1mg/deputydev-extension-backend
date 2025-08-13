@@ -14,10 +14,10 @@ class PrsSerializer:
         raw_data (List[Dict[str, Any]]): The raw pull request data to be processed.
     """
 
-    def __init__(self, raw_data: List[Dict[str, Any]]):
+    def __init__(self, raw_data: List[Dict[str, Any]]) -> None:
         self.raw_data = raw_data
 
-    def process_raw_data(self):
+    def process_raw_data(self) -> List[Dict[str, Any]]:
         """
         Processes the raw pull request data into a structured format.
 

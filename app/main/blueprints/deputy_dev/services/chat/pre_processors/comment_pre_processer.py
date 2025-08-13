@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any, Dict, Tuple
 
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.repository.repo.repository import RepoRepository
@@ -18,14 +19,14 @@ from app.main.blueprints.deputy_dev.services.repository.pr.pr_service import PRS
 
 class CommentPreprocessor(Enum):
     @classmethod
-    async def process_chat(cls, chat_request: ChatRequest, pr_model: BasePrModel):
+    async def process_chat(cls, chat_request: ChatRequest, pr_model: BasePrModel) -> str:
         message_type, feedback_type = cls.get_message_type(chat_request.comment.raw)
         if message_type == MessageTypes.FEEDBACK.value:
             await cls.save_feedback_info(feedback_type, chat_request, pr_model)
         return message_type
 
     @classmethod
-    def get_message_type(cls, message: str):
+    def get_message_type(cls, message: str) -> Tuple[str, str | None]:
         for _type in FeedbackTypes.list():
             if f"#{_type}" in message.lower():
                 return MessageTypes.FEEDBACK.value, _type
@@ -35,13 +36,17 @@ class CommentPreprocessor(Enum):
         return MessageTypes.UNKNOWN.value, None
 
     @classmethod
-    async def save_feedback_info(cls, feedback_type, chat_request: ChatRequest, pr_model: BasePrModel):
+    async def save_feedback_info(
+        cls, feedback_type: str, chat_request: ChatRequest, pr_model: BasePrModel
+    ) -> FeedbackDTO:
         payload = await cls.extract_feedback_payload(feedback_type, chat_request, pr_model)
         result = await FeedbackService.db_insert(feedback_dto=FeedbackDTO(**payload))
         return result
 
     @classmethod
-    async def extract_feedback_payload(cls, feedback_type, chat_request: ChatRequest, pr_model: BasePrModel):
+    async def extract_feedback_payload(
+        cls, feedback_type: str, chat_request: ChatRequest, pr_model: BasePrModel
+    ) -> Dict[str, Any]:
         workspace_dto, repo_dto, pr_dto = None, None, None
         workspace_dto = await WorkspaceService.find(
             scm=pr_model.scm_type(),

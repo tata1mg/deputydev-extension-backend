@@ -1,7 +1,11 @@
+from typing import Any
+
 from sanic import Blueprint
+from sanic.response import JSONResponse
 from sanic_ext import openapi
 from sanic_ext.extensions.openapi.definitions import Response
 from torpedo import Request, send_response
+from torpedo.types import ResponseDict
 
 from app.main.blueprints.deputy_dev.models.analytics import AnalyticsData
 from app.main.blueprints.deputy_dev.services.analytics.analytics_service import (
@@ -62,7 +66,7 @@ console = Blueprint("console", "/console")
         ),
     ],
 )
-async def get_analytics_data(_request: Request, **kwargs):
+async def get_analytics_data(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     response = await AnalyticsManager.handle_analytics_data(query_params=query_params)
     return send_response(response, headers={"Access-Control-Allow-Origin": "*"})
@@ -114,7 +118,7 @@ async def get_analytics_data(_request: Request, **kwargs):
         ),
     ],
 )
-async def get_teams(_request: Request, **kwargs):
+async def get_teams(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_teams(query_params)
     return send_response(response, headers={"Access-Control-Allow-Origin": "*"})
@@ -166,7 +170,7 @@ async def get_teams(_request: Request, **kwargs):
         ),
     ],
 )
-async def get_workspaces(_request: Request, **kwargs):
+async def get_workspaces(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_workspaces(query_params)
     return send_response(response, headers={"Access-Control-Allow-Origin": "*"})
@@ -218,7 +222,7 @@ async def get_workspaces(_request: Request, **kwargs):
         ),
     ],
 )
-async def get_repos(_request: Request, **kwargs):
+async def get_repos(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_repos(query_params)
     return send_response(response, headers={"Access-Control-Allow-Origin": "*"})
@@ -270,7 +274,7 @@ async def get_repos(_request: Request, **kwargs):
         ),
     ],
 )
-async def get_prs(_request: Request, **kwargs):
+async def get_prs(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     response = await AnalyticsManager.handle_prs_data(query_params)
     return send_response(response, headers={"Access-Control-Allow-Origin": "*"})
@@ -329,7 +333,7 @@ async def get_prs(_request: Request, **kwargs):
         ),
     ],
 )
-async def get_tiles(_request: Request, **kwargs):
+async def get_tiles(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     response = await DashboardFiltersManager.get_tiles(query_params)
     return send_response(response, headers={"Access-Control-Allow-Origin": "*"})
