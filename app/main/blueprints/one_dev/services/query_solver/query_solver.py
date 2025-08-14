@@ -13,7 +13,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadDTO,
     MessageType,
-    TextBlockData,
     ToolUseResponseContent,
     ToolUseResponseData,
 )
@@ -76,16 +75,11 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main 
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
-    CodeBlockDeltaContent,
     CodeBlockEnd,
     CodeBlockStart,
-    CodeBlockStartContent,
     ThinkingBlockDelta,
     ThinkingBlockEnd,
     ThinkingBlockStart,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.dataclasses.main import (
-    CodeBlockEndContent,
 )
 from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
@@ -243,13 +237,11 @@ class QuerySolver:
             previous_queries: List[str],
         ) -> Optional[MessageData]:
             new_data: Optional[MessageData] = None
-            print(f"Updating text message data for event: {event}")
-            print(current_message_data.text if current_message_data else "No current message data")
             if isinstance(event, TextBlockStart):
                 new_data = TextMessageData(text="")
             elif isinstance(event, TextBlockDelta):
                 new_data = TextMessageData(
-                    text=current_message_data.text if current_message_data else "" + event.content.text
+                    text=((current_message_data.text if current_message_data else "") + event.content.text)
                 )
             elif current_message_data:  # TextBlockEnd
                 await AgentChatsRepository.create_chat(
@@ -277,9 +269,10 @@ class QuerySolver:
                 new_data = ThinkingInfoData(thinking_summary="")
             elif isinstance(event, ThinkingBlockDelta):
                 new_data = ThinkingInfoData(
-                    thinking_summary=current_message_data.thinking_summary
-                    if current_message_data
-                    else "" + event.content.thinking_delta
+                    thinking_summary=(
+                        (current_message_data.thinking_summary if current_message_data else "")
+                        + event.content.thinking_delta
+                    )
                 )
             elif current_message_data:  # ThinkingBlockEnd
                 await AgentChatsRepository.create_chat(
