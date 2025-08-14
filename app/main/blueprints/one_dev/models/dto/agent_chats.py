@@ -16,6 +16,9 @@ class MessageType(str, Enum):
     TEXT = "TEXT"
     TOOL_USE = "TOOL_USE"
     INFO = "INFO"
+    TASK_COMPLETION = "TASK_COMPLETION"
+    THINKING = "THINKING"
+    CODE_BLOCK = "CODE_BLOCK"
 
 
 class TextMessageData(BaseModel):
@@ -57,6 +60,7 @@ class TaskCompletionStatus(Enum):
 
 
 class TaskCompletionData(BaseModel):
+    message_type: Literal["TASK_COMPLETION"] = "TASK_COMPLETION"
     status: TaskCompletionStatus
     time_taken_seconds: Optional[float] = None
 
