@@ -37,8 +37,8 @@ async def _process_messages(ws: Any, payload_kb: int) -> None:
                             "payload_info": {
                                 "payload": None,
                                 "echo_size_kb": payload_kb,
-                                "original_size_bytes": len(message.encode('utf-8'))
-                            }
+                                "original_size_bytes": len(message.encode("utf-8")),
+                            },
                         }
                     except json.JSONDecodeError:
                         echo_response_base = {
@@ -49,8 +49,8 @@ async def _process_messages(ws: Any, payload_kb: int) -> None:
                             "payload_info": {
                                 "payload": None,
                                 "echo_size_kb": payload_kb,
-                                "original_size_bytes": len(message.encode('utf-8'))
-                            }
+                                "original_size_bytes": len(message.encode("utf-8")),
+                            },
                         }
                 else:
                     echo_response_base = {
@@ -60,8 +60,8 @@ async def _process_messages(ws: Any, payload_kb: int) -> None:
                         "payload_info": {
                             "payload": None,
                             "echo_size_kb": payload_kb,
-                            "original_size_bytes": len(message)
-                        }
+                            "original_size_bytes": len(message),
+                        },
                     }
 
                 echo_response_str = json.dumps(echo_response_base)
@@ -80,10 +80,7 @@ async def _process_messages(ws: Any, payload_kb: int) -> None:
                     "type": "error",
                     "message": f"Error processing your message: {str(e)}",
                     "timestamp": time.time(),
-                    "payload_info": {
-                        "payload": None,
-                        "error_size_kb": payload_kb
-                    }
+                    "payload_info": {"payload": None, "error_size_kb": payload_kb},
                 }
                 error_response_str = json.dumps(error_response_base)
                 error_response_base["payload_info"]["payload"] = error_response_str
@@ -101,10 +98,10 @@ async def _process_messages(ws: Any, payload_kb: int) -> None:
 @websocket_test_v1_bp.websocket("/connect")
 async def websocket_test_endpoint(request: Request, ws: Any) -> None:
     try:
-        payload_kb = int(request.args.get('payload_kb', 1))
-        ping_payload_kb = int(request.args.get('ping_payload_kb', payload_kb))
-        ping_interval_sec = float(request.args.get('ping_interval_sec', 1))
-        ws_duration_sec = int(request.args.get('ws_duration_sec', 30))
+        payload_kb = int(request.args.get("payload_kb", 1))
+        ping_payload_kb = int(request.args.get("ping_payload_kb", payload_kb))
+        ping_interval_sec = float(request.args.get("ping_interval_sec", 1))
+        ws_duration_sec = int(request.args.get("ws_duration_sec", 30))
 
         max_payload_kb = 1024
         payload_kb = min(max(payload_kb, 0), max_payload_kb)
@@ -118,7 +115,7 @@ async def websocket_test_endpoint(request: Request, ws: Any) -> None:
 
         # Start ping task
         ping_task = asyncio.create_task(_send_custom_pings(ws, ping_payload_kb, ping_interval_sec, ws_duration_sec))
-        
+
         try:
             # Run message processing with timeout constraint
             await asyncio.wait_for(_process_messages(ws, payload_kb), timeout=ws_duration_sec)
@@ -129,16 +126,16 @@ async def websocket_test_endpoint(request: Request, ws: Any) -> None:
         finally:
             # Cancel remaining tasks
             ping_task.cancel()
-            
+
             try:
                 await ping_task
             except asyncio.CancelledError:
                 pass
             except (ConnectionError, OSError, RuntimeError) as e:
                 AppLogger.log_error(f"Error cancelling ping task: {e}")
-            
+
             # Force close the connection if still open
-            if hasattr(ws, 'transport') and ws.transport and not ws.transport.is_closing():
+            if hasattr(ws, "transport") and ws.transport and not ws.transport.is_closing():
                 try:
                     ws.transport.close()
                     AppLogger.log_info("WebSocket transport forcefully closed in finally block")
@@ -158,7 +155,7 @@ async def _send_custom_pings(ws: Any, payload_kb: int, ping_interval_sec: float,
         t0 = time.time()
         num_pings = int(ws_duration_sec // ping_interval_sec)
         random_offsets = [random.uniform(0, ping_interval_sec) for _ in range(num_pings)]
-        send_times = [t0 + offset + (i*ping_interval_sec) for i, offset in enumerate(random_offsets)]
+        send_times = [t0 + offset + (i * ping_interval_sec) for i, offset in enumerate(random_offsets)]
 
         for send_time in send_times:
             now = time.time()
@@ -166,17 +163,14 @@ async def _send_custom_pings(ws: Any, payload_kb: int, ping_interval_sec: float,
             if delay > 0:
                 await asyncio.sleep(delay)
 
-            if hasattr(ws, 'transport') and (not ws.transport or ws.transport.is_closing()):
+            if hasattr(ws, "transport") and (not ws.transport or ws.transport.is_closing()):
                 break
 
             ping_message_base = {
                 "type": "ping",
                 "message": "Server ping - connection alive",
                 "timestamp": time.time(),
-                "payload_info": {
-                    "payload": None,
-                    "ping_size_kb": payload_kb
-                }
+                "payload_info": {"payload": None, "ping_size_kb": payload_kb},
             }
 
             ping_message_str = json.dumps(ping_message_base)
@@ -199,8 +193,6 @@ async def _send_custom_pings(ws: Any, payload_kb: int, ping_interval_sec: float,
         AppLogger.log_error(f"Error in custom ping task: {e}")
 
 
-
-
 @websocket_test_v1_bp.get("/status")
 async def websocket_status(request: Request) -> dict:
     return {
@@ -212,14 +204,14 @@ async def websocket_status(request: Request) -> dict:
             "Echo back all received messages",
             "Auto-disconnect after user-defined duration",
             "JSON and plain text support",
-            "Configurable payload sizes for load testing"
+            "Configurable payload sizes for load testing",
         ],
         "payload_options": {
             "payload_kb": "Size in KB for echo messages (default: 1, max: 1024)",
             "ping_payload_kb": "Size in KB for ping messages (default: same as payload_kb, max: 1024)",
             "ping_interval_sec": "Interval in seconds to distribute each ping randomly (default: 1)",
-            "ws_duration_sec": "WebSocket duration in seconds (default: 30)"
-        }
+            "ws_duration_sec": "WebSocket duration in seconds (default: 30)",
+        },
     }
 
 
@@ -231,43 +223,43 @@ async def websocket_info(request: Request) -> dict:
         "endpoints": {
             "websocket": "/end_user/v1/websocket-test/connect",
             "status": "/end_user/v1/websocket-test/status",
-            "info": "/end_user/v1/websocket-test/"
+            "info": "/end_user/v1/websocket-test/",
         },
         "features": {
             "ping": "Server sends randomized pings over the duration with configurable interval",
             "echo": "Server echoes back all received messages",
             "auto_disconnect": "WebSocket closes automatically after given duration",
             "formats": ["JSON", "Plain text", "Binary data"],
-            "payload_sizing": "Configurable payload sizes for load testing"
+            "payload_sizing": "Configurable payload sizes for load testing",
         },
         "usage": {
             "connect": "Connect to ws://your-host/end_user/v1/websocket-test/connect",
             "example": "ws://your-host/end_user/v1/websocket-test/connect?payload_kb=10&ping_payload_kb=5&ping_interval_sec=2&ws_duration_sec=60",
             "send_message": "Send any text or JSON message",
-            "receive": "Server will echo your message and send pings at randomized intervals"
+            "receive": "Server will echo your message and send pings at randomized intervals",
         },
         "query_parameters": {
             "payload_kb": {
                 "description": "Size in KB for echo messages",
                 "type": "integer",
                 "default": 1,
-                "range": "0-1024"
+                "range": "0-1024",
             },
             "ping_payload_kb": {
                 "description": "Size in KB for ping messages",
                 "type": "integer",
                 "default": "same as payload_kb",
-                "range": "0-1024"
+                "range": "0-1024",
             },
             "ping_interval_sec": {
                 "description": "Random interval spacing between pings (spread within each second)",
                 "type": "float",
-                "default": 1
+                "default": 1,
             },
             "ws_duration_sec": {
                 "description": "Duration of the WebSocket session in seconds",
                 "type": "integer",
-                "default": 30
-            }
-        }
+                "default": 30,
+            },
+        },
     }
