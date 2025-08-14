@@ -51,6 +51,7 @@ class ExtensionSessionsRepository:
                         session_type=extension_session.session_type,
                         created_at=extension_session.created_at.isoformat(),
                         updated_at=extension_session.updated_at.isoformat(),
+                        current_model=extension_session.current_model,
                     )
                 )
             )
