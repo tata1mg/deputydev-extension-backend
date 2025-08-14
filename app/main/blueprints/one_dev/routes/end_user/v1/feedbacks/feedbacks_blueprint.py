@@ -6,9 +6,7 @@ from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 from torpedo.response import ResponseDict
 
-from app.main.blueprints.one_dev.services.code_generation.feedback.main import (
-    FeedbackService,
-)
+from app.main.blueprints.one_dev.services.feedback.feedback_service import FeedbackService
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,

@@ -3,7 +3,7 @@ from typing import List, Optional
 from sanic.log import logger
 
 from app.backend_common.repository.db import DB
-from app.main.blueprints.deputy_dev.models.dao.postgres.review_agent_chats import AgentChats
+from app.main.blueprints.deputy_dev.models.dao.postgres.review_agent_chats import ReviewAgentChats
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
     ActorType,
     MessageType,
@@ -21,7 +21,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             chats = await DB.by_filters(
-                model_name=AgentChats,
+                model_name=ReviewAgentChats,
                 where_clause={"session_id": session_id},
                 fetch_one=False,
                 order_by="created_at",
@@ -40,7 +40,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             chat = await DB.by_filters(
-                model_name=AgentChats,
+                model_name=ReviewAgentChats,
                 where_clause={"id": chat_id},
                 fetch_one=True,
             )
@@ -58,7 +58,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             payload = chat_data.model_dump(mode="json")
-            created_chat = await DB.create(AgentChats, payload)
+            created_chat = await DB.create(ReviewAgentChats, payload)
             return ReviewAgentChatDTO(**await created_chat.to_dict())
         except Exception as ex:
             logger.error(
@@ -83,7 +83,7 @@ class ReviewAgentChatsRepository:
 
             await DB.update_with_filters(
                 None,
-                model=AgentChats,
+                model=ReviewAgentChats,
                 payload=payload,
                 where_clause={"id": chat_id},
                 update_fields=updated_fields,
@@ -100,7 +100,7 @@ class ReviewAgentChatsRepository:
         Delete a chat entry by ID.
         """
         try:
-            await DB.delete_with_filters(model=AgentChats, where_clause={"id": chat_id})
+            await DB.delete_with_filters(model=ReviewAgentChats, where_clause={"id": chat_id})
             return True
         except Exception as ex:
             logger.error(f"Error occurred while deleting review agent chat id: {chat_id}, ex: {ex}")
@@ -113,7 +113,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             chats = await DB.by_filters(
-                model_name=AgentChats,
+                model_name=ReviewAgentChats,
                 where_clause={"session_id": session_id},
                 fetch_one=False,
                 order_by="-created_at",
@@ -137,7 +137,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             chats = await DB.by_filters(
-                model_name=AgentChats,
+                model_name=ReviewAgentChats,
                 where_clause={"session_id": session_id, "actor": actor.value},
                 fetch_one=False,
                 order_by="created_at",
@@ -160,7 +160,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             chats = await DB.by_filters(
-                model_name=AgentChats,
+                model_name=ReviewAgentChats,
                 where_clause={"session_id": session_id, "message_type": message_type.value},
                 fetch_one=False,
                 order_by="created_at",
@@ -181,7 +181,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             chats = await DB.by_filters(
-                model_name=AgentChats,
+                model_name=ReviewAgentChats,
                 where_clause={"session_id": session_id, "agent_id": agent_id},
                 fetch_one=False,
                 order_by="created_at",
@@ -202,7 +202,7 @@ class ReviewAgentChatsRepository:
         """
         try:
             payload = chat_data.model_dump(mode="json")
-            row = await DB.insert_row(AgentChats, payload)
+            row = await DB.insert_row(ReviewAgentChats, payload)
             row_dict = await row.to_dict()
             return ReviewAgentChatDTO(**row_dict)
         except Exception as ex:
@@ -221,8 +221,8 @@ class ReviewAgentChatsRepository:
             agent_chats = []
             for chat in chats:
                 chat_dict = chat.model_dump()
-                agent_chats.append(AgentChats(**chat_dict))
-            await AgentChats.bulk_create(agent_chats)
+                agent_chats.append(ReviewAgentChats(**chat_dict))
+            await ReviewAgentChats.bulk_create(agent_chats)
         except Exception as ex:
             logger.error(f"Error bulk creating review agent chats, ex: {ex}")
             raise ex
