@@ -13,7 +13,7 @@ class ExtensionSessionData(BaseModel):
     pinned_rank: Optional[int] = None
     status: str = "ACTIVE"
     session_type: str
-    current_model: LLModels
+    current_model: Optional[LLModels] = LLModels.CLAUDE_3_POINT_7_SONNET
 
 
 class ExtensionSessionDTO(ExtensionSessionData):
