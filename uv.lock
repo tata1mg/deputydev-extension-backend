@@ -512,7 +512,7 @@ wheels = [
 
 [[package]]
 name = "deputydev"
-version = "12.3.6"
+version = "12.3.7"
 source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
