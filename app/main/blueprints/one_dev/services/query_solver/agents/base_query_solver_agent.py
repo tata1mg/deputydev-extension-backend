@@ -26,7 +26,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     TextMessageData,
     ToolUseMessageData,
 )
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
+from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.chat_history_handler import (
     ChatHistoryHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
