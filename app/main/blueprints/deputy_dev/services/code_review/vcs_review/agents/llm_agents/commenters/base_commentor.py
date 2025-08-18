@@ -107,7 +107,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
     def get_display_name(self) -> str:
         return self.agent_setting.get("display_name")
 
-    async def run_agent(self, session_id: int) -> AgentRunResult:
+    async def run_agent(self, session_id: int) -> AgentRunResult:  # noqa : C901
         """
         Run the agent and return the agent run result
         """
@@ -168,8 +168,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                 "MAX_REVIEW_TOOL_ITERATIONS"
             ]  # Limit the number of iterations to prevent infinite loops
             iteration_count = 0
+            user_and_system_messages = None
 
-            while iteration_count < max_iterations:
+            while iteration_count <= max_iterations:
                 # Check if parse_final_response tool is used
                 if self.tool_request_manager.is_final_response(current_response):
                     try:
@@ -179,7 +180,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     except Exception as e:  # noqa: BLE001
                         AppLogger.log_error(f"Error processing parse_final_response Retrying with LLM : {e}")
                         # Create a tool use response with error feedback
-                        tool_use_response = ToolUseResponseData(
+                        tool_use_responses = ToolUseResponseData(
                             content=ToolUseResponseContent(
                                 tool_name="parse_final_response",
                                 tool_use_id=current_response.parsed_content[0].content.tool_use_id,
@@ -195,7 +196,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         # Submit the error feedback to the LLM
                         current_response = await self.llm_handler.submit_batch_tool_use_response(
                             session_id=session_id,
-                            tool_use_responses=[tool_use_response],
+                            tool_use_responses=[tool_use_responses],
                             tools=tools_to_use,
                             prompt_type=prompt_handler.prompt_type,
                         )
@@ -214,22 +215,26 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
                 else:
                     # Iterative tool use
-                    tool_use_response = await self.tool_request_manager.process_tool_use_request(
+                    tool_use_responses = await self.tool_request_manager.process_tool_use_request(
                         current_response, session_id
                     )
 
-                    if tool_use_response:
+                    if tool_use_responses:
                         # Submit the tool use response to the LLM
+                        if iteration_count == max_iterations - 1:
+                            user_and_system_messages = prompt_handler.get_finalize_iteration_breached_prompt()
+
                         current_response = await self.llm_handler.submit_batch_tool_use_response(
                             session_id=session_id,
-                            tool_use_responses=[tool_use_response],
+                            tool_use_responses=tool_use_responses,
                             tools=tools_to_use,
                             prompt_type=prompt_handler.prompt_type,
+                            user_and_system_messages=user_and_system_messages,
                         )
 
                         iteration_count += 1
 
-            if iteration_count >= max_iterations:
+            if iteration_count > max_iterations:
                 AppLogger.log_error(
                     f"Maximum number of iterations ({max_iterations}) reached for agent {self.agent_name}"
                 )
