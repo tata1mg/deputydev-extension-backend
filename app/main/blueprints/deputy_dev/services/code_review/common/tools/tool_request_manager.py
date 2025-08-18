@@ -1,6 +1,8 @@
 import json
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestData,
@@ -35,7 +37,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.tools.tool_handl
     ToolHandlers,
 )
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import ContextService
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class ToolRequestManager:
