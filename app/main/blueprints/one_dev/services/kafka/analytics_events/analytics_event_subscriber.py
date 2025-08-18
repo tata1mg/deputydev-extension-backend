@@ -8,8 +8,8 @@ from app.backend_common.repository.message_sessions.repository import MessageSes
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
 from app.main.blueprints.one_dev.services.kafka.analytics_events.dataclasses.kafka_analytics_events import (
-    KafkaAnalyticsEventMessage,
     EventTypes,
+    KafkaAnalyticsEventMessage,
 )
 
 from ..base_kafka_subscriber import BaseKafkaSubscriber
