@@ -19,6 +19,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
+from app.main.blueprints.deputy_dev.models.dto.pr_dto import PullRequestDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentRunResult,
@@ -70,6 +71,9 @@ class PRReviewManager(BasePRReviewManager):
         try:
             CodeReviewRequest(**data)
             logger.info("Received MessageQueue Message: {}".format(data))
+            set_context_values(repo_origin=data.get("repo_origin"))
+            if not data.get("is_review_enabled"):
+                return await PRReviewManager.handle_non_reviewable_request(data)
             await cls.process_pr_review(data=data)
             AppLogger.log_info("Completed PR review: ")
         except ValidationError as e:
@@ -78,8 +82,33 @@ class PRReviewManager(BasePRReviewManager):
             AppLogger.log_error(f"Unable to review PR: {e}")
             raise
 
+    @classmethod
+    async def handle_non_reviewable_request(cls, data: Dict[str, Any]) -> None:
+        """Handle non-reviewable requests by creating appropriate notifications and DB entries.
+
+        Args:
+            data (Dict[str, Any]): Dictionary containing necessary data for processing the request.
+        """
+        try:
+            repo_service, pr_service, comment_service = await cls.initialise_services(data)
+            pr_diff_handler = PRDiffHandler(pr_service)
+            affirmation_service = AffirmationService(data, comment_service)
+
+            pre_processor = PRReviewPreProcessor(
+                repo_service=repo_service,
+                pr_service=pr_service,
+                comment_service=comment_service,
+                affirmation_service=affirmation_service,
+                pr_diff_handler=pr_diff_handler,
+            )
+            await pre_processor.handle_non_reviewable_request(data)
+
+        except Exception as ex:
+            AppLogger.log_error(f"Error while processing non-reviewable request: {ex}")
+            raise ex
+
     @staticmethod
-    def set_identifier(value: str):
+    def set_identifier(value: str) -> None:
         """Set repo_name or any other value to the contextvar identifier
 
         Args:
@@ -104,7 +133,7 @@ class PRReviewManager(BasePRReviewManager):
         pre_processor = None
 
         try:
-            tokens_data, execution_start_time = None, datetime.now()
+            execution_start_time = datetime.now()
             pre_processor = PRReviewPreProcessor(
                 repo_service=repo_service,
                 pr_service=pr_service,
@@ -158,7 +187,7 @@ class PRReviewManager(BasePRReviewManager):
             repo_service.delete_local_repo()
 
     @classmethod
-    def check_no_pr_comments(cls, llm_response):
+    def check_no_pr_comments(cls, llm_response: List) -> bool:
         return not llm_response
 
     @classmethod
@@ -168,9 +197,9 @@ class PRReviewManager(BasePRReviewManager):
         repo_service: BaseRepo,
         comment_service: BaseComment,
         pr_service: BasePR,
-        prompt_version,
+        prompt_version: str,
         pr_diff_handler: PRDiffHandler,
-    ):
+    ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         valid_agents_and_init_params = cls.get_valid_agents_and_init_params_for_review()
         non_error_results, is_large_pr = await MultiAgentPRReviewManager(
             repo_service, pr_service, pr_diff_handler, session_id, prompt_version
@@ -212,7 +241,7 @@ class PRReviewManager(BasePRReviewManager):
         return valid_agents
 
     @classmethod
-    async def post_process_review_results(
+    async def post_process_review_results(  # noqa: C901
         cls,
         agent_results: List[AgentRunResult],
         is_large_pr: bool,
@@ -223,8 +252,8 @@ class PRReviewManager(BasePRReviewManager):
         session_id: int,
         execution_start_time: datetime,
         data: Dict[str, Any],
-        affirmation_service,
-        pr_dto,
+        affirmation_service: AffirmationService,
+        pr_dto: PullRequestDTO,
     ) -> Tuple[Optional[List[Dict[str, Any]]], Dict[str, Any], Dict[str, Any], bool]:
         """Post-process agent results to generate final comments and metadata.
 
@@ -333,7 +362,7 @@ class PRReviewManager(BasePRReviewManager):
         ).post_process_pr(pr_dto, final_comments, agents_tokens, is_large_pr, meta_info_to_save)
 
     @staticmethod
-    def _update_bucket_name(agent_result: AgentRunResult):
+    def _update_bucket_name(agent_result: AgentRunResult) -> None:
         """Update bucket names for agent result comments."""
         comments = agent_result.agent_result["comments"]
         for comment in comments:

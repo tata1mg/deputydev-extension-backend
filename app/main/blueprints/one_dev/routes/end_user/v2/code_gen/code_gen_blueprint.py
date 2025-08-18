@@ -46,6 +46,18 @@ from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor i
 from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer import (
     UserQueryEnhancer,
 )
+from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
+from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
+from app.main.blueprints.one_dev.utils.client.client_validator import (
+    validate_client_version,
+    validate_version,
+)
+from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
+from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from app.main.blueprints.one_dev.utils.session import (
+    ensure_session_id,
+    get_valid_session_data,
+)
 
 
 def get_model_display_name(model_name: str) -> str:
@@ -59,19 +71,6 @@ def get_model_display_name(model_name: str) -> str:
     except Exception:  # noqa : BLE001
         return model_name
 
-
-from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data  # noqa : E402
-from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker  # noqa : E402
-from app.main.blueprints.one_dev.utils.client.client_validator import (  # noqa : E402
-    validate_client_version,
-    validate_version,
-)
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData  # noqa : E402
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData  # noqa : E402
-from app.main.blueprints.one_dev.utils.session import (  # noqa : E402
-    ensure_session_id,
-    get_valid_session_data,
-)
 
 code_gen_v2_bp = Blueprint("code_gen_v2_bp", url_prefix="/code-gen")
 
