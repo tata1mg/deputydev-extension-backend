@@ -5,7 +5,7 @@ from .claude_3_point_5_sonnet import (
 )
 
 
-class Claude3Point7CodeCommunicationCommentsGenerationPass2Prompt(
+class Claude3Point7CodeCommunicationCommentsGenerationPass1Prompt(
     Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt
 ):
     model_name = LLModels.CLAUDE_3_POINT_7_SONNET
