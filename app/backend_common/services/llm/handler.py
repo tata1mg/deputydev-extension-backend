@@ -788,6 +788,7 @@ class LLMHandler(Generic[PromptFeatures]):
         prompt_vars: Optional[Dict[str, Any]] = None,
         checker: Optional[CancellationChecker] = None,
         parallel_tool_calls: bool = False,
+        user_and_system_messages: Optional[UserAndSystemMessages] = None,
     ) -> ParsedLLMCallResponse:
         """
         Submit multiple tool use responses to LLM for parallel processing
@@ -924,6 +925,7 @@ class LLMHandler(Generic[PromptFeatures]):
             stream=stream,
             checker=checker,
             parallel_tool_calls=parallel_tool_calls,
+            user_and_system_messages=user_and_system_messages,
         )
 
     async def submit_feedback_response(
