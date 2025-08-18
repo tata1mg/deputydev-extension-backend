@@ -36,6 +36,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
+    MalformedToolUseRequest,
+    MalformedToolUseRequestContent,
     NonStreamingResponse,
     PromptCacheConfig,
     StreamingEvent,
@@ -408,9 +410,30 @@ class Google(BaseLLMProvider):
         event_blocks: List[StreamingEvent] = []
         usage: LLMUsage = LLMUsage(input=0, output=0, cache_read=0, cache_write=None)
         candidate = chunk.candidates[0]
-
         # Process all parts instead of just the first one
         parts = candidate.content.parts if candidate.content and candidate.content.parts else []
+
+        # Handle malformed function call first
+        if candidate.finish_reason == "MALFORMED_FUNCTION_CALL":
+            AppLogger.log_warn("Malformed function call detected in model response.")
+
+            event_blocks.append(
+                MalformedToolUseRequest(
+                    content=MalformedToolUseRequestContent(
+                        reason="Model returned a malformed function call",
+                        raw_payload=candidate.finish_message or "No message provided",
+                    )
+                )
+            )
+
+            # Still extract token usage if available
+            if chunk.usage_metadata:
+                usage.input = (chunk.usage_metadata.prompt_token_count or 0) - (
+                    chunk.usage_metadata.cached_content_token_count or 0
+                )
+                usage.output = chunk.usage_metadata.candidates_token_count or 0
+                usage.cache_read = chunk.usage_metadata.cached_content_token_count or 0
+            return event_blocks, None, usage
 
         for i, part in enumerate(parts):
             # Block type is changing, so mark current running block end and start new block.
@@ -519,7 +542,9 @@ class Google(BaseLLMProvider):
         """
         model_config = self._get_model_config(model)  # Get your internal config
         vertex_model_name = model_config.get("NAME")
-        max_output_tokens = model_config.get("MAX_TOKENS") or 8192
+        max_output_tokens = model_config.get("MAX_TOKENS") or 16384
+        thinking_budget_tokens = model_config.get("THINKING_BUDGET_TOKENS", 4096)
+        temperature = model_config.get("TEMPERATURE", 0.5)
         client = GeminiServiceClient()
         stream_id = str(uuid.uuid4())
 
@@ -531,6 +556,8 @@ class Google(BaseLLMProvider):
                 tool_config=llm_payload.get("tool_config"),
                 system_instruction=llm_payload.get("system_instruction"),
                 max_output_tokens=max_output_tokens,
+                temperature=temperature,
+                thinking_budget_tokens=thinking_budget_tokens,
             )
             return await self._parse_streaming_response(response, stream_id, session_id)
         else:
