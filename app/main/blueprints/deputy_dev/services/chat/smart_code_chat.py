@@ -76,7 +76,7 @@ class SmartCodeChatManager:
         return CommentTypes.CHAT.value
 
     @classmethod
-    async def chat(cls, payload: dict, query_params: dict):
+    async def chat(cls, payload: dict, query_params: dict) -> None:
         logger.info(f"Comment payload: {payload}")
         logger.info(f"comment query params {query_params}")
         payload = update_payload_with_jwt_data(query_params, payload)
@@ -102,7 +102,7 @@ class SmartCodeChatManager:
             return
 
         if request_type == CommentTypes.REVIEW.value:
-            await CodeReviewTrigger.perform_review(payload, query_params)
+            await CodeReviewTrigger.perform_review(payload, query_params, is_manual_review=True)
             return
 
         # Bot comments
@@ -113,7 +113,7 @@ class SmartCodeChatManager:
         await cls.handle_chat_request(chat_request=comment_payload, vcs_type=vcs_type)
 
     @classmethod
-    async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type):
+    async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type) -> None:
         message_type, feedback_type = CommentPreprocessor.get_message_type(chat_request.comment.raw)
 
         # handles comment that don't start with #feedback, #dd, #scrit or #deputydev

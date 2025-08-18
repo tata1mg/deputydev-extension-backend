@@ -4,24 +4,24 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 
 GREP_SEARCH = ConversationTool(
     name="grep_search",
-    description=textwrap.dedent(
-        """
-        This is a built-in tool.
-        Use git grep or standard grep to find exact pattern matches within files or directories.
+    description=textwrap.dedent("""
+        A built-in tool for searching text patterns inside files within a specified directory.
 
-        This tool searches for specific text patterns inside files within a given path. It supports both plain text and regular expression queries.
+        **Capabilities:**
+        - Uses `ripgrep` under the hood for fast, recursive text search.
+        - Supports both exact string matches and regular expressions.
+        - Returns results in plain Markdown format.
+        - Each result includes:
+            - File path and matching line number
+            - The matched line
+            - Up to 2 lines of surrounding context (above and below)
+        - Can locate function names, variable assignments, configuration keys, comments, and more.
 
-        Results are returned in XML format. Each match includes:
-        - The file path and matching line number
-        - The matched line
-        - Up to 2 lines of surrounding context
-
-        For accurate results, always use the exact syntax as it appears in the source (e.g., exact function names, variables).
-        Avoid changing case or format unless you explicitly set case-insensitive mode.
-
-        Note: Total results are capped at 50.
-        """
-    ),
+        **Notes:**
+        - For accurate results, use the exact syntax and casing as it appears in the source, unless case-insensitive mode is explicitly enabled.
+        - Results are capped at 50 matches.
+        - #IMPORTANT: This tool is for file contents only; it does not search directory names or metadata.
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={

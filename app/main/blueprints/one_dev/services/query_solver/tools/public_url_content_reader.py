@@ -1,8 +1,10 @@
+import textwrap
+
 from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
 
 PUBLIC_URL_CONTENT_READER = ConversationTool(
     name="public_url_content_reader",
-    description="""
+    description=textwrap.dedent("""
         This is a built-in tool.
         Fetches and converts content from publicly accessible HTTP/HTTPS URLs into clean, readable Markdown.
 
@@ -15,7 +17,7 @@ PUBLIC_URL_CONTENT_READER = ConversationTool(
         (e.g., Jira, Confluence, or internal portals).
 
         Tip: For best performance, process 3-5 URLs at a time.
-    """,
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={

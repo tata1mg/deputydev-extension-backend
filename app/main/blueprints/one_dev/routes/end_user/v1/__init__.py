@@ -16,6 +16,7 @@ from .web_search.web_search import websearch_v1_bp
 from .websocket_connection.websocket_connection_blueprint import (
     websocket_connection_v1_bp,
 )
+from .websocket_test.websocket_test_blueprint import websocket_test_v1_bp
 
 blueprints = [
     auth_v1_bp,
@@ -25,6 +26,7 @@ blueprints = [
     chunks_v1_bp,
     ui_data_v1_bp,
     websocket_connection_v1_bp,
+    websocket_test_v1_bp,
     feedbacks_v1_bp,
     urls_v1_bp,
     websearch_v1_bp,

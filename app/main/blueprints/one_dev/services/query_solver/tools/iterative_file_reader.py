@@ -5,23 +5,19 @@ from app.backend_common.services.llm.dataclasses.main import ConversationTool, J
 ITERATIVE_FILE_READER = ConversationTool(
     name="iterative_file_reader",
     description=textwrap.dedent("""
-        This is a built-in tool.
-        Reads content of a file, and optionally between a specific range of lines if a start line and/or end line is provided. (1 indexed).
-
-        If the file is small (<=1000 lines) and the entire file is requested, it will return the full content.
-        If the file is large (>1000 lines) and the entire file is requested, it will return a summary instead of the full content. The summary will contain an overview of the file's constructs (classes, functions, etc.) and their line numbers.
-
-        If summary content is returned, the tool can be run again with specific start and end lines to read more detailed content.
-
-        This tool can be used iteratively, to read a file until either the desired context is found.
-        If using this tool iteratively, the `start_line` and `end_line` parameters should be used to specify the range of lines to read in each iteration. The recommended maximum range is 250 lines, but it can be adjusted based on the file size and content.
-        A range of greater than 1000 lines, when provided explicitly, will automatically trigger an error.
+        A built-in tool for reading file contents, either fully or by specified line ranges (1-indexed).
                                 
-        If unsure about the range of lines to read, it is recommended to start with a summary, i.e. not providing `start_line` and `end_line` parameters, which will return a summary of the file.
-
-        The response will EXPLICITLY mention if the end of the file is reached or not.
-        Make sure to NOT run this tool for a directory
-    """),
+        **Capabilities:**
+        - Reads an entire file or a specific section between `start_line` and `end_line`.
+        - For small files (≤ 1000 lines), full content is returned when no line range is provided.
+        - For large files (> 1000 lines), a high-level summary is returned by default, including key constructs (e.g., classes, functions) and their line numbers.
+        - When reading by range, the recommended maximum is 250 lines per call. Reading >1000 lines in a single request will result in an error.
+        - Can be invoked iteratively to explore a file in parts until desired content is found.
+                                
+        **Notes:**
+        - IMPORTANT: This tool is for files only; do not use it on directories.
+        - Responses explicitly state whether the end of the file has been reached and whether the content is a summary or raw snippet.                         
+        """),
     input_schema=JSONSchema(
         type="object",
         properties={

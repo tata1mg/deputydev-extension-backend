@@ -6,6 +6,7 @@ from sanic.log import logger
 from torpedo import CONFIG
 from torpedo.exceptions import BadRequestException
 
+from app.main.blueprints.deputy_dev.constants.constants import PR_REVIEW_POST_AFFIRMATION_MESSAGES, PrStatusTypes
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
@@ -54,7 +55,7 @@ class CodeReviewTrigger:
             raise BadRequestException(f"Invalid PR review request with error {ex.errors()}")
 
     @classmethod
-    async def __process_review_request(cls, code_review_request: CodeReviewRequest):  # Private method
+    async def __process_review_request(cls, code_review_request: CodeReviewRequest) -> str:  # Private method
         """
         Validates the repository and pushes the request to the appropriate queue.
         Args:
@@ -76,26 +77,29 @@ class CodeReviewTrigger:
             return f"Currently we are not serving: {code_review_request.repo_name}"
 
     @classmethod
-    async def perform_review(cls, payload: dict, query_params: dict):
+    async def perform_review(cls, payload: dict, query_params: dict, is_manual_review: bool = False) -> Optional[str]:
         """
         Triggers code review
         Args:
             payload (dict): payload from webhook or
-            query_params (dict): request quaer params: contains a jwt token
+            query_params (dict): request query params: contains a jwt token
+            is_manual_review (bool): if manual review
         Returns:
             PR review acknowledgments
         """
+        is_review_enabled = is_manual_review or config.get("AUTO_REVIEW_ENABLED")
         pr_review_start_time = datetime.now(timezone.utc)
         payload["pr_review_start_time"] = pr_review_start_time.isoformat()
         code_review_request = await cls.__preprocess_review_payload(payload, query_params)
         if not code_review_request:
             return
+        code_review_request.is_review_enabled = is_review_enabled
 
         return await cls.__process_review_request(code_review_request)
 
     @classmethod
-    async def __notify_pr_review_initiation(cls, payload):  # Private method
-        repo_name, pr_id, workspace, scm_workspace_id, repo_id, workspace_slug, vcs_type = (
+    async def __notify_pr_review_initiation(cls, payload: dict) -> None:  # Private method
+        repo_name, pr_id, workspace, scm_workspace_id, repo_id, workspace_slug, vcs_type, is_review_enabled = (
             payload.get("repo_name"),
             payload.get("pr_id"),
             payload.get("workspace"),
@@ -103,6 +107,7 @@ class CodeReviewTrigger:
             payload.get("repo_id"),
             payload.get("workspace_slug"),
             payload.get("vcs_type"),
+            payload.get("is_review_enabled"),
         )
         auth_handler = await get_vcs_auth_handler(scm_workspace_id, vcs_type)
         comment_service = await CommentFactory.initialize(
@@ -116,4 +121,9 @@ class CodeReviewTrigger:
         )
 
         affirmation_service = AffirmationService(payload, comment_service)
-        await affirmation_service.create_initial_comment()
+        initial_message = (
+            PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.SKIPPED_AUTO_REVIEW.value]
+            if not is_review_enabled
+            else PR_REVIEW_POST_AFFIRMATION_MESSAGES[PrStatusTypes.IN_PROGRESS.value]
+        )
+        await affirmation_service.create_initial_comment(initial_message)
