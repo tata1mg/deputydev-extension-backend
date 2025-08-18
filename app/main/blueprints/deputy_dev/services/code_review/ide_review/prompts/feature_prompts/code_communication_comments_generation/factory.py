@@ -9,11 +9,13 @@ from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from .claude_3_point_7_sonnet import (
     Claude3Point7CodeCommunicationCommentsGenerationPrompt,
 )
+from .claude_4_sonnet import Claude4CodeCommunicationCommentsGenerationPrompt
 
 
 class CodeCommunicationCommentsGenerationPromptFactory(BaseFeaturePromptFactory):
     prompts = {
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CodeCommunicationCommentsGenerationPrompt,
+        LLModels.CLAUDE_4_SONNET: Claude4CodeCommunicationCommentsGenerationPrompt,
     }
 
     @classmethod

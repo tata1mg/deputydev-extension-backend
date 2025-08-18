@@ -17,7 +17,7 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
     prompt_type = PromptFeatures.CODE_MAINTAINABILITY_COMMENTS_GENERATION_PASS_1.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.CODE_MAINTAINABILITY.value
 
@@ -128,3 +128,8 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
         return UserAndSystemMessages(
             user_message=user_message, system_message=system_message, cached_message=cached_message
         )
+
+    def get_finalize_iteration_breached_prompt(self) -> UserAndSystemMessages:
+        user_message = self.get_force_finalize_user_message()
+        system_message = self.get_system_prompt()
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
