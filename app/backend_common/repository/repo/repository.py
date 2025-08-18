@@ -1,5 +1,6 @@
 from typing import Dict, List, Union
 
+from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 
 from app.backend_common.models.dao.postgres.repos import Repos
@@ -8,12 +9,11 @@ from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.repository.db import DB
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils import app_utils
-from deputydev_core.utils.context_vars import get_context_value
 
 
 class RepoRepository:
     @classmethod
-    async def db_get(cls, filters: Dict, fetch_one: bool=False) -> Union[RepoDTO, List[RepoDTO]]:
+    async def db_get(cls, filters: Dict, fetch_one: bool = False) -> Union[RepoDTO, List[RepoDTO]]:
         try:
             repo_data = await DB.by_filters(model_name=Repos, where_clause=filters, fetch_one=fetch_one)
             if repo_data and fetch_one:

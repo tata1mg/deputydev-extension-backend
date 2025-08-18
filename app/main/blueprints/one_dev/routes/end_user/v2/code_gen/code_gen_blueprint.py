@@ -2,12 +2,13 @@ import asyncio
 import json
 import uuid
 from typing import Any, Dict, List, Optional
-from sanic.server.websockets.impl import WebsocketImplProtocol
+
 import aiohttp
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic import Blueprint, response
+from sanic.server.websockets.impl import WebsocketImplProtocol
 from torpedo import Request, send_response
 from torpedo.types import ResponseDict
 
