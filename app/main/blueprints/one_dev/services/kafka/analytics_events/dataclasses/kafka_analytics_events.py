@@ -1,11 +1,11 @@
 import re
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, field_validator
 
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
-from enum import Enum
 
 
 class EventTypes(Enum):
