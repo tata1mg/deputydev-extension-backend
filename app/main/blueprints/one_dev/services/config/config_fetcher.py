@@ -29,6 +29,7 @@ class ConfigFetcher:
             "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
             "BINARY": {},
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
+            "DD_HOST_WS_NON_GATEWAY": ConfigManager.configs["DD_HOST_WS_NON_GATEWAY"],
             "QUERY_SOLVER_ENDPOINT": ConfigManager.configs["QUERY_SOLVER_ENDPOINT"],
             "REVIEW_SOLVER_ENDPOINT": ConfigManager.configs["CODE_REVIEW"]["REVIEW_SOLVER_ENDPOINT"],
             "REVIEW_POST_PROCESS_SOLVER_ENDPOINT": ConfigManager.configs["CODE_REVIEW"]["POST_PROCESS_SOLVER_ENDPOINT"],
