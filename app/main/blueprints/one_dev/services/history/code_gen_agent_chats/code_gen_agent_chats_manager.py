@@ -46,6 +46,9 @@ class PastCodeGenAgentChatsManager:
                             else None
                         )
 
+                if chat_data.message_data.vscode_env:
+                    chat_data.message_data.vscode_env = None
+
             if isinstance(chat_data.message_data, ToolUseMessageData):
                 chat_data.message_data.tool_status = (
                     ToolStatus.ABORTED
