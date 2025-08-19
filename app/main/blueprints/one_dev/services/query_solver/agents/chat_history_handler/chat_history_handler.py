@@ -13,6 +13,7 @@ from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
+    AgentChatUpdateRequest,
     MessageType,
     TextMessageData,
     ToolUseMessageData,
@@ -146,7 +147,9 @@ class ChatHistoryHandler:
                     agent_chat
                 )
 
-    async def get_relevant_previous_agent_chats_for_new_query(self) -> List[AgentChatDTO]:
+    async def get_relevant_previous_agent_chats_for_new_query(
+        self, new_query_chat: AgentChatDTO
+    ) -> Tuple[List[AgentChatDTO], List[str]]:
         # Fetch both query summaries and message threads concurrently, to save time in DB calls
         all_session_query_summaries, all_agent_chats = await asyncio.gather(
             QuerySummarysRepository.get_all_session_query_summaries(session_id=self.payload.session_id),
@@ -161,8 +164,10 @@ class ChatHistoryHandler:
         # now create a map of query_id to agent chats and summaries
         self._set_query_id_to_chats_and_summary_map(all_agent_chats, all_session_query_summaries)
 
+        query_id_int_to_query_map: Dict[int, AgentChatDTO] = {}
         for query_id, (agent_chats, query_summary) in self.query_id_to_chats_and_summary_map.items():
-            query_id_int = self._hash_query_id_to_int(query_id)
+            query_id_int = self._hash_query_id_to_int(agent_chats[0].query_id)
+            query_id_int_to_query_map[query_id_int] = agent_chats[0]
             query_agent_chat = agent_chats[0]
             if not isinstance(query_agent_chat.message_data, TextMessageData):
                 raise ValueError(
@@ -178,21 +183,31 @@ class ChatHistoryHandler:
                 )
             )
 
-        # sort the previous chats based on query_id
-        self.previous_chats.sort(key=lambda x: x.id, reverse=False)
+        # sort the previous chats based on the order of original chats, not based on id but on their position in the original list
+        self.previous_chats.sort(key=lambda x: query_id_int_to_query_map[x.id].created_at)
 
         # this will keep max 5 most relevant chats
         filtered_query_ids = await self.filter_chat_summaries()
 
         all_relevant_agent_chats: List[AgentChatDTO] = []
+        previous_queries: List[AgentChatDTO] = []
         for query_id in filtered_query_ids:
             agent_chats, query_summary = self.query_id_to_chats_and_summary_map.get(query_id, ([], None))
             if agent_chats:
                 all_relevant_agent_chats.extend(agent_chats)
+                if agent_chats[0].id != new_query_chat.id:
+                    previous_queries.append(agent_chats[0])
 
-        return all_relevant_agent_chats
+        await AgentChatsRepository.update_chat(
+            chat_id=new_query_chat.id,
+            update_data=AgentChatUpdateRequest(previous_queries=[chat.query_id for chat in previous_queries]),
+        )
 
-    async def get_relevant_previous_agent_chats_for_tool_response_submission(self) -> List[AgentChatDTO]:
+        return all_relevant_agent_chats, [_query.query_id for _query in previous_queries]
+
+    async def get_relevant_previous_agent_chats_for_tool_response_submission(
+        self,
+    ) -> Tuple[List[AgentChatDTO], List[str]]:
         # tool responses to submit
         tool_response_ids = [tool_response.tool_use_id for tool_response in self.payload.batch_tool_responses or []]
 
@@ -218,6 +233,10 @@ class ChatHistoryHandler:
 
         # Filter chats based on specific query IDs
         relevant_agent_chats = [
-            chat for chat in all_agent_chats if chat.query_id in tool_use_chats[-1].previous_queries
+            chat
+            for chat in all_agent_chats
+            if (
+                (chat.query_id in tool_use_chats[-1].previous_queries) or (chat.query_id == tool_use_chats[-1].query_id)
+            )
         ]
-        return relevant_agent_chats
+        return relevant_agent_chats, tool_use_chats[-1].previous_queries

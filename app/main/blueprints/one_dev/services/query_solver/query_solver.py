@@ -619,11 +619,18 @@ class QuerySolver:
                     )
                 )
 
-            await AgentChatsRepository.create_chat(
+            new_query_chat = await AgentChatsRepository.create_chat(
                 chat_data=AgentChatCreateRequest(
                     session_id=payload.session_id,
                     actor=ActorType.USER,
-                    message_data=TextMessageData(text=payload.query),
+                    message_data=TextMessageData(
+                        text=payload.query,
+                        attachments=payload.attachments,
+                        focus_items=payload.focus_items,
+                        directory_items=payload.directory_items,
+                        vscode_env=payload.vscode_env,
+                        urls=payload.urls,
+                    ),
                     message_type=ChatMessageType.TEXT,
                     metadata={},
                     query_id=generated_query_id,
@@ -659,10 +666,8 @@ class QuerySolver:
             }
 
             model_to_use = LLModels(payload.llm_model.value)
-            llm_inputs = await agent_instance.get_llm_inputs(
-                payload=payload,
-                _client_data=client_data,
-                llm_model=model_to_use,
+            llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
+                payload=payload, _client_data=client_data, llm_model=model_to_use, new_query_chat=new_query_chat
             )
 
             prompt_vars_to_use = {**prompt_vars_to_use, **llm_inputs.extra_prompt_vars}
@@ -689,7 +694,7 @@ class QuerySolver:
                 session_id=payload.session_id,
                 llm_handler=llm_handler,
                 query_id=generated_query_id,
-                previous_queries=[],
+                previous_queries=previous_queries,
             )
 
         elif payload.batch_tool_responses:
@@ -739,7 +744,7 @@ class QuerySolver:
                 )
 
             agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
-            llm_inputs = await agent_instance.get_llm_inputs(
+            llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
                 _client_data=client_data,
                 llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
@@ -762,7 +767,7 @@ class QuerySolver:
                 session_id=payload.session_id,
                 llm_handler=llm_handler,
                 query_id=inserted_tool_responses[0].query_id,
-                previous_queries=inserted_tool_responses[0].previous_queries,
+                previous_queries=previous_queries,
             )
 
         else:

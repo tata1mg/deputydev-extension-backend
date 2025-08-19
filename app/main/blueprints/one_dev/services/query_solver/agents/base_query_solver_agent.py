@@ -1,9 +1,17 @@
+import textwrap
 from abc import ABC
-from typing import List, Type
+from asyncio import Task
+from typing import Dict, List, Optional, Tuple, Type
 
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
@@ -14,6 +22,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedConversationRole,
     UnifiedConversationTurn,
     UnifiedConversationTurnContentType,
+    UnifiedImageConversationTurnContent,
     UnifiedTextConversationTurnContent,
     UnifiedToolRequestConversationTurnContent,
     UnifiedToolResponseConversationTurnContent,
@@ -23,7 +32,9 @@ from app.backend_common.services.llm.prompts.base_feature_prompt_factory import 
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
+    CodeBlockData,
     TextMessageData,
+    ThinkingInfoData,
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.chat_history_handler import (
@@ -31,6 +42,7 @@ from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handl
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
+    FocusItemTypes,
     MCPToolMetadata,
     QuerySolverInput,
 )
@@ -86,6 +98,7 @@ class QuerySolverAgent(ABC):
         """
         self.agent_name = agent_name
         self.agent_description = agent_description
+        self.attachment_data_task_map: Dict[int, Task[ChatAttachmentDataWithObjectBytes]] = {}
 
     def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
         # check if tool is MCP type tool
@@ -139,7 +152,84 @@ class QuerySolverAgent(ABC):
         tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
-    def _convert_text_agent_chat_to_conversation_turn(self, agent_chat: AgentChatDTO) -> UnifiedConversationTurn:
+    async def _get_unified_user_conv_turns(self, message_data: TextMessageData) -> List[UnifiedConversationTurn]:  # noqa: C901
+        """
+        Get unified text conversation turn content for user messages.
+        :param message_data: TextMessageData containing the text message.
+        :return: UnifiedTextConversationTurnContent object.
+        """
+
+        all_turns: List[UnifiedConversationTurn] = []
+        # first process attachments
+        for attachment in message_data.attachments:
+            if attachment.attachment_id in self.attachment_data_task_map:
+                image_data = await self.attachment_data_task_map[attachment.attachment_id]
+                all_turns.append(
+                    UserConversationTurn(
+                        role=UnifiedConversationRole.USER,
+                        content=[
+                            UnifiedImageConversationTurnContent(
+                                type=UnifiedConversationTurnContentType.IMAGE,
+                                bytes_data=image_data.object_bytes,
+                                image_mimetype=image_data.attachment_metadata.file_type,
+                            )
+                        ],
+                    )
+                )
+
+        text = f"User Query: {message_data.text}"
+
+        if message_data.focus_items:
+            text += "\nThe user has asked to focus on the following\n"
+            for focus_item in message_data.focus_items:
+                if focus_item.type == FocusItemTypes.DIRECTORY:
+                    continue
+                text += (
+                    "<item>"
+                    + f"<type>{focus_item.type.value}</type>"
+                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                    + (f"<path>{focus_item.path}</path>")
+                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                    + "</item>"
+                )
+
+        if message_data.directory_items:
+            text += "\nThe user has also asked to explore the contents of the following directories:\n"
+            for directory_item in message_data.directory_items:
+                text += "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                for entry in directory_item.structure or []:
+                    label = "file" if entry.type == "file" else "folder"
+                    text += f"{label}: {entry.name}\n"
+                text += "</structure></item>"
+
+        if message_data.urls:
+            text += f"\nThe user has attached following urls as reference: {[url['url'] for url in message_data.urls]}"
+
+        if message_data.vscode_env:
+            text += f"""\n====
+                                            
+            Below is the information about the current vscode environment:
+            {message_data.vscode_env}
+
+            ===="""
+
+        all_turns.append(
+            UserConversationTurn(
+                role=UnifiedConversationRole.USER,
+                content=[
+                    UnifiedTextConversationTurnContent(
+                        type=UnifiedConversationTurnContentType.TEXT,
+                        text=textwrap.dedent(text).strip(),
+                    )
+                ],
+            )
+        )
+
+        return all_turns
+
+    async def _convert_text_agent_chat_to_conversation_turn(
+        self, agent_chat: AgentChatDTO
+    ) -> List[UnifiedConversationTurn]:
         """
         Convert AgentChatDTO object to UnifiedConversationTurn object for text messages.
         :param agent_chat: AgentChatDTO object containing the chat data.
@@ -152,21 +242,20 @@ class QuerySolverAgent(ABC):
                 f"Expected message_data to be of type TextMessageData, got {type(agent_chat.message_data)}"
             )
 
-        content = UnifiedTextConversationTurnContent(
-            type=UnifiedConversationTurnContentType.TEXT,
-            text=agent_chat.message_data.text,
-        )
-
         if agent_chat.actor == ActorType.USER:
-            return UserConversationTurn(
-                role=UnifiedConversationRole.USER,
-                content=[content],
-            )
+            return await self._get_unified_user_conv_turns(agent_chat.message_data)
         else:
-            return AssistantConversationTurn(
-                role=UnifiedConversationRole.ASSISTANT,
-                content=[content],
-            )
+            return [
+                AssistantConversationTurn(
+                    role=UnifiedConversationRole.ASSISTANT,
+                    content=[
+                        UnifiedTextConversationTurnContent(
+                            type=UnifiedConversationTurnContentType.TEXT,
+                            text=agent_chat.message_data.text,
+                        )
+                    ],
+                )
+            ]
 
     def _convert_tool_use_agent_chat_to_conversation_turn(
         self, agent_chat: AgentChatDTO
@@ -217,7 +306,57 @@ class QuerySolverAgent(ABC):
 
         return all_conversation_turns
 
-    def _convert_agent_chats_to_conversation_turns(
+    def _convert_thinking_agent_chat_to_conversation_turn(
+        self, agent_chat: AgentChatDTO
+    ) -> List[UnifiedConversationTurn]:
+        """
+        Convert AgentChatDTO object to UnifiedConversationTurn object for thinking messages.
+        :param agent_chat: AgentChatDTO object containing the chat data.
+        :return: UnifiedConversationTurn object.
+        """
+
+        if not isinstance(agent_chat.message_data, ThinkingInfoData):
+            raise ValueError(
+                f"Expected message_data to be of type ThinkingInfoData, got {type(agent_chat.message_data)}"
+            )
+
+        return [
+            AssistantConversationTurn(
+                role=UnifiedConversationRole.ASSISTANT,
+                content=[
+                    UnifiedTextConversationTurnContent(
+                        type=UnifiedConversationTurnContentType.TEXT,
+                        text=agent_chat.message_data.thinking_summary,
+                    )
+                ],
+            )
+        ]
+
+    def _convert_code_block_agent_chat_to_conversation_turn(
+        self, agent_chat: AgentChatDTO
+    ) -> List[UnifiedConversationTurn]:
+        """
+        Convert AgentChatDTO object to UnifiedConversationTurn object for code block messages.
+        :param agent_chat: AgentChatDTO object containing the chat data.
+        :return: UnifiedConversationTurn object.
+        """
+
+        if not isinstance(agent_chat.message_data, CodeBlockData):
+            raise ValueError(f"Expected message_data to be of type CodeBlockData, got {type(agent_chat.message_data)}")
+
+        return [
+            AssistantConversationTurn(
+                role=UnifiedConversationRole.ASSISTANT,
+                content=[
+                    UnifiedTextConversationTurnContent(
+                        type=UnifiedConversationTurnContentType.TEXT,
+                        text=agent_chat.message_data.code,
+                    )
+                ],
+            )
+        ]
+
+    async def _convert_agent_chats_to_conversation_turns(
         self, agent_chats: List[AgentChatDTO]
     ) -> List[UnifiedConversationTurn]:
         """
@@ -230,15 +369,40 @@ class QuerySolverAgent(ABC):
 
         for agent_chat in agent_chats:
             if agent_chat.message_type == "TEXT":
-                conversation_turns.append(self._convert_text_agent_chat_to_conversation_turn(agent_chat))
+                conversation_turns.extend(await self._convert_text_agent_chat_to_conversation_turn(agent_chat))
             elif agent_chat.message_type == "TOOL_USE":
                 conversation_turns.extend(self._convert_tool_use_agent_chat_to_conversation_turn(agent_chat))
+            elif agent_chat.message_type == "THINKING":
+                conversation_turns.extend(self._convert_thinking_agent_chat_to_conversation_turn(agent_chat))
+            elif agent_chat.message_type == "CODE_BLOCK":
+                conversation_turns.extend(self._convert_code_block_agent_chat_to_conversation_turn(agent_chat))
 
         return conversation_turns
 
-    async def _get_conversation_turns(
-        self, payload: QuerySolverInput, _client_data: ClientData
-    ) -> List[UnifiedConversationTurn]:
+    async def get_all_chat_attachments(self, previous_chat_queries: List[AgentChatDTO]) -> List[Attachment]:
+        """
+        Get all chat attachment IDs from the previous chat queries.
+        :param previous_chat_queries: List of AgentChatDTO objects containing previous chat data.
+        :return: List of chat attachment IDs.
+        """
+        attachment_ids: List[int] = []
+        for agent_chat in previous_chat_queries:
+            if (
+                agent_chat.message_data
+                and isinstance(agent_chat.message_data, TextMessageData)
+                and agent_chat.message_data.attachments
+            ):
+                attachment_ids.extend(attachment.attachment_id for attachment in agent_chat.message_data.attachments)
+        # filter all attachments which are not deleted
+        all_attachments_from_db = await ChatAttachmentsRepository.get_attachments_by_ids(attachment_ids)
+        filtered_attachment_ids = [
+            attachment.id for attachment in all_attachments_from_db if attachment.status != "deleted"
+        ]
+        return [Attachment(attachment_id=attachment_id) for attachment_id in filtered_attachment_ids]
+
+    async def _get_conversation_turns_and_previous_queries(
+        self, payload: QuerySolverInput, _client_data: ClientData, new_query_chat: Optional[AgentChatDTO] = None
+    ) -> Tuple[List[UnifiedConversationTurn], List[str]]:
         # first, we need to get the previous history of messages in case of a new query
 
         previous_chat_queries: List[AgentChatDTO] = []
@@ -246,28 +410,43 @@ class QuerySolverAgent(ABC):
             previous_chat_payload=payload,
             llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
         )
+        previous_queries: List[str] = []
         if payload.query:
-            previous_chat_queries = await chat_handler.get_relevant_previous_agent_chats_for_new_query()
+            if not new_query_chat:
+                raise ValueError("new_query_chat must be provided when payload.query is present")
+            (
+                previous_chat_queries,
+                previous_queries,
+            ) = await chat_handler.get_relevant_previous_agent_chats_for_new_query(new_query_chat)
         else:
-            previous_chat_queries = await chat_handler.get_relevant_previous_agent_chats_for_tool_response_submission()
+            (
+                previous_chat_queries,
+                previous_queries,
+            ) = await chat_handler.get_relevant_previous_agent_chats_for_tool_response_submission()
 
-        return self._convert_agent_chats_to_conversation_turns(previous_chat_queries)
+        filtered_attachments = await self.get_all_chat_attachments(previous_chat_queries)
+        self.attachment_data_task_map = ChatFileUpload.get_attachment_data_task_map(filtered_attachments)
 
-    async def get_llm_inputs(
+        return await self._convert_agent_chats_to_conversation_turns(previous_chat_queries), previous_queries
+
+    async def get_llm_inputs_and_previous_queries(
         self,
         payload: QuerySolverInput,
         _client_data: ClientData,
         llm_model: LLModels,
-    ) -> LLMHandlerInputs:
+        new_query_chat: Optional[AgentChatDTO] = None,
+    ) -> Tuple[LLMHandlerInputs, List[str]]:
         """
         Generate the inputs for the LLM handler based on the task and previous messages.
         :return: LLMHandlerInputs object containing the user and system messages.
         """
 
         tools = self.get_all_tools(payload, _client_data)
-
+        messages, previous_queries = await self._get_conversation_turns_and_previous_queries(
+            payload, _client_data, new_query_chat
+        )
         return LLMHandlerInputs(
             tools=tools,
             prompt=self.prompt_factory.get_prompt(model_name=llm_model),
-            messages=await self._get_conversation_turns(payload, _client_data),
-        )
+            messages=messages,
+        ), previous_queries
