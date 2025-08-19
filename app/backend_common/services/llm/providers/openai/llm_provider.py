@@ -40,10 +40,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     LLMCallResponseTypes,
@@ -73,7 +76,6 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolRequestConversationTurnContent,
     UserConversationTurn,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
