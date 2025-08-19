@@ -587,6 +587,51 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                                 }
                             )
                         )
+
+                    except InputTokenLimitExceededError as ex:
+                        AppLogger.log_error(
+                            f"Input token limit exceeded: model={ex.model_name}, tokens={ex.current_tokens}/{ex.max_tokens}"
+                        )
+
+                        # Get available models with higher token limits
+                        better_models: List[Dict[str, Any]] = []
+
+                        try:
+                            code_gen_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
+                            llm_models_config = ConfigManager.configs.get("LLM_MODELS", {})
+                            current_model_limit = ex.max_tokens
+
+                            for model in code_gen_models:
+                                model_name = model.get("name")
+                                if model_name and model_name != ex.model_name and model_name in llm_models_config:
+                                    model_config = llm_models_config[model_name]
+                                    model_token_limit = model_config.get("INPUT_TOKENS_LIMIT", 100000)
+
+                                    if model_token_limit > current_model_limit:
+                                        enhanced_model = model.copy()
+                                        enhanced_model["input_token_limit"] = model_token_limit
+                                        better_models.append(enhanced_model)
+
+                            # Sort by token limit (highest first)
+                            better_models.sort(key=lambda m: m.get("input_token_limit", 0), reverse=True)
+
+                        except Exception as model_error:  # noqa : BLE001
+                            AppLogger.log_error(f"Error fetching better models: {model_error}")
+
+                        error_data: Dict[str, Any] = {
+                            "type": "STREAM_ERROR",
+                            "status": "INPUT_TOKEN_LIMIT_EXCEEDED",
+                            "model": ex.model_name,
+                            "current_tokens": ex.current_tokens,
+                            "max_tokens": ex.max_tokens,
+                            "query": payload.query,
+                            "message": f"Your message exceeds the context window supported by {get_model_display_name(ex.model_name)}. Try switching to a model with a higher context window to proceed.",
+                            "detail": ex.detail,
+                            "better_models": better_models,
+                        }
+
+                        await ws.send(json.dumps(error_data))
+
                     except asyncio.CancelledError as ex:
                         await ws.send(
                             json.dumps({"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"})

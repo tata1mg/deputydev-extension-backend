@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Tuple
-
+from sanic.server.websockets.impl import WebsocketImplProtocol
 from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -147,6 +147,9 @@ def authenticate(func: Any) -> Any:
             kwargs["response_headers"] = response_headers
             ContextValue.set("response_headers", response_headers)
         except Exception as ex:  # noqa: BLE001
+            if args and isinstance(args[0], WebsocketImplProtocol):
+                error_data = {"type": "STREAM_ERROR", "message": "Unable to authenticate user", "status": "NOT_VERIFIED"}
+                await args[0].send(json.dumps(error_data))
             raise BadRequestException(str(ex), sentry_raise=False)
         kwargs = {
             **kwargs,

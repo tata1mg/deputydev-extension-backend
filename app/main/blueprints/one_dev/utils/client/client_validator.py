@@ -1,6 +1,7 @@
 from functools import wraps
 from typing import Any, Callable, Optional, Tuple
-
+import json
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import StreamErrorData
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
@@ -14,6 +15,7 @@ from app.main.blueprints.one_dev.constants.constants import (
 )
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
+from sanic.server.websockets.impl import WebsocketImplProtocol
 
 
 def validate_version(client: Clients, client_version: str) -> Tuple[bool, Optional[str], Optional[str]]:
@@ -88,6 +90,18 @@ def validate_client_version(func: Callable[..., Any]) -> Callable[..., Any]:
         )
 
         if not is_valid:
+            if args and isinstance(args[0], WebsocketImplProtocol):
+                error_data = StreamErrorData(
+                    type="STREAM_ERROR",
+                    message={
+                        "error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value,
+                        "upgrade_version": upgrade_version,
+                        **({"client_download_link": client_download_link} if client_download_link else {}),
+                    },
+                    status="INVALID_CLIENT_VERSION",
+                )
+                await args[0].send(json.dumps(error_data.model_dump(mode="json")))
+
             raise BadRequestException(
                 error=upgrade_version,
                 meta={
