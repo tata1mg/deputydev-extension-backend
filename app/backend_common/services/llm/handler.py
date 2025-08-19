@@ -36,9 +36,12 @@ from app.backend_common.repository.message_threads.repository import (
 )
 from app.backend_common.service_clients.exceptions import LLMThrottledError
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -62,7 +65,6 @@ from app.backend_common.services.llm.providers.anthropic.llm_provider import Ant
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.backend_common.services.llm.providers.openrouter_models.llm_provider import OpenRouter
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
@@ -339,14 +341,7 @@ class LLMHandler(Generic[PromptFeatures]):
 
         all_attachments = previous_attachments + current_attachments
 
-        attachment_data_task_map: Dict[int, Any] = {}
-        for attachment in all_attachments:
-            if attachment.attachment_id not in attachment_data_task_map:
-                attachment_data_task_map[attachment.attachment_id] = asyncio.create_task(
-                    self._get_attachment_data_and_metadata(attachment_id=attachment.attachment_id)
-                )
-
-        return attachment_data_task_map
+        return ChatFileUpload.get_attachment_data_task_map(all_attachments)
 
     async def fetch_and_parse_llm_response(  # noqa: C901
         self,

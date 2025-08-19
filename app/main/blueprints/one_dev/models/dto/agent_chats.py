@@ -5,6 +5,13 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated, Literal
 
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    DetailedDirectoryItem,
+    DetailedFocusItem,
+    Url,
+)
+
 
 class ActorType(str, Enum):
     USER = "USER"
@@ -24,7 +31,11 @@ class MessageType(str, Enum):
 class TextMessageData(BaseModel):
     message_type: Literal["TEXT"] = "TEXT"
     text: str
-    attachments: Optional[Dict[str, Any]] = None
+    attachments: List[Attachment] = []
+    focus_items: List[DetailedFocusItem] = []
+    directory_items: Optional[List[DetailedDirectoryItem]] = None
+    urls: List[Url] = []
+    vscode_env: Optional[str] = None
 
 
 class ToolStatus(Enum):
@@ -109,4 +120,4 @@ class AgentChatUpdateRequest(BaseModel):
     message_type: Optional[MessageType] = None
     message_data: Optional[MessageData] = None
     metadata: Optional[Dict[str, Any]] = None
-    previous_queries: Optional[List[int]] = None
+    previous_queries: Optional[List[str]] = None

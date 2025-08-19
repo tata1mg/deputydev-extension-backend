@@ -5,6 +5,7 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel, field_validator
 
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.services.llm.dataclasses.main import JSONSchema
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
@@ -86,10 +87,6 @@ class ClientTool(BaseModel):
     description: str
     input_schema: JSONSchema
     tool_metadata: MCPToolMetadata
-
-
-class Attachment(BaseModel):
-    attachment_id: int
 
 
 class Repository(BaseModel):

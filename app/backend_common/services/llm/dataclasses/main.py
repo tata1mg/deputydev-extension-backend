@@ -5,7 +5,6 @@ from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional,
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     LLMUsage,
@@ -287,11 +286,6 @@ ParsedLLMCallResponse = Annotated[
     ],
     Field(discriminator="type"),
 ]
-
-
-class ChatAttachmentDataWithObjectBytes(BaseModel):
-    attachment_metadata: ChatAttachmentsDTO
-    object_bytes: bytes
 
 
 class LLMToolChoice(Enum):
