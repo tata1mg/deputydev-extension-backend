@@ -41,10 +41,15 @@ from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handl
     ChatHistoryHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
     ClientTool,
-    FocusItemTypes,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FunctionFocusItem,
     MCPToolMetadata,
     QuerySolverInput,
+    UrlFocusItem,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
@@ -180,31 +185,46 @@ class QuerySolverAgent(ABC):
         text = f"User Query: {message_data.text}"
 
         if message_data.focus_items:
-            text += "\nThe user has asked to focus on the following\n"
-            for focus_item in message_data.focus_items:
-                if focus_item.type == FocusItemTypes.DIRECTORY:
-                    continue
-                text += (
-                    "<item>"
-                    + f"<type>{focus_item.type.value}</type>"
-                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                    + (f"<path>{focus_item.path}</path>")
-                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                    + "</item>"
-                )
+            code_snippet_based_items = [
+                item
+                for item in message_data.focus_items
+                if isinstance(item, CodeSnippetFocusItem)
+                or isinstance(item, FileFocusItem)
+                or isinstance(item, ClassFocusItem)
+                or isinstance(item, FunctionFocusItem)
+            ]
+            if code_snippet_based_items:
+                text = "The user has asked to focus on the following\n"
+                for focus_item in code_snippet_based_items:
+                    if (
+                        isinstance(focus_item, FileFocusItem)
+                        or isinstance(focus_item, ClassFocusItem)
+                        or isinstance(focus_item, FunctionFocusItem)
+                    ):
+                        text += (
+                            "<item>"
+                            + f"<type>{focus_item.type.value}</type>"
+                            + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                            + (f"<path>{focus_item.path}</path>")
+                            + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                            + "</item>"
+                        )
 
-        if message_data.directory_items:
-            text += "\nThe user has also asked to explore the contents of the following directories:\n"
-            for directory_item in message_data.directory_items:
-                text += "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
-                for entry in directory_item.structure or []:
-                    label = "file" if entry.type == "file" else "folder"
-                    text += f"{label}: {entry.name}\n"
-                text += "</structure></item>"
+            directory_items = [item for item in message_data.focus_items if isinstance(item, DirectoryFocusItem)]
+            if directory_items:
+                text += "\nThe user has also asked to explore the contents of the following directories:\n"
+                for directory_item in directory_items:
+                    text += (
+                        "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                    )
+                    for entry in directory_item.structure or []:
+                        label = "file" if entry.type == "file" else "folder"
+                        text += f"{label}: {entry.name}\n"
+                    text += "</structure></item>"
 
-        if message_data.urls:
-            text += f"\nThe user has attached following urls as reference: {[url['url'] for url in message_data.urls]}"
-
+            url_focus_items = [item for item in message_data.focus_items if isinstance(item, UrlFocusItem)]
+            if url_focus_items:
+                text += f"\nThe user has also provided the following URLs for reference: {[url.url for url in url_focus_items]}\n"
         if message_data.vscode_env:
             text += f"""\n====
                                             

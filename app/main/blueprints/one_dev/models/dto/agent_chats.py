@@ -7,9 +7,7 @@ from typing_extensions import Annotated, Literal
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    DetailedDirectoryItem,
-    DetailedFocusItem,
-    Url,
+    FocusItem,
 )
 
 
@@ -32,9 +30,7 @@ class TextMessageData(BaseModel):
     message_type: Literal["TEXT"] = "TEXT"
     text: str
     attachments: List[Attachment] = []
-    focus_items: List[DetailedFocusItem] = []
-    directory_items: Optional[List[DetailedDirectoryItem]] = None
-    urls: List[Url] = []
+    focus_items: List[FocusItem] = []
     vscode_env: Optional[str] = None
 
 

@@ -1,5 +1,6 @@
 from typing import List
 
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -10,6 +11,13 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
 )
 from app.main.blueprints.one_dev.services.history.code_gen_agent_chats.dataclasses.code_gen_agent_chats import (
     ChatElement,
+)
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FunctionFocusItem,
 )
 from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 
@@ -30,21 +38,38 @@ class PastCodeGenAgentChatsManager:
         all_elements: List[ChatElement] = []
         for chat_data in raw_agent_chats:
             if isinstance(chat_data.message_data, TextMessageData):
-                if chat_data.message_data.directory_items:
-                    for item in chat_data.message_data.directory_items:
-                        item.structure = None
+                for focus_item in chat_data.message_data.focus_items:
+                    if isinstance(focus_item, DirectoryFocusItem):
+                        focus_item.structure = None
 
-                if chat_data.message_data.focus_items:
-                    for item in chat_data.message_data.focus_items:
-                        item.chunks = []
+                    if (
+                        isinstance(focus_item, FileFocusItem)
+                        or isinstance(focus_item, ClassFocusItem)
+                        or isinstance(focus_item, FunctionFocusItem)
+                        or isinstance(focus_item, CodeSnippetFocusItem)
+                    ):
+                        focus_item.chunks = []
 
+                filtered_attachments: List[Attachment] = []
                 if chat_data.message_data.attachments:
                     for item in chat_data.message_data.attachments:
+                        attachment_data_from_db = await ChatAttachmentsRepository.get_attachment_by_id(
+                            item.attachment_id
+                        )
+                        if not attachment_data_from_db or attachment_data_from_db.status == "deleted":
+                            continue
                         item.attachment_data = (
                             (await attachment_data_task_map[item.attachment_id])
                             if item.attachment_id in attachment_data_task_map
                             else None
                         )
+                        if item.attachment_data:
+                            item.attachment_data.object_bytes = None
+                            presigned_url = await ChatFileUpload.get_presigned_url_for_fetch_by_s3_key(
+                                attachment_data_from_db.s3_key
+                            )
+                            item.get_url = presigned_url
+                            filtered_attachments.append(item)
 
                 if chat_data.message_data.vscode_env:
                     chat_data.message_data.vscode_env = None
