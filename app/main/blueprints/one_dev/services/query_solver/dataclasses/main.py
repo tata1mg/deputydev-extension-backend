@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
-from pydantic import BaseModel, field_validator
+from git import Union
+from pydantic import BaseModel, Field, field_validator
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.services.llm.dataclasses.main import JSONSchema
@@ -27,12 +28,25 @@ class FocusItemTypes(Enum):
     URL = "url"
 
 
-class DetailedFocusItem(BaseModel):
-    type: FocusItemTypes
+class ClassFocusItem(BaseModel):
+    type: Literal[FocusItemTypes.CLASS] = FocusItemTypes.CLASS
     value: Optional[str] = None
     chunks: List[ChunkInfo] = []
-    path: Optional[str] = ""
-    url: Optional[str] = ""
+    path: str
+
+
+class FunctionFocusItem(BaseModel):
+    type: Literal[FocusItemTypes.FUNCTION] = FocusItemTypes.FUNCTION
+    value: Optional[str] = None
+    chunks: List[ChunkInfo] = []
+    path: str
+
+
+class FileFocusItem(BaseModel):
+    type: Literal[FocusItemTypes.FILE] = FocusItemTypes.FILE
+    value: Optional[str] = None
+    chunks: List[ChunkInfo] = []
+    path: str
 
 
 class DirectoryEntry(BaseModel):
@@ -40,17 +54,30 @@ class DirectoryEntry(BaseModel):
     type: str
 
 
-class DetailedDirectoryItem(BaseModel):
-    path: str
+class DirectoryFocusItem(BaseModel):
+    type: Literal[FocusItemTypes.DIRECTORY] = FocusItemTypes.DIRECTORY
     value: Optional[str] = None
+    path: str
     structure: Optional[List[DirectoryEntry]] = None
 
 
-class Url(BaseModel):
-    value: str
+class CodeSnippetFocusItem(BaseModel):
+    type: Literal[FocusItemTypes.CODE_SNIPPET] = FocusItemTypes.CODE_SNIPPET
+    value: Optional[str] = None
+    chunks: List[ChunkInfo] = []
+    path: str
+
+
+class UrlFocusItem(BaseModel):
+    type: Literal[FocusItemTypes.URL] = FocusItemTypes.URL
+    value: Optional[str] = None
     url: str
-    type: str
-    keyword: str
+
+
+FocusItem = Annotated[
+    Union[ClassFocusItem, FunctionFocusItem, FileFocusItem, DirectoryFocusItem, CodeSnippetFocusItem, UrlFocusItem],
+    Field(discriminator="type"),
+]
 
 
 class LLMModel(Enum):
@@ -98,8 +125,6 @@ class Repository(BaseModel):
 
 class QuerySolverInput(BaseModel):
     query: Optional[str] = None
-    focus_items: List[DetailedFocusItem] = []
-    directory_items: Optional[List[DetailedDirectoryItem]] = None
     write_mode: bool = False
     session_id: int
     tool_use_failed: Optional[bool] = None
@@ -109,7 +134,6 @@ class QuerySolverInput(BaseModel):
     deputy_dev_rules: Optional[str] = None
     user_team_id: int
     session_type: str
-    urls: List[Url] = []
     os_name: Optional[str] = None
     shell: Optional[str] = None
     vscode_env: Optional[str] = None
@@ -117,9 +141,10 @@ class QuerySolverInput(BaseModel):
     search_web: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
     client_tools: List[ClientTool] = []
-    attachments: List[Attachment] = []
     is_embedding_done: Optional[bool] = True
     retry_reason: Optional[RetryReasons] = None
+    attachments: List[Attachment] = []
+    focus_items: List[FocusItem] = []
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805

@@ -13,9 +13,10 @@ class PresignedDownloadUrls(BaseModel):
 
 class ChatAttachmentDataWithObjectBytes(BaseModel):
     attachment_metadata: ChatAttachmentsDTO
-    object_bytes: bytes
+    object_bytes: Optional[bytes] = None
 
 
 class Attachment(BaseModel):
     attachment_id: int
     attachment_data: Optional[ChatAttachmentDataWithObjectBytes] = None
+    get_url: Optional[str] = None
