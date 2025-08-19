@@ -89,11 +89,6 @@ MessageData = Annotated[
     Field(discriminator="message_type"),
 ]
 
-# ACTOR to data mapping. # noqa: ERA001
-# USER = TextMessageData  # noqa: ERA001
-# ASSISTANT = Union[ToolUseMessageData, ThinkingInfoData, TaskCompletionData, CodeBlockData]. # noqa: ERA001
-# SYSTEM = InfoMessageData  # noqa: ERA001
-
 
 class AgentChatData(BaseModel):
     session_id: int
