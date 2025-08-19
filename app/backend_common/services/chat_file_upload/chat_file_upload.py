@@ -99,7 +99,7 @@ class ChatFileUpload:
         await cls.s3_client.delete_object(object_name=s3_key)
 
     @classmethod
-    async def _get_attachment_data_and_metadata(
+    async def get_attachment_data_and_metadata(
         cls,
         attachment_id: int,
     ) -> ChatAttachmentDataWithObjectBytes:
@@ -128,7 +128,7 @@ class ChatFileUpload:
         for attachment in all_attachments:
             if attachment.attachment_id not in attachment_data_task_map:
                 attachment_data_task_map[attachment.attachment_id] = asyncio.create_task(
-                    cls._get_attachment_data_and_metadata(attachment_id=attachment.attachment_id)
+                    cls.get_attachment_data_and_metadata(attachment_id=attachment.attachment_id)
                 )
 
         return attachment_data_task_map
