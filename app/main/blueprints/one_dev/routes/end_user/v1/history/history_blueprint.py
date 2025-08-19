@@ -42,6 +42,7 @@ async def get_chats(
         response = await PastCodeGenAgentChatsManager.get_past_chats(session_id=session_id)
     except Exception:  # noqa: BLE001
         raise BadRequestException(f"Failed to fetch past chats: {traceback.format_exc()}")
+
     return send_response(
         [chat_element.model_dump(mode="json") for chat_element in response], headers=kwargs.get("response_headers")
     )

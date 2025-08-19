@@ -30,9 +30,12 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ChatAttachmentDataWithObjectBytes,
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
@@ -63,7 +66,6 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolRequestConversationTurnContent,
     UserConversationTurn,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )

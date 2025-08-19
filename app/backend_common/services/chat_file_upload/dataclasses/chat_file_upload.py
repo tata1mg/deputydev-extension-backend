@@ -2,8 +2,19 @@ from typing import Any, Dict
 
 from pydantic import BaseModel
 
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
+
 
 class PresignedDownloadUrls(BaseModel):
     upload_url: Dict[str, Any]
     download_url: str
+    attachment_id: int
+
+
+class ChatAttachmentDataWithObjectBytes(BaseModel):
+    attachment_metadata: ChatAttachmentsDTO
+    object_bytes: bytes
+
+
+class Attachment(BaseModel):
     attachment_id: int

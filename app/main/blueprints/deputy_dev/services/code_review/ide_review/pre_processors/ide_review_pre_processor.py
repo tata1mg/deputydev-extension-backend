@@ -13,7 +13,7 @@ from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
-from app.backend_common.services.llm.dataclasses.main import ChatAttachmentDataWithObjectBytes
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import ChatAttachmentDataWithObjectBytes
 from app.main.blueprints.deputy_dev.constants.constants import (
     MAX_PR_DIFF_TOKEN_LIMIT,
     IdeReviewStatusTypes,
