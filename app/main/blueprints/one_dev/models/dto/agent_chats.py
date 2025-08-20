@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import Annotated, Literal
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
+from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
 )
@@ -32,13 +33,6 @@ class TextMessageData(BaseModel):
     attachments: List[Attachment] = []
     focus_items: List[FocusItem] = []
     vscode_env: Optional[str] = None
-
-
-class ToolStatus(Enum):
-    PENDING = "PENDING"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    ABORTED = "ABORTED"
 
 
 class ToolUseMessageData(BaseModel):
