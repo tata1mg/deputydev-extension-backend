@@ -1,9 +1,8 @@
 from enum import Enum
-from typing import Annotated, Any, Dict, List, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
-from git import Union
 from pydantic import BaseModel, Field, field_validator
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
