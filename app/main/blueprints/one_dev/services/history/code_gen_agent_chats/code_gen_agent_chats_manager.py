@@ -71,6 +71,8 @@ class PastCodeGenAgentChatsManager:
                             item.get_url = presigned_url
                             filtered_attachments.append(item)
 
+                chat_data.message_data.attachments = filtered_attachments
+
                 if chat_data.message_data.vscode_env:
                     chat_data.message_data.vscode_env = None
 
