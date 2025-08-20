@@ -22,11 +22,11 @@ class ReviewPlanner:
         self.session_id = session_id
         self.prompt_vars = prompt_vars
 
-    async def get_review_plan(self) -> Optional[NonStreamingParsedLLMCallResponse]:
+    async def get_review_plan(self) -> Optional[Dict[str, Any]]:
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
 
         max_retries = 2
-        response: Optional[NonStreamingParsedLLMCallResponse] = None
+        response: Optional[Dict[str, Any]] = None
         for attempt in range(max_retries + 1):
             try:
                 llm_response = await llm_handler.start_llm_query(
