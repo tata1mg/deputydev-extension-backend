@@ -140,7 +140,7 @@ def authenticate(func: Any) -> Any:
     """
 
     @wraps(func)
-    async def wrapper(request: Request, *args, **kwargs: Any) -> Any:
+    async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         try:
             # Get the auth data
             client_data: ClientData = kwargs.get("client_data")
