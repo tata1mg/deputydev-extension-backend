@@ -81,13 +81,13 @@ def ensure_session_id(auto_create: bool = False) -> Any:
         """
 
         @wraps(func)
-        async def wrapper(_request: Request, client_data: ClientData, auth_data: AuthData, **kwargs: Any) -> Any:
+        async def wrapper(_request: Request, *args, **kwargs: Any) -> Any:
+            client_data: ClientData = kwargs.get("client_data")
+            auth_data: AuthData = kwargs.get("auth_data")
             ##########################  Bypass Auth Token Flow  ##########################
             if kwargs.get("response_headers", {}).get("_bypass_review_auth"):
-                session_id = _request.headers.get("X-Session-ID")
-                return await func(
-                    _request, client_data=client_data, auth_data=auth_data, session_id=session_id, **kwargs
-                )
+                kwargs["session_id"] = _request.headers.get("X-Session-ID")
+                return await func(_request, *args, **kwargs)
 
             valid_session_data = await get_valid_session_data(
                 _request=_request,
@@ -95,10 +95,12 @@ def ensure_session_id(auto_create: bool = False) -> Any:
                 auth_data=auth_data,
                 auto_create=auto_create,
             )
+            kwargs = {
+                **kwargs,
+                "session_id": valid_session_data.id,
+            }
             # Proceed to the wrapped function
-            return await func(
-                _request, client_data=client_data, auth_data=auth_data, session_id=valid_session_data.id, **kwargs
-            )
+            return await func(_request, *args, **kwargs)
 
         return wrapper
 

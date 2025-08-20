@@ -12,12 +12,14 @@ from .claude_3_point_5_sonnet import (
 from .claude_3_point_7_sonnet import (
     Claude3Point7CodeMaintainabilityCommentsGenerationPass1Prompt,
 )
+from .claude_4_sonnet import Claude4CodeMaintainabilityCommentsGenerationPass1Prompt
 
 
 class CodeMaintainabilityCommentsGenerationPass1PromptFactory(BaseFeaturePromptFactory):
     prompts = {
         LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt,
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CodeMaintainabilityCommentsGenerationPass1Prompt,
+        LLModels.CLAUDE_4_SONNET: Claude4CodeMaintainabilityCommentsGenerationPass1Prompt,
     }
 
     @classmethod
