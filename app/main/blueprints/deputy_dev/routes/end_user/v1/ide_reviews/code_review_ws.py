@@ -78,6 +78,7 @@ async def legacy_post_process(request: Request, **kwargs: Any) -> ResponseDict |
 
 @ide_review_websocket.route("/run-agent", methods=["POST"])
 async def run_multi_agent_review(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:  # noqa: C901
+    print(_request.json)
     connection_id: str = _request.json["headers"].get("X-Amzn-ConnectionId")  # type: ignore
     is_local: bool = _request.json["headers"].get("X-Is-Local") == "true"
 

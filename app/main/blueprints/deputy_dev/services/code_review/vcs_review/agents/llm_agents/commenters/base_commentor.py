@@ -242,15 +242,15 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             )  # Limit the number of iterations to prevent infinite loops
             iteration_count: int = 0
 
-            while iteration_count < max_iterations:
+            while iteration_count <= max_iterations:
                 # Check if parse_final_response tool is used
                 if self.tool_request_manager.is_final_response(current_response):
                     try:
                         # extract final response tool use
-                        tool_use_request = self.tool_request_manager.get_tool_use_request_data(
+                        tool_use_requests = self.tool_request_manager.get_tool_use_request_data(
                             current_response, session_id
                         )
-                        if not tool_use_request:
+                        if not tool_use_requests:
                             raise ValueError(f"No tool use request found in LLM response: {current_response}")
                         # store final response in review_agent_chats
                         current_turn_chat = await ReviewAgentChatsRepository.create_chat(
@@ -260,9 +260,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                                 actor=ActorType.ASSISTANT,
                                 message_type=MessageType.TOOL_USE,
                                 message_data=ToolUseMessageData(
-                                    tool_name=tool_use_request.content.tool_name,
-                                    tool_input=tool_use_request.content.tool_input,
-                                    tool_use_id=tool_use_request.content.tool_use_id,
+                                    tool_name=tool_use_requests[0].content.tool_name,
+                                    tool_input=tool_use_requests[0].content.tool_input,
+                                    tool_use_id=tool_use_requests[0].content.tool_use_id,
                                 ),
                                 metadata={},
                             )
@@ -275,7 +275,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     except Exception as e:  # noqa: BLE001
                         AppLogger.log_error(f"Error processing parse_final_response Retrying with LLM : {e}")
                         # Create a tool use response with error feedback
-                        tool_use_response = ToolUseResponseData(
+                        tool_use_responses = ToolUseResponseData(
                             content=ToolUseResponseContent(
                                 tool_name="parse_final_response",
                                 tool_use_id=current_response.parsed_content[0].content.tool_use_id,
@@ -291,7 +291,8 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
                         # store the tool use response in the last tool_request chat in review_agent_chats
                         last_chat = chat_dto_list[-1]
-                        last_chat.message_data.tool_response = tool_use_response.content.response
+                        if isinstance(last_chat.message_data, ToolUseMessageData):
+                            last_chat.message_data.tool_response = tool_use_responses.content.response
                         await ReviewAgentChatsRepository.update_chat(
                             chat_id=last_chat.id,
                             update_data=ReviewAgentChatUpdateRequest(message_data=last_chat.message_data),
@@ -346,35 +347,58 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
                 else:
                     # Iterative tool use
-                    tool_use_request = self.tool_request_manager.get_tool_use_request_data(current_response, session_id)
+                    tool_use_requests = self.tool_request_manager.get_tool_use_request_data(
+                        current_response, session_id
+                    )
 
-                    if tool_use_request:
-                        # store tool use request in review_agent_chats
-                        current_turn_chat = await ReviewAgentChatsRepository.create_chat(
-                            ReviewAgentChatCreateRequest(
-                                session_id=session_id,
-                                agent_id=self.agent_id,
-                                actor=ActorType.ASSISTANT,
-                                message_type=MessageType.TOOL_USE,
-                                message_data=ToolUseMessageData(
-                                    tool_use_id=tool_use_request.content.tool_use_id,
-                                    tool_input=tool_use_request.content.tool_input,
-                                    tool_name=tool_use_request.content.tool_name,
-                                ),
-                                metadata={},
+                    if tool_use_requests:
+                        for tool_use_request in tool_use_requests:
+                            # store tool use request in review_agent_chats
+                            current_turn_chat = await ReviewAgentChatsRepository.create_chat(
+                                ReviewAgentChatCreateRequest(
+                                    session_id=session_id,
+                                    agent_id=self.agent_id,
+                                    actor=ActorType.ASSISTANT,
+                                    message_type=MessageType.TOOL_USE,
+                                    message_data=ToolUseMessageData(
+                                        tool_use_id=tool_use_request.content.tool_use_id,
+                                        tool_input=tool_use_request.content.tool_input,
+                                        tool_name=tool_use_request.content.tool_name,
+                                    ),
+                                    metadata={},
+                                )
                             )
-                        )
-                        chat_dto_list.append(current_turn_chat)
-                        tool_use_response = await self.tool_request_manager.process_tool_use_request(
-                            tool_use_request, session_id
+
+                            chat_dto_list.append(current_turn_chat)
+
+                        tool_use_responses = await self.tool_request_manager.process_tool_use_request(
+                            current_response, session_id
                         )
 
-                        last_chat = chat_dto_list[-1]
-                        last_chat.message_data.tool_response = tool_use_response.content.response
-                        await ReviewAgentChatsRepository.update_chat(
-                            chat_id=last_chat.id,
-                            update_data=ReviewAgentChatUpdateRequest(message_data=last_chat.message_data),
-                        )
+                        if tool_use_responses:
+                            if iteration_count == max_iterations - 1:
+                                prompt_vars["final_breach"] = "true"
+
+                        for tool_response in tool_use_responses:
+                            corresp_tool_request = next(
+                                (
+                                    req
+                                    for req in chat_dto_list
+                                    if isinstance(req.message_data, ToolUseMessageData)
+                                    and req.message_data.tool_use_id == tool_response.content.tool_use_id
+                                ),
+                                None,
+                            )
+                            if corresp_tool_request and isinstance(
+                                corresp_tool_request.message_data, ToolUseMessageData
+                            ):
+                                corresp_tool_request.message_data.tool_response = tool_response.content.response
+                                await ReviewAgentChatsRepository.update_chat(
+                                    chat_id=corresp_tool_request.id,
+                                    update_data=ReviewAgentChatUpdateRequest(
+                                        message_data=corresp_tool_request.message_data
+                                    ),
+                                )
 
                         # Submit the tool use response to the LLM
                         current_turn_response = await self.llm_handler.start_llm_query(
@@ -392,7 +416,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         current_response = current_turn_response
                         iteration_count += 1
 
-            if iteration_count >= max_iterations:
+            if iteration_count > max_iterations:
                 AppLogger.log_error(
                     f"Maximum number of iterations ({max_iterations}) reached for agent {self.agent_name}"
                 )

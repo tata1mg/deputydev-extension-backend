@@ -1,9 +1,11 @@
+import json
 from functools import wraps
 from typing import Any, Callable, Optional, Tuple
 
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
+from sanic.server.websockets.impl import WebsocketImplProtocol
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
@@ -12,6 +14,7 @@ from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_VSCODE_EXT_VERSION,
     MIN_SUPPORTED_WEB_VERSION,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import StreamErrorData
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
@@ -81,13 +84,25 @@ def validate_client_version(func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @wraps(func)
-    async def wrapper(_request: Request, **kwargs: Any) -> Any:
+    async def wrapper(_request: Request, *args, **kwargs: Any) -> Any:
         client_data = _extract_and_validate_client_data(_request)
         is_valid, upgrade_version, client_download_link = validate_version(
             client=client_data.client, client_version=client_data.client_version
         )
 
         if not is_valid:
+            if args and isinstance(args[0], WebsocketImplProtocol):
+                error_data = StreamErrorData(
+                    type="STREAM_ERROR",
+                    message={
+                        "error_code": APIErrorCodes.INVALID_CLIENT_VERSION.value,
+                        "upgrade_version": upgrade_version,
+                        **({"client_download_link": client_download_link} if client_download_link else {}),
+                    },
+                    status="INVALID_CLIENT_VERSION",
+                )
+                await args[0].send(json.dumps(error_data.model_dump(mode="json")))
+
             raise BadRequestException(
                 error=upgrade_version,
                 meta={
@@ -96,8 +111,11 @@ def validate_client_version(func: Callable[..., Any]) -> Callable[..., Any]:
                     **({} if client_download_link is None else {"client_download_link": client_download_link}),
                 },
             )
-
-        return await func(_request, client_data=client_data, **kwargs)
+        kwargs = {
+            **kwargs,
+            "client_data": client_data,
+        }
+        return await func(_request, *args, **kwargs)
 
     return wrapper
 
