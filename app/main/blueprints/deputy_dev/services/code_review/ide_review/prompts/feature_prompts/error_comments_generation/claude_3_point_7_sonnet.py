@@ -13,7 +13,7 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.base
 )
 
 
-class Claude3Point5ErrorCommentsGenerationPrompt(BaseClaude3Point5SonnetCommentCreationPrompt):
+class Claude3Point7ErrorCommentsGenerationPrompt(BaseClaude3Point5SonnetCommentCreationPrompt):
     prompt_type = PromptFeatures.ERROR_COMMENTS_GENERATION.value
     prompt_category = PromptCategories.CODE_REVIEW.value
     model_name = LLModels.CLAUDE_3_POINT_7_SONNET

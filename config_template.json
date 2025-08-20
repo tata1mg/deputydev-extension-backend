@@ -778,6 +778,8 @@
     },
     "IS_RELATED_CODE_SEARCHER_ENABLED": true,
     "DD_HOST_WS": "ws://localhost:8084",
+    "DD_HOST_WS_NON_GATEWAY": "ws://localhost:8084",
+    "QUERY_SOLVER_ENDPOINT_NON_GATEWAY": "/end_user/v2/code-gen/generate-code-ws",
     "QUERY_SOLVER_ENDPOINT": "/end_user/v2/code-gen/generate-code-local-connection",
     "CODE_REVIEW": {
         "REVIEW_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/run-multi-agent-local-connection",

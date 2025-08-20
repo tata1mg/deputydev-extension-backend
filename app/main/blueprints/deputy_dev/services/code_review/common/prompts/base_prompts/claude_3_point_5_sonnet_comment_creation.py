@@ -1,6 +1,6 @@
 import re
 import xml.etree.ElementTree as ET
-from typing import Any, AsyncIterator, Dict, List, Tuple
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 from deputydev_core.utils.context_vars import get_context_value
 
@@ -12,6 +12,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
+    UserAndSystemMessages,
 )
 from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
     BaseClaude3Point5SonnetPromptHandler,
@@ -182,6 +183,10 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.
         
+        # Parallel Tool Usage Guidelines
+        - If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+        - If you choose to use the PR_REVIEW_PLANNER tool, you MUST NOT include any other tool calls in that same message.
+        
         <tool_usage_strategy>
         Use tools strategically and efficiently to gather only the necessary context:
         
@@ -283,3 +288,22 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPrompt
             system_message = f"{system_message}\n{params['REPO_INFO_PROMPT']}"
 
         return system_message
+
+    @classmethod
+    def get_force_finalize_user_message(cls) -> str:
+        """
+        Returns a strong final-instruction message for the PR review agent
+        when the iteration limit is about to be reached.
+
+        The message instructs the LLM to stop using any further tools and
+        only call the `parse_final_Response` tool with the required comment structure.
+        """
+        return """
+            You are a Pull Request reviewer agent. 
+            With whatever information you currently have, review the diff now and provide final comments. 
+            Do NOT call any more tools. 
+            Only call the `parse_final_Response` tool, following its required comment structure.
+        """
+
+    def get_finalize_iteration_breached_prompt(self) -> Optional[UserAndSystemMessages]:
+        return None

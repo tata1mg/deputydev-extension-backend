@@ -34,7 +34,7 @@ class ToolUseMessageData(BaseModel):
     tool_use_id: str
     tool_name: str
     tool_input: Dict[str, Any]
-    tool_response: Optional[Dict[str, Any]] = None
+    tool_response: Optional[Dict[str, Any] | str] = None
     tool_status: ToolStatus = ToolStatus.PENDING
 
 

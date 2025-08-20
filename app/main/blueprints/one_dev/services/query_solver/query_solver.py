@@ -526,7 +526,6 @@ class QuerySolver:
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
                 focus_items=payload.focus_items,
-                directory_items=payload.directory_items if payload.directory_items else [],
                 last_agent=last_query_message.metadata.get("agent_name")
                 if last_query_message and last_query_message.metadata
                 else None,

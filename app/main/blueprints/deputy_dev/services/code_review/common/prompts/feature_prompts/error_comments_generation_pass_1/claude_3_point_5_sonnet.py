@@ -114,10 +114,16 @@ class Claude3Point5ErrorCommentsGenerationPass1Prompt(BaseClaude3Point5SonnetCom
             Remember to maintain a professional and constructive tone in your comments. Your goal is to help
             improve the code quality by identifying and explaining errors accurately.
         """
-
+        if self.params.get("final_breach") == "true":
+            return self.get_finalize_iteration_breached_prompt()
         if self.params.get("CUSTOM_PROMPT"):
             user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 
         return UserAndSystemMessages(
             user_message=user_message, system_message=system_message, cached_message=cached_message
         )
+
+    def get_finalize_iteration_breached_prompt(self) -> UserAndSystemMessages:
+        user_message = self.get_force_finalize_user_message()
+        system_message = self.get_system_prompt()
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)

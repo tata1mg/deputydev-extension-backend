@@ -1,5 +1,5 @@
 import json
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -73,20 +73,17 @@ class ToolRequestManager:
 
     def get_tool_use_request_data(
         self, llm_response: NonStreamingParsedLLMCallResponse, session_id: int
-    ) -> Optional[ToolUseRequestData]:
+    ) -> List[ToolUseRequestData]:
+        tool_use_requests: List[ToolUseRequestData] = []
         for content_block in llm_response.parsed_content:
             if hasattr(content_block, "type") and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
                 tool_use_request = content_block
                 if not isinstance(tool_use_request, ToolUseRequestData):
                     continue
+                tool_use_requests.append(tool_use_request)
+        return tool_use_requests
 
-                return tool_use_request
-
-        return None
-
-    async def process_tool_use_request(
-        self, tool_use_request: ToolUseRequestData, session_id: int
-    ) -> ToolUseResponseData:
+    async def process_tool_use_request(self, llm_response: Any, session_id: int) -> List[ToolUseResponseData]:
         """
         Process a tool use request from the LLM response.
 
@@ -98,28 +95,38 @@ class ToolRequestManager:
             The tool use response data if a tool was used, None otherwise.
         """
 
-        tool_name = tool_use_request.content.tool_name
-        tool_input = tool_use_request.content.tool_input
-        tool_use_id = tool_use_request.content.tool_use_id
+        tool_responses: List[ToolUseResponseData] = []
+        for content_block in llm_response.parsed_content:
+            if hasattr(content_block, "type") and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                tool_use_request = content_block
+                if not isinstance(tool_use_request, ToolUseRequestData):
+                    continue
 
-        # Process the tool request based on the tool name
-        try:
-            tool_response = await self._process_tool_request(tool_name, tool_input)
-        except Exception as e:  # noqa: BLE001
-            AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
-            tool_response = EXCEPTION_RAISED_FALLBACK.format(
-                tool_name=tool_name, tool_input=json.dumps(tool_input, indent=2), error_message=str(e)
-            )
+                tool_name = tool_use_request.content.tool_name
+                tool_input = tool_use_request.content.tool_input
+                tool_use_id = tool_use_request.content.tool_use_id
 
-        return ToolUseResponseData(
-            content=ToolUseResponseContent(
-                tool_name=tool_name,
-                tool_use_id=tool_use_id,
-                response=tool_response,
-            )
-        )
+                # Process the tool request based on the tool name
+                try:
+                    tool_response = await self._process_tool_request(tool_name, tool_input)
+                except Exception as e:  # noqa: BLE001
+                    AppLogger.log_error(f"Error processing tool {tool_name}: {e}")
+                    tool_response = EXCEPTION_RAISED_FALLBACK.format(
+                        tool_name=tool_name, tool_input=json.dumps(tool_input, indent=2), error_message=str(e)
+                    )
 
-    async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+                tool_responses.append(
+                    ToolUseResponseData(
+                        content=ToolUseResponseContent(
+                            tool_name=tool_name,
+                            tool_use_id=tool_use_id,
+                            response=tool_response,
+                        )
+                    )
+                )
+        return tool_responses
+
+    async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Dict[str, Any]:
         handler = self._tool_handlers.get(tool_name)
         if handler:
             return await handler(tool_input, self.context_service)
