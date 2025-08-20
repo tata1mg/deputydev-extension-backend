@@ -29,6 +29,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher 
 from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
     FOCUSED_SNIPPETS_SEARCHER,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.get_usage_tool import (
+    GET_USAGE_TOOL,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import (
     GREP_SEARCH,
 )
@@ -42,6 +45,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.related_code_search
     RELATED_CODE_SEARCHER,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
+from app.main.blueprints.one_dev.services.query_solver.tools.resolve_import_tool import RESOLVE_IMPORT_TOOL
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
@@ -94,6 +98,9 @@ class QuerySolverAgent(ABC):
             tools_to_use.append(RELATED_CODE_SEARCHER)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
+        if payload.is_lsp_ready:
+            tools_to_use.append(GET_USAGE_TOOL)
+            tools_to_use.append(RESOLVE_IMPORT_TOOL)
         if payload.write_mode:
             tools_to_use.append(get_create_new_workspace_tool(write_mode=True))
             tools_to_use.append(REPLACE_IN_FILE)

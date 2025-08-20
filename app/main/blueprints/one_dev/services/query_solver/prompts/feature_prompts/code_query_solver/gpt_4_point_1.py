@@ -71,8 +71,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 6. New terminal output in reaction to the changes, which you may need to consider or act upon.
                 7. Any other relevant feedback or information related to the tool use.
 
-                """
-                + """
                 ====
 
                 EDITING FILES
