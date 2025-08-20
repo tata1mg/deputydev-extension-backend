@@ -485,19 +485,19 @@ async def sse_websocket(request: Request, ws: Any) -> None:
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kwargs: Any) -> None:
+async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kwargs: Any) -> None:  # noqa: C901
     client_data: ClientData = kwargs.get("client_data")
     auth_data: AuthData = kwargs.get("auth_data")
     session_id: int = kwargs.get("session_id")
     session_type: str = _request.headers.get("X-Session-Type")
 
-    async def start_pinger(interval: int = 25):
+    async def start_pinger(interval: int = 25) -> None:
         try:
             while True:
                 await asyncio.sleep(interval)
                 try:
                     await ws.send(json.dumps({"type": "PING"}))
-                except Exception:
+                except Exception: # noqa: BLE001
                     break  # stop pinging if connection breaks
         except asyncio.CancelledError:
             pass
@@ -506,7 +506,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
     pinger_task = None
     try:
         pinger_task = asyncio.create_task(start_pinger())
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession():
             while True:
                 payload_dict = await ws.recv()
                 payload_dict = json.loads(payload_dict)
@@ -530,11 +530,11 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                     payload_dict = s3_payload
                     try:
                         await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         AppLogger.log_error(f"Failed to delete S3 file {s3_key}")
                     try:
                         await ChatAttachmentsRepository.update_attachment_status(attachment_id, "deleted")
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         AppLogger.log_error(f"Failed to update status for attachment {attachment_id}")
 
                 payload = QuerySolverInput(**payload_dict, user_team_id=auth_data.user_team_id)
@@ -548,7 +548,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                         session_data_dict["llm_model"] = payload.llm_model.value
                     await CodeGenTasksCache.set_session_data(payload.session_id, session_data_dict)
 
-                async def solve_query():
+                async def solve_query() -> None:  # noqa: C901
                     task_checker = CancellationChecker(payload.session_id)
                     try:
                         await task_checker.start_monitoring()
@@ -635,7 +635,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                         await ws.send(
                             json.dumps({"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"})
                         )
-                    except Exception as ex:
+                    except Exception as ex:  # noqa: BLE001
                         AppLogger.log_error(f"Error in solving query: {ex}")
                         await ws.send(
                             json.dumps({"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"})
