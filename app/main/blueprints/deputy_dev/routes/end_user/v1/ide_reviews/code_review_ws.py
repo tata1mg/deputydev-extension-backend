@@ -203,10 +203,11 @@ async def multi_agent_websocket_local(request: Request, ws: Websocket) -> None:
                 try:
                     # Receive payload from WebSocket
                     raw_payload = await ws.recv()
-                    payload = json.loads(raw_payload)
+                    payload = {"body": json.loads(raw_payload)}
 
                     # Add connection_id and mark as local
-                    payload["connection_id"] = connection_id
+                    payload.setdefault("headers", {})["X-Amzn-ConnectionId"] = connection_id
+                    payload["headers"]["X-Is-Local"] = "true"
 
                     # Send to multi-agent endpoint
                     await session.post(
