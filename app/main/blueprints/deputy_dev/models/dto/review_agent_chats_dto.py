@@ -46,7 +46,7 @@ MessageData = Annotated[
 
 class ReviewAgentChatData(BaseModel):
     session_id: int
-    agent_id: str
+    agent_id: int
     actor: ActorType
     message_type: MessageType
     message_data: MessageData
