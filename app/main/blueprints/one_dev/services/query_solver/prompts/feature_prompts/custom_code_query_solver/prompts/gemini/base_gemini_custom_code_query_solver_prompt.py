@@ -543,9 +543,9 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
             ```json
             [
               {{
-                "name": "definition",
+                "name": "get_usage_tool",
                 "type": "specialized",
-                "description": "Purpose-built for reading symbol definitions"
+                "description": "Purpose-built for reading symbol definitions and their references"
               }},
               {{
                 "name": "focused_snippets_searcher",

@@ -112,6 +112,7 @@ class QuerySolverInput(BaseModel):
     vscode_env: Optional[str] = None
     repositories: Optional[List[Repository]] = None
     search_web: Optional[bool] = False
+    is_lsp_ready: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
     client_tools: List[ClientTool] = []
     attachments: List[Attachment] = []
