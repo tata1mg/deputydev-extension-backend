@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.services.llm.dataclasses.main import JSONSchema
+from app.main.blueprints.one_dev.models.dto.agent_chats import ToolStatus
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 MAX_DEPUTY_DEV_RULES_LENGTH = ConfigManager.configs["MAX_DEPUTY_DEV_RULES_LENGTH"]
@@ -16,6 +17,7 @@ class ToolUseResponseInput(BaseModel):
     tool_name: str
     tool_use_id: str
     response: Dict[str, Any]
+    status: ToolStatus = ToolStatus.COMPLETED
 
 
 class FocusItemTypes(str, Enum):
