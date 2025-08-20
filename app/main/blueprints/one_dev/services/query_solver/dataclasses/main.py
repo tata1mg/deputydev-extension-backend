@@ -18,7 +18,7 @@ class ToolUseResponseInput(BaseModel):
     response: Dict[str, Any]
 
 
-class FocusItemTypes(Enum):
+class FocusItemTypes(str, Enum):
     FUNCTION = "function"
     CLASS = "class"
     FILE = "file"
