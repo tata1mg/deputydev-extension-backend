@@ -497,7 +497,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                 await asyncio.sleep(interval)
                 try:
                     await ws.send(json.dumps({"type": "PING"}))
-                except Exception: # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     break  # stop pinging if connection breaks
         except asyncio.CancelledError:
             pass
