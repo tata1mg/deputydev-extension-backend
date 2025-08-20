@@ -90,3 +90,8 @@ class Claude3Point5BusinessLogicValidationCommentsGenerationPass1Prompt(BaseClau
         return UserAndSystemMessages(
             user_message=user_message, system_message=system_message, cached_message=cached_message
         )
+
+    def get_finalize_iteration_breached_prompt(self) -> UserAndSystemMessages:
+        user_message = self.get_force_finalize_user_message()
+        system_message = self.get_system_prompt()
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)

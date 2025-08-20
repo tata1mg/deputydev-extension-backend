@@ -134,6 +134,8 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
             -   Provide the exact, correct bucket name relevant to the issue. Ensure that the value is never left as a placeholder like "$BUCKET".
             - Before suggesting a comment or corrective code verify diligently that the suggestion is not already incorporated in the <pull_request_diff>.
         """
+        if self.params.get("final_breach") == "true":
+            return self.get_finalize_iteration_breached_prompt()
 
         if self.params.get("CUSTOM_PROMPT"):
             user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
@@ -141,3 +143,8 @@ class Claude3Point5PerformanceOptimizationCommentsGenerationPass1Prompt(BaseClau
         return UserAndSystemMessages(
             user_message=user_message, system_message=system_message, cached_message=cached_message
         )
+
+    def get_finalize_iteration_breached_prompt(self) -> UserAndSystemMessages:
+        user_message = self.get_force_finalize_user_message()
+        system_message = self.get_system_prompt()
+        return UserAndSystemMessages(user_message=user_message, system_message=system_message)
