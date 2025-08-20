@@ -466,7 +466,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     content=ToolUseResponseContent(
                         tool_name="pr_review_planner",
                         tool_use_id=llm_response.parsed_content[0].content.tool_use_id,
-                        response=review_plan,
+                        response=review_plan or {},
                     )
                 )
                 last_chat = self.review_agent_chats[-1]

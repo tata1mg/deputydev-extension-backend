@@ -21,7 +21,7 @@ class ReviewAgentChats(Base):
 
     id = fields.IntField(primary_key=True)
     session_id = fields.IntField(null=False)
-    agent_id = fields.CharField(max_length=64, null=False)
+    agent_id = fields.IntField(null=False)
     actor = CITextField(max_length=16, null=False)
     message_type = CITextField(max_length=16, null=False)
     message_data = fields.JSONField(null=False)
