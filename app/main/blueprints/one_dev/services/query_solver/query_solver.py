@@ -160,6 +160,7 @@ class QuerySolver:
                     tool_response=tool_response.response,
                     tool_name=selected_tool_use_chat.message_data.tool_name,
                     tool_input=selected_tool_use_chat.message_data.tool_input,
+                    tool_status=tool_response.status,
                 )
             ),
         )
