@@ -455,15 +455,15 @@ class BaseKimiCustomCodeQuerySolverPrompt:
               </decision_framework>
             
               <example_scenario>
-                <task>Find the definition of a symbol (method, class, or variable) in codebase</task>
+                <task>Find the definition of a symbol (method, class, or variable) and it's references in codebase</task>
                 <available_tools>
-                  <tool name="definition" type="specialized">Purpose-built for reading symbol definitions</tool>
+                  <tool name="get_usage_tool" type="specialized">Purpose-built for reading symbol definitions and their references</tool>
                   <tool name="focused_snippets_searcher" type="generic">Multi-purpose tool with various capabilities including symbol definition lookup</tool>
                 </available_tools>
                 <correct_choice>
-                  <primary>Use "definition" tool first</primary>
+                  <primary>Use "get_usage_tool" first</primary>
                   <reasoning>Purpose-built for this exact task, likely more accurate and faster</reasoning>
-                  <fallback>If "definition" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
+                  <fallback>If "get_usage_tool" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
                 </correct_choice>
               </example_scenario>
             
