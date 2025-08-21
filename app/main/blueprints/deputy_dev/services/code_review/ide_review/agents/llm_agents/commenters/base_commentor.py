@@ -181,7 +181,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         # firstly, seed the current_agent_chats array
         current_chat_data = await ReviewAgentChatsRepository.get_chats_by_agent_id_and_session(
-            session_id=session_id, agent_id=self.agent_id
+            session_id=session_id, agent_id=str(self.agent_id)
         )
         self.review_agent_chats = current_chat_data if current_chat_data else []
 
@@ -238,7 +238,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         cached_chat = await ReviewAgentChatsRepository.create_chat(
             ReviewAgentChatCreateRequest(
                 session_id=session_id,
-                agent_id=self.agent_id,
+                agent_id=str(self.agent_id),
                 actor=ActorType.REVIEW_AGENT,
                 message_type=MessageType.TEXT,
                 message_data=TextMessageData(text=user_and_system_messages.cached_message),
@@ -251,7 +251,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         query_chat = await ReviewAgentChatsRepository.create_chat(
             ReviewAgentChatCreateRequest(
                 session_id=session_id,
-                agent_id=self.agent_id,
+                agent_id=str(self.agent_id),
                 actor=ActorType.REVIEW_AGENT,
                 message_type=MessageType.TEXT,
                 message_data=TextMessageData(text=user_and_system_messages.user_message),
@@ -424,7 +424,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                                     tool_input=content_block.content.tool_input,
                                 ),
                                 metadata={},
-                                agent_id=self.agent_id,
+                                agent_id=str(self.agent_id),
                             )
                         )
                         self.review_agent_chats.append(new_tool_request_chat)
@@ -473,7 +473,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                                     tool_input=content_block.content.tool_input,
                                 ),
                                 metadata={},
-                                agent_id=self.agent_id,
+                                agent_id=str(self.agent_id),
                             )
                         )
                         self.review_agent_chats.append(turn_chat)
@@ -487,7 +487,12 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     )
                 )
                 last_chat = self.review_agent_chats[-1]
-                last_chat.message_data.tool_response = tool_use_response.content.response
+                if isinstance(last_chat.message_data, ToolUseMessageData):
+                    last_chat.message_data.tool_response = (
+                        tool_use_response.content.response
+                        if isinstance(tool_use_response.content.response, dict)
+                        else {"response": tool_use_response.content.response}
+                    )
                 await ReviewAgentChatsRepository.update_chat(
                     last_chat.id, update_data=ReviewAgentChatUpdateRequest(message_data=last_chat.message_data)
                 )
@@ -533,7 +538,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         tool_input=tool_request.get("tool_input"),
                     ),
                     metadata={},
-                    agent_id=self.agent_id,
+                    agent_id=str(self.agent_id),
                 )
             )
 
