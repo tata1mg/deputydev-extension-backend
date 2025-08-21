@@ -1,7 +1,7 @@
 import hashlib
 import time
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 import mmh3
 from deputydev_core.services.tiktoken import TikToken
@@ -9,17 +9,16 @@ from sanic.log import logger
 from torpedo import CONFIG, Task, TaskExecutor
 
 
-def service_client_wrapper(service_name):
-    def wrapped(func):
-        async def wrapper(*args, **kwargs):
+def service_client_wrapper(service_name: str) -> Callable[..., Any]:
+    def wrapped(func: Callable[..., Any]) -> Callable[..., Any]:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 t1 = time.time() * 1000
                 response = await func(*args, **kwargs)
                 t2 = time.time() * 1000
                 logger.debug("Time taken for {}-{} API - {} ms".format(service_name, func.__name__, t2 - t1))
                 return response
-            except Exception as exception:
-                print(exception.with_traceback())
+            except Exception as exception:  # noqa: BLE001
                 log_combined_exception(
                     "Unable to get response from {}-{} API".format(service_name, func.__name__),
                     exception,
@@ -31,23 +30,19 @@ def service_client_wrapper(service_name):
     return wrapped
 
 
-def log_combined_error(title, error):
+def log_combined_error(title: str, error: str) -> None:
     request_params = {"exception": error}
     logger.error(title, extra=request_params)
     combined_error = title + " " + error
     logger.info(combined_error)
 
 
-def log_combined_exception(title, exception, meta_info: str = ""):
+def log_combined_exception(title: str, exception: Exception, meta_info: str = "") -> None:
     error = "Exception type {} , exception {} , meta_info {}".format(type(exception), exception, str(meta_info))
     log_combined_error(title, error)
 
 
-def hash_sha256(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8", "ignore")).hexdigest()
-
-
-def build_openai_conversation_message(system_message, user_message) -> list:
+def build_openai_conversation_message(system_message: str, user_message: str) -> List[Dict[str, str]]:
     """
     Build the conversation message list to be passed to openai.
     """
@@ -55,7 +50,7 @@ def build_openai_conversation_message(system_message, user_message) -> list:
     return message
 
 
-def get_foundation_model_name():
+def get_foundation_model_name() -> str:
     model_config = CONFIG.config.get("SCRIT_MODEL")
     model = model_config["MODEL"]
     return model
@@ -78,7 +73,7 @@ def get_token_count(value: str) -> int:
     return token_count
 
 
-def get_ab_experiment_set(experiment_id, experiment_name):
+def get_ab_experiment_set(experiment_id: str, experiment_name: str) -> Dict[str, Any] | None:
     """
     This function required any experiment id (device id, user id, visitor id)
     and the experiment name, and it will return the control set
@@ -114,7 +109,7 @@ def get_ab_experiment_set(experiment_id, experiment_name):
     return None  # Fallback if no set is assigned
 
 
-async def get_task_response(tasks: List[Task], suppress_exception=True) -> Dict[str, Any]:
+async def get_task_response(tasks: List[Task], suppress_exception: bool = True) -> Dict[str, Any]:
     response = {}
     if tasks:
         task_results = await TaskExecutor(tasks=tasks).submit()
@@ -171,7 +166,7 @@ def get_gitlab_workspace_slug(value: str) -> str:
     return parts[0]
 
 
-def name_to_slug(input_str) -> str:
+def name_to_slug(input_str: str) -> str:
     """
     Converts a name to a slug.
 
@@ -186,7 +181,7 @@ def name_to_slug(input_str) -> str:
     return result_str
 
 
-def safe_index(lst, item, default=None):
+def safe_index(lst: List[Any], item: Any, default: Any = None) -> int:
     try:
         return lst.index(item)
     except ValueError:

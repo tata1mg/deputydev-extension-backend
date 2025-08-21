@@ -12,6 +12,7 @@ class ExtensionSession(Base):
         "pinned_rank",
         "status",
         "session_type",
+        "current_model",
         "created_at",
         "updated_at",
         "deleted_at",
@@ -25,6 +26,7 @@ class ExtensionSession(Base):
     status = fields.TextField(null=False, default="ACTIVE")
     session_type = fields.TextField(null=False)
     deleted_at = fields.DatetimeField(null=True)
+    current_model = fields.TextField(null=True)
 
     class Meta:
         table = "extension_sessions"

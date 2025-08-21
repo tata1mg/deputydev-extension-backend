@@ -35,7 +35,7 @@ class CommentSummarizerAgent(BaseCodeReviewAgent):
         agent_setting: Dict[str, Any],
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
-    ):
+    ) -> None:
         self.comments = comments
         super().__init__(context_service, is_reflection_enabled, llm_handler, model)
 

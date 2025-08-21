@@ -5,7 +5,6 @@ from typing import Annotated, Any, AsyncIterator, Dict, List, Literal, Optional,
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     LLMUsage,
@@ -25,7 +24,7 @@ class LLMMeta(BaseModel):
 
 
 class UserAndSystemMessages(BaseModel):
-    user_message: Optional[str] = None
+    user_message: str
     system_message: Optional[str] = None
     cached_message: Optional[str] = None
 
@@ -272,7 +271,7 @@ class ParsedLLMCallResponseCommon(BaseModel):
 class StreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, StreamingResponse):
     parsed_content: AsyncIterator[Any]
     query_id: int
-    llm_response_storage_task: asyncio.Task[None]
+    llm_response_storage_task: asyncio.Task[NonStreamingResponse]
 
 
 class NonStreamingParsedLLMCallResponse(ParsedLLMCallResponseCommon, NonStreamingResponse):
@@ -287,11 +286,6 @@ ParsedLLMCallResponse = Annotated[
     ],
     Field(discriminator="type"),
 ]
-
-
-class ChatAttachmentDataWithObjectBytes(BaseModel):
-    attachment_metadata: ChatAttachmentsDTO
-    object_bytes: bytes
 
 
 class LLMToolChoice(Enum):

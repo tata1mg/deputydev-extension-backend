@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import Any, Dict, List
 
 from deputydev_core.utils.context_vars import get_context_value, set_context_values
 
@@ -26,7 +26,7 @@ class BitbucketPR(BasePR):
         auth_handler: AuthHandler,
         workspace_slug: str,
         repo_service: BitbucketRepo,
-    ):
+    ) -> None:
         super().__init__(
             vcs_type=VCSTypes.bitbucket.value,
             workspace=workspace,
@@ -93,7 +93,7 @@ class BitbucketPR(BasePR):
         if self.pr_json_data:
             return self.parse_pr_detail_response(pr_model)
 
-    async def update_pr_details(self, description):
+    async def update_pr_details(self, description: str) -> None:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
@@ -103,7 +103,7 @@ class BitbucketPR(BasePR):
         payload = {"description": description}
         await self.repo_client.update_pr_details(payload)
 
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> str | None:
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.
 
@@ -119,7 +119,7 @@ class BitbucketPR(BasePR):
             return PR_NOT_FOUND
         return pr_diff.text
 
-    async def get_commit_diff(self):
+    async def get_commit_diff(self) -> str | None:
         """
         Get the diff between two commits in Bitbucket.
 
@@ -141,7 +141,7 @@ class BitbucketPR(BasePR):
             return PR_NOT_FOUND
         return commit_diff.text if commit_diff else ""
 
-    def __get_issue_id(self, title) -> str:
+    def __get_issue_id(self, title: Dict[str, Any]) -> str:
         title_html = title.get("html", "")
         if title_html:
             escaped_prefix = re.escape(ATLASSIAN_ISSUE_URL_PREFIX) + ISSUE_ID_REGEX
@@ -150,13 +150,13 @@ class BitbucketPR(BasePR):
                 issue_url = matched_text.group()
                 return issue_url.replace(ATLASSIAN_ISSUE_URL_PREFIX, "")
 
-    def pr_model(self):
+    def pr_model(self) -> BitbucketPrModel:
         return BitbucketPrModel(
             pr_detail=self.pr_json(),
             meta_info={"scm_workspace_id": self.workspace_id},
         )
 
-    async def get_pr_stats(self):
+    async def get_pr_stats(self) -> Dict[str, int]:
         if self.pr_stats:
             return self.pr_stats
         # compute stats
@@ -186,14 +186,14 @@ class BitbucketPR(BasePR):
         }
         return self.pr_stats
 
-    async def get_loc_changed_count(self):
+    async def get_loc_changed_count(self) -> int:
         stats = await self.get_pr_stats()
         if stats:
             return stats["total_added"] + stats["total_removed"]
         else:
             raise Exception("Pr stats data not present")
 
-    async def create_pr(self, title, description, source_branch, destination_branch):
+    async def create_pr(self, title: str, description: str, source_branch: str, destination_branch: str) -> str | None:
         payload = {
             "title": title,
             "source": {"branch": {"name": source_branch}},

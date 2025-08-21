@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 from aiokafka import AIOKafkaConsumer
+from git import Optional
 from sanic.log import logger
 from ujson import loads
 
@@ -9,16 +11,16 @@ from app.backend_common.repository.failed_operations.repository import (
 )
 
 
-def safe_json_deserializer(x):
+def safe_json_deserializer(x: bytes) -> Optional[Dict[str, Any]]:
     try:
         return loads(x.decode("utf-8"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Failed to deserialize message: {str(e)}")
         return None
 
 
 class BaseKafkaSubscriber(ABC):
-    def __init__(self, config, topic_name):
+    def __init__(self, config: Dict[str, Any], topic_name: str) -> None:
         self.config = config
         self.topic_name = topic_name
         kafka_config = config.get("KAFKA", {})
@@ -29,7 +31,7 @@ class BaseKafkaSubscriber(ABC):
             value_deserializer=safe_json_deserializer,
         )
 
-    async def consume(self):
+    async def consume(self) -> None:
         """Start consuming messages from Kafka."""
         try:
             logger.info("Starting kafka consumer")
@@ -45,16 +47,16 @@ class BaseKafkaSubscriber(ABC):
                 try:
                     logger.info("kafka message", message.value)
                     await self._process_message(message)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing message: {str(e)}")
                     dlq_payload = {"data": message.value, "type": message.value["event"]}
                     await FailedOperationsRepository.db_insert(dlq_payload)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Kafka consumer error: {str(e)}")
         finally:
             await self.consumer.stop()
 
     @abstractmethod
-    async def _process_message(self, message):
+    async def _process_message(self, message: Any) -> None:
         """Abstract method to be implemented by subclasses for handling messages."""
         raise NotImplementedError()

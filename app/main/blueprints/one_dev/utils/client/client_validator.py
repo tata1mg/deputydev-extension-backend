@@ -84,7 +84,7 @@ def validate_client_version(func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @wraps(func)
-    async def wrapper(_request: Request, *args, **kwargs: Any) -> Any:
+    async def wrapper(_request: Request, *args: Any, **kwargs: Any) -> Any:
         client_data = _extract_and_validate_client_data(_request)
         is_valid, upgrade_version, client_download_link = validate_version(
             client=client_data.client, client_version=client_data.client_version

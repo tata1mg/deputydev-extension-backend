@@ -7,7 +7,7 @@ from app.main.blueprints.deputy_dev.models.dto.feedback_dto import FeedbackDTO
 
 class FeedbackService:
     @classmethod
-    async def db_insert(cls, feedback_dto: FeedbackDTO):
+    async def db_insert(cls, feedback_dto: FeedbackDTO) -> FeedbackDTO:
         try:
             payload = feedback_dto.dict()
             del payload["id"]

@@ -1,10 +1,15 @@
-from deputydev_core.utils.context_vars import set_context_values
+from typing import Any, Dict, Tuple
 
+from deputydev_core.utils.context_vars import set_context_values
+from git import Optional
+
+from app.backend_common.services.credentials.auth_handler import AuthHandler
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.pr.pr_factory import PRFactory
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.context_var import identifier
+from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
@@ -13,22 +18,24 @@ from app.main.blueprints.deputy_dev.utils import get_vcs_auth_handler
 
 class BasePRReviewManager:
     @staticmethod
-    def set_identifier(value: str):
+    def set_identifier(value: str) -> None:
         """Set repo_name or any other value to the contextvar identifier"""
         identifier.set(value)
 
     @classmethod
-    def _set_context_values(cls, data: dict):
+    def _set_context_values(cls, data: Dict[str, Any]) -> None:
         cls.set_identifier(data.get("repo_name"))
         set_context_values(scm_pr_id=data.get("pr_id"), repo_name=data.get("repo_name"))
 
     @classmethod
-    async def _get_auth_handler(cls, data: dict):
+    async def _get_auth_handler(cls, data: Dict[str, Any]) -> AuthHandler:
         """Get auth handler for VCS operations"""
         return await get_vcs_auth_handler(data.get("workspace_id"), data.get("vcs_type"))
 
     @classmethod
-    async def initialize_repo_service(cls, data: dict, auth_handler=None):
+    async def initialize_repo_service(
+        cls, data: Dict[str, Any], auth_handler: Optional[AuthHandler] = None
+    ) -> BaseRepo:
         """Initialize repository service"""
         if not auth_handler:
             auth_handler = await cls._get_auth_handler(data)
@@ -44,7 +51,9 @@ class BasePRReviewManager:
         )
 
     @classmethod
-    async def initialize_pr_service(cls, data: dict, repo_service: BaseRepo, auth_handler=None):
+    async def initialize_pr_service(
+        cls, data: Dict[str, Any], repo_service: BaseRepo, auth_handler: Optional[AuthHandler] = None
+    ) -> BasePR:
         """Initialize PR service"""
         if not auth_handler:
             auth_handler = await cls._get_auth_handler(data)
@@ -62,7 +71,9 @@ class BasePRReviewManager:
         )
 
     @classmethod
-    async def initialize_comment_service(cls, data: dict, pr_service: BasePR, auth_handler=None):
+    async def initialize_comment_service(
+        cls, data: Dict[str, Any], pr_service: BasePR, auth_handler: Optional[AuthHandler] = None
+    ) -> BaseComment:
         """Initialize comment service"""
         if not auth_handler:
             auth_handler = await cls._get_auth_handler(data)
@@ -79,7 +90,7 @@ class BasePRReviewManager:
         )
 
     @classmethod
-    async def initialise_services(cls, data: dict):
+    async def initialise_services(cls, data: Dict[str, Any]) -> Tuple[BaseRepo, BasePR, BaseComment]:
         """Initialize all required services for PR operations"""
         cls._set_context_values(data)
 

@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.utils.app_utils import (
     get_gitlab_workspace_slug,
@@ -14,7 +16,7 @@ class PRApprovalWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload):
+    async def parse_payload(cls, payload: Dict[str, Any]) -> PRApprovalRequest | None:
         vcs_type = payload.get("vcs_type")
         if should_skip_trayalabs_request(payload):
             return None
@@ -27,7 +29,7 @@ class PRApprovalWebhook:
             return parsed_payload
 
     @classmethod
-    def __parse_bitbucket_payload(cls, payload):
+    def __parse_bitbucket_payload(cls, payload: Dict[str, Any]) -> PRApprovalRequest:
         """
         Generates servable payload from bitbucket payload
         """
@@ -45,7 +47,7 @@ class PRApprovalWebhook:
         return PRApprovalRequest(**parsed_payload)
 
     @classmethod
-    def __parse_github_payload(cls, payload):
+    def __parse_github_payload(cls, payload: Dict[str, Any]) -> PRApprovalRequest:
         """
         Generates servable payload from github payload
         """
@@ -63,7 +65,7 @@ class PRApprovalWebhook:
         return PRApprovalRequest(**parsed_payload)
 
     @classmethod
-    async def __parse_gitlab_payload(cls, payload):
+    async def __parse_gitlab_payload(cls, payload: Dict[str, Any]) -> PRApprovalRequest:
         """
         Generates servable payload from github payload
         """

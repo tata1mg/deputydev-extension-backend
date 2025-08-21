@@ -3,9 +3,6 @@ from sanic import Blueprint
 from app.main.blueprints.deputy_dev.routes.end_user.v1.ab_analysis_routes import (
     ab_analysis,
 )
-from app.main.blueprints.deputy_dev.routes.end_user.v1.backfill_missed_data import (
-    backfill,
-)
 from app.main.blueprints.deputy_dev.routes.end_user.v1.code_review import smart_code
 from app.main.blueprints.deputy_dev.routes.end_user.v1.dashboard_routes import console
 from app.main.blueprints.deputy_dev.routes.end_user.v1.ide_reviews import ide_reviews_v1_bp
@@ -18,7 +15,6 @@ blueprints = [
     ab_analysis,
     console,
     setting,
-    backfill,
     ide_reviews_v1_bp,
 ]  # onboarding flows,
 

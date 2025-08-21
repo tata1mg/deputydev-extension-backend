@@ -1,6 +1,8 @@
 import json
 from datetime import datetime
+from typing import Any, Dict, Type
 
+from git import Optional
 from sanic.log import logger
 
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pr_review_manager import (
@@ -12,19 +14,21 @@ from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.sqs_
 
 
 class SQSGenaiSubscriber(SQSSubscriber):
-    def get_queue_name(self):
+    def get_queue_name(self) -> str:
         logger.info(f"GenAi queue getting picked: {self.config.get('SQS')}")
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {}).get("QUEUE_NAME", "")
 
-    def get_queue_config(self):
+    def get_queue_config(self) -> Dict[str, Any]:
         return self.config.get("SQS", {}).get("SUBSCRIBE", {}).get("GENAI", {})
 
     @property
-    def event_handler(self):
+    def event_handler(self) -> Type[PRReviewManager]:
         return PRReviewManager
 
     # This can be removed and we can use publish function of base subscriber
-    async def publish(self, payload: dict, attributes=None, **kwargs):
+    async def publish(
+        self, payload: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> None:
         message_group_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}"
         message_deduplication_id = f"{payload['vcs_type']}_{payload['pr_id']}_{payload['workspace_id']}_{payload['repo_name']}_{int(round(datetime.now().timestamp()))}"
 
