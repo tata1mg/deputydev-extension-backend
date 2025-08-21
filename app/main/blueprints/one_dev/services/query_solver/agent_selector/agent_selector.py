@@ -6,7 +6,7 @@ from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import (
     QuerySolverAgent,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import DetailedDirectoryItem, DetailedFocusItem
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItem
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 
 
@@ -18,8 +18,7 @@ class QuerySolverAgentSelector:
     def __init__(
         self,
         user_query: str,
-        focus_items: List[DetailedFocusItem],
-        directory_items: List[DetailedDirectoryItem],
+        focus_items: List[FocusItem],
         last_agent: Optional[str],
         all_agents: List[QuerySolverAgent],
         llm_handler: LLMHandler[PromptFeatures],
@@ -29,7 +28,6 @@ class QuerySolverAgentSelector:
         # Initialize with the user query.
         self.user_query = user_query
         self.focus_items = focus_items
-        self.directory_items = directory_items
         self.all_agents = all_agents
         self.llm_handler = llm_handler
         self.session_id = session_id
@@ -52,7 +50,6 @@ class QuerySolverAgentSelector:
         prompt_vars: Dict[str, Any] = {
             "query": self.user_query,
             "focus_items": self.focus_items,
-            "directory_items": self.directory_items,
             "intents": [
                 {
                     "name": agent.agent_name,

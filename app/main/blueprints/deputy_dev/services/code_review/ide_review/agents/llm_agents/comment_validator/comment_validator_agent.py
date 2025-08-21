@@ -33,7 +33,7 @@ class CommentValidatorAgent(BaseCodeReviewAgent):
         comments: List[ParsedCommentData],
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
-    ):
+    ) -> None:
         self.comments = comments
         super().__init__(context_service, llm_handler, model)
 

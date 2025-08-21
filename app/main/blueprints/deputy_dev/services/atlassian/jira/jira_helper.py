@@ -1,9 +1,10 @@
 import re
+from typing import Any, Dict, List
 
 
 class JiraHelper:
     @staticmethod
-    def parse_description(content, indent_level=0):
+    def parse_description(content: List[Dict[str, Any]], indent_level: int = 0) -> str:  # noqa: C901
         """
 
         :param content: Rich text format description
@@ -46,7 +47,7 @@ class JiraHelper:
         return text_output
 
     @staticmethod
-    def extract_confluence_id_from_description(content) -> str:
+    def extract_confluence_id_from_description(content: Dict[str, Any]) -> str:
         """
         Extracts Confluence links from the given JIRA story description.
 
@@ -61,7 +62,7 @@ class JiraHelper:
             return confluence_id
 
     @staticmethod
-    def extract_confluence_ids(data):
+    def extract_confluence_ids(data: Dict[str, Any]) -> List[str]:
         """
         Extracts Confluence links from the given JIRA story description.
 
@@ -71,9 +72,9 @@ class JiraHelper:
         Returns:
             list: A list of Confluence links found in the description.
         """
-        links = []
+        links: List[str] = []
 
-        def traverse(content):
+        def traverse(content: Dict[str, Any] | List[Dict[str, Any]]) -> None:
             if isinstance(content, dict):
                 if (
                     "type" in content
@@ -93,10 +94,10 @@ class JiraHelper:
         return links
 
     @staticmethod
-    def extract_confluence_id_from_link(link):
+    def extract_confluence_id_from_link(link: str) -> str | None:
         pattern = r"/pages/(\d+)/"
         if not link:
-            return
+            return None
         match = re.search(pattern, link)
         if match:
             return match.group(1)

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from sanic.log import logger
 from tortoise.query_utils import Prefetch
@@ -19,7 +19,9 @@ from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDT
 
 class ExtensionReviewsRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False, order_by=None) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
+    async def db_get(
+        cls, filters: Dict[str, Any], fetch_one: bool = False, order_by: Optional[str] = None
+    ) -> Union[IdeReviewDTO, List[IdeReviewDTO]]:
         try:
             review_data = await DB.by_filters(
                 model_name=IdeReviews, where_clause=filters, fetch_one=fetch_one, order_by=order_by
@@ -43,24 +45,6 @@ class ExtensionReviewsRepository:
         except Exception as ex:
             logger.error(f"Error inserting Ide review: {review_dto.dict()}, ex: {ex}")
             raise ex
-
-    @classmethod
-    async def find_or_create(
-        cls, user_repo_id: int, reviewed_files: dict, loc: int, status: str, **kwargs
-    ) -> IdeReviewDTO:
-        # You may want to define what makes a review unique (e.g., user_repo_id + reviewed_files hash)
-        filters = {"user_repo_id": user_repo_id, "reviewed_files": reviewed_files, "is_deleted": False}
-        review_dto = await cls.db_get(filters=filters, fetch_one=True)
-        if not review_dto:
-            review_data = {
-                "user_repo_id": user_repo_id,
-                "reviewed_files": reviewed_files,
-                "loc": loc,
-                "status": status,
-                **kwargs,
-            }
-            review_dto = await cls.db_insert(IdeReviewDTO(**review_data))
-        return review_dto
 
     @classmethod
     async def fetch_reviews_history(cls, filters: dict, order_by: str = "-created_at") -> list[IdeReviewDTO]:

@@ -1,5 +1,8 @@
+from typing import Any, Dict, List
+
 import botocore.exceptions
 from aiobotocore.client import AioBaseClient
+from aiobotocore.session import ClientCreatorContext
 from sanic.log import logger
 
 from app.backend_common.service_clients.sqs.sqs_client import SQSClient
@@ -15,13 +18,13 @@ from app.backend_common.utils.types.types import DelayQueueTime
 
 
 class SQSManager(MessageQueueManager):
-    def __init__(self, config: dict, config_key: str = "SQS"):
+    def __init__(self, config: Dict[str, Any], config_key: str = "SQS") -> None:
         self.config = config.get(config_key, {})
         self._app_config = config
         self.client = None
         self.queue_url = None
 
-    async def get_client(self, queue_name):
+    async def get_client(self, queue_name: str) -> ClientCreatorContext:
         aws_access_key_id = self.config.get("AWS_ACCESS_KEY_ID")
         aws_secret_access_key = self.config.get("AWS_SECRET_ACCESS_KEY")
         region = self.config.get("SQS_REGION", "ap-south-1")
@@ -51,7 +54,14 @@ class SQSManager(MessageQueueManager):
             self.queue_url = queue_url
         return client
 
-    async def publish(self, messages: list = None, attributes: dict = None, payload: str = None, batch=True, **kwargs):
+    async def publish(
+        self,
+        messages: List[Dict[str, Any]] | None = None,
+        attributes: Dict[str, Any] | None = None,
+        payload: str | None = None,
+        batch: bool = True,
+        **kwargs: Any,
+    ) -> bool:
         """
         :param messages: entity payload to be sent to SQS queue for batch requests
         :param payload: entity payload to be sent to SQS queue for not batch requests (single events)
@@ -98,7 +108,7 @@ class SQSManager(MessageQueueManager):
                     raise Exception(AWSErrorMessages.AwsSQSPayloadSize.value)
                 else:
                     logger.info(AWSErrorMessages.AwsSQSPublishError.value.format(error=err, count=_retry_count))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.info(AWSErrorMessages.AwsSQSPublishError.value.format(error=e, count=_retry_count))
             finally:
                 _retry_count += 1
@@ -106,7 +116,7 @@ class SQSManager(MessageQueueManager):
             return sent_response_data
         return _send
 
-    async def _get_queue_url(self, queue_name):
+    async def _get_queue_url(self, queue_name: str) -> str:
         try:
             response = await self.client.get_queue_url(QueueName=queue_name)
         except botocore.exceptions.ClientError as err:
@@ -121,12 +131,12 @@ class SQSManager(MessageQueueManager):
         queue_url = response.get("QueueUrl")
         return queue_url
 
-    async def get_queue_arn(self, queue_name):
+    async def get_queue_arn(self, queue_name: str) -> str:
         queue_url = await self._get_queue_url(queue_name)
         response = await self._get_queue_attributes(queue_url=queue_url, attribute_names=["QueueArn"])
         return response.get("Attributes").get("QueueArn")
 
-    async def subscribe(self, **kwargs):
+    async def subscribe(self, **kwargs: Any) -> Dict[str, Any]:
         max_no_of_messages = kwargs.get("max_no_of_messages") or 1
         wait_time_in_seconds = kwargs.get("wait_time_in_seconds") or 5
         message_attribute_names = kwargs.get("message_attribute_names") or ["All"]
@@ -152,14 +162,14 @@ class SQSManager(MessageQueueManager):
             )
         return messages
 
-    async def close(self):
+    async def close(self) -> None:
         await self.client.close()
 
-    async def purge(self, message):
+    async def purge(self, message: Any) -> None:
         await self.client.delete_message(QueueUrl=self.queue_url, ReceiptHandle=message.receipt_handle)
 
     @staticmethod
-    def _validate_publish(queue_type, message_group_id, message_deduplication_id):
+    def _validate_publish(queue_type: str, message_group_id: str, message_deduplication_id: str) -> None:
         if queue_type == SQSQueueType.STANDARD_QUEUE_FIFO.value:
             if not message_group_id:
                 raise Exception(
@@ -175,12 +185,12 @@ class SQSManager(MessageQueueManager):
                     )
                 )
 
-    def _get_queue_type(self):
+    def _get_queue_type(self) -> str:
         if ".fifo" in self.queue_url:
             return SQSQueueType.STANDARD_QUEUE_FIFO.value
         return SQSQueueType.STANDARD_QUEUE.value
 
-    async def _get_queue_attributes(self, queue_url, attribute_names=[]):
+    async def _get_queue_attributes(self, queue_url: str, attribute_names: List[str] = []) -> Dict[str, Any]:
         try:
             response = await self.client.get_queue_attributes(QueueUrl=queue_url, AttributeNames=attribute_names)
         except botocore.exceptions.ClientError as err:

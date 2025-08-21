@@ -34,7 +34,7 @@ class Claude4CodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Claude4CodeQuerySolverPrompt
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.prompt = self.prompt_class(params)
 

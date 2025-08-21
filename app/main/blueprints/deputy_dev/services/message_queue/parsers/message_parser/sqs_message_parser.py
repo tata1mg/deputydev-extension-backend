@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 
 from app.main.blueprints.deputy_dev.models.dto.message_queue.attribute import Attribute
 from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_message import (
@@ -8,7 +9,7 @@ from app.main.blueprints.deputy_dev.models.dto.message_queue.sqs_message import 
 
 class SQSMessageParser:
     @classmethod
-    def parse(cls, message: dict) -> SQSMessage:
+    def parse(cls, message: Dict[str, Any]) -> SQSMessage:
         """
         Sample Message:
         {
@@ -49,5 +50,5 @@ class SQSMessageParser:
         return SQSMessage(body=body, attributes=attributes, receipt_handle=receipt_handle)
 
     @staticmethod
-    def decompress(message):
+    def decompress(message: Dict[str, Any]) -> str:
         return json.loads(message)

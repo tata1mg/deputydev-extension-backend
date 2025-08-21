@@ -3,7 +3,7 @@ from app.backend_common.utils.formatting import append_line_numbers
 
 
 class IdeReviewContextService:
-    def __init__(self, review_id: int):
+    def __init__(self, review_id: int) -> None:
         self.review_id = review_id
 
     async def get_pr_diff(self, append_line_no_info: bool = False) -> str:

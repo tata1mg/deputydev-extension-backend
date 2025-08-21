@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value, set_context_values
@@ -26,7 +26,7 @@ class GithubPR(BasePR):
         workspace_slug: str,
         auth_handler: AuthHandler,
         repo_service: GithubRepo,
-    ):
+    ) -> None:
         super().__init__(
             vcs_type=VCSTypes.github.value,
             workspace=workspace,
@@ -49,7 +49,7 @@ class GithubPR(BasePR):
     Manages Github Repo
     """
 
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> str | None:
         if self.pr_diff:
             return self.pr_diff
 
@@ -60,7 +60,7 @@ class GithubPR(BasePR):
             return PR_NOT_FOUND
         return response.text
 
-    async def get_commit_diff(self):
+    async def get_commit_diff(self) -> str | None:
         """
         Get the diff between two commits in GitHub.
 
@@ -114,13 +114,13 @@ class GithubPR(BasePR):
         self.branch_name = data["branch_name"]
         return PullRequestResponse(**data)
 
-    def pr_model(self):
+    def pr_model(self) -> GitHubPrModel:
         return GitHubPrModel(
             pr_detail=self.pr_json(),
             meta_info={"scm_workspace_id": self.workspace_id},
         )
 
-    async def get_file_stats_from_pulls(self):
+    async def get_file_stats_from_pulls(self) -> List[Dict[str, int]] | None:
         """
         Get PR file statistics using the pulls API endpoint.
         """
@@ -129,7 +129,9 @@ class GithubPR(BasePR):
         if pr_diff_stats_response:
             return await pr_diff_stats_response.json()
 
-    async def get_file_stats_from_commits(self, current_commit, last_reviewed_commit):
+    async def get_file_stats_from_commits(
+        self, current_commit: str, last_reviewed_commit: str
+    ) -> List[Dict[str, int]] | None:
         """
         Get PR file statistics by comparing two commits.
 
@@ -143,7 +145,7 @@ class GithubPR(BasePR):
         if diff_stats_response:
             return diff_stats_response_json.get("files", [])
 
-    async def get_pr_stats(self):
+    async def get_pr_stats(self) -> Dict[str, int]:
         if self.pr_stats:
             return self.pr_stats
 
@@ -169,7 +171,7 @@ class GithubPR(BasePR):
         }
         return self.pr_stats
 
-    async def update_pr_details(self, description):
+    async def update_pr_details(self, description: str) -> None:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
@@ -179,7 +181,7 @@ class GithubPR(BasePR):
         payload = {"body": description}
         return await self.repo_client.update_pr_details(payload)
 
-    async def get_loc_changed_count(self):
+    async def get_loc_changed_count(self) -> int:
         stats = await self.get_pr_stats()
         if stats:
             return stats["total_added"] + stats["total_removed"]
@@ -206,7 +208,7 @@ class GithubPR(BasePR):
 
         return formatted_commits
 
-    async def create_pr(self, title, description, source_branch, destination_branch):
+    async def create_pr(self, title: str, description: str, source_branch: str, destination_branch: str) -> str | None:
         payload = {
             "title": title,
             "head": source_branch,

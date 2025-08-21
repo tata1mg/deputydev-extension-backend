@@ -11,7 +11,7 @@ class BaseGoogleTextDeltaParser(ABC):
     def __init__(
         self,
         xml_tag: str,
-    ):
+    ) -> None:
         # we use regex to find the tag, because partial tags are possible
         # we create regex patterns for partial tags
         self.xml_tag = xml_tag

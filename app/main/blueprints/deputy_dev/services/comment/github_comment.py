@@ -1,3 +1,5 @@
+from typing import Any, Dict, Optional
+
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
@@ -29,16 +31,16 @@ class GithubComment(BaseComment):
         repo_name: str,
         pr_id: str,
         auth_handler: AuthHandler,
-        pr_details: PullRequestResponse = None,
-        repo_id=None,
-    ):
+        pr_details: Optional[PullRequestResponse] = None,
+        repo_id: Optional[int] = None,
+    ) -> None:
         super().__init__(workspace, workspace_slug, repo_name, pr_id, auth_handler, pr_details, repo_id)
         self.repo_client = GithubRepoClient(
             workspace_slug=workspace_slug, repo=repo_name, pr_id=int(pr_id), auth_handler=auth_handler
         )
         self.comment_helper = GithubCommentHelper
 
-    async def create_pr_comment(self, comment, model):
+    async def create_pr_comment(self, comment: Dict[str, Any], model: str) -> None:
         """Create comment on whole PR"""
         comment_payload = {
             "body": format_comment(comment),
@@ -48,7 +50,7 @@ class GithubComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
-    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
+    async def create_comment_on_parent(self, comment: str, parent_id: str, model: str = "") -> None:
         """creates comment on whole pr"""
         if get_context_value("is_issue_comment"):
             comment_payload = {"body": format_comment(comment)}
@@ -60,7 +62,7 @@ class GithubComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
-    async def create_pr_review_comment(self, comment, model):
+    async def create_pr_review_comment(self, comment: Dict[str, Any], model: str) -> None:
         """Creates comments on PR lines"""
         logger.info(f"Comment payload: {comment}")
         comment["commit_id"] = self.pr_details.commit_id
@@ -75,7 +77,7 @@ class GithubComment(BaseComment):
         response_json = await response.json()
         comment["scm_comment_id"] = str(response_json["id"])
 
-    async def fetch_comment_thread(self, chat_request):
+    async def fetch_comment_thread(self, chat_request: ChatRequest) -> str:
         """
         Fetches the comment thread for a comment_id
 
@@ -112,7 +114,7 @@ class GithubComment(BaseComment):
             AppLogger.log_warn(f"Invalid data format in comments: {e}")
             return ""
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(self, comment: str, chat_request: ChatRequest, add_note: bool = False) -> None:
         """
         Create a comment on a parent comment in pull request.
 
@@ -131,7 +133,7 @@ class GithubComment(BaseComment):
         comment_payload = self.comment_helper.format_chat_comment(comment, chat_request, have_parent=have_parent)
         await self.create_comment_on_thread(comment_payload)
 
-    async def create_comment_on_thread(self, comment_payload):
+    async def create_comment_on_thread(self, comment_payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a comment on a parent comment in pull request.
 
