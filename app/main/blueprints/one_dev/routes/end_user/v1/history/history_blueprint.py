@@ -2,9 +2,9 @@ import traceback
 from typing import Any
 
 from sanic import Blueprint, response
-from torpedo import Request, send_response
-from torpedo.exceptions import BadRequestException
-from torpedo.types import ResponseDict
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,

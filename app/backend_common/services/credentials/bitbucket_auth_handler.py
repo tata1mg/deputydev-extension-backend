@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from git.util import Actor
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from typing_extensions import override
 
 from app.backend_common.service_clients.oauth import BitbucketOAuthClient

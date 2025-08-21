@@ -1,7 +1,7 @@
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.service_clients.github.github_repo_client import (
     GithubRepoClient,

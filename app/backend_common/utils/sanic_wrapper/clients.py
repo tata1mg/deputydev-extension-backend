@@ -9,17 +9,17 @@ import yarl
 from aiohttp.helpers import sentinel
 from multidict import MultiDict
 
-from torpedo.common_utils import CONFIG
-from torpedo.constants.headers import CONTENT_TYPE
-from torpedo.constants.http import HTTPMethod
-from torpedo.ctx import _task_ctx
-from torpedo.exceptions import (
+from app.backend_common.utils.sanic_wrapper.common_utils import CONFIG
+from app.backend_common.utils.sanic_wrapper.constants.headers import CONTENT_TYPE
+from app.backend_common.utils.sanic_wrapper.constants.http import HTTPMethod
+from app.backend_common.utils.sanic_wrapper.ctx import _task_ctx
+from app.backend_common.utils.sanic_wrapper.exceptions import (
     HTTPRequestException,
     HTTPRequestTimeoutException,
 )
-from torpedo.parser import BaseAPIResponseParser, SearchAPIResponseParser
-from torpedo.response import send_response
-from torpedo.task import AsyncTaskResponse
+from app.backend_common.utils.sanic_wrapper.parser import BaseAPIResponseParser
+from app.backend_common.utils.sanic_wrapper.response import send_response
+from app.backend_common.utils.sanic_wrapper.task import AsyncTaskResponse
 
 
 class BaseAPIClient:
@@ -333,9 +333,6 @@ class BaseAPIClient:
         )
         return result
 
-
-class SearchAPIClient(BaseAPIClient):
-    _parser = SearchAPIResponseParser
 
 
 class TorpedoClient(BaseAPIClient):

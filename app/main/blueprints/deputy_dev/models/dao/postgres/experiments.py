@@ -1,5 +1,5 @@
 from tortoise import fields
-from tortoise_wrapper.db.fields import CITextField, NaiveDatetimeField
+from app.backend_common.utils.tortoise_wrapper.db.fields import CITextField, NaiveDatetimeField
 
 from app.backend_common.models.dao.postgres.base import Base
 

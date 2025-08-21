@@ -1,6 +1,6 @@
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.service_clients.bitbucket import BitbucketRepoClient
 from app.backend_common.services.credentials import AuthHandler

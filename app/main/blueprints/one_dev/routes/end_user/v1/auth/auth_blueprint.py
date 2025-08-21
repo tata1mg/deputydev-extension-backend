@@ -1,6 +1,6 @@
 from sanic import Blueprint
-from torpedo import Request, send_response
-from torpedo.exceptions import HTTPRequestException
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
 
 from app.backend_common.services.auth.supabase.session import SupabaseSession
 from app.main.blueprints.one_dev.services.auth.auth import Auth

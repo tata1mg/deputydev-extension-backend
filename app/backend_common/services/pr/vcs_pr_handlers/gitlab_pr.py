@@ -2,7 +2,7 @@ from typing import List
 
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.constants.constants import PR_NOT_FOUND, VCSTypes
 from app.backend_common.models.dto.comment_dto import CommentDTO

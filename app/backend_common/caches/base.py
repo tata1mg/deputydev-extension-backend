@@ -1,5 +1,5 @@
-from redis_wrapper.client import RedisCache
-from torpedo import CONFIG
+from app.backend_common.utils.redis_wrapper.client import RedisCache
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 
 class Base(RedisCache):
