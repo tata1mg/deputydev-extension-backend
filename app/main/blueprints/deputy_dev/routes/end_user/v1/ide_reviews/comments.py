@@ -1,6 +1,10 @@
+from typing import Any
+
 from deputydev_core.utils.app_logger import AppLogger
 from sanic import Blueprint
+from sanic.response import JSONResponse
 from torpedo import CONFIG, Request, send_response
+from torpedo.types import ResponseDict
 
 from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
@@ -28,7 +32,9 @@ config = CONFIG.config
 @validate_client_version
 @authenticate
 @exception_logger
-async def create_comment_feedback(request: Request, auth_data: AuthData, comment_id: int, **kwargs):
+async def create_comment_feedback(
+    request: Request, auth_data: AuthData, comment_id: int, **kwargs: Any
+) -> JSONResponse | ResponseDict:
     """
     Create feedback for a specific comment
 
@@ -38,23 +44,19 @@ async def create_comment_feedback(request: Request, auth_data: AuthData, comment
         "like": "boolean (optional)"
     }
     """
-    try:
-        request_data = request.json or {}
-        payload = IdeReviewCommentFeedbackPayload(**request_data)
-        feedback_dto = IdeReviewCommentFeedbackDTO(
-            comment_id=comment_id, feedback_comment=payload.feedback_comment, like=payload.like
-        )
-        created_feedback = await IdeReviewCommentFeedbacksRepository.db_insert(feedback_dto)
-        return send_response(created_feedback.model_dump(mode="json"))
-
-    except Exception as e:
-        raise e
+    request_data = request.json or {}
+    payload = IdeReviewCommentFeedbackPayload(**request_data)
+    feedback_dto = IdeReviewCommentFeedbackDTO(
+        comment_id=comment_id, feedback_comment=payload.feedback_comment, like=payload.like
+    )
+    created_feedback = await IdeReviewCommentFeedbacksRepository.db_insert(feedback_dto)
+    return send_response(created_feedback.model_dump(mode="json"))
 
 
 @comments.route("/update-comment-status", methods=["POST"])
 @validate_client_version
 @authenticate
-async def update_comment_status(request: Request, auth_data: AuthData, **kwargs):
+async def update_comment_status(request: Request, auth_data: AuthData, **kwargs: Any) -> JSONResponse | ResponseDict:
     """
     Generate a query to fix a specific comment in the code review.
 
@@ -73,7 +75,7 @@ async def update_comment_status(request: Request, auth_data: AuthData, **kwargs)
         manager = IdeCodeReviewHistoryManager()
         data = await manager.update_comment_status(comment_update_request)
         return send_response(data)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error updating comment status: {e}")
         return send_response({"status": "ERROR", "message": str(e)})
 
@@ -81,7 +83,9 @@ async def update_comment_status(request: Request, auth_data: AuthData, **kwargs)
 @comments.route("/generate-fix-query", methods=["GET"])
 @validate_client_version
 @authenticate
-async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kwargs):
+async def generate_comment_fix_query(
+    request: Request, auth_data: AuthData, **kwargs: Any
+) -> JSONResponse | ResponseDict:
     """
     Generate a query to fix a specific comment in the code review.
 
@@ -98,6 +102,6 @@ async def generate_comment_fix_query(request: Request, auth_data: AuthData, **kw
         manager = IdeReviewManager()
         fix_query = await manager.generate_comment_fix_query(comment_id=comment_id)
         return send_response({"fix_query": fix_query})
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error generating fix query: {e}")
         return send_response({"status": "ERROR", "message": str(e)})

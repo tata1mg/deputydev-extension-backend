@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Tuple
+
 from app.backend_common.repository.db import DB
 from app.main.blueprints.one_dev.models.dao.postgres.urls import Url
 from app.main.blueprints.one_dev.models.dto.url import UrlDto
@@ -17,7 +19,7 @@ class UrlRepository:
         return payload
 
     @classmethod
-    async def delete_url(cls, url_id: int):
+    async def delete_url(cls, url_id: int) -> None:
         await Url.filter(id=url_id).update(is_deleted=True)
 
     @classmethod
@@ -28,7 +30,7 @@ class UrlRepository:
         return paylaod
 
     @classmethod
-    async def list_urls_with_count(cls, user_team_id, limit, offset):
+    async def list_urls_with_count(cls, user_team_id: int, limit: int, offset: int) -> Tuple[List[Dict[str, Any]], int]:
         urls = (
             await Url.filter(user_team_id=user_team_id, is_deleted=False)
             .order_by("-created_at")

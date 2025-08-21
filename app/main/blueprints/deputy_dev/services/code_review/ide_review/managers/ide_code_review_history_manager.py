@@ -36,7 +36,7 @@ class IdeCodeReviewHistoryManager:
             history = self.format_reviews(reviews)
             return history
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error fetching reviews: {str(e)}")
             return []
 
@@ -134,12 +134,12 @@ class IdeCodeReviewHistoryManager:
 
             return count
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error counting reviews: {str(e)}")
             return 0
 
     @classmethod
-    async def update_comment_status(cls, comment_update_request: CommentUpdateRequest):
+    async def update_comment_status(cls, comment_update_request: CommentUpdateRequest) -> Dict[str, str]:
         """Update the status of a comment."""
         try:
             comment = await IdeCommentRepository.db_get({"id": comment_update_request.id}, fetch_one=True)

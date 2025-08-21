@@ -17,7 +17,7 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass2Prompt(BaseClaude3P
     prompt_type = PromptFeatures.CODE_MAINTAINABILITY_COMMENTS_GENERATION_PASS_2.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.CODE_MAINTAINABILITY.value
 

@@ -5,7 +5,9 @@ from deputydev_core.services.chunking.utils.snippet_renderer import render_snipp
 from deputydev_core.utils.app_logger import AppLogger
 
 from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
     LLModels,
+    ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
 )
@@ -13,10 +15,28 @@ from app.backend_common.services.llm.dataclasses.main import (
     ConversationTool,
     NonStreamingParsedLLMCallResponse,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
+from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
+    ActorType,
+    MessageType,
+    ReviewAgentChatCreateRequest,
+    ReviewAgentChatDTO,
+    ReviewAgentChatUpdateRequest,
+    TextMessageData,
+    ToolUseMessageData,
+)
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
@@ -40,6 +60,7 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.tools.tool_r
     ToolRequestManager,
 )
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
+from app.main.blueprints.deputy_dev.services.repository.review_agent_chats.repository import ReviewAgentChatsRepository
 
 
 class BaseCommenterAgent(BaseCodeReviewAgent):
@@ -66,6 +87,8 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         }
 
         self.tool_request_manager = ToolRequestManager(context_service=self.context_service)
+        self.review_agent_chats: List[ReviewAgentChatDTO] = []
+        self.prompt_vars = {}
 
     def agent_relevant_chunk(self, relevant_chunks: Dict[str, Any]) -> str:
         relevant_chunks_index = relevant_chunks["relevant_chunks_mapping"][self.agent_id]
@@ -85,6 +108,46 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
     def get_display_name(self) -> str:
         return self.agent_setting.get("display_name")
+
+    def _get_conversation_turns_from_chat(
+        self, chat_dto_list: List[ReviewAgentChatDTO]
+    ) -> List[UnifiedConversationTurn]:
+        conversation_turns: List[UnifiedConversationTurn] = []
+        for chat in chat_dto_list:
+            if isinstance(chat.message_data, TextMessageData) and chat.actor == ActorType.REVIEW_AGENT:
+                conversation_turns.append(
+                    UserConversationTurn(
+                        content=[UnifiedTextConversationTurnContent(text=chat.message_data.text)],
+                        cache_breakpoint=chat.metadata.get("cache_breakpoint"),
+                    )
+                )
+            elif isinstance(chat.message_data, ToolUseMessageData) and chat.actor == ActorType.ASSISTANT:
+                conversation_turns.append(
+                    AssistantConversationTurn(
+                        content=[
+                            UnifiedToolRequestConversationTurnContent(
+                                tool_name=chat.message_data.tool_name,
+                                tool_input=chat.message_data.tool_input,
+                                tool_use_id=chat.message_data.tool_use_id,
+                            )
+                        ]
+                    )
+                )
+                if chat.message_data.tool_response:
+                    conversation_turns.append(
+                        ToolConversationTurn(
+                            content=[
+                                UnifiedToolResponseConversationTurnContent(
+                                    tool_name=chat.message_data.tool_name,
+                                    tool_use_response=chat.message_data.tool_response
+                                    if isinstance(chat.message_data.tool_response, dict)
+                                    else {"response": chat.message_data.tool_response},
+                                    tool_use_id=chat.message_data.tool_use_id,
+                                )
+                            ]
+                        )
+                    )
+        return conversation_turns
 
     def get_tools_for_review(self, prompt_handler: BasePrompt) -> List[ConversationTool]:
         """
@@ -116,6 +179,12 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         payload = payload or {}
         request_type = payload.get("type")
 
+        # firstly, seed the current_agent_chats array
+        current_chat_data = await ReviewAgentChatsRepository.get_chats_by_agent_id_and_session(
+            session_id=session_id, agent_id=self.agent_id
+        )
+        self.review_agent_chats = current_chat_data if current_chat_data else []
+
         if request_type == "query":
             return await self._handle_query_request(session_id, payload)
         elif request_type == "tool_use_response" or request_type == "tool_use_failed":
@@ -141,6 +210,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         # Check if the token limit has been exceeded
         prompt_vars = await self.required_prompt_variables()
+        self.prompt_vars = prompt_vars
         prompt_handler = self.llm_handler.prompt_handler_map.get_prompt(model_name=self.model, feature=prompt_feature)(
             prompt_vars
         )
@@ -165,6 +235,32 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         # Get the tools to use for PR review flow
         tools_to_use = self.get_tools_for_review(prompt_handler)
 
+        cached_chat = await ReviewAgentChatsRepository.create_chat(
+            ReviewAgentChatCreateRequest(
+                session_id=session_id,
+                agent_id=self.agent_id,
+                actor=ActorType.REVIEW_AGENT,
+                message_type=MessageType.TEXT,
+                message_data=TextMessageData(text=user_and_system_messages.cached_message),
+                metadata={"cache_breakpoint": True},
+            )
+        )
+        self.review_agent_chats.append(cached_chat)
+
+        # create the review agent chat
+        query_chat = await ReviewAgentChatsRepository.create_chat(
+            ReviewAgentChatCreateRequest(
+                session_id=session_id,
+                agent_id=self.agent_id,
+                actor=ActorType.REVIEW_AGENT,
+                message_type=MessageType.TEXT,
+                message_data=TextMessageData(text=user_and_system_messages.user_message),
+                metadata={},
+            )
+        )
+
+        self.review_agent_chats.append(query_chat)
+
         # Initial query to the LLM
         llm_response = await self.llm_handler.start_llm_query(
             session_id=session_id,
@@ -172,6 +268,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             llm_model=self.model,
             prompt_vars=prompt_vars,
             tools=tools_to_use,
+            conversation_turns=self._get_conversation_turns_from_chat(self.review_agent_chats),
         )
 
         if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
@@ -248,6 +345,18 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             )
         )
 
+        # store the tool response in the review_agent_chats
+        last_chat = self.review_agent_chats[-1] if self.review_agent_chats else None
+        if (
+            last_chat
+            and last_chat.message_data.message_type == MessageType.TOOL_USE
+            and last_chat.message_data.tool_use_id == tool_use_id
+        ):
+            last_chat.message_data.tool_response = tool_use_response.content.response
+            await ReviewAgentChatsRepository.update_chat(
+                chat_id=last_chat.id, update_data=ReviewAgentChatUpdateRequest(message_data=last_chat.message_data)
+            )
+
         # Get tools and prompt handler
         prompt_vars = await self.required_prompt_variables()
         prompt_feature = self.prompt_features[0]  # Use first prompt feature for tool responses
@@ -257,17 +366,22 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         tools_to_use = self.get_tools_for_review(prompt_handler)
 
         # Submit the tool use response to the LLM
-        current_response = await self.llm_handler.submit_batch_tool_use_response(
+        current_response = await self.llm_handler.start_llm_query(
             session_id=session_id,
-            tool_use_responses=[tool_use_response],
             tools=tools_to_use,
-            prompt_type=prompt_handler.prompt_type,
+            conversation_turns=self._get_conversation_turns_from_chat(self.review_agent_chats),
+            prompt_feature=prompt_feature,
+            llm_model=self.model,
+            prompt_vars=prompt_vars,
         )
+
+        if not isinstance(current_response, NonStreamingParsedLLMCallResponse):
+            raise ValueError("Invalid LLM response")
 
         # Process the LLM response
         return await self._process_llm_response(current_response, session_id, tools_to_use, prompt_handler, {})
 
-    async def _process_llm_response(
+    async def _process_llm_response(  # noqa: C901
         self,
         llm_response: NonStreamingParsedLLMCallResponse,
         session_id: int,
@@ -292,6 +406,28 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         if self.tool_request_manager.is_final_response(llm_response):
             try:
                 final_response = self.tool_request_manager.extract_final_response(llm_response)
+                for content_block in llm_response.parsed_content:
+                    if (
+                        hasattr(content_block, "type")
+                        and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
+                        and isinstance(content_block, ToolUseRequestData)
+                        and content_block.content.tool_name == "parse_final_response"
+                    ):
+                        new_tool_request_chat = await ReviewAgentChatsRepository.create_chat(
+                            ReviewAgentChatCreateRequest(
+                                session_id=session_id,
+                                actor=ActorType.ASSISTANT,
+                                message_type=MessageType.TOOL_USE,
+                                message_data=ToolUseMessageData(
+                                    tool_name=content_block.content.tool_name,
+                                    tool_use_id=content_block.content.tool_use_id,
+                                    tool_input=content_block.content.tool_input,
+                                ),
+                                metadata={},
+                                agent_id=self.agent_id,
+                            )
+                        )
+                        self.review_agent_chats.append(new_tool_request_chat)
 
                 await self._save_comments_to_db(final_response)
                 return AgentRunResult(
@@ -318,22 +454,55 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         # Check for review planner response
         if self.tool_request_manager.is_review_planner_response(llm_response):
             try:
+                for content_block in llm_response.parsed_content:
+                    if (
+                        hasattr(content_block, "type")
+                        and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST
+                        and isinstance(content_block, ToolUseRequestData)
+                        and content_block.content.tool_name == "pr_review_planner"
+                    ):
+                        # store the agent chats
+                        turn_chat = await ReviewAgentChatsRepository.create_chat(
+                            ReviewAgentChatCreateRequest(
+                                session_id=session_id,
+                                actor=ActorType.ASSISTANT,
+                                message_type=MessageType.TOOL_USE,
+                                message_data=ToolUseMessageData(
+                                    tool_name=content_block.content.tool_name,
+                                    tool_use_id=content_block.content.tool_use_id,
+                                    tool_input=content_block.content.tool_input,
+                                ),
+                                metadata={},
+                                agent_id=self.agent_id,
+                            )
+                        )
+                        self.review_agent_chats.append(turn_chat)
                 review_plan = await self.tool_request_manager.process_review_planner_response(llm_response, session_id)
                 # Submit the review plan response to the LLM
                 tool_use_response = ToolUseResponseData(
                     content=ToolUseResponseContent(
                         tool_name="pr_review_planner",
                         tool_use_id=llm_response.parsed_content[0].content.tool_use_id,
-                        response=review_plan,
+                        response=review_plan or {},
                     )
                 )
-                current_response = await self.llm_handler.submit_batch_tool_use_response(
+                last_chat = self.review_agent_chats[-1]
+                last_chat.message_data.tool_response = tool_use_response.content.response
+                await ReviewAgentChatsRepository.update_chat(
+                    last_chat.id, update_data=ReviewAgentChatUpdateRequest(message_data=last_chat.message_data)
+                )
+                current_response = await self.llm_handler.start_llm_query(
                     session_id=session_id,
-                    tool_use_responses=[tool_use_response],
                     tools=tools_to_use,
-                    prompt_type=prompt_handler.prompt_type,
+                    conversation_turns=self._get_conversation_turns_from_chat(self.review_agent_chats),
+                    prompt_feature=self.prompt_features[0],
+                    llm_model=self.model,
+                    prompt_vars=self.prompt_vars,
                 )
                 # Recursively process the new response
+                if not isinstance(current_response, NonStreamingParsedLLMCallResponse):
+                    raise ValueError(f"Unexpected response type: {type(current_response)}")
+
                 return await self._process_llm_response(
                     current_response, session_id, tools_to_use, prompt_handler, tokens_data
                 )
@@ -351,7 +520,25 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         # Parse for other tool use requests
         tool_request = self.tool_request_manager.parse_tool_use_request(llm_response)
+        # store the tool request in the agent_chats_db
         if tool_request:
+            current_turn = await ReviewAgentChatsRepository.create_chat(
+                ReviewAgentChatCreateRequest(
+                    session_id=session_id,
+                    actor=ActorType.ASSISTANT,
+                    message_type=MessageType.TOOL_USE,
+                    message_data=ToolUseMessageData(
+                        tool_name=tool_request.get("tool_name"),
+                        tool_use_id=tool_request.get("tool_use_id"),
+                        tool_input=tool_request.get("tool_input"),
+                    ),
+                    metadata={},
+                    agent_id=self.agent_id,
+                )
+            )
+
+            self.review_agent_chats.append(current_turn)
+
             # Return tool request details to frontend
             return AgentRunResult(
                 agent_result=tool_request,
@@ -374,7 +561,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
             display_name=self.get_display_name(),
         )
 
-    async def _save_comments_to_db(self, final_response: dict) -> None:
+    async def _save_comments_to_db(self, final_response: Dict[str, Any]) -> None:
         """
         Save the final LLM comments to the database as IdeReviewsCommentDTOs.
         """

@@ -1,3 +1,5 @@
+from typing import Any
+
 from aiobotocore.session import ClientCreatorContext
 
 from app.backend_common.service_clients.aws.sqs_aws_client import AWSClient
@@ -8,7 +10,11 @@ class SQSClient(AWSClient):
 
     @classmethod
     async def create_sqs_client(
-        cls, region_name: str, aws_secret_access_key=None, aws_access_key_id=None, **kwargs
+        cls,
+        region_name: str,
+        aws_secret_access_key: str | None = None,
+        aws_access_key_id: str | None = None,
+        **kwargs: Any,
     ) -> ClientCreatorContext:
         client = await cls.create_client(
             cls.aws_service_name,

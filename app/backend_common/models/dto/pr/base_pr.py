@@ -1,91 +1,92 @@
 import re
+from typing import Any, Dict
 
 
 class BasePrModel:
-    def __init__(self, scm: str, pr_detail: dict, meta_info: dict = None):
+    def __init__(self, scm: str, pr_detail: Dict[str, Any], meta_info: Dict[str, Any] | None = None) -> None:
         if meta_info is None:
             meta_info = dict()
         self.pr_detail = pr_detail
         self.meta_info = meta_info
         self.scm = scm
 
-    def scm_type(self):
+    def scm_type(self) -> str:
         return self.scm
 
-    def workspace_id(self):
+    def workspace_id(self) -> str | None:
         return self.meta_info.get("workspace_id")
 
-    def team_id(self):
+    def team_id(self) -> str | None:
         return self.meta_info.get("team_id")
 
-    def pr_id(self):
+    def pr_id(self) -> str | None:
         return self.meta_info.get("pr_id")
 
-    def repo_id(self):
+    def repo_id(self) -> str | None:
         return self.meta_info.get("repo_id")
 
-    def review_status(self):
+    def review_status(self) -> str | None:
         return self.meta_info.get("review_status")
 
-    def quality_score(self):
+    def quality_score(self) -> float | None:
         return self.meta_info.get("quality_score")
 
-    def scm_workspace_id(self):
+    def scm_workspace_id(self) -> str | None:
         return self.meta_info.get("scm_workspace_id")
 
-    def loc_changed(self):
+    def loc_changed(self) -> int | None:
         return self.meta_info.get("loc_changed")
 
-    def pr_diff_token_count(self):
+    def pr_diff_token_count(self) -> int | None:
         return self.meta_info.get("pr_diff_token_count")
 
-    def title(self):
+    def title(self) -> str | None:
         raise NotImplementedError()
 
-    def description(self):
+    def description(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_pr_id(self):
+    def scm_pr_id(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_author_id(self):
+    def scm_author_id(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_author_name(self):
+    def scm_author_name(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_creation_time(self):
+    def scm_creation_time(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_close_time(self):
+    def scm_close_time(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_state(self):
+    def scm_state(self) -> str | None:
         raise NotImplementedError()
 
-    def source_branch(self):
+    def source_branch(self) -> str | None:
         raise NotImplementedError()
 
-    def destination_branch(self):
+    def destination_branch(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_repo_id(self):
+    def scm_repo_id(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_repo_name(self):
+    def scm_repo_name(self) -> str | None:
         raise NotImplementedError()
 
-    def scm_updation_time(self):
+    def scm_updation_time(self) -> str | None:
         raise NotImplementedError()
 
-    def commit_id(self):
+    def commit_id(self) -> str | None:
         raise NotImplementedError()
 
-    def destination_branch_commit(self):
+    def destination_branch_commit(self) -> str | None:
         raise NotImplementedError()
 
-    def get_pr_info(self) -> dict:
-        pr_details = {
+    def get_pr_info(self) -> Dict[str, Any]:
+        pr_details: Dict[str, Any] = {
             "quality_score": self.quality_score(),
             "title": self.title(),
             "description": self.description(),
@@ -107,7 +108,7 @@ class BasePrModel:
         return pr_details
 
     @staticmethod
-    def user_description(description):
+    def user_description(description: str | None) -> str:
         if not description:
             return ""
         # Patterns to match start and end markers for the summary

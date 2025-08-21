@@ -1,21 +1,22 @@
 import math
+from typing import Dict
 
 
 class PRScoreHelper:
     @classmethod
-    def calculate_pr_score(cls, issues: dict):
+    def calculate_pr_score(cls, issues: Dict[int, int]) -> int:
         return cls.__format_score(cls.__calculate_pr_score(issues))
 
     @classmethod
-    def __scaling_factor(cls):
+    def __scaling_factor(cls) -> float:
         return 100.0
 
     @classmethod
-    def __format_score(cls, score):
+    def __format_score(cls, score: float) -> int:
         return int(score * cls.__scaling_factor())
 
     @classmethod
-    def __calculate_pr_score(cls, issues: dict):
+    def __calculate_pr_score(cls, issues: Dict[int, int]) -> float:
         weighted_score = sum(weight * count for weight, count in issues.items())
         total_comments = sum(issues.values())
         if total_comments == 0:

@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Type, Union
+from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Type, Union, cast
 
 import httpx
 from deputydev_core.utils.singleton import Singleton
@@ -8,11 +8,14 @@ from openai.types.chat import ChatCompletion
 from openai.types.responses import (
     Response,
     ResponseFormatTextJSONSchemaConfigParam,
+    ResponseInputItemParam,
     ResponseTextConfigParam,
 )
+from openai.types.responses.response_create_params import ToolChoice
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 from openai.types.shared_params.response_format_json_object import ResponseFormatJSONObject
 from openai.types.shared_params.response_format_text import ResponseFormatText
+from openai.types.shared_params.responses_model import ResponsesModel
 from pydantic import BaseModel
 from torpedo import CONFIG
 
@@ -48,7 +51,7 @@ class OpenAIServiceClient(metaclass=Singleton):
         max_output_tokens: str = None,
         parallel_tool_calls: bool = True,
     ) -> Response:
-        response_type = self._get_response_type(
+        response_type = self._get_response_text_config(
             response_type=response_type,
             response_schema=response_schema,
             schema_name=response_format_name,
@@ -132,40 +135,32 @@ class OpenAIServiceClient(metaclass=Singleton):
         )
         return embeddings
 
-    async def get_llm_stream_response(
+    def _create_valid_responses_params(
         self,
-        conversation_messages: List[Dict[str, Any]],
-        model: str,
-        tool_choice: Literal["none", "auto", "required"] = None,
+        conversation_messages: List[ResponseInputItemParam],
+        model: ResponsesModel,
+        response_text_config: ResponseTextConfigParam,
+        tool_choice: Optional[ToolChoice] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
-        response_type: Optional[Literal["text", "json_object", "json_schema"]] = "json_object",
-        response_schema: Any = None,
-        response_format_name: Any = None,
-        response_format_description: Any = None,
-        instructions: str = None,
-        max_output_tokens: int = None,
+        instructions: Optional[str] = None,
+        max_output_tokens: Optional[int] = None,
         parallel_tool_calls: bool = True,
-    ) -> AsyncIterator[ResponseStreamEvent]:
-        response_type = self._get_response_type(
-            response_type=response_type,
-            response_schema=response_schema,
-            schema_name=response_format_name,
-            schema_description=response_format_description,
-        )
-        stream_manager: AsyncStream[ResponseStreamEvent] = await self.__client.responses.create(
-            input=conversation_messages,
-            model=model,
-            tool_choice=tool_choice,
-            tools=tools,
-            stream=True,
-            text=response_type,
-            parallel_tool_calls=parallel_tool_calls,
-            instructions=instructions,
-            max_output_tokens=max_output_tokens,
-        )
-        return stream_manager.__stream__()
+    ) -> Dict[str, Any]:
+        all_params: Dict[str, Any] = {
+            "input": conversation_messages,
+            "model": model,
+            "tool_choice": tool_choice,
+            "tools": tools,
+            "stream": True,
+            "text": response_text_config,
+            "parallel_tool_calls": parallel_tool_calls,
+            "instructions": instructions,
+            "max_output_tokens": max_output_tokens,
+            "extra_body": {"prompt_cache_key": f"{model}_X"},
+        }
+        return {k: v for k, v in all_params.items() if v is not None}
 
-    def _get_response_type(
+    def _get_response_text_config(
         self, response_type: Any, response_schema: Any = None, schema_name: Any = None, schema_description: Any = None
     ) -> ResponseTextConfigParam:
         if response_type == "json_schema":
@@ -183,3 +178,40 @@ class OpenAIServiceClient(metaclass=Singleton):
             return ResponseTextConfigParam(format=ResponseFormatJSONObject(type=response_type))
         else:
             raise ValueError("Invalid response type")
+
+    async def get_llm_stream_response(
+        self,
+        conversation_messages: List[ResponseInputItemParam],
+        model: ResponsesModel,
+        tool_choice: Optional[ToolChoice] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        response_type: Optional[Literal["text", "json_object", "json_schema"]] = "json_object",
+        response_schema: Any = None,
+        response_format_name: Any = None,
+        response_format_description: Any = None,
+        instructions: Optional[str] = None,
+        max_output_tokens: Optional[int] = None,
+        parallel_tool_calls: bool = True,
+    ) -> AsyncIterator[ResponseStreamEvent]:
+        response_type_config = self._get_response_text_config(
+            response_type=response_type,
+            response_schema=response_schema,
+            schema_name=response_format_name,
+            schema_description=response_format_description,
+        )
+        response: AsyncStream[ResponseStreamEvent] = cast(
+            AsyncStream[ResponseStreamEvent],
+            await self.__client.responses.create(
+                **self._create_valid_responses_params(
+                    conversation_messages=conversation_messages,
+                    model=model,
+                    response_text_config=response_type_config,
+                    tool_choice=tool_choice,
+                    tools=tools,
+                    instructions=instructions,
+                    max_output_tokens=max_output_tokens,
+                    parallel_tool_calls=parallel_tool_calls,
+                )
+            ),
+        )
+        return response.__stream__()

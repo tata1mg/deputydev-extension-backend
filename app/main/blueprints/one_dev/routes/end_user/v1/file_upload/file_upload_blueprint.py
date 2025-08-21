@@ -1,8 +1,10 @@
 from typing import Any
 
 from sanic import Blueprint
+from sanic.response import JSONResponse
 from torpedo import Request, send_response
 from torpedo.exceptions import HTTPRequestException
+from torpedo.response import ResponseDict
 
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
@@ -21,7 +23,7 @@ file_upload_v1_bp = Blueprint("file_upload_v1_bp", url_prefix="/file-upload")
 @file_upload_v1_bp.route("/get-presigned-post-url", methods=["POST"])
 @validate_client_version
 @authenticate
-async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwargs: Any):
+async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwargs: Any) -> ResponseDict | JSONResponse:
     payload = FileUploadPostInput(**_request.custom_json())
     try:
         presigned_urls = await ChatFileUpload.get_presigned_urls_for_upload(
@@ -30,7 +32,7 @@ async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwarg
             folder=payload.folder,
         )
         return send_response(presigned_urls.model_dump(mode="json"), headers=kwargs.get("response_headers"))
-    except Exception as _ex:
+    except Exception as _ex:  # noqa: BLE001
         raise HTTPRequestException(
             f"Error generating presigned URL: {_ex}",
         )
@@ -39,7 +41,7 @@ async def get_presigned_post_url(_request: Request, auth_data: AuthData, **kwarg
 @file_upload_v1_bp.route("/get-presigned-get-url", methods=["POST"])
 @validate_client_version
 @authenticate
-async def get_presigned_get_url(_request: Request, auth_data: AuthData, **kwargs: Any):
+async def get_presigned_get_url(_request: Request, auth_data: AuthData, **kwargs: Any) -> ResponseDict | JSONResponse:
     payload = FileUploadGetInput(**_request.custom_json())
 
     try:
@@ -53,7 +55,7 @@ async def get_presigned_get_url(_request: Request, auth_data: AuthData, **kwargs
             {"download_url": presigned_get_url, "file_name": attachment.file_name},
             headers=kwargs.get("response_headers"),
         )
-    except Exception as _ex:
+    except Exception as _ex:  # noqa: BLE001
         raise HTTPRequestException(
             f"Error generating presigned URL: {_ex}",
         )
@@ -62,7 +64,7 @@ async def get_presigned_get_url(_request: Request, auth_data: AuthData, **kwargs
 @file_upload_v1_bp.route("/delete-file", methods=["POST"])
 @validate_client_version
 @authenticate
-async def delete_attachment(_request: Request, auth_data: AuthData, **kwargs: Any):
+async def delete_attachment(_request: Request, auth_data: AuthData, **kwargs: Any) -> ResponseDict | JSONResponse:
     payload = FileDeleteInput(**_request.custom_json())
 
     try:
@@ -71,7 +73,7 @@ async def delete_attachment(_request: Request, auth_data: AuthData, **kwargs: An
             status="deleted",
         )
         return send_response({"message": "Attachment deleted successfully."}, headers=kwargs.get("response_headers"))
-    except Exception as _ex:
+    except Exception as _ex:  # noqa: BLE001
         raise HTTPRequestException(
             f"Error deleting attachment: {_ex}",
         )

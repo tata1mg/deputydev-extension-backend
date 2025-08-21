@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
@@ -8,6 +8,7 @@ from tortoise.exceptions import IntegrityError
 from app.backend_common.models.dao.postgres.repos import Repos
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
+from app.backend_common.models.dto.repo_dto import RepoDTO
 from app.backend_common.repository.db import DB
 from app.backend_common.repository.repo.repository import RepoRepository
 from app.main.blueprints.deputy_dev.constants.constants import PrStatusTypes
@@ -33,7 +34,7 @@ class PRService:
             raise ex
 
     @classmethod
-    async def db_update(cls, payload, filters):
+    async def db_update(cls, payload: Dict[str, Any], filters: Dict[str, Any]) -> Optional[PullRequestDTO]:
         try:
             await DB.update_by_filters(None, PullRequests, payload, where_clause=filters)
             row = await cls.db_get(filters)
@@ -43,25 +44,27 @@ class PRService:
             raise ex
 
     @classmethod
-    async def db_get(cls, filters: dict, order_by=None) -> PullRequestDTO:
+    async def db_get(cls, filters: Dict[str, Any], order_by: Optional[List[str]] = None) -> Optional[PullRequestDTO]:
         try:
             pr_info = await DB.by_filters(
                 model_name=PullRequests, where_clause=filters, limit=1, fetch_one=True, order_by=order_by
             )
             if pr_info:
                 return PullRequestDTO(**pr_info)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 "error occurred while fetching pr details from db for pr filters : {}, ex: {}".format(filters, ex)
             )
 
     @classmethod
-    async def db_get_count(cls, filters: dict) -> int:
+    async def db_get_count(cls, filters: Dict[str, Any]) -> int:
         count = await DB.count_by_filters(PullRequests, filters)
         return count
 
     @classmethod
-    async def find_or_create(cls, pr_model: BasePrModel, pr_status, pr_commits) -> Optional[PullRequestDTO]:
+    async def find_or_create(
+        cls, pr_model: BasePrModel, pr_status: str, pr_commits: List[str]
+    ) -> Optional[PullRequestDTO]:
         pr_dto = None
         team_id, workspace_id = get_context_value("team_id"), get_context_value("workspace_id")
         if workspace_id:
@@ -98,7 +101,7 @@ class PRService:
         return pr_dto
 
     @classmethod
-    async def find_reviewed_pr(cls, pr_model: BasePrModel, repo_dto) -> Optional[PullRequestDTO]:
+    async def find_reviewed_pr(cls, pr_model: BasePrModel, repo_dto: RepoDTO) -> Optional[PullRequestDTO]:
         """Find a last reviewed PR on that destination branch"""
         filters = {
             "scm_pr_id": pr_model.scm_pr_id(),
@@ -115,7 +118,7 @@ class PRService:
         return await PRService.find(filters=filters, order_by=["-updated_at"])
 
     @classmethod
-    async def find_failed_pr(cls, pr_model: BasePrModel, repo_dto) -> Optional[PullRequestDTO]:
+    async def find_failed_pr(cls, pr_model: BasePrModel, repo_dto: RepoDTO) -> Optional[PullRequestDTO]:
         """Find earliest failed PR of scm_pr_id."""
         filters = {
             "scm_pr_id": pr_model.scm_pr_id(),
@@ -125,11 +128,11 @@ class PRService:
         return await PRService.find(filters=filters, order_by=["-updated_at"])
 
     @classmethod
-    async def find(cls, filters, order_by=None):
+    async def find(cls, filters: Dict[str, Any], order_by: Optional[List[str]] = None) -> List[PullRequestDTO]:
         return await PRService.db_get(filters=filters, order_by=order_by)
 
     @classmethod
-    async def get_bulk_prs_by_filter(cls, query_params):
+    async def get_bulk_prs_by_filter(cls, query_params: Dict[str, Any]) -> List[PullRequestDTO]:
         all_prs = await DB.raw_sql(
             "SELECT * FROM pull_requests where id>={} and id<{} and scm_close_time is null and (pr_state='OPEN' or pr_state='APPROVED')".format(
                 query_params.get("start"), query_params.get("end")
@@ -138,7 +141,7 @@ class PRService:
         return all_prs
 
     @classmethod
-    def get_completed_pr_filters(cls, pr_dto: PullRequestDTO) -> dict:
+    def get_completed_pr_filters(cls, pr_dto: PullRequestDTO) -> Dict[str, Any]:
         """
         Get filters for completed PR records
         """
@@ -171,7 +174,9 @@ class PRService:
         return await cls.db_get_count(filters)
 
     @classmethod
-    async def fetch_pr(cls, scm_workspace_id, repo_name, scm, scm_pr_id):
+    async def fetch_pr(
+        cls, scm_workspace_id: int, repo_name: str, scm: str, scm_pr_id: int
+    ) -> Optional[PullRequestDTO]:
         workspace = await Workspaces.get_or_none(scm_workspace_id=scm_workspace_id, scm=scm)
         repo = await Repos.get_or_none(workspace_id=workspace.id, name=repo_name)
         if repo:

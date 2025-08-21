@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict
+
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
 from torpedo import CONFIG
 
@@ -12,7 +14,7 @@ class AtlassianOAuthClient:
     SESSION_MANAGER = SessionManager()
 
     @classmethod
-    async def get_access_token(cls, code: str) -> dict:
+    async def get_access_token(cls, code: str) -> Dict[str, Any]:
         url = "https://auth.atlassian.com/oauth/token"
 
         data = {
@@ -30,7 +32,7 @@ class AtlassianOAuthClient:
             return await response.json()
 
     @classmethod
-    async def refresh_access_token(cls, refresh_token: str) -> dict:
+    async def refresh_access_token(cls, refresh_token: str) -> Dict[str, Any]:
         url = "https://auth.atlassian.com/oauth/token"
 
         data = {
@@ -48,7 +50,7 @@ class AtlassianOAuthClient:
             return await response.json()
 
     @classmethod
-    async def get_accessible_resources(cls, token):
+    async def get_accessible_resources(cls, token: str) -> Dict[str, Any]:
         url = "https://api.atlassian.com/oauth/token/accessible-resources"
         headers = {
             "Authorization": f"Bearer {token}",

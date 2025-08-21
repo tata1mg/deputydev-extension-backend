@@ -13,6 +13,7 @@ from torpedo.constants.errors import (
 )
 from torpedo.constants.http import STATUS_CODE_4XX, STATUS_CODE_MAPPING, HTTPStatusCodes
 from torpedo.ctx import app_ctx
+from torpedo.handlers import _TorpedoErrorHandler
 from torpedo.request import TorpedoRequest
 from torpedo.types import ErrorResponseDict
 from torpedo.utils import capture_exception, name
@@ -104,7 +105,6 @@ HANDLED_TORPEDO_EXC = (
     NotFoundException,
     ForbiddenException,
 )
-from torpedo.handlers import _TorpedoErrorHandler
 
 
 def exception_response(
@@ -187,7 +187,7 @@ class DDErrorHandler(_TorpedoErrorHandler):
         response_headers = ContextValue.get("response_headers") or {}
         try:
             req_info = self.__get_req_info(req)
-        except Exception:
+        except Exception:  # noqa: BLE001
             req_info = {}
 
         # ---------------------------------------------------------------------------- #

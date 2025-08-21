@@ -14,6 +14,7 @@ from app.main.blueprints.deputy_dev.constants.constants import (
 )
 from app.main.blueprints.deputy_dev.helpers.pr_diff_handler import PRDiffHandler
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
+    AgentAndInitParams,
     AgentRunResult,
     AgentTypes,
 )
@@ -41,9 +42,9 @@ class MultiAgentPRReviewManager:
         pr_service: BasePR,
         pr_diff_handler: PRDiffHandler,
         session_id: int,
-        prompt_version=None,
-        eligible_agents=[],
-    ):
+        prompt_version: Optional[str] = None,
+        eligible_agents: List[AgentTypes] = [],
+    ) -> None:
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.multi_agent_enabled = None
@@ -80,7 +81,7 @@ class MultiAgentPRReviewManager:
         return self.reflection_enabled
 
     # blending engine section start
-    async def filter_comments(self):
+    async def filter_comments(self) -> None:
         if not self.agent_results:
             return
         self.filtered_comments, self.blending_agent_results = await CommentBlendingEngine(
@@ -89,12 +90,12 @@ class MultiAgentPRReviewManager:
 
     # blending engine section end
 
-    def populate_pr_summary(self):
+    def populate_pr_summary(self) -> None:
         pr_summary = self.agent_results.pop(AgentTypes.PR_SUMMARY.value, None)
         self.pr_summary = pr_summary.agent_result if pr_summary else None
         self.pr_summary_tokens = pr_summary.tokens_data if pr_summary else {}
 
-    def populate_meta_info(self):
+    def populate_meta_info(self) -> None:
         self.agents_tokens.update(self.pr_summary_tokens)
         for agent, agent_run_results in self.agent_results.items():
             self.agents_tokens.update(agent_run_results.tokens_data)
@@ -120,7 +121,7 @@ class MultiAgentPRReviewManager:
         )
 
     async def get_code_review_comments(
-        self, valid_agents_and_init_params
+        self, valid_agents_and_init_params: List[AgentAndInitParams]
     ) -> Tuple[Optional[List[Dict[str, Any]]], str, Dict[str, Any], Dict[str, Any], bool]:
         # get all agents from factory
         all_agents = AgentFactory.get_code_review_agents(
@@ -160,7 +161,7 @@ class MultiAgentPRReviewManager:
 
         return non_error_results, self._is_large_pr
 
-    def update_bucket_name(self, agent_result: AgentRunResult):
+    def update_bucket_name(self, agent_result: AgentRunResult) -> None:
         comments = agent_result.agent_result["comments"]
         for comment in comments:
             display_name = agent_result.display_name

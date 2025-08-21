@@ -150,3 +150,19 @@ class MessageThreadsRepository:
         except Exception as ex:  # noqa: BLE001
             logger.error(f"error occurred while fetching user queries count for session_ids: {session_ids}, ex: {ex}")
             return 0
+
+    @classmethod
+    async def mark_as_migrated(cls, session_id: int) -> None:
+        # add migrated in metadata
+        try:
+            await DB.update_by_filters(
+                None,
+                MessageThread,
+                {"metadata": {"migrated": True}},
+                {"session_id": session_id},
+            )
+        except Exception as ex:
+            logger.error(
+                f"error occurred while marking message threads as migrated for session_id: {session_id}, ex: {ex}"
+            )
+            raise ex

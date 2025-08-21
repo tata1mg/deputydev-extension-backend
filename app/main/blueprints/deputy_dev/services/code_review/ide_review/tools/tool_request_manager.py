@@ -42,7 +42,7 @@ class ToolRequestManager:
     This manager handles tool parsing and execution for the extension review system.
     """
 
-    def __init__(self, context_service: IdeReviewContextService):
+    def __init__(self, context_service: IdeReviewContextService) -> None:
         self.context_service = context_service
         self.tools = [
             GREP_SEARCH,
@@ -143,12 +143,12 @@ class ToolRequestManager:
 
         return {}
 
-    async def process_review_planner_response(self, llm_response: Any, session_id: int) -> Dict[str, Any]:
+    async def process_review_planner_response(self, llm_response: Any, session_id: int) -> Dict[str, Any] | None:
         """
         Process the review planner response and return the review plan.
         """
         if not self.is_review_planner_response(llm_response):
-            return {}
+            return None
 
         for content_block in llm_response.parsed_content:
             if (
@@ -162,7 +162,7 @@ class ToolRequestManager:
                     tool_input, session_id, self.context_service
                 )
 
-        return {}
+        return None
 
     def _parse_comments_from_tool_input(self, tool_input: Dict[str, Any]) -> Dict[str, Any]:
         """

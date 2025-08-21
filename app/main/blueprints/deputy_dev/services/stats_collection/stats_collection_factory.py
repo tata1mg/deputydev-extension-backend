@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Any, Dict
 
 from sanic.log import logger
 
@@ -23,7 +24,7 @@ class StatsCollectionFactory:
     }
 
     @classmethod
-    async def handle_event(cls, data):
+    async def handle_event(cls, data: Dict[str, Any]) -> None:
         event_type = data.get(
             "stats_type", MetaStatCollectionTypes.PR_CLOSE.value
         )  # default value for backward compatibility
