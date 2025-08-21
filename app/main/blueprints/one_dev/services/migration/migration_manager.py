@@ -1,6 +1,7 @@
 import asyncio
-from typing import List
+from typing import Any, Dict, List
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -26,6 +27,14 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as AgentMessageType
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    FileFocusItem,
+    FocusItem,
+    FunctionFocusItem,
+    UrlFocusItem,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -64,25 +73,90 @@ class MessageThreadMigrationManager:
                         message_thread.actor == MessageThreadActor.USER
                         and message_thread.message_type == MessageType.QUERY
                     ):
-                        text_block_data: TextBlockData | None = None
+                        query_vars: Dict[str, Any] | None = None
                         file_blocks: List[FileBlockData] = []
                         for query_message_content in message_thread.message_data:
                             if isinstance(query_message_content, TextBlockData):
-                                text_block_data = query_message_content
+                                query_vars = query_message_content.content_vars
                             elif isinstance(query_message_content, FileBlockData):
                                 file_blocks.append(query_message_content)
-                        if not text_block_data:
+                        if not query_vars:
                             continue
+
+                        focus_items: List[FocusItem] = []
+
+                        try:
+                            if query_vars.get("focus_items"):
+                                for focus_item in query_vars["focus_items"]:
+                                    if focus_item.get("type") == "file":
+                                        focus_items.append(
+                                            FileFocusItem(
+                                                value=focus_item["value"],
+                                                chunks=[
+                                                    ChunkInfo(**focus_chunk) for focus_chunk in focus_item["chunks"]
+                                                ],
+                                                path=focus_item["path"],
+                                            )
+                                        )
+
+                                    if focus_item.get("type") == "code_snippet":
+                                        focus_items.append(
+                                            CodeSnippetFocusItem(
+                                                value=focus_item["value"],
+                                                chunks=[
+                                                    ChunkInfo(**focus_chunk) for focus_chunk in focus_item["chunks"]
+                                                ],
+                                                path=focus_item["path"],
+                                            )
+                                        )
+
+                                    if focus_item.get("type") == "function":
+                                        focus_items.append(
+                                            FunctionFocusItem(
+                                                value=focus_item["value"],
+                                                chunks=[
+                                                    ChunkInfo(**focus_chunk) for focus_chunk in focus_item["chunks"]
+                                                ],
+                                                path=focus_item["path"],
+                                            )
+                                        )
+
+                                    if focus_item.get("type") == "class":
+                                        focus_items.append(
+                                            ClassFocusItem(
+                                                value=focus_item["value"],
+                                                chunks=[
+                                                    ChunkInfo(**focus_chunk) for focus_chunk in focus_item["chunks"]
+                                                ],
+                                                path=focus_item["path"],
+                                            )
+                                        )
+
+                            if query_vars.get("urls"):
+                                for url in query_vars["urls"]:
+                                    focus_items.append(
+                                        UrlFocusItem(
+                                            value=url["value"],
+                                            url=url["url"],
+                                        )
+                                    )
+
+                        except Exception as ex:  # noqa: BLE001
+                            AppLogger.log_error(
+                                f"Error occurred while processing focus items: {ex} for {message_thread.id}"
+                            )
 
                         corresponding_agent_chats.append(
                             AgentChatData(
                                 actor=ActorType.USER,
                                 message_type=AgentMessageType.TEXT,
                                 message_data=TextMessageData(
-                                    text=text_block_data.content.text,
+                                    text=query_vars["query"],
                                     attachments=[
                                         Attachment(attachment_id=block.content.attachment_id) for block in file_blocks
                                     ],
+                                    vscode_env=query_vars.get("vscode_env") or None,
+                                    focus_items=focus_items,
                                 ),
                                 metadata=message_thread.metadata or {},
                                 session_id=session.session_id,
