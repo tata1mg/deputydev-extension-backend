@@ -544,14 +544,14 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             **Task**: Find the definition of a symbol (method, class, or variable) in the codebase.
         
             **Available Tools**:
-            - `definition` (specialized): Built specifically for reading symbol definitions.
+            - `get_usage_tool` (specialized): Built specifically for reading symbol definitions.
             - `focused_snippets_searcher` (generic): A general-purpose tool that includes symbol lookup among other capabilities.
         
             **Correct Choice**:
-            - Use the `definition` tool **first**.
+            - Use the `get_usage_tool` **first**.
             - **Why**: It's optimized for this task and likely faster and more accurate.
-            - **Fallback**: If `definition` fails or provides insufficient results, then use `focused_snippets_searcher`.
-        
+            - **Fallback**: If `get_usage_tool` fails or provides insufficient results, then use `focused_snippets_searcher`.
+
             ---
         
             ## Behavioral Guidelines
