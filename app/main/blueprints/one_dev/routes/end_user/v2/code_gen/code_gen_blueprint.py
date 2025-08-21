@@ -657,15 +657,14 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
 @code_gen_v2_bp.route("/start-message-thread-migration", methods=["POST"])
 async def migrate_message_thread(_request: Request, **kwargs: Any) -> ResponseDict | response.JSONResponse:
     try:
-        payload = await _request.json()
-        AppLogger.log_info(f"Starting message thread migration: {payload}")
+        AppLogger.log_info("Starting message thread migration")
 
         # Simulate migration process
         _task = asyncio.create_task(MessageThreadMigrationManager.migrate_to_agent_chats())
 
-        response_data = {"status": "success", "message": "Message thread migration completed."}
-        return response.JSONResponse(content=response_data)
+        response_data = {"status": "success", "message": "Message thread migration started."}
+        return send_response(response_data)
 
     except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error during message thread migration: {e}")
-        return response.JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+        return send_response({"status": "error", "message": str(e)})
