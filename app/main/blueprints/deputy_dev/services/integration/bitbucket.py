@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Dict, List
+
 from sanic.log import logger
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
@@ -17,11 +19,11 @@ from .base import SCM, Integration
 class Bitbucket(Integration, SCM):
     __name__ == "bitbucket"
 
-    def __init__(self, auth_handler: BitbucketAuthHandler | None = None):
+    def __init__(self, auth_handler: BitbucketAuthHandler | None = None) -> None:
         self.auth_handler: BitbucketAuthHandler | None = auth_handler
         self.client: BitbucketWorkspaceClient | None = None
 
-    async def integrate(self, payload: OnboardingRequest):
+    async def integrate(self, payload: OnboardingRequest) -> None:
         integration_row: Integrations = await self.get_integration(
             team_id=payload.team_id, client=payload.integration_client
         )
@@ -69,7 +71,7 @@ class Bitbucket(Integration, SCM):
 
             await self.mark_connected(integration_row)
 
-    async def create_webhooks(self, workspace_slug, scm_workspace_id):
+    async def create_webhooks(self, workspace_slug: str, scm_workspace_id: str) -> None:
         set_hooks = await self.list_all_webhooks(workspace_slug)
 
         filtered_hooks = []
@@ -98,7 +100,7 @@ class Bitbucket(Integration, SCM):
 
         return filtered_hooks
 
-    def __hook_exists(self, new_webhook, set_hooks):
+    def __hook_exists(self, new_webhook: Dict[str, Any], set_hooks: List[Dict[str, Any]]) -> bool:
         for set_hook in set_hooks:
             if set_hook["active"]:
                 url = set_hook["url"]
@@ -109,11 +111,11 @@ class Bitbucket(Integration, SCM):
 
         return False
 
-    async def list_all_workspaces(self):
+    async def list_all_workspaces(self) -> List[Dict[str, Any]]:
         resp = await self.client.get_all_workspaces()
         user_workspaces = resp["values"]
 
-        result = []
+        result: List[Dict[str, Any]] = []
         for user_workspace in user_workspaces:
             if not user_workspace["permission"] == "owner":
                 logger.info("Skipping workspace : Not owner")
@@ -131,7 +133,7 @@ class Bitbucket(Integration, SCM):
         logger.info("Workspaces with ownership: %s", result)
         return result
 
-    async def list_all_webhooks(self, workspace):
+    async def list_all_webhooks(self, workspace: str) -> List[Dict[str, Any]]:
         resp = await self.client.get_webhooks(workspace)
         workspace_webhooks = resp["values"]
 

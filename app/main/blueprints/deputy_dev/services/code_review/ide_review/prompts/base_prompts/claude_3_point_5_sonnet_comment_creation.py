@@ -28,7 +28,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(CommonBaseClaude3Point5Sonnet
             """
 
     @classmethod
-    def get_tools_specific_system_message(cls, params):
+    def get_tools_specific_system_message(cls, params: Dict[str, Any]) -> str:
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.
@@ -85,7 +85,7 @@ class BaseClaude3Point5SonnetCommentCreationPrompt(CommonBaseClaude3Point5Sonnet
         return system_message
 
     @classmethod
-    def get_tools_configurable_system_message(cls, params) -> str:
+    def get_tools_configurable_system_message(cls, params: Dict[str, Any]) -> str:
         system_message = """
         You are a senior developer tasked with reviewing pull requests for code quality issues.
         Your goal is to provide thorough, actionable feedback while maintaining efficiency and precision.

@@ -20,7 +20,7 @@ class AWSClientManager:
         region_name: str,
         aws_connection_params: Optional[AWSConnectionParams] = None,
         aws_config: Optional[AWSConfig] = None,
-    ):
+    ) -> None:
         # set service and region
         self.aws_service_name = aws_service_name
         self.region_name = region_name
@@ -89,7 +89,7 @@ class AWSClientManager:
             self._client = await self._create_client()
         return self._client
 
-    async def close_client(self):
+    async def close_client(self) -> None:
         """
         Close the AWS client. This is important to avoid resource leaks.
         """

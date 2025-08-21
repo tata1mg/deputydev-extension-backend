@@ -19,7 +19,7 @@ class PRWebhook:
     """
 
     @classmethod
-    async def parse_payload(cls, payload: Dict) -> Optional[Dict[str, Any]]:
+    async def parse_payload(cls, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         vcs_type = payload.get("vcs_type")
         if should_skip_trayalabs_request(payload):
             return None
@@ -32,7 +32,7 @@ class PRWebhook:
             return parsed_payload
 
     @classmethod
-    def __parse_bitbucket_payload(cls, bitbucket_payload: dict) -> Optional[dict]:
+    def __parse_bitbucket_payload(cls, bitbucket_payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates servable payload from bitbucket payload
         """
@@ -61,7 +61,7 @@ class PRWebhook:
         }
 
     @classmethod
-    def __parse_github_payload(cls, github_payload: dict) -> Optional[dict]:
+    def __parse_github_payload(cls, github_payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates servable payload from github payload
         """
@@ -96,7 +96,7 @@ class PRWebhook:
         }
 
     @classmethod
-    def __parse_github_issue_comment_payload(cls, payload: dict) -> Optional[dict]:
+    def __parse_github_issue_comment_payload(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parse GitHub issue comment payload for PR conversation comments
         Only handles comments created on PR conversation
@@ -126,7 +126,7 @@ class PRWebhook:
         }
 
     @classmethod
-    async def __parse_gitlab_payload(cls, gitlab_payload: dict) -> Optional[dict]:
+    async def __parse_gitlab_payload(cls, gitlab_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Generates servable payload from gitlab merge request (MR) payload
         """

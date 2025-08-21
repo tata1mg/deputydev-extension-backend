@@ -1,8 +1,10 @@
 import asyncio
+from typing import Any, Dict, Optional
 
 from torpedo import CONFIG
 
 from app.backend_common.constants.constants import PRStatus, VCSTypes
+from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import convert_to_datetime
@@ -36,12 +38,12 @@ from app.main.blueprints.deputy_dev.utils import (
 class StatsCollectionTrigger:
     config = CONFIG.config
 
-    def __init__(self, repo_service=None):
+    def __init__(self, repo_service: Optional[BaseRepo] = None) -> None:
         self.repo_service = repo_service
         self.default_branch = None
         self.workspace = None
 
-    async def select_stats_and_publish(self, payload, query_params):
+    async def select_stats_and_publish(self, payload: Dict[str, Any], query_params: Dict[str, Any]) -> None:
         parsed_payload = {}
         payload = update_payload_with_jwt_data(query_params, payload)
         vcs_type = payload.get("vcs_type")
@@ -73,7 +75,7 @@ class StatsCollectionTrigger:
                     await MessageQueueFactory.meta_subscriber()(config=self.config).publish(data)
 
     @classmethod
-    async def repo_instance(cls, payload, vcs_type):
+    async def repo_instance(cls, payload: Any, vcs_type: str) -> BaseRepo:
         auth_handler = await get_vcs_auth_handler(payload.scm_workspace_id, vcs_type)
         repo = await RepoFactory.repo(
             vcs_type=vcs_type,
@@ -86,13 +88,13 @@ class StatsCollectionTrigger:
         )
         return repo
 
-    async def update_repo_setting(self, parsed_payload, vcs_type):
+    async def update_repo_setting(self, parsed_payload: Any, vcs_type: str) -> None:
         self.default_branch = await self.repo_service.get_default_branch()
         if self.default_branch == parsed_payload.destination_branch:
             await SettingService(self.repo_service, self.workspace.team_id, self.default_branch).update_repo_setting()
 
     @classmethod
-    def get_stats_collection_type(cls, vcs_type, payload):
+    def get_stats_collection_type(cls, vcs_type: str, payload: Dict[str, Any]) -> Optional[str]:
         if vcs_type == VCSTypes.bitbucket.value:
             return cls.bitbucket_stat_type(payload)
         elif vcs_type == VCSTypes.github.value:
@@ -101,7 +103,7 @@ class StatsCollectionTrigger:
             return cls.gitlab_stat_type(payload)
 
     @classmethod
-    def bitbucket_stat_type(cls, payload):
+    def bitbucket_stat_type(cls, payload: Dict[str, Any]) -> Optional[str]:
         if payload.get("pullrequest", {}).get("state") in [PRStatus.MERGED.value, PRStatus.DECLINED.value]:
             return MetaStatCollectionTypes.PR_CLOSE.value
         if payload.get("comment"):
@@ -110,7 +112,7 @@ class StatsCollectionTrigger:
             return MetaStatCollectionTypes.PR_APPROVAL_TIME.value
 
     @classmethod
-    def github_stat_type(cls, payload):
+    def github_stat_type(cls, payload: Dict[str, Any]) -> Optional[str]:
         if payload.get("action") == GithubActions.CLOSED.value and "merged" in payload.get("pull_request", {}):
             return MetaStatCollectionTypes.PR_CLOSE.value
         if payload.get("action") == GithubActions.CREATED.value and payload.get("comment"):
@@ -122,7 +124,7 @@ class StatsCollectionTrigger:
             return MetaStatCollectionTypes.PR_APPROVAL_TIME.value
 
     @classmethod
-    def gitlab_stat_type(cls, payload):
+    def gitlab_stat_type(cls, payload: Dict[str, Any]) -> Optional[str]:
         if payload.get("object_kind") == "merge_request":
             action = payload.get("object_attributes", {}).get("state")
             if action.lower() in [PRStatus.MERGED.value.lower(), PRStatus.DECLINED.value.lower()]:
@@ -136,8 +138,10 @@ class StatsCollectionTrigger:
             and payload.get("object_attributes", {}).get("approval_state") == PRStatus.APPROVED.value
         ):
             return MetaStatCollectionTypes.PR_APPROVAL_TIME.value
+        else:
+            return None
 
-    async def is_pr_created_post_onboarding(self, stats_webhook_payload, vcs_type):
+    async def is_pr_created_post_onboarding(self, stats_webhook_payload: Any, vcs_type: str) -> bool:
         """
         Check if PR is created after onboarding time of team.
         Returns:
@@ -153,6 +157,6 @@ class StatsCollectionTrigger:
                 return True
         return False
 
-    async def is_repo_eligible_for_review(self):
-        # TODO: This is done temporarily for fixing latency  issue
+    async def is_repo_eligible_for_review(self) -> bool:
+        # HACK: This is done temporarily for fixing latency  issue
         return True

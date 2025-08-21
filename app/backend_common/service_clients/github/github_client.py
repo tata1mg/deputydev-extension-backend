@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from torpedo import CONFIG
 from typing_extensions import override
 
@@ -8,7 +10,7 @@ class GithubClient(BaseSCMClient):
     BASE_URL = CONFIG.config["GITHUB"]["HOST"]
 
     @override
-    async def auth_headers(self) -> dict:
+    async def auth_headers(self) -> Dict[str, str]:
         access_token = await self.auth_handler.access_token()
         headers = {
             "Content-Type": "application/vnd.github+json",
@@ -17,16 +19,18 @@ class GithubClient(BaseSCMClient):
         }
         return headers
 
-    async def get_org_webhooks(self, org_name):
+    async def get_org_webhooks(self, org_name: str) -> Dict[str, Any]:
         url = f"{self.BASE_URL}/orgs/{org_name}/hooks"
         response = await self.get(url=url)
         response.raise_for_status()
         return await response.json()
 
-    async def create_org_webhook(self, org_name, webhook_url, events, secret):
+    async def create_org_webhook(
+        self, org_name: str, webhook_url: str, events: List[str], secret: str
+    ) -> Dict[str, Any]:
         url = f"{self.BASE_URL}/orgs/{org_name}/hooks"
 
-        data = {
+        data: Dict[str, Any] = {
             "name": "web",
             "active": True,
             "events": events,
