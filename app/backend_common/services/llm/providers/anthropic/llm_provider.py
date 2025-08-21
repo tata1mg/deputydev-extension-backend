@@ -198,6 +198,8 @@ class Anthropic(BaseLLMProvider):
                         },
                     }
                 )
+        if conversation_turn.cache_breakpoint:
+            contents[-1]["cache_control"] = {"type": "ephemeral"}
         return ConversationTurn(role=ConversationRole.USER, content=contents)
 
     def _get_anthropic_conversation_turn_from_assistant_conversation_turn(
@@ -281,58 +283,6 @@ class Anthropic(BaseLLMProvider):
             messages = self._get_anthropic_conversation_turns_from_conversation_turns(
                 conversation_turns=conversation_turns
             )
-
-        if prompt and prompt.cached_message:
-            cached_message = ConversationTurn(
-                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
-            )
-            if cache_config.conversation and model_config["PROMPT_CACHING_SUPPORTED"]:
-                cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
-            messages.append(cached_message)
-
-        # add system and user messages to conversation
-        if prompt and prompt.user_message and not conversation_turns:
-            user_message = ConversationTurn(
-                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
-            )
-            if attachments:
-                for attachment in attachments:
-                    if attachment.attachment_id not in attachment_data_task_map:
-                        continue
-                    attachment_data = await attachment_data_task_map[attachment.attachment_id]
-                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
-                        # append at the beginning of the user message
-                        user_message.content.insert(  # type: ignore
-                            0,
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": attachment_data.attachment_metadata.file_type,
-                                    "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
-                                },
-                            },
-                        )
-            messages.append(user_message)
-
-        # add tool result to conversation
-        if tool_use_response and not conversation_turns:
-            tool_message = ConversationTurn(
-                role=ConversationRole.USER,
-                content=[
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_response.content.tool_use_id,
-                        "content": json.dumps(tool_use_response.content.response),
-                    }
-                ],
-            )
-            messages.append(tool_message)
-        if feedback:
-            feedback_message = ConversationTurn(
-                role=ConversationRole.USER, content=[{"type": "text", "text": feedback}]
-            )
-            messages.append(feedback_message)
 
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []

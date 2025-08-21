@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Any, Dict, List, Literal, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -63,16 +63,19 @@ UnifiedAssistantConversationTurnContent = Annotated[
 class ToolConversationTurn(BaseModel):
     role: Literal[UnifiedConversationRole.TOOL] = UnifiedConversationRole.TOOL
     content: List[UnifiedToolResponseConversationTurnContent]
+    cache_breakpoint: Optional[bool] = None
 
 
 class UserConversationTurn(BaseModel):
     role: Literal[UnifiedConversationRole.USER] = UnifiedConversationRole.USER
     content: List[UnifiedUserConversationTurnContent]
+    cache_breakpoint: Optional[bool] = None
 
 
 class AssistantConversationTurn(BaseModel):
     role: Literal[UnifiedConversationRole.ASSISTANT] = UnifiedConversationRole.ASSISTANT
     content: List[UnifiedAssistantConversationTurnContent]
+    cache_breakpoint: Optional[bool] = None
 
 
 UnifiedConversationTurn = Annotated[
