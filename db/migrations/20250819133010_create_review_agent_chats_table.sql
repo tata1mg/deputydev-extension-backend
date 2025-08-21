@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS review_agent_chats (
     id SERIAL PRIMARY KEY,
     session_id INT NOT NULL,
-    agent_id INT NOT NULL,
+    agent_id TEXT NOT NULL,
     actor VARCHAR(16) NOT NULL,
     message_type VARCHAR(16) NOT NULL,
     message_data JSONB NOT NULL,
