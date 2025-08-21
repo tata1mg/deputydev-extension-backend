@@ -273,10 +273,10 @@ class Google(BaseLLMProvider):
         # 3. Handle Current User Prompt
         user_parts: List[google_genai_types.Part] = []
 
-        if prompt and prompt.user_message:
+        if prompt and prompt.user_message and not conversation_turns:
             user_parts.append(google_genai_types.Part.from_text(text=prompt.user_message))
 
-        if attachments:
+        if attachments and not conversation_turns:
             for attachment in attachments:
                 if attachment.attachment_id not in attachment_data_task_map:
                     continue
