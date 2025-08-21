@@ -341,3 +341,7 @@ class MessageThreadMigrationManager:
             migrated_count = await cls.migrate_batch_of_sessions()
             if migrated_count == 0:
                 break
+
+
+if __name__ == "__main__":
+    asyncio.run(MessageThreadMigrationManager.migrate_to_agent_chats())
