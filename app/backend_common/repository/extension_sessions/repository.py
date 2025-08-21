@@ -10,6 +10,7 @@ from app.backend_common.models.dto.extension_sessions_dto import (
     ExtensionSessionData,
     ExtensionSessionDTO,
 )
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.repository.db import DB
 
 
@@ -218,5 +219,36 @@ class ExtensionSessionsRepository:
                 {"session_id": session_id},
             )
         except (ValueError, Exception) as ex:
+            logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
+            raise ex
+
+    @classmethod
+    async def get_unmigrated_sessions(cls, limit: int) -> List[ExtensionSessionDTO]:
+        try:
+            extension_sessions = await DB.by_filters(
+                model_name=ExtensionSession,
+                # get where current model is null
+                where_clause={"current_model": None},
+                fetch_one=False,
+                limit=limit,
+            )
+            if not extension_sessions:
+                return []
+            return [ExtensionSessionDTO(**extension_session) for extension_session in extension_sessions]
+
+        except Exception as ex:  # noqa: BLE001
+            logger.error(f"error occurred while fetching unmigrated extension_sessions from db, ex: {ex}")
+            return []
+
+    @classmethod
+    async def update_session_llm_model(cls, session_id: int, llm_model: LLModels) -> None:
+        try:
+            await DB.update_by_filters(
+                None,
+                ExtensionSession,
+                {"current_model": llm_model.value},
+                {"session_id": session_id},
+            )
+        except Exception as ex:
             logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
             raise ex
