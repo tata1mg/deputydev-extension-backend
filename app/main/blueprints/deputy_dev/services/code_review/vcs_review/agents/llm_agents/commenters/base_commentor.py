@@ -133,7 +133,10 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         for chat in chat_dto_list:
             if isinstance(chat.message_data, TextMessageData) and chat.actor == ActorType.REVIEW_AGENT:
                 conversation_turns.append(
-                    UserConversationTurn(content=[UnifiedTextConversationTurnContent(text=chat.message_data.text)])
+                    UserConversationTurn(
+                        content=[UnifiedTextConversationTurnContent(text=chat.message_data.text)],
+                        cache_breakpoint=chat.metadata.get("cache_breakpoint"),
+                    )
                 )
             elif isinstance(chat.message_data, ToolUseMessageData) and chat.actor == ActorType.ASSISTANT:
                 conversation_turns.append(
@@ -153,7 +156,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                             content=[
                                 UnifiedToolResponseConversationTurnContent(
                                     tool_name=chat.message_data.tool_name,
-                                    tool_use_response=chat.message_data.tool_response,
+                                    tool_use_response=chat.message_data.tool_response
+                                    if isinstance(chat.message_data.tool_response, dict)
+                                    else {"response": chat.message_data.tool_response},
                                     tool_use_id=chat.message_data.tool_use_id,
                                 )
                             ]
@@ -199,11 +204,24 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
             chat_dto_list: List[ReviewAgentChatDTO] = []
 
+            # store the review diff
+            cached_chat = await ReviewAgentChatsRepository.create_chat(
+                ReviewAgentChatCreateRequest(
+                    session_id=session_id,
+                    agent_id=str(self.agent_id),
+                    actor=ActorType.REVIEW_AGENT,
+                    message_type=MessageType.TEXT,
+                    message_data=TextMessageData(text=user_and_system_messages.cached_message),
+                    metadata={"cache_breakpoint": True},
+                )
+            )
+            chat_dto_list.append(cached_chat)
+
             # store the first query in review_agent_chats
             start_chat = await ReviewAgentChatsRepository.create_chat(
                 ReviewAgentChatCreateRequest(
                     session_id=session_id,
-                    agent_id=self.agent_id,
+                    agent_id=str(self.agent_id),
                     actor=ActorType.REVIEW_AGENT,
                     message_type=MessageType.TEXT,
                     message_data=TextMessageData(text=user_and_system_messages.user_message),
@@ -256,7 +274,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         current_turn_chat = await ReviewAgentChatsRepository.create_chat(
                             ReviewAgentChatCreateRequest(
                                 session_id=session_id,
-                                agent_id=self.agent_id,
+                                agent_id=str(self.agent_id),
                                 actor=ActorType.ASSISTANT,
                                 message_type=MessageType.TOOL_USE,
                                 message_data=ToolUseMessageData(
@@ -292,7 +310,11 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                         # store the tool use response in the last tool_request chat in review_agent_chats
                         last_chat = chat_dto_list[-1]
                         if isinstance(last_chat.message_data, ToolUseMessageData):
-                            last_chat.message_data.tool_response = tool_use_responses.content.response
+                            last_chat.message_data.tool_response = (
+                                tool_use_responses.content.response
+                                if isinstance(tool_use_responses.content.response, dict)
+                                else {"response": tool_use_responses.content.response}
+                            )
                         await ReviewAgentChatsRepository.update_chat(
                             chat_id=last_chat.id,
                             update_data=ReviewAgentChatUpdateRequest(message_data=last_chat.message_data),
@@ -322,7 +344,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                     current_turn_chat = await ReviewAgentChatsRepository.create_chat(
                         ReviewAgentChatCreateRequest(
                             session_id=session_id,
-                            agent_id=self.agent_id,
+                            agent_id=str(self.agent_id),
                             actor=ActorType.REVIEW_AGENT,
                             message_type=MessageType.TEXT,
                             message_data=TextMessageData(text=NO_TOOL_USE_FALLBACK_PROMPT),
@@ -357,7 +379,7 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                             current_turn_chat = await ReviewAgentChatsRepository.create_chat(
                                 ReviewAgentChatCreateRequest(
                                     session_id=session_id,
-                                    agent_id=self.agent_id,
+                                    agent_id=str(self.agent_id),
                                     actor=ActorType.ASSISTANT,
                                     message_type=MessageType.TOOL_USE,
                                     message_data=ToolUseMessageData(
@@ -392,7 +414,11 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                             if corresp_tool_request and isinstance(
                                 corresp_tool_request.message_data, ToolUseMessageData
                             ):
-                                corresp_tool_request.message_data.tool_response = tool_response.content.response
+                                corresp_tool_request.message_data.tool_response = (
+                                    tool_response.content.response
+                                    if isinstance(tool_response.content.response, dict)
+                                    else {"response": tool_response.content.response}
+                                )
                                 await ReviewAgentChatsRepository.update_chat(
                                     chat_id=corresp_tool_request.id,
                                     update_data=ReviewAgentChatUpdateRequest(
