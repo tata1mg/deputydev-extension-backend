@@ -13,7 +13,7 @@ RESOLVE_IMPORT_TOOL = ConversationTool(
         • Symbols from stdlib: `from pathlib import Path` → `Path`
 
         Do NOT use for repo-local code (e.g. `from manager.tools import define_tools`).
-        For those, use **get_usages_tool** instead.
+        For those, use **get_usage_tool** instead.
 
         Input notes
         -----
