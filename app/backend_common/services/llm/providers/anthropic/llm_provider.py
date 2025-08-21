@@ -277,6 +277,32 @@ class Anthropic(BaseLLMProvider):
         # create conversation array
 
         messages: List[ConversationTurn] = []
+
+        # add system and user messages to conversation
+        if prompt and prompt.user_message and not conversation_turns:
+            user_message = ConversationTurn(
+                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
+            )
+            if attachments:
+                for attachment in attachments:
+                    if attachment.attachment_id not in attachment_data_task_map:
+                        continue
+                    attachment_data = await attachment_data_task_map[attachment.attachment_id]
+                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
+                        # append at the beginning of the user message
+                        user_message.content.insert(  # type: ignore
+                            0,
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": attachment_data.attachment_metadata.file_type,
+                                    "data": FileProcessor.get_base64_file_content(attachment_data.object_bytes),
+                                },
+                            },
+                        )
+            messages.append(user_message)
+
         if previous_responses and not conversation_turns:
             messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
         elif conversation_turns:
