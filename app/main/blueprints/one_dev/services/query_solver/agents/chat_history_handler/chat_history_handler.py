@@ -137,6 +137,8 @@ class ChatHistoryHandler:
 
         # create a map of query_id to agent chats with summaries
         for agent_chat in all_agent_chats:
+            if agent_chat.actor == ActorType.SYSTEM:
+                continue
             if agent_chat.actor == ActorType.USER and agent_chat.message_type == MessageType.TEXT:
                 self.query_id_to_chats_and_summary_map[self._hash_query_id_to_int(agent_chat.query_id)] = (
                     [agent_chat],
