@@ -1,7 +1,7 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import Request, send_response
+from app.backend_common.utils.sanic_wrapper import Request, send_response
 
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
     LLMBasedChunkReranker,

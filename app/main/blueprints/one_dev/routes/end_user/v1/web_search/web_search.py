@@ -2,8 +2,8 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.exceptions import ServerError
-from torpedo import Request, send_response
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.main.blueprints.one_dev.services.web_search.web_search_service import (
     WebSearchService,

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from deputydev_core.utils.constants.enums import Clients
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 

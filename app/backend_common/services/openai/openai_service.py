@@ -8,7 +8,7 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.caches.common import CommonCache
 from app.backend_common.constants.error_messages import ErrorMessages

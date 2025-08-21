@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.services.credentials import AuthHandler
 

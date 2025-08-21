@@ -2,7 +2,7 @@ from sanic import Blueprint
 from sanic.log import logger
 from sanic_ext import openapi
 from sanic_ext.extensions.openapi.definitions import Response
-from torpedo import Request, send_response
+from app.backend_common.utils.sanic_wrapper import Request, send_response
 
 from app.main.blueprints.deputy_dev.services.ab_analysis.ab_analysis_svc import (
     AbAnalysisFetchingData,

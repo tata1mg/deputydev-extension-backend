@@ -3,7 +3,7 @@ import textwrap
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
 from pydantic import BaseModel
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (

@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 from sanic import Blueprint, response
 from sanic.response import JSONResponse
-from torpedo import Request
+from app.backend_common.utils.sanic_wrapper import Request
 
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,

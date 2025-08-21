@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 import toml
 from git.util import Actor
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.constants.constants import (
     SETTING_ERROR_MESSAGE,

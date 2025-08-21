@@ -1,7 +1,7 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import Request, send_response
+from app.backend_common.utils.sanic_wrapper import Request, send_response
 
 from app.main.blueprints.one_dev.services.repos.main import ReposHandler
 from app.main.blueprints.one_dev.utils.authenticate import authenticate

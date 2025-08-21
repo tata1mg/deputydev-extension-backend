@@ -9,7 +9,7 @@ from deputydev_core.services.repo.local_repo.managers.git_repo_service import Gi
 from deputydev_core.services.search.dataclasses.main import SearchTypes
 from deputydev_core.services.tiktoken import TikToken
 from deputydev_core.utils.context_vars import get_context_value
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.constants.constants import MAX_RELEVANT_CHUNKS
 from app.backend_common.services.embedding.openai_embedding_manager import (

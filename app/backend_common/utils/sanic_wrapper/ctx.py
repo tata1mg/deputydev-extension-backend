@@ -10,7 +10,7 @@ from contextvars import ContextVar
 
 from sanic import Sanic
 
-from torpedo.request import Request
+from app.backend_common.utils.sanic_wrapper.request import Request
 
 
 class _TaskContext:
@@ -49,7 +49,7 @@ def req_ctx() -> types.SimpleNamespace:
 
     Example:
         ```py
-        from torpedo.ctx import req_ctx
+        from app.backend_common.utils.sanic_wrapper.ctx import req_ctx
 
         # set value
         req_ctx().val = ...
@@ -75,7 +75,7 @@ def app_ctx() -> types.SimpleNamespace:
 
     Example:
         ```py
-        from torpedo.ctx import app_ctx
+        from app.backend_common.utils.sanic_wrapper.ctx import app_ctx
 
         # set value
         app_ctx().val = ...
