@@ -626,6 +626,7 @@ class QuerySolver:
                         attachments=payload.attachments,
                         focus_items=payload.focus_items,
                         vscode_env=payload.vscode_env,
+                        repositories=payload.repositories,
                     ),
                     message_type=ChatMessageType.TEXT,
                     metadata={},
