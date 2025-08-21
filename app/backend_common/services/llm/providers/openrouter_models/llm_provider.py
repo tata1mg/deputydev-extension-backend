@@ -126,13 +126,13 @@ class OpenRouter(BaseLLMProvider):
         messages: List[Dict[str, Any]] = []
 
         # system
-        if prompt and prompt.system_message:
+        if prompt and prompt.system_message and not conversation_turns:
             messages.append({"role": "system", "content": prompt.system_message})
 
-        if previous_responses:
+        if previous_responses and not conversation_turns:
             messages.extend(await self.get_conversation_turns(previous_responses, attachment_data_task_map))
         # user
-        if prompt and prompt.user_message:
+        if prompt and prompt.user_message and not conversation_turns:
             # collect any image attachments
             image_parts: List[Dict[str, Any]] = []
             for attachment in attachments:
@@ -155,7 +155,7 @@ class OpenRouter(BaseLLMProvider):
             else:
                 messages.append({"role": "user", "content": prompt.user_message})
 
-        if tool_use_response:
+        if tool_use_response and not conversation_turns:
             messages.append(
                 {
                     "role": "tool",
