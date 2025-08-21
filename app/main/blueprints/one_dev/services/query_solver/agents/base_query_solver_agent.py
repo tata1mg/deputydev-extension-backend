@@ -49,6 +49,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FunctionFocusItem,
     MCPToolMetadata,
     QuerySolverInput,
+    Repository,
     UrlFocusItem,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
@@ -164,6 +165,49 @@ class QuerySolverAgent(ABC):
         tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
+    def get_repository_context(self, repositories: List[Repository]) -> str:
+        working_repo = next(repo for repo in repositories if repo.is_working_repository)
+        context_repos = [repo for repo in repositories if not repo.is_working_repository]
+        context_repos_str = ""
+        for index, context_repo in enumerate(context_repos):
+            context_repos_str += f"""
+                <context_repository_{index + 1}>
+                    <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
+                    <repo_name>{context_repo.repo_name}</repo_name>
+                    <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
+                </context_repository_{index + 1}>
+                """
+
+        return f"""
+            ====
+            <repository_context>
+            You are working with two types of repositories:
+            <working_repository>
+                <purpose>The primary repository where you will make changes and apply modifications</purpose>
+                <access_level>Full read/write access</access_level>
+                <allowed_operations>All read and write operations</allowed_operations>
+                <restrictions>No restrictions</restrictions>
+                <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
+                <repo_name>{working_repo.repo_name}</repo_name>
+                <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
+            </working_repository>
+            <context_repositories>
+                <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
+                <access_level>Read-only access</access_level>
+                <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
+                <restrictions>
+                1. NO write operations allowed
+                2. NO file creation or modification
+                3. NO diff application
+                </restrictions>
+                <list_of_context_repositories>
+                    {context_repos_str}
+                </list_of_context_repositories>
+            </context_repositories>
+            </repository_context>
+            ====
+            """
+
     async def _get_unified_user_conv_turns(self, message_data: TextMessageData) -> List[UnifiedConversationTurn]:  # noqa: C901
         """
         Get unified text conversation turn content for user messages.
@@ -239,6 +283,9 @@ class QuerySolverAgent(ABC):
             {message_data.vscode_env}
 
             ===="""
+
+        if message_data.repositories:
+            text += textwrap.dedent(self.get_repository_context(message_data.repositories))
 
         all_turns.append(
             UserConversationTurn(
