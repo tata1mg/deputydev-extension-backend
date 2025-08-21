@@ -1,8 +1,8 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import Request, send_response
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.main.blueprints.one_dev.models.dto.url import UrlDto
 from app.main.blueprints.one_dev.services.urls.url_service import UrlService

@@ -6,7 +6,7 @@ from typing import Any, AsyncIterator, Dict, List, Literal, Optional, Tuple, Typ
 from deputydev_core.utils.app_logger import AppLogger
 from google.genai import types as google_genai_types
 from pydantic import BaseModel
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,

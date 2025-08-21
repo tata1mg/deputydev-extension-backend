@@ -6,8 +6,8 @@ from typing import Any, Dict, Tuple
 from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
-from torpedo import CONFIG, Request
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.constants.onboarding import SubscriptionStatus
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO

@@ -4,7 +4,7 @@ from typing import Any, Dict, Tuple
 
 import jwt
 from gotrue.types import AuthResponse
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
 from app.backend_common.services.auth.session_encryption_service import (

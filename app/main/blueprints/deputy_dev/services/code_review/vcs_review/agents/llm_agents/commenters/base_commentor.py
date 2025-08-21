@@ -5,7 +5,7 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,

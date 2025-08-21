@@ -1,6 +1,6 @@
 import pandas as pd
 from sanic.log import logger
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.repository.db import DB
 from app.main.blueprints.deputy_dev.constants.ab_analysis_constants import (

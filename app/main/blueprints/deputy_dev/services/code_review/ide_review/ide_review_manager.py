@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler

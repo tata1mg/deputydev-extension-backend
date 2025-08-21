@@ -1,7 +1,7 @@
 import asyncio
 
 from sanic import Blueprint
-from torpedo import Request, send_response
+from app.backend_common.utils.sanic_wrapper import Request, send_response
 
 from app.main.blueprints.deputy_dev.services.backfill.agent_mapping_backfill_manager import (
     AgentMappingBackfillManager,

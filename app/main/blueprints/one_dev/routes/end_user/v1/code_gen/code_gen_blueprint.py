@@ -1,7 +1,7 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import Request, send_response
+from app.backend_common.utils.sanic_wrapper import Request, send_response
 
 from app.main.blueprints.one_dev.services.code_generation.features.code_generator.dataclasses.main import (
     CodeGenerationInput,

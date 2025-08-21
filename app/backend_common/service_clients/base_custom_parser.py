@@ -1,6 +1,6 @@
 from sanic.log import error_logger
-from torpedo import InterServiceRequestException
-from torpedo.task import AsyncTaskResponse
+from app.backend_common.utils.sanic_wrapper import InterServiceRequestException
+from app.backend_common.utils.sanic_wrapper.task import AsyncTaskResponse
 
 
 class BaseCustomParser:

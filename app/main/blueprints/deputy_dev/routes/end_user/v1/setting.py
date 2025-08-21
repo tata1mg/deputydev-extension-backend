@@ -1,5 +1,5 @@
 from sanic import Blueprint
-from torpedo import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
 
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
