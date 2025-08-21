@@ -14,8 +14,8 @@ class GitlabRepo(BaseRepo):
         workspace_id: str,
         workspace_slug: str,
         auth_handler: AuthHandler,
-        repo_id: str = None,
-    ):
+        repo_id: str | None = None,
+    ) -> None:
         super().__init__(
             vcs_type=VCSTypes.gitlab.value,
             workspace=workspace,
@@ -29,11 +29,11 @@ class GitlabRepo(BaseRepo):
         self.token = ""
 
     @staticmethod
-    def get_remote_host():
+    def get_remote_host() -> str:
         return "gitlab.com"
 
-    def get_repo_url(self):
+    def get_repo_url(self) -> str:
         return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
 
-    def get_remote_url_without_token(self):
+    def get_remote_url_without_token(self) -> str:
         return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"

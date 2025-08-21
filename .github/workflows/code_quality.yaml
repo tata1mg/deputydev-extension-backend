@@ -11,10 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code with full history
+      - name: Checkout code with full history into deputydev_backend
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          path: deputydev_backend
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,6 +27,7 @@ jobs:
 
       - name: Run pre-commit on changed files
         run: |
+          cd deputydev_backend
           BASE_REF="origin/${{ github.base_ref }}"
           HEAD_REF="HEAD"
           echo "Running pre-commit from $BASE_REF to $HEAD_REF"

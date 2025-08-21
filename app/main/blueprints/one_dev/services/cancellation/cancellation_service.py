@@ -77,6 +77,6 @@ class CancellationService:
                         summary=cancelled_query,
                     )
                 )
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 AppLogger.log_error(f"Error creating cancelled query entry: {ex}")
                 return None

@@ -12,12 +12,12 @@ class BaseSerializers(ABC):
         graph_type (str): The type of graph for which the data is being processed.
     """
 
-    def __init__(self, raw_data: List[Dict[str, Any]], graph_type: str, interval_filter: str):
+    def __init__(self, raw_data: List[Dict[str, Any]], graph_type: str, interval_filter: str) -> None:
         self.raw_data = raw_data
         self.graph_type = graph_type
         self.interval_filter = interval_filter
 
-    def get_processed_data(self):
+    def get_processed_data(self) -> Any:
         """
         Retrieves the processed data by delegating to the `process_raw_data` method.
 
@@ -29,7 +29,7 @@ class BaseSerializers(ABC):
         """
         return self.process_raw_data(self.raw_data, self.graph_type, self.interval_filter)
 
-    def process_raw_data(self, raw_data, graph_type, interval_filter):
+    def process_raw_data(self, raw_data: List[Dict[str, Any]], graph_type: str, interval_filter: str) -> Any:
         """
         Processes the raw data based on the graph type.
         This method must be implemented by subclasses.

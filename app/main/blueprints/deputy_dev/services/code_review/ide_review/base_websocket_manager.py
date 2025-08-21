@@ -10,7 +10,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
-    SocketClosedException,
+    SocketClosedError,
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import WebSocketMessage
 
@@ -65,7 +65,7 @@ class BaseWebSocketManager(ABC):
                         connection_id=self.connection_id,
                         message=json.dumps(message_data),
                     )
-        except SocketClosedException:
+        except SocketClosedError:
             self.connection_id_gone = True
             AppLogger.log_error(f"WebSocket connection {self.connection_id} closed")
             raise

@@ -43,7 +43,7 @@ class BaseClaudePromptHandler(BasePrompt):
         raise NotImplementedError("This method must be implemented in the child class")
 
     @classmethod
-    async def parse_streaming_text_block_events(
+    async def parse_streaming_text_block_events(  # noqa: C901
         cls,
         events: AsyncIterator[StreamingEvent],
         parsers: List[BaseAnthropicTextDeltaParser],

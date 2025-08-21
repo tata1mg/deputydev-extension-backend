@@ -31,7 +31,9 @@ class SettingService:
     helper = SettingHelper
     validator = SettingValidator
 
-    def __init__(self, repo_service: BaseRepo, team_id: Optional[int] = None, default_branch: Optional[str] = None):
+    def __init__(
+        self, repo_service: BaseRepo, team_id: Optional[int] = None, default_branch: Optional[str] = None
+    ) -> None:
         """
         Initialize the SettingService.
 
@@ -383,7 +385,7 @@ class SettingService:
         return {}, ""
 
     @classmethod
-    async def create_or_update_team_settings(cls, payload: dict, query_params: dict) -> None:
+    async def create_or_update_team_settings(cls, payload: Dict[str, Any], query_params: Dict[str, Any]) -> None:
         """
         Creates or updates team-level settings based on the provided payload and query parameters.
 
@@ -442,7 +444,7 @@ class SettingService:
 
     @classmethod
     async def update_team_agents(
-        cls, team_id: int, updated_team_setting: dict, existing_team_setting: Union[Configurations, None]
+        cls, team_id: int, updated_team_setting: Dict[str, Any], existing_team_setting: Union[Configurations, None]
     ) -> None:
         """
         Updates the team agents in the database based on the changes in the provided team settings.
@@ -498,7 +500,7 @@ class SettingService:
             await cls.upsert_agents(updated_agents)
 
     @classmethod
-    async def repo_settings_by_ids(cls, repo_ids: list[int]) -> dict[int, dict]:
+    async def repo_settings_by_ids(cls, repo_ids: List[int]) -> Dict[int, Dict[str, Any]]:
         """
         Fetches repository settings for a list of repository IDs.
 
@@ -523,7 +525,12 @@ class SettingService:
 
     @classmethod
     async def create_or_update_setting(
-        cls, configurable_id: int, configurable_type: str, error: str, setting: dict, saved_setting
+        cls,
+        configurable_id: int,
+        configurable_type: str,
+        error: str,
+        setting: Dict[str, Any],
+        saved_setting: Configurations | None,
     ) -> None:
         """
         Creates or updates a configuration record in the database.
@@ -566,7 +573,7 @@ class SettingService:
                 await saved_setting.delete()
 
     @classmethod
-    def fetch_setting_errors(cls, error_types: list[str]) -> str:
+    def fetch_setting_errors(cls, error_types: List[str]) -> str:
         """
         Retrieves error messages related to specific error types from the context.
 

@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
@@ -24,7 +26,7 @@ from app.main.blueprints.deputy_dev.services.repository.user_agents.repository i
 
 class IdeReviewPostProcessor:
     @classmethod
-    async def post_process_pr(cls, data, user_team_id: int):
+    async def post_process_pr(cls, data: Dict[str, Any], user_team_id: int) -> Dict[str, Any]:
         review_id = data.get("review_id")
         review = await ExtensionReviewsRepository.db_get(filters={"id": review_id}, fetch_one=True)
         comments = await IdeCommentRepository.get_review_comments(review_id)
@@ -72,8 +74,8 @@ class IdeReviewPostProcessor:
         return {"status": "Completed"}
 
     @classmethod
-    def format_comments(cls, comments: list[IdeReviewsCommentDTO]):
-        comments_by_agent_name = {}
+    def format_comments(cls, comments: list[IdeReviewsCommentDTO]) -> Dict[str, List[LLMCommentData]]:
+        comments_by_agent_name: Dict[str, List[LLMCommentData]] = {}
         for comment in comments:
             for agent in comment.agents:
                 if agent.agent_name not in comments_by_agent_name:

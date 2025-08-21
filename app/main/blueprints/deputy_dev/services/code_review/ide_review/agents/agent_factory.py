@@ -7,10 +7,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
     AgentAndInitParams,
     AgentTypes,
 )
-
-# from app.main.blueprints.deputy_dev.services.code_review.extension_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
-#     PRSummarizerAgent,
-# )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     ParsedAggregatedCommentData,
     ParsedCommentData,
@@ -135,11 +131,8 @@ class AgentFactory:
             Single agent instance or None if creation fails
         """
 
-        agent_type = agent_and_init_params.agent_type
-
         agent = cls.code_review_agents[agent_and_init_params.agent_type](
             context_service=context_service,
-            # is_reflection_enabled=False,
             llm_handler=llm_handler,
             model=cls.agent_type_to_model_map[agent_and_init_params.agent_type],
             user_agent_dto=user_agent_dto,
@@ -181,7 +174,7 @@ class AgentFactory:
         context_service: IdeReviewContextService,
         comments: List[ParsedCommentData],
         llm_handler: LLMHandler[PromptFeatures],
-    ):
+    ) -> CommentValidatorAgent:
         model = cls.agent_type_to_model_map[AgentTypes.COMMENT_VALIDATION]
         return CommentValidatorAgent(
             context_service=context_service, comments=comments, llm_handler=llm_handler, model=model
@@ -193,7 +186,7 @@ class AgentFactory:
         context_service: IdeReviewContextService,
         comments: List[ParsedCommentData],
         llm_handler: LLMHandler[PromptFeatures],
-    ):
+    ) -> CommentSummarizerAgent:
         model = cls.agent_type_to_model_map[AgentTypes.COMMENT_SUMMARIZATION]
         return CommentSummarizerAgent(
             context_service=context_service, comments=comments, llm_handler=llm_handler, model=model
