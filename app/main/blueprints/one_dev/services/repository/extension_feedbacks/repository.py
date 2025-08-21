@@ -28,7 +28,7 @@ class ExtensionFeedbacksRepository:
             raise ex
 
     @classmethod
-    async def submit_feedback(cls, query_id: int, feedback: str):
+    async def submit_feedback(cls, query_id: int, feedback: str) -> None:
         try:
             if await cls.get_feedback_by_query_id(query_id):
                 await DB.update_with_filters(

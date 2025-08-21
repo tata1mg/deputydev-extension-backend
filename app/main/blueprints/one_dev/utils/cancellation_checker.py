@@ -9,7 +9,7 @@ class CancellationChecker:
     Periodic checker that monitors Redis for task cancellation across servers
     """
 
-    def __init__(self, session_id: int, check_interval: float = 1):
+    def __init__(self, session_id: int, check_interval: float = 1) -> None:
         self.session_id = session_id
         self.check_interval = check_interval
         self.cancelled_event = asyncio.Event()
@@ -46,9 +46,11 @@ class CancellationChecker:
         """Check if cancellation has been detected"""
         return self.cancelled_event.is_set()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "CancellationChecker":
         await self.start_monitoring()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[object]
+    ) -> None:
         await self.stop_monitoring()

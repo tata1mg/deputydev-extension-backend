@@ -1,8 +1,12 @@
+from typing import Any
+
 from sanic import Blueprint
 from sanic.log import logger
+from sanic.response import JSONResponse
 from sanic_ext import openapi
 from sanic_ext.extensions.openapi.definitions import Response
 from torpedo import Request, send_response
+from torpedo.types import ResponseDict
 
 from app.main.blueprints.deputy_dev.services.ab_analysis.ab_analysis_svc import (
     AbAnalysisFetchingData,
@@ -49,7 +53,7 @@ ab_analysis = Blueprint("ab_analysis", "/ab_analysis")
         ),
     ],
 )
-async def fetching_ab_analysis_data(_request: Request, **kwargs):
+async def fetching_ab_analysis_data(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     query_params = _request.request_params()
     logger.debug(query_params)
     response = await AbAnalysisFetchingData.get_ab_analysis_data(query_params)

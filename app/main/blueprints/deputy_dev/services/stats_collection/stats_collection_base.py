@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Any, Dict
 
 from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
@@ -12,7 +13,7 @@ from app.main.blueprints.deputy_dev.utils import is_request_from_blocked_repo
 
 
 class StatsCollectionBase(ABC):
-    def __init__(self, payload, vcs_type):
+    def __init__(self, payload: Dict[str, Any], vcs_type: str) -> None:
         self.payload = payload
         self.vcs_type = vcs_type
         self.repo_service = None
@@ -21,11 +22,11 @@ class StatsCollectionBase(ABC):
         self.pr_dto = None
         self.stats_type = None
 
-    async def save_to_db(self, extracted_payload):
+    async def save_to_db(self, extracted_payload: Dict[str, Any]) -> None:
         """implement Saving meta info to db"""
         raise NotImplementedError()
 
-    async def revert(self):
+    async def revert(self) -> None:
         """Implement if any revert step is required"""
         pass
 
@@ -39,7 +40,7 @@ class StatsCollectionBase(ABC):
         except RetryException as ex:
             raise ex
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             await self.revert()
             logger.error(
                 f"{self.stats_type} meta sync failed with for repo {self.payload.get('repo_name')}"
@@ -51,7 +52,7 @@ class StatsCollectionBase(ABC):
                 f" and pr {self.payload.get('scm_pr_id')} exception {ex}"
             )
 
-    async def get_pr_from_db(self, payload):
+    async def get_pr_from_db(self, payload: Dict[str, Any]) -> None:
         self.payload["pr_created_at"] = (
             convert_to_datetime(self.payload["pr_created_at"]) if self.payload.get("pr_created_at") else None
         )
@@ -81,14 +82,14 @@ class StatsCollectionBase(ABC):
             ):  # Failed case will also be handled as it will not have iteration value
                 raise RetryException(f"PR: {self.payload['scm_pr_id']} not picked to be reviewed by Deputydev")
 
-    async def generate_old_payload(self):
+    async def generate_old_payload(self) -> None:
         """TODO deprecated method"""
         pass
 
-    def check_serviceable_event(self):
+    def check_serviceable_event(self) -> bool:
         return not is_request_from_blocked_repo(self.payload.get("repo_name"))
 
-    def pr_created_after_onboarding_time(self):
+    def pr_created_after_onboarding_time(self) -> bool:
         """
         Check if PR is created after onboarding time of team.
          Returns:

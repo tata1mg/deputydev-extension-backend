@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
+from deputydev_core.clients.http.adapters.http_response_adapter import AiohttpToRequestsAdapter
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo import CONFIG
@@ -26,7 +27,7 @@ class GithubRepoClient(BaseSCMClient):
 
     HOST = config["GITHUB"]["HOST"]
 
-    async def create_pr_comment(self, payload: dict):
+    async def create_pr_comment(self, payload: Dict[str, Any]) -> AiohttpToRequestsAdapter | None:
         """
         creates comment on whole PR
         """
@@ -34,18 +35,20 @@ class GithubRepoClient(BaseSCMClient):
         try:
             result = await self.post(url=path, json=payload)
             return result
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"unable to comment on github pr for repo_name: {self.repo}, "
                 f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} err {ex}"
             )
 
-    async def create_issue_comment(self, payload: dict, issue_id: int):
+    async def create_issue_comment(self, payload: Dict[str, Any], issue_id: int) -> AiohttpToRequestsAdapter | None:
         """Create a comment on PR conversation/issue tab"""
         url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/issues/{issue_id}/comments"
         return await self.post(url=url, json=payload)
 
-    async def update_pr(self, payload: dict, headers: dict = None):
+    async def update_pr(
+        self, payload: Dict[str, Any], headers: Dict[str, str] | None = None
+    ) -> AiohttpToRequestsAdapter | None:
         """
         Updates PR properties like description
         """
@@ -53,13 +56,15 @@ class GithubRepoClient(BaseSCMClient):
         try:
             result = await self.patch(path, json=payload, headers=headers)
             return result
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"unable to  update pr for repo_name: {self.repo}, "
                 f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} err {ex}"
             )
 
-    async def create_pr_review_comment(self, payload: dict, headers: dict = None):
+    async def create_pr_review_comment(
+        self, payload: Dict[str, Any], headers: Dict[str, str] | None = None
+    ) -> Optional[AiohttpToRequestsAdapter]:
         """
         Creates pr review comment on a file and line
         """
@@ -91,13 +96,13 @@ class GithubRepoClient(BaseSCMClient):
             else:
                 AppLogger.log_error(f"Unable to create comment on pr - {result.status_code} {result_json}")
             return result
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"unable to comment on github pr for repo_name: {self.repo}, "
                 f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} err {ex}"
             )
 
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> Optional[AiohttpToRequestsAdapter]:
         """
         returns pr diff in git format
         """
@@ -111,7 +116,7 @@ class GithubRepoClient(BaseSCMClient):
             raise HTTPRequestException(status_code=result.status_code, error=error_msg)
         return result
 
-    async def get_commit_diff(self, commit_a, commit_b):
+    async def get_commit_diff(self, commit_a: str, commit_b: str) -> Optional[AiohttpToRequestsAdapter]:
         """
         Get the diff between two commits in GitHub.
 
@@ -130,7 +135,7 @@ class GithubRepoClient(BaseSCMClient):
             raise HTTPRequestException(status_code=result.status_code, error=error_msg)
         return result
 
-    async def get_pr_details(self):
+    async def get_pr_details(self) -> Optional[AiohttpToRequestsAdapter]:
         """
         returns pr details
         """
@@ -140,13 +145,15 @@ class GithubRepoClient(BaseSCMClient):
         try:
             result = await self.get(path, headers=headers)
             return result
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"unable to get github pr details for repo_name: {self.repo}, "
                 f"pr_id: {self.pr_id}, user_name: {self.workspace_slug} er {ex}"
             )
 
-    async def get_comment_thread(self, user_name, repo_name, comment_id, headers=None):
+    async def get_comment_thread(
+        self, user_name: str, repo_name: str, comment_id: str, headers: Dict[str, str] | None = None
+    ) -> Optional[AiohttpToRequestsAdapter]:
         """
         returns comment thread
         """
@@ -156,13 +163,13 @@ class GithubRepoClient(BaseSCMClient):
         try:
             result = await self.get(path, headers=headers)
             return result
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"unable to get github comment thread details for repo_name: {repo_name}, "
                 f"comment_id: {comment_id}, user_name: {user_name} er {ex}"
             )
 
-    async def get_pr_diff_stats(self, headers=None):
+    async def get_pr_diff_stats(self, headers: Dict[str, str] | None = None) -> Optional[AiohttpToRequestsAdapter]:
         """
         Get the diff stat of a pull request from GitHub.
 
@@ -179,7 +186,9 @@ class GithubRepoClient(BaseSCMClient):
             return None
         return response
 
-    async def get_commit_diff_stats(self, base_commit, destination_commit, headers=None):
+    async def get_commit_diff_stats(
+        self, base_commit: str, destination_commit: str, headers: Dict[str, str] | None = None
+    ) -> Optional[AiohttpToRequestsAdapter]:
         """
         Get the diff stat between two commits
 
@@ -196,7 +205,7 @@ class GithubRepoClient(BaseSCMClient):
             return None
         return response
 
-    async def update_pr_details(self, payload) -> Optional[dict]:
+    async def update_pr_details(self, payload: Dict[str, Any]) -> Optional[AiohttpToRequestsAdapter]:
         """
         Update the details of a pull request on GitHub.
 
@@ -217,7 +226,7 @@ class GithubRepoClient(BaseSCMClient):
             error_json = await response.json()
             AppLogger.log_error("PR couldn't updated {}".format(error_json))
 
-    async def get_pr_commits(self) -> list:
+    async def get_pr_commits(self) -> List[Dict[str, Any]]:
         """
         Get the latest commit SHA of a pull request on GitHub.
 
@@ -253,7 +262,7 @@ class GithubRepoClient(BaseSCMClient):
 
         return list(reversed(commits))
 
-    async def get_pr_comments(self) -> list:
+    async def get_pr_comments(self) -> List[Dict[str, Any]]:
         """
         Get all the comments on a PR in GitHub.
         Note: In API response we get comments in ascending order of created_at
@@ -281,14 +290,14 @@ class GithubRepoClient(BaseSCMClient):
             page += 1
         return comments
 
-    async def get_file(self, branch_name, file_path):
+    async def get_file(self, branch_name: str, file_path: str) -> Optional[bytes]:
         url = f"{self.HOST}/repos/{self.workspace_slug}/{self.repo}/contents/{file_path}?ref={branch_name}"
         response = await self.get(url)
         if response.status_code != 200:
             return None
         return response.content
 
-    async def create_pr(self, payload, headers=None):
+    async def create_pr(self, payload: Dict[str, Any], headers: Dict[str, str] | None = None) -> Dict[str, Any]:
         """
         Create a PR on Github.
 
@@ -301,7 +310,9 @@ class GithubRepoClient(BaseSCMClient):
         response = await self.post(url, json=payload, headers=headers)
         return await response.json()
 
-    async def list_prs(self, state="open", source=None, destination=None):
+    async def list_prs(
+        self, state: str = "open", source: str | None = None, destination: str | None = None
+    ) -> Dict[str, Any]:
         """
         List all PRs on github.
 

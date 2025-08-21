@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
@@ -103,7 +103,7 @@ def get_corrective_code(data):
     return ""
 
 
-def format_comment(data):
+def format_comment(data: Dict[str, Any] | str | None) -> str:
     # Check if corrective_code exists and is a dictionary
     if isinstance(data, dict):
         comment = data.get("comment", "")

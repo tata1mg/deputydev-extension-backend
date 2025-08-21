@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from sanic.log import logger
 
 from app.backend_common.repository.db import DB
@@ -12,7 +14,7 @@ class BucketService:
     BUCKET_KEYS = [Buckets.Columns.id.name, Buckets.Columns.description.name, Buckets.Columns.name.name]
 
     @classmethod
-    async def get_published_buckets(cls):
+    async def get_published_buckets(cls) -> List[Buckets]:
         # get buckets from cache
         buckets = await BucketsCache.get(cls.BUCKETS_CACHE_KEY)
         if not buckets:
@@ -29,12 +31,12 @@ class BucketService:
         return buckets
 
     @classmethod
-    async def get_all_buckets(cls):
+    async def get_all_buckets(cls) -> List[Buckets]:
         buckets = await DB.by_filters(Buckets, order_by=Buckets.Columns.id.name, where_clause={})
         return buckets
 
     @classmethod
-    async def db_insert(cls, bucket_dto: BucketDTO):
+    async def db_insert(cls, bucket_dto: BucketDTO) -> Buckets:
         try:
             payload = bucket_dto.dict()
             del payload["id"]
@@ -45,7 +47,7 @@ class BucketService:
             raise ex
 
     @classmethod
-    async def get_all_buckets_dict(cls):
+    async def get_all_buckets_dict(cls) -> Dict[str, BucketDTO]:
         # Fetch all buckets
         buckets_data = await BucketService.get_all_buckets()
         # Convert each bucket data to a BucketDTO instance

@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Optional
+
 from sanic.log import logger
 from torpedo import Task, TaskExecutor
 from torpedo.exceptions import BadRequestException, TaskExecutorException
@@ -19,7 +21,7 @@ class DashboardFiltersManager:
     """
 
     @classmethod
-    async def get_teams(cls, query_params):
+    async def get_teams(cls, query_params: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
         """Fetch teams data for a given user.
 
         Args:
@@ -38,11 +40,11 @@ class DashboardFiltersManager:
         try:
             data = await DB.raw_sql(query, connection=Connections.DEPUTY_DEV_REPLICA.value)
             return data
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"Failed to fetch teams data: {ex}")
 
     @classmethod
-    async def get_workspaces(cls, query_params):
+    async def get_workspaces(cls, query_params: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
         """Fetch workspaces data for a given team.
 
         Args:
@@ -64,11 +66,11 @@ class DashboardFiltersManager:
         try:
             data = await DB.raw_sql(query, connection=Connections.DEPUTY_DEV_REPLICA.value)
             return data
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"Failed to fetch workspaces data for team_id={team_id}: {ex}")
 
     @classmethod
-    async def get_repos(cls, query_params):
+    async def get_repos(cls, query_params: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
         """Fetch repositories data for a given workspace.
 
         Args:
@@ -90,11 +92,11 @@ class DashboardFiltersManager:
         try:
             data = await DB.raw_sql(query, connection=Connections.DEPUTY_DEV_REPLICA.value)
             return data
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"Failed to fetch repositories data for workspace_id={workspace_id}: {ex}")
 
     @classmethod
-    async def get_prs(cls, query_params):
+    async def get_prs(cls, query_params: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
         """Fetch pull requests data based on specified filters.
 
         Args:
@@ -128,11 +130,11 @@ class DashboardFiltersManager:
         try:
             data = await DB.raw_sql(query, connection=Connections.DEPUTY_DEV_REPLICA.value)
             return data
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"Failed to fetch pull requests data for bucket_type={bucket_type}: {ex}")
 
     @classmethod
-    async def get_tiles(cls, query_params):
+    async def get_tiles(cls, query_params: Dict[str, Any]) -> Dict[str, Any]:  # noqa: C901
         """
         Asynchronously retrieves tile data based on the provided query parameters.
 
@@ -216,13 +218,13 @@ class DashboardFiltersManager:
                     response["merge_rate"] = None
         except TaskExecutorException as tex:
             raise TaskExecutorException(f"Failed to fetch tiles data with error: {tex}")
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"Failed to fetch tiles data for team_id={team_id} and workspace_id={workspace_id}: {ex}")
 
         return response
 
     @classmethod
-    def get_tile_queries(cls, start_date, end_date, repo_ids):
+    def get_tile_queries(cls, start_date: str, end_date: str, repo_ids: List[str]) -> Dict[str, str]:
         """
         Constructs SQL queries for retrieving tile data based on the provided parameters.
 
