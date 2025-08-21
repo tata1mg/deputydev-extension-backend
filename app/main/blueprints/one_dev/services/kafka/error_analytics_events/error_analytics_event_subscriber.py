@@ -42,7 +42,7 @@ class ErrorAnalyticsEventSubscriber(BaseKafkaSubscriber):
                 user_team_id=user_team_id,
             )
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             raise ValueError(f"Error processing error analytics event message: {str(ex)}")
 
     async def _process_message(self, message: Any) -> None:
@@ -54,7 +54,7 @@ class ErrorAnalyticsEventSubscriber(BaseKafkaSubscriber):
                 AppLogger.log_warn(f"Skipping duplicate or invalid analytics event: {event_data}")
                 return
             await ErrorAnalyticsEventsRepository.save_error_analytics_event(error_analytics_event_data)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             AppLogger.log_error(
                 f"Error processing error analytics event message from Kafka: {str(ex)}. Message: {str(event_data)}"
             )

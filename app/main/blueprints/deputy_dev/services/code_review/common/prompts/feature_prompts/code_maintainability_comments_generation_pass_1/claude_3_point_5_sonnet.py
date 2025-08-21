@@ -121,7 +121,8 @@ class Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt(BaseClaude3P
             Begin your review now, focusing on providing valuable feedback to improve the code quality and
             maintainability of the pull request.
         """
-
+        if self.params.get("final_breach") == "true":
+            return self.get_finalize_iteration_breached_prompt()
         if self.params.get("CUSTOM_PROMPT"):
             user_message = f"{user_message}\n{CUSTOM_PROMPT_INSTRUCTIONS}\n{self.params['CUSTOM_PROMPT']}"
 

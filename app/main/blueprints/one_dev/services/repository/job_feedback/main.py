@@ -18,7 +18,7 @@ class JobFeedbackService:
                 return JobFeedbackDTO(**code_generation_jobs[0])
             elif code_generation_jobs:
                 return [JobFeedbackDTO(**code_generation_job) for code_generation_job in code_generation_jobs]
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 "error occurred while fetching sessionchat details from db for sessionchat filters : {}, ex: {}".format(
                     filters, ex

@@ -18,7 +18,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 
 
 class CodeBlockParser(BaseGoogleTextDeltaParser):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(xml_tag="code_block")
         self.diff_buffer = ""
         self.udiff_line_start: Optional[str] = None
@@ -52,7 +52,7 @@ class CodeBlockParser(BaseGoogleTextDeltaParser):
             return "-"
         return None
 
-    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:
+    async def parse_text_delta(self, event: TextBlockDelta, last_event: bool = False) -> List[BaseModel]:  # noqa: C901
         event.content.text = event.content.text.replace("```diff", "").replace("```", "")
         if self.is_diff is None:
             self.text_buffer += event.content.text

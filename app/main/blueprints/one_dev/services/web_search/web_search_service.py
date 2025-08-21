@@ -34,7 +34,7 @@ class WebSearchService:
                 if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
                     raise ValueError("Expected NonStreamingParsedLLMCallResponse")
                 response = llm_response
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_warn(f"Web search call failed: {e}")
 
         if response:

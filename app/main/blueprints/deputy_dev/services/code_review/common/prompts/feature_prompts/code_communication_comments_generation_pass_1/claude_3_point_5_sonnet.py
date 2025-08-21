@@ -18,7 +18,7 @@ class Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt(BaseClaude3Poi
     prompt_category = PromptCategories.CODE_REVIEW.value
     disable_tools = True
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.CODE_COMMUNICATION.value
 

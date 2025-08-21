@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict
 
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import (
@@ -9,9 +10,9 @@ from app.main.blueprints.deputy_dev.utils import (
 
 class GithubCommentHelper:
     @classmethod
-    def format_pr_review_comment(cls, comment) -> dict:
+    def format_pr_review_comment(cls, comment: Dict[str, Any]) -> Dict[str, Any]:
         file_path = comment.get("file_path")
-        comment_payload = {
+        comment_payload: Dict[str, Any] = {
             "body": format_comment(comment),
             "commit_id": comment["commit_id"],
         }
@@ -35,8 +36,8 @@ class GithubCommentHelper:
         return comment_payload
 
     @classmethod
-    def format_chat_comment(cls, comment, chat_request: ChatRequest, have_parent):
-        comment_payload = {
+    def format_chat_comment(cls, comment: str, chat_request: ChatRequest, have_parent: bool) -> Dict[str, Any]:
+        comment_payload: Dict[str, Any] = {
             "body": comment,
             "path": chat_request.comment.path,
             "line": chat_request.comment.line_number,
@@ -48,8 +49,8 @@ class GithubCommentHelper:
         return comment_payload
 
     @classmethod
-    def format_chat_thread_comment(cls, comment, chat_request: ChatRequest) -> dict:
-        comment_payload = {
+    def format_chat_thread_comment(cls, comment: str, chat_request: ChatRequest) -> Dict[str, Any]:
+        comment_payload: Dict[str, Any] = {
             "content": comment,
             "in_reply_to_id": chat_request.comment.parent,
             "path": chat_request.comment.path,

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
@@ -24,7 +24,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.helpers.pr_score
 from app.main.blueprints.deputy_dev.services.comment.affirmation_comment_service import (
     AffirmationService,
 )
-from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_Service import (
+from app.main.blueprints.deputy_dev.services.comment.agent_comment_mapping_repository import (
     AgentCommentMappingService,
 )
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
@@ -43,7 +43,9 @@ config = CONFIG.config
 
 
 class PRReviewPostProcessor:
-    def __init__(self, pr_service: BasePR, comment_service: BaseComment, affirmation_service: AffirmationService):
+    def __init__(
+        self, pr_service: BasePR, comment_service: BaseComment, affirmation_service: AffirmationService
+    ) -> None:
         self.pr_service = pr_service
         self.comment_service = comment_service
         self.pr_model = pr_service.pr_model()
@@ -52,7 +54,7 @@ class PRReviewPostProcessor:
         self.review_status = None
         self.loc_changed = 0
 
-    async def post_process_pr_large_pr(self, pr_dto: PullRequestDTO, tokens_data):
+    async def post_process_pr_large_pr(self, pr_dto: PullRequestDTO, tokens_data: Dict[str, int]) -> None:
         self.review_status = PrStatusTypes.REJECTED_LARGE_SIZE.value
         await PRService.db_update(
             payload={
@@ -69,7 +71,9 @@ class PRReviewPostProcessor:
                 filters={"repo_id": pr_dto.repo_id, "pr_id": pr_dto.id},
             )
 
-    async def post_process_pr_no_comments(self, pr_dto: PullRequestDTO, tokens_data, extra_info: dict = None):
+    async def post_process_pr_no_comments(
+        self, pr_dto: PullRequestDTO, tokens_data: Dict[str, int], extra_info: Optional[Dict[str, Any]] = None
+    ) -> None:
         self.review_status = PrStatusTypes.COMPLETED.value
         await PRService.db_update(
             payload={
@@ -88,7 +92,7 @@ class PRReviewPostProcessor:
             )
 
     @staticmethod
-    async def post_process_pr_experiment_purpose(pr_dto: PullRequestDTO):
+    async def post_process_pr_experiment_purpose(pr_dto: PullRequestDTO) -> None:
         await PRService.db_update(
             payload={
                 "review_status": PrStatusTypes.REJECTED_EXPERIMENT.value,
@@ -104,11 +108,11 @@ class PRReviewPostProcessor:
     async def post_process_pr(
         self,
         pr_dto: PullRequestDTO,
-        llm_comments: List[dict],
-        tokens_data: dict,
+        llm_comments: List[Dict[str, Any]],
+        tokens_data: Dict[str, int],
         is_large_pr: bool,
-        extra_info: dict = None,
-    ):
+        extra_info: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self.loc_changed = await self.pr_service.get_loc_changed_count()
         self.completed_pr_count = await PRService.get_completed_pr_count(pr_dto)
 
@@ -120,7 +124,7 @@ class PRReviewPostProcessor:
             await self.post_process_pr_no_comments(pr_dto, tokens_data, extra_info)
         await self.process_affirmation_message()
 
-    async def process_affirmation_message(self):
+    async def process_affirmation_message(self) -> None:
         error_message = SettingService.fetch_setting_errors(CODE_REVIEW_ERRORS)
         additional_context = {"error": f"\n\n{error_message}" if error_message else ""}
         await self.affirmation_service.create_affirmation_reply(
@@ -128,8 +132,12 @@ class PRReviewPostProcessor:
         )
 
     async def post_process_pr_with_comments(
-        self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None
-    ):
+        self,
+        pr_dto: PullRequestDTO,
+        llm_comments: List[Dict[str, Any]],
+        tokens_data: Dict[str, int],
+        extra_info: Optional[Dict[str, Any]] = None,
+    ) -> None:
         comments = await self.save_llm_comments(pr_dto, llm_comments)
         await self.update_pr(pr_dto, comments, tokens_data, extra_info=extra_info)
         if ExperimentService.is_eligible_for_experiment():
@@ -142,8 +150,8 @@ class PRReviewPostProcessor:
             )
 
     @staticmethod
-    def combine_all_agents_comments(llm_agents_comments):
-        all_comments = []
+    def combine_all_agents_comments(llm_agents_comments: Dict[str, Any]) -> List[Dict[str, Any]]:
+        all_comments: List[Dict[str, Any]] = []
 
         for agent, data in llm_agents_comments.items():
             for comment in data.get("comments", []):
@@ -158,8 +166,8 @@ class PRReviewPostProcessor:
         return all_comments
 
     @staticmethod
-    def get_pr_score(llm_comments: list):
-        weight_counts_data = {}
+    def get_pr_score(llm_comments: List[Dict[str, Any]]) -> float:
+        weight_counts_data: Dict[int, int] = {}
         agent_settings = get_context_value("setting")["code_review_agent"]["agents"]
         agents_by_agent_id = {agent_data["agent_id"]: agent_data for agent_name, agent_data in agent_settings.items()}
         for comment in llm_comments:
@@ -169,7 +177,7 @@ class PRReviewPostProcessor:
         return PRScoreHelper.calculate_pr_score(weight_counts_data)
 
     @classmethod
-    async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[Dict[Any, Any]]):
+    async def save_llm_comments(cls, pr_dto: PullRequestDTO, llm_comments: List[Dict[Any, Any]]) -> None:  # noqa: C901
         comments_to_save = []
         agent_mappings_to_save = []
 
@@ -255,7 +263,7 @@ class PRReviewPostProcessor:
         return agents_by_id
 
     @staticmethod
-    async def upsert_agents(repo_id: int, saved_agents: Dict[str, Any], current_agents: Dict[str, dict]):
+    async def upsert_agents(repo_id: int, saved_agents: Dict[str, Any], current_agents: Dict[str, Any]) -> bool:
         new_agents = []
         is_new_agent_created = False
         for agent_id, agent_data in current_agents.items():
@@ -272,7 +280,13 @@ class PRReviewPostProcessor:
         await SettingService.upsert_agents(new_agents)
         return is_new_agent_created
 
-    async def update_pr(self, pr_dto: PullRequestDTO, llm_comments, tokens_data, extra_info: dict = None):
+    async def update_pr(
+        self,
+        pr_dto: PullRequestDTO,
+        llm_comments: Optional[List[Dict[str, Any]]],
+        tokens_data: Dict[str, int],
+        extra_info: Optional[Dict[str, Any]] = None,
+    ) -> None:
         pr_score = self.get_pr_score(llm_comments)
         self.review_status = PrStatusTypes.COMPLETED.value
         await PRService.db_update(
@@ -286,7 +300,13 @@ class PRReviewPostProcessor:
             filters={"id": pr_dto.id},
         )
 
-    def pr_meta_info(self, pr_dto: PullRequestDTO, tokens_data, llm_comments: dict = None, extra_info: dict = None):
+    def pr_meta_info(
+        self,
+        pr_dto: PullRequestDTO,
+        tokens_data: Dict[str, int],
+        llm_comments: Optional[List[Dict[str, Any]]] = None,
+        extra_info: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         llm_comments, extra_info = llm_comments or [], extra_info or {}
         # Check if pr_review_start_time is present in extra_info otherwise fallback case
         if extra_info.get("pr_review_start_time"):
@@ -306,7 +326,7 @@ class PRReviewPostProcessor:
         }
 
     @staticmethod
-    def format_token(tokens_data: dict):
+    def format_token(tokens_data: Dict[str, int]) -> Dict[str, Any]:
         tokens = {}
         for agent_name, agent_tokens in tokens_data.items():
             tokens[agent_name] = agent_tokens

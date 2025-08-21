@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from app.main.blueprints.deputy_dev.services.serializers.shadcn.base_shadcn import (
     BaseShadcn,
 )
@@ -20,7 +22,7 @@ class PrScore(BaseShadcn):
             formatted `step` (string) and `pr_score` (float) values.
     """
 
-    def process_raw_data(self):
+    def process_raw_data(self) -> List[Dict[str, Any]]:
         """
         Processes the raw data by converting datetime and Decimal values
         into their respective string and float formats.

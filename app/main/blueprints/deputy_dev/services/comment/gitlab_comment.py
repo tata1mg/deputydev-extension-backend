@@ -1,3 +1,5 @@
+from typing import Any, Dict, Optional
+
 from sanic.log import logger
 from torpedo import CONFIG
 
@@ -25,13 +27,13 @@ class GitlabComment(BaseComment):
         pr_id: str,
         auth_handler: AuthHandler,
         pr_details: PullRequestResponse = None,
-        repo_id=None,
-    ):
+        repo_id: Optional[int] = None,
+    ) -> None:
         super().__init__(workspace, workspace_slug, repo_name, pr_id, auth_handler, pr_details, repo_id=repo_id)
         self.repo_client = GitlabRepoClient(pr_id=pr_id, project_id=self.repo_id, auth_handler=auth_handler)
         self.comment_helper = GitlabCommentHelper
 
-    async def create_pr_comment(self, comment, model):
+    async def create_pr_comment(self, comment: Dict[str, Any], model: str) -> None:
         """Create comment on whole PR"""
         comment_payload = {
             "body": format_comment(comment),
@@ -41,7 +43,7 @@ class GitlabComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
-    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
+    async def create_comment_on_parent(self, comment: Dict[str, Any], parent_id: str, model: str = "") -> None:
         """creates comment on whole pr"""
         comment_payload = {"body": format_comment(comment)}
         response = await self.repo_client.create_comment_on_parent(comment_payload, parent_id)
@@ -49,7 +51,7 @@ class GitlabComment(BaseComment):
             logger.error(f"unable to make whole PR comment {self.meta_data}")
         return response
 
-    async def create_pr_review_comment(self, comment, model):
+    async def create_pr_review_comment(self, comment: Dict[str, Any], model: str) -> None:
         """Creates comments on PR lines"""
         logger.info(f"Comment payload: {comment}")
         comment["commit_id"] = self.pr_details.commit_id
@@ -64,7 +66,7 @@ class GitlabComment(BaseComment):
         response_json = await response.json()
         comment["scm_comment_id"] = str(response_json["id"])
 
-    async def fetch_comment_thread(self, chat_request):
+    async def fetch_comment_thread(self, chat_request: ChatRequest) -> str:
         """
         Fetches the comment thread for a comment_id
 
@@ -84,11 +86,11 @@ class GitlabComment(BaseComment):
                     comment_thread += "\n" + comment["body"]
 
             return comment_thread
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"An unexpected error occurred while processing fetch_comment_thread : {e}")
             return ""
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(self, comment: str, chat_request: ChatRequest, add_note: bool = False) -> None:
         """
         Create a comment on a parent comment in pull request.
 
@@ -102,7 +104,7 @@ class GitlabComment(BaseComment):
         comment_payload = {"body": comment}
         await self.create_comment_on_thread(comment_payload, chat_request.comment.parent)
 
-    async def create_comment_on_thread(self, comment_payload, discussion_id):
+    async def create_comment_on_thread(self, comment_payload: Dict[str, Any], discussion_id: str) -> Dict[str, Any]:
         """
         Create a comment on a parent comment in pull request.
 

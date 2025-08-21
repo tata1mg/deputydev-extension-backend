@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Optional
 
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
@@ -22,7 +23,7 @@ class OnboardingManager:
     # ---------------------------------- signup ---------------------------------- #
 
     @classmethod
-    async def signup(cls, payload: SignUpRequest):
+    async def signup(cls, payload: SignUpRequest) -> Optional[int]:
         try:
             await Users.get(email=payload.email)
         except DoesNotExist:
@@ -58,12 +59,11 @@ class OnboardingManager:
     # ---------------------------------- onboard --------------------------------- #
 
     @classmethod
-    async def onboard(cls, payload: OnboardingRequest):
+    async def onboard(cls, payload: OnboardingRequest) -> None:
         try:
             _ = await Teams.get(id=payload.team_id)  # check if team exists
         except DoesNotExist as exc:
             raise TeamNotFound(f"Team with id {payload.team_id} not found") from exc
 
         integration: Integration = get_integration(payload.integration_client)()
-        onboarding_info = await integration.integrate(payload=payload)
-        return onboarding_info
+        await integration.integrate(payload=payload)

@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Optional
+
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo import CONFIG
@@ -23,14 +25,14 @@ class BitbucketComment(BaseComment):
         repo_name: str,
         pr_id: str,
         auth_handler: AuthHandler,
-        pr_details: PullRequestResponse = None,
-        repo_id=None,
-    ):
+        pr_details: Optional[PullRequestResponse] = None,
+        repo_id: Optional[int] = None,
+    ) -> None:
         super().__init__(workspace, workspace_slug, repo_name, pr_id, auth_handler, pr_details, repo_id)
         self.repo_client = BitbucketRepoClient(workspace_slug, repo_name, int(pr_id), auth_handler=auth_handler)
         self.comment_helper = BitbucketCommentHelper
 
-    async def create_comment_on_line(self, comment: dict):
+    async def create_comment_on_line(self, comment: Dict[str, Any]) -> None:
         """
         Create a comment on a line in a file in pull request.
 
@@ -47,7 +49,7 @@ class BitbucketComment(BaseComment):
         )
         return response
 
-    async def fetch_comment_thread(self, chat_request):
+    async def fetch_comment_thread(self, chat_request: ChatRequest) -> str:  # noqa: C901
         """
         Fetches comment thread by finding root node and building thread recursively.
 
@@ -106,11 +108,18 @@ class BitbucketComment(BaseComment):
                 thread += formatted_comment
             return thread
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_warn(f"Error processing comment thread: {e}")
             return ""
 
-    async def _build_comment_thread(self, comment_id, comment_map, children_map, thread_comments, request_comment_id):
+    async def _build_comment_thread(
+        self,
+        comment_id: str,
+        comment_map: Dict[str, Any],
+        children_map: Dict[str, List[Dict[str, Any]]],
+        thread_comments: List[Dict[str, Any]],
+        request_comment_id: str,
+    ) -> None:
         """
         Recursively builds comment thread starting from root.
 
@@ -134,19 +143,19 @@ class BitbucketComment(BaseComment):
                     await self._build_comment_thread(
                         child["id"], comment_map, children_map, thread_comments, request_comment_id
                     )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_error(f"Error building thread from comment {comment_id}: {e}")
 
-    async def create_pr_comment(self, comment: str, model: str):
+    async def create_pr_comment(self, comment: str, model: str) -> Dict[str, Any]:
         comment_payload = {"content": {"raw": comment}}
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
 
-    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
+    async def create_comment_on_parent(self, comment: str, parent_id: str, model: str = "") -> Dict[str, Any]:
         """creates comment on whole pr"""
         comment_payload = {"content": {"raw": comment}, "parent": {"id": parent_id}}
         return await self.repo_client.create_comment_on_pr(comment_payload, model)
 
-    async def create_pr_review_comment(self, comment: dict, model):
+    async def create_pr_review_comment(self, comment: Dict[str, Any], model: str) -> Dict[str, Any]:
         logger.info(f"Comment payload: {comment}")
         comment_payload = self.comment_helper.format_pr_review_comment(comment)
 
@@ -155,7 +164,7 @@ class BitbucketComment(BaseComment):
         comment["scm_comment_id"] = result_json["id"]
         return result
 
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(self, comment: str, chat_request: ChatRequest, add_note: bool = False) -> None:
         comment = await super().process_chat_comment(comment, chat_request, add_note)
         if chat_request.comment.parent:
             await self.create_comment_on_thread(comment, chat_request)
@@ -165,7 +174,7 @@ class BitbucketComment(BaseComment):
         else:
             await self.create_comment_on_parent(comment, chat_request.comment.id)
 
-    async def create_comment_on_thread(self, comment, chat_request: ChatRequest):
+    async def create_comment_on_thread(self, comment: str, chat_request: ChatRequest) -> None:
         """
         Create a comment on a parent comment in pull request.
 

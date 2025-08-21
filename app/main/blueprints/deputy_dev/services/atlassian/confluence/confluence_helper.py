@@ -1,6 +1,6 @@
 class ConfluenceHelper:
     @staticmethod
-    def parse_description(content) -> str:
+    def parse_description(content: str) -> str:
         """
         Extracts the Confluence document ID from the given Confluence link.
 

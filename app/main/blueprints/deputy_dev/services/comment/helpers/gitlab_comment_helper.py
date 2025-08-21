@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict
 
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import (
@@ -9,7 +10,7 @@ from app.main.blueprints.deputy_dev.utils import (
 
 class GitlabCommentHelper:
     @classmethod
-    def format_pr_review_comment(cls, comment, diff_refs) -> dict:
+    def format_pr_review_comment(cls, comment: Dict[str, Any], diff_refs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Formats a comment for reviewing a GitLab merge request.
         """
@@ -42,7 +43,7 @@ class GitlabCommentHelper:
         return comment_payload
 
     @classmethod
-    def format_chat_thread_comment(cls, comment, chat_request: ChatRequest) -> dict:
+    def format_chat_thread_comment(cls, comment: str, chat_request: ChatRequest) -> Dict[str, Any]:
         """
         Formats a comment reply in a thread for GitLab.
         """

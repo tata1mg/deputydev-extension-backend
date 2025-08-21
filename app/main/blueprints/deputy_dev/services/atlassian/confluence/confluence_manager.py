@@ -7,13 +7,13 @@ from .confluence_helper import ConfluenceHelper
 
 
 class ConfluenceManager:
-    def __init__(self, document_id: str):
+    def __init__(self, document_id: str) -> None:
         self.document_id = document_id
         self.auth_handler = None
         self.client_account_id = None
         self.is_confluence_integration_enabled = False
 
-    async def set_auth_handler(self):
+    async def set_auth_handler(self) -> None:
         if not self.auth_handler and not self.client_account_id:
             confluence_auth_handler, integration_info = await get_auth_handler(
                 client="confluence", team_id=get_context_value("team_id")
@@ -23,7 +23,7 @@ class ConfluenceManager:
                 self.client_account_id = integration_info["client_account_id"]
                 self.is_confluence_integration_enabled = True
 
-    async def get_description_text(self):
+    async def get_description_text(self) -> str:
         """
         Extracts the Confluence document ID from the given Confluence link.
         Returns:
