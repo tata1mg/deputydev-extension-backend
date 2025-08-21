@@ -152,17 +152,52 @@ class MessageThreadsRepository:
             return 0
 
     @classmethod
-    async def mark_as_migrated(cls, session_id: int) -> None:
+    async def mark_as_migrated(cls, message_thread_ids: List[int]) -> None:
         # add migrated in metadata
         try:
             await DB.update_by_filters(
                 None,
                 MessageThread,
-                {"metadata": {"migrated": True}},
-                {"session_id": session_id},
+                {"migrated": True},
+                {"id__in": message_thread_ids},
             )
         except Exception as ex:
             logger.error(
-                f"error occurred while marking message threads as migrated for session_id: {session_id}, ex: {ex}"
+                f"error occurred while marking message threads as migrated for message_thread_ids: {message_thread_ids}, ex: {ex}"
             )
             raise ex
+
+    @classmethod
+    async def get_unmigrated_threads(
+        cls,
+        session_id: int,
+        call_chain_category: MessageCallChainCategory,
+        content_hashes: List[str] = [],
+        prompt_types: List[str] = [],
+    ) -> List[MessageThreadDTO]:
+        try:
+            filters: Dict[str, Union[List[str], int, str]] = {
+                "session_id": session_id,
+                "call_chain_category": call_chain_category.value,
+            }
+            if content_hashes:
+                filters["data_hash__in"] = content_hashes
+            if prompt_types:
+                filters["prompt_type__in"] = prompt_types
+
+            filters["migrated"] = None
+            message_threads = await DB.by_filters(
+                model_name=MessageThread,
+                where_clause=filters,
+                fetch_one=False,
+                order_by=["id"],
+            )
+            if not message_threads:
+                return []
+            return [MessageThreadDTO(**message_thread) for message_thread in message_threads]
+
+        except Exception as ex:  # noqa: BLE001
+            logger.error(
+                f"error occurred while fetching message_threads from db for session_id filters : {session_id}, ex: {ex}"
+            )
+            return []
