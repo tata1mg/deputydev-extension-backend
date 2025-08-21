@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Type
 
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import GraphTypes
 from app.main.blueprints.deputy_dev.services.serializers.base_serializers import (
@@ -34,16 +34,16 @@ class ShadcnFactory(BaseSerializers):
         get_shadcn_service() -> An instance of the appropriate shadcn service.
     """
 
-    FACTORIES = {
+    FACTORIES: Dict[str, Type[BaseShadcn]] = {
         GraphTypes.COMMENT_BUCKET_TYPES.value: CommentBucketTypes,
         GraphTypes.PR_SCORE.value: PrScore,
         GraphTypes.REVIEWED_VS_REJECTED.value: ReviewedVsRejected,
     }
 
-    def __init__(self, raw_data: List[Dict[str, Any]], graph_type: str, interval_filter: str):
+    def __init__(self, raw_data: List[Dict[str, Any]], graph_type: str, interval_filter: str) -> None:
         super().__init__(raw_data=raw_data, graph_type=graph_type, interval_filter=interval_filter)
 
-    def get_shadcn_service(self):
+    def get_shadcn_service(self) -> BaseShadcn:
         """
         Returns an instance of the shadcn service based on the provided graph type.
 

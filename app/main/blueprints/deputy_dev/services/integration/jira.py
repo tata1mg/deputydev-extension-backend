@@ -13,13 +13,13 @@ from .base import Integration
 class Jira(Integration):
     __name__ = "jira"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.auth_handler: JiraAuthHandler | None = None
 
-    async def integrate(self, payload: OnboardingRequest):
+    async def integrate(self, payload: OnboardingRequest) -> None:
         integration_row = await self.get_integration(payload.team_id, payload.integration_client)
 
-        self.auth_handler: JiraAuthHandler = JiraAuthHandler(
+        self.auth_handler = JiraAuthHandler(
             tokenable_id=integration_row.id,
         )
 
@@ -38,7 +38,7 @@ class Jira(Integration):
 
             await self.mark_connected(integration_row)
 
-    async def get_cloud_id(self, token) -> str:
+    async def get_cloud_id(self, token: str) -> str:
         response = await AtlassianOAuthClient.get_accessible_resources(token)
         cloud_id = response[0]["id"]
         return cloud_id

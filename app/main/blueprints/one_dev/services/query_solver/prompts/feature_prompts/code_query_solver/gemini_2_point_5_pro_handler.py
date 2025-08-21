@@ -31,7 +31,7 @@ class Gemini2Point5ProCodeQuerySolverPromptHandler(BaseGemini2Point5ProPromptHan
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Gemini2Point5ProCodeQuerySolverPrompt
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.prompt = self.prompt_class(params)
 

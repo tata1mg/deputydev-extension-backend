@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -17,16 +17,16 @@ from .prompts.factory import PromptFeatureFactory
 
 
 class ReviewPlanner:
-    def __init__(self, session_id: int, prompt_vars) -> None:
+    def __init__(self, session_id: int, prompt_vars: Dict[str, Any]) -> None:
         super().__init__()
         self.session_id = session_id
         self.prompt_vars = prompt_vars
 
-    async def get_review_plan(self):
+    async def get_review_plan(self) -> Optional[Dict[str, Any]]:
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
 
         max_retries = 2
-        response: Optional[NonStreamingParsedLLMCallResponse] = None
+        response: Optional[Dict[str, Any]] = None
         for attempt in range(max_retries + 1):
             try:
                 llm_response = await llm_handler.start_llm_query(
@@ -41,7 +41,7 @@ class ReviewPlanner:
                         raise ValueError("Expected NonStreamingParsedLLMCallResponse")
                     response = llm_response.parsed_content[0]
                     break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_warn(f"Review Planner call Attempt {attempt + 1} failed: {e}")
                 await asyncio.sleep(1)  # Optional: add a delay before retrying
 

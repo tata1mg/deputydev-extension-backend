@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.utils.app_utils import get_vcs_repo_name_slug
@@ -12,7 +12,7 @@ from .webhook_utils import should_skip_trayalabs_request
 
 class IssueCommentWebhook:
     @classmethod
-    async def parse_payload(cls, request_payload) -> Optional[IssueCommentRequest]:
+    async def parse_payload(cls, request_payload: Dict[str, Any]) -> Optional[IssueCommentRequest]:
         """Parse issue comment webhook payload"""
         if should_skip_trayalabs_request(request_payload):
             return None
@@ -22,7 +22,7 @@ class IssueCommentWebhook:
         return None
 
     @classmethod
-    def __parse_bitbucket_issue_payload(cls, request_payload) -> IssueCommentRequest:
+    def __parse_bitbucket_issue_payload(cls, request_payload: Dict[str, Any]) -> IssueCommentRequest:
         """
         Parse Bitbucket issue comment payload
         Returns structured data containing comment, repo, and issue information

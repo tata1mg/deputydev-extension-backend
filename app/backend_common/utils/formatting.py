@@ -111,7 +111,7 @@ def format_summary_with_metadata(summary: str, loc: int, commit_id: str) -> str:
     return formatted_summary
 
 
-def append_line_numbers(pr_diff: str) -> str:
+def append_line_numbers(pr_diff: str) -> str:  # noqa: C901
     """Append line numbers to PR diff
     Args:
         pr_diff (str): pr diff returned from git diff

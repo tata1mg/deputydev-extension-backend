@@ -1,4 +1,7 @@
+from typing import Dict, Type
+
 from app.main.blueprints.deputy_dev.constants.dashboard_constants import GraphTypes
+from app.main.blueprints.deputy_dev.services.analytics.v1.base_analytics import BaseAnalytics
 from app.main.blueprints.deputy_dev.services.analytics.v1.comment_bucket_types import (
     CommentBucketTypes,
 )
@@ -11,7 +14,7 @@ from app.main.blueprints.deputy_dev.services.analytics.v1.reviewed_vs_rejected i
 class AnalyticsFactory:
     """Factory class to get an instance of the analytics service based on the graph type"""
 
-    FACTORIES = {
+    FACTORIES: Dict[str, Type[BaseAnalytics]] = {
         GraphTypes.COMMENT_BUCKET_TYPES.value: CommentBucketTypes,
         GraphTypes.PR_SCORE.value: PrScore,
         GraphTypes.REVIEWED_VS_REJECTED.value: ReviewedVsRejected,
@@ -20,7 +23,7 @@ class AnalyticsFactory:
     @classmethod
     def get_analytics_service(
         cls, start_date: str, end_date: str, repo_ids: str, graph_type: str, interval_filter: str
-    ):
+    ) -> BaseAnalytics:
         """
         Returns an instance of the analytics service based on the provided graph type.
 

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from ast import Tuple
+from typing import Any, Dict, List
+
+from deputydev_core.clients.http.adapters.http_response_adapter import AiohttpToRequestsAdapter
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from torpedo import CONFIG
@@ -24,7 +28,7 @@ class BitbucketRepoClient(BaseSCMClient):
 
         super().__init__(auth_handler=auth_handler)
 
-    async def get_pr_details(self) -> dict:
+    async def get_pr_details(self) -> Dict[str, Any] | None:
         """
         Get details of a pull request from Bitbucket.
 
@@ -41,7 +45,7 @@ class BitbucketRepoClient(BaseSCMClient):
         response_json = await response.json()
         return response_json
 
-    async def update_pr_details(self, payload) -> dict:
+    async def update_pr_details(self, payload: Dict[str, Any]) -> Dict[str, Any] | None:
         """
         Update details of a pull request from Bitbucket.
 
@@ -64,14 +68,14 @@ class BitbucketRepoClient(BaseSCMClient):
         else:
             AppLogger.log_error(f"PR couldn't updated {response_json}")
 
-    async def get_pr_comments(self) -> list:
+    async def get_pr_comments(self) -> List[Dict[str, Any]]:
         """
         Get all comments for the pull request, handling pagination.
         Note: In API response we get comments in ascending order of created_at
         Returns:
             list: List of all comments for the pull request.
         """
-        comments = []
+        comments: List[Dict[str, Any]] = []
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/comments?pagelen=100"
 
         while url:
@@ -86,7 +90,7 @@ class BitbucketRepoClient(BaseSCMClient):
 
         return comments
 
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> Tuple[AiohttpToRequestsAdapter, int]:
         """
         Get the diff of a pull request from Bitbucket.
 
@@ -102,7 +106,7 @@ class BitbucketRepoClient(BaseSCMClient):
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
         return response, response.status_code
 
-    async def get_commit_diff(self, base_commit, destination_commit):
+    async def get_commit_diff(self, base_commit: str, destination_commit: str) -> Tuple[AiohttpToRequestsAdapter, int]:
         """
         Get the diff between two commits in Bitbucket.
 
@@ -120,7 +124,7 @@ class BitbucketRepoClient(BaseSCMClient):
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
         return response, response.status_code
 
-    async def create_comment_on_pr(self, comment: dict, model: str):
+    async def create_comment_on_pr(self, comment: Dict[str, Any], model: str) -> AiohttpToRequestsAdapter | None:
         """
         Create a comment on the pull request.
 
@@ -136,7 +140,7 @@ class BitbucketRepoClient(BaseSCMClient):
         response = await self.post(url, json=comment, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
-    async def get_comment_details(self, comment_id):
+    async def get_comment_details(self, comment_id: str) -> AiohttpToRequestsAdapter | None:
         """
         Get the comment details on PR from Bitbucket.
 
@@ -154,7 +158,7 @@ class BitbucketRepoClient(BaseSCMClient):
             )
         return response
 
-    async def get_pr_diff_stats(self):
+    async def get_pr_diff_stats(self) -> AiohttpToRequestsAdapter | None:
         """
         Get the diff stat of pull request
 
@@ -168,7 +172,7 @@ class BitbucketRepoClient(BaseSCMClient):
             return None
         return response
 
-    async def get_commit_diff_stats(self, base_commit, destination_commit):
+    async def get_commit_diff_stats(self, base_commit: str, destination_commit: str) -> AiohttpToRequestsAdapter | None:
         """
         Get the diff stat between two commits
 
@@ -182,7 +186,7 @@ class BitbucketRepoClient(BaseSCMClient):
             return None
         return response
 
-    async def fetch_diffstat(self, repo_name, scm_pr_id):
+    async def fetch_diffstat(self, repo_name: str, scm_pr_id: str) -> int:
         url = "https://api.bitbucket.org/2.0/repositories/tata1mg/{repo_name}/pullrequests/{scm_pr_id}/diffstat".format(
             repo_name=repo_name, scm_pr_id=scm_pr_id
         )
@@ -193,7 +197,7 @@ class BitbucketRepoClient(BaseSCMClient):
         else:
             return 0
 
-    async def get_pr_diff_v1(self, repo_name, scm_pr_id):
+    async def get_pr_diff_v1(self, repo_name: str, scm_pr_id: str) -> Tuple[AiohttpToRequestsAdapter, int]:
         """
         Get the diff of a pull request from Bitbucket.
 
@@ -210,7 +214,7 @@ class BitbucketRepoClient(BaseSCMClient):
             AppLogger.log_error(f"Unable to retrieve diff for PR - {self.pr_id}: {response._content}")
         return response, response.status_code
 
-    async def get_pr_commits(self) -> list:
+    async def get_pr_commits(self) -> List[Any]:
         """Get all commits in a Bitbucket PR with pagination"""
         url = (
             f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/pullrequests/{self.pr_id}/commits"
@@ -227,7 +231,7 @@ class BitbucketRepoClient(BaseSCMClient):
         )
         return []
 
-    async def create_pr(self, payload):
+    async def create_pr(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a PR on Bitbucket.
 
@@ -239,7 +243,7 @@ class BitbucketRepoClient(BaseSCMClient):
         response = await self.post(url, json=payload, headers=workspace_token_headers, skip_auth_headers=True)
         return await response.json()
 
-    async def list_prs(self, state="OPEN"):
+    async def list_prs(self, state: str = "OPEN") -> Dict[str, Any]:
         """
         List all PRs on Bitbucket.
 
@@ -250,13 +254,13 @@ class BitbucketRepoClient(BaseSCMClient):
         response = await self.get(url, params={"state": state})
         return await response.json()
 
-    async def create_issue_comment(self, issue_id, comment):
+    async def create_issue_comment(self, issue_id: str, comment: str) -> Dict[str, Any]:
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/issues/{issue_id}/comments"
         payload = {"content": {"raw": comment}}
         response = await self.post(url, json=payload)
         return await response.json()
 
-    async def get_file(self, branch_name, file_path):
+    async def get_file(self, branch_name: str, file_path: str) -> AiohttpToRequestsAdapter:
         url = f"{self.bitbucket_url}/2.0/repositories/{self.workspace_slug}/{self.repo}/src/{branch_name}/{file_path}"
         response = await self.get(url)
         if response.status_code != 200:

@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from sanic.log import logger
 
 from app.backend_common.models.dto.pr.bitbucket_pr import BitbucketPrModel
@@ -21,10 +23,10 @@ from app.main.blueprints.deputy_dev.utils import (
 
 
 class BackfillManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.bitbucket_client = None
 
-    async def backfill_comments_count_in_experiments_table(self, query_params):
+    async def backfill_comments_count_in_experiments_table(self, query_params: Dict[str, Any]) -> None:
         pr_rows = await PRService.get_bulk_prs_by_filter(query_params)
         for pr in pr_rows:
             scm_pr_id = pr["scm_pr_id"]
@@ -43,7 +45,7 @@ class BackfillManager:
                 )
                 logger.info(f"Backfilling of comment counts completed for - {pr['id']}")
 
-    async def backfill_expermients_data(self, query_params):
+    async def backfill_experiment_data(self, query_params: Dict[str, Any]) -> None:
         """
         Backfill experiment and pull request data based on the given query parameters.
 
@@ -123,7 +125,7 @@ class BackfillManager:
                     )
                     logger.info(f"Marked data to merge state for experiment and PR for row - {row.id}")
 
-    async def backfill_pullrequests_data(self, query_params):
+    async def backfill_pullrequests_data(self, query_params: Dict[str, Any]) -> None:
         """
         Backfill pull request data based on the given query parameters.
 
@@ -172,10 +174,10 @@ class BackfillManager:
                         filters={"id": row["id"]},
                     )
                     logger.info(f"Marked data to merge / decline state for PR row - {row['id']}")
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001
                 logger.info(f"Error occured for {row['id']} error: {error} pr_details: {pr_detail}")
 
-    async def backfill_pr_approval_time(self, query_params):
+    async def backfill_pr_approval_time(self, query_params: Dict[str, Any]) -> None:
         """
         Backfill pull request data based on the given query parameters.
 

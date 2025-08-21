@@ -27,7 +27,7 @@ from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import get_stored_session
 
 
-async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
+async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
     """
     Get the auth data from the request
     """
@@ -140,7 +140,7 @@ def authenticate(func: Any) -> Any:
     """
 
     @wraps(func)
-    async def wrapper(request: Request, *args, **kwargs: Any) -> Any:
+    async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         try:
             # Get the auth data
             client_data: ClientData = kwargs.get("client_data")

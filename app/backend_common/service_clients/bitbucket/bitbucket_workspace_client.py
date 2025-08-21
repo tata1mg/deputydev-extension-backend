@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Dict
+
 from torpedo import CONFIG
 
 from app.backend_common.services.credentials import AuthHandler
@@ -13,7 +15,7 @@ class BitbucketWorkspaceClient(BaseSCMClient):
 
         super().__init__(auth_handler=auth_handler)
 
-    async def get_all_workspaces(self):
+    async def get_all_workspaces(self) -> Dict[str, Any]:
         url = f"{self.bitbucket_url}/2.0/user/permissions/workspaces"
         response = await self.get(url=url)
         response.raise_for_status()
@@ -21,7 +23,7 @@ class BitbucketWorkspaceClient(BaseSCMClient):
 
     # ---------------------------------------------------------------------------- #
 
-    async def get_webhooks(self, workspace):
+    async def get_webhooks(self, workspace: str) -> Dict[str, Any]:
         url = f"{self.bitbucket_url}/2.0/workspaces/{workspace}/hooks"
         response = await self.get(url=url)
         response.raise_for_status()
@@ -29,15 +31,15 @@ class BitbucketWorkspaceClient(BaseSCMClient):
 
     async def create_webhooks(
         self,
-        workspace,
+        workspace: str,
         description: str,
         webhook_url: str,
         events: list[str],
         secret_token: str,
-    ):
+    ) -> Dict[str, Any]:
         url = f"{self.bitbucket_url}/2.0/workspaces/{workspace}/hooks"
 
-        data = {
+        data: Dict[str, Any] = {
             "description": description,
             "url": webhook_url,
             "active": True,
@@ -49,13 +51,13 @@ class BitbucketWorkspaceClient(BaseSCMClient):
         response.raise_for_status()
         return await response.json()
 
-    async def get_active_users(self, workspace):
+    async def get_active_users(self, workspace: str) -> Dict[str, Any]:
         url = f"{self.bitbucket_url}/2.0/workspaces/{workspace}/members"
         response = await self.get(url)
         response.raise_for_status()
         return await response.json()
 
-    async def get_all_repos(self, workspace):
+    async def get_all_repos(self, workspace: str) -> Dict[str, Any]:
         url = f"{self.bitbucket_url}/2.0/repositories/{workspace}"
         response = await self.get(url)
         response.raise_for_status()

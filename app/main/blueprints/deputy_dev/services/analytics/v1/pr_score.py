@@ -16,7 +16,7 @@ class PrScore(BaseAnalytics):
         repo_ids: str = None,
         graph_type: str = None,
         interval_filter: str = None,
-    ):
+    ) -> None:
         super().__init__(
             start_date=start_date,
             end_date=end_date,
