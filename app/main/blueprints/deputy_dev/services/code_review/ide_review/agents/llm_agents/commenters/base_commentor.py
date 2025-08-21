@@ -116,7 +116,10 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
         for chat in chat_dto_list:
             if isinstance(chat.message_data, TextMessageData) and chat.actor == ActorType.REVIEW_AGENT:
                 conversation_turns.append(
-                    UserConversationTurn(content=[UnifiedTextConversationTurnContent(text=chat.message_data.text)])
+                    UserConversationTurn(
+                        content=[UnifiedTextConversationTurnContent(text=chat.message_data.text)],
+                        cache_breakpoint=chat.metadata.get("cache_breakpoint"),
+                    )
                 )
             elif isinstance(chat.message_data, ToolUseMessageData) and chat.actor == ActorType.ASSISTANT:
                 conversation_turns.append(
@@ -231,6 +234,18 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
 
         # Get the tools to use for PR review flow
         tools_to_use = self.get_tools_for_review(prompt_handler)
+
+        cached_chat = await ReviewAgentChatsRepository.create_chat(
+            ReviewAgentChatCreateRequest(
+                session_id=session_id,
+                agent_id=self.agent_id,
+                actor=ActorType.REVIEW_AGENT,
+                message_type=MessageType.TEXT,
+                message_data=TextMessageData(text=user_and_system_messages.cached_message),
+                metadata={"cache_breakpoint": True},
+            )
+        )
+        self.review_agent_chats.append(cached_chat)
 
         # create the review agent chat
         query_chat = await ReviewAgentChatsRepository.create_chat(
