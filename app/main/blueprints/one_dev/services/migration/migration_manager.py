@@ -3,6 +3,8 @@ from typing import Any, Dict, List
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
+from torpedo import CONFIG
+from tortoise_wrapper import TortoiseWrapper
 
 from app.backend_common.models.dto.message_thread_dto import (
     ExtendedThinkingData,
@@ -33,6 +35,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FileFocusItem,
     FocusItem,
     FunctionFocusItem,
+    Repository,
     UrlFocusItem,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
@@ -157,6 +160,9 @@ class MessageThreadMigrationManager:
                                     ],
                                     vscode_env=query_vars.get("vscode_env") or None,
                                     focus_items=focus_items,
+                                    repositories=[
+                                        Repository(**_rep_data) for _rep_data in query_vars.get("repositories") or []
+                                    ],
                                 ),
                                 metadata=message_thread.metadata or {},
                                 session_id=session.session_id,
@@ -291,7 +297,7 @@ class MessageThreadMigrationManager:
                                         previous_queries=[],
                                     )
                                 )
-                    AppLogger.log_info(f"Corresponding agent chats created for message_thread {message_thread.id}")
+                    print(f"Corresponding agent chats created for message_thread {message_thread.id}")  # noqa: T201
                     migrated_message_thread_ids.append(message_thread.id)
                 except Exception as ex:  # noqa: BLE001
                     AppLogger.log_error(
@@ -314,7 +320,7 @@ class MessageThreadMigrationManager:
                             )
                         )
 
-                    AppLogger.log_info(f"Corresponding agent chats saved for session {session.session_id}")
+                    print(f"Corresponding agent chats saved for session {session.session_id}")  # noqa: T201
 
                     # mark the last used LLM in the session
                     if last_llm_model:
@@ -324,7 +330,7 @@ class MessageThreadMigrationManager:
 
                     # mark all message_threads as migrated
                     await MessageThreadsRepository.mark_as_migrated(migrated_message_thread_ids)
-                    AppLogger.log_info(f"Message threads marked as migrated for session {session.session_id}")
+                    print(f"Message threads marked as migrated for session {session.session_id}")  # noqa: T201
                     total_migrated_sessions += 1
 
                     await asyncio.sleep(0.1)  # to avoid hitting the database too hard
@@ -336,12 +342,11 @@ class MessageThreadMigrationManager:
 
     @classmethod
     async def migrate_to_agent_chats(cls) -> None:
+        await TortoiseWrapper.setup(config={}, orm_config=CONFIG.config["DB_CONNECTIONS"])
         # migrate all
         while True:
             migrated_count = await cls.migrate_batch_of_sessions()
             if migrated_count == 0:
                 break
 
-
-if __name__ == "__main__":
-    asyncio.run(MessageThreadMigrationManager.migrate_to_agent_chats())
+        print("Migration to agent chats completed.")  # noqa: T201

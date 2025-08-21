@@ -9,6 +9,7 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
+    Repository,
 )
 
 
@@ -33,6 +34,7 @@ class TextMessageData(BaseModel):
     attachments: List[Attachment] = []
     focus_items: List[FocusItem] = []
     vscode_env: Optional[str] = None
+    repositories: Optional[List[Repository]] = None
 
 
 class ToolUseMessageData(BaseModel):
