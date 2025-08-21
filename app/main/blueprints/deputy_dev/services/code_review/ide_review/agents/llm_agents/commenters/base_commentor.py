@@ -136,7 +136,9 @@ class BaseCommenterAgent(BaseCodeReviewAgent):
                             content=[
                                 UnifiedToolResponseConversationTurnContent(
                                     tool_name=chat.message_data.tool_name,
-                                    tool_use_response=chat.message_data.tool_response,
+                                    tool_use_response=chat.message_data.tool_response
+                                    if isinstance(chat.message_data.tool_response, dict)
+                                    else {"response": chat.message_data.tool_response},
                                     tool_use_id=chat.message_data.tool_use_id,
                                 )
                             ]
