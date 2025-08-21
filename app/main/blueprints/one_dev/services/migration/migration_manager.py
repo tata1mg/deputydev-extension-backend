@@ -1,5 +1,6 @@
 import asyncio
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
@@ -19,6 +20,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
+from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,
@@ -65,7 +67,7 @@ class MessageThreadMigrationManager:
                 prompt_types=["CODE_QUERY_SOLVER", "CUSTOM_CODE_QUERY_SOLVER"],
             )
             message_threads.sort(key=lambda x: x.created_at)
-            corresponding_agent_chats: List[AgentChatData] = []
+            corresponding_agent_chats_and_dates: List[Tuple[AgentChatData, datetime, datetime]] = []
             last_llm_model = None
             migrated_message_thread_ids: List[int] = []
             for message_thread in message_threads:
@@ -149,25 +151,31 @@ class MessageThreadMigrationManager:
                                 f"Error occurred while processing focus items: {ex} for {message_thread.id}"
                             )
 
-                        corresponding_agent_chats.append(
-                            AgentChatData(
-                                actor=ActorType.USER,
-                                message_type=AgentMessageType.TEXT,
-                                message_data=TextMessageData(
-                                    text=query_vars["query"],
-                                    attachments=[
-                                        Attachment(attachment_id=block.content.attachment_id) for block in file_blocks
-                                    ],
-                                    vscode_env=query_vars.get("vscode_env") or None,
-                                    focus_items=focus_items,
-                                    repositories=[
-                                        Repository(**_rep_data) for _rep_data in query_vars.get("repositories") or []
-                                    ],
+                        corresponding_agent_chats_and_dates.append(
+                            (
+                                AgentChatData(
+                                    actor=ActorType.USER,
+                                    message_type=AgentMessageType.TEXT,
+                                    message_data=TextMessageData(
+                                        text=query_vars["query"],
+                                        attachments=[
+                                            Attachment(attachment_id=block.content.attachment_id)
+                                            for block in file_blocks
+                                        ],
+                                        vscode_env=query_vars.get("vscode_env") or None,
+                                        focus_items=focus_items,
+                                        repositories=[
+                                            Repository(**_rep_data)
+                                            for _rep_data in query_vars.get("repositories") or []
+                                        ],
+                                    ),
+                                    metadata=message_thread.metadata or {},
+                                    session_id=session.session_id,
+                                    query_id=f"{message_thread.id}",
+                                    previous_queries=[],
                                 ),
-                                metadata=message_thread.metadata or {},
-                                session_id=session.session_id,
-                                query_id=f"{message_thread.id}",
-                                previous_queries=[],
+                                message_thread.created_at,
+                                message_thread.updated_at,
                             )
                         )
 
@@ -181,7 +189,7 @@ class MessageThreadMigrationManager:
                         corresponding_tool_request = next(
                             (
                                 req
-                                for req in corresponding_agent_chats
+                                for req, _created_at, _updated_at in corresponding_agent_chats_and_dates
                                 if isinstance(req.message_data, ToolUseMessageData)
                                 and req.message_data.tool_use_id == tool_response_message_content.content.tool_use_id
                             ),
@@ -198,6 +206,7 @@ class MessageThreadMigrationManager:
                             if isinstance(tool_response_message_content.content.response, dict)
                             else {"response": tool_response_message_content.content.response}
                         )
+                        corresponding_tool_request.message_data.tool_status = ToolStatus.COMPLETED
 
                     if (
                         message_thread.actor == MessageThreadActor.ASSISTANT
@@ -218,29 +227,37 @@ class MessageThreadMigrationManager:
                                 for parsed_block in parsed_blocks:
                                     if parsed_block["type"] == "THINKING_BLOCK":
                                         thinking_text = parsed_block["content"]["text"]
-                                        corresponding_agent_chats.append(
-                                            AgentChatData(
-                                                actor=ActorType.ASSISTANT,
-                                                message_type=AgentMessageType.THINKING,
-                                                message_data=ThinkingInfoData(thinking_summary=thinking_text),
-                                                metadata=message_thread.metadata or {},
-                                                session_id=session.session_id,
-                                                query_id=f"{message_thread.query_id}",
-                                                previous_queries=[],
+                                        corresponding_agent_chats_and_dates.append(
+                                            (
+                                                AgentChatData(
+                                                    actor=ActorType.ASSISTANT,
+                                                    message_type=AgentMessageType.THINKING,
+                                                    message_data=ThinkingInfoData(thinking_summary=thinking_text),
+                                                    metadata=message_thread.metadata or {},
+                                                    session_id=session.session_id,
+                                                    query_id=f"{message_thread.query_id}",
+                                                    previous_queries=[],
+                                                ),
+                                                message_thread.created_at,
+                                                message_thread.updated_at,
                                             )
                                         )
 
                                     elif parsed_block["type"] == "TEXT_BLOCK":
                                         text_content = parsed_block["content"]["text"]
-                                        corresponding_agent_chats.append(
-                                            AgentChatData(
-                                                actor=ActorType.ASSISTANT,
-                                                message_type=AgentMessageType.TEXT,
-                                                message_data=TextMessageData(text=text_content),
-                                                metadata=message_thread.metadata or {},
-                                                session_id=session.session_id,
-                                                query_id=f"{message_thread.query_id}",
-                                                previous_queries=[],
+                                        corresponding_agent_chats_and_dates.append(
+                                            (
+                                                AgentChatData(
+                                                    actor=ActorType.ASSISTANT,
+                                                    message_type=AgentMessageType.TEXT,
+                                                    message_data=TextMessageData(text=text_content),
+                                                    metadata=message_thread.metadata or {},
+                                                    session_id=session.session_id,
+                                                    query_id=f"{message_thread.query_id}",
+                                                    previous_queries=[],
+                                                ),
+                                                message_thread.created_at,
+                                                message_thread.updated_at,
                                             )
                                         )
 
@@ -249,52 +266,64 @@ class MessageThreadMigrationManager:
                                         file_path = parsed_block["content"]["file_path"]
                                         code = parsed_block["content"]["code"]
                                         diff = parsed_block["content"].get("diff")
-                                        corresponding_agent_chats.append(
-                                            AgentChatData(
-                                                actor=ActorType.ASSISTANT,
-                                                message_type=AgentMessageType.CODE_BLOCK,
-                                                message_data=CodeBlockData(
-                                                    code=code,
-                                                    language=language,
-                                                    file_path=file_path,
-                                                    diff=diff if diff else None,
+                                        corresponding_agent_chats_and_dates.append(
+                                            (
+                                                AgentChatData(
+                                                    actor=ActorType.ASSISTANT,
+                                                    message_type=AgentMessageType.CODE_BLOCK,
+                                                    message_data=CodeBlockData(
+                                                        code=code,
+                                                        language=language,
+                                                        file_path=file_path,
+                                                        diff=diff if diff else None,
+                                                    ),
+                                                    metadata=message_thread.metadata or {},
+                                                    session_id=session.session_id,
+                                                    query_id=f"{message_thread.query_id}",
+                                                    previous_queries=[],
                                                 ),
-                                                metadata=message_thread.metadata or {},
-                                                session_id=session.session_id,
-                                                query_id=f"{message_thread.query_id}",
-                                                previous_queries=[],
+                                                message_thread.created_at,
+                                                message_thread.updated_at,
                                             )
                                         )
 
                             elif isinstance(assistant_response_block, ToolUseRequestData):
-                                corresponding_agent_chats.append(
-                                    AgentChatData(
-                                        actor=ActorType.ASSISTANT,
-                                        message_type=AgentMessageType.TOOL_USE,
-                                        message_data=ToolUseMessageData(
-                                            tool_use_id=assistant_response_block.content.tool_use_id,
-                                            tool_name=assistant_response_block.content.tool_name,
-                                            tool_input=assistant_response_block.content.tool_input,
+                                corresponding_agent_chats_and_dates.append(
+                                    (
+                                        AgentChatData(
+                                            actor=ActorType.ASSISTANT,
+                                            message_type=AgentMessageType.TOOL_USE,
+                                            message_data=ToolUseMessageData(
+                                                tool_use_id=assistant_response_block.content.tool_use_id,
+                                                tool_name=assistant_response_block.content.tool_name,
+                                                tool_input=assistant_response_block.content.tool_input,
+                                            ),
+                                            metadata=message_thread.metadata or {},
+                                            session_id=session.session_id,
+                                            query_id=f"{message_thread.query_id}",
+                                            previous_queries=[],
                                         ),
-                                        metadata=message_thread.metadata or {},
-                                        session_id=session.session_id,
-                                        query_id=f"{message_thread.query_id}",
-                                        previous_queries=[],
+                                        message_thread.created_at,
+                                        message_thread.updated_at,
                                     )
                                 )
 
                             elif isinstance(assistant_response_block, ExtendedThinkingData):
-                                corresponding_agent_chats.append(
-                                    AgentChatData(
-                                        actor=ActorType.ASSISTANT,
-                                        message_type=AgentMessageType.THINKING,
-                                        message_data=ThinkingInfoData(
-                                            thinking_summary=assistant_response_block.content.thinking
+                                corresponding_agent_chats_and_dates.append(
+                                    (
+                                        AgentChatData(
+                                            actor=ActorType.ASSISTANT,
+                                            message_type=AgentMessageType.THINKING,
+                                            message_data=ThinkingInfoData(
+                                                thinking_summary=assistant_response_block.content.thinking
+                                            ),
+                                            metadata=message_thread.metadata or {},
+                                            session_id=session.session_id,
+                                            query_id=f"{message_thread.query_id}",
+                                            previous_queries=[],
                                         ),
-                                        metadata=message_thread.metadata or {},
-                                        session_id=session.session_id,
-                                        query_id=f"{message_thread.query_id}",
-                                        previous_queries=[],
+                                        message_thread.created_at,
+                                        message_thread.updated_at,
                                     )
                                 )
                     print(f"Corresponding agent chats created for message_thread {message_thread.id}")  # noqa: T201
@@ -305,9 +334,9 @@ class MessageThreadMigrationManager:
                     )
 
             try:
-                if corresponding_agent_chats and migrated_message_thread_ids and last_llm_model:
+                if corresponding_agent_chats_and_dates and migrated_message_thread_ids and last_llm_model:
                     # now insert all the corresponding agent chats in the table
-                    for agent_chat in corresponding_agent_chats:
+                    for agent_chat, created_datetime, updated_datetime in corresponding_agent_chats_and_dates:
                         await AgentChatsRepository.create_chat(
                             chat_data=AgentChatCreateRequest(
                                 session_id=agent_chat.session_id,
@@ -317,7 +346,9 @@ class MessageThreadMigrationManager:
                                 message_data=agent_chat.message_data,
                                 metadata=agent_chat.metadata or {},
                                 previous_queries=agent_chat.previous_queries,
-                            )
+                            ),
+                            custom_created_at=created_datetime,
+                            custom_updated_at=updated_datetime,
                         )
 
                     print(f"Corresponding agent chats saved for session {session.session_id}")  # noqa: T201

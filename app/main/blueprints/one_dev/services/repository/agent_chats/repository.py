@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from sanic.log import logger
@@ -50,12 +51,21 @@ class AgentChatsRepository:
             raise ex
 
     @classmethod
-    async def create_chat(cls, chat_data: AgentChatCreateRequest) -> AgentChatDTO:
+    async def create_chat(
+        cls,
+        chat_data: AgentChatCreateRequest,
+        custom_created_at: Optional[datetime] = None,
+        custom_updated_at: Optional[datetime] = None,
+    ) -> AgentChatDTO:
         """
         Create a new chat entry.
         """
         try:
             payload = chat_data.model_dump(mode="json")
+            if custom_created_at:
+                payload["created_at"] = custom_created_at
+            if custom_updated_at:
+                payload["updated_at"] = custom_updated_at
             created_chat = await DB.create(AgentChats, payload)
             return AgentChatDTO(**await created_chat.to_dict())
         except Exception as ex:
