@@ -3,8 +3,8 @@ from functools import wraps
 from typing import Any, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
-from torpedo import Request
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.models.dto.message_sessions_dto import (
     MessageSessionData,

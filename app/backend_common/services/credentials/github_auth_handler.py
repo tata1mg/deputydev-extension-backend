@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Tuple
 
 from git.util import Actor
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from tortoise.exceptions import DoesNotExist
 from typing_extensions import override
 

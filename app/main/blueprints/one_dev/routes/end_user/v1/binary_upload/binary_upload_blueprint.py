@@ -2,8 +2,8 @@ from typing import Any
 
 from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint
-from torpedo import Request, send_response
-from torpedo.exceptions import HTTPRequestException
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
 
 from app.backend_common.services.binary_file_upload.binary_file_upload import BinaryFileUpload
 

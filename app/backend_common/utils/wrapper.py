@@ -2,7 +2,7 @@ import asyncio
 from functools import wraps
 
 from sanic.log import logger
-from torpedo import Request, send_response
+from app.backend_common.utils.sanic_wrapper import Request, send_response
 
 from app.backend_common.utils.headers import Headers
 

@@ -5,7 +5,7 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler

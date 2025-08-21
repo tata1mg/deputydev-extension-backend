@@ -1,4 +1,4 @@
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.services.encryption.encryption_service import EncryptionService
 

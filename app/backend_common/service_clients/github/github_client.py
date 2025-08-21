@@ -1,4 +1,4 @@
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from typing_extensions import override
 
 from ..base_scm_client import BaseSCMClient

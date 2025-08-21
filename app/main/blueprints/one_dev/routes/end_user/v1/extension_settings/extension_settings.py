@@ -1,8 +1,8 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import CONFIG, Request, send_response
-from torpedo.exceptions import BadRequestException, HTTPRequestException
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException, HTTPRequestException
 
 from app.main.blueprints.one_dev.models.dto.extension_settings_dto import (
     ExtensionSettingsData,

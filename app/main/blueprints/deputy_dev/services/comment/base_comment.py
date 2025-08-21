@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Union
 
 from deputydev_core.utils.app_logger import AppLogger
-from torpedo import Task
+from app.backend_common.utils.sanic_wrapper import Task
 
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse

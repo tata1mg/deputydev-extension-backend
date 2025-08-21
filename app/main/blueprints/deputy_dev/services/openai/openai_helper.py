@@ -3,7 +3,7 @@ import time
 
 from openai import OpenAI
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 config = CONFIG.config
 

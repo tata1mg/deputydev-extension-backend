@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from deputydev_core.utils.jwt_handler import JWTHandler
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from .......backend_common.services.credentials import AuthHandler
 

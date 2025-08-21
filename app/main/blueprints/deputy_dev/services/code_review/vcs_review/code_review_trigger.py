@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import ValidationError
 from sanic.log import logger
-from torpedo import CONFIG
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import CONFIG
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.main.blueprints.deputy_dev.constants.constants import PR_REVIEW_POST_AFFIRMATION_MESSAGES, PrStatusTypes
 from app.main.blueprints.deputy_dev.models.code_review_request import CodeReviewRequest

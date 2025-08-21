@@ -1,6 +1,6 @@
 from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
 from app.backend_common.repository.repo.repository import RepoRepository

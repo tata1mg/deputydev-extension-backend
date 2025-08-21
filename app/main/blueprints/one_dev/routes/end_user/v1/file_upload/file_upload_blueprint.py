@@ -1,8 +1,8 @@
 from typing import Any
 
 from sanic import Blueprint
-from torpedo import Request, send_response
-from torpedo.exceptions import HTTPRequestException
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
 
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload

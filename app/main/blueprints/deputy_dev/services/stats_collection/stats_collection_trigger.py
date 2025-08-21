@@ -1,6 +1,6 @@
 import asyncio
 
-from torpedo import CONFIG
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.constants.constants import PRStatus, VCSTypes
 from app.backend_common.services.repo.repo_factory import RepoFactory
