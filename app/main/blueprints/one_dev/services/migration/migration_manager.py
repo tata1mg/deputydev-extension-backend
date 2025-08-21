@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 
 from deputydev_core.utils.app_logger import AppLogger
@@ -36,23 +37,25 @@ from app.main.blueprints.one_dev.services.repository.agent_chats.repository impo
 
 class MessageThreadMigrationManager:
     @classmethod
-    async def migrate_to_agent_chats(cls) -> None:  # noqa: C901
+    async def migrate_batch_of_sessions(cls) -> int:  # noqa: C901
         """
         Migrate message threads to agent chats.
         This method simulates the migration process.
         """
         batch_size = 100
         unmigrated_sessions = await ExtensionSessionsRepository.get_unmigrated_sessions(limit=batch_size)
+        total_migrated_sessions = 0
 
         for session in unmigrated_sessions:
             message_threads = await MessageThreadsRepository.get_message_threads_for_session(
-                session_id=session.id,
+                session_id=session.session_id,
                 call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
                 prompt_types=["CODE_QUERY_SOLVER", "CUSTOM_CODE_QUERY_SOLVER"],
             )
             message_threads.sort(key=lambda x: x.created_at)
             corresponding_agent_chats: List[AgentChatData] = []
             last_llm_model = None
+            migrated_message_thread_ids: List[int] = []
             for message_thread in message_threads:
                 if message_thread.llm_model != last_llm_model:
                     last_llm_model = message_thread.llm_model
@@ -82,8 +85,8 @@ class MessageThreadMigrationManager:
                                     ],
                                 ),
                                 metadata=message_thread.metadata or {},
-                                session_id=session.id,
-                                query_id=f"{message_thread.query_id}",
+                                session_id=session.session_id,
+                                query_id=f"{message_thread.id}",
                                 previous_queries=[],
                             )
                         )
@@ -124,7 +127,7 @@ class MessageThreadMigrationManager:
                             if isinstance(assistant_response_block, TextBlockData):
                                 prompt_feature = PromptFeatures(message_thread.prompt_type)
                                 parser_class = PromptFeatureFactory.get_prompt(message_thread.llm_model, prompt_feature)
-                                parsed_blocks, _tool_use_map = await parser_class.get_parsed_response_blocks(
+                                parsed_blocks, _tool_use_map = parser_class.get_parsed_response_blocks(
                                     [assistant_response_block]
                                 )
                                 if not isinstance(parsed_blocks, list):
@@ -141,7 +144,7 @@ class MessageThreadMigrationManager:
                                                 message_type=AgentMessageType.THINKING,
                                                 message_data=ThinkingInfoData(thinking_summary=thinking_text),
                                                 metadata=message_thread.metadata or {},
-                                                session_id=session.id,
+                                                session_id=session.session_id,
                                                 query_id=f"{message_thread.query_id}",
                                                 previous_queries=[],
                                             )
@@ -155,7 +158,7 @@ class MessageThreadMigrationManager:
                                                 message_type=AgentMessageType.TEXT,
                                                 message_data=TextMessageData(text=text_content),
                                                 metadata=message_thread.metadata or {},
-                                                session_id=session.id,
+                                                session_id=session.session_id,
                                                 query_id=f"{message_thread.query_id}",
                                                 previous_queries=[],
                                             )
@@ -177,7 +180,7 @@ class MessageThreadMigrationManager:
                                                     diff=diff if diff else None,
                                                 ),
                                                 metadata=message_thread.metadata or {},
-                                                session_id=session.id,
+                                                session_id=session.session_id,
                                                 query_id=f"{message_thread.query_id}",
                                                 previous_queries=[],
                                             )
@@ -194,7 +197,7 @@ class MessageThreadMigrationManager:
                                             tool_input=assistant_response_block.content.tool_input,
                                         ),
                                         metadata=message_thread.metadata or {},
-                                        session_id=session.id,
+                                        session_id=session.session_id,
                                         query_id=f"{message_thread.query_id}",
                                         previous_queries=[],
                                     )
@@ -209,38 +212,58 @@ class MessageThreadMigrationManager:
                                             thinking_summary=assistant_response_block.content.thinking
                                         ),
                                         metadata=message_thread.metadata or {},
-                                        session_id=session.id,
+                                        session_id=session.session_id,
                                         query_id=f"{message_thread.query_id}",
                                         previous_queries=[],
                                     )
                                 )
-
+                    AppLogger.log_info(f"Corresponding agent chats created for message_thread {message_thread.id}")
+                    migrated_message_thread_ids.append(message_thread.id)
                 except Exception as ex:  # noqa: BLE001
-                    AppLogger.log_error(f"Error occurred while migrating message_thread, ex: {ex}")
+                    AppLogger.log_error(
+                        f"Error occurred while migrating message_thread, ex: {ex}, message_thread_id: {message_thread.id}"
+                    )
 
             try:
-                # now insert all the corresponding agent chats in the table
-                for agent_chat in corresponding_agent_chats:
-                    await AgentChatsRepository.create_chat(
-                        chat_data=AgentChatCreateRequest(
-                            session_id=agent_chat.session_id,
-                            query_id=agent_chat.query_id,
-                            actor=agent_chat.actor,
-                            message_type=agent_chat.message_type,
-                            message_data=agent_chat.message_data,
-                            metadata=agent_chat.metadata or {},
-                            previous_queries=agent_chat.previous_queries,
+                if corresponding_agent_chats and migrated_message_thread_ids and last_llm_model:
+                    # now insert all the corresponding agent chats in the table
+                    for agent_chat in corresponding_agent_chats:
+                        await AgentChatsRepository.create_chat(
+                            chat_data=AgentChatCreateRequest(
+                                session_id=agent_chat.session_id,
+                                query_id=agent_chat.query_id,
+                                actor=agent_chat.actor,
+                                message_type=agent_chat.message_type,
+                                message_data=agent_chat.message_data,
+                                metadata=agent_chat.metadata or {},
+                                previous_queries=agent_chat.previous_queries,
+                            )
                         )
-                    )
 
-                # mark the last used LLM in the session
-                if last_llm_model:
-                    await ExtensionSessionsRepository.update_session_llm_model(
-                        session_id=session.id, llm_model=last_llm_model
-                    )
+                    AppLogger.log_info(f"Corresponding agent chats saved for session {session.session_id}")
 
-                # mark all message_threads as migrated
-                await MessageThreadsRepository.mark_as_migrated(session.id)
+                    # mark the last used LLM in the session
+                    if last_llm_model:
+                        await ExtensionSessionsRepository.update_session_llm_model(
+                            session_id=session.session_id, llm_model=last_llm_model
+                        )
+
+                    # mark all message_threads as migrated
+                    await MessageThreadsRepository.mark_as_migrated(migrated_message_thread_ids)
+                    AppLogger.log_info(f"Message threads marked as migrated for session {session.session_id}")
+                    total_migrated_sessions += 1
+
+                    await asyncio.sleep(0.1)  # to avoid hitting the database too hard
 
             except Exception as ex:  # noqa: BLE001
                 AppLogger.log_error(f"Error occurred while migrating session, ex: {ex}")
+
+        return total_migrated_sessions
+
+    @classmethod
+    async def migrate_to_agent_chats(cls) -> None:
+        # migrate all
+        while True:
+            migrated_count = await cls.migrate_batch_of_sessions()
+            if migrated_count == 0:
+                break

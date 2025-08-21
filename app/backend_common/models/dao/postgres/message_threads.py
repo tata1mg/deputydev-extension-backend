@@ -19,6 +19,7 @@ class MessageThread(Base):
         "prompt_category",
         "call_chain_category",
         "metadata",
+        "migrated",
         "created_at",
         "updated_at",
         "cost",
@@ -38,6 +39,7 @@ class MessageThread(Base):
     prompt_category = fields.TextField()
     call_chain_category = fields.TextField()
     metadata = fields.JSONField(null=True)
+    migrated = fields.BooleanField(default=False)
     cost = fields.FloatField(null=True)
 
     class Meta:
