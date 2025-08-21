@@ -94,7 +94,9 @@ class GithubPR(BasePR):
         if not self.pr_json_data:
             response = await self.repo_client.get_pr_details()
             if not response or response.status_code != 200:
-                AppLogger.log_error(f"unable to get pr details {self.meta_data} status code {response.status_code} ")
+                AppLogger.log_error(
+                    f"unable to get pr details {self.meta_data} status code {response.status_code if response else 'unknown'} "
+                )
                 raise BadRequestException(f"unable to get pr details for {self.meta_data}")
             self.pr_json_data = await response.json()
 
