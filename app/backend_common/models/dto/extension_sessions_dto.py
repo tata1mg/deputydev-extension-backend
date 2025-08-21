@@ -14,6 +14,7 @@ class ExtensionSessionData(BaseModel):
     status: str = "ACTIVE"
     session_type: str
     current_model: Optional[LLModels] = LLModels.CLAUDE_3_POINT_7_SONNET
+    migrated: bool = False
 
 
 class ExtensionSessionDTO(ExtensionSessionData):
