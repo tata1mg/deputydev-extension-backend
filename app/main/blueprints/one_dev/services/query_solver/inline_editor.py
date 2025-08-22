@@ -141,7 +141,7 @@ class InlineEditGenerator:
         return conv_turns
 
     async def _get_response_from_parsed_llm_response(
-        self, parsed_llm_response: List[Dict[str, Any]], query_id: str, session_id: int
+        self, parsed_llm_response: List[Dict[str, Any]], query_id: str, session_id: int, llm_model: LLModels
     ) -> Dict[str, Any]:
         code_snippets: List[Dict[str, Any]] = []
         tool_use_request: Dict[str, Any] = {}
@@ -164,7 +164,7 @@ class InlineEditGenerator:
                         ),
                         query_id=query_id,
                         actor=ActorType.ASSISTANT,
-                        metadata={"is_inline_editor": True},
+                        metadata={"is_inline_editor": True, "llm_model": llm_model.value},
                         previous_queries=[],
                     )
                 )
@@ -181,7 +181,7 @@ class InlineEditGenerator:
                     ),
                     query_id=query_id,
                     actor=ActorType.ASSISTANT,
-                    metadata={"is_inline_editor": True},
+                    metadata={"is_inline_editor": True, "llm_model": llm_model.value},
                     previous_queries=[],
                 )
             )
@@ -251,6 +251,7 @@ class InlineEditGenerator:
                 parsed_llm_response=llm_response.parsed_content,
                 query_id=agent_chat_with_tool_call.query_id,
                 session_id=payload.session_id,
+                llm_model=LLModels(agent_chat_with_tool_call.metadata["llm_model"]),
             )
 
         if payload.query and payload.code_selection:
@@ -282,7 +283,7 @@ class InlineEditGenerator:
                         ],
                     ),
                     query_id=generated_query_id,
-                    metadata={"is_inline_editor": True},
+                    metadata={"is_inline_editor": True, "llm_model": LLModels(payload.llm_model.value)},
                     previous_queries=[],
                 )
             )
@@ -312,6 +313,7 @@ class InlineEditGenerator:
                 parsed_llm_response=llm_response.parsed_content,
                 query_id=agent_chat.query_id,
                 session_id=payload.session_id,
+                llm_model=LLModels(payload.llm_model.value),
             )
 
         raise ValueError("Either query and code selection or tool use response must be provided")

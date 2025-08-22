@@ -226,6 +226,8 @@ class QuerySolver:
         llm_handler: LLMHandler[PromptFeatures],
         query_id: str,
         previous_queries: List[str],
+        llm_model: LLModels,
+        agent_name: str,
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
         tool_use_detected: bool = False
@@ -249,7 +251,7 @@ class QuerySolver:
                         actor=ActorType.ASSISTANT,
                         message_data=current_message_data,
                         message_type=ChatMessageType.TEXT,
-                        metadata={},
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -280,7 +282,7 @@ class QuerySolver:
                         actor=ActorType.ASSISTANT,
                         message_data=current_message_data,
                         message_type=ChatMessageType.THINKING,
-                        metadata={},
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -316,7 +318,7 @@ class QuerySolver:
                             diff=event.content.diff,
                         ),
                         message_type=ChatMessageType.CODE_BLOCK,
-                        metadata={},
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -358,7 +360,7 @@ class QuerySolver:
                             tool_use_id=current_message_data.tool_use_id,
                         ),
                         message_type=ChatMessageType.TOOL_USE,
-                        metadata={},
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -516,19 +518,20 @@ class QuerySolver:
         return DefaultQuerySolverAgentInstance
 
     async def _get_query_solver_agent_instance(
-        self, payload: QuerySolverInput, llm_handler: LLMHandler[PromptFeatures]
+        self,
+        payload: QuerySolverInput,
+        llm_handler: LLMHandler[PromptFeatures],
+        previous_agent_chats: List[AgentChatDTO],
     ) -> QuerySolverAgent:
-        all_custom_agents, last_query_message = await asyncio.gather(
-            self._generate_dynamic_query_solver_agents(), self._get_last_query_message_for_session(payload.session_id)
-        )
+        all_custom_agents = await self._generate_dynamic_query_solver_agents()
         agent_instance: QuerySolverAgent
 
         if payload.query:
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
                 focus_items=payload.focus_items,
-                last_agent=last_query_message.metadata.get("agent_name")
-                if last_query_message and last_query_message.metadata
+                last_agent=previous_agent_chats[-1].metadata.get("agent_name")
+                if previous_agent_chats and previous_agent_chats[-1].metadata
                 else None,
                 all_agents=[*all_custom_agents, DefaultQuerySolverAgentInstance],
                 llm_handler=llm_handler,
@@ -542,8 +545,8 @@ class QuerySolver:
             )
         else:
             agent_name = (
-                last_query_message.metadata.get("agent_name")
-                if last_query_message and last_query_message.metadata
+                previous_agent_chats[-1].metadata.get("agent_name")
+                if previous_agent_chats and previous_agent_chats[-1].metadata
                 else None
             )
             agent_instance: QuerySolverAgent = self._get_agent_instance_by_name(
@@ -597,6 +600,13 @@ class QuerySolver:
             if not payload.llm_model:
                 raise ValueError("LLM model is required for query solving.")
 
+            session_chats = await AgentChatsRepository.get_chats_by_session_id(session_id=payload.session_id)
+            session_chats.sort(key=lambda x: x.created_at)
+
+            agent_instance = await self._get_query_solver_agent_instance(
+                payload=payload, llm_handler=llm_handler, previous_agent_chats=session_chats
+            )
+
             if current_session.current_model != LLModels(payload.llm_model.value):
                 # Store a note in the chat about the model change
                 await AgentChatsRepository.create_chat(
@@ -611,7 +621,10 @@ class QuerySolver:
                             )
                         ),
                         message_type=ChatMessageType.INFO,
-                        metadata={},
+                        metadata={
+                            "llm_model": LLModels(payload.llm_model.value).value,
+                            "agent_name": agent_instance.agent_name,
+                        },
                         query_id=generated_query_id,
                         previous_queries=[],
                     )
@@ -629,7 +642,10 @@ class QuerySolver:
                         repositories=payload.repositories,
                     ),
                     message_type=ChatMessageType.TEXT,
-                    metadata={},
+                    metadata={
+                        "llm_model": LLModels(payload.llm_model.value).value,
+                        "agent_name": agent_instance.agent_name,
+                    },
                     query_id=generated_query_id,
                     previous_queries=[],
                 )
@@ -645,8 +661,6 @@ class QuerySolver:
                     session_type=payload.session_type,
                 )
             )
-
-            agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
 
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
@@ -689,6 +703,8 @@ class QuerySolver:
                 llm_handler=llm_handler,
                 query_id=generated_query_id,
                 previous_queries=previous_queries,
+                llm_model=model_to_use,
+                agent_name=agent_instance.agent_name,
             )
 
         elif payload.batch_tool_responses:
@@ -737,7 +753,9 @@ class QuerySolver:
                     )
                 )
 
-            agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
+            agent_instance = await self._get_query_solver_agent_instance(
+                payload=payload, llm_handler=llm_handler, previous_agent_chats=inserted_tool_responses
+            )
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
                 _client_data=client_data,
@@ -762,6 +780,8 @@ class QuerySolver:
                 llm_handler=llm_handler,
                 query_id=inserted_tool_responses[0].query_id,
                 previous_queries=previous_queries,
+                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
+                agent_name=agent_instance.agent_name,
             )
 
         else:
