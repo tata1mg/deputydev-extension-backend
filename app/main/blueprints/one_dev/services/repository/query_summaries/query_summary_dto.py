@@ -61,7 +61,7 @@ class QuerySummarysRepository:
     async def get_query_summary(
         cls,
         session_id: int,
-        query_id: int,
+        query_id: str,
     ) -> Optional[QuerySummaryDTO]:
         try:
             query_summary = await DB.by_filters(
@@ -80,7 +80,7 @@ class QuerySummarysRepository:
             raise ex
 
     @classmethod
-    async def update_query_summary(cls, session_id: int, query_id: int, summary: str) -> None:
+    async def update_query_summary(cls, session_id: int, query_id: str, summary: str) -> None:
         try:
             await DB.update_by_filters(
                 None, QuerySummaries, {"summary": summary}, {"session_id": session_id, "query_id": query_id}
