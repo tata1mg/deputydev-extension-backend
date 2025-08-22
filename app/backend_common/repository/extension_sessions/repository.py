@@ -227,8 +227,8 @@ class ExtensionSessionsRepository:
         try:
             extension_sessions = await DB.by_filters(
                 model_name=ExtensionSession,
-                # get where current model is null
-                where_clause={"current_model": None},
+                # get where current model is null and summary is not null
+                where_clause={"current_model__isnull": True, "summary__isnull": False},
                 fetch_one=False,
                 limit=limit,
             )
