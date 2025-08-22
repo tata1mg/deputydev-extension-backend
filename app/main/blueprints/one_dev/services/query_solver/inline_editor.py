@@ -1,19 +1,42 @@
 import asyncio
 from typing import Any, Dict, List
+from uuid import uuid4
 
+from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
-    ToolUseResponseContent,
-    ToolUseResponseData,
 )
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationRole,
+    UnifiedConversationTurn,
+    UnifiedConversationTurnContentType,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
 from app.backend_common.services.llm.handler import LLMHandler
+from app.main.blueprints.one_dev.models.dto.agent_chats import (
+    ActorType,
+    AgentChatCreateRequest,
+    AgentChatDTO,
+    AgentChatUpdateRequest,
+    CodeBlockData,
+    MessageType,
+    TextMessageData,
+    ToolUseMessageData,
+)
 from app.main.blueprints.one_dev.models.dto.job import JobDTO
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    CodeSelectionInput,
+    CodeSnippetFocusItem,
     InlineEditInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
@@ -28,6 +51,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.related_code_search
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.task_completed import TASK_COMPLETION
+from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
@@ -37,7 +61,88 @@ from .prompts.factory import PromptFeatureFactory
 
 
 class InlineEditGenerator:
-    def _get_response_from_parsed_llm_response(self, parsed_llm_response: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _get_conversation_turns_from_agent_chat_for_inline_edit(
+        self, agent_chats: List[AgentChatDTO], llm_model: LLModels
+    ) -> List[UnifiedConversationTurn]:
+        conv_turns: List[UnifiedConversationTurn] = []
+        for agent_chat in agent_chats:
+            if agent_chat.actor == ActorType.USER and isinstance(agent_chat.message_data, TextMessageData):
+                prompt_handler = PromptFeatureFactory.get_prompt(
+                    model_name=llm_model, feature=PromptFeatures.INLINE_EDITOR
+                )(
+                    {
+                        "query": agent_chat.message_data.text,
+                        "code_selection": CodeSelectionInput(
+                            selected_text=agent_chat.message_data.focus_items[0].chunks[0].content,
+                            file_path=agent_chat.message_data.focus_items[0].path,
+                        )
+                        if agent_chat.message_data.focus_items
+                        and isinstance(agent_chat.message_data.focus_items[0], CodeSnippetFocusItem)
+                        else None,
+                        "deputy_dev_rules": None,
+                        "relevant_chunks": [],
+                    }
+                )
+                prompt_text = prompt_handler.get_prompt()
+                conv_turns.append(
+                    UserConversationTurn(
+                        role=UnifiedConversationRole.USER,
+                        content=[
+                            UnifiedTextConversationTurnContent(
+                                type=UnifiedConversationTurnContentType.TEXT,
+                                text=prompt_text.user_message,
+                            )
+                        ],
+                    )
+                )
+
+            if agent_chat.actor == ActorType.ASSISTANT:
+                if isinstance(agent_chat.message_data, CodeBlockData):
+                    conv_turns.append(
+                        AssistantConversationTurn(
+                            role=UnifiedConversationRole.ASSISTANT,
+                            content=[
+                                UnifiedTextConversationTurnContent(
+                                    text=agent_chat.message_data.code,
+                                )
+                            ],
+                        )
+                    )
+                elif isinstance(agent_chat.message_data, ToolUseMessageData) and agent_chat.message_data.tool_response:
+                    conv_turns.append(
+                        AssistantConversationTurn(
+                            role=UnifiedConversationRole.ASSISTANT,
+                            content=[
+                                UnifiedToolRequestConversationTurnContent(
+                                    type=UnifiedConversationTurnContentType.TOOL_REQUEST,
+                                    tool_use_id=agent_chat.message_data.tool_use_id,
+                                    tool_name=agent_chat.message_data.tool_name,
+                                    tool_input=agent_chat.message_data.tool_input,
+                                )
+                            ],
+                        )
+                    )
+
+                    if agent_chat.message_data.tool_response:
+                        conv_turns.append(
+                            ToolConversationTurn(
+                                role=UnifiedConversationRole.TOOL,
+                                content=[
+                                    UnifiedToolResponseConversationTurnContent(
+                                        type=UnifiedConversationTurnContentType.TOOL_RESPONSE,
+                                        tool_use_id=agent_chat.message_data.tool_use_id,
+                                        tool_name=agent_chat.message_data.tool_name,
+                                        tool_use_response=agent_chat.message_data.tool_response,
+                                    )
+                                ],
+                            )
+                        )
+
+        return conv_turns
+
+    async def _get_response_from_parsed_llm_response(
+        self, parsed_llm_response: List[Dict[str, Any]], query_id: str, session_id: int
+    ) -> Dict[str, Any]:
         code_snippets: List[Dict[str, Any]] = []
         tool_use_request: Dict[str, Any] = {}
         for response in parsed_llm_response:
@@ -45,6 +150,41 @@ class InlineEditGenerator:
                 code_snippets.extend(response["code_snippets"])
             if "type" in response and response["type"] == "TOOL_USE_REQUEST":
                 tool_use_request = response
+
+        if code_snippets:
+            for snippet in code_snippets:
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        message_type=MessageType.CODE_BLOCK,
+                        message_data=CodeBlockData(
+                            code=snippet["code"],
+                            language=snippet["programming_language"],
+                            file_path=snippet["file_path"],
+                        ),
+                        query_id=query_id,
+                        actor=ActorType.ASSISTANT,
+                        metadata={"is_inline_editor": True},
+                        previous_queries=[],
+                    )
+                )
+
+        if tool_use_request:
+            await AgentChatsRepository.create_chat(
+                chat_data=AgentChatCreateRequest(
+                    session_id=session_id,
+                    message_type=MessageType.TOOL_USE,
+                    message_data=ToolUseMessageData(
+                        tool_name=tool_use_request["content"]["tool_name"],
+                        tool_use_id=tool_use_request["content"]["tool_use_id"],
+                        tool_input=tool_use_request["content"]["tool_input"],
+                    ),
+                    query_id=query_id,
+                    actor=ActorType.ASSISTANT,
+                    metadata={"is_inline_editor": True},
+                    previous_queries=[],
+                )
+            )
 
         return {
             "code_snippets": code_snippets if code_snippets else None,
@@ -67,52 +207,111 @@ class InlineEditGenerator:
         tools_to_use.append(REPLACE_IN_FILE)
 
         if payload.tool_use_response:
-            llm_response = await llm_handler.submit_batch_tool_use_response(
+            all_chats_for_session = await AgentChatsRepository.get_chats_by_session_id(session_id=payload.session_id)
+            agent_chat_with_tool_call = next(
+                (
+                    chat
+                    for chat in all_chats_for_session
+                    if isinstance(chat.message_data, ToolUseMessageData)
+                    and chat.message_data.tool_use_id == payload.tool_use_response.tool_use_id
+                ),
+                None,
+            )
+            if not agent_chat_with_tool_call or not isinstance(
+                agent_chat_with_tool_call.message_data, ToolUseMessageData
+            ):
+                raise ValueError("No matching agent chat found for the provided tool use response.")
+            agent_chat_with_tool_call.message_data.tool_response = payload.tool_use_response.response
+
+            # update the agent chat in the database
+            await AgentChatsRepository.update_chat(
+                chat_id=agent_chat_with_tool_call.id,
+                update_data=AgentChatUpdateRequest(message_data=agent_chat_with_tool_call.message_data),
+            )
+            conversation_turns = await self._get_conversation_turns_from_agent_chat_for_inline_edit(
+                agent_chats=all_chats_for_session, llm_model=LLModels(payload.llm_model.value)
+            )
+
+            llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
-                tool_use_responses=[
-                    ToolUseResponseData(
-                        content=ToolUseResponseContent(
-                            tool_name=payload.tool_use_response.tool_name,
-                            tool_use_id=payload.tool_use_response.tool_use_id,
-                            response=payload.tool_use_response.response,
-                        )
-                    )
-                ],
                 tools=tools_to_use,
                 stream=False,
                 parallel_tool_calls=False,
                 tool_choice="required",
+                conversation_turns=conversation_turns,
+                prompt_feature=PromptFeatures.INLINE_EDITOR,
+                llm_model=LLModels(payload.llm_model.value),
+                prompt_vars={},
             )
 
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
                 raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
-            return self._get_response_from_parsed_llm_response(
+            return await self._get_response_from_parsed_llm_response(
                 parsed_llm_response=llm_response.parsed_content,
+                query_id=agent_chat_with_tool_call.query_id,
+                session_id=payload.session_id,
             )
 
         if payload.query and payload.code_selection:
+            # store in agent_chats
+            generated_query_id = uuid4().hex
+            agent_chat = await AgentChatsRepository.create_chat(
+                chat_data=AgentChatCreateRequest(
+                    session_id=payload.session_id,
+                    actor=ActorType.USER,
+                    message_type=MessageType.TEXT,
+                    message_data=TextMessageData(
+                        text=payload.query,
+                        focus_items=[
+                            CodeSnippetFocusItem(
+                                chunks=[
+                                    ChunkInfo(
+                                        content=payload.code_selection.selected_text,
+                                        source_details=ChunkSourceDetails(
+                                            file_path=payload.code_selection.file_path,
+                                            start_line=-1,
+                                            end_line=-1,
+                                        ),
+                                    )
+                                ],
+                                path=payload.code_selection.file_path,
+                                # value as file name (taken from file path)
+                                value=payload.code_selection.file_path.split("/")[-1],
+                            )
+                        ],
+                    ),
+                    query_id=generated_query_id,
+                    metadata={"is_inline_editor": True},
+                    previous_queries=[],
+                )
+            )
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures.INLINE_EDITOR,
                 llm_model=LLModels(payload.llm_model.value),
                 prompt_vars={
                     "query": payload.query,
                     "code_selection": payload.code_selection,
-                    "deputy_dev_rules": payload.deputy_dev_rules,
-                    "relevant_chunks": payload.relevant_chunks,
+                    "deputy_dev_rules": None,
+                    "relevant_chunks": [],
                 },
                 previous_responses=[],
                 tools=tools_to_use,
                 tool_choice="required",
                 stream=False,
                 session_id=payload.session_id,
+                conversation_turns=await self._get_conversation_turns_from_agent_chat_for_inline_edit(
+                    agent_chats=[agent_chat], llm_model=LLModels(payload.llm_model.value)
+                ),
             )
 
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
                 raise ValueError("LLM response is not of type NonStreamingParsedLLMCallResponse")
 
-            return self._get_response_from_parsed_llm_response(
+            return await self._get_response_from_parsed_llm_response(
                 parsed_llm_response=llm_response.parsed_content,
+                query_id=agent_chat.query_id,
+                session_id=payload.session_id,
             )
 
         raise ValueError("Either query and code selection or tool use response must be provided")
