@@ -161,7 +161,6 @@ def authenticate(func: Any) -> Any:
             "auth_data": auth_data,
             "client_data": client_data,
         }
-
         return await func(request, *args, **kwargs)
 
     return wrapper
