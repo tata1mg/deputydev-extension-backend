@@ -195,7 +195,6 @@ class InlineEditGenerator:
         self, payload: InlineEditInput, client_data: ClientData
     ) -> Dict[str, Any]:
         llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
-
         tools_to_use = [FOCUSED_SNIPPETS_SEARCHER, ITERATIVE_FILE_READER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)
@@ -241,7 +240,12 @@ class InlineEditGenerator:
                 conversation_turns=conversation_turns,
                 prompt_feature=PromptFeatures.INLINE_EDITOR,
                 llm_model=LLModels(payload.llm_model.value),
-                prompt_vars={},
+                prompt_vars={
+                    "code_selection": payload.code_selection,
+                    "deputy_dev_rules": None,
+                    "relevant_chunks": [],
+                    "query": payload.query,
+                },
             )
 
             if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
