@@ -131,7 +131,7 @@ class ChatHistoryHandler:
         self, all_agent_chats: List[AgentChatDTO], all_query_summaries: List[QuerySummaryDTO]
     ) -> None:
         # firstly create query_id to summary map
-        query_id_to_summary_map: Dict[int, QuerySummaryDTO] = {}
+        query_id_to_summary_map: Dict[str, QuerySummaryDTO] = {}
         for query_summary in all_query_summaries:
             query_id_to_summary_map[query_summary.query_id] = query_summary
 
@@ -142,7 +142,7 @@ class ChatHistoryHandler:
             if agent_chat.actor == ActorType.USER and agent_chat.message_type == MessageType.TEXT:
                 self.query_id_to_chats_and_summary_map[self._hash_query_id_to_int(agent_chat.query_id)] = (
                     [agent_chat],
-                    query_id_to_summary_map.get(agent_chat.id),
+                    query_id_to_summary_map.get(agent_chat.query_id),
                 )
             else:
                 self.query_id_to_chats_and_summary_map[self._hash_query_id_to_int(agent_chat.query_id)][0].append(
@@ -190,12 +190,16 @@ class ChatHistoryHandler:
 
         # this will keep max 5 most relevant chats
         filtered_query_ids = await self.filter_chat_summaries()
+        filtered_query_ids.sort(key=lambda x: query_id_int_to_query_map[x].created_at)
+
+        # print the queries in same order
 
         all_relevant_agent_chats: List[AgentChatDTO] = []
         previous_queries: List[AgentChatDTO] = []
         for query_id in filtered_query_ids:
-            agent_chats, query_summary = self.query_id_to_chats_and_summary_map.get(query_id, ([], None))
+            agent_chats, _query_summary = self.query_id_to_chats_and_summary_map.get(query_id, ([], None))
             if agent_chats:
+                agent_chats.sort(key=lambda x: x.created_at)
                 all_relevant_agent_chats.extend(agent_chats)
                 if agent_chats[0].id != new_query_chat.id:
                     previous_queries.append(agent_chats[0])

@@ -377,6 +377,20 @@ class QuerySolverAgent(ABC):
                     ],
                 )
             )
+        else:
+            all_conversation_turns.append(
+                ToolConversationTurn(
+                    role=UnifiedConversationRole.TOOL,
+                    content=[
+                        UnifiedToolResponseConversationTurnContent(
+                            type=UnifiedConversationTurnContentType.TOOL_RESPONSE,
+                            tool_use_id=agent_chat.message_data.tool_use_id,
+                            tool_name=agent_chat.message_data.tool_name,
+                            tool_use_response={"response": "NO_RESPONSE"},
+                        )
+                    ],
+                )
+            )
 
         return all_conversation_turns
 
