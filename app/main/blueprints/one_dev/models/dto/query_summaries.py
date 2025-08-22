@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class QuerySummaryData(BaseModel):
     session_id: int
-    query_id: int
+    query_id: str
     summary: str
 
 
