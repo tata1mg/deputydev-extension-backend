@@ -58,6 +58,7 @@ class MessageThreadMigrationManager:
         """
         batch_size = 100
         unmigrated_sessions = await ExtensionSessionsRepository.get_unmigrated_sessions(limit=batch_size)
+        print(f"Unmigrated sessions found: {len(unmigrated_sessions)}")  # noqa: T201
         total_migrated_sessions = 0
 
         for session in unmigrated_sessions:
@@ -67,7 +68,7 @@ class MessageThreadMigrationManager:
                 prompt_types=["CODE_QUERY_SOLVER", "CUSTOM_CODE_QUERY_SOLVER"],
             )
             message_threads.sort(key=lambda x: x.created_at)
-            corresponding_agent_chats_and_dates: List[Tuple[AgentChatData, datetime, datetime]] = []
+            corresponding_agent_chats_and_dates: List[Tuple[AgentChatData, datetime, datetime, int]] = []
             last_llm_model = None
             migrated_message_thread_ids: List[int] = []
             for message_thread in message_threads:
@@ -86,6 +87,7 @@ class MessageThreadMigrationManager:
                             elif isinstance(query_message_content, FileBlockData):
                                 file_blocks.append(query_message_content)
                         if not query_vars:
+                            AppLogger.log_error(f"Query variables not found for message_thread: {message_thread.id}")
                             continue
 
                         focus_items: List[FocusItem] = []
@@ -176,6 +178,7 @@ class MessageThreadMigrationManager:
                                 ),
                                 message_thread.created_at,
                                 message_thread.updated_at,
+                                message_thread.id,  # Store the message_thread id for later use
                             )
                         )
 
@@ -185,11 +188,14 @@ class MessageThreadMigrationManager:
                     ):
                         tool_response_message_content = message_thread.message_data[0]
                         if not isinstance(tool_response_message_content, ToolUseResponseData):
+                            AppLogger.log_error(
+                                f"Tool response message content is not of type ToolUseResponseData for message_thread: {message_thread.id}"
+                            )
                             continue
                         corresponding_tool_request = next(
                             (
                                 req
-                                for req, _created_at, _updated_at in corresponding_agent_chats_and_dates
+                                for req, _created_at, _updated_at, _message_thread_id in corresponding_agent_chats_and_dates
                                 if isinstance(req.message_data, ToolUseMessageData)
                                 and req.message_data.tool_use_id == tool_response_message_content.content.tool_use_id
                             ),
@@ -198,6 +204,9 @@ class MessageThreadMigrationManager:
                         if not corresponding_tool_request or not isinstance(
                             corresponding_tool_request.message_data, ToolUseMessageData
                         ):
+                            AppLogger.log_error(
+                                f"Corresponding tool request not found or invalid for message_thread: {message_thread.id}"
+                            )
                             continue
 
                         # update tool response
@@ -240,6 +249,7 @@ class MessageThreadMigrationManager:
                                                 ),
                                                 message_thread.created_at,
                                                 message_thread.updated_at,
+                                                message_thread.id,  # Store the message_thread id for later use
                                             )
                                         )
 
@@ -258,6 +268,7 @@ class MessageThreadMigrationManager:
                                                 ),
                                                 message_thread.created_at,
                                                 message_thread.updated_at,
+                                                message_thread.id,  # Store the message_thread id for later use
                                             )
                                         )
 
@@ -284,6 +295,7 @@ class MessageThreadMigrationManager:
                                                 ),
                                                 message_thread.created_at,
                                                 message_thread.updated_at,
+                                                message_thread.id,  # Store the message_thread id for later use
                                             )
                                         )
 
@@ -305,6 +317,7 @@ class MessageThreadMigrationManager:
                                         ),
                                         message_thread.created_at,
                                         message_thread.updated_at,
+                                        message_thread.id,  # Store the message_thread id for later use
                                     )
                                 )
 
@@ -324,6 +337,7 @@ class MessageThreadMigrationManager:
                                         ),
                                         message_thread.created_at,
                                         message_thread.updated_at,
+                                        message_thread.id,  # Store the message_thread id for later use
                                     )
                                 )
                     print(f"Corresponding agent chats created for message_thread {message_thread.id}")  # noqa: T201
@@ -334,37 +348,65 @@ class MessageThreadMigrationManager:
                     )
 
             try:
+                saved = False
+                unsaved_msg_thread_ids: List[int] = []
                 if corresponding_agent_chats_and_dates and migrated_message_thread_ids and last_llm_model:
                     # now insert all the corresponding agent chats in the table
-                    for agent_chat, created_datetime, updated_datetime in corresponding_agent_chats_and_dates:
-                        await AgentChatsRepository.create_chat(
-                            chat_data=AgentChatCreateRequest(
-                                session_id=agent_chat.session_id,
-                                query_id=agent_chat.query_id,
-                                actor=agent_chat.actor,
-                                message_type=agent_chat.message_type,
-                                message_data=agent_chat.message_data,
-                                metadata=agent_chat.metadata or {},
-                                previous_queries=agent_chat.previous_queries,
-                            ),
-                            custom_created_at=created_datetime,
-                            custom_updated_at=updated_datetime,
-                        )
+                    for (
+                        agent_chat,
+                        created_datetime,
+                        updated_datetime,
+                        msg_thr_id,
+                    ) in corresponding_agent_chats_and_dates:
+                        try:
+                            await AgentChatsRepository.create_chat(
+                                chat_data=AgentChatCreateRequest(
+                                    session_id=agent_chat.session_id,
+                                    query_id=agent_chat.query_id,
+                                    actor=agent_chat.actor,
+                                    message_type=agent_chat.message_type,
+                                    message_data=agent_chat.message_data,
+                                    metadata=agent_chat.metadata or {},
+                                    previous_queries=agent_chat.previous_queries,
+                                ),
+                                custom_created_at=created_datetime,
+                                custom_updated_at=updated_datetime,
+                            )
+                            saved = True
+                        except Exception as ex:  # noqa: BLE001
+                            AppLogger.log_error(
+                                f"Error occurred while saving agent chat for session {session.session_id}, ex: {ex} - message_thread_id: {msg_thr_id}"
+                            )
+                            unsaved_msg_thread_ids.append(msg_thr_id)
 
                     print(f"Corresponding agent chats saved for session {session.session_id}")  # noqa: T201
 
                     # mark the last used LLM in the session
-                    if last_llm_model:
+                    if saved:
                         await ExtensionSessionsRepository.update_session_llm_model(
                             session_id=session.session_id, llm_model=last_llm_model
                         )
 
-                    # mark all message_threads as migrated
-                    await MessageThreadsRepository.mark_as_migrated(migrated_message_thread_ids)
-                    print(f"Message threads marked as migrated for session {session.session_id}")  # noqa: T201
-                    total_migrated_sessions += 1
+                        # mark all message_threads as migrated
+                        final_migrated_message_thread_ids = [
+                            _msg_thr_id
+                            for _msg_thr_id in migrated_message_thread_ids
+                            if _msg_thr_id not in unsaved_msg_thread_ids
+                        ]
+                        await MessageThreadsRepository.mark_as_migrated(final_migrated_message_thread_ids)
+                        print(f"Message threads marked as migrated for session {session.session_id}")  # noqa: T201
+                        total_migrated_sessions += 1
+
+                    else:
+                        AppLogger.log_error(f"Agent chats not saved for session {session.session_id}")
+                        raise ValueError(f"Agent chats not saved for session {session.session_id}")
 
                     await asyncio.sleep(0.1)  # to avoid hitting the database too hard
+
+                else:
+                    raise ValueError(
+                        f"No corresponding agent chats found for session {session.session_id} or no message threads to migrate. Values for len(corresponding_agent_chats_and_dates): {len(corresponding_agent_chats_and_dates)}, len(migrated_message_thread_ids): {len(migrated_message_thread_ids)}, last_llm_model: {last_llm_model}"
+                    )
 
             except Exception as ex:  # noqa: BLE001
                 AppLogger.log_error(f"Error occurred while migrating session, ex: {ex}")
