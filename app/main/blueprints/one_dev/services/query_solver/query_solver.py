@@ -759,7 +759,7 @@ class QuerySolver:
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
             )
 
             llm_response = await llm_handler.start_llm_query(
@@ -770,7 +770,7 @@ class QuerySolver:
                 checker=task_checker,
                 parallel_tool_calls=True,
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
+                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
                 conversation_turns=llm_inputs.messages,
             )
 
