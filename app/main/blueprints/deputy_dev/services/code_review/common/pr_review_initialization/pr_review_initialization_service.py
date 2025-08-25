@@ -1,6 +1,7 @@
 import asyncio
 import traceback
 from concurrent.futures import ProcessPoolExecutor
+from typing import Any
 
 from deputydev_core.services.initialization.review_initialization_manager import (
     ReviewInitialisationManager,
@@ -21,7 +22,7 @@ from app.main.blueprints.deputy_dev.services.code_review.common.utils.weaviate_c
 
 class PRReviewInitializationService:
     @classmethod
-    async def _monitor_embedding_progress(cls, progress_bar, progress_callback):
+    async def _monitor_embedding_progress(cls, progress_bar: Any, progress_callback: Any) -> None:
         """A separate task that can monitor and report progress while chunking happens"""
         try:
             while True:
@@ -42,7 +43,7 @@ class PRReviewInitializationService:
         return await existing_client.is_ready()
 
     @classmethod
-    async def maintain_weaviate_heartbeat(cls):
+    async def maintain_weaviate_heartbeat(cls) -> None:
         while True:
             try:
                 is_reachable = await cls.is_weaviate_ready()
@@ -61,12 +62,12 @@ class PRReviewInitializationService:
                     )
 
                     await new_weaviate_client.ensure_connected()
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 AppLogger.log_error(f"Failed to maintain weaviate heartbeat: {ex}")
             await asyncio.sleep(3)
 
     @classmethod
-    async def initialization(cls):
+    async def initialization(cls) -> None:
         app = Sanic.get_app()
         if not hasattr(app.ctx, "weaviate_client"):
             weaviate_client = await ReviewInitialisationManager().initialize_vector_db()
@@ -78,9 +79,9 @@ class PRReviewInitializationService:
             asyncio.create_task(cls.maintain_weaviate_heartbeat())
 
     @classmethod
-    async def create_embedding(cls, repo_path):
+    async def create_embedding(cls, repo_path: str) -> None:
         try:
-            print(f"Embedding started for repo {repo_path} started")
+            AppLogger.log_info(f"Embedding started for repo {repo_path} started")
 
             with ProcessPoolExecutor(max_workers=1) as executor:
                 one_dev_client = OneDevReviewClient()
@@ -101,6 +102,6 @@ class PRReviewInitializationService:
                 await initialisation_manager.prefill_vector_store(
                     chunkable_files_and_hashes=chunkable_files_and_hashes,
                 )
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             AppLogger.log_error(traceback.format_exc())
-            print(f"embedding failed due to {ex}")
+            AppLogger.log_debug(f"embedding failed due to {ex}")

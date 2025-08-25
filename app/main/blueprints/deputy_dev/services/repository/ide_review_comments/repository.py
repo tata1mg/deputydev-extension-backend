@@ -1,5 +1,6 @@
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
+from git import Optional
 from sanic.log import logger
 
 from app.backend_common.repository.db import DB
@@ -9,7 +10,9 @@ from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import Id
 
 class IdeReviewsCommentsRepository:
     @classmethod
-    async def db_get(cls, filters, fetch_one=False) -> Union[IdeReviewsCommentDTO, List[IdeReviewsCommentDTO]]:
+    async def db_get(
+        cls, filters: Dict[str, Any], fetch_one: bool = False
+    ) -> Optional[Union[IdeReviewsCommentDTO, List[IdeReviewsCommentDTO]]]:
         try:
             data = await DB.by_filters(model_name=IdeReviewsComments, where_clause=filters, fetch_one=fetch_one)
             if data and fetch_one:

@@ -10,7 +10,14 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestData,
 )
 from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItemTypes
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FunctionFocusItem,
+    UrlFocusItem,
+)
 
 
 class BaseKimiCustomCodeQuerySolverPrompt:
@@ -294,32 +301,48 @@ class BaseKimiCustomCodeQuerySolverPrompt:
         system_message = self.get_system_prompt()
         focus_chunks_message = ""
         if self.params.get("focus_items"):
-            focus_chunks_message = "The user has asked to focus on the following\n"
-            for focus_item in self.params["focus_items"]:
-                if focus_item.type == FocusItemTypes.DIRECTORY:
-                    continue
+            code_snippet_based_items = [
+                item
+                for item in self.params["focus_items"]
+                if isinstance(item, CodeSnippetFocusItem)
+                or isinstance(item, FileFocusItem)
+                or isinstance(item, ClassFocusItem)
+                or isinstance(item, FunctionFocusItem)
+            ]
+            if code_snippet_based_items:
+                focus_chunks_message = "The user has asked to focus on the following\n"
+                for focus_item in code_snippet_based_items:
+                    if (
+                        isinstance(focus_item, FileFocusItem)
+                        or isinstance(focus_item, ClassFocusItem)
+                        or isinstance(focus_item, FunctionFocusItem)
+                    ):
+                        focus_chunks_message += (
+                            "<item>"
+                            + f"<type>{focus_item.type.value}</type>"
+                            + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                            + (f"<path>{focus_item.path}</path>")
+                            + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                            + "</item>"
+                        )
+
+            directory_items = [item for item in self.params["focus_items"] if isinstance(item, DirectoryFocusItem)]
+            if directory_items:
                 focus_chunks_message += (
-                    "<item>"
-                    + f"<type>{focus_item.type.value}</type>"
-                    + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                    + (f"<path>{focus_item.path}</path>" if focus_item.type == FocusItemTypes.DIRECTORY else "")
-                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                    + "</item>"
+                    "\nThe user has also asked to explore the contents of the following directories:\n"
                 )
-        if self.params.get("directory_items"):
-            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
-            for directory_item in self.params["directory_items"]:
-                focus_chunks_message += (
-                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
-                )
-                for entry in directory_item.structure:
-                    label = "file" if entry.type == "file" else "folder"
-                    focus_chunks_message += f"{label}: {entry.name}\n"
-                focus_chunks_message += "</structure></item>"
-        urls_message = ""
-        if self.params.get("urls"):
-            urls = self.params.get("urls")
-            urls_message = f"The user has attached following urls as reference: {[url['url'] for url in urls]}"
+                for directory_item in directory_items:
+                    focus_chunks_message += (
+                        "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                    )
+                    for entry in directory_item.structure or []:
+                        label = "file" if entry.type == "file" else "folder"
+                        focus_chunks_message += f"{label}: {entry.name}\n"
+                    focus_chunks_message += "</structure></item>"
+
+            url_focus_items = [item for item in self.params["focus_items"] if isinstance(item, UrlFocusItem)]
+            if url_focus_items:
+                focus_chunks_message += f"\nThe user has also provided the following URLs for reference: {[url.url for url in url_focus_items]}\n"
         if self.params.get("write_mode") is True:
             user_message = textwrap.dedent(
                 f"""
@@ -374,8 +397,6 @@ class BaseKimiCustomCodeQuerySolverPrompt:
 
         if focus_chunks_message:
             user_message = focus_chunks_message + "\n" + user_message
-        if urls_message:
-            user_message = urls_message + "\n" + user_message
 
         return UserAndSystemMessages(
             user_message=user_message,
@@ -455,15 +476,15 @@ class BaseKimiCustomCodeQuerySolverPrompt:
               </decision_framework>
             
               <example_scenario>
-                <task>Find the definition of a symbol (method, class, or variable) in codebase</task>
+                <task>Find the definition of a symbol (method, class, or variable) and it's references in codebase</task>
                 <available_tools>
-                  <tool name="definition" type="specialized">Purpose-built for reading symbol definitions</tool>
+                  <tool name="get_usage_tool" type="specialized">Purpose-built for reading symbol definitions and their references</tool>
                   <tool name="focused_snippets_searcher" type="generic">Multi-purpose tool with various capabilities including symbol definition lookup</tool>
                 </available_tools>
                 <correct_choice>
-                  <primary>Use "definition" tool first</primary>
+                  <primary>Use "get_usage_tool" first</primary>
                   <reasoning>Purpose-built for this exact task, likely more accurate and faster</reasoning>
-                  <fallback>If "definition" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
+                  <fallback>If "get_usage_tool" fails or provides insufficient results or doesn't exist, then use "focused_snippets_searcher"</fallback>
                 </correct_choice>
               </example_scenario>
             

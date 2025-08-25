@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Tuple
+
 from git.util import Actor
 from app.backend_common.utils.sanic_wrapper import CONFIG
 from typing_extensions import override
@@ -14,7 +17,7 @@ class BitbucketAuthHandler(AuthHandler):
     __tokenable_type__ = "integration"
 
     @override
-    async def _authorise(self, auth_code):
+    async def _authorise(self, auth_code: str) -> Tuple[str, datetime, str]:
         response = await BitbucketOAuthClient.get_access_token(auth_code)
         access_token = response["access_token"]
         expires_in = response["expires_in"]
@@ -25,7 +28,7 @@ class BitbucketAuthHandler(AuthHandler):
         return access_token, expires_at, refresh_token
 
     @override
-    async def _refresh(self, refresh_token):
+    async def _refresh(self, refresh_token: str) -> Tuple[str, datetime, str]:
         response = await BitbucketOAuthClient.refresh_access_token(refresh_token)
         access_token = response["access_token"]
         expires_in = response["expires_in"]

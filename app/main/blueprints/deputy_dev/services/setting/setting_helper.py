@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 import toml
 from deputydev_core.utils.context_vars import get_context_value
@@ -13,7 +13,7 @@ class SettingHelper:
     REPO_SPECIFIC_KEYS = ["app"]
 
     @classmethod
-    def merge_setting(cls, base_config: dict, override_config: dict) -> dict:
+    def merge_setting(cls, base_config: Dict[str, Any], override_config: Dict[str, Any]) -> Dict[str, Any]:
         """
         Merges the override configuration into the base configuration.
 
@@ -55,7 +55,7 @@ class SettingHelper:
         return base_config
 
     @classmethod
-    def _merge_agents(cls, base_agents: dict, override_agents: dict) -> dict:
+    def _merge_agents(cls, base_agents: Dict[str, Any], override_agents: Dict[str, Any]) -> Dict[str, Any]:
         """
         Merges agent configurations from the override into the base agents.
 
@@ -89,7 +89,7 @@ class SettingHelper:
         return base_agents
 
     @staticmethod
-    def agent_data_by_id(agents):
+    def agent_data_by_id(agents: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
         agents_by_id = {
             data["agent_id"]: {"agent_name": agent_name, "display_name": data.get("display_name", "")}
             for agent_name, data in agents.items()
@@ -97,7 +97,9 @@ class SettingHelper:
         return agents_by_id
 
     @classmethod
-    def agents_analytics_info_recursive(cls, level_agents_list, combined_agents=None):
+    def agents_analytics_info_recursive(
+        cls, level_agents_list: List[Dict[str, Any]], combined_agents: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         if combined_agents is None:
             combined_agents = {}
 
@@ -127,7 +129,7 @@ class SettingHelper:
         return cls.agents_analytics_info_recursive(level_agents_list[1:], combined_agents)
 
     @staticmethod
-    def chat_setting():
+    def chat_setting() -> Dict[str, Any]:
         setting = get_context_value("setting")
         return setting.get("chat", {}) if setting else {}
 
@@ -146,11 +148,11 @@ class SettingHelper:
         return setting["code_review_agent"]["agents"]
 
     @classmethod
-    def pre_defined_agents(cls):
+    def pre_defined_agents(cls) -> Dict[str, Any]:
         return cls.DD_LEVEL_SETTINGS["code_review_agent"]["agents"]
 
     @classmethod
-    def summary_agent_id(cls):
+    def summary_agent_id(cls) -> str:
         return cls.DD_LEVEL_SETTINGS["pr_summary"]["agent_id"]
 
     @classmethod
@@ -161,21 +163,23 @@ class SettingHelper:
         return setting["pr_summary"]
 
     @classmethod
-    def agents(cls, setting):
+    def agents(cls, setting: Dict[str, Any]) -> Dict[str, Any]:
         if setting:
             return setting.get("code_review_agent", {}).get("agents") or {}
         return {}
 
     @classmethod
-    def agents_analytics_info(cls, dd_agents, team_agents, repo_agents):
+    def agents_analytics_info(
+        cls, dd_agents: Dict[str, Any], team_agents: Dict[str, Any], repo_agents: Dict[str, Any]
+    ) -> Dict[str, Any]:
         return cls.agents_analytics_info_recursive([dd_agents, team_agents, repo_agents])
 
     @classmethod
-    def dd_level_settings(cls):
+    def dd_level_settings(cls) -> Dict[str, Any]:
         return cls.DD_LEVEL_SETTINGS
 
     @classmethod
-    def get_uuid_wise_agents(cls):
+    def get_uuid_wise_agents(cls) -> Dict[str, Any]:
         setting = get_context_value("setting")
         agent_setting = setting["code_review_agent"]["agents"]
         pr_summary_setting = setting["pr_summary"]
@@ -187,7 +191,7 @@ class SettingHelper:
         return agents
 
     @classmethod
-    def get_agent_inclusion_exclusions(cls, agent_id=None):
+    def get_agent_inclusion_exclusions(cls, agent_id: Optional[str] = None) -> Tuple[List[str], List[str]]:
         setting = get_context_value("setting")
         global_exclusions = setting["code_review_agent"]["exclusions"] or []
         global_inclusions = setting["code_review_agent"]["inclusions"] or []
@@ -203,7 +207,7 @@ class SettingHelper:
                 return list(global_inclusions), list(global_exclusions)
 
     @classmethod
-    def agent_id_by_custom_name(cls, agent_name):
+    def agent_id_by_custom_name(cls, agent_name: str) -> str:
         agent_settings = cls.agents_settings()
         return agent_settings[agent_name]["agent_id"]
 
@@ -218,7 +222,7 @@ class SettingHelper:
             return agent_name
 
     @classmethod
-    def custom_name_to_predefined_name(cls, agent_name):
+    def custom_name_to_predefined_name(cls, agent_name: str) -> str:
         # In case of custom agent predefined_name will be same as custom agent
         all_agents = cls.agents_settings()
         if all_agents[agent_name]["is_custom_agent"]:
@@ -227,11 +231,11 @@ class SettingHelper:
             return cls.PREDEFINED_AGENTS_IDS_AND_NAMES[all_agents[agent_name]["agent_id"]]
 
     @classmethod
-    def predefined_name_by_id(cls, agent_id):
+    def predefined_name_by_id(cls, agent_id: str) -> str:
         return cls.PREDEFINED_AGENTS_IDS_AND_NAMES.get(agent_id)
 
     @classmethod
-    def custom_name_by_id(cls, agent_id):
+    def custom_name_by_id(cls, agent_id: str) -> str:
         agents_settings = cls.get_uuid_wise_agents()
         return agents_settings[agent_id]["agent_name"]
 
@@ -248,7 +252,7 @@ class SettingHelper:
         return agents_by_agent_uuid
 
     @classmethod
-    def remove_repo_specific_setting(cls, setting):
+    def remove_repo_specific_setting(cls, setting: Dict[str, Any]) -> Dict[str, Any]:
         if setting:
             for key in cls.REPO_SPECIFIC_KEYS:
                 if setting.get(key):

@@ -35,7 +35,7 @@ class ExtensionToolHandlers:
     @staticmethod
     async def handle_pr_review_planner(
         tool_input: Dict[str, Any], session_id: int, context_service: Optional[IdeReviewContextService] = None
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any] | None:
         """
         Handle the pr_review_planner tool request.
 

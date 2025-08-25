@@ -3,10 +3,10 @@ from typing import Any
 from sanic import Blueprint
 from app.backend_common.utils.sanic_wrapper import Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from sanic.response import JSONResponse
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 
-from app.main.blueprints.one_dev.services.code_generation.feedback.main import (
-    FeedbackService,
-)
+from app.main.blueprints.one_dev.services.feedback.feedback_service import FeedbackService
 from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
@@ -21,7 +21,9 @@ feedbacks_v1_bp = Blueprint("feedbacks_v1_bp", url_prefix="/feedbacks")
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=False)
-async def submit_feedback(_request: Request, auth_data: AuthData, session_id: int, **kwargs: Any):
+async def submit_feedback(
+    _request: Request, auth_data: AuthData, session_id: int, **kwargs: Any
+) -> ResponseDict | JSONResponse:
     try:
         query_id = _request.headers.get("X-Query-ID")
         feedback = _request.headers.get("X-Feedback")
@@ -30,6 +32,6 @@ async def submit_feedback(_request: Request, auth_data: AuthData, session_id: in
         response = await FeedbackService.record_extension_feedback(
             query_id=query_id, feedback=feedback, session_id=session_id, user_team_id=user_team_id
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         raise BadRequestException(f"Failed to submit feedback: {str(e)}")
     return send_response(response, headers=kwargs.get("response_headers"))

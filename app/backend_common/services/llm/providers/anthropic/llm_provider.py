@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 from typing import Any, AsyncIterable, AsyncIterator, Dict, List, Literal, Optional, Tuple, Type, cast
 
@@ -31,10 +32,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.service_clients.bedrock.bedrock import BedrockServiceClient
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     ConversationTurn,
@@ -62,10 +66,18 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedImageConversationTurnContent,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UserConversationTurn,
+)
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
@@ -167,6 +179,84 @@ class Anthropic(BaseLLMProvider):
                 conversation_turns.append(ConversationTurn(role=role, content=content))
         return conversation_turns
 
+    def _get_anthropic_conversation_turn_from_user_conversation_turn(
+        self, conversation_turn: UserConversationTurn
+    ) -> ConversationTurn:
+        contents: List[Dict[str, Any]] = []
+        for turn_content in conversation_turn.content:
+            if isinstance(turn_content, UnifiedTextConversationTurnContent):
+                contents.append({"type": "text", "text": turn_content.text})
+
+            if isinstance(turn_content, UnifiedImageConversationTurnContent):
+                contents.append(
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": turn_content.image_mimetype,
+                            "data": base64.b64encode(turn_content.bytes_data).decode("utf-8"),
+                        },
+                    }
+                )
+        if conversation_turn.cache_breakpoint:
+            contents[-1]["cache_control"] = {"type": "ephemeral"}
+        return ConversationTurn(role=ConversationRole.USER, content=contents)
+
+    def _get_anthropic_conversation_turn_from_assistant_conversation_turn(
+        self, conversation_turn: AssistantConversationTurn
+    ) -> ConversationTurn:
+        contents: List[Dict[str, Any]] = []
+        for turn_content in conversation_turn.content:
+            if isinstance(turn_content, UnifiedTextConversationTurnContent):
+                contents.append({"type": "text", "text": turn_content.text})
+
+            if isinstance(turn_content, UnifiedToolRequestConversationTurnContent):
+                contents.append(
+                    {
+                        "type": "tool_use",
+                        "name": turn_content.tool_name,
+                        "id": turn_content.tool_use_id,
+                        "input": turn_content.tool_input,
+                    }
+                )
+        return ConversationTurn(role=ConversationRole.ASSISTANT, content=contents)
+
+    def _get_anthropic_conversation_turn_from_tool_conversation_turn(
+        self, conversation_turn: ToolConversationTurn
+    ) -> ConversationTurn:
+        return ConversationTurn(
+            role=ConversationRole.USER,
+            content=[
+                {
+                    "type": "tool_result",
+                    "tool_use_id": turn_content.tool_use_id,
+                    "content": json.dumps(turn_content.tool_use_response),
+                }
+                for turn_content in conversation_turn.content
+            ],
+        )
+
+    def _get_anthropic_conversation_turns_from_conversation_turns(
+        self, conversation_turns: List[UnifiedConversationTurn]
+    ) -> List[ConversationTurn]:
+        anthropic_conversation_turns: List[ConversationTurn] = []
+
+        for turn in conversation_turns:
+            if isinstance(turn, UserConversationTurn):
+                anthropic_conversation_turns.append(
+                    self._get_anthropic_conversation_turn_from_user_conversation_turn(conversation_turn=turn)
+                )
+            elif isinstance(turn, AssistantConversationTurn):
+                anthropic_conversation_turns.append(
+                    self._get_anthropic_conversation_turn_from_assistant_conversation_turn(conversation_turn=turn)
+                )
+            else:
+                anthropic_conversation_turns.append(
+                    self._get_anthropic_conversation_turn_from_tool_conversation_turn(conversation_turn=turn)
+                )
+
+        return anthropic_conversation_turns
+
     async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
@@ -181,23 +271,15 @@ class Anthropic(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
+        conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         model_config = self._get_model_config(llm_model)
         # create conversation array
-        messages: List[ConversationTurn] = await self.get_conversation_turns(
-            previous_responses, attachment_data_task_map
-        )
 
-        if prompt and prompt.cached_message:
-            cached_message = ConversationTurn(
-                role=ConversationRole.USER, content=[{"type": "text", "text": prompt.cached_message}]
-            )
-            if cache_config.conversation and model_config["PROMPT_CACHING_SUPPORTED"]:
-                cached_message.content[0]["cache_control"] = {"type": "ephemeral"}
-            messages.append(cached_message)
+        messages: List[ConversationTurn] = []
 
         # add system and user messages to conversation
-        if prompt and prompt.user_message:
+        if prompt and prompt.user_message and not conversation_turns:
             user_message = ConversationTurn(
                 role=ConversationRole.USER, content=[{"type": "text", "text": prompt.user_message}]
             )
@@ -221,24 +303,12 @@ class Anthropic(BaseLLMProvider):
                         )
             messages.append(user_message)
 
-        # add tool result to conversation
-        if tool_use_response:
-            tool_message = ConversationTurn(
-                role=ConversationRole.USER,
-                content=[
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_response.content.tool_use_id,
-                        "content": json.dumps(tool_use_response.content.response),
-                    }
-                ],
+        if previous_responses and not conversation_turns:
+            messages = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
+        elif conversation_turns:
+            messages = self._get_anthropic_conversation_turns_from_conversation_turns(
+                conversation_turns=conversation_turns
             )
-            messages.append(tool_message)
-        if feedback:
-            feedback_message = ConversationTurn(
-                role=ConversationRole.USER, content=[{"type": "text", "text": feedback}]
-            )
-            messages.append(feedback_message)
 
         # create tools sorted by name
         tools = sorted(tools, key=lambda x: x.name) if tools else []

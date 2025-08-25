@@ -1,10 +1,13 @@
 import asyncio
+import json
 from typing import Any, AsyncIterator, Dict, List, Optional
+from uuid import uuid4
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
+from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
@@ -25,17 +28,39 @@ from app.backend_common.services.llm.dataclasses.main import (
     PromptCacheConfig,
     StreamingEventType,
     StreamingParsedLLMCallResponse,
+    TextBlockDelta,
+    TextBlockEnd,
+    TextBlockStart,
+    ToolUseRequestDelta,
+    ToolUseRequestEnd,
+    ToolUseRequestStart,
+)
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
+from app.main.blueprints.one_dev.models.dto.agent_chats import (
+    ActorType,
+    AgentChatCreateRequest,
+    AgentChatDTO,
+    AgentChatUpdateRequest,
+    CodeBlockData,
+    InfoMessageData,
+    MessageData,
+    TextMessageData,
+    ThinkingInfoData,
+    ToolUseMessageData,
+)
+from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.chat_history_handler import (
-    ChatHistoryHandler,
-)
-from app.main.blueprints.one_dev.services.code_generation.iterative_handlers.previous_chats.dataclasses.main import (
-    PreviousChatPayload,
-)
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
     CustomQuerySolverAgent,
@@ -44,11 +69,11 @@ from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solv
     DefaultQuerySolverAgentInstance,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    DetailedDirectoryItem,
-    DetailedFocusItem,
+    FocusItem,
     QuerySolverInput,
     ResponseMetadataBlock,
     ResponseMetadataContent,
+    RetryReasons,
     TaskCompletionBlock,
     TaskCompletionContent,
     ToolUseResponseInput,
@@ -56,6 +81,15 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
+    CodeBlockDelta,
+    CodeBlockEnd,
+    CodeBlockStart,
+    ThinkingBlockDelta,
+    ThinkingBlockEnd,
+    ThinkingBlockStart,
+)
+from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
@@ -74,8 +108,7 @@ class QuerySolver:
         self,
         session_id: int,
         query: str,
-        focus_items: List[DetailedFocusItem],
-        directory_items: Optional[List[DetailedDirectoryItem]],
+        focus_items: List[FocusItem],
         llm_handler: LLMHandler[PromptFeatures],
         user_team_id: int,
         session_type: str,
@@ -95,7 +128,7 @@ class QuerySolver:
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.SESSION_SUMMARY_GENERATOR,
             llm_model=LLModels.GEMINI_2_POINT_5_FLASH,
-            prompt_vars={"query": query, "focus_items": focus_items, "directory_items": directory_items},
+            prompt_vars={"query": query, "focus_items": focus_items},
             previous_responses=[],
             tools=[],
             stream=False,
@@ -109,29 +142,146 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
+    async def _store_tool_response_in_chat_chain(
+        self, tool_response: ToolUseResponseInput, sesison_id: int
+    ) -> AgentChatDTO:
+        # store query in DB
+        tool_use_chats = await AgentChatsRepository.get_chats_by_message_type_and_session(
+            message_type=ChatMessageType.TOOL_USE, session_id=sesison_id
+        )
+        selected_tool_use_chat = next(
+            (
+                chat
+                for chat in tool_use_chats
+                if getattr(chat.message_data, "tool_use_id", None) == tool_response.tool_use_id
+            ),
+            None,
+        )
+
+        if not selected_tool_use_chat or not isinstance(selected_tool_use_chat.message_data, ToolUseMessageData):
+            raise Exception("tool use request not found")
+
+        updated_chat = await AgentChatsRepository.update_chat(
+            chat_id=selected_tool_use_chat.id,
+            update_data=AgentChatUpdateRequest(
+                message_data=ToolUseMessageData(
+                    tool_use_id=selected_tool_use_chat.message_data.tool_use_id,
+                    tool_response=tool_response.response,
+                    tool_name=selected_tool_use_chat.message_data.tool_name,
+                    tool_input=selected_tool_use_chat.message_data.tool_input,
+                    tool_status=tool_response.status,
+                )
+            ),
+        )
+        if not updated_chat:
+            raise Exception("Failed to update tool use chat with response")
+        return updated_chat
+
+    async def _get_conversation_turns_for_summary(
+        self, agent_chats: List[AgentChatDTO]
+    ) -> List[UnifiedConversationTurn]:
+        conv_turns_for_summarization: List[UnifiedConversationTurn] = []
+
+        for chat in agent_chats:
+            if chat.actor == ActorType.USER:
+                conv_turns_for_summarization.append(
+                    UserConversationTurn(
+                        content=[
+                            UnifiedTextConversationTurnContent(
+                                text=chat.message_data.text if isinstance(chat.message_data, TextMessageData) else ""
+                            )
+                        ]
+                    )
+                )
+            elif chat.actor == ActorType.ASSISTANT:
+                if chat.message_type == ChatMessageType.TEXT and isinstance(chat.message_data, TextMessageData):
+                    conv_turns_for_summarization.append(
+                        AssistantConversationTurn(
+                            content=[UnifiedTextConversationTurnContent(text=chat.message_data.text)]
+                        )
+                    )
+                elif chat.message_type == ChatMessageType.CODE_BLOCK and isinstance(chat.message_data, CodeBlockData):
+                    code_content = f"```{chat.message_data.language}\n{chat.message_data.code}\n```"
+                    if chat.message_data.file_path:
+                        code_content = f"File: {chat.message_data.file_path}\n" + code_content
+                    conv_turns_for_summarization.append(
+                        AssistantConversationTurn(content=[UnifiedTextConversationTurnContent(text=code_content)])
+                    )
+                elif chat.message_type == ChatMessageType.TOOL_USE and isinstance(
+                    chat.message_data, ToolUseMessageData
+                ):
+                    conv_turns_for_summarization.append(
+                        AssistantConversationTurn(
+                            content=[
+                                UnifiedToolRequestConversationTurnContent(
+                                    tool_name=chat.message_data.tool_name,
+                                    tool_input=chat.message_data.tool_input,
+                                    tool_use_id=chat.message_data.tool_use_id,
+                                )
+                            ]
+                        )
+                    )
+                    if chat.message_data.tool_response:
+                        conv_turns_for_summarization.append(
+                            ToolConversationTurn(
+                                content=[
+                                    UnifiedToolResponseConversationTurnContent(
+                                        tool_name=chat.message_data.tool_name,
+                                        tool_use_response=chat.message_data.tool_response,
+                                        tool_use_id=chat.message_data.tool_use_id,
+                                    )
+                                ]
+                            )
+                        )
+                    else:
+                        conv_turns_for_summarization.append(
+                            ToolConversationTurn(
+                                content=[
+                                    UnifiedToolResponseConversationTurnContent(
+                                        tool_name=chat.message_data.tool_name,
+                                        tool_use_response={"result": "NO RESULT"},
+                                        tool_use_id=chat.message_data.tool_use_id,
+                                    )
+                                ]
+                            )
+                        )
+
+        prompt_handler = PromptFeatureFactory.get_prompt(
+            model_name=LLModels.GPT_4_POINT_1_NANO,
+            feature=PromptFeatures.QUERY_SUMMARY_GENERATOR,
+        )(params={})
+        user_and_system_message = prompt_handler.get_prompt()
+        conv_turns_for_summarization.append(
+            UserConversationTurn(
+                content=[UnifiedTextConversationTurnContent(text=user_and_system_message.user_message)]
+            )
+        )
+
+        return conv_turns_for_summarization
+
     async def _generate_query_summary(
         self,
         session_id: int,
-        query_id: int,
+        query_id: str,
         llm_handler: LLMHandler[PromptFeatures],
     ) -> tuple[Optional[str], bool]:  # Always return a tuple
-        all_messages = await MessageThreadsRepository.get_message_threads_for_session(
-            session_id=session_id, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
-        )
+        all_messages = await AgentChatsRepository.get_chats_by_session_id(session_id=session_id)
         # filter messages to be from current query only
-        filtered_queries = [msg.id for msg in all_messages if msg.query_id == query_id]
-        if query_id not in filtered_queries:
-            filtered_queries.insert(0, query_id)
+        filtered_agent_chats = [chat for chat in all_messages if chat.query_id == query_id]
+        filtered_agent_chats.sort(key=lambda x: x.created_at)
+
+        conv_turns = await self._get_conversation_turns_for_summary(filtered_agent_chats)
+
         # then generate a more detailed summary using LLM
         llm_response = await llm_handler.start_llm_query(
             prompt_feature=PromptFeatures.QUERY_SUMMARY_GENERATOR,
             llm_model=LLModels.GPT_4_POINT_1_NANO,
             prompt_vars={},
-            previous_responses=filtered_queries,
             tools=[],
             stream=False,
             session_id=session_id,
             call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
+            conversation_turns=conv_turns,
         )
 
         if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
@@ -144,7 +294,7 @@ class QuerySolver:
         _summary_updation_task = asyncio.create_task(self._update_query_summary(query_id, query_summary, session_id))
         return query_summary, query_status
 
-    async def _update_query_summary(self, query_id: int, summary: str, session_id: int) -> None:
+    async def _update_query_summary(self, query_id: str, summary: str, session_id: int) -> None:
         existing_summary = await QuerySummarysRepository.get_query_summary(session_id=session_id, query_id=query_id)
         if existing_summary:
             new_updated_summary = existing_summary.summary + "\n" + summary
@@ -160,18 +310,157 @@ class QuerySolver:
                 )
             )
 
-    async def get_final_stream_iterator(
+    async def get_final_stream_iterator(  # noqa: C901
         self,
         llm_response: ParsedLLMCallResponse,
         session_id: int,
         llm_handler: LLMHandler[PromptFeatures],
-        user_team_id: int,
-        session_type: str,
+        query_id: str,
+        previous_queries: List[str],
+        llm_model: LLModels,
+        agent_name: str,
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
         tool_use_detected: bool = False
 
-        async def _streaming_content_block_generator() -> AsyncIterator[BaseModel]:
+        async def _update_current_message_data_for_text(
+            current_message_data: Optional[TextMessageData],
+            event: TextBlockStart | TextBlockDelta | TextBlockEnd,
+            previous_queries: List[str],
+        ) -> Optional[MessageData]:
+            new_data: Optional[MessageData] = None
+            if isinstance(event, TextBlockStart):
+                new_data = TextMessageData(text="")
+            elif isinstance(event, TextBlockDelta):
+                new_data = TextMessageData(
+                    text=((current_message_data.text if current_message_data else "") + event.content.text)
+                )
+            elif current_message_data:  # TextBlockEnd
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        actor=ActorType.ASSISTANT,
+                        message_data=current_message_data,
+                        message_type=ChatMessageType.TEXT,
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        query_id=query_id,
+                        previous_queries=previous_queries,
+                    )
+                )
+                new_data = None
+
+            return new_data
+
+        async def _update_current_message_data_for_thinking(
+            current_message_data: Optional[ThinkingInfoData],
+            event: ThinkingBlockStart | ThinkingBlockDelta | ThinkingBlockEnd,
+            previous_queries: List[str],
+        ) -> Optional[MessageData]:
+            new_data: Optional[MessageData] = None
+            if isinstance(event, ThinkingBlockStart):
+                new_data = ThinkingInfoData(thinking_summary="")
+            elif isinstance(event, ThinkingBlockDelta):
+                new_data = ThinkingInfoData(
+                    thinking_summary=(
+                        (current_message_data.thinking_summary if current_message_data else "")
+                        + event.content.thinking_delta
+                    )
+                )
+            elif current_message_data:  # ThinkingBlockEnd
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        actor=ActorType.ASSISTANT,
+                        message_data=current_message_data,
+                        message_type=ChatMessageType.THINKING,
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        query_id=query_id,
+                        previous_queries=previous_queries,
+                    )
+                )
+                new_data = None
+
+            return new_data
+
+        async def _update_current_message_data_for_code(
+            current_message_data: Optional[CodeBlockData],
+            event: CodeBlockStart | CodeBlockDelta | CodeBlockEnd,
+            previous_queries: List[str],
+        ) -> Optional[MessageData]:
+            new_data: Optional[MessageData] = None
+            if isinstance(event, CodeBlockStart):
+                new_data = CodeBlockData(language=event.content.language, file_path=event.content.filepath, code="")
+            elif isinstance(event, CodeBlockDelta):
+                if current_message_data:
+                    new_data = CodeBlockData(
+                        language=current_message_data.language,
+                        file_path=current_message_data.file_path,
+                        code=current_message_data.code + event.content.code_delta,
+                    )
+            elif current_message_data:  # CodeBlockEnd
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        actor=ActorType.ASSISTANT,
+                        message_data=CodeBlockData(
+                            language=current_message_data.language,
+                            file_path=current_message_data.file_path,
+                            code=current_message_data.code,
+                            diff=event.content.diff,
+                        ),
+                        message_type=ChatMessageType.CODE_BLOCK,
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        query_id=query_id,
+                        previous_queries=previous_queries,
+                    )
+                )
+                new_data = None
+
+            return new_data
+
+        async def _update_current_message_data_for_tool_use(
+            current_message_data: Optional[ToolUseMessageData],
+            event: ToolUseRequestStart | ToolUseRequestDelta | ToolUseRequestEnd,
+            previous_queries: List[str],
+        ) -> Optional[MessageData]:
+            new_data: Optional[MessageData] = None
+            if isinstance(event, ToolUseRequestStart):
+                new_data = ToolUseMessageData(
+                    tool_name=event.content.tool_name,
+                    tool_input={},
+                    tool_use_id=event.content.tool_use_id,
+                )
+            elif isinstance(event, ToolUseRequestDelta):
+                if current_message_data:
+                    new_data = ToolUseMessageData(
+                        tool_name=current_message_data.tool_name,
+                        tool_input={
+                            "delta": current_message_data.tool_input.get("delta", "")
+                            + event.content.input_params_json_delta
+                        },
+                        tool_use_id=current_message_data.tool_use_id,
+                    )
+            elif current_message_data:  # ToolUseRequestEnd
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        actor=ActorType.ASSISTANT,
+                        message_data=ToolUseMessageData(
+                            tool_name=current_message_data.tool_name,
+                            tool_input=json.loads(current_message_data.tool_input.get("delta", "{}")),
+                            tool_use_id=current_message_data.tool_use_id,
+                        ),
+                        message_type=ChatMessageType.TOOL_USE,
+                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        query_id=query_id,
+                        previous_queries=previous_queries,
+                    )
+                )
+                new_data = None
+
+            return new_data
+
+        async def _streaming_content_block_generator() -> AsyncIterator[BaseModel]:  # noqa: C901
             nonlocal llm_response
             nonlocal query_summary
             nonlocal tool_use_detected
@@ -182,6 +471,8 @@ class QuerySolver:
                 content=ResponseMetadataContent(query_id=llm_response.query_id, session_id=session_id),
                 type="RESPONSE_METADATA",
             )
+
+            current_message_data: Optional[MessageData] = None
 
             async for data_block in llm_response.parsed_content:
                 # Check if the current task is cancelled
@@ -197,17 +488,52 @@ class QuerySolver:
                 ]:
                     tool_use_detected = True
 
+                if (
+                    isinstance(data_block, TextBlockStart)
+                    or isinstance(data_block, TextBlockDelta)
+                    or isinstance(data_block, TextBlockEnd)
+                ):
+                    current_message_data = await _update_current_message_data_for_text(
+                        current_message_data, data_block, previous_queries
+                    )
+
+                elif (
+                    isinstance(data_block, ThinkingBlockStart)
+                    or isinstance(data_block, ThinkingBlockDelta)
+                    or isinstance(data_block, ThinkingBlockEnd)
+                ):
+                    current_message_data = await _update_current_message_data_for_thinking(
+                        current_message_data, data_block, previous_queries
+                    )
+
+                elif (
+                    isinstance(data_block, CodeBlockStart)
+                    or isinstance(data_block, CodeBlockDelta)
+                    or isinstance(data_block, CodeBlockEnd)
+                ):
+                    current_message_data = await _update_current_message_data_for_code(
+                        current_message_data, data_block, previous_queries
+                    )
+
+                elif (
+                    isinstance(data_block, ToolUseRequestStart)
+                    or isinstance(data_block, ToolUseRequestDelta)
+                    or isinstance(data_block, ToolUseRequestEnd)
+                ):
+                    current_message_data = await _update_current_message_data_for_tool_use(
+                        current_message_data, data_block, previous_queries
+                    )
+
                 yield data_block
 
             # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
             await llm_response.llm_response_storage_task
-
             # Conditionally generate query summary only if no tool use was detected
             if not tool_use_detected:
                 task = asyncio.create_task(
                     self._generate_query_summary(
                         session_id=session_id,
-                        query_id=llm_response.query_id,
+                        query_id=query_id,
                         llm_handler=llm_handler,
                     )
                 )
@@ -216,9 +542,7 @@ class QuerySolver:
                 if task in done:
                     query_summary, success = task.result()
                 else:
-                    AppLogger.log_info(
-                        f"Query summary generation timed out after 5 seconds, Query id: {llm_response.query_id}"
-                    )
+                    AppLogger.log_info(f"Query summary generation timed out after 5 seconds, Query id: {query_id}")
                     query_summary = None
                     success = True
 
@@ -252,7 +576,7 @@ class QuerySolver:
 
         return agent_classes
 
-    async def get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
+    async def _get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
         """
         Get the last query message for the session.
         """
@@ -282,20 +606,20 @@ class QuerySolver:
         return DefaultQuerySolverAgentInstance
 
     async def _get_query_solver_agent_instance(
-        self, payload: QuerySolverInput, llm_handler: LLMHandler[PromptFeatures]
+        self,
+        payload: QuerySolverInput,
+        llm_handler: LLMHandler[PromptFeatures],
+        previous_agent_chats: List[AgentChatDTO],
     ) -> QuerySolverAgent:
-        all_custom_agents, last_query_message = await asyncio.gather(
-            self._generate_dynamic_query_solver_agents(), self.get_last_query_message_for_session(payload.session_id)
-        )
+        all_custom_agents = await self._generate_dynamic_query_solver_agents()
         agent_instance: QuerySolverAgent
 
         if payload.query:
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
                 focus_items=payload.focus_items,
-                directory_items=payload.directory_items if payload.directory_items else [],
-                last_agent=last_query_message.metadata.get("agent_name")
-                if last_query_message and last_query_message.metadata
+                last_agent=previous_agent_chats[-1].metadata.get("agent_name")
+                if previous_agent_chats and previous_agent_chats[-1].metadata
                 else None,
                 all_agents=[*all_custom_agents, DefaultQuerySolverAgentInstance],
                 llm_handler=llm_handler,
@@ -309,8 +633,8 @@ class QuerySolver:
             )
         else:
             agent_name = (
-                last_query_message.metadata.get("agent_name")
-                if last_query_message and last_query_message.metadata
+                previous_agent_chats[-1].metadata.get("agent_name")
+                if previous_agent_chats and previous_agent_chats[-1].metadata
                 else None
             )
             agent_instance: QuerySolverAgent = self._get_agent_instance_by_name(
@@ -318,6 +642,18 @@ class QuerySolver:
                 all_agents=[*await self._generate_dynamic_query_solver_agents(), DefaultQuerySolverAgentInstance],
             )
         return agent_instance
+
+    def _get_model_change_text(
+        self, current_model: LLModels, new_model: LLModels, retry_reason: Optional[RetryReasons]
+    ) -> str:
+        if retry_reason == RetryReasons.TOOL_USE_FAILED:
+            return f"LLM model changed from {current_model} to {new_model} due to tool use failure."
+        elif retry_reason == RetryReasons.THROTTLED:
+            return f"LLM model changed from {current_model} to {new_model} due to throttling."
+        elif retry_reason == RetryReasons.TOKEN_LIMIT_EXCEEDED:
+            return f"LLM model changed from {current_model} to {new_model} due to token limit exceeded."
+        else:
+            return f"LLM model changed from {current_model} to {new_model} by the user."
 
     async def solve_query(
         self,
@@ -332,38 +668,93 @@ class QuerySolver:
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
 
-        # TODO: remove this after 9.0.0. force upgrade
-        if payload.query is None and payload.batch_tool_responses is None and payload.tool_use_response is not None:
-            payload.batch_tool_responses = [payload.tool_use_response]
-
         if payload.query:
-            asyncio.create_task(
+            # get current model and check if it is changed, if yes, store a note in chat
+            generated_query_id = uuid4().hex
+            current_session = await ExtensionSessionsRepository.get_by_id(
+                session_id=payload.session_id,
+            )
+
+            if not current_session:
+                current_session = await ExtensionSessionsRepository.create_extension_session(
+                    extension_session_data=ExtensionSessionData(
+                        session_id=payload.session_id,
+                        user_team_id=payload.user_team_id,
+                        session_type=payload.session_type,
+                        current_model=LLModels(payload.llm_model.value),
+                    )
+                )
+
+            if not payload.llm_model:
+                raise ValueError("LLM model is required for query solving.")
+
+            session_chats = await AgentChatsRepository.get_chats_by_session_id(session_id=payload.session_id)
+            session_chats.sort(key=lambda x: x.created_at)
+
+            agent_instance = await self._get_query_solver_agent_instance(
+                payload=payload, llm_handler=llm_handler, previous_agent_chats=session_chats
+            )
+
+            if current_session.current_model != LLModels(payload.llm_model.value):
+                # Store a note in the chat about the model change
+                await AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=payload.session_id,
+                        actor=ActorType.SYSTEM,
+                        message_data=InfoMessageData(
+                            info=self._get_model_change_text(
+                                current_model=current_session.current_model,
+                                new_model=LLModels(payload.llm_model.value),
+                                retry_reason=payload.retry_reason,
+                            )
+                        ),
+                        message_type=ChatMessageType.INFO,
+                        metadata={
+                            "llm_model": LLModels(payload.llm_model.value).value,
+                            "agent_name": agent_instance.agent_name,
+                        },
+                        query_id=generated_query_id,
+                        previous_queries=[],
+                    )
+                )
+
+            new_query_chat = await AgentChatsRepository.create_chat(
+                chat_data=AgentChatCreateRequest(
+                    session_id=payload.session_id,
+                    actor=ActorType.USER,
+                    message_data=TextMessageData(
+                        text=payload.query,
+                        attachments=payload.attachments,
+                        focus_items=payload.focus_items,
+                        vscode_env=payload.vscode_env,
+                        repositories=payload.repositories,
+                    ),
+                    message_type=ChatMessageType.TEXT,
+                    metadata={
+                        "llm_model": LLModels(payload.llm_model.value).value,
+                        "agent_name": agent_instance.agent_name,
+                    },
+                    query_id=generated_query_id,
+                    previous_queries=[],
+                )
+            )
+
+            _summary_task = asyncio.create_task(
                 self._generate_session_summary(
                     session_id=payload.session_id,
                     query=payload.query,
                     focus_items=payload.focus_items,
-                    directory_items=payload.directory_items,
                     llm_handler=llm_handler,
                     user_team_id=payload.user_team_id,
                     session_type=payload.session_type,
                 )
             )
-            chat_handler = ChatHistoryHandler(
-                previous_chat_payload=PreviousChatPayload(query=payload.query, session_id=payload.session_id),
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
-            )
-            relevant_previous_messages, agent_instance = await asyncio.gather(
-                chat_handler.get_relevant_previous_chats(),
-                self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler),
-            )
 
             prompt_vars_to_use: Dict[str, Any] = {
                 "query": payload.query,
                 "focus_items": payload.focus_items,
-                "directory_items": payload.directory_items,
                 "deputy_dev_rules": payload.deputy_dev_rules,
                 "write_mode": payload.write_mode,
-                "urls": [url.model_dump() for url in payload.urls],
                 "os_name": payload.os_name,
                 "shell": payload.shell,
                 "vscode_env": payload.vscode_env,
@@ -371,11 +762,8 @@ class QuerySolver:
             }
 
             model_to_use = LLModels(payload.llm_model.value)
-            llm_inputs = agent_instance.get_llm_inputs(
-                payload=payload,
-                _client_data=client_data,
-                llm_model=model_to_use,
-                previous_messages=[message.id for message in relevant_previous_messages],
+            llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
+                payload=payload, _client_data=client_data, llm_model=model_to_use, new_query_chat=new_query_chat
             )
 
             prompt_vars_to_use = {**prompt_vars_to_use, **llm_inputs.extra_prompt_vars}
@@ -385,7 +773,7 @@ class QuerySolver:
                 llm_model=model_to_use,
                 prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
-                previous_responses=llm_inputs.previous_messages,
+                conversation_turns=llm_inputs.messages,
                 tools=llm_inputs.tools,
                 stream=True,
                 session_id=payload.session_id,
@@ -401,11 +789,20 @@ class QuerySolver:
                 llm_response,
                 session_id=payload.session_id,
                 llm_handler=llm_handler,
-                user_team_id=payload.user_team_id,
-                session_type=payload.session_type,
+                query_id=generated_query_id,
+                previous_queries=previous_queries,
+                llm_model=model_to_use,
+                agent_name=agent_instance.agent_name,
             )
 
         elif payload.batch_tool_responses:
+            inserted_tool_responses = await asyncio.gather(
+                *[
+                    self._store_tool_response_in_chat_chain(tool_resp, payload.session_id)
+                    for tool_resp in payload.batch_tool_responses
+                ]
+            )
+
             prompt_vars: Dict[str, Any] = {
                 "os_name": payload.os_name,
                 "shell": payload.shell,
@@ -444,30 +841,35 @@ class QuerySolver:
                     )
                 )
 
-            agent_instance = await self._get_query_solver_agent_instance(payload=payload, llm_handler=llm_handler)
-            llm_inputs = agent_instance.get_llm_inputs(
+            agent_instance = await self._get_query_solver_agent_instance(
+                payload=payload, llm_handler=llm_handler, previous_agent_chats=inserted_tool_responses
+            )
+            llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(payload.llm_model.value if payload.llm_model else LLModels.CLAUDE_3_POINT_7_SONNET),
-                previous_messages=None,
+                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
             )
 
-            llm_response = await llm_handler.submit_batch_tool_use_response(
+            llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
-                tool_use_responses=tool_responses,
                 tools=llm_inputs.tools,
                 stream=True,
                 prompt_vars=prompt_vars,
                 checker=task_checker,
                 parallel_tool_calls=True,
+                prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
+                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
+                conversation_turns=llm_inputs.messages,
             )
 
             return await self.get_final_stream_iterator(
                 llm_response,
                 session_id=payload.session_id,
                 llm_handler=llm_handler,
-                user_team_id=payload.user_team_id,
-                session_type=payload.session_type,
+                query_id=inserted_tool_responses[0].query_id,
+                previous_queries=previous_queries,
+                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
+                agent_name=agent_instance.agent_name,
             )
 
         else:

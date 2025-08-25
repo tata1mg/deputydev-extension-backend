@@ -1,12 +1,17 @@
 import asyncio
 import uuid
+from typing import Any, Dict, List
 
 from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsData
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
-from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import PresignedDownloadUrls
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+    PresignedDownloadUrls,
+)
 
 
 class ChatFileUpload:
@@ -92,3 +97,38 @@ class ChatFileUpload:
         Delete a file from S3 by its key (no DB changes).
         """
         await cls.s3_client.delete_object(object_name=s3_key)
+
+    @classmethod
+    async def get_attachment_data_and_metadata(
+        cls,
+        attachment_id: int,
+    ) -> ChatAttachmentDataWithObjectBytes:
+        """
+        Get attachment data and metadata
+        """
+
+        attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
+        if not attachment_data:
+            raise ValueError(f"Attachment with id {attachment_id} not found")
+
+        s3_key = attachment_data.s3_key
+        object_bytes = await cls.get_file_data_by_s3_key(s3_key=s3_key)
+
+        return ChatAttachmentDataWithObjectBytes(attachment_metadata=attachment_data, object_bytes=object_bytes)
+
+    @classmethod
+    def get_attachment_data_task_map(
+        cls,
+        all_attachments: List[Attachment],
+    ) -> Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]]:
+        """
+        map attachment id to attachment data fetch task
+        """
+        attachment_data_task_map: Dict[int, Any] = {}
+        for attachment in all_attachments:
+            if attachment.attachment_id not in attachment_data_task_map:
+                attachment_data_task_map[attachment.attachment_id] = asyncio.create_task(
+                    cls.get_attachment_data_and_metadata(attachment_id=attachment.attachment_id)
+                )
+
+        return attachment_data_task_map

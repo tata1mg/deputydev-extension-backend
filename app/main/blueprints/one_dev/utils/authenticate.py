@@ -8,6 +8,7 @@ from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
 from app.backend_common.utils.sanic_wrapper import CONFIG, Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from sanic.server.websockets.impl import WebsocketImplProtocol
 
 from app.backend_common.constants.onboarding import SubscriptionStatus
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
@@ -26,7 +27,7 @@ from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import get_stored_session
 
 
-async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:
+async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
     """
     Get the auth data from the request
     """
@@ -139,7 +140,7 @@ def authenticate(func: Any) -> Any:
     """
 
     @wraps(func)
-    async def wrapper(request: Request, *args, **kwargs: Any) -> Any:
+    async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         try:
             # Get the auth data
             client_data: ClientData = kwargs.get("client_data")
@@ -147,13 +148,19 @@ def authenticate(func: Any) -> Any:
             kwargs["response_headers"] = response_headers
             ContextValue.set("response_headers", response_headers)
         except Exception as ex:  # noqa: BLE001
+            if args and isinstance(args[0], WebsocketImplProtocol):
+                error_data = {
+                    "type": "STREAM_ERROR",
+                    "message": "Unable to authenticate user",
+                    "status": "NOT_VERIFIED",
+                }
+                await args[0].send(json.dumps(error_data))
             raise BadRequestException(str(ex), sentry_raise=False)
         kwargs = {
             **kwargs,
             "auth_data": auth_data,
             "client_data": client_data,
         }
-
         return await func(request, *args, **kwargs)
 
     return wrapper

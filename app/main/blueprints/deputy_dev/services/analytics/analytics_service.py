@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from sanic.log import logger
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
@@ -23,7 +25,7 @@ class AnalyticsManager:
     """
 
     @classmethod
-    async def handle_analytics_data(cls, query_params):
+    async def handle_analytics_data(cls, query_params: Dict[str, Any]) -> Dict[str, Any] | None:
         """Fetch and process analytics data based on query parameters.
 
         Args:
@@ -71,11 +73,11 @@ class AnalyticsManager:
             raise BadRequestException(f"Value error occurred while fetching analytics data with error: {ve}")
         except TypeError as te:
             raise BadRequestException(f"Type error occurred while fetching analytics data with error: {te}")
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(f"Failed to fetch analytics data for team_id={team_id} and workspace_id={workspace_id}: {ex}")
 
     @classmethod
-    async def handle_prs_data(cls, query_params):
+    async def handle_prs_data(cls, query_params: Dict[str, Any]) -> Dict[str, Any]:
         """Fetch and process pull request data based on query parameters.
 
         Args:

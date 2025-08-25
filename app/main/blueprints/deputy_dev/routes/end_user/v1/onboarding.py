@@ -1,4 +1,5 @@
 from sanic import Blueprint, Request, response
+from sanic.response import JSONResponse
 from sanic_ext import validate
 from app.backend_common.utils.sanic_wrapper.response import get_error_body_response
 
@@ -21,7 +22,7 @@ onboarding_bp = Blueprint("onboarding", url_prefix="/onboard")
 
 @onboarding_bp.post("/signup")
 @validate(json=SignUpRequest)
-async def signup(req: Request, body: SignUpRequest):
+async def signup(req: Request, body: SignUpRequest) -> JSONResponse:
     await OnboardingManager.signup(payload=body)
     return response.json({"user": "created"})
 
@@ -33,7 +34,7 @@ async def signup(req: Request, body: SignUpRequest):
 
 @onboarding_bp.post("/integration")
 @validate(json=OnboardingRequest)
-async def onboard_org(request: Request, body: OnboardingRequest):
+async def onboard_org(request: Request, body: OnboardingRequest) -> JSONResponse:
     try:
         await OnboardingManager.onboard(payload=body)
     except OnboardingError as exc:
