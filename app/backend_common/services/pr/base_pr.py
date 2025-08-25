@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 
 from app.backend_common.models.dao.postgres import Repos, Workspaces
+from app.backend_common.models.dto.comment_dto import CommentDTO
 from app.backend_common.models.dto.pr.base_pr import BasePrModel
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
@@ -19,14 +21,14 @@ class BasePR(ABC):
         workspace_id: str,
         workspace_slug: str,
         auth_handler: AuthHandler,
-        pr_id: str = None,
-        repo_service: BaseRepo = None,
-    ):
+        pr_id: str | None = None,
+        repo_service: BaseRepo | None = None,
+    ) -> None:
         self.vcs_type = vcs_type
         self.workspace = workspace
         self.pr_id = pr_id
         self.repo_name = repo_name
-        self.pr_details: PullRequestResponse = None
+        self.pr_details: PullRequestResponse | None = None
         self.meta_data = f"repo: {repo_name}, pr_id: {pr_id}, user_name: {workspace}"
         self.comment_helper = None
         self.pr_json_data = None
@@ -39,13 +41,13 @@ class BasePR(ABC):
         self.repo_service = repo_service
         self.repo_client = None
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         self.pr_details = await self.get_pr_details()
         if self.pr_details:
             self.branch_name = self.pr_details.branch_name
             self.repo_id = self.pr_details.scm_repo_id
 
-    def get_pr_id(self):
+    def get_pr_id(self) -> str | None:
         return self.pr_id
 
     @abstractmethod
@@ -60,7 +62,7 @@ class BasePR(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def update_pr_details(self, description):
+    async def update_pr_details(self, description: str) -> None:
         """
         Update details of a pull request from Bitbucket, Github or Gitlab.
         Args:
@@ -68,7 +70,7 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    async def get_commit_diff_or_pr_diff(self):
+    async def get_commit_diff_or_pr_diff(self) -> str | None:
         """
         Determines whether to fetch the full PR diff or a specific commit diff.
         Returns:
@@ -83,7 +85,7 @@ class BasePR(ABC):
         return self.pr_diff
 
     @abstractmethod
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> str | None:
         """
         Get pr diff
         Args:
@@ -94,7 +96,7 @@ class BasePR(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def get_commit_diff(self):
+    async def get_commit_diff(self) -> str | None:
         """
         Get pr diff
         Args:
@@ -104,13 +106,13 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    def pr_json(self):
+    def pr_json(self) -> Dict[str, Any]:
         return self.pr_json_data
 
     def pr_model(self) -> BasePrModel:
         pass
 
-    async def get_pr_comments(self):
+    async def get_pr_comments(self) -> List[CommentDTO]:
         """
         Get pr_comments.
 
@@ -154,14 +156,14 @@ class BasePR(ABC):
             return f"{self.pr_details.description}\n\n---\n\n{pr_summary}"
         return pr_summary
 
-    async def update_pr_description(self, pr_summary):
+    async def update_pr_description(self, pr_summary: str) -> None:
         try:
             description = await self.generate_pr_description(pr_summary)
             return await self.update_pr_details(description)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             AppLogger.log_error(f"PR description was not updated {ex}")
 
-    async def create_pr(self, title, description, source_branch, destination_branch) -> str:
+    async def create_pr(self, title: str, description: str, source_branch: str, destination_branch: str) -> str:
         raise NotImplementedError()
 
     @abstractmethod
@@ -183,7 +185,7 @@ class BasePR(ABC):
         """
         raise NotImplementedError()
 
-    async def fetch_repo(self):
+    async def fetch_repo(self) -> Repos | None:
         if self.repo_id:
             scm_workspace_id = self.workspace_id
             scm_repo_id = self.repo_id

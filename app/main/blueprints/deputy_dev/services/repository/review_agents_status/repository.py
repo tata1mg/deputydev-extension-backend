@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -9,7 +9,7 @@ from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import Re
 
 class ReviewAgentStatusRepository:
     @classmethod
-    async def db_insert(cls, agent_status: ReviewAgentStatusDTO):
+    async def db_insert(cls, agent_status: ReviewAgentStatusDTO) -> ReviewAgentStatusDTO:
         """Insert a new agent status record."""
         try:
             payload = agent_status.dict()
@@ -23,7 +23,7 @@ class ReviewAgentStatusRepository:
 
     @classmethod
     async def db_get(
-        cls, filters, fetch_one=False, order_by=None
+        cls, filters: Dict[str, Any], fetch_one: bool = False, order_by: Optional[str] = None
     ) -> Union[ReviewAgentStatusDTO, List[ReviewAgentStatusDTO]]:
         try:
             agent_status_data = await DB.by_filters(

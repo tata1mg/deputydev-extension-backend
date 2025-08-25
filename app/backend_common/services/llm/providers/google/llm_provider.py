@@ -30,9 +30,12 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.service_clients.gemini.gemini import GeminiServiceClient
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ChatAttachmentDataWithObjectBytes,
     ConversationRoleGemini,
     ConversationTool,
     LLMCallResponseTypes,
@@ -54,7 +57,15 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedImageConversationTurnContent,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UserConversationTurn,
+)
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
@@ -144,6 +155,68 @@ class Google(BaseLLMProvider):
 
         return conversation_turns
 
+    def _get_google_content_from_user_conversation_turn(
+        self, conversation_turn: UserConversationTurn
+    ) -> google_genai_types.Content:
+        parts: List[google_genai_types.Part] = []
+        for turn_content in conversation_turn.content:
+            if isinstance(turn_content, UnifiedTextConversationTurnContent):
+                parts.append(google_genai_types.Part.from_text(text=turn_content.text))
+
+            if isinstance(turn_content, UnifiedImageConversationTurnContent):
+                parts.append(
+                    google_genai_types.Part.from_bytes(
+                        data=turn_content.bytes_data,
+                        mime_type=turn_content.image_mimetype,
+                    )
+                )
+        return google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=parts)
+
+    def _get_google_content_from_assistant_conversation_turn(
+        self, conversation_turn: AssistantConversationTurn
+    ) -> google_genai_types.Content:
+        parts: List[google_genai_types.Part] = []
+        for turn_content in conversation_turn.content:
+            if isinstance(turn_content, UnifiedTextConversationTurnContent):
+                parts.append(google_genai_types.Part.from_text(text=turn_content.text))
+
+            if isinstance(turn_content, UnifiedToolRequestConversationTurnContent):
+                parts.append(
+                    google_genai_types.Part.from_function_call(
+                        name=turn_content.tool_name,
+                        args=turn_content.tool_input,
+                    )
+                )
+        return google_genai_types.Content(role=ConversationRoleGemini.MODEL.value, parts=parts)
+
+    def _get_google_content_from_tool_conversation_turn(
+        self, conversation_turn: ToolConversationTurn
+    ) -> google_genai_types.Content:
+        return google_genai_types.Content(
+            role=ConversationRoleGemini.USER.value,
+            parts=[
+                google_genai_types.Part.from_function_response(
+                    name=turn_content.tool_name, response=turn_content.tool_use_response
+                )
+                for turn_content in conversation_turn.content
+            ],
+        )
+
+    async def _get_google_content_from_conversation_turns(
+        self, conversation_turns: List[UnifiedConversationTurn]
+    ) -> List[google_genai_types.Content]:
+        contents_arr: List[google_genai_types.Content] = []
+
+        for turn in conversation_turns:
+            if isinstance(turn, UserConversationTurn):
+                contents_arr.append(self._get_google_content_from_user_conversation_turn(conversation_turn=turn))
+            elif isinstance(turn, AssistantConversationTurn):
+                contents_arr.append(self._get_google_content_from_assistant_conversation_turn(conversation_turn=turn))
+            else:
+                contents_arr.append(self._get_google_content_from_tool_conversation_turn(conversation_turn=turn))
+
+        return contents_arr
+
     async def build_llm_payload(  # noqa: C901
         self,
         llm_model: LLModels,
@@ -160,6 +233,7 @@ class Google(BaseLLMProvider):
         ),
         search_web: bool = False,
         disable_caching: bool = False,
+        conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         """
         Formats the conversation for Vertex AI's Gemini model.
@@ -189,17 +263,20 @@ class Google(BaseLLMProvider):
             system_instruction = google_genai_types.Part.from_text(text=prompt.system_message)
 
         # 2. Process Conversation History (previous_responses)
-        contents: List[google_genai_types.Content] = await self.get_conversation_turns(
-            previous_responses, attachment_data_task_map
-        )
+        contents: List[google_genai_types.Content] = []
+
+        if previous_responses and not conversation_turns:
+            contents = await self.get_conversation_turns(previous_responses, attachment_data_task_map)
+        elif conversation_turns:
+            contents = await self._get_google_content_from_conversation_turns(conversation_turns=conversation_turns)
 
         # 3. Handle Current User Prompt
         user_parts: List[google_genai_types.Part] = []
 
-        if prompt and prompt.user_message:
+        if prompt and prompt.user_message and not conversation_turns:
             user_parts.append(google_genai_types.Part.from_text(text=prompt.user_message))
 
-        if attachments:
+        if attachments and not conversation_turns:
             for attachment in attachments:
                 if attachment.attachment_id not in attachment_data_task_map:
                     continue
@@ -211,11 +288,11 @@ class Google(BaseLLMProvider):
                         )
                     )
 
-        if user_parts:
+        if user_parts and not conversation_turns:
             contents.append(google_genai_types.Content(role=ConversationRoleGemini.USER.value, parts=user_parts))
 
         # 4. Handle Tool Use Response (if provided for this specific call)
-        if tool_use_response:
+        if tool_use_response and not conversation_turns:
             contents.append(
                 google_genai_types.Content(
                     parts=[

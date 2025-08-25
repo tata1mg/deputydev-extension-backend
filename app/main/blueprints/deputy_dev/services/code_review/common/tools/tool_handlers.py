@@ -233,7 +233,7 @@ class ToolHandlers:
     @staticmethod
     async def handle_pr_review_planner(
         tool_input: Dict[str, Any], context_service: Optional[ContextService] = None
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any] | None:
         """
         Handle the pr_review_planner tool request.
 
@@ -254,4 +254,4 @@ class ToolHandlers:
         review_planner = ReviewPlanner(session_id=get_context_value("session_id"), prompt_vars=prompt_vars)
 
         review_plan = await review_planner.get_review_plan()
-        return review_plan
+        return review_plan or {}

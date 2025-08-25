@@ -7,8 +7,10 @@ __all__ = [
     "Url",
     "ExtensionSetting",
     "QuerySolverAgent",
+    "AgentChats",
 ]
 
+from .agent_chats import AgentChats
 from .extension_settings import ExtensionSetting
 from .ide_feedbacks import IdeFeedbacks
 from .job import Job

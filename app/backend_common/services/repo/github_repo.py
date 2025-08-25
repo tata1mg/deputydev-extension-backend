@@ -1,5 +1,5 @@
 import base64
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import toml
 from git.util import Actor
@@ -25,8 +25,8 @@ class GithubRepo(BaseRepo):
         workspace_id: str,
         workspace_slug: str,
         auth_handler: AuthHandler,
-        repo_id: str = None,
-    ):
+        repo_id: str | None = None,
+    ) -> None:
         super().__init__(
             vcs_type=VCSTypes.github.value,
             workspace=workspace,
@@ -46,14 +46,14 @@ class GithubRepo(BaseRepo):
     """
 
     @staticmethod
-    def get_remote_host():
+    def get_remote_host() -> str:
         return "github.com"
 
-    async def get_repo_url(self):
+    async def get_repo_url(self) -> str:
         self.token = await self.auth_handler.access_token()
         return f"https://x-token-auth:{self.token}@{self.get_remote_host()}/{self.workspace_slug}/{self.repo_name}.git"
 
-    async def get_settings(self, branch_name):
+    async def get_settings(self, branch_name: str) -> Tuple[Dict[str, Any], Dict[str, str] | str]:
         settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
         if settings:
             try:
@@ -76,7 +76,7 @@ class GithubRepo(BaseRepo):
             return True, pr["html_url"]
         return False, None
 
-    def get_remote_url_without_token(self):
+    def get_remote_url_without_token(self) -> str:
         return f"git@{self.get_remote_host()}:{self.workspace_slug}/{self.repo_name}.git"
 
     def get_repo_actor(self) -> Actor:

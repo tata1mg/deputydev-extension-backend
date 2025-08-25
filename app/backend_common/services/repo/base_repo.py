@@ -4,7 +4,7 @@ import re
 import shutil
 from abc import ABC
 from functools import cached_property
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import toml
 from deputydev_core.services.repo.local_repo.managers.git_repo_service import GitRepo
@@ -39,8 +39,8 @@ class BaseRepo(ABC):
         workspace_id: str,
         workspace_slug: str,
         auth_handler: AuthHandler,
-        repo_id: str = None,
-    ):
+        repo_id: str | None = None,
+    ) -> None:
         self.vcs_type = vcs_type
         self.workspace = workspace
         self.repo_name = repo_name
@@ -60,10 +60,10 @@ class BaseRepo(ABC):
         try:
             shutil.rmtree(self.repo_dir)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
 
-    def apply_diff_on_local_repo(self, diff: Dict[str, List[Tuple[int, int, str]]]):
+    def apply_diff_on_local_repo(self, diff: Dict[str, List[Tuple[int, int, str]]]) -> None:
         """
         Apply the diff on the local repo
         """
@@ -71,7 +71,7 @@ class BaseRepo(ABC):
             raise ValueError("Local repo not initialized, please clone the repo first")
         self.local_repo.apply_diff(diff)
 
-    def repo_full_name(self):
+    def repo_full_name(self) -> str:
         return f"{self.workspace}/{self.repo_name}"
 
     @cached_property
@@ -83,7 +83,7 @@ class BaseRepo(ABC):
             return self.local_repo.repo_path
         raise ValueError("Local repo not initialized, please clone the repo first")
 
-    async def get_default_branch(self):
+    async def get_default_branch(self) -> Optional[str]:
         """
         Response of 'git remote show https://github.com/tata1mg/hector' command:
           remote https://github.com/tata1mg/hector
@@ -96,7 +96,7 @@ class BaseRepo(ABC):
             "git", "remote", "show", repo_url, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
 
-        stdout, stderr = await process.communicate()
+        stdout, _stderr = await process.communicate()
 
         if process.returncode == 0:
             for line in stdout.decode().splitlines():
@@ -114,7 +114,7 @@ class BaseRepo(ABC):
         if not repo_dir_prefix:
             raise ValueError("Repo dir prefix is required to clone the repo")
 
-        repo_dir = os.path.join(
+        repo_dir = os.path.join(  # noqa: PTH118
             CONFIG.config.get("REPO_BASE_DIR"),
             repo_dir_prefix,
             self.repo_full_name(),
@@ -161,23 +161,23 @@ class BaseRepo(ABC):
     def scm_workspace_id(self) -> str:
         return self.workspace_id
 
-    def vcs(self):
+    def vcs(self) -> str:
         return self.vcs_type
 
-    def get_repo_url(self):
+    def get_repo_url(self) -> str:
         raise NotImplementedError()
 
     def get_remote_url_without_token(self) -> str:
         raise NotImplementedError()
 
-    async def create_issue_comment(self, issue_id: str, comment: str):
+    async def create_issue_comment(self, issue_id: str, comment: str) -> None:
         raise NotImplementedError()
 
-    async def notify_pr_creation(self, issue_id: str, pr_url: str):
+    async def notify_pr_creation(self, issue_id: str, pr_url: str) -> None:
         comment = f"✨ Created pull request: {pr_url}"
         await self.create_issue_comment(issue_id, comment)
 
-    async def push_to_remote(self, branch_name: str):
+    async def push_to_remote(self, branch_name: str) -> None:
         await self.local_repo.push_to_remote(
             branch_name=branch_name,
             remote_repo_url=await self.get_repo_url(),
@@ -188,22 +188,22 @@ class BaseRepo(ABC):
     ) -> Tuple[bool, Optional[str]]:
         raise NotImplementedError()
 
-    def checkout_branch(self, branch_name: str):
+    def checkout_branch(self, branch_name: str) -> None:
         if not self.local_repo:
             raise ValueError("Local repo not initialized, please clone the repo first")
         self.local_repo.checkout_branch(branch_name)
 
-    def stage_changes(self):
+    def stage_changes(self) -> None:
         if not self.local_repo:
             raise ValueError("Local repo not initialized, please clone the repo first")
         self.local_repo.stage_changes()
 
-    def commit_changes(self, commit_message: str):
+    def commit_changes(self, commit_message: str) -> None:
         if not self.local_repo:
             raise ValueError("Local repo not initialized, please clone the repo first")
         self.local_repo.commit_changes(commit_message, self.get_repo_actor())
 
-    async def get_settings(self, branch_name):
+    async def get_settings(self, branch_name: str) -> Tuple[Dict[str, Any], Dict[str, str] | str]:
         settings = await self.repo_client.get_file(branch_name, CONFIG.config["REPO_SETTINGS_FILE"])
         if settings:
             try:
@@ -216,7 +216,7 @@ class BaseRepo(ABC):
         else:
             return {}, {}
 
-    async def fetch_repo(self):
+    async def fetch_repo(self) -> Optional[Repos]:
         if self.repo_id:
             scm_workspace_id = self.workspace_id
             scm_repo_id = self.repo_id

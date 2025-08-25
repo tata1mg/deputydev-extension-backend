@@ -35,7 +35,6 @@ class IdeReviews(Base):
     review_status = fields.CharField(max_length=100)
     user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
     repo = fields.ForeignKeyField(model_name="dao.Repos", related_name="review_repo")
-    # user_team = fields.ForeignKeyField(model_name="dao.UserTeams", related_name="review_user_team")
     loc = fields.IntField()
     reviewed_files = fields.JSONField()
     execution_time_seconds = fields.IntField(null=True)

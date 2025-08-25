@@ -23,7 +23,7 @@ class UIProfile:
             )
             ui_profile_data = await cls.get_ui_profile_data(total_queries)
             return {"ui_profile_data": ui_profile_data}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise BadRequestException(f"Failed to fetch ui profile data: {str(e)}")
 
     @classmethod

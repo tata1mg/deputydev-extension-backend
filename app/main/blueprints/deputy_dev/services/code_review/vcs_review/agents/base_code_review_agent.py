@@ -36,7 +36,7 @@ class BaseCodeReviewAgent(ABC):
         is_reflection_enabled: bool,
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
-    ):
+    ) -> None:
         self.context_service = context_service
         self.is_reflection_enabled = is_reflection_enabled
         self.tiktoken = TikToken()
@@ -58,7 +58,7 @@ class BaseCodeReviewAgent(ABC):
         """
         return {}
 
-    def get_tokens_data(self, rendered_messages: UserAndSystemMessages):
+    def get_tokens_data(self, rendered_messages: UserAndSystemMessages) -> Dict[str, int]:
         tokens_info = self.get_agent_specific_tokens_data()
         tokens_info[TokenTypes.SYSTEM_PROMPT.value] = self.tiktoken.count(rendered_messages.system_message or "")
         tokens_info[TokenTypes.USER_PROMPT.value] = self.tiktoken.count(rendered_messages.user_message)
@@ -144,5 +144,5 @@ class BaseCodeReviewAgent(ABC):
             display_name=self.get_display_name(),
         )
 
-    def get_display_name(self):
+    def get_display_name(self) -> str:
         pass

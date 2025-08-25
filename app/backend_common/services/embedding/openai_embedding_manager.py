@@ -47,7 +47,7 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
         return batches
 
     @classmethod
-    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[NDArray[np.float64], int]:
+    async def embed_text_array(cls, texts: List[str], store_embeddings: bool = True) -> Tuple[NDArray[np.float64], int]:  # noqa: C901
         """
         Embeds a list of texts using OpenAI's embedding model.
 
@@ -75,17 +75,17 @@ class OpenAIEmbeddingManager(BaseEmbeddingManager):
             if not batch:
                 continue
             if len(parallel_batches) >= max_parallel_tasks:
-                print(f"Starting embedding for {len(parallel_batches)} in parallel")
+                AppLogger.log_debug(f"Starting embedding for {len(parallel_batches)} in parallel")
                 parallel_tasks = [
                     OpenAILLMService().get_embeddings(batch, store_embeddings) for batch in parallel_batches
                 ]
-                print(f"Starting embedding for {len(parallel_batches)} in parallel")
+                AppLogger.log_debug(f"Starting embedding for {len(parallel_batches)} in parallel")
                 batch_result = await asyncio.gather(*parallel_tasks, return_exceptions=True)
                 AppLogger.log_debug(f"Batch of {len(parallel_batches)} completed for embedding")
                 failed_batches = []
                 for _data, data_batch in zip(batch_result, parallel_batches):
                     if isinstance(_data, Exception):
-                        print(_data)
+                        AppLogger.log_debug(_data)
                         AppLogger.log_debug(f"Failed embedding batch: {_data}")
                         failed_batches.append(data_batch)
                     else:

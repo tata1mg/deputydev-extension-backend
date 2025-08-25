@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 from app.backend_common.utils.sanic_wrapper import CONFIG
@@ -44,7 +46,7 @@ class ExperimentService:
             raise ex
 
     @classmethod
-    async def initiate_experiment(cls, pr_dto: PullRequestDTO):
+    async def initiate_experiment(cls, pr_dto: PullRequestDTO) -> None:
         """
         Retrieve the experiment set for a given review cache key.
 
@@ -90,7 +92,7 @@ class ExperimentService:
         return experiment_set
 
     @classmethod
-    async def db_count(cls, filters) -> int:
+    async def db_count(cls, filters: Dict[str, Any]) -> int:
         """
         Get the count of pull requests for a given workspace and organization.
 
@@ -112,7 +114,7 @@ class ExperimentService:
             raise ex
 
     @classmethod
-    async def db_update(cls, payload, filters):
+    async def db_update(cls, payload: Dict[str, Any], filters: Dict[str, Any]) -> int:
         try:
             row = await DB.update_by_filters(None, Experiments, payload, where_clause=filters)
             return row
@@ -121,7 +123,7 @@ class ExperimentService:
             raise ex
 
     @classmethod
-    async def get_data_in_range(cls, start, end):
+    async def get_data_in_range(cls, start: int, end: int) -> List[Dict[str, Any]]:
         try:
             row = await DB.get_by_filters(model=Experiments, filters={"id__gte": start, "id__lte": end})
             return row
@@ -130,7 +132,7 @@ class ExperimentService:
             raise ex
 
     @classmethod
-    async def increment_human_comment_count(cls, scm_pr_id, repo_id):
+    async def increment_human_comment_count(cls, scm_pr_id: str, repo_id: int) -> bool:
         query = (
             f"UPDATE experiments SET human_comment_count = COALESCE(human_comment_count, 0) + 1 "
             f"WHERE scm_pr_id = '{scm_pr_id}' AND repo_id = {repo_id} RETURNING human_comment_count;"
@@ -141,14 +143,14 @@ class ExperimentService:
         return False
 
     @classmethod
-    async def decrement_human_comment_count(cls, scm_pr_id, repo_id):
+    async def decrement_human_comment_count(cls, scm_pr_id: str, repo_id: int) -> bool:
         update_count = await Experiments.filter(scm_pr_id=scm_pr_id, repo_id=repo_id).update(
             human_comment_count=F("human_comment_count") - 1
         )
         return update_count
 
     @classmethod
-    def is_eligible_for_experiment(cls):
+    def is_eligible_for_experiment(cls) -> bool:
         """
         Determines if the current team is eligible for the PR review experiment.
         Returns:

@@ -16,7 +16,7 @@ class PRDiffHandler:
     Service that manages the PR diffs and their mappings, and provides operations for retrieving and processing them.
     """
 
-    def __init__(self, pr_service: BasePR):
+    def __init__(self, pr_service: BasePR) -> None:
         """
         Initializes the PRDiffService with the provided PR diff.
 
@@ -58,7 +58,7 @@ class PRDiffHandler:
         # Return the corresponding PR diff from the list
         return self.pr_diffs[diff_index]
 
-    def set_pr_diff_mappings(self, operation: str):
+    def set_pr_diff_mappings(self, operation: str) -> None:
         """
         Populates the mappings for the PR diffs based on the operation.
 
@@ -75,7 +75,7 @@ class PRDiffHandler:
         elif operation == "chat":
             self.chat_pr_diff_mapping()  # Mapping for chat operation
 
-    def map_complete_pr_diff(self):
+    def map_complete_pr_diff(self) -> None:
         """
         Maps the complete PR diff to the mappings.
         """
@@ -83,7 +83,7 @@ class PRDiffHandler:
         self.pr_diff_mappings["complete_pr_diff"] = 0
         self.pr_diffs.append(self.pr_diff)
 
-    def code_review_agents_pr_diff_mapping(self):
+    def code_review_agents_pr_diff_mapping(self) -> None:
         """
         Maps the PR diffs for each agent in the code review operation.
         """
@@ -95,7 +95,7 @@ class PRDiffHandler:
             agent_pr_diff = self.exclude_pr_diff(agent_id=agent_id)  # Exclude agent-specific diffs
             self.map_pr_diff(key=agent_id, extracted_pr_diff=agent_pr_diff)  # Map the extracted diff to the agent
 
-    def code_review_global_pr_diff_mapping(self):
+    def code_review_global_pr_diff_mapping(self) -> None:
         """
         Maps the global PR diff for the code review operation.
         """
@@ -103,7 +103,7 @@ class PRDiffHandler:
         global_pr_diff = self.exclude_pr_diff()
         self.map_pr_diff(key="global_diff", extracted_pr_diff=global_pr_diff)  # Map the global diff
 
-    def chat_pr_diff_mapping(self):
+    def chat_pr_diff_mapping(self) -> None:
         """
         Maps the PR diff for the chat operation.
         """
@@ -111,7 +111,7 @@ class PRDiffHandler:
         chat_diff = self.exclude_pr_diff(operation="chat")
         self.map_pr_diff(key="chat", extracted_pr_diff=chat_diff)  # Map the chat diff
 
-    def map_pr_diff(self, key: str, extracted_pr_diff: str):
+    def map_pr_diff(self, key: str, extracted_pr_diff: str) -> None:
         """
         Maps the extracted PR diff to the provided key.
 
@@ -224,5 +224,5 @@ class PRDiffHandler:
         else:
             return pr_diff_token_count
 
-    async def get_pr_diff_token_count(self, operation="code_review") -> Dict[str, Any]:
+    async def get_pr_diff_token_count(self, operation: str = "code_review") -> Dict[str, Any]:
         return await self.pr_diffs_token_counts_agent_name_wise(operation)

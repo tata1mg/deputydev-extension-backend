@@ -81,7 +81,7 @@ def ensure_session_id(auto_create: bool = False) -> Any:
         """
 
         @wraps(func)
-        async def wrapper(_request: Request, *args, **kwargs: Any) -> Any:
+        async def wrapper(_request: Request, *args: Any, **kwargs: Any) -> Any:
             client_data: ClientData = kwargs.get("client_data")
             auth_data: AuthData = kwargs.get("auth_data")
             ##########################  Bypass Auth Token Flow  ##########################

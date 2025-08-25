@@ -37,7 +37,7 @@ class UrlService:
         }
 
     @classmethod
-    async def summarize_urls_long_content(cls, session_id, content):
+    async def summarize_urls_long_content(cls, session_id: int, content: str) -> str:
         llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
         response: Optional[NonStreamingParsedLLMCallResponse] = None
         try:
@@ -52,7 +52,7 @@ class UrlService:
                 if not isinstance(llm_response, NonStreamingParsedLLMCallResponse):
                     raise ValueError("Expected NonStreamingParsedLLMCallResponse")
                 response = llm_response
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             AppLogger.log_warn(f"URL summarization call failed: {e}")
 
         if response:
@@ -61,21 +61,21 @@ class UrlService:
         return ""
 
     @classmethod
-    async def save_url(cls, payload: "UrlDto"):
+    async def save_url(cls, payload: "UrlDto") -> Dict[str, Any]:
         url = await UrlRepository.save_url(payload)
         return cls.parse_url(url)
 
     @classmethod
-    async def update_url(cls, payload: "UrlDto"):
+    async def update_url(cls, payload: "UrlDto") -> Dict[str, Any]:
         url = await UrlRepository.update_url(payload)
         return cls.parse_url(url)
 
     @classmethod
-    async def delete_url(cls, url_id):
+    async def delete_url(cls, url_id: int) -> None:
         await UrlRepository.delete_url(url_id)
 
     @classmethod
-    def parse_url(cls, url: "UrlDto"):
+    def parse_url(cls, url: "UrlDto") -> Dict[str, Any]:
         keys = ["id", "name", "url", "last_indexed"]
         data = url.model_dump(include=set(keys))
         data["last_indexed"] = url.last_indexed.isoformat() if url.last_indexed else None

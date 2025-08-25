@@ -1,5 +1,5 @@
 import json
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -9,7 +9,7 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseContent,
     ToolUseResponseData,
 )
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from app.backend_common.services.llm.dataclasses.main import ConversationTool, NonStreamingParsedLLMCallResponse
 from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
@@ -71,7 +71,19 @@ class ToolRequestManager:
         """
         return self.tools
 
-    async def process_tool_use_request(self, llm_response: Any, session_id: int) -> Optional[List[ToolUseResponseData]]:
+    def get_tool_use_request_data(
+        self, llm_response: NonStreamingParsedLLMCallResponse, session_id: int
+    ) -> List[ToolUseRequestData]:
+        tool_use_requests: List[ToolUseRequestData] = []
+        for content_block in llm_response.parsed_content:
+            if hasattr(content_block, "type") and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
+                tool_use_request = content_block
+                if not isinstance(tool_use_request, ToolUseRequestData):
+                    continue
+                tool_use_requests.append(tool_use_request)
+        return tool_use_requests
+
+    async def process_tool_use_request(self, llm_response: Any, session_id: int) -> List[ToolUseResponseData]:
         """
         Process a tool use request from the LLM response.
 
@@ -83,7 +95,7 @@ class ToolRequestManager:
             The tool use response data if a tool was used, None otherwise.
         """
 
-        tool_responses = []
+        tool_responses: List[ToolUseResponseData] = []
         for content_block in llm_response.parsed_content:
             if hasattr(content_block, "type") and content_block.type == ContentBlockCategory.TOOL_USE_REQUEST:
                 tool_use_request = content_block
@@ -114,7 +126,7 @@ class ToolRequestManager:
                 )
         return tool_responses
 
-    async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def _process_tool_request(self, tool_name: str, tool_input: Dict[str, Any]) -> Dict[str, Any]:
         handler = self._tool_handlers.get(tool_name)
         if handler:
             return await handler(tool_input, self.context_service)
@@ -144,7 +156,7 @@ class ToolRequestManager:
 
         return False
 
-    def extract_final_response(self, llm_response: Any) -> Dict[str, Any]:
+    def extract_final_response(self, llm_response: NonStreamingParsedLLMCallResponse) -> Dict[str, Any]:
         """
         Extract the final response from the LLM response.
 

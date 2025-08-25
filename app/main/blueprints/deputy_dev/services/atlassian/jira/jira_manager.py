@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.context_vars import get_context_value
 
@@ -9,14 +9,14 @@ from .jira_helper import JiraHelper
 
 
 class JiraManager:
-    def __init__(self, issue_id: str):
+    def __init__(self, issue_id: str) -> None:
         self.issue_id = issue_id
         self.auth_handler = None
         self.issue_details = None
         self.client_account_id = None
         self.is_jira_integrations_enabled = False
 
-    async def set_auth_handler(self):
+    async def set_auth_handler(self) -> None:
         if not self.client_account_id or not self.auth_handler:
             confluence_auth_handler, integration_info = await get_auth_handler(
                 client="jira", team_id=get_context_value("team_id")
@@ -26,14 +26,14 @@ class JiraManager:
                 self.client_account_id = integration_info["client_account_id"]
                 self.is_jira_integrations_enabled = True
 
-    async def get_description_text(self):
+    async def get_description_text(self) -> str:
         response = await self.__get_issue_details(fields=["description"])
         if response.get("fields", {}).get("description"):
             return JiraHelper.parse_description(response.get("fields").get("description").get("content", []))
         else:
             return ""
 
-    async def __get_issue_details(self, fields: list[str] = None):
+    async def __get_issue_details(self, fields: List[str] | None = None) -> Dict[str, Any]:
         if self.issue_details:
             return self.issue_details
         await self.set_auth_handler()
@@ -44,7 +44,7 @@ class JiraManager:
         ).get_issue_details(issue_id=self.issue_id, fields=fields)
         return self.issue_details
 
-    async def comment_on_issue(self, comment):
+    async def comment_on_issue(self, comment: str) -> Optional[Dict[str, Any]]:
         if not self.is_jira_integrations_enabled:
             return {}
         self.issue_details = await Issue(

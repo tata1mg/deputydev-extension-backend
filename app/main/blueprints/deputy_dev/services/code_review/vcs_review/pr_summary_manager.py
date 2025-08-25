@@ -14,6 +14,8 @@ from app.backend_common.repository.repo.repository import RepoRepository
 from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
+from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.services.repo.base_repo import BaseRepo
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,
     FeatureFlows,
@@ -68,7 +70,14 @@ class PRSummaryManager(BasePRReviewManager):
         await cls._process_summary(repo_service, pr_service, comment_service, chat_request, team_id)
 
     @classmethod
-    async def _process_summary(cls, repo_service, pr_service, comment_service, chat_request, team_id):
+    async def _process_summary(
+        cls,
+        repo_service: BaseRepo,
+        pr_service: BasePR,
+        comment_service: BaseComment,
+        chat_request: ChatRequest,
+        team_id: int,
+    ) -> None:
         """Process PR summary generation and posting."""
         pr_diff_handler = PRDiffHandler(pr_service)
 
@@ -141,7 +150,7 @@ class PRSummaryManager(BasePRReviewManager):
         )
 
     @staticmethod
-    def parse_summary_prompt(comment: str):
+    def parse_summary_prompt(comment: str) -> Optional[str]:
         """
         Parse summary command from comment.
         Returns None if comment doesn't start with #summary.
@@ -202,7 +211,7 @@ class PRSummaryManager(BasePRReviewManager):
         return valid_agents
 
     @staticmethod
-    def _update_bucket_name(agent_result: AgentRunResult):
+    def _update_bucket_name(agent_result: AgentRunResult) -> None:
         """Update bucket names for agent result comments."""
         comments = agent_result.agent_result["comments"]
         for comment in comments:

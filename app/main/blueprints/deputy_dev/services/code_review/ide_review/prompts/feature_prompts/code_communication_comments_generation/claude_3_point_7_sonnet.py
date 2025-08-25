@@ -19,7 +19,7 @@ class Claude3Point7CodeCommunicationCommentsGenerationPrompt(BaseClaude3Point5So
     disable_tools = True
     model_name = LLModels.CLAUDE_3_POINT_7_SONNET
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.CODE_COMMUNICATION.value
 

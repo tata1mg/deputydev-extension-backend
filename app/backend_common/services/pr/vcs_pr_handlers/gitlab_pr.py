@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
@@ -26,7 +26,7 @@ class GitlabPR(BasePR):
         workspace_slug: str,
         auth_handler: AuthHandler,
         repo_service: GitlabRepo,
-    ):
+    ) -> None:
         super().__init__(
             vcs_type=VCSTypes.gitlab.value,
             workspace=workspace,
@@ -93,7 +93,7 @@ class GitlabPR(BasePR):
         if self.pr_json_data:
             return self.parse_pr_detail_response(pr_model)
 
-    async def update_pr_details(self, description):
+    async def update_pr_details(self, description: str) -> None:
         """
         Get details of a pull request from Bitbucket, Github or Gitlab.
         Args:
@@ -102,7 +102,7 @@ class GitlabPR(BasePR):
         payload = {"description": description}
         return await self.repo_client.update_pr_details(payload)
 
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> str | None:
         """
         Get PR diff of a pull request from Bitbucket, Github or Gitlab.
 
@@ -121,7 +121,7 @@ class GitlabPR(BasePR):
             combined_pr_diff = self.create_combined_diff_text(response["changes"])
             return combined_pr_diff
 
-    async def get_commit_diff(self):
+    async def get_commit_diff(self) -> str | None:
         """
         Get the diff between two commits in GitLab.
 
@@ -147,7 +147,7 @@ class GitlabPR(BasePR):
             return combined_repo_diff
 
     @staticmethod
-    def create_combined_diff_text(changes):
+    def create_combined_diff_text(changes: List[Dict[str, str]]) -> str:
         combined_diff = ""
 
         for change in changes:
@@ -164,10 +164,10 @@ class GitlabPR(BasePR):
 
         return combined_diff
 
-    def pr_model(self):
+    def pr_model(self) -> GitlabPrModel:
         return GitlabPrModel(pr_detail=self.pr_json(), meta_info={"scm_workspace_id": self.workspace_id})
 
-    async def get_pr_stats(self):
+    async def get_pr_stats(self) -> Dict[str, int]:
         if self.pr_stats:
             return self.pr_stats
 
@@ -192,7 +192,7 @@ class GitlabPR(BasePR):
         }
         return self.pr_stats
 
-    async def get_loc_changed_count(self):
+    async def get_loc_changed_count(self) -> int:
         stats = await self.get_pr_stats()
         if stats:
             return stats["total_added"] + stats["total_removed"]

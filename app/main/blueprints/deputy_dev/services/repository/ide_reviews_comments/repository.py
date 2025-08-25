@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 from deputydev_core.utils.app_logger import AppLogger
 from tortoise.query_utils import Prefetch
@@ -12,7 +12,7 @@ from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDT
 
 class IdeCommentRepository:
     @classmethod
-    async def get_review_comments(cls, review_id) -> list[IdeReviewsCommentDTO]:
+    async def get_review_comments(cls, review_id: int) -> List[IdeReviewsCommentDTO]:
         comments = (
             await IdeReviewsComments.filter(is_deleted=False, review_id=review_id, is_valid=True)
             .prefetch_related(
@@ -32,17 +32,17 @@ class IdeCommentRepository:
         return comment_dtos
 
     @classmethod
-    async def update_comments(cls, comment_ids, data):
+    async def update_comments(cls, comment_ids: List[int], data: Dict[str, Any]) -> None:
         if comment_ids and data:
             await IdeReviewsComments.filter(id__in=comment_ids).update(**data)
 
     @classmethod
-    async def update_comment(cls, comment_id, data):
+    async def update_comment(cls, comment_id: int, data: Dict[str, Any]) -> None:
         if comment_id and data:
             await IdeReviewsComments.filter(id=comment_id).update(**data)
 
     @classmethod
-    async def insert_comments(cls, comments: list[IdeReviewsCommentDTO]):
+    async def insert_comments(cls, comments: List[IdeReviewsCommentDTO]) -> None:
         agent_comment_mappings = []
         for comment in comments:
             comment_to_insert = IdeReviewsComments(
@@ -67,7 +67,7 @@ class IdeCommentRepository:
 
     @classmethod
     async def db_get(
-        cls, filters, fetch_one=False, order_by=None
+        cls, filters: Dict[str, Any], fetch_one: bool = False, order_by: List[str] = None
     ) -> Union[IdeReviewsCommentDTO, List[IdeReviewsCommentDTO]]:
         try:
             review_data = await DB.by_filters(

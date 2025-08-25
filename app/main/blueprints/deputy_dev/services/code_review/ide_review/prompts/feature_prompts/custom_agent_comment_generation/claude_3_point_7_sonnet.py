@@ -14,16 +14,8 @@ class Claude3Point7CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
     prompt_category = PromptCategories.CODE_REVIEW.value
     model_name = LLModels.CLAUDE_3_POINT_7_SONNET
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
-
-    def get_system_prompt(self) -> str:
-        system_message = f"""
-            You are a senior developer tasked with reviewing a pull request.
-            You act as an agent named {self.params["AGENT_NAME"]}, responsible for providing a detailed, constructive,
-            and professional review.
-        """
-        return system_message
 
     def get_system_prompt(self) -> str:
         return self.get_tools_specific_system_message(self.params)

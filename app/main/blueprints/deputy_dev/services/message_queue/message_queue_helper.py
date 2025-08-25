@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.utils.types.types import CloudProviders
@@ -13,7 +14,7 @@ class MessageQueueHelper:
     }
 
     @classmethod
-    def is_queue_enabled(cls, config, queue_type):
+    def is_queue_enabled(cls, config: Dict[str, Any], queue_type: str) -> bool:
         key = cls.queue_config_key[cls.cloud_provider]
         is_queue_enabled = config.get(key, {}).get("SUBSCRIBE", {}).get(queue_type, {}).get("ENABLED", False)
         return is_queue_enabled
