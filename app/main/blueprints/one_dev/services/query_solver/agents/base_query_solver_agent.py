@@ -247,19 +247,14 @@ class QuerySolverAgent(ABC):
             if code_snippet_based_items:
                 text = "The user has asked to focus on the following\n"
                 for focus_item in code_snippet_based_items:
-                    if (
-                        isinstance(focus_item, FileFocusItem)
-                        or isinstance(focus_item, ClassFocusItem)
-                        or isinstance(focus_item, FunctionFocusItem)
-                    ):
-                        text += (
-                            "<item>"
-                            + f"<type>{focus_item.type.value}</type>"
-                            + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                            + (f"<path>{focus_item.path}</path>")
-                            + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                            + "</item>"
-                        )
+                    text += (
+                        "<item>"
+                        + f"<type>{focus_item.type.value}</type>"
+                        + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                        + (f"<path>{focus_item.path}</path>")
+                        + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                        + "</item>"
+                    )
 
             directory_items = [item for item in message_data.focus_items if isinstance(item, DirectoryFocusItem)]
             if directory_items:
