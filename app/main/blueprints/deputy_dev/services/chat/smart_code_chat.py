@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
 from app.backend_common.utils.sanic_wrapper import CONFIG
@@ -35,6 +37,7 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.code_review_
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pr_summary_manager import (
     PRSummaryManager,
 )
+from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.comment_factory import (
     CommentFactory,
 )
@@ -89,7 +92,9 @@ class SmartCodeChatManager:
         await cls.handle_request(request_type, payload, query_params, vcs_type)
 
     @classmethod
-    async def handle_request(cls, request_type: str, payload: dict, query_params: dict, vcs_type: str):
+    async def handle_request(
+        cls, request_type: str, payload: Dict[str, Any], query_params: Dict[str, Any], vcs_type: str
+    ) -> None:
         """Route the request to appropriate handler based on type."""
         if request_type == CommentTypes.UNKNOWN.value:
             return
@@ -113,7 +118,7 @@ class SmartCodeChatManager:
         await cls.handle_chat_request(chat_request=comment_payload, vcs_type=vcs_type)
 
     @classmethod
-    async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type) -> None:
+    async def handle_chat_request(cls, chat_request: ChatRequest, vcs_type: str) -> None:
         message_type, feedback_type = CommentPreprocessor.get_message_type(chat_request.comment.raw)
 
         # handles comment that don't start with #feedback, #dd, #scrit or #deputydev
@@ -203,7 +208,9 @@ class SmartCodeChatManager:
         logger.info(f"Chat processing completed: {comment} , with payload : {chat_request}")
 
     @classmethod
-    async def get_chat_comments(cls, context, chat_request: ChatRequest, comment_service, add_note: bool = False):
+    async def get_chat_comments(
+        cls, context: Dict[str, Any], chat_request: ChatRequest, comment_service: BaseComment, add_note: bool = False
+    ) -> None:
         llm_comment_response = await cls.get_comments_from_llm(
             context, config.get("FEATURE_MODELS").get("PR_CHAT"), chat_request
         )
@@ -212,14 +219,14 @@ class SmartCodeChatManager:
         await comment_service.process_chat_comment(comment=comment, chat_request=chat_request, add_note=add_note)
 
     @classmethod
-    def append_settings_error(cls, comment):
+    def append_settings_error(cls, comment: str) -> str:
         error_message = SettingService.fetch_setting_errors(CHAT_ERRORS)
         if error_message:
             comment = f"**Warning**: {error_message}\n\n{comment}"
         return comment
 
     @classmethod
-    async def get_comments_from_llm(cls, context: dict, model: str, chat_request: ChatRequest) -> str:
+    async def get_comments_from_llm(cls, context: Dict[str, Any], model: str, chat_request: ChatRequest) -> str:
         """
         Makes a call to OpenAI chat completion API with a specific model and conversation messages.
 
@@ -251,7 +258,7 @@ class SmartCodeChatManager:
         return formatted_comment
 
     @classmethod
-    async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, vcs_type):
+    async def handle_human_comment(cls, parsed_payload: HumanCommentRequest, vcs_type: str) -> None:
         if await StatsCollectionTrigger().is_pr_created_post_onboarding(parsed_payload, vcs_type):
             payload = {
                 "payload": parsed_payload.dict(),

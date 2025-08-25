@@ -11,6 +11,9 @@ from app.backend_common.services.llm.prompts.base_prompt_feature_factory import 
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.chat_filter.factory import (
+    ChatRankingPromptFactory,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
     CodeQuerySolverPromptFactory,
 )
@@ -47,6 +50,7 @@ class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
         PromptFeatures.INTENT_SELECTOR: IntentSelectorPromptFactory,
         PromptFeatures.CUSTOM_CODE_QUERY_SOLVER: CustomCodeQuerySolverPromptFactory,
         PromptFeatures.QUERY_SUMMARY_GENERATOR: QuerySummaryGeneratorPromptFactory,
+        PromptFeatures.CHAT_RERANKING: ChatRankingPromptFactory,
     }
 
     @classmethod

@@ -16,7 +16,12 @@ from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.ba
     BaseClaude3Point7SonnetPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    FocusItemTypes,
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FunctionFocusItem,
+    UrlFocusItem,
 )
 
 
@@ -34,33 +39,50 @@ class Claude3Point7SessionSummaryGeneratorPrompt(BaseClaude3Point7SonnetPromptHa
 
     def get_prompt(self) -> UserAndSystemMessages:
         system_message = self.get_system_prompt()
-
         focus_chunks_message = ""
         if self.params.get("focus_items"):
-            focus_chunks_message = "The user has asked to focus on the following\n"
-            for focus_item in self.params["focus_items"]:
-                if focus_item.type == FocusItemTypes.DIRECTORY:
-                    continue
-                focus_chunks_message += (
-                    ("<item>" + f"<type>{focus_item.type}</type>" + f"<value>{focus_item.value}</value>" + "</item>")
-                    if focus_item.type != FocusItemTypes.CODE_SNIPPET
-                    else "<item>"
-                    + f"<type>{focus_item.type}</type>"
-                    + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                    + "</item>"
-                )
+            code_snippet_based_items = [
+                item
+                for item in self.params["focus_items"]
+                if isinstance(item, CodeSnippetFocusItem)
+                or isinstance(item, FileFocusItem)
+                or isinstance(item, ClassFocusItem)
+                or isinstance(item, FunctionFocusItem)
+            ]
+            if code_snippet_based_items:
+                focus_chunks_message = "The user has asked to focus on the following\n"
+                for focus_item in code_snippet_based_items:
+                    if (
+                        isinstance(focus_item, FileFocusItem)
+                        or isinstance(focus_item, ClassFocusItem)
+                        or isinstance(focus_item, FunctionFocusItem)
+                    ):
+                        focus_chunks_message += (
+                            "<item>"
+                            + f"<type>{focus_item.type.value}</type>"
+                            + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
+                            + (f"<path>{focus_item.path}</path>")
+                            + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
+                            + "</item>"
+                        )
 
-        if self.params.get("directory_items"):
-            focus_chunks_message += "\nThe user has also asked to explore the contents of the following directories:\n"
-            for directory_item in self.params["directory_items"]:
+            directory_items = [item for item in self.params["focus_items"] if isinstance(item, DirectoryFocusItem)]
+            if directory_items:
                 focus_chunks_message += (
-                    "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                    "\nThe user has also asked to explore the contents of the following directories:\n"
                 )
-                for entry in directory_item.structure:
-                    label = "file" if entry.type == "file" else "folder"
-                    focus_chunks_message += f"{label}: {entry.name}\n"
-                focus_chunks_message += "</structure></item>"
+                for directory_item in directory_items:
+                    focus_chunks_message += (
+                        "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
+                    )
+                    for entry in directory_item.structure or []:
+                        label = "file" if entry.type == "file" else "folder"
+                        focus_chunks_message += f"{label}: {entry.name}\n"
+                    focus_chunks_message += "</structure></item>"
 
+            url_focus_items = [item for item in self.params["focus_items"] if isinstance(item, UrlFocusItem)]
+            if url_focus_items:
+                focus_chunks_message += f"\nThe user has also provided the following URLs for reference: {[url.url for url in url_focus_items]}\n"
         user_message = f"""
             Here is a query asked on some repository by the user.
             {self.params.get("query")}

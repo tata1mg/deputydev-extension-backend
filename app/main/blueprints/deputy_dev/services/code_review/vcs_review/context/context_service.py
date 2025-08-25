@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.chunking.chunker.handlers.non_vector_db_chunker import (
@@ -34,7 +34,7 @@ from app.main.blueprints.deputy_dev.utils import is_path_included
 
 
 class ContextService:
-    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler):
+    def __init__(self, repo_service: BaseRepo, pr_service: BasePR, pr_diff_handler: PRDiffHandler) -> None:
         self.repo_service = repo_service
         self.pr_service = pr_service
         self.pr_title = None
@@ -56,7 +56,7 @@ class ContextService:
         self.pr_status = None
         self.pr_diff_handler = pr_diff_handler
 
-    async def get_relevant_chunk(self):
+    async def get_relevant_chunk(self) -> List[ChunkInfo]:
         use_new_chunking = get_context_value("team_id") not in CONFIG.config["TEAMS_NOT_SUPPORTED_FOR_NEW_CHUNKING"]
         local_repo = GitRepo(self.repo_service.repo_dir)
         chunker = NonVectorDBChunker(
@@ -77,7 +77,7 @@ class ContextService:
         return relevant_chunk
 
     # TODO: Add type hints for the return value without Any
-    async def agent_wise_relevant_chunks(self) -> Dict[str, Any]:
+    async def agent_wise_relevant_chunks(self) -> Dict[str, List[ChunkInfo]]:  # noqa: C901
         """
         Retrieves agent-wise relevant chunks by filtering and mapping ranked snippets to agents
         based on inclusion/exclusion rules. Avoids saving duplicate chunks to optimize memory usage.
@@ -161,7 +161,7 @@ class ContextService:
         return self.pr_description
 
     async def get_pr_diff(
-        self, append_line_no_info=False, operation="code_review", agent_id: Optional[str] = None
+        self, append_line_no_info: bool = False, operation: str = "code_review", agent_id: Optional[str] = None
     ) -> str:
         pr_diff = await self.pr_diff_handler.get_effective_pr_diff(operation, agent_id)
         self.pr_diff_tokens = await self.pr_diff_handler.pr_diffs_token_counts(operation)
@@ -178,7 +178,7 @@ class ContextService:
         self.pr_user_story_tokens = self.tiktoken.count(self.jira_story)
         return self.jira_story
 
-    async def get_confluence_doc(self):
+    async def get_confluence_doc(self) -> str:
         if self.confluence_doc_data:
             return self.confluence_doc_data
         if not self.jira_manager:
@@ -189,7 +189,7 @@ class ContextService:
             self.confluence_doc_data_tokens = self.tiktoken.count(self.confluence_doc_data)
         return self.confluence_doc_data
 
-    def get_confluence_id(self):
+    def get_confluence_id(self) -> str:
         return self.confluence_id
 
     def get_issue_id(self) -> str:

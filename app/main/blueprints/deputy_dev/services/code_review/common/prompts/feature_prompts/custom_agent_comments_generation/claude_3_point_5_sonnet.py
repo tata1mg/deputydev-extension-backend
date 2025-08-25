@@ -13,7 +13,7 @@ class Claude3Point5CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCom
     prompt_type = PromptFeatures.CUSTOM_AGENT_COMMENTS_GENERATION.value
     prompt_category = PromptCategories.CODE_REVIEW.value
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
 
     def get_system_prompt(self) -> str:

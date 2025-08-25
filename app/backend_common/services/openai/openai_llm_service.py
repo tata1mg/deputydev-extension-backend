@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.openai.openai_service import OpenAIManager
@@ -28,12 +28,14 @@ class OpenAILLMService:
 
         try:
             embeddings, input_tokens = await OpenAIManager().get_embeddings(input_data, store_embeddings)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise ValueError(f"Failed to get embeddings: {e}")
 
         return embeddings, input_tokens
 
-    async def get_client_response(self, conversation_message: list, model: str, response_type: str = "json_object"):
+    async def get_client_response(
+        self, conversation_message: List[Dict[str, Any]], model: str, response_type: str = "json_object"
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Makes a call to OpenAI chat completion API with a specific model and conversation messages.
         Implements a retry mechanism in case of a failed request or improper response.

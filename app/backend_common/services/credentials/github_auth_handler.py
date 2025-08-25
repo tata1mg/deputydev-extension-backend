@@ -23,11 +23,11 @@ class GithubAuthHandler(AuthHandler):
     DATETIME_FMT = "%Y-%m-%dT%H:%M:%SZ"
 
     @override
-    def __init__(self, tokenable_id: int | None = None):
+    def __init__(self, tokenable_id: int | None = None) -> None:
         self.tokenable_id: int | None = tokenable_id
 
     @override
-    async def _authorise(self, installation_id: str):
+    async def _authorise(self, installation_id: str) -> Tuple[str, datetime, str]:
         response = await GithubOAuthClient.get_access_token(installation_id)
         access_token = response["token"]
         expires_at = response["expires_at"]
@@ -37,7 +37,7 @@ class GithubAuthHandler(AuthHandler):
         return access_token, expires_at, installation_id
 
     @override
-    async def _refresh(self, installation_id: str):
+    async def _refresh(self, installation_id: str) -> Tuple[str, datetime, str]:
         response = await GithubOAuthClient.get_access_token(installation_id)
         access_token = response["token"]
         expires_at = response["expires_at"]

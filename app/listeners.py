@@ -1,3 +1,4 @@
+from typing import Any
 from app.backend_common.utils.redis_wrapper.registry import cache_registry
 from sanic import Sanic
 from app.backend_common.utils.sanic_wrapper.constants import ListenerEventTypes
@@ -17,7 +18,7 @@ from app.main.blueprints.one_dev.services.kafka.error_analytics_events.error_ana
 )
 
 
-async def initialize_message_queue_subscribers(_app, loop):
+async def initialize_message_queue_subscribers(_app: Sanic, loop: Any) -> None:
     """
 
     :param _app:
@@ -32,7 +33,7 @@ async def initialize_message_queue_subscribers(_app, loop):
         _app.add_task(await meta_subscribe.subscribe())
 
 
-async def initialize_kafka_subscriber(_app, loop):
+async def initialize_kafka_subscriber(_app: Sanic, loop: Any) -> None:
     """
     Initialize Kafka subscribers for session and error events,
     depending on their individual ENABLED flags.
@@ -50,22 +51,22 @@ async def initialize_kafka_subscriber(_app, loop):
         _app.add_task(error_event_subscriber.consume())
 
 
-async def close_weaviate_server(_app, loop):
+async def close_weaviate_server(_app: Sanic, loop: Any) -> None:
     if hasattr(_app.ctx, "weaviate_client"):
         await _app.ctx.weaviate_client.async_client.close()
         _app.ctx.weaviate_client.sync_client.close()
 
 
-async def setup_caches(app: Sanic):
+async def setup_caches(app: Sanic) -> None:
     cache_config = app.config["REDIS_CACHE_HOSTS"]
     cache_registry.from_config(cache_config)
 
 
-async def setup_tortoise(app: Sanic):
+async def setup_tortoise(app: Sanic) -> None:
     await TortoiseWrapper.setup(config=app.config, orm_config=app.config["DB_CONNECTIONS"])
 
 
-async def teardown_tortoise(app: Sanic):
+async def teardown_tortoise(app: Sanic) -> None:
     await TortoiseWrapper.teardown()
 
 

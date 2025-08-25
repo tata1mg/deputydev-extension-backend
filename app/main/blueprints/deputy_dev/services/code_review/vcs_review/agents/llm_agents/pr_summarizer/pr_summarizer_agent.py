@@ -37,7 +37,7 @@ class PRSummarizerAgent(BaseCodeReviewAgent):
         is_reflection_enabled: bool,
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
-    ):
+    ) -> None:
         super().__init__(context_service, is_reflection_enabled, llm_handler, model)
         self.agent_setting = SettingService.helper.agent_setting_by_name(self.agent_name)
         self.agent_id: str = SettingService.helper.summary_agent_id()

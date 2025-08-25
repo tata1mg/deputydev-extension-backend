@@ -10,6 +10,7 @@ from app.backend_common.models.dto.extension_sessions_dto import (
     ExtensionSessionData,
     ExtensionSessionDTO,
 )
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.repository.db import DB
 
 
@@ -51,6 +52,7 @@ class ExtensionSessionsRepository:
                         session_type=extension_session.session_type,
                         created_at=extension_session.created_at.isoformat(),
                         updated_at=extension_session.updated_at.isoformat(),
+                        current_model=extension_session.current_model,
                     )
                 )
             )
@@ -100,7 +102,7 @@ class ExtensionSessionsRepository:
             # Return only the IDs of the extension sessions
             return [extension_session["session_id"] for extension_session in extension_sessions]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching extension_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
@@ -140,14 +142,14 @@ class ExtensionSessionsRepository:
                 return []
             return [ExtensionSessionDTO(**extension_session) for extension_session in extension_sessions]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching extension_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
             return []
 
     @classmethod
-    async def soft_delete_extension_session_by_id(cls, session_id: int, user_team_id: int):
+    async def soft_delete_extension_session_by_id(cls, session_id: int, user_team_id: int) -> None:
         try:
             # First check if the session belongs to the user
             extension_session = await DB.by_filters(
@@ -196,7 +198,9 @@ class ExtensionSessionsRepository:
             raise ex
 
     @classmethod
-    async def update_session_pinned_rank(cls, session_id: int, user_team_id: int, pinned_rank: int) -> None:
+    async def update_session_pinned_rank(
+        cls, session_id: int, user_team_id: int, pinned_rank: Optional[int] = None
+    ) -> None:
         try:
             # First check if the session belongs to the user
             extension_session = await DB.by_filters(
@@ -215,5 +219,36 @@ class ExtensionSessionsRepository:
                 {"session_id": session_id},
             )
         except (ValueError, Exception) as ex:
+            logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
+            raise ex
+
+    @classmethod
+    async def get_unmigrated_sessions(cls, limit: int) -> List[ExtensionSessionDTO]:
+        try:
+            extension_sessions = await DB.by_filters(
+                model_name=ExtensionSession,
+                # get where current model is null and summary is not null
+                where_clause={"current_model__isnull": True, "summary__isnull": False},
+                fetch_one=False,
+                limit=limit,
+            )
+            if not extension_sessions:
+                return []
+            return [ExtensionSessionDTO(**extension_session) for extension_session in extension_sessions]
+
+        except Exception as ex:  # noqa: BLE001
+            logger.error(f"error occurred while fetching unmigrated extension_sessions from db, ex: {ex}")
+            return []
+
+    @classmethod
+    async def update_session_llm_model(cls, session_id: int, llm_model: LLModels) -> None:
+        try:
+            await DB.update_by_filters(
+                None,
+                ExtensionSession,
+                {"current_model": llm_model.value},
+                {"session_id": session_id},
+            )
+        except Exception as ex:
             logger.error(f"error occurred while updating extension_session in DB, ex: {ex}")
             raise ex

@@ -15,7 +15,7 @@ class QuerySummaries(Base):
 
     id = fields.IntField(primary_key=True)
     session_id = fields.IntField(null=False)
-    query_id = fields.IntField(null=False)
+    query_id = fields.TextField(null=False)
     summary = fields.TextField(null=False)
 
     class Meta:

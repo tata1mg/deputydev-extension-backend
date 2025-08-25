@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from pydantic import ValidationError
 from sanic.log import logger
 from app.backend_common.utils.sanic_wrapper import CONFIG
@@ -22,12 +24,12 @@ from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook i
 
 
 class PullRequestMetricsManager(StatsCollectionBase):
-    def __init__(self, payload, vcs_type):
+    def __init__(self, payload: Dict[str, Any], vcs_type: str) -> None:
         super().__init__(payload, vcs_type)
         self.stats_type = MetaStatCollectionTypes.PR_CLOSE.value
         self.sqs_message_retention_time = CONFIG.config.get("SQS", {}).get("MESSAGE_RETENTION_TIME_SEC", 0)
 
-    def validate_payload(self):
+    def validate_payload(self) -> bool:
         """
         Validates the PRCloseRequest payload and raises BadRequestException if validation fails.
         """
@@ -40,11 +42,11 @@ class PullRequestMetricsManager(StatsCollectionBase):
             logger.error(f"Invalid pr close request with error {ex}")
             return False
 
-    def handle_old_keys(self):
+    def handle_old_keys(self) -> None:
         if "repo_id" in self.payload:
             self.payload["scm_repo_id"] = self.payload.pop("repo_id")
 
-    async def process_event(self):
+    async def process_event(self) -> None:
         logger.info(f"PR close payload: {self.payload}")
         if not self.check_serviceable_event():
             return
@@ -73,7 +75,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
 
         await self.post_pr_close_processing(close_cycle_time)
 
-    async def post_pr_close_processing(self, close_cycle_time):
+    async def post_pr_close_processing(self, close_cycle_time: int) -> None:
         await PRService.db_update(
             payload={
                 "scm_close_time": self.payload["pr_closed_at"],
@@ -91,7 +93,7 @@ class PullRequestMetricsManager(StatsCollectionBase):
                 filters={"pr_id": self.pr_dto.id},
             )
 
-    async def calculate_pr_close_cycle_time(self):
+    async def calculate_pr_close_cycle_time(self) -> int:
         """
         Calculates the stats_collection cycle time from the provided payload and VCS type, then stores it.
         """
@@ -105,6 +107,6 @@ class PullRequestMetricsManager(StatsCollectionBase):
 
         return cycle_time_seconds
 
-    async def generate_old_payload(self):
+    async def generate_old_payload(self) -> None:
         self.payload = await PullRequestCloseWebhook.parse_payload(self.payload)
         self.payload = self.payload.dict()
