@@ -32,7 +32,7 @@ class CustomAgent(BaseCommenterAgent):
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
         agent_setting: Dict[str, Any],
-    ):
+    ) -> None:
         super().__init__(context_service, is_reflection_enabled, agent_setting, llm_handler, model)
         self.agent_name = custom_commenter_name  # overrides the agent_name value from the base class
 

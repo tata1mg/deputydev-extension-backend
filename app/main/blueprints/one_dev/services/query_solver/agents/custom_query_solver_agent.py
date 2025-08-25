@@ -50,7 +50,7 @@ class CustomQuerySolverAgent(QuerySolverAgent):
 
         return all_tools
 
-    def get_llm_inputs(
+    def get_llm_inputs_and_previous_queries(
         self,
         payload: QuerySolverInput,
         _client_data: ClientData,

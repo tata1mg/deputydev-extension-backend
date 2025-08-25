@@ -1,8 +1,12 @@
+from typing import Any
+
 from deputydev_core.utils.app_logger import AppLogger
 from pydantic import ValidationError
 from sanic import Blueprint
 from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from sanic.response import JSONResponse
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 
 from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentCreateParams, AgentUpdateParams
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.agent_manager import (
@@ -22,7 +26,7 @@ config = CONFIG.config
 @agents.route("/", methods=["GET"])
 @validate_client_version
 @authenticate
-async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
+async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs: Any) -> ResponseDict | JSONResponse:
     """
     Get user agents for a specific user team.
 
@@ -35,7 +39,7 @@ async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
     try:
         agents_response = await AgentManager.get_or_create_agents(user_team_id=auth_data.user_team_id)
         return send_response({"agents": agents_response, "count": len(agents_response)})
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         AppLogger.log_error(f"Error fetching user agents: {e}")
         raise e
 
@@ -43,7 +47,7 @@ async def get_user_agents(_request: Request, auth_data: AuthData, **kwargs):
 @agents.route("/", methods=["POST"])
 @validate_client_version
 @authenticate
-async def create_agent(_request: Request, auth_data: AuthData, **kwargs):
+async def create_agent(_request: Request, auth_data: AuthData, **kwargs: Any) -> ResponseDict | JSONResponse:
     try:
         payload = _request.custom_json()
         payload = AgentCreateParams(**payload, user_team_id=auth_data.user_team_id)
@@ -57,7 +61,9 @@ async def create_agent(_request: Request, auth_data: AuthData, **kwargs):
 @agents.route("/<agent_id:int>", methods=["PATCH"])
 @validate_client_version
 @authenticate
-async def update_agent(_request: Request, agent_id, auth_data: AuthData, **kwargs):
+async def update_agent(
+    _request: Request, agent_id: int, auth_data: AuthData, **kwargs: Any
+) -> ResponseDict | JSONResponse:
     try:
         """Update an existing agent with the provided parameters."""
         payload = _request.custom_json()
@@ -72,11 +78,10 @@ async def update_agent(_request: Request, agent_id, auth_data: AuthData, **kwarg
 @agents.route("/<agent_id:int>", methods=["DELETE"])
 @validate_client_version
 @authenticate
-async def delete_agent(_request: Request, agent_id, auth_data: AuthData, **kwargs):
+async def delete_agent(
+    _request: Request, agent_id: int, auth_data: AuthData, **kwargs: Any
+) -> ResponseDict | JSONResponse:
     """Delete an agent by its ID."""
-    try:
-        agent_manager = AgentManager()
-        response = await agent_manager.delete_agent(agent_id)
-        return send_response(response)
-    except Exception as e:
-        raise e
+    agent_manager = AgentManager()
+    response = await agent_manager.delete_agent(agent_id)
+    return send_response(response)

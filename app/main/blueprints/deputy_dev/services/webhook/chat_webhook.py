@@ -1,3 +1,5 @@
+from typing import Any, Dict, Optional
+
 from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
 
@@ -19,7 +21,7 @@ class ChatWebhook:
     """
 
     @classmethod
-    def get_raw_comment(cls, payload):
+    def get_raw_comment(cls, payload: Dict[str, Any]) -> Optional[str]:
         vcs_type = payload.get("vcs_type")
         if vcs_type == VCSTypes.bitbucket.value:
             comment = payload.get("comment")
@@ -38,7 +40,7 @@ class ChatWebhook:
         return None
 
     @classmethod
-    async def parse_payload(cls, payload):
+    async def parse_payload(cls, payload: Dict[str, Any]) -> Optional[ChatRequest]:
         vcs_type = payload.get("vcs_type")
         if should_skip_trayalabs_request(payload):
             return None
@@ -51,7 +53,7 @@ class ChatWebhook:
             return parsed_payload
 
     @classmethod
-    def __parse_bitbucket_payload(cls, request_payload) -> ChatRequest:
+    def __parse_bitbucket_payload(cls, request_payload: Dict[str, Any]) -> ChatRequest:
         """
         Generates servable payload from bitbucket payload
         """
@@ -88,22 +90,22 @@ class ChatWebhook:
         return ChatRequest(**final_payload)
 
     @staticmethod
-    def _is_valid_github_action(payload):
+    def _is_valid_github_action(payload: Dict[str, Any]) -> bool:
         """Check if the webhook action is valid for processing."""
         return payload.get("action") == GithubActions.CREATED.value
 
     @staticmethod
-    def _is_pr_review_comment(payload):
+    def _is_pr_review_comment(payload: Dict[str, Any]) -> bool:
         """Check if payload is a PR review comment."""
         return payload.get("comment") and not payload.get("issue")
 
     @staticmethod
-    def _is_pr_issue_comment(payload):
+    def _is_pr_issue_comment(payload: Dict[str, Any]) -> bool:
         """Check if payload is a PR conversation comment."""
         return payload.get("issue", {}).get("pull_request")
 
     @staticmethod
-    def _parse_github_pr_review_comment(request_payload):
+    def _parse_github_pr_review_comment(request_payload: Dict[str, Any]) -> ChatRequest:
         """Check if payload is a PR conversation comment."""
         final_payload = {
             "comment": {
@@ -143,7 +145,7 @@ class ChatWebhook:
         return ChatRequest(**final_payload)
 
     @staticmethod
-    def _parse_github_pr_issue_comment(request_payload):
+    def _parse_github_pr_issue_comment(request_payload: Dict[str, Any]) -> ChatRequest:
         set_context_values(is_issue_comment=True)
         pr_url = request_payload["issue"]["pull_request"]["url"]
         pr_number = pr_url.split("/")[-1]
@@ -177,7 +179,7 @@ class ChatWebhook:
         return ChatRequest(**final_payload)
 
     @classmethod
-    def __parse_github_payload(cls, request_payload):
+    def __parse_github_payload(cls, request_payload: Dict[str, Any]) -> Optional[ChatRequest]:
         """
         Generates servable payload from github payload
         """
@@ -190,7 +192,7 @@ class ChatWebhook:
             return cls._parse_github_pr_issue_comment(request_payload)
 
     @classmethod
-    def __get_bitbucket_comment(cls, payload):
+    def __get_bitbucket_comment(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         try:
             bb_payload = {}
             comment = payload["comment"]
@@ -214,13 +216,13 @@ class ChatWebhook:
             logger.error(f"bitbucket chat failed payload {payload}")
             logger.error(f"bitbucket chat failed error {e}")
             raise f"Error: {e} not found in the JSON structure."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"bitbucket chat failed payload {payload}")
             logger.error(f"bitbucket chat failed error {e}")
             raise f"An unexpected error occurred: {e}"
 
     @classmethod
-    async def __parse_gitlab_payload(cls, request_payload):
+    async def __parse_gitlab_payload(cls, request_payload: Dict[str, Any]) -> Optional[ChatRequest]:
         """
         Generates servable payload from GitLab payload.
         """

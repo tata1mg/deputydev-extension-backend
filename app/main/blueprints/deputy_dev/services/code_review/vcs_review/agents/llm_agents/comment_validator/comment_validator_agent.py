@@ -37,7 +37,7 @@ class CommentValidatorAgent(BaseCodeReviewAgent):
         agent_setting: Dict[str, Any],
         llm_handler: LLMHandler[PromptFeatures],
         model: LLModels,
-    ):
+    ) -> None:
         self.comments = comments
         self.agent_setting = agent_setting
         self.agent_id = self.agent_setting.get("agent_id")

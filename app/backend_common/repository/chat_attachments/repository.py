@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from sanic.log import logger
 
@@ -21,6 +21,20 @@ class ChatAttachmentsRepository:
             return ChatAttachmentsDTO(**attachment)
         except Exception as ex:
             logger.error(f"error occurred while getting chat_attachment in db for id : {attachment_id}, ex: {ex}")
+            raise ex
+
+    @classmethod
+    async def get_attachments_by_ids(cls, attachment_ids: List[int]) -> List[ChatAttachmentsDTO]:
+        try:
+            attachments = await DB.by_filters(
+                model_name=ChatAttachments,
+                where_clause={"id__in": attachment_ids},
+            )
+            if not attachments:
+                return []
+            return [ChatAttachmentsDTO(**attachment) for attachment in attachments]
+        except Exception as ex:
+            logger.error(f"error occurred while getting chat_attachment in db for ids : {attachment_ids}, ex: {ex}")
             raise ex
 
     @classmethod

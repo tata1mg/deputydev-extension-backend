@@ -7,7 +7,7 @@ from app.main.blueprints.deputy_dev.models.dto.pr_comments_dto import PRComments
 
 class CommentService:
     @classmethod
-    async def db_insert(cls, comment_dto: PRCommentsDTO):
+    async def db_insert(cls, comment_dto: PRCommentsDTO) -> PRComments:
         try:
             payload = comment_dto.dict()
             del payload["id"]
@@ -20,7 +20,7 @@ class CommentService:
             raise ex
 
     @classmethod
-    async def bulk_insert(cls, comment_daos: list[PRComments]):
+    async def bulk_insert(cls, comment_daos: list[PRComments]) -> int:
         try:
             rows_inserted = await DB.bulk_create(PRComments, comment_daos)
             return rows_inserted

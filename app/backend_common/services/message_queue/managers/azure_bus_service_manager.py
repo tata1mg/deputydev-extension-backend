@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from azure.identity import DefaultAzureCredential
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
@@ -29,7 +29,7 @@ from app.main.blueprints.deputy_dev.models.dto.message_queue.azure_bus_service_m
 
 
 class AzureServiceBusManager(MessageQueueManager):
-    def __init__(self, config: dict, config_key: str = "AZURE_BUS_SERVICE"):
+    def __init__(self, config: Dict[str, Any], config_key: str = "AZURE_BUS_SERVICE") -> None:
         self.config = config.get(config_key, {})
         self._app_config = config
         self.client: Optional[AsyncServiceBusClient] = None
@@ -38,7 +38,7 @@ class AzureServiceBusManager(MessageQueueManager):
         self.queue_name = None
         self.queue_type = None
 
-    async def get_client(self, queue_name):
+    async def get_client(self, queue_name: str) -> AsyncServiceBusClient:
         fully_qualified_namespace = self.config.get("NAMESPACE_FQDN")
         logging_enabled = self.config.get("LOGGING_ENABLED") or False
         retry_total = self.config.get("RETRY_TOTAL", 3)
@@ -46,7 +46,7 @@ class AzureServiceBusManager(MessageQueueManager):
         retry_backoff_max: float = self.config.get("RETRY_BACKOFF_MAX", 120)
         retry_mode: str = self.config.get("RETRY_MODE", "exponential")
 
-        self.client: AsyncServiceBusClient = AsyncServiceBusClient(
+        self.client = AsyncServiceBusClient(
             fully_qualified_namespace=fully_qualified_namespace,
             credential=self.async_credential,
             retry_total=retry_total,
@@ -59,7 +59,14 @@ class AzureServiceBusManager(MessageQueueManager):
         self.queue_type = self._get_queue_type()
         return self.client
 
-    async def publish(self, payload: str = None, messages: list = None, attributes: dict = None, batch=False, **kwargs):
+    async def publish(
+        self,
+        payload: str | None = None,
+        messages: List[str] | None = None,
+        attributes: Dict[str, Any] | None = None,
+        batch: bool = False,
+        **kwargs: Any,
+    ) -> bool:
         """
         :param messages: list of messages to be sent to Azure Service Bus for batch requests
         :param payload: message payload to be sent to Azure Service Bus for single events
@@ -94,7 +101,7 @@ class AzureServiceBusManager(MessageQueueManager):
                 raise Exception(AzureErrorMessages.AzureServiceBusPayloadSize.value.format())
             except ServiceBusError as err:
                 logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=err, count=_retry_count))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.info(AzureErrorMessages.AzureServiceBusPublishError.value.format(error=e, count=_retry_count))
             finally:
                 _retry_count += 1
@@ -102,7 +109,12 @@ class AzureServiceBusManager(MessageQueueManager):
         return _send
 
     async def _send_message(
-        self, payload: str = None, messages: List[str] = None, attributes: dict = None, batch=False, **kwargs
+        self,
+        payload: str | None = None,
+        messages: List[str] | None = None,
+        attributes: Dict[str, Any] | None = None,
+        batch: bool = False,
+        **kwargs: Any,
     ) -> None:
         sender = self.client.get_queue_sender(self.queue_name)
         if not batch:
@@ -146,7 +158,7 @@ class AzureServiceBusManager(MessageQueueManager):
                     await sender.send_messages(message_batch)
             # TODO: have few doubts in session_enabled bulk publish
 
-    async def close(self):
+    async def close(self) -> None:
         if self.client:
             await self.client.close()
         if self.async_credential:
@@ -154,7 +166,9 @@ class AzureServiceBusManager(MessageQueueManager):
         if self.sync_credential:
             self.sync_credential.close()
 
-    async def subscribe(self, **kwargs) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver, AutoLockRenewer]:
+    async def subscribe(
+        self, **kwargs: Any
+    ) -> Tuple[List[ServiceBusReceivedMessage], ServiceBusReceiver, AutoLockRenewer]:
         if not self.client or not self.queue_name:
             raise ValueError("Service Bus client or entity name is not initialized")
         max_message_count = kwargs.get("max_no_of_messages")
@@ -184,7 +198,7 @@ class AzureServiceBusManager(MessageQueueManager):
             await lock_renewer.close()
             raise e
 
-    def _validate_publish_to_service_bus(self, session_id: str, message_id: str):
+    def _validate_publish_to_service_bus(self, session_id: str, message_id: str) -> None:
         queue_type = self._get_queue_type()
         if queue_type == AzureBusServiceQueueType.SESSION_ENABLED:
             if not session_id:
@@ -201,7 +215,7 @@ class AzureServiceBusManager(MessageQueueManager):
                     )
                 )
 
-    def _get_queue_type(self):
+    def _get_queue_type(self) -> str:
         if self.queue_type:
             return self.queue_type
         client = ServiceBusManagementClient(self.sync_credential, self.config.get("SUBSCRIPTION_ID"))
@@ -213,5 +227,5 @@ class AzureServiceBusManager(MessageQueueManager):
         )
         return self.queue_type
 
-    async def purge(self, message: AzureBusServiceMessage, receiver: ServiceBusReceiver):
+    async def purge(self, message: AzureBusServiceMessage, receiver: ServiceBusReceiver) -> None:
         await receiver.complete_message(message.received_message)

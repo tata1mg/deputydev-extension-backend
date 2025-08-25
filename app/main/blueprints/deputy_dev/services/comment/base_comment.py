@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from deputydev_core.utils.app_logger import AppLogger
 from app.backend_common.utils.sanic_wrapper import Task
@@ -20,8 +20,8 @@ class BaseComment(ABC):
         pr_id: str,
         auth_handler: AuthHandler,
         pr_details: PullRequestResponse = None,
-        repo_id=None,
-    ):
+        repo_id: Optional[int] = None,
+    ) -> None:
         self.workspace = workspace
         self.pr_id = pr_id
         self.repo_name = repo_name
@@ -34,7 +34,7 @@ class BaseComment(ABC):
         self.repo_client = None
 
     @abstractmethod
-    async def fetch_comment_thread(self, chat_request):
+    async def fetch_comment_thread(self, chat_request: ChatRequest) -> str:
         """
         Fetches comment thread
         Args:
@@ -46,29 +46,29 @@ class BaseComment(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def create_pr_review_comment(self, comment: dict, model):
+    async def create_pr_review_comment(self, comment: Dict[str, Any], model: str) -> None:
         """creates comment on code files"""
         raise NotImplementedError()
 
     @abstractmethod
-    async def create_pr_comment(self, comment: str, model: str):
+    async def create_pr_comment(self, comment: str, model: str) -> None:
         """creates comment on whole pr"""
         raise NotImplementedError()
 
     @abstractmethod
-    async def create_comment_on_parent(self, comment: str, parent_id, model: str = ""):
+    async def create_comment_on_parent(self, comment: str, parent_id: str, model: str = "") -> None:
         """creates comment on whole pr"""
         raise NotImplementedError()
 
     @abstractmethod
-    async def process_chat_comment(self, comment, chat_request: ChatRequest, add_note: bool = False):
+    async def process_chat_comment(self, comment: str, chat_request: ChatRequest, add_note: bool = False) -> str:
         """process"""
         if add_note:
             # This is a temporary addition to convey the user of the deprecation of #scrit
             comment = f"{SCRIT_DEPRECATION_NOTIFICATION}\n\n{comment}"
         return comment
 
-    async def create_bulk_comments(self, comments: List[Union[str, dict]]) -> None:
+    async def create_bulk_comments(self, comments: List[Union[str, Dict[str, Any]]]) -> None:
         """
         Iterate over each comment in pull request and post that comment on PR.
 
@@ -83,10 +83,10 @@ class BaseComment(ABC):
         for comment in comments:
             try:
                 await self.create_pr_review_comment(comment, comment.get("model"))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 AppLogger.log_error(f"Unable to create comment: {comment}: {e}")
 
-    async def post_bots_comments(self, comments):
+    async def post_bots_comments(self, comments: List[Dict[str, Any]]) -> None:
         """
         Create two parallel tasks to comment on PR using multiple bots
 

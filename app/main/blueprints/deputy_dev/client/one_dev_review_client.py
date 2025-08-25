@@ -6,7 +6,7 @@ from deputydev_core.utils.constants.enums import Clients
 
 
 class OneDevReviewClient(BaseHTTPClient):
-    def __init__(self, config=None):
+    def __init__(self, config: Dict[str, Any] | None = None) -> None:
         timeout = ConfigManager.configs["ONE_DEV"].get("TIMEOUT") or 60
         # The total number of simultaneous connections allowed (default is 100). (set 0 for unlimited)
         limit = ConfigManager.configs["ONE_DEV"].get("LIMIT") or 0
@@ -36,7 +36,7 @@ class OneDevReviewClient(BaseHTTPClient):
         )
         return (await result.json()).get("data")
 
-    async def llm_reranking(self, payload: Dict[str, Any], headers: Dict[str, str]):
+    async def llm_reranking(self, payload: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
         path = f"{self.get_reranking_base_url()}/end_user/v1/chunks/rerank-via-llm"
         headers = {**headers, "X-Client-Version": "2.0.1", "X-Client": Clients.PR_REVIEW.value}
         result = await self.post(url=path, json=payload, headers=headers)

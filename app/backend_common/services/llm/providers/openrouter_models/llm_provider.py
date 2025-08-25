@@ -32,10 +32,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseResponseData,
 )
 from app.backend_common.service_clients.openrouter.openrouter import OpenRouterServiceClient
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
+    ChatAttachmentDataWithObjectBytes,
+)
 from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ChatAttachmentDataWithObjectBytes,
     ConversationRole,
     ConversationTool,
     LLMCallResponseTypes,
@@ -56,7 +59,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Attachment
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
@@ -82,6 +85,7 @@ class OpenRouter(BaseLLMProvider):
         cache_config: PromptCacheConfig = PromptCacheConfig(tools=False, system_message=False, conversation=False),
         search_web: bool = False,
         disable_caching: bool = False,
+        conversation_turns: List[UnifiedConversationTurn] = [],
     ) -> Dict[str, Any]:
         """XP
         Formats the conversation for OpenRouter's GPT model.
@@ -122,13 +126,13 @@ class OpenRouter(BaseLLMProvider):
         messages: List[Dict[str, Any]] = []
 
         # system
-        if prompt and prompt.system_message:
+        if prompt and prompt.system_message and not conversation_turns:
             messages.append({"role": "system", "content": prompt.system_message})
 
-        if previous_responses:
+        if previous_responses and not conversation_turns:
             messages.extend(await self.get_conversation_turns(previous_responses, attachment_data_task_map))
         # user
-        if prompt and prompt.user_message:
+        if prompt and prompt.user_message and not conversation_turns:
             # collect any image attachments
             image_parts: List[Dict[str, Any]] = []
             for attachment in attachments:
@@ -151,7 +155,7 @@ class OpenRouter(BaseLLMProvider):
             else:
                 messages.append({"role": "user", "content": prompt.user_message})
 
-        if tool_use_response:
+        if tool_use_response and not conversation_turns:
             messages.append(
                 {
                     "role": "tool",

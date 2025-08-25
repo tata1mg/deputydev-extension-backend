@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Optional
+
 import ujson as json
 from sanic.log import logger
 
@@ -16,22 +18,24 @@ from app.main.blueprints.deputy_dev.constants.constants import MESSAGE_QUEUE_LOG
 
 
 class BaseSubscriber:
-    def __init__(self, config: dict):
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config or {}
         self.message_queue_manager: MessageQueueManager = MessageQueueManagerFactory.manager()(config)
         self.queue_name = self.get_queue_name()
         logger.info(f"Queue name: {self.queue_name}")
         self.is_client_created = False
 
-    def get_queue_name(self):
+    def get_queue_name(self) -> str:
         raise NotImplementedError()
 
-    async def init(self):
+    async def init(self) -> None:
         if not self.is_client_created:
             await self.message_queue_manager.get_client(queue_name=self.queue_name)
             self.is_client_created = True
 
-    async def publish(self, payload: dict, attributes=None, **kwargs):
+    async def publish(
+        self, payload: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> None:
         await self.init()
         payload = json.dumps(payload)
         try:
@@ -40,7 +44,7 @@ class BaseSubscriber:
             self.is_client_created = False
             await self.message_queue_manager.close()
 
-    async def bulk_publish(self, data: list, **kwargs):
+    async def bulk_publish(self, data: List[Dict[str, Any]], **kwargs: Any) -> None:
         # '''
         # format of data is same as the all params that we send in single publish call
         # :param data: contains list of dict(payload, attributes, message_group_id, message_deduplication_id etc..)
@@ -55,19 +59,19 @@ class BaseSubscriber:
 
         return await self.message_queue_manager.publish(messages=data, batch=True, **kwargs)
 
-    def log_error(self, message, exception, payload=None):
+    def log_error(self, message: str, exception: Exception, payload: Optional[Dict[str, Any]] = None) -> None:
         message = message.format(queue_name=self.queue_name)
         if payload:
             message += " Payload =  " + json.dumps(payload)[:MESSAGE_QUEUE_LOG_LENGTH]
         log_combined_exception(message, exception)
 
-    def log_info(self, message, payload=None):
+    def log_info(self, message: str, payload: Optional[Dict[str, Any]] = None) -> None:
         message = message.format(queue_name=self.queue_name)
         if payload:
             message += " Payload = " + json.dumps(payload)[:MESSAGE_QUEUE_LOG_LENGTH]
         logger.info(message)
 
-    def log_warn(self, message, payload=None):
+    def log_warn(self, message: str, payload: Optional[Dict[str, Any]] = None) -> None:
         message = message.format(queue_name=self.queue_name)
         if payload:
             message += " Payload =  " + json.dumps(payload)[:MESSAGE_QUEUE_LOG_LENGTH]

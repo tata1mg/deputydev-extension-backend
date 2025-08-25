@@ -1,4 +1,7 @@
+from typing import Any, Dict, List, Optional, Tuple
+
 import requests
+from deputydev_core.clients.http.adapters.http_response_adapter import AiohttpToRequestsAdapter
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
@@ -18,14 +21,14 @@ class GitlabRepoClient(BaseSCMClient):
         self.gitlab_url = "https://gitlab.com/api/v4"
         self.project_id = project_id
 
-    async def get_namespace_id(self, workspace_slug):
+    async def get_namespace_id(self, workspace_slug: str) -> str:
         query_params = {"search": workspace_slug}
         path = f"{self.gitlab_url}/namespaces"
-        response = requests.get(path, params=query_params)
+        response = requests.get(path, params=query_params)  # noqa: ASYNC210
         response_json = await response.json()
         return response_json[0]["id"]
 
-    async def create_pr_comment(self, comment_payload: dict):
+    async def create_pr_comment(self, comment_payload: Dict[str, Any]) -> None:
         """
         Creates a comment on the entire merge request.
 
@@ -42,7 +45,7 @@ class GitlabRepoClient(BaseSCMClient):
         response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
-    async def create_comment_on_parent(self, comment_payload: dict, parent_id):
+    async def create_comment_on_parent(self, comment_payload: Dict[str, Any], parent_id: str) -> None:
         """
         Creates a child comment on parent in  merge request.
 
@@ -58,7 +61,7 @@ class GitlabRepoClient(BaseSCMClient):
         response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
-    async def create_pr_review_comment(self, comment_payload: dict):
+    async def create_pr_review_comment(self, comment_payload: Dict[str, Any]) -> AiohttpToRequestsAdapter:
         """
         Creates a comment on the entire merge request.
 
@@ -75,7 +78,7 @@ class GitlabRepoClient(BaseSCMClient):
         response = await self.post(path, json=comment_payload, headers=workspace_token_headers, skip_auth_headers=True)
         return response
 
-    async def get_pr_details(self) -> dict:
+    async def get_pr_details(self) -> Dict[str, Any]:
         """
         Get details of a pull request from Bitbucket.
 
@@ -91,7 +94,7 @@ class GitlabRepoClient(BaseSCMClient):
             return
         return await response.json()
 
-    async def update_pr_details(self, payload) -> dict:
+    async def update_pr_details(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Update details of a pull request from Bitbucket.
 
@@ -105,7 +108,7 @@ class GitlabRepoClient(BaseSCMClient):
         response = await self.put(url, json=payload, headers=workspace_token_headers, skip_auth_headers=True)
         return await response.json()
 
-    async def get_pr_diff(self):
+    async def get_pr_diff(self) -> Tuple[Dict[str, Any], int]:
         """
         Get the diff of a pull request from Bitbucket.
 
@@ -120,7 +123,7 @@ class GitlabRepoClient(BaseSCMClient):
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
         return response_json, response.status_code
 
-    async def get_commit_diff(self, base_commit, destination_commit):
+    async def get_commit_diff(self, base_commit: str, destination_commit: str) -> Tuple[Dict[str, Any], int]:
         """
         Get the diff between two commits in GitLab.
 
@@ -140,14 +143,14 @@ class GitlabRepoClient(BaseSCMClient):
             raise HTTPRequestException(status_code=response.status_code, error=error_msg)
         return response_json, response.status_code
 
-    async def get_discussion_comments(self, discussion_id):
+    async def get_discussion_comments(self, discussion_id: str) -> Dict[str, Any]:
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions/{discussion_id}/notes"
         response = await self.get(diff_url)
         if response.status_code != 200:
-            logger.error(f"Unable to retrieve discussoin thread comments- {self.pr_id}: {response._content}")
+            logger.error(f"Unable to retrieve discussion thread comments- {self.pr_id}: {response._content}")
         return await response.json()
 
-    async def create_discussion_comment(self, comment_payload, discussion_id):
+    async def create_discussion_comment(self, comment_payload: Dict[str, Any], discussion_id: str) -> Dict[str, Any]:
         workspace_token_headers = await self.get_ws_token_headers()
         diff_url = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/discussions/{discussion_id}/notes"
         response = await self.post(
@@ -157,7 +160,7 @@ class GitlabRepoClient(BaseSCMClient):
             logger.error(f"Unable to retrieve discussoin thread comments- {self.pr_id}: {response._content}")
         return await response.json()
 
-    async def get_pr_commits(self) -> list:
+    async def get_pr_commits(self) -> List[Dict[str, Any]]:
         """Get all commits in a GitLab merge request with pagination"""
         path = f"{self.gitlab_url}/projects/{self.project_id}/merge_requests/{self.pr_id}/commits"
 
@@ -174,7 +177,7 @@ class GitlabRepoClient(BaseSCMClient):
         )
         return []
 
-    async def get_file(self, branch_name, file_path):
+    async def get_file(self, branch_name: str, file_path: str) -> Optional[AiohttpToRequestsAdapter]:
         url = f"{self.gitlab_url}/projects/{self.project_id}/repository/files/{file_path}?ref={branch_name}"
         response = await self.get(url)
         if response.status_code != 200:

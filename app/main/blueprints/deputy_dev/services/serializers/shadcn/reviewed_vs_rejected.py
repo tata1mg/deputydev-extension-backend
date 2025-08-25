@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any, Dict, List
 
 from app.main.blueprints.deputy_dev.constants.constants import REJECTED_STATUS_TYPES
 from app.main.blueprints.deputy_dev.services.serializers.shadcn.base_shadcn import (
@@ -26,7 +27,7 @@ class ReviewedVsRejected(BaseShadcn):
                           and rejected totals.
     """
 
-    def process_raw_data(self):
+    def process_raw_data(self) -> List[Dict[str, Any]]:
         """
         Method to process raw data and aggregate statistics using defaultdict.
 

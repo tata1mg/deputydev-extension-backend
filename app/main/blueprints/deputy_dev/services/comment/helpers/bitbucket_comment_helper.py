@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict
 
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.utils import (
@@ -9,7 +10,7 @@ from app.main.blueprints.deputy_dev.utils import (
 
 class BitbucketCommentHelper:
     @classmethod
-    def format_pr_review_comment(cls, comment) -> dict:
+    def format_pr_review_comment(cls, comment: Dict[str, Any]) -> Dict[str, Any]:
         file_path = comment.get("file_path")
         comment_payload = {"content": {"raw": format_comment(comment)}}
 
@@ -32,8 +33,8 @@ class BitbucketCommentHelper:
         return comment_payload
 
     @classmethod
-    def format_chat_comment(cls, comment, chat_request: ChatRequest) -> dict:
-        comment_payload = {
+    def format_chat_comment(cls, comment: Dict[str, Any], chat_request: ChatRequest) -> Dict[str, Any]:
+        comment_payload: Dict[str, Any] = {
             "comment": comment,
             "file_path": chat_request.comment.path,
             "line_number_from": chat_request.comment.line_number_from,
@@ -42,8 +43,8 @@ class BitbucketCommentHelper:
         return comment_payload
 
     @classmethod
-    def format_chat_thread_comment(cls, comment, chat_request: ChatRequest) -> dict:
-        comment_payload = {
+    def format_chat_thread_comment(cls, comment: Dict[str, Any], chat_request: ChatRequest) -> Dict[str, Any]:
+        comment_payload: Dict[str, Any] = {
             "content": {"raw": format_comment(comment)},
             "parent": {"id": chat_request.comment.id},
             "inline": {"path": chat_request.comment.path},
@@ -51,10 +52,10 @@ class BitbucketCommentHelper:
         return comment_payload
 
     @classmethod
-    def format_pr_review_inline_comment(cls, comment) -> dict:
+    def format_pr_review_inline_comment(cls, comment: Dict[str, Any]) -> Dict[str, Any]:
         if comment.get("file_path"):
             comment["file_path"] = re.sub(r"^[ab]/\s*", "", comment["file_path"])
-        comment_payload = {
+        comment_payload: Dict[str, Any] = {
             "content": {"raw": format_comment(comment)},
             "inline": {
                 "path": (

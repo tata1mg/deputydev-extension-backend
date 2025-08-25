@@ -18,7 +18,7 @@ class Claude3Point5SecurityCommentsGenerationPass2Prompt(BaseClaude3Point5Sonnet
     prompt_category = PromptCategories.CODE_REVIEW.value
     disable_tools = True
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
         self.agent_focus_area = AgentFocusArea.SECURITY.value
 

@@ -7,7 +7,7 @@ from app.main.blueprints.deputy_dev.services.authorisation.authorisation_util im
 
 class AuthorisationService:
     @classmethod
-    def authorize_pr_service_request(cls, request_auth_token, payload, secret):
+    def authorize_pr_service_request(cls, request_auth_token: str, payload: str, secret: str) -> bool:
         # not getting used currently
         if validate_bitbucket_request(request_auth_token, payload, secret):
             return True

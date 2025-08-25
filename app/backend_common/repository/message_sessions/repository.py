@@ -87,7 +87,7 @@ class MessageSessionsRepository:
             # Return only the IDs of the message sessions
             return [message_session["id"] for message_session in message_sessions]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching message_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
@@ -125,14 +125,14 @@ class MessageSessionsRepository:
                 return []
             return [MessageSessionDTO(**message_session) for message_session in message_sessions]
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             logger.error(
                 f"error occurred while fetching message_sessions from db for user_team_id filters : {user_team_id}, ex: {ex}"
             )
             return []
 
     @classmethod
-    async def soft_delete_message_session_by_id(cls, session_id: int, user_team_id: int):
+    async def soft_delete_message_session_by_id(cls, session_id: int, user_team_id: int) -> None:
         try:
             # First check if the session belongs to the user
             message_session = await DB.by_filters(

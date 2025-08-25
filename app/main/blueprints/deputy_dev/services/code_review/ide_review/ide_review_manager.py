@@ -38,7 +38,7 @@ class IdeReviewManager:
     """Manager for processing Pull Request reviews."""
 
     @classmethod
-    async def review_diff(cls, agent_request: AgentRequestItem):
+    async def review_diff(cls, agent_request: AgentRequestItem) -> Optional[Dict[str, Any]]:
         agent_id = agent_request.agent_id
         review_id = agent_request.review_id
         request_type = agent_request.type.value
@@ -88,7 +88,7 @@ class IdeReviewManager:
         return cls.format_agent_response(agent_result, agent_id)
 
     @classmethod
-    def format_agent_response(cls, agent_result: AgentRunResult, agent_id: int) -> Dict[str, Any]:
+    def format_agent_response(cls, agent_result: AgentRunResult, agent_id: int) -> Optional[Dict[str, Any]]:
         """Format agent result for API response with single response block."""
         agent_result_dict = agent_result.agent_result
 
@@ -128,7 +128,7 @@ class IdeReviewManager:
         return agent_and_init_params
 
     @staticmethod
-    def _update_bucket_name(agent_result: AgentRunResult):
+    def _update_bucket_name(agent_result: AgentRunResult) -> None:
         """Update bucket names for agent result comments."""
         comments = agent_result.agent_result["comments"]
         for comment in comments:
@@ -136,7 +136,7 @@ class IdeReviewManager:
             comment.bucket = "_".join(display_name.upper().split())
 
     @classmethod
-    async def generate_comment_fix_query(cls, comment_id):
+    async def generate_comment_fix_query(cls, comment_id: int) -> str:
         comment = await IdeCommentRepository.db_get({"id": comment_id}, fetch_one=True)
         if not comment:
             raise ValueError(f"Comment with ID {comment_id} not found")
@@ -159,7 +159,7 @@ class IdeReviewManager:
         """)
         return query
 
-    async def cancel_review(self, review_id):
+    async def cancel_review(self, review_id: int) -> Dict[str, str]:
         """Cancel an ongoing review."""
         try:
             review = await ExtensionReviewsRepository.db_get(filters={"id": review_id}, fetch_one=True)

@@ -188,7 +188,7 @@ class DDErrorHandler(ErrorHandler):
         response_headers = ContextValue.get("response_headers") or {}
         try:
             req_info = self.__get_req_info(req)
-        except Exception:
+        except Exception:  # noqa: BLE001
             req_info = {}
 
         # ---------------------------------------------------------------------------- #
