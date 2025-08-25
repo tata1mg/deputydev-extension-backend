@@ -60,10 +60,6 @@
     "INTERSERVICE_TIMEOUT": 50,
     "NAME": "genai",
     "PORT": 8081,
-    "SEARCH": {
-        "HOST": "http://search.{{ env_name }}.svc.cluster.{{ cluster_domain }}/__onemg-internal__",
-        "TIMEOUT": 10
-    },
     "SENTRY": {
         "DSN": "",
         "EM": ""
@@ -76,10 +72,6 @@
     },
     "OPENAI_KEY": "",
     "GOOGLE_API_KEY": "",
-    "LABS": {
-        "HOST": "https://api.1mg.com/api/labs/",
-        "TIMEOUT": 10
-    },
     "EXPERIMENT": {},
     "ENCRYPTION_PASSWORD": "",
     "WEBHOOK_JWT_SIGNING_KEY": "",
