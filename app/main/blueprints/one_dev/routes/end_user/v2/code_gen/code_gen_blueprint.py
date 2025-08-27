@@ -537,7 +537,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                         await ChatAttachmentsRepository.update_attachment_status(attachment_id, "deleted")
                     except Exception:  # noqa: BLE001
                         AppLogger.log_error(f"Failed to update status for attachment {attachment_id}")
-
+                print(payload_dict)
                 payload = QuerySolverInput(**payload_dict, user_team_id=auth_data.user_team_id)
 
                 await CodeGenTasksCache.cleanup_session_data(payload.session_id)
@@ -564,6 +564,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                         last_block = None
                         async for data_block in data:
                             last_block = data_block
+                            print('Sending data block to client:', data_block)
                             await ws.send(json.dumps(data_block.model_dump(mode="json")))
 
                         if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
