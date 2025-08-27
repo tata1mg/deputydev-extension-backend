@@ -537,7 +537,6 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                         await ChatAttachmentsRepository.update_attachment_status(attachment_id, "deleted")
                     except Exception:  # noqa: BLE001
                         AppLogger.log_error(f"Failed to update status for attachment {attachment_id}")
-
                 payload = QuerySolverInput(**payload_dict, user_team_id=auth_data.user_team_id)
 
                 await CodeGenTasksCache.cleanup_session_data(payload.session_id)
