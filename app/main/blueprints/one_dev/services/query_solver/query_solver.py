@@ -849,12 +849,12 @@ class QuerySolver:
                 _client_data=client_data,
                 llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
             )
-
+            prompt_vars_to_use = {**prompt_vars, **llm_inputs.extra_prompt_vars}
             llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
                 tools=llm_inputs.tools,
                 stream=True,
-                prompt_vars=prompt_vars,
+                prompt_vars=prompt_vars_to_use,
                 checker=task_checker,
                 parallel_tool_calls=True,
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
