@@ -626,6 +626,7 @@ class Anthropic(BaseLLMProvider):
                         raise asyncio.CancelledError()
                     chunk = json.loads(event["chunk"]["bytes"])
                     # yield content block delta
+                    print(chunk)
                     try:
                         event_blocks, event_block_category, content_block_delta, event_usage = (
                             self._get_parsed_stream_event(

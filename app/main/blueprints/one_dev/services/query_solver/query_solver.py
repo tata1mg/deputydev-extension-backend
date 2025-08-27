@@ -47,6 +47,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
+from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,
@@ -813,7 +814,7 @@ class QuerySolver:
 
             tool_responses: List[ToolUseResponseData] = []
             for resp in payload.batch_tool_responses:
-                if not payload.tool_use_failed:
+                if resp.status == ToolStatus.COMPLETED:
                     response_data = self._format_tool_response(resp)
                 else:
                     if resp.tool_name not in {"replace_in_file", "write_to_file"}:
