@@ -3,17 +3,20 @@ from datetime import datetime
 from typing import Any, Dict, Tuple
 
 import jwt
+from deputydev_core.utils.constants.auth import AuthStatus
 from gotrue.types import AuthResponse
+from jwt import ExpiredSignatureError, InvalidTokenError
 from torpedo import CONFIG
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
+from app.backend_common.services.auth.base_auth import BaseAuth
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 
 
-class SupabaseAuth:
+class SupabaseAuth(BaseAuth):
     supabase = SupabaseClient.get_instance()
 
     @classmethod
@@ -92,32 +95,6 @@ class SupabaseAuth:
             await AuthTokenGracePeriod.set(access_token, 1)
 
     @classmethod
-    async def extract_and_validate_token(cls, headers: Dict[str, str]) -> Dict[str, Any]:
-        """
-        Extract the access token from the headers, validate its format, and verify it.
-
-        Args:
-            headers (Dict): The headers containing the access token.
-
-        Returns:
-            Dict[str, Any]: A dictionary containing:
-                - 'valid' (bool): Indicates if the token is valid.
-                - 'message' (str): Status message explaining the validation result.
-                - 'user_email' (Optional[str]): Email of the user if the token is valid, otherwise None.
-                - 'user_name' (Optional[str]): Name of the user if the token is valid, otherwise None.
-        """
-        if "Authorization" not in headers:
-            return {"valid": False, "message": "Authorization header missing", "user_email": None, "user_name": None}
-
-        auth_header = headers["Authorization"]
-        access_token = auth_header.split(" ")[1]
-        if not access_token:
-            return {"valid": False, "message": "Access token missing", "user_email": None, "user_name": None}
-
-        # Call the verify_auth_token method with the access token
-        return await cls.verify_auth_token(access_token)
-
-    @classmethod
     async def refresh_session(cls, session_data: Dict[str, Any]) -> Tuple[str, str, str]:
         """
         Refreshes the user session by obtaining new access and refresh tokens.
@@ -162,3 +139,81 @@ class SupabaseAuth:
         except Exception as e:  # noqa: BLE001
             # Handle exceptions (e.g., log the error)
             raise Exception(f"Error refreshing session: {str(e)}")
+
+    @classmethod
+    async def validate_session(cls, encrypted_session_data: str, enable_grace_period: bool = False) -> Dict[str, Any]:
+        """
+        Verifies the authenticity of the provided encrypted session data by decrypting it
+        and checking the validity of the associated access token.
+
+        Args:
+            encrypted_session_data (str): The encrypted session data containing the access token.
+            enable_grace_period (bool): A flag indicating whether to allow a grace period for token expiry.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - 'status' (str): The verification status, which can be:
+                    - 'VERIFIED': If the token is valid.
+                    - 'NOT_VERIFIED': If the token is invalid or not verified.
+                    - 'EXPIRED': If the token has expired and a new session is created.
+                - 'user_email' (str): The email of the user associated with the session (if verified).
+                - 'user_name' (str): The name of the user associated with the session (if verified).
+                - 'encrypted_session_data' (str): The new encrypted session data if the token has expired.
+                - 'error_message' (str): An error message if the verification fails.
+
+        Raises:
+            ExpiredSignatureError: If the access token has expired.
+            InvalidTokenError: If the token format is invalid.
+            Exception: If any other error occurs during the verification process.
+        """
+        try:
+            # first decrypt the encrypted session data using session encryption service
+            session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
+            # convert back to json object
+            session_data = json.loads(session_data_string)
+            # extract supabase access token
+            access_token = session_data.get("access_token")
+            response = await cls.verify_auth_token(access_token, enable_grace_period=enable_grace_period)
+            if not response["valid"]:
+                return {"status": AuthStatus.NOT_VERIFIED.value}
+            return {
+                "status": AuthStatus.VERIFIED.value,
+                "user_email": response["user_email"],
+                "user_name": response["user_name"],
+            }
+        except ExpiredSignatureError:
+            # refresh the current session
+            try:
+                refresh_session_data, email, user_name = await cls.refresh_session(session_data)
+                return {
+                    "status": AuthStatus.EXPIRED.value,
+                    "encrypted_session_data": refresh_session_data,
+                    "user_email": email,
+                    "user_name": user_name,
+                }
+            except Exception as _ex:  # noqa: BLE001
+                return {
+                    "status": AuthStatus.NOT_VERIFIED.value,
+                    "error_message": str(_ex),
+                }
+        except InvalidTokenError:
+            return {
+                "status": AuthStatus.NOT_VERIFIED.value,
+                "error_message": "Invalid token format.",
+            }
+        except Exception as _ex:  # noqa: BLE001
+            return {
+                "status": AuthStatus.NOT_VERIFIED.value,
+                "error_message": str(_ex),
+            }
+
+    async def extract_and_verify_token(self, headers: Dict[str, str], payload: Dict[str, Any]) -> Dict[str, Any]:
+        authorization_header = headers.get("Authorization")
+        if not authorization_header:
+            raise Exception("Authorization header is missing")
+
+        # decode encrypted session data and get the supabase access token
+        encrypted_session_data = authorization_header.split(" ")[1]
+        enable_grace_period = payload.get("enable_grace_period") or False
+        result = await self.validate_session(encrypted_session_data, enable_grace_period=enable_grace_period)
+        return result
