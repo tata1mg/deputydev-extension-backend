@@ -8,8 +8,8 @@ from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
-from app.backend_common.services.auth.supabase.auth import SupabaseAuth
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from app.backend_common.services.auth.supabase.supabase_auth import SupabaseAuth
 
 
 class SupabaseSession:

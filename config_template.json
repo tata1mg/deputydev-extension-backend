@@ -985,5 +985,11 @@
         "AUTH_KEY": ""
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3,
-    "AUTO_REVIEW_ENABLED": true
+    "AUTO_REVIEW_ENABLED": true,
+    "FAKE_AUTH": {
+        "ENABLED": false,
+        "USER_EMAIL": "",
+        "USER_NAME": "",
+        "ENCRYPTED_SESSION_DATA": ""
+    }
 }
