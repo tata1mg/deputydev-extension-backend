@@ -229,7 +229,9 @@ class OpenRouter(BaseLLMProvider):
                         "function": {
                             "name": func_tool["name"],
                             "description": func_tool.get("description"),
-                            "parameters": func_tool["parameters"],
+                            "parameters": func_tool["parameters"]
+                            if func_tool.get("parameters")
+                            else {"type": "object", "properties": {}},
                         },
                     }
                 )
