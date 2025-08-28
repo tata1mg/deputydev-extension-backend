@@ -1,7 +1,17 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 from pydantic import ValidationError
+
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FocusItem,
+    FunctionFocusItem,
+    UrlFocusItem,
+)
 
 
 class LLMResponseFormatter:
@@ -132,3 +142,69 @@ class LLMResponseFormatter:
             sections.append(section + code_block)
 
         return f"{header}\n\n" + "\n\n".join(sections) + note
+
+    # ---------------------------------------------------------------------
+    # ASK USER INPUT TOOL FORMATTER (structured return)
+    # ---------------------------------------------------------------------
+    @staticmethod
+    def format_ask_user_input_response(
+        response: Dict[str, Any], vscode_env: Optional[str], focus_items: Optional[List[FocusItem]]
+    ) -> Dict[str, Any]:
+        # user response (just the raw user response string/dict)
+        user_response = response["user_response"] if response["user_response"] else ""
+        # focus_items string builder
+        focus_parts: List[str] = []
+        if focus_items:
+            # Code-related focus items
+            code_snippet_based_items = [
+                item
+                for item in focus_items
+                if isinstance(item, (CodeSnippetFocusItem, FileFocusItem, ClassFocusItem, FunctionFocusItem))
+            ]
+            if code_snippet_based_items:
+                snippet_text = "The user has asked to focus on the following:\n"
+                for focus_item in code_snippet_based_items:
+                    snippet_text += (
+                        "<item>"
+                        + f"<type>{focus_item.type.value}</type>"
+                        + (f"<value>{focus_item.value}</value>" if getattr(focus_item, "value", None) else "")
+                        + f"<path>{focus_item.path}</path>"
+                    )
+                    if getattr(focus_item, "chunks", None):
+                        snippet_text += "".join([chunk.get_xml() for chunk in focus_item.chunks])
+                    snippet_text += "</item>\n"
+                focus_parts.append(snippet_text)
+
+            # Directory items
+            directory_items = [item for item in focus_items if isinstance(item, DirectoryFocusItem)]
+            if directory_items:
+                dir_text = "\nThe user has also asked to explore the contents of the following directories:\n"
+                for directory_item in directory_items:
+                    dir_text += "<item><type>directory</type>" + f"<path>{directory_item.path}</path><structure>\n"
+                    for entry in directory_item.structure or []:
+                        label = "file" if entry.type == "file" else "folder"
+                        dir_text += f"{label}: {entry.name}\n"
+                    dir_text += "</structure></item>\n"
+                focus_parts.append(dir_text)
+
+            # URL items
+            url_focus_items = [item for item in focus_items if isinstance(item, UrlFocusItem)]
+            if url_focus_items:
+                urls = [url.url for url in url_focus_items]
+                focus_parts.append(f"\nThe user has also provided the following URLs for reference: {urls}\n")
+
+        focus_items_str = "\n".join(focus_parts).strip() if focus_parts else ""
+
+        # vscode_env string (already formatted)
+        vscode_env_str = (
+            f"""
+====
+Below is the information about the current vscode environment:
+{vscode_env}
+====
+"""
+            if vscode_env
+            else ""
+        )
+
+        return {"user_response": user_response, "focus_items": focus_items_str, "vscode_env": vscode_env_str.strip()}
