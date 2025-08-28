@@ -1,5 +1,6 @@
 # TODO : REFACTOR: This file is long, needs refactoring.
 import asyncio
+import base64
 import json
 import uuid
 from collections import defaultdict
@@ -13,22 +14,17 @@ from openai.types.chat import ChatCompletionChunk
 from openai.types.responses import Response
 from pydantic import BaseModel
 
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
-)
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.constants.constants import LLMProviders
 from app.backend_common.models.dto.message_thread_dto import (
-    ExtendedThinkingContent,
     LLModels,
     LLMUsage,
-    MessageThreadActor,
     MessageThreadDTO,
     ResponseData,
     TextBlockContent,
     TextBlockData,
     ToolUseRequestContent,
     ToolUseRequestData,
-    ToolUseResponseContent,
     ToolUseResponseData,
 )
 from app.backend_common.service_clients.openrouter.openrouter import OpenRouterServiceClient
@@ -36,11 +32,14 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
     Attachment,
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.services.chat_file_upload.file_processor import FileProcessor
 from app.backend_common.services.llm.base_llm_provider import BaseLLMProvider
 from app.backend_common.services.llm.dataclasses.main import (
-    ConversationRole,
     ConversationTool,
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockDeltaContent,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockEndContent,
+    ExtendedThinkingBlockStart,
     LLMCallResponseTypes,
     NonStreamingResponse,
     PromptCacheConfig,
@@ -59,10 +58,15 @@ from app.backend_common.services.llm.dataclasses.main import (
     UnparsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UnifiedConversationTurn
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
+from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UserConversationTurn,
 )
+from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 
 class OpenRouter(BaseLLMProvider):
@@ -70,6 +74,115 @@ class OpenRouter(BaseLLMProvider):
         super().__init__(LLMProviders.OPENAI.value, checker=checker)
         self._active_streams: Dict[str, AsyncIterator] = {}
         self.anthropic_client = None
+
+    # ----------------------------
+    # Helpers for Unified → OpenRouter messages
+    # ----------------------------
+    def _image_content_to_data_url(self, bytes_data: bytes, mimetype: str) -> str:
+        b64 = base64.b64encode(bytes_data).decode("utf-8")
+        return f"data:{mimetype};base64,{b64}"
+
+    def _openrouter_messages_from_user_turn(self, turn: UserConversationTurn) -> List[Dict[str, Any]]:
+        texts: List[str] = []
+        image_parts: List[Dict[str, Any]] = []
+
+        for c in turn.content:
+            if isinstance(c, UnifiedTextConversationTurnContent):
+                texts.append(c.text)
+            else:
+                data_url = self._image_content_to_data_url(c.bytes_data, c.image_mimetype)
+                image_parts.append({"type": "image_url", "image_url": {"url": data_url}})
+
+        if not texts and not image_parts:
+            return []
+
+        # Only text → plain string content (backward compatible)
+        if texts and not image_parts:
+            return [{"role": "user", "content": "\n\n".join(texts)}]
+
+        # Only images → array of image parts
+        if image_parts and not texts:
+            return [{"role": "user", "content": image_parts}]
+
+        # Mixed → multipart with text then images
+        parts: List[Dict[str, Any]] = [{"type": "text", "text": "\n\n".join(texts)}] + image_parts
+        return [{"role": "user", "content": parts}]
+
+    def _flush_pending_tool_calls(self, pending_tool_calls: List[Dict[str, Any]], out: List[Dict[str, Any]]) -> None:
+        if pending_tool_calls:
+            out.append(
+                {
+                    "role": "assistant",
+                    "content": None,
+                    # copy the list (and its dict items) so later .clear() doesn't mutate the message
+                    "tool_calls": [tc.copy() for tc in pending_tool_calls],
+                }
+            )
+            pending_tool_calls.clear()
+
+    def _openrouter_messages_from_assistant_turn(self, turn: AssistantConversationTurn) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        pending_tool_calls: List[Dict[str, Any]] = []
+
+        for c in turn.content:
+            if isinstance(c, UnifiedToolRequestConversationTurnContent):
+                pending_tool_calls.append(
+                    {
+                        "id": c.tool_use_id,
+                        "type": "function",
+                        "function": {
+                            "name": c.tool_name,
+                            "arguments": json.dumps(c.tool_input),
+                        },
+                    }
+                )
+            else:  # UnifiedTextConversationTurnContent
+                # Any text breaks parallel tool-call grouping
+                self._flush_pending_tool_calls(pending_tool_calls, out)
+                out.append({"role": "assistant", "content": c.text})
+
+        # End: flush remaining parallel calls
+        self._flush_pending_tool_calls(pending_tool_calls, out)
+        return out
+
+    def _openrouter_messages_from_tool_turn(self, turn: ToolConversationTurn) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        for c in turn.content:
+            # Map each tool response to a tool message (OpenRouter format)
+            out.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": c.tool_use_id,
+                    "name": c.tool_name,
+                    "content": json.dumps(c.tool_use_response),
+                }
+            )
+        return out
+
+    def _get_openrouter_messages_from_conversation_turns(
+        self,
+        conversation_turns: List[UnifiedConversationTurn],
+        system_message: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Convert UnifiedConversationTurn → OpenRouter-style messages[].
+        Keeps your legacy message schema intact.
+        """
+        messages: List[Dict[str, Any]] = []
+
+        # Preserve prior behavior: include system if provided
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+
+        for turn in conversation_turns:
+            if isinstance(turn, UserConversationTurn):
+                messages.extend(self._openrouter_messages_from_user_turn(turn))
+            elif isinstance(turn, AssistantConversationTurn):
+                messages.extend(self._openrouter_messages_from_assistant_turn(turn))
+            else:  # ToolConversationTurn
+                messages.extend(self._openrouter_messages_from_tool_turn(turn))
+
+        return messages
 
     async def build_llm_payload(  # noqa: C901
         self,
@@ -92,7 +205,7 @@ class OpenRouter(BaseLLMProvider):
 
         Args:
             prompt (Dict[str, str]): A prompt object.
-            previous_responses (List[Dict[str, str]] ): previous messages to pass to LLM
+            conversation_turns (List[UnifiedConversationTurn]): previous messages to pass to LLM
 
         Returns:
             List[Dict[str, str]]: A formatted list of message dictionaries.
@@ -123,47 +236,14 @@ class OpenRouter(BaseLLMProvider):
             formatted_tools.sort(key=lambda t: t["function"]["name"])
             tool_choice = tool_choice if tool_choice else "auto"
 
+        # Messages
         messages: List[Dict[str, Any]] = []
 
-        # system
-        if prompt and prompt.system_message and not conversation_turns:
-            messages.append({"role": "system", "content": prompt.system_message})
-
-        if previous_responses and not conversation_turns:
-            messages.extend(await self.get_conversation_turns(previous_responses, attachment_data_task_map))
-        # user
-        if prompt and prompt.user_message and not conversation_turns:
-            # collect any image attachments
-            image_parts: List[Dict[str, Any]] = []
-            for attachment in attachments:
-                if attachment.attachment_id not in attachment_data_task_map:
-                    continue
-                attachment_data = await attachment_data_task_map[attachment.attachment_id]
-                if not attachment_data.attachment_metadata.file_type.startswith("image/"):
-                    continue
-
-                data_url = (
-                    f"data:{attachment_data.attachment_metadata.file_type};"
-                    f"base64,{FileProcessor.get_base64_file_content(attachment_data.object_bytes)}"
-                )
-                image_parts.append({"type": "image_url", "image_url": {"url": data_url}})
-
-            # if we have images, send a multipart content array, else just the string
-            if image_parts:
-                user_parts: List[Dict[str, Any]] = [{"type": "text", "text": prompt.user_message}] + image_parts
-                messages.append({"role": "user", "content": user_parts})
-            else:
-                messages.append({"role": "user", "content": prompt.user_message})
-
-        if tool_use_response and not conversation_turns:
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tool_use_response.content.tool_use_id,
-                    "name": tool_use_response.content.tool_name,
-                    "content": json.dumps(tool_use_response.content.response),
-                }
-            )
+        sys_msg = prompt.system_message if (prompt and prompt.system_message) else None
+        messages = self._get_openrouter_messages_from_conversation_turns(
+            conversation_turns=conversation_turns,
+            system_message=sys_msg,
+        )
         messages = self.filter_empty_assistant_messages(messages)
         return {
             "model": model_config["NAME"],
@@ -172,101 +252,6 @@ class OpenRouter(BaseLLMProvider):
             "messages": messages,
             "tools": formatted_tools,
         }
-
-    async def get_conversation_turns(  # noqa: C901
-        self,
-        previous_responses: List[MessageThreadDTO],
-        attachment_data_task_map: Dict[int, asyncio.Task[ChatAttachmentDataWithObjectBytes]],
-    ) -> List[Dict[str, Any]]:
-        """
-        Turn our internal MessageThreadDTOs into OpenRouter‐style messages:
-        - plain text → {role, content: str}
-        - prior function calls → {role:assistant, content:None, tool_calls:[…]}
-        - tool outputs      → {role:tool, tool_call_id, name, content: str}
-        - prior images      → {role:user, content:[{type:"image_url",image_url:{url:…}}]}
-        """
-        conversation_turns: List[Dict[str, Any]] = []
-
-        for message in previous_responses:
-            role = ConversationRole.USER if message.actor == MessageThreadActor.USER else ConversationRole.ASSISTANT
-            message_datas = list(message.message_data)
-            pending_tool_calls: List[Dict[str, Any]] = []
-
-            def flush_tool_calls() -> None:
-                nonlocal pending_tool_calls
-                if pending_tool_calls:
-                    conversation_turns.append(
-                        {
-                            "role": "assistant",
-                            "content": None,
-                            "tool_calls": pending_tool_calls,
-                        }
-                    )
-                    pending_tool_calls = []
-
-            for message_data in message_datas:
-                content_data = message_data.content
-
-                # Ignore extended thinking entirely and DO NOT flush here
-                if isinstance(content_data, ExtendedThinkingContent):
-                    continue
-
-                # 1) Collect assistant tool use requests (supports parallel tool calls)
-                if role == ConversationRole.ASSISTANT and isinstance(content_data, ToolUseRequestContent):
-                    pending_tool_calls.append(
-                        {
-                            "id": content_data.tool_use_id,
-                            "type": "function",
-                            "function": {
-                                "name": content_data.tool_name,
-                                "arguments": json.dumps(content_data.tool_input),
-                            },
-                        }
-                    )
-                    continue  # keep collecting consecutive ToolUseRequestContent
-
-                # Anything else: first flush any pending tool calls to preserve order
-                flush_tool_calls()
-
-                # 2) Plain text
-                if isinstance(content_data, TextBlockContent):
-                    conversation_turns.append({"role": role.value, "content": content_data.text})
-
-                # 3) Embedded images (earlier user turns)
-                elif hasattr(content_data, "attachment_id"):
-                    attachment_id = content_data.attachment_id
-                    if attachment_id not in attachment_data_task_map:
-                        continue
-                    attachment_data = await attachment_data_task_map[attachment_id]
-                    if attachment_data.attachment_metadata.file_type.startswith("image/"):
-                        data_url = (
-                            f"data:{attachment_data.attachment_metadata.file_type};"
-                            f"base64,{FileProcessor.get_base64_file_content(attachment_data.object_bytes)}"
-                        )
-                        conversation_turns.append(
-                            {
-                                "role": "user",
-                                "content": [{"type": "image_url", "image_url": {"url": data_url}}],
-                            }
-                        )
-
-                # 4) Tool outputs (responses)
-                elif isinstance(content_data, ToolUseResponseContent):
-                    conversation_turns.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": content_data.tool_use_id,
-                            "name": content_data.tool_name,
-                            "content": json.dumps(content_data.response),
-                        }
-                    )
-
-                # (else: silently ignore unknown content types)
-
-            # End of this message: flush any remaining parallel tool calls
-            flush_tool_calls()
-
-        return conversation_turns
 
     def _parse_non_streaming_response(self, response: Response) -> NonStreamingResponse:
         """
@@ -398,7 +383,7 @@ class OpenRouter(BaseLLMProvider):
             current_tool_id: Optional[str] = None
             current_tool_name: Optional[str] = None
             text_block_open = False
-
+            extended_thinking_open = False
             try:
                 async for chunk in response:
                     # Cancellation check
@@ -423,6 +408,57 @@ class OpenRouter(BaseLLMProvider):
                     finish_reason = chunk.choices[0].finish_reason
                     text_part = delta.content or ""
                     tool_calls = getattr(delta, "tool_calls", []) or []
+                    reasoning_text = getattr(delta, "reasoning", None)
+                    reasoning_details = getattr(delta, "reasoning_details", None)
+                    # --- Extended Thinking Handling ---
+                    if reasoning_details:
+                        # Normalize for type safety
+                        if isinstance(reasoning_details, dict):
+                            reasoning_dict: Dict[str, Any] = reasoning_details
+                            if reasoning_dict.get("type") == "reasoning.encrypted":
+                                continue
+                        elif isinstance(reasoning_details, list):
+                            reasoning_list: List[Dict[str, Any]] = [d for d in reasoning_details if isinstance(d, dict)]
+                            if any(d.get("type") == "reasoning.encrypted" for d in reasoning_list):
+                                continue
+
+                    if reasoning_text or reasoning_details:
+                        if not extended_thinking_open:
+                            start_event = ExtendedThinkingBlockStart()
+                            accumulated_events.append(start_event)
+                            yield start_event
+                            extended_thinking_open = True
+
+                        # Normalize reasoning_details into a list of dicts
+                        details_list: List[Dict[str, Any]] = []
+                        if reasoning_details:
+                            if isinstance(reasoning_details, dict):
+                                details_list = [reasoning_details]  # wrap single dict
+                            elif isinstance(reasoning_details, list):
+                                details_list = [d for d in reasoning_details if isinstance(d, dict)]
+
+                        # Prefer reasoning_text, else join summaries or data fields
+                        thinking_delta: str = reasoning_text or " ".join(
+                            str(d.get("summary") or d.get("data") or "") for d in details_list
+                        )
+
+                        delta_event = ExtendedThinkingBlockDelta(
+                            type=StreamingEventType.EXTENDED_THINKING_BLOCK_DELTA,
+                            content=ExtendedThinkingBlockDeltaContent(thinking_delta=thinking_delta),
+                        )
+                        accumulated_events.append(delta_event)
+                        yield delta_event
+                        continue  # don’t drop into text/tool flow
+
+                    # If reasoning was open and now we see text/tool/stop → close it
+                    if extended_thinking_open and (text_part or tool_calls or finish_reason in {"stop", "tool_calls"}):
+                        end_event = ExtendedThinkingBlockEnd(
+                            type=StreamingEventType.EXTENDED_THINKING_BLOCK_END,
+                            content=ExtendedThinkingBlockEndContent(signature=""),
+                        )
+                        accumulated_events.append(end_event)
+                        yield end_event
+                        extended_thinking_open = False
 
                     # Tool-call event handling
                     if tool_calls:
