@@ -144,11 +144,15 @@ class QuerySolver:
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
     async def _store_tool_response_in_chat_chain(
-        self, tool_response: ToolUseResponseInput, sesison_id: int
+        self,
+        tool_response: ToolUseResponseInput,
+        session_id: int,
+        vscode_env: Optional[str],
+        focus_items: Optional[List[FocusItem]],
     ) -> AgentChatDTO:
         # store query in DB
         tool_use_chats = await AgentChatsRepository.get_chats_by_message_type_and_session(
-            message_type=ChatMessageType.TOOL_USE, session_id=sesison_id
+            message_type=ChatMessageType.TOOL_USE, session_id=session_id
         )
         selected_tool_use_chat = next(
             (
@@ -162,12 +166,13 @@ class QuerySolver:
         if not selected_tool_use_chat or not isinstance(selected_tool_use_chat.message_data, ToolUseMessageData):
             raise Exception("tool use request not found")
 
+        formatted_response_data = self._format_tool_response(tool_response, vscode_env, focus_items)
         updated_chat = await AgentChatsRepository.update_chat(
             chat_id=selected_tool_use_chat.id,
             update_data=AgentChatUpdateRequest(
                 message_data=ToolUseMessageData(
                     tool_use_id=selected_tool_use_chat.message_data.tool_use_id,
-                    tool_response=tool_response.response,
+                    tool_response=formatted_response_data,
                     tool_name=selected_tool_use_chat.message_data.tool_name,
                     tool_input=selected_tool_use_chat.message_data.tool_input,
                     tool_status=tool_response.status,
@@ -359,13 +364,19 @@ class QuerySolver:
         ) -> Optional[MessageData]:
             new_data: Optional[MessageData] = None
             if isinstance(event, ThinkingBlockStart):
-                new_data = ThinkingInfoData(thinking_summary="")
+                new_data = ThinkingInfoData(
+                    thinking_summary="",
+                    ignore_in_chat=getattr(event, "ignore_in_chat", False),
+                )
             elif isinstance(event, ThinkingBlockDelta):
                 new_data = ThinkingInfoData(
                     thinking_summary=(
                         (current_message_data.thinking_summary if current_message_data else "")
                         + event.content.thinking_delta
-                    )
+                    ),
+                    ignore_in_chat=getattr(event, "ignore_in_chat", False)
+                    if hasattr(event, "ignore_in_chat")
+                    else (current_message_data.ignore_in_chat if current_message_data else False),
                 )
             elif current_message_data:  # ThinkingBlockEnd
                 await AgentChatsRepository.create_chat(
@@ -799,7 +810,9 @@ class QuerySolver:
         elif payload.batch_tool_responses:
             inserted_tool_responses = await asyncio.gather(
                 *[
-                    self._store_tool_response_in_chat_chain(tool_resp, payload.session_id)
+                    self._store_tool_response_in_chat_chain(
+                        tool_resp, payload.session_id, payload.vscode_env, payload.focus_items
+                    )
                     for tool_resp in payload.batch_tool_responses
                 ]
             )
@@ -815,7 +828,9 @@ class QuerySolver:
             tool_responses: List[ToolUseResponseData] = []
             for resp in payload.batch_tool_responses:
                 if resp.status == ToolStatus.COMPLETED:
-                    response_data = self._format_tool_response(resp)
+                    response_data = self._format_tool_response(
+                        resp, vscode_env=payload.vscode_env, focus_items=payload.focus_items
+                    )
                 else:
                     if resp.tool_name not in {"replace_in_file", "write_to_file"}:
                         response_data = {
@@ -876,25 +891,35 @@ class QuerySolver:
         else:
             raise ValueError("Invalid input")
 
-    def _format_tool_response(self, tool_use_response: ToolUseResponseInput) -> Dict[str, Any]:
+    def _format_tool_response(
+        self, tool_response: ToolUseResponseInput, vscode_env: Optional[str], focus_items: Optional[List[FocusItem]]
+    ) -> Dict[str, Any]:
         """Handle and structure tool responses based on tool type."""
-        tool_response = tool_use_response.response
 
-        if tool_use_response.tool_name == "focused_snippets_searcher":
+        if tool_response.status != ToolStatus.COMPLETED:
+            return tool_response.response if tool_response.response else {}
+
+        if tool_response.tool_name == "focused_snippets_searcher":
             return {
                 "chunks": [
                     ChunkInfo(**chunk).get_xml()
-                    for search_response in tool_response["batch_chunks_search"]["response"]
+                    for search_response in tool_response.response["batch_chunks_search"]["response"]
                     for chunk in search_response["chunks"]
                 ],
             }
 
-        if tool_use_response.tool_name == "iterative_file_reader":
-            markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response["data"])
+        if tool_response.tool_name == "iterative_file_reader":
+            markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response.response["data"])
             return {"Tool Response": markdown}
 
-        if tool_use_response.tool_name == "grep_search":
-            markdown = LLMResponseFormatter.format_grep_tool_response(tool_response)
+        if tool_response.tool_name == "grep_search":
+            markdown = LLMResponseFormatter.format_grep_tool_response(tool_response.response)
             return {"Tool Response": markdown}
 
-        return tool_response if tool_response else {}
+        if tool_response.tool_name == "ask_user_input":
+            json_response = LLMResponseFormatter.format_ask_user_input_response(
+                tool_response.response, vscode_env, focus_items
+            )
+            return json_response
+
+        return tool_response.response if tool_response.response else {}
