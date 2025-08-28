@@ -3,7 +3,7 @@ from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData
+from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
 from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -27,6 +27,7 @@ class Gpt5MiniCustomCodeQuerySolverPromptHandler(BaseGpt5Prompt):
     prompt_type = "CUSTOM_CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Gpt5MiniCustomQuerySolverPrompt
+    model_name = LLModels.OPENROUTER_GPT_5_MINI
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
