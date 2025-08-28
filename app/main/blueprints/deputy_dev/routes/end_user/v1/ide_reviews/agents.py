@@ -8,15 +8,15 @@ from torpedo import CONFIG, Request, send_response
 from torpedo.exceptions import BadRequestException
 from torpedo.types import ResponseDict
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentCreateParams, AgentUpdateParams
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.agent_manager import (
     AgentManager,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 agents = Blueprint("agents", "/agents")
 
