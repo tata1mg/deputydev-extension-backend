@@ -49,6 +49,7 @@ class ToolUseMessageData(BaseModel):
 class ThinkingInfoData(BaseModel):
     message_type: Literal["THINKING"] = "THINKING"
     thinking_summary: str
+    ignore_in_chat: Optional[bool] = False
 
 
 class InfoMessageData(BaseModel):
