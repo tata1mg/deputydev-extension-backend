@@ -54,7 +54,6 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     AgentChatDTO,
     AgentChatUpdateRequest,
     CodeBlockData,
-    InfoMessageData,
     MessageData,
     TextMessageData,
     ThinkingInfoData,
@@ -706,29 +705,6 @@ class QuerySolver:
             agent_instance = await self._get_query_solver_agent_instance(
                 payload=payload, llm_handler=llm_handler, previous_agent_chats=session_chats
             )
-
-            if current_session.current_model != LLModels(payload.llm_model.value):
-                # Store a note in the chat about the model change
-                await AgentChatsRepository.create_chat(
-                    chat_data=AgentChatCreateRequest(
-                        session_id=payload.session_id,
-                        actor=ActorType.SYSTEM,
-                        message_data=InfoMessageData(
-                            info=self._get_model_change_text(
-                                current_model=current_session.current_model,
-                                new_model=LLModels(payload.llm_model.value),
-                                retry_reason=payload.retry_reason,
-                            )
-                        ),
-                        message_type=ChatMessageType.INFO,
-                        metadata={
-                            "llm_model": LLModels(payload.llm_model.value).value,
-                            "agent_name": agent_instance.agent_name,
-                        },
-                        query_id=generated_query_id,
-                        previous_queries=[],
-                    )
-                )
 
             new_query_chat = await AgentChatsRepository.create_chat(
                 chat_data=AgentChatCreateRequest(
