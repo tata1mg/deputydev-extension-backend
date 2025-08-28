@@ -233,8 +233,7 @@ class QuerySolverAgent(ABC):
                     )
                 )
 
-        text = f"User Query: {message_data.text}"
-
+        text = f"<task>{message_data.text}</task>"
         if message_data.focus_items:
             code_snippet_based_items = [
                 item
@@ -402,7 +401,8 @@ class QuerySolverAgent(ABC):
             raise ValueError(
                 f"Expected message_data to be of type ThinkingInfoData, got {type(agent_chat.message_data)}"
             )
-
+        if agent_chat.message_data.ignore_in_chat:
+            return []
         return [
             AssistantConversationTurn(
                 role=UnifiedConversationRole.ASSISTANT,
