@@ -7,7 +7,7 @@ from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sanic.server.websockets.impl import WebsocketImplProtocol
-from torpedo import CONFIG, Request
+from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.constants.onboarding import SubscriptionStatus
@@ -20,32 +20,19 @@ from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
-from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.main.blueprints.one_dev.services.auth.signup import SignUp
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import get_stored_session
+from app.backend_common.services.auth.signup import SignUp
+from app.backend_common.services.auth.supabase.supabase_auth import SupabaseAuth
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
     """
     Get the auth data from the request
     """
-    # TODO: SLIGHTLY FUCKED UP. DUPLICATE OF verify_auth_token
-    # Check if the session ID is present in the headers
     response_headers = {}
     authorization_header: str = request.headers.get("Authorization")
     use_grace_period: bool = False
     enable_grace_period: bool = False
-    bypass_token = CONFIG.config.get("REVIEW_AUTH_TOKEN")
-    if authorization_header and bypass_token and authorization_header.split(" ")[1].strip() == bypass_token:
-        session_id = request.headers.get("X-Session-ID")
-        session = await get_stored_session(session_id)
-        if not session:
-            raise BadRequestException("Invalid or missing session for bypass token")
-        auth_data = AuthData(user_team_id=session.user_team_id)
-        response_headers["_bypass_review_auth"] = True
-        return auth_data, response_headers
 
     try:
         payload: Dict[str, Any] = request.custom_json() if request.method == "POST" else request.request_params()
