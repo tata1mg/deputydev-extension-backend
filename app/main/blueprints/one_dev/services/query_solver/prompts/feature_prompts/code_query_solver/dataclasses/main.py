@@ -52,11 +52,13 @@ class ThinkingBlockDeltaContent(BaseModel):
 
 class ThinkingBlockStart(BaseModel):
     type: Literal[StreamingContentBlockType.THINKING_BLOCK_START] = StreamingContentBlockType.THINKING_BLOCK_START
+    ignore_in_chat: Optional[bool] = False
 
 
 class ThinkingBlockDelta(BaseModel):
     type: Literal[StreamingContentBlockType.THINKING_BLOCK_DELTA] = StreamingContentBlockType.THINKING_BLOCK_DELTA
     content: ThinkingBlockDeltaContent
+    ignore_in_chat: Optional[bool] = False
 
     def __add__(self, other: "ThinkingBlockDelta") -> "ThinkingBlockDelta":
         return ThinkingBlockDelta(
@@ -66,6 +68,7 @@ class ThinkingBlockDelta(BaseModel):
 
 class ThinkingBlockEnd(BaseModel):
     type: Literal[StreamingContentBlockType.THINKING_BLOCK_END] = StreamingContentBlockType.THINKING_BLOCK_END
+    ignore_in_chat: Optional[bool] = False
 
 
 # CODE BLOCKS
