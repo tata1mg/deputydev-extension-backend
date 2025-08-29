@@ -8,7 +8,7 @@
         "SPAN_FRAMES_MIN_DURATION": "5ms",
         "TRANSACTION_SAMPLE_RATE": 1
     },
-    "DD_BROWSER_HOST": "https://deputydev.ai",
+    "BROWSER_HOST": "https://deputydev.ai",
     "SUPABASE": {
         "URL": "",
         "KEY": "",
@@ -845,7 +845,6 @@
         "API_KEY": ""
     },
     "MAX_REVIEW_TOOL_ITERATIONS": 25,
-    "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
     "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
     "WEAVIATE_EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
@@ -990,6 +989,7 @@
         "ENABLED": false,
         "USER_EMAIL": "",
         "USER_NAME": "",
-        "ENCRYPTED_SESSION_DATA": ""
+        "ENCRYPTED_SESSION_DATA": "",
+        "FAKE_BROWSER_HOST": ""
     }
 }
