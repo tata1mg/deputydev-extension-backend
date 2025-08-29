@@ -15,6 +15,7 @@ from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.base_auth import BaseAuth
 from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
 from app.backend_common.services.auth.supabase.client import SupabaseClient
+from app.backend_common.utils.dataclasses.main import AuthSessionData
 
 
 class SupabaseAuth(BaseAuth):
@@ -53,7 +54,7 @@ class SupabaseAuth(BaseAuth):
 
         return data
 
-    async def get_auth_session(self, headers: Dict[str, str]) -> Dict[str, Any]:
+    async def get_auth_session(self, headers: Dict[str, str]) -> AuthSessionData:
         """
         Query the external_sessions table for a session matching the given Supabase session ID.
 
@@ -95,16 +96,18 @@ class SupabaseAuth(BaseAuth):
             # Encrypting session data using session encryption service
             encrypted_session_data = SessionEncryptionService.encrypt(updated_session_data_string)
 
-            return {
-                "encrypted_session_data": encrypted_session_data,
-                "user_email": updated_session_data["email"],
-                "user_name": updated_session_data["user_name"],
-                "status": AuthStatus.AUTHENTICATED.value,
-            }
+            return AuthSessionData(
+                encrypted_session_data=encrypted_session_data,
+                user_email=updated_session_data["email"],
+                user_name=updated_session_data["user_name"],
+                status=AuthStatus.AUTHENTICATED,
+            )
 
         except APIError as e:
             if e.code == "PGRST116":
-                return {"status": AuthStatus.PENDING.value}
+                return AuthSessionData(
+                    status=AuthStatus.PENDING,
+                )
             raise e
 
     async def verify_auth_token(
@@ -226,7 +229,7 @@ class SupabaseAuth(BaseAuth):
 
     async def validate_session(
         self, encrypted_session_data: str, use_grace_period: bool = False, enable_grace_period: bool = False
-    ) -> Dict[str, Any]:
+    ) -> AuthSessionData:
         session_data: Dict[str, Any] = {}
         """
         Verifies the authenticity of the provided encrypted session data by decrypting it
@@ -263,39 +266,39 @@ class SupabaseAuth(BaseAuth):
                 access_token, use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
             )
             if not response["valid"]:
-                return {"status": AuthStatus.NOT_VERIFIED.value}
-            return {
-                "status": AuthStatus.VERIFIED.value,
-                "user_email": response["user_email"],
-                "user_name": response["user_name"],
-            }
+                return AuthSessionData(status=AuthStatus.NOT_VERIFIED)
+            return AuthSessionData(
+                status=AuthStatus.VERIFIED,
+                user_email=response["user_email"],
+                user_name=response["user_name"],
+            )
         except ExpiredSignatureError:
             # refresh the current session
             try:
                 refresh_session_data, email, user_name = await self.refresh_session(session_data)
-                return {
-                    "status": AuthStatus.EXPIRED.value,
-                    "encrypted_session_data": refresh_session_data,
-                    "user_email": email,
-                    "user_name": user_name,
-                }
+                return AuthSessionData(
+                    status=AuthStatus.EXPIRED,
+                    encrypted_session_data=refresh_session_data,
+                    user_email=email,
+                    user_name=user_name,
+                )
             except Exception as _ex:  # noqa: BLE001
-                return {
-                    "status": AuthStatus.NOT_VERIFIED.value,
-                    "error_message": str(_ex),
-                }
+                return AuthSessionData(
+                    status=AuthStatus.NOT_VERIFIED,
+                    error_message=str(_ex),
+                )
         except InvalidTokenError:
-            return {
-                "status": AuthStatus.NOT_VERIFIED.value,
-                "error_message": "Invalid token format.",
-            }
+            return AuthSessionData(
+                status=AuthStatus.NOT_VERIFIED,
+                error_message="Invalid token format.",
+            )
         except Exception as _ex:  # noqa: BLE001
-            return {
-                "status": AuthStatus.NOT_VERIFIED.value,
-                "error_message": str(_ex),
-            }
+            return AuthSessionData(
+                status=AuthStatus.NOT_VERIFIED,
+                error_message=str(_ex),
+            )
 
-    async def extract_and_verify_token(self, request: Request) -> Dict[str, Any]:
+    async def extract_and_verify_token(self, request: Request) -> AuthSessionData:
         use_grace_period: bool = False
         enable_grace_period: bool = False
         payload: Dict[str, Any] = {}
