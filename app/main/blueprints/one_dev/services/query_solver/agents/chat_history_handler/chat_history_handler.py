@@ -14,6 +14,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
     AgentChatUpdateRequest,
+    InfoMessageData,
     MessageType,
     TextMessageData,
     ToolUseMessageData,
@@ -218,6 +219,10 @@ class ChatHistoryHandler:
         tool_response_ids = [tool_response.tool_use_id for tool_response in self.payload.batch_tool_responses or []]
 
         all_agent_chats = await AgentChatsRepository.get_chats_by_session_id(session_id=self.payload.session_id)
+        all_agent_chats = [
+            _agent_chat for _agent_chat in all_agent_chats if not isinstance(_agent_chat.message_data, InfoMessageData)
+        ]
+        all_agent_chats.sort(key=lambda x: x.created_at)
 
         # get the tool request from the last agent_chat
         if not isinstance(all_agent_chats[-1].message_data, ToolUseMessageData):
