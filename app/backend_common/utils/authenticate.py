@@ -18,7 +18,7 @@ from app.backend_common.repository.user_teams.user_team_repository import (
 from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.auth_factory import AuthFactory
 from app.backend_common.services.auth.signup import SignUp
-from app.backend_common.utils.dataclasses.main import AuthData, ClientData
+from app.backend_common.utils.dataclasses.main import AuthData, AuthSessionData, ClientData
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
@@ -27,16 +27,16 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  #
     """
     response_headers = {}
     auth_provider = AuthFactory.get_auth_provider()
-    verification_result = await auth_provider.extract_and_verify_token(request)
+    verification_result: AuthSessionData = await auth_provider.extract_and_verify_token(request)
 
-    if AuthStatus(verification_result.get("status")) == AuthStatus.NOT_VERIFIED:
-        raise BadRequestException(verification_result.get("error_message") or AuthStatus.NOT_VERIFIED.value)
+    if verification_result.status == AuthStatus.NOT_VERIFIED:
+        raise BadRequestException(verification_result.error_message or AuthStatus.NOT_VERIFIED.value)
 
-    if AuthStatus(verification_result.get("status")) == AuthStatus.EXPIRED:
-        response_headers = {"new_session_data": verification_result.get("encrypted_session_data")}
+    if verification_result.status == AuthStatus.EXPIRED:
+        response_headers = {"new_session_data": verification_result.encrypted_session_data}
 
     # Extract the email from the user response
-    email = verification_result.get("user_email")
+    email = verification_result.user_email
     if not email:
         raise BadRequestException("Email not found in session data")
 

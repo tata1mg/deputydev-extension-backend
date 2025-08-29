@@ -20,7 +20,7 @@ auth_v1_bp = Blueprint("auth_v1_bp", url_prefix="/auth")
 async def verify_auth_token(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     auth_provider = AuthFactory.get_auth_provider()
     response = await auth_provider.extract_and_verify_token(_request)
-    return send_response(response)
+    return send_response(response.model_dump(mode="json"))
 
 
 @auth_v1_bp.route("/get-session", methods=["GET"])
@@ -29,7 +29,7 @@ async def get_session(_request: Request, **kwargs: Any) -> ResponseDict | JSONRe
     headers = _request.headers
     auth_provider = AuthFactory.get_auth_provider()
     response = await auth_provider.get_auth_session(headers)
-    return send_response(response)
+    return send_response(response.model_dump(mode="json"))
 
 
 @auth_v1_bp.route("/sign-up", methods=["POST"])
