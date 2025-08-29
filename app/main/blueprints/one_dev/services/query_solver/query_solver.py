@@ -678,6 +678,57 @@ class QuerySolver:
         else:
             return f"LLM model changed from {current_display} to {new_display} by the user."
 
+    async def _set_required_model(
+        self,
+        llm_model: LLModels,
+        session_id: int,
+        query_id: str,
+        agent_name: str,
+        retry_reason: Optional[RetryReasons],
+        user_team_id: int,
+        session_type: str,
+    ) -> None:
+        """
+        Set the required model for the session.
+        """
+        current_session = await ExtensionSessionsRepository.get_by_id(session_id=session_id)
+
+        if not current_session:
+            current_session = await ExtensionSessionsRepository.create_extension_session(
+                extension_session_data=ExtensionSessionData(
+                    session_id=session_id,
+                    user_team_id=user_team_id,
+                    session_type=session_type,
+                    current_model=llm_model,
+                )
+            )
+
+        if current_session.current_model != llm_model:
+            # update current model in session
+            await asyncio.gather(
+                ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
+                AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        actor=ActorType.SYSTEM,
+                        message_data=InfoMessageData(
+                            info=self._get_model_change_text(
+                                current_model=LLModels(current_session.current_model),
+                                new_model=llm_model,
+                                retry_reason=retry_reason,
+                            )
+                        ),
+                        message_type=ChatMessageType.INFO,
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                        },
+                        query_id=query_id,
+                        previous_queries=[],
+                    )
+                ),
+            )
+
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -694,19 +745,6 @@ class QuerySolver:
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
-            current_session = await ExtensionSessionsRepository.get_by_id(
-                session_id=payload.session_id,
-            )
-
-            if not current_session:
-                current_session = await ExtensionSessionsRepository.create_extension_session(
-                    extension_session_data=ExtensionSessionData(
-                        session_id=payload.session_id,
-                        user_team_id=payload.user_team_id,
-                        session_type=payload.session_type,
-                        current_model=LLModels(payload.llm_model.value),
-                    )
-                )
 
             if not payload.llm_model:
                 raise ValueError("LLM model is required for query solving.")
@@ -718,33 +756,15 @@ class QuerySolver:
                 payload=payload, llm_handler=llm_handler, previous_agent_chats=session_chats
             )
 
-            if current_session.current_model != LLModels(payload.llm_model.value):
-                # update current model in session
-                await asyncio.gather(
-                    ExtensionSessionsRepository.update_session_llm_model(
-                        session_id=payload.session_id, llm_model=LLModels(payload.llm_model.value)
-                    ),
-                    AgentChatsRepository.create_chat(
-                        chat_data=AgentChatCreateRequest(
-                            session_id=payload.session_id,
-                            actor=ActorType.SYSTEM,
-                            message_data=InfoMessageData(
-                                info=self._get_model_change_text(
-                                    current_model=LLModels(current_session.current_model),
-                                    new_model=LLModels(payload.llm_model.value),
-                                    retry_reason=payload.retry_reason,
-                                )
-                            ),
-                            message_type=ChatMessageType.INFO,
-                            metadata={
-                                "llm_model": LLModels(payload.llm_model.value).value,
-                                "agent_name": agent_instance.agent_name,
-                            },
-                            query_id=generated_query_id,
-                            previous_queries=[],
-                        )
-                    ),
-                )
+            await self._set_required_model(
+                llm_model=LLModels(payload.llm_model.value),
+                session_id=payload.session_id,
+                query_id=generated_query_id,
+                agent_name=agent_instance.agent_name,
+                retry_reason=payload.retry_reason,
+                user_team_id=payload.user_team_id,
+                session_type=payload.session_type,
+            )
 
             new_query_chat = await AgentChatsRepository.create_chat(
                 chat_data=AgentChatCreateRequest(
@@ -849,10 +869,14 @@ class QuerySolver:
             if payload.retry_reason is not None:
                 llm_to_use = LLModels(payload.llm_model.value)
 
-            _change_model_task = asyncio.create_task(
-                ExtensionSessionsRepository.update_session_llm_model(
-                    session_id=payload.session_id, llm_model=llm_to_use
-                )
+            await self._set_required_model(
+                llm_model=llm_to_use,
+                session_id=payload.session_id,
+                query_id=inserted_tool_responses[0].query_id,
+                agent_name=agent_instance.agent_name,
+                retry_reason=payload.retry_reason,
+                user_team_id=payload.user_team_id,
+                session_type=payload.session_type,
             )
 
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
