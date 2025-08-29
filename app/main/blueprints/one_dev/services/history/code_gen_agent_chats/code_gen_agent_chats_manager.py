@@ -52,7 +52,7 @@ class PastCodeGenAgentChatsManager:
                         timestamp=chat_data.created_at,
                     )
                 )
-                if chat_data.message_data.tool_response:
+                if chat_data.message_data.tool_response and "user_response" in chat_data.message_data.tool_response:
                     all_elements.append(
                         ChatElement(
                             actor=ActorType.USER,
