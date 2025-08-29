@@ -311,6 +311,7 @@ class BaseClaudeQuerySolverPrompt:
                 or isinstance(item, ClassFocusItem)
                 or isinstance(item, FunctionFocusItem)
             ]
+            focus_chunks_message = ""
             if code_snippet_based_items:
                 focus_chunks_message = "The user has asked to focus on the following\n"
                 for focus_item in code_snippet_based_items:
