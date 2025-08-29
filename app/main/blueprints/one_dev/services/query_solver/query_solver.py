@@ -719,26 +719,31 @@ class QuerySolver:
             )
 
             if current_session.current_model != LLModels(payload.llm_model.value):
-                # Store a note in the chat about the model change
-                await AgentChatsRepository.create_chat(
-                    chat_data=AgentChatCreateRequest(
-                        session_id=payload.session_id,
-                        actor=ActorType.SYSTEM,
-                        message_data=InfoMessageData(
-                            info=self._get_model_change_text(
-                                current_model=LLModels(current_session.current_model),
-                                new_model=LLModels(payload.llm_model.value),
-                                retry_reason=payload.retry_reason,
-                            )
-                        ),
-                        message_type=ChatMessageType.INFO,
-                        metadata={
-                            "llm_model": LLModels(payload.llm_model.value).value,
-                            "agent_name": agent_instance.agent_name,
-                        },
-                        query_id=generated_query_id,
-                        previous_queries=[],
-                    )
+                # update current model in session
+                await asyncio.gather(
+                    ExtensionSessionsRepository.update_session_llm_model(
+                        session_id=payload.session_id, llm_model=LLModels(payload.llm_model.value)
+                    ),
+                    AgentChatsRepository.create_chat(
+                        chat_data=AgentChatCreateRequest(
+                            session_id=payload.session_id,
+                            actor=ActorType.SYSTEM,
+                            message_data=InfoMessageData(
+                                info=self._get_model_change_text(
+                                    current_model=LLModels(current_session.current_model),
+                                    new_model=LLModels(payload.llm_model.value),
+                                    retry_reason=payload.retry_reason,
+                                )
+                            ),
+                            message_type=ChatMessageType.INFO,
+                            metadata={
+                                "llm_model": LLModels(payload.llm_model.value).value,
+                                "agent_name": agent_instance.agent_name,
+                            },
+                            query_id=generated_query_id,
+                            previous_queries=[],
+                        )
+                    ),
                 )
 
             new_query_chat = await AgentChatsRepository.create_chat(
@@ -842,7 +847,7 @@ class QuerySolver:
 
             llm_to_use = LLModels(inserted_tool_responses[0].metadata["llm_model"])
             if payload.retry_reason is not None:
-                llm_to_use = LLModels(payload.retry_reason)
+                llm_to_use = LLModels(payload.llm_model.value)
 
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
