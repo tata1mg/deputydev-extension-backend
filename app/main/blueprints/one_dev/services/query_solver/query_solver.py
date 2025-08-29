@@ -849,6 +849,12 @@ class QuerySolver:
             if payload.retry_reason is not None:
                 llm_to_use = LLModels(payload.llm_model.value)
 
+            _change_model_task = asyncio.create_task(
+                ExtensionSessionsRepository.update_session_llm_model(
+                    session_id=payload.session_id, llm_model=llm_to_use
+                )
+            )
+
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
                 _client_data=client_data,
