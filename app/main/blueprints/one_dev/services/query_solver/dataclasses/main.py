@@ -132,8 +132,6 @@ class QuerySolverInput(BaseModel):
     write_mode: bool = False
     session_id: int
     batch_tool_responses: Optional[List[ToolUseResponseInput]] = None
-    tool_use_response: Optional[ToolUseResponseInput] = None
-    previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
     user_team_id: int
     session_type: str

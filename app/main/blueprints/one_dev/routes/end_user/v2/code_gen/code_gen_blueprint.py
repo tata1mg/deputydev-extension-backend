@@ -65,7 +65,7 @@ from app.main.blueprints.one_dev.utils.session import (
 def get_model_display_name(model_name: str) -> str:
     """Get the display name for a model from the configuration."""
     try:
-        chat_models = ConfigManager.configs.get("CHAT_LLM_MODELS", [])
+        chat_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
         for model in chat_models:
             if model.get("name") == model_name:
                 return model.get("display_name", model_name)
