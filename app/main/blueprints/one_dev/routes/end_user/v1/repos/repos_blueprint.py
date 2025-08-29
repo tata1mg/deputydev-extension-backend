@@ -6,12 +6,11 @@ from torpedo import Request, send_response
 from torpedo.response import ResponseDict
 
 from app.backend_common.utils.authenticate import authenticate
-from app.backend_common.utils.dataclasses.main import AuthData
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.services.repos.main import ReposHandler
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 repos_v1_bp = Blueprint("repos_v1_bp", url_prefix="/repos")
 

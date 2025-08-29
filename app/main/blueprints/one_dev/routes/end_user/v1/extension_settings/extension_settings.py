@@ -7,7 +7,10 @@ from torpedo.exceptions import BadRequestException, HTTPRequestException
 from torpedo.response import ResponseDict
 
 from app.backend_common.utils.authenticate import authenticate
-from app.backend_common.utils.dataclasses.main import AuthData
+from app.backend_common.utils.dataclasses.main import (
+    AuthData,
+    ClientData,
+)
 from app.main.blueprints.one_dev.models.dto.extension_settings_dto import (
     ExtensionSettingsData,
     Settings,
@@ -17,9 +20,6 @@ from app.main.blueprints.one_dev.services.repository.extension_settings.reposito
 )
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
-)
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import (
-    ClientData,
 )
 
 extension_settings_v1_bp = Blueprint("extension_settings_v1_bp", url_prefix="/extension_settings")

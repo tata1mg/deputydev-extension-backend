@@ -8,7 +8,6 @@ from torpedo.response import ResponseDict
 
 from app.backend_common.services.auth.auth_factory import AuthFactory
 from app.backend_common.services.auth.signup import SignUp
-from app.backend_common.services.auth.supabase.session import SupabaseSession
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
@@ -19,10 +18,8 @@ auth_v1_bp = Blueprint("auth_v1_bp", url_prefix="/auth")
 @auth_v1_bp.route("/verify-auth-token", methods=["POST"])
 @validate_client_version
 async def verify_auth_token(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
-    headers = _request.headers
-    payload = _request.custom_json() or {}
     auth_provider = AuthFactory.get_auth_provider()
-    response = await auth_provider.extract_and_verify_token(headers, payload)
+    response = await auth_provider.extract_and_verify_token(_request)
     return send_response(response)
 
 
@@ -30,7 +27,8 @@ async def verify_auth_token(_request: Request, **kwargs: Any) -> ResponseDict | 
 @validate_client_version
 async def get_session(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
     headers = _request.headers
-    response = await SupabaseSession.get_session_by_supabase_session_id(headers)
+    auth_provider = AuthFactory.get_auth_provider()
+    response = await auth_provider.get_auth_session(headers)
     return send_response(response)
 
 
