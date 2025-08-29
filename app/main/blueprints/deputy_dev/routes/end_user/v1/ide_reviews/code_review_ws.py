@@ -13,7 +13,7 @@ from torpedo.types import ResponseDict
 
 from app.backend_common.caches.websocket_connections_cache import WebsocketConnectionCache
 from app.backend_common.utils.authenticate import authenticate, get_auth_data
-from app.backend_common.utils.dataclasses.main import AuthData
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
     AgentRequestItem,
     MultiAgentReviewRequest,
@@ -35,7 +35,6 @@ from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
     validate_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 ide_review_websocket = Blueprint("ide_review_websocket", "")
 
