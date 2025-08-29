@@ -644,7 +644,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                     finally:
                         await task_checker.stop_monitoring()
 
-                asyncio.create_task(solve_query())
+                _main_task = asyncio.create_task(solve_query())
     except Exception as error:
         if pinger_task:
             pinger_task.cancel()
