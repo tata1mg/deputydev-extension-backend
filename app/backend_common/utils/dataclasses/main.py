@@ -27,3 +27,10 @@ class AuthSessionData(BaseModel):
     user_email: Optional[str] = None
     user_name: Optional[str] = None
     error_message: Optional[str] = None
+
+
+class AuthTokenData(BaseModel):
+    valid: bool
+    message: str
+    user_email: Optional[str] = None
+    user_name: Optional[str] = None
