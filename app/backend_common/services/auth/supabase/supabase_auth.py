@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import jwt
 from deputydev_core.utils.config_manager import ConfigManager
@@ -16,7 +16,7 @@ from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.base_auth import BaseAuth
 from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
 from app.backend_common.services.auth.supabase.client import SupabaseClient
-from app.backend_common.utils.dataclasses.main import AuthSessionData, AuthTokenData
+from app.backend_common.utils.dataclasses.main import AuthSessionData, AuthTokenData, RefreshedSessionData
 
 
 class SupabaseAuth(BaseAuth):
@@ -198,7 +198,7 @@ class SupabaseAuth(BaseAuth):
         if exp_timestamp is not None:
             await AuthTokenGracePeriod.set(access_token, 1)
 
-    async def refresh_session(self, session_data: Dict[str, Any]) -> Tuple[str, str, str]:
+    async def refresh_session(self, session_data: Dict[str, Any]) -> RefreshedSessionData:
         """Refresh an expired session using the refresh token.
 
         Args:
@@ -217,10 +217,10 @@ class SupabaseAuth(BaseAuth):
                 raise Exception("Failed to refresh tokens.")
 
             # extracting email and user name
-            email = response.user.email
+            user_email = response.user.email
             user_name: str = response.user.user_metadata["full_name"]
 
-            if not email or not user_name:
+            if not user_email or not user_name:
                 raise Exception("User email or name is missing in the response.")
 
             # update the session data with the refreshed access and refresh tokens
@@ -228,8 +228,8 @@ class SupabaseAuth(BaseAuth):
             session_data["refresh_token"] = response.session.refresh_token
             session_data["token_updated_at"] = str(datetime.now())
             # return the refreshed session data
-            encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
-            return encrypted_session_data, email, user_name
+            refreshed_session = SessionEncryptionService.encrypt(json.dumps(session_data))
+            return RefreshedSessionData(refreshed_session=refreshed_session, user_email=user_email, user_name=user_name)
         except Exception as e:  # noqa: BLE001
             raise Exception(f"Error refreshing session: {str(e)}")
 
@@ -274,12 +274,12 @@ class SupabaseAuth(BaseAuth):
         except ExpiredSignatureError:
             # refresh the current session
             try:
-                refresh_session_data, email, user_name = await self.refresh_session(session_data)
+                refreshed_session_data: RefreshedSessionData = await self.refresh_session(session_data)
                 return AuthSessionData(
                     status=AuthStatus.EXPIRED,
-                    encrypted_session_data=refresh_session_data,
-                    user_email=email,
-                    user_name=user_name,
+                    encrypted_session_data=refreshed_session_data.refreshed_session,
+                    user_email=refreshed_session_data.user_email,
+                    user_name=refreshed_session_data.user_name,
                 )
             except Exception as _ex:  # noqa: BLE001
                 return AuthSessionData(
