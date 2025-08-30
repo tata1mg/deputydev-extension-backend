@@ -34,3 +34,9 @@ class AuthTokenData(BaseModel):
     message: str
     user_email: Optional[str] = None
     user_name: Optional[str] = None
+
+
+class RefreshedSessionData(BaseModel):
+    refreshed_session: Optional[str] = None
+    user_email: Optional[str] = None
+    user_name: Optional[str] = None
