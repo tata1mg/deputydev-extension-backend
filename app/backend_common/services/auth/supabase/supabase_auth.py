@@ -3,11 +3,12 @@ from datetime import datetime
 from typing import Any, Dict, Tuple
 
 import jwt
+from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.auth import AuthStatus
 from gotrue.types import AuthResponse
 from jwt import ExpiredSignatureError, InvalidTokenError
 from postgrest.exceptions import APIError
-from torpedo import CONFIG, Request
+from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
@@ -15,34 +16,40 @@ from app.backend_common.repository.users.user_repository import UserRepository
 from app.backend_common.services.auth.base_auth import BaseAuth
 from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
 from app.backend_common.services.auth.supabase.client import SupabaseClient
-from app.backend_common.utils.dataclasses.main import AuthSessionData
+from app.backend_common.utils.dataclasses.main import AuthSessionData, AuthTokenData
 
 
 class SupabaseAuth(BaseAuth):
+    """Implementation of BaseAuth using Supabase for authentication and session management.
+
+    This class handles user authentication, session management, and token validation
+    using Supabase as the authentication provider. It implements the abstract methods
+    defined in the BaseAuth class.
+    """
+
     supabase = SupabaseClient.get_instance()
 
     async def update_session_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Update the session data with user information based on the access token.
+        """Update session data with user information from the access token.
 
         Args:
-            data (Dict[str, Any]): The session data containing the access token.
+            data: Dictionary containing session data including 'access_token'.
 
         Returns:
-            Dict[str, Any]: The updated session data including the user's email and user ID.
+            Updated session data with additional user information (email, user_name, user_id).
 
         Raises:
-            ValueError: If the access token is invalid, user cannot be found, or user information is missing.
+            ValueError: If the access token is invalid or user information is missing.
         """
         access_token = data["access_token"]
-        token_data = await self.verify_auth_token(access_token)
+        token_data: AuthTokenData = await self.verify_auth_token(access_token)
 
-        if not token_data["valid"]:
+        if not token_data.valid:
             raise ValueError("Invalid access token")
 
         # Check for user_email and user_name in token_data
-        email = token_data["user_email"]
-        user_name = token_data["user_name"]
+        email = token_data.user_email
+        user_name = token_data.user_name
 
         # Fetch the registered user ID based on the email
         user = await UserRepository.db_get(filters={"email": email}, fetch_one=True)
@@ -55,26 +62,22 @@ class SupabaseAuth(BaseAuth):
         return data
 
     async def get_auth_session(self, headers: Dict[str, str]) -> AuthSessionData:
-        """
-        Query the external_sessions table for a session matching the given Supabase session ID.
+        """Retrieve and validate an authentication session from Supabase.
 
         Args:
-            headers (Dict[str, str]): The headers containing the Supabase session ID.
+            headers: HTTP headers containing 'X-Unique-Session-Id' for session lookup.
 
         Returns:
-            Dict[str, Any]: A dictionary containing:
-                - 'encrypted_session_data' (str): The encrypted session data if found.
-                - 'user_email' (str): The email of the user associated with the session.
-                - 'user_name' (str): The name of the user associated with the session.
-                - 'status' (str): The authentication status, indicating if the user is authenticated or pending.
+            AuthSessionData containing encrypted session data and user information.
 
         Raises:
-            ValueError: If no Supabase session ID is found or if no session data is found.
-            APIError: If there is an error during the API call.
+            ValueError: If session ID is missing or no session data is found.
+            APIError: If there's an error communicating with Supabase.
         """
         unique_session_id = headers.get("X-Unique-Session-Id")
         if not unique_session_id:
             raise ValueError("No unique session ID found")
+
         supabase_client = SupabaseClient.get_public_instance()
         try:
             response = (
@@ -105,36 +108,36 @@ class SupabaseAuth(BaseAuth):
 
         except APIError as e:
             if e.code == "PGRST116":
-                return AuthSessionData(
-                    status=AuthStatus.PENDING,
-                )
+                return AuthSessionData(status=AuthStatus.PENDING)
             raise e
 
     async def verify_auth_token(
         self, access_token: str, use_grace_period: bool = False, enable_grace_period: bool = False
-    ) -> Dict[str, Any]:
-        """
-        Validate a Supabase access token and check if it's expired.
+    ) -> AuthTokenData:
+        """Validate a Supabase JWT access token.
 
         Args:
-            access_token (str): The access token to validate.
-            enable_grace_period(bool): If this is true, auth token is considered valid for current_time + grace_period
-            use_grace_period(bool): If this is true only then grace_period is used
+            access_token: The JWT token to validate.
+            use_grace_period: If True, allows token validation during grace period.
+            enable_grace_period: If True, enables grace period for token expiration.
 
         Returns:
-            Dict[str, Any]: A dictionary containing:
-                - 'valid' (bool): Indicates if the token is valid.
-                - 'message' (str): Status message explaining the validation result.
-                - 'user_email' (Optional[str]): Email of the user if the token is valid, otherwise None.
-                - 'user_name' (Optional[str]): Name of the user if the token is valid, otherwise None.
+            AuthTokenData containing validation result and user information.
 
+        Raises:
+            ExpiredSignatureError: If token has expired and no grace period is available.
+            InvalidTokenError: If token is malformed or invalid.
+            Exception: For other validation errors.
         """
         try:
             # Use the Supabase JWT secret key
-            jwt_secret: str = CONFIG.config["SUPABASE"]["JWT_SECRET_KEY"]
+            jwt_secret: str = ConfigManager.configs["SUPABASE"]["JWT_SECRET_KEY"]
 
             if not jwt_secret:
-                return {"valid": False, "message": "JWT secret key is missing", "user_email": None, "user_name": None}
+                return AuthTokenData(
+                    valid=False,
+                    message="JWT secret key is missing",
+                )
 
             # Decode and verify the JWT
             decoded_token = jwt.decode(
@@ -146,25 +149,24 @@ class SupabaseAuth(BaseAuth):
             )
 
             if use_grace_period and await self.is_grace_period_available(access_token):
-                return {
-                    "valid": True,
-                    "message": "Token is valid",
-                    "user_email": decoded_token.get("email"),
-                    "user_name": decoded_token.get("user_metadata").get("full_name"),
-                }
+                return AuthTokenData(
+                    valid=True,
+                    message="Token is valid",
+                    user_email=decoded_token.get("email"),
+                    user_name=decoded_token.get("user_metadata").get("full_name"),
+                )
 
             if enable_grace_period and decoded_token:
                 await self.add_grace_period(access_token, decoded_token)
 
             if decoded_token:
-                return {
-                    "valid": True,
-                    "message": "Token is valid",
-                    "user_email": decoded_token.get("email"),
-                    "user_name": decoded_token.get("user_metadata").get("full_name"),
-                }
-            else:
-                return {"valid": False, "message": "Token is invalid", "user_email": None, "user_name": None}
+                return AuthTokenData(
+                    valid=True,
+                    message="Token is valid",
+                    user_email=decoded_token.get("email"),
+                    user_name=decoded_token.get("user_metadata").get("full_name"),
+                )
+            return AuthTokenData(valid=False, message="Token is invalid")
 
         except jwt.ExpiredSignatureError:
             raise jwt.ExpiredSignatureError("The token has expired.")
@@ -174,36 +176,41 @@ class SupabaseAuth(BaseAuth):
             raise Exception(f"Token validation failed: {str(e)}")
 
     async def is_grace_period_available(self, access_token: str) -> bool:
+        """Check if a grace period is available for the given access token.
+
+        Args:
+            access_token: The token to check grace period for.
+
+        Returns:
+            bool: True if grace period is available, False otherwise.
+        """
         is_token_present: Any = await AuthTokenGracePeriod.get(access_token)
         return bool(is_token_present)
 
     async def add_grace_period(self, access_token: str, decoded_token: Dict[str, Any]) -> None:
+        """Add a grace period for an access token.
+
+        Args:
+            access_token: The token to add grace period for.
+            decoded_token: Decoded JWT token data.
+        """
         exp_timestamp = decoded_token.get("exp")
         if exp_timestamp is not None:
             await AuthTokenGracePeriod.set(access_token, 1)
 
     async def refresh_session(self, session_data: Dict[str, Any]) -> Tuple[str, str, str]:
-        """
-        Refreshes the user session by obtaining new access and refresh tokens.
-
-        This method calls the Supabase authentication service to refresh the session
-        using the provided refresh token. It updates the session data with the new
-        tokens and encrypts the session data before returning it.
+        """Refresh an expired session using the refresh token.
 
         Args:
-            session_data (Dict[str, Any]): A dictionary containing the session data,
-                including the refresh token.
+            session_data: Current session data containing refresh token.
 
         Returns:
-            Tuple[str, str, str]: A tuple containing the encrypted session data,
-                the user's email, and the user's full name.
+            Tuple containing (encrypted_session_data, email, user_name).
 
         Raises:
-            Exception: If the refresh operation fails or if there is an error during
-                the process.
+            Exception: If session refresh fails or user data is missing.
         """
         try:
-            # Call the Supabase auth refresh method with the provided refresh token
             response: AuthResponse = self.supabase.auth.refresh_session(session_data.get("refresh_token"))
 
             if not response.session or not response.user:
@@ -224,37 +231,25 @@ class SupabaseAuth(BaseAuth):
             encrypted_session_data = SessionEncryptionService.encrypt(json.dumps(session_data))
             return encrypted_session_data, email, user_name
         except Exception as e:  # noqa: BLE001
-            # Handle exceptions (e.g., log the error)
             raise Exception(f"Error refreshing session: {str(e)}")
 
     async def validate_session(
         self, encrypted_session_data: str, use_grace_period: bool = False, enable_grace_period: bool = False
     ) -> AuthSessionData:
-        session_data: Dict[str, Any] = {}
-        """
-        Verifies the authenticity of the provided encrypted session data by decrypting it
-        and checking the validity of the associated access token.
+        """Validate an encrypted session and check token validity.
 
         Args:
-            encrypted_session_data (str): The encrypted session data containing the access token.
-            enable_grace_period (bool): A flag indicating whether to allow a grace period for token expiry.
+            encrypted_session_data: Encrypted session data string.
+            use_grace_period: If True, allows validation during grace period.
+            enable_grace_period: If True, enables grace period for token expiration.
 
         Returns:
-            Dict[str, Any]: A dictionary containing:
-                - 'status' (str): The verification status, which can be:
-                    - 'VERIFIED': If the token is valid.
-                    - 'NOT_VERIFIED': If the token is invalid or not verified.
-                    - 'EXPIRED': If the token has expired and a new session is created.
-                - 'user_email' (str): The email of the user associated with the session (if verified).
-                - 'user_name' (str): The name of the user associated with the session (if verified).
-                - 'encrypted_session_data' (str): The new encrypted session data if the token has expired.
-                - 'error_message' (str): An error message if the verification fails.
+            AuthSessionData with validation status and user information.
 
         Raises:
-            ExpiredSignatureError: If the access token has expired.
-            InvalidTokenError: If the token format is invalid.
-            Exception: If any other error occurs during the verification process.
+            Various exceptions from decryption and validation processes.
         """
+        session_data: Dict[str, Any] = {}
         try:
             # first decrypt the encrypted session data using session encryption service
             session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
@@ -262,16 +257,20 @@ class SupabaseAuth(BaseAuth):
             session_data = json.loads(session_data_string)
             # extract supabase access token
             access_token: str = session_data.get("access_token") or ""
-            response = await self.verify_auth_token(
+
+            token_data: AuthTokenData = await self.verify_auth_token(
                 access_token, use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
             )
-            if not response["valid"]:
+
+            if not token_data.valid:
                 return AuthSessionData(status=AuthStatus.NOT_VERIFIED)
+
             return AuthSessionData(
                 status=AuthStatus.VERIFIED,
-                user_email=response["user_email"],
-                user_name=response["user_name"],
+                user_email=token_data.user_email,
+                user_name=token_data.user_name,
             )
+
         except ExpiredSignatureError:
             # refresh the current session
             try:
@@ -287,6 +286,7 @@ class SupabaseAuth(BaseAuth):
                     status=AuthStatus.NOT_VERIFIED,
                     error_message=str(_ex),
                 )
+
         except InvalidTokenError:
             return AuthSessionData(
                 status=AuthStatus.NOT_VERIFIED,
@@ -299,6 +299,17 @@ class SupabaseAuth(BaseAuth):
             )
 
     async def extract_and_verify_token(self, request: Request) -> AuthSessionData:
+        """Extract and verify authentication token from the request.
+
+        Args:
+            request: The incoming HTTP request.
+
+        Returns:
+            AuthSessionData with verification results.
+
+        Raises:
+            BadRequestException: If Authorization header is missing.
+        """
         use_grace_period: bool = False
         enable_grace_period: bool = False
         payload: Dict[str, Any] = {}
@@ -316,7 +327,7 @@ class SupabaseAuth(BaseAuth):
 
         # decode encrypted session data and get the supabase access token
         encrypted_session_data = authorization_header.split(" ")[1]
-        verfication_result = await self.validate_session(
+        verification_result = await self.validate_session(
             encrypted_session_data, use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
         )
-        return verfication_result
+        return verification_result
