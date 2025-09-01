@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Tuple
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
 from deputydev_core.utils.jwt_handler import JWTHandler
-from torpedo import CONFIG
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import CONFIG
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.models.dao.postgres.workspaces import Workspaces

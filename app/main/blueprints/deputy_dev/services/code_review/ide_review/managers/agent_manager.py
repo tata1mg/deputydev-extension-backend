@@ -1,5 +1,4 @@
-from torpedo.exceptions import BadRequestException
-
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentCreateParams, AgentUpdateParams
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository

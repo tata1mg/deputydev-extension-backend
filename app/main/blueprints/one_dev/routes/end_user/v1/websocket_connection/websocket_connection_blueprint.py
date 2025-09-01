@@ -3,11 +3,11 @@ from typing import Any, Optional
 
 from sanic import Blueprint, response
 from sanic.response import JSONResponse
-from torpedo import Request
 
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
+from app.backend_common.utils.sanic_wrapper import Request
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_headers_only,
 )

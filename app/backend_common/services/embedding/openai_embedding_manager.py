@@ -9,9 +9,9 @@ from deputydev_core.services.tiktoken.tiktoken import TikToken
 from deputydev_core.utils.app_logger import AppLogger
 from numpy.typing import NDArray
 from sanic.log import logger
-from torpedo import CONFIG
 
 from app.backend_common.services.openai.openai_llm_service import OpenAILLMService
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 config = CONFIG.config
 

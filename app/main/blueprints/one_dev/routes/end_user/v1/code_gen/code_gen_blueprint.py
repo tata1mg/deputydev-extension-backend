@@ -2,9 +2,9 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.response import JSONResponse
-from torpedo import Request, send_response
-from torpedo.response import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 from app.main.blueprints.one_dev.services.embedding.dataclasses.main import (
     OneDevEmbeddingPayload,
 )

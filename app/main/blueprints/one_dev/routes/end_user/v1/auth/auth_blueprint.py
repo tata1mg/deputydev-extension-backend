@@ -2,11 +2,11 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.response import JSONResponse
-from torpedo import Request, send_response
-from torpedo.exceptions import HTTPRequestException
-from torpedo.response import ResponseDict
 
 from app.backend_common.services.auth.supabase.session import SupabaseSession
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 from app.main.blueprints.one_dev.services.auth.auth import Auth
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.client.client_validator import (
