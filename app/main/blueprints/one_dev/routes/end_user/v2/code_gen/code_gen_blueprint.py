@@ -29,6 +29,8 @@ from app.backend_common.service_clients.exceptions import (
 )
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
+from app.backend_common.utils.authenticate import authenticate, get_auth_data
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.services.migration.migration_manager import MessageThreadMigrationManager
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
@@ -47,14 +49,11 @@ from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor i
 from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer import (
     UserQueryEnhancer,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate, get_auth_data
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
     validate_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import (
     ensure_session_id,
     get_valid_session_data,

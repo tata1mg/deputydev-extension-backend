@@ -44,6 +44,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UserConversationTurn,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -97,7 +98,6 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
