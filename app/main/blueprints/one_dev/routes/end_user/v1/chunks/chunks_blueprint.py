@@ -8,13 +8,12 @@ from torpedo.response import ResponseDict
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
     LLMBasedChunkReranker,
 )
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.models.dto.reranking_input import RerankingInput
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 chunks_v1_bp = Blueprint("chunks_v1_bp", url_prefix="/chunks")

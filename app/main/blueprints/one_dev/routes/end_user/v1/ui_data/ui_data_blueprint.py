@@ -6,12 +6,12 @@ from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 from torpedo.response import ResponseDict
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.services.ui_data.ui_data import UIProfile
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 ui_data_v1_bp = Blueprint("ui_data_v1_bp", url_prefix="/ui_data")
 
