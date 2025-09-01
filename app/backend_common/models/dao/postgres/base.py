@@ -1,4 +1,5 @@
 from tortoise import Model
+
 from app.backend_common.utils.tortoise_wrapper.db import ModelUtilMixin, NaiveDatetimeField
 
 

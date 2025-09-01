@@ -33,9 +33,7 @@ async def get_openapi_json_file(app: Sanic) -> None:
     _service_name = config.get("SERVICE_NAME")
     _service_hosts = config.get("SERVICE_HOSTS")
     _env = config.get("ENVIRONMENT")
-    data["info"]["title"] = (
-        f"{_service_name} service API documentation (Automated method)"
-    )
+    data["info"]["title"] = f"{_service_name} service API documentation (Automated method)"
     if _service_hosts:
         # When API gateway will be migrated to sanic,
         # _service_host can be defined in its config

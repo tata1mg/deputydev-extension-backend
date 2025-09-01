@@ -4,21 +4,22 @@ import typing as t
 
 from deputydev_core.utils.context_value import ContextValue
 from sanic import response
+from sanic.handlers import ErrorHandler
 from sanic.log import error_logger
+from typing_extensions import override
+
 from app.backend_common.utils.sanic_wrapper.constants.errors import (
     HANDLED_ERR,
     INTERSERVICE_ERR,
     SOMETHING_WENT_WRONG,
     UNHANDLED_ERR,
 )
+from app.backend_common.utils.sanic_wrapper.constants.headers import USER_AGENT, X_SERVICE_NAME
 from app.backend_common.utils.sanic_wrapper.constants.http import STATUS_CODE_4XX, STATUS_CODE_MAPPING, HTTPStatusCodes
 from app.backend_common.utils.sanic_wrapper.ctx import app_ctx
 from app.backend_common.utils.sanic_wrapper.request import TorpedoRequest
 from app.backend_common.utils.sanic_wrapper.types import ErrorResponseDict
 from app.backend_common.utils.sanic_wrapper.utils import capture_exception, name
-from typing_extensions import override
-from app.backend_common.utils.sanic_wrapper.constants.headers import USER_AGENT, X_SERVICE_NAME
-from sanic.handlers import ErrorHandler
 
 ############################
 # import tortoise excpetions

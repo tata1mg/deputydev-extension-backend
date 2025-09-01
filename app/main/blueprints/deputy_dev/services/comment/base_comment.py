@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 from deputydev_core.utils.app_logger import AppLogger
-from app.backend_common.utils.sanic_wrapper import Task
 
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
 from app.backend_common.utils.app_utils import get_task_response
+from app.backend_common.utils.sanic_wrapper import Task
 from app.main.blueprints.deputy_dev.constants import SCRIT_DEPRECATION_NOTIFICATION
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 

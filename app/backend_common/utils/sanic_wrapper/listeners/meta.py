@@ -1,4 +1,3 @@
-import importlib.metadata
 import time
 
 from sanic import Sanic
@@ -19,7 +18,7 @@ def log_meta(app: Sanic):
     service_meta_info = {
         "service_init_duration": service_init_duration,
         "workers_count": app.config.get("WORKERS"),
-        "debug_mode": app.debug
+        "debug_mode": app.debug,
     }
 
     logger.info("Service Meta Info", extra=service_meta_info)

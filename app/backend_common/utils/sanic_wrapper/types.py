@@ -10,9 +10,7 @@ from sanic.models.handler_types import (
 
 ListenerEventTuple = t.Tuple[ListenerType, str]
 MiddlewaresTargetTuple = t.Tuple[MiddlewareType, str]
-HandlerExceptionTuple = t.Tuple[
-    ErrorMiddlewareType, t.Union[Exception, t.Sequence[Exception]]
-]
+HandlerExceptionTuple = t.Tuple[ErrorMiddlewareType, t.Union[Exception, t.Sequence[Exception]]]
 SignalHandlerTuple = t.Tuple[SignalHandler, t.Union[str, Enum]]
 
 

@@ -34,22 +34,10 @@ class CacheRegistry(metaclass=SingletonMeta):
 
         Example:
             ```python
-
             cache_config = {
-                "cache1": {
-                    "LABEL": "label1",
-                    "REDIS_HOST": "localhost",
-                    "REDIS_PORT": 6379,
-                    "TIMEOUT": 10
-                },
-                "cache2": {
-                    "LABEL": "label2",
-                    "REDIS_HOST": "localhost",
-                    "REDIS_PORT": 6380,
-                    "TIMEOUT": 5
-                }
+                "cache1": {"LABEL": "label1", "REDIS_HOST": "localhost", "REDIS_PORT": 6379, "TIMEOUT": 10},
+                "cache2": {"LABEL": "label2", "REDIS_HOST": "localhost", "REDIS_PORT": 6380, "TIMEOUT": 5},
             }
-
             ```
 
         Raises:
@@ -80,9 +68,7 @@ class CacheRegistry(metaclass=SingletonMeta):
 
         """  # noqa: E501
         if label in self._caches:
-            raise ConfigurationError(
-                f"Cache Host with label '{label}' already registered"
-            )
+            raise ConfigurationError(f"Cache Host with label '{label}' already registered")
 
         self._caches[label] = redis_wrapper
 

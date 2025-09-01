@@ -184,9 +184,7 @@ class BaseServiceCache:
         :param key: String
         :param amount: Integer
         """
-        return await cache_registry[cls._host].incr(
-            cls.prefixed_key(key), amount=amount
-        )
+        return await cache_registry[cls._host].incr(cls.prefixed_key(key), amount=amount)
 
     @classmethod
     async def decr(cls, key: str, amount: int = 1):
@@ -196,9 +194,7 @@ class BaseServiceCache:
         :param key: String
         :param amount: Integer
         """
-        return await cache_registry[cls._host].decr(
-            cls.prefixed_key(key), amount=amount
-        )
+        return await cache_registry[cls._host].decr(cls.prefixed_key(key), amount=amount)
 
     @classmethod
     async def setnx(cls, key: str, value):
@@ -258,9 +254,7 @@ class BaseServiceCache:
         keys = list(map(lambda key: cls.prefixed_key(key), keys))
         result = await cache_registry[cls._host].mget(keys)
         if result:
-            result = list(
-                map(lambda value: json.loads(value) if value else None, result)
-            )
+            result = list(map(lambda value: json.loads(value) if value else None, result))
         return result
 
     ###############################
@@ -290,9 +284,7 @@ class BaseServiceCache:
                 f"Please use batch processing for keys count > {cls._hset_with_expire_max_keys_limit}"  # noqa : E501
             )
         mapping = {k: json.dumps(v) for k, v in mapping.items()}
-        await cache_registry[cls._host].hset_with_expire(
-            cls.prefixed_key(key), mapping, expire
-        )
+        await cache_registry[cls._host].hset_with_expire(cls.prefixed_key(key), mapping, expire)
 
     @classmethod
     async def hget(cls, key: str, field: str):
@@ -401,30 +393,22 @@ class BaseServiceCache:
         :param end: int
         :return: list of any
         """
-        result = await cache_registry[cls._host].lrange(
-            cls.prefixed_key(key), start, end
-        )
+        result = await cache_registry[cls._host].lrange(cls.prefixed_key(key), start, end)
         return result
 
     @classmethod
     async def delete_by_prefix(cls, prefix: str):
-        result = await cache_registry[cls._host].delete_by_prefix(
-            cls.prefixed_key(prefix)
-        )
+        result = await cache_registry[cls._host].delete_by_prefix(cls.prefixed_key(prefix))
         return result
 
     @classmethod
     async def members_in_set(cls, key: str, namespace: str | None = None):
-        result = await cache_registry[cls._host].smembers(
-            cls.prefixed_key(key), namespace=namespace
-        )
+        result = await cache_registry[cls._host].smembers(cls.prefixed_key(key), namespace=namespace)
         return result
 
     @classmethod
     async def is_value_in_set(cls, key: str, value, namespace: str | None = None):
-        result = await cache_registry[cls._host].sismember(
-            cls.prefixed_key(key), value, namespace=namespace
-        )
+        result = await cache_registry[cls._host].sismember(cls.prefixed_key(key), value, namespace=namespace)
         return result
 
     # FIXME: raise custom exception
@@ -447,10 +431,7 @@ class BaseServiceCache:
             raise Exception(
                 f"Please use batch processing for keys count > {cls._mset_with_expire_max_keys_limit}"  # noqa : E501
             )
-        items = [
-            (cls.prefixed_key(k), json.dumps(v), ex if ex else cls._expire_in_sec)
-            for k, v, ex in items
-        ]
+        items = [(cls.prefixed_key(k), json.dumps(v), ex if ex else cls._expire_in_sec) for k, v, ex in items]
         await cache_registry[cls._host].mset_with_varying_ttl(items)
 
     @classmethod
@@ -493,9 +474,7 @@ class BaseServiceCache:
         :param key: name of the sorted set
         :return: min score element from sorted redis
         """
-        result = await cache_registry[cls._host].zrange(
-            cls.prefixed_key(key), limit, offset, withscores=withscores
-        )
+        result = await cache_registry[cls._host].zrange(cls.prefixed_key(key), limit, offset, withscores=withscores)
         return result
 
     @classmethod
@@ -506,15 +485,11 @@ class BaseServiceCache:
         :param count: integer
         :return: max score elements from sorted redis
         """
-        result = await cache_registry[cls._host].zpopmax(
-            cls.prefixed_key(key), count=count
-        )
+        result = await cache_registry[cls._host].zpopmax(cls.prefixed_key(key), count=count)
         return result
 
     @classmethod
-    async def zrevrangebyscore(
-        cls, key: str, max, min, start=0, num=1, withscores=False
-    ):
+    async def zrevrangebyscore(cls, key: str, max, min, start=0, num=1, withscores=False):
         """Remove and return the count number of members with maximum score in a given interval.
 
         :param key: name of the key

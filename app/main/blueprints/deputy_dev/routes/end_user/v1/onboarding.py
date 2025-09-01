@@ -1,9 +1,9 @@
 from sanic import Blueprint, Request, response
 from sanic.response import JSONResponse
 from sanic_ext import validate
-from app.backend_common.utils.sanic_wrapper.response import get_error_body_response
 
 from app.backend_common.exception.exception import OnboardingError
+from app.backend_common.utils.sanic_wrapper.response import get_error_body_response
 from app.main.blueprints.deputy_dev.models.request import (
     OnboardingRequest,
     SignUpRequest,

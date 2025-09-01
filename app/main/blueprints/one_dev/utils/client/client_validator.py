@@ -6,9 +6,9 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic.server.websockets.impl import WebsocketImplProtocol
+
 from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
-
 from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_CLI_VERSION,
     MIN_SUPPORTED_VSCODE_EXT_VERSION,

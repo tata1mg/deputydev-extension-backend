@@ -1,11 +1,11 @@
 from typing import Any
 
 from sanic import Blueprint
+from sanic.response import JSONResponse
+
 from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException, HTTPRequestException
-from sanic.response import JSONResponse
 from app.backend_common.utils.sanic_wrapper.response import ResponseDict
-
 from app.main.blueprints.one_dev.models.dto.extension_settings_dto import (
     ExtensionSettingsData,
     Settings,
