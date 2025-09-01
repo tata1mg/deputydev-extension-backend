@@ -1,8 +1,8 @@
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
-from partial_json_parser import loads
 from pydantic import BaseModel
+from pydantic_core import from_json
 
 from app.backend_common.services.llm.dataclasses.main import (
     StreamingEvent,
@@ -227,7 +227,7 @@ class TextBlockEventParser:
             return
 
         self.buffer += event.content.text
-        parsed_response = loads(self.buffer)
+        parsed_response = from_json(self.buffer, allow_partial=True)
         keys = list(parsed_response.keys())
         if keys:
             self.current_block = keys[-1]
