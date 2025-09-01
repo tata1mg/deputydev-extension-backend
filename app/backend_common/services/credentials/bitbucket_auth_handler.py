@@ -4,10 +4,10 @@ from datetime import datetime
 from typing import Tuple
 
 from git.util import Actor
-from app.backend_common.utils.sanic_wrapper import CONFIG
 from typing_extensions import override
 
 from app.backend_common.service_clients.oauth import BitbucketOAuthClient
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from .auth_handler import AuthHandler
 

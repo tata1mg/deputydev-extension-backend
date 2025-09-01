@@ -65,12 +65,11 @@ def legacy(reason: str | None = None):
     Example:
         ```py
         @legacy
-        def some_legacy_function():
-            ...
+        def some_legacy_function(): ...
+
 
         @legacy("This function uses an outdated algorithm.")
-        def another_legacy_function():
-            ...
+        def another_legacy_function(): ...
         ```
 
     Args:

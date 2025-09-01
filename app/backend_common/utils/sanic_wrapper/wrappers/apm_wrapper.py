@@ -9,9 +9,7 @@ from wrapt import decorator
 TRANSACTION_TYPE = "consumer"
 
 
-def apm_wrapper(
-    *, transaction_name: Optional[str] = None, transaction_type: str = TRANSACTION_TYPE
-):
+def apm_wrapper(*, transaction_name: Optional[str] = None, transaction_type: str = TRANSACTION_TYPE):
     """
     method to pass events to apm
     :param transaction_name: name under which transactions will be grouped

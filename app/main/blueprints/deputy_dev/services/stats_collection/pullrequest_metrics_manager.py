@@ -2,10 +2,10 @@ from typing import Any, Dict
 
 from pydantic import ValidationError
 from sanic.log import logger
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.exception import RetryException
 from app.backend_common.utils.app_utils import convert_to_datetime
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.constants.constants import (
     MetaStatCollectionTypes,
     PrStatusTypes,

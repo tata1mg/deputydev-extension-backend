@@ -4,9 +4,9 @@ from deputydev_core.utils.singleton import Singleton
 from google import genai
 from google.genai import errors, types
 from google.oauth2 import service_account
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.service_clients.exceptions import GeminiThrottledError
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 config = CONFIG.config
 

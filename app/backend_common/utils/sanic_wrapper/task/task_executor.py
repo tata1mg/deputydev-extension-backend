@@ -32,6 +32,4 @@ class TaskExecutor:
             index += 1
 
         if not is_main_task_present:
-            raise TaskExecutorException(
-                "Atleast one task should be main while submitting " "to executor"
-            )
+            raise TaskExecutorException("Atleast one task should be main while submitting to executor")

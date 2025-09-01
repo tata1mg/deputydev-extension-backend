@@ -1,12 +1,3 @@
-__author__ = "Ajay Gupta"
-
-#
-#   ▀█▀ █▀█ █▀█ █▀█ █▀▀ █▀▄ █▀█   █░█ █░█
-#   ░█░ █▄█ █▀▄ █▀▀ ██▄ █▄▀ █▄█   ▀▄▀ ▀▀█
-#
-#   Tata 1mg's microservice chasis built on Sanic.
-#
-
 from .clients import BaseAPIClient
 from .common_utils import CONFIG
 from .constants import ListenerEvent, MiddlewareLocation

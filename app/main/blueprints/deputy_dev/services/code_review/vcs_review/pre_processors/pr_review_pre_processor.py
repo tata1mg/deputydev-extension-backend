@@ -4,7 +4,6 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
 from deputydev_core.utils.context_value import ContextValue
 from deputydev_core.utils.context_vars import get_context_value, set_context_values
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, PRStatus
 from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
@@ -22,6 +21,7 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import get_token_count
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.client.one_dev_review_client import (
     OneDevReviewClient,
 )

@@ -17,9 +17,7 @@ from tortoise.exceptions import NoValuesFetched
 
 
 class ModelUtilMixin:
-    async def to_dict(
-        self: Model, filter_keys=None, get_related=True, related_fields=None
-    ):
+    async def to_dict(self: Model, filter_keys=None, get_related=True, related_fields=None):
         """
 
         :param filter_keys: Any Specific Keys which required in the
@@ -54,16 +52,12 @@ class ModelUtilMixin:
         o2o_fields = self._meta.o2o_fields
         fk_o2o_fields = list(set(fk_fields) | set(o2o_fields))
         backward_fk_fields = self._meta.backward_fk_fields
-        related_fields = related_fields or list(
-            set(backward_fk_fields) | set(fk_o2o_fields)
-        )
+        related_fields = related_fields or list(set(backward_fk_fields) | set(fk_o2o_fields))
 
         # If no Filter Keys are given, all the variables of the Model class
         # will be taken in account.
         if not filter_keys:
-            filter_keys = (
-                getattr(self, "serializable_keys", None) or self._meta.fields_map.keys()
-            )
+            filter_keys = getattr(self, "serializable_keys", None) or self._meta.fields_map.keys()
 
         for key in filter_keys:
             is_fk = key in backward_fk_fields

@@ -1,13 +1,13 @@
 from typing import Any, Dict, Optional
 
 from sanic.log import logger
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.service_clients.gitlab.gitlab_repo_client import (
     GitlabRepoClient,
 )
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.helpers.gitlab_comment_helper import (

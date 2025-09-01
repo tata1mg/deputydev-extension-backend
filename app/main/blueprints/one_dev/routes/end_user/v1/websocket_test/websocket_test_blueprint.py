@@ -6,6 +6,7 @@ from typing import Any, Set
 
 from deputydev_core.utils.app_logger import AppLogger
 from sanic import Blueprint
+
 from app.backend_common.utils.sanic_wrapper import Request
 
 websocket_test_v1_bp = Blueprint("websocket_test_v1_bp", url_prefix="/websocket-test")

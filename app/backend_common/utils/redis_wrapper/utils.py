@@ -16,6 +16,7 @@ class SingletonMeta(type):
             def __init__(self, value):
                 self.value = value
 
+
         instance1 = SingletonClass(10)
         instance2 = SingletonClass(20)
 

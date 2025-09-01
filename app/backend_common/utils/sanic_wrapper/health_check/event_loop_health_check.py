@@ -15,9 +15,7 @@ class EventLoopHealthCheck(HealthCheckStrategy):
 
     async def check(self) -> str:
         try:
-            await asyncio.wait_for(
-                asyncio.sleep(self.sleep_duration), timeout=self.timeout_duration
-            )
+            await asyncio.wait_for(asyncio.sleep(self.sleep_duration), timeout=self.timeout_duration)
             return "healthy"
         except asyncio.TimeoutError:
             error_logger.error(EVENT_LOOP_STARVED_ERROR)

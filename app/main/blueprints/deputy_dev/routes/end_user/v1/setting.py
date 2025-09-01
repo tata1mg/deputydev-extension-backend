@@ -1,10 +1,10 @@
 from typing import Any
 
 from sanic import Blueprint
-from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
 from sanic.response import JSONResponse
-from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )

@@ -72,32 +72,22 @@ class Torpedo:
 
     Example:
         ```python
-
         from app.backend_common.utils.sanic_wrapper import Torpedo
 
-        middlewares = [
-            (parse_response_headers, "request"),
-            (append_headers, "response")
-        ]
+        middlewares = [(parse_response_headers, "request"), (append_headers, "response")]
 
         torpedo = Torpedo(blueprints=blueprints, middlewares=middlewares)
         app = torpedo.create_app()
-
         ```
 
     Example:
         ```python
-
         from app.backend_common.utils.sanic_wrapper import Torpedo
 
-        middlewares = [
-            (parse_response_headers, "request"),
-            (append_headers, "response")
-        ]
+        middlewares = [(parse_response_headers, "request"), (append_headers, "response")]
 
         torpedo = Torpedo(blueprints=blueprints, middlewares=middlewares)
         app = torpedo.create_app()
-
         ```
 
     """  # noqa: E501
@@ -321,9 +311,7 @@ class Torpedo:
 
             # =-= enable custom access logging =-=
             if self._host_config.ACCESS_LOG:
-                self._signal_handlers.append(
-                    (log_request_info, Event.HTTP_LIFECYCLE_RESPONSE)
-                )
+                self._signal_handlers.append((log_request_info, Event.HTTP_LIFECYCLE_RESPONSE))
 
             # =-= enable strucured logging =-=
             patch_standard_logging()
@@ -358,6 +346,4 @@ class Torpedo:
                 setup_rich_logging(show_locals, traceback_theme)
 
             if self._host_config.ACCESS_LOG:
-                self._signal_handlers.append(
-                    (log_rich_request_info, Event.HTTP_LIFECYCLE_RESPONSE)
-                )
+                self._signal_handlers.append((log_rich_request_info, Event.HTTP_LIFECYCLE_RESPONSE))

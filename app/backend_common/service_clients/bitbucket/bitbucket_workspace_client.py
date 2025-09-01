@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from typing import Any, Dict
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.services.credentials import AuthHandler
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from ..base_scm_client import BaseSCMClient
 

@@ -33,9 +33,7 @@ class TorpedoRequest(sanic.Request):
         params = {}
         # Iterate through query parameters
         for key, value in self.args.items():
-            modified_key = key.replace(
-                "[]", ""
-            )  # Remove '[]' suffix for array parameters
+            modified_key = key.replace("[]", "")  # Remove '[]' suffix for array parameters
             if "[]" in key:  # Check if the parameter is an array
                 params[modified_key] = value  # Store the value as a list
             else:

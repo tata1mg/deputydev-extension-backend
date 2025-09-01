@@ -9,8 +9,6 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
 from sanic import Blueprint, response
 from sanic.server.websockets.impl import WebsocketImplProtocol
-from app.backend_common.utils.sanic_wrapper import Request, send_response
-from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 
 from app.backend_common.caches.code_gen_tasks_cache import (
     CodeGenTasksCache,
@@ -29,6 +27,8 @@ from app.backend_common.service_clients.exceptions import (
 )
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.dataclasses.main import StreamingEventType
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.main.blueprints.one_dev.services.cancellation.cancellation_service import CancellationService
 from app.main.blueprints.one_dev.services.migration.migration_manager import MessageThreadMigrationManager
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
