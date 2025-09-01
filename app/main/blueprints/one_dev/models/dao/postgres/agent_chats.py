@@ -1,9 +1,9 @@
 from enum import Enum
 
 from tortoise import fields
-from tortoise_wrapper.db import CITextField
 
 from app.backend_common.models.dao.postgres.base import Base
+from app.backend_common.utils.tortoise_wrapper.db import CITextField
 
 
 class AgentChats(Base):

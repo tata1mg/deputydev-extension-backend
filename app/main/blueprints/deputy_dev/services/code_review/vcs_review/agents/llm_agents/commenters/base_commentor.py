@@ -5,7 +5,6 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
-from torpedo import CONFIG
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
@@ -27,6 +26,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
 )
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
     ActorType,
     MessageType,

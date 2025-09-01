@@ -1,5 +1,4 @@
-from torpedo import CONFIG
-
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.caches.affirmation import AffirmationCache
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_REVIEW_POST_AFFIRMATION_MESSAGES,

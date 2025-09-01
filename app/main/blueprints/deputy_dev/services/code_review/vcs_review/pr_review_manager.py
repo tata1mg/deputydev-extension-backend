@@ -5,7 +5,6 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
-from torpedo import CONFIG
 
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
@@ -13,6 +12,7 @@ from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.log_time import log_time
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.constants.constants import (
     PR_SIZE_TOO_BIG_MESSAGE,
     PrStatusTypes,

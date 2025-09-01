@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Union, overload
 
 from tortoise import Model
-from tortoise_wrapper.wrappers.db_wrapper import ORMWrapper
+
+from app.backend_common.repository.db_wrapper import ORMWrapper
 
 
 class DB(ORMWrapper):
