@@ -70,6 +70,7 @@ from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solv
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
     QuerySolverInput,
+    Reasoning,
     ResponseMetadataBlock,
     ResponseMetadataContent,
     RetryReasons,
@@ -323,6 +324,7 @@ class QuerySolver:
         previous_queries: List[str],
         llm_model: LLModels,
         agent_name: str,
+        reasoning: Optional[Reasoning],
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
         tool_use_detected: bool = False
@@ -346,7 +348,11 @@ class QuerySolver:
                         actor=ActorType.ASSISTANT,
                         message_data=current_message_data,
                         message_type=ChatMessageType.TEXT,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -383,7 +389,11 @@ class QuerySolver:
                         actor=ActorType.ASSISTANT,
                         message_data=current_message_data,
                         message_type=ChatMessageType.THINKING,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -419,7 +429,11 @@ class QuerySolver:
                             diff=event.content.diff,
                         ),
                         message_type=ChatMessageType.CODE_BLOCK,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -461,7 +475,11 @@ class QuerySolver:
                             tool_use_id=current_message_data.tool_use_id,
                         ),
                         message_type=ChatMessageType.TOOL_USE,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -687,6 +705,7 @@ class QuerySolver:
         retry_reason: Optional[RetryReasons],
         user_team_id: int,
         session_type: str,
+        reasoning: Optional[Reasoning],
     ) -> None:
         """
         Set the required model for the session.
@@ -722,6 +741,7 @@ class QuerySolver:
                         metadata={
                             "llm_model": llm_model.value,
                             "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
                         },
                         query_id=query_id,
                         previous_queries=[],
@@ -741,7 +761,7 @@ class QuerySolver:
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-
+        reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
@@ -764,6 +784,7 @@ class QuerySolver:
                 retry_reason=payload.retry_reason,
                 user_team_id=payload.user_team_id,
                 session_type=payload.session_type,
+                reasoning=reasoning,
             )
 
             new_query_chat = await AgentChatsRepository.create_chat(
@@ -819,6 +840,7 @@ class QuerySolver:
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
                 llm_model=model_to_use,
+                reasoning=reasoning,
                 prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
                 conversation_turns=llm_inputs.messages,
@@ -831,6 +853,7 @@ class QuerySolver:
                 prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
                 metadata={
                     "agent_name": agent_instance.agent_name,
+                    **({"reasoning": reasoning.value} if reasoning else {}),
                 },
             )
             return await self.get_final_stream_iterator(
@@ -841,6 +864,7 @@ class QuerySolver:
                 previous_queries=previous_queries,
                 llm_model=model_to_use,
                 agent_name=agent_instance.agent_name,
+                reasoning=reasoning,
             )
 
         elif payload.batch_tool_responses:
@@ -864,10 +888,12 @@ class QuerySolver:
             agent_instance = await self._get_query_solver_agent_instance(
                 payload=payload, llm_handler=llm_handler, previous_agent_chats=inserted_tool_responses
             )
-
             llm_to_use = LLModels(inserted_tool_responses[0].metadata["llm_model"])
+            reasoning_val = inserted_tool_responses[0].metadata.get("reasoning")
+            reasoning = Reasoning(reasoning_val) if reasoning_val else None
             if payload.retry_reason is not None:
                 llm_to_use = LLModels(payload.llm_model.value)
+                reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
 
             await self._set_required_model(
                 llm_model=llm_to_use,
@@ -877,6 +903,7 @@ class QuerySolver:
                 retry_reason=payload.retry_reason,
                 user_team_id=payload.user_team_id,
                 session_type=payload.session_type,
+                reasoning=reasoning,
             )
 
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
@@ -894,6 +921,7 @@ class QuerySolver:
                 parallel_tool_calls=True,
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
                 llm_model=llm_to_use,
+                reasoning=reasoning,
                 conversation_turns=llm_inputs.messages,
             )
 
@@ -905,6 +933,7 @@ class QuerySolver:
                 previous_queries=previous_queries,
                 llm_model=llm_to_use,
                 agent_name=agent_instance.agent_name,
+                reasoning=reasoning,
             )
 
         else:
