@@ -1,11 +1,10 @@
 from typing import Type, Union
 
-from torpedo import CONFIG
-
 from app.backend_common.services.message_queue.managers.azure_bus_service_manager import (
     AzureServiceBusManager,
 )
 from app.backend_common.services.message_queue.managers.sqs_manager import SQSManager
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.backend_common.utils.types.types import CloudProviders
 
 

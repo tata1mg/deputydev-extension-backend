@@ -2,12 +2,12 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.response import JSONResponse
-from torpedo import Request, send_response
-from torpedo.exceptions import HTTPRequestException
-from torpedo.response import ResponseDict
 
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 from app.main.blueprints.one_dev.models.dto.file_upload_input import (
     FileDeleteInput,
     FileUploadGetInput,

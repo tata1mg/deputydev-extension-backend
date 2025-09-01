@@ -6,11 +6,11 @@ from typing import Any, Dict, List
 from deputydev_core.clients.http.adapters.http_response_adapter import AiohttpToRequestsAdapter
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
-from torpedo import CONFIG
-from torpedo.exceptions import HTTPRequestException
 
 from app.backend_common.constants.constants import VCSFailureMessages
 from app.backend_common.services.credentials import AuthHandler
+from app.backend_common.utils.sanic_wrapper import CONFIG
+from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
 
 from ..base_scm_client import BaseSCMClient
 
