@@ -6,15 +6,15 @@ from sanic.response import JSONResponse
 from torpedo import CONFIG, Request, send_response
 from torpedo.types import ResponseDict
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import GetRepoIdRequest
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor import (
     IdeReviewPreProcessor,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 repos = Blueprint("repos", "/repos")
 

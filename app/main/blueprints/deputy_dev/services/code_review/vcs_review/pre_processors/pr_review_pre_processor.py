@@ -1,8 +1,7 @@
 from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.constants.enums import Clients, ContextValueKeys
-from deputydev_core.utils.context_value import ContextValue
+from deputydev_core.utils.constants.enums import Clients
 from deputydev_core.utils.context_vars import get_context_value, set_context_values
 from torpedo import CONFIG
 
@@ -86,7 +85,6 @@ class PRReviewPreProcessor:
         set_context_values(
             is_corrective_code_enabled=setting["code_review_agent"].get("is_corrective_code_enabled", False)
         )
-        ContextValue.set(ContextValueKeys.PR_REVIEW_TOKEN.value, config.get("REVIEW_AUTH_TOKEN"))
         pr_state = self.pr_model.scm_state()
         # Declined and not raised by #review
         already_declined = pr_state == PRStatus.DECLINED.value and not get_context_value("manually_triggered_review")

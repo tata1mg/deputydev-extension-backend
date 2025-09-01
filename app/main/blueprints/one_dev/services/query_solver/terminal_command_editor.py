@@ -5,13 +5,13 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     TerminalCommandEditInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 from .prompts.factory import PromptFeatureFactory
 
