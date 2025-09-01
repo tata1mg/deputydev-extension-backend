@@ -9,13 +9,13 @@ from sanic.server.websockets.impl import WebsocketImplProtocol
 from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_CLI_VERSION,
     MIN_SUPPORTED_VSCODE_EXT_VERSION,
     MIN_SUPPORTED_WEB_VERSION,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import StreamErrorData
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.version import compare_version
 
 

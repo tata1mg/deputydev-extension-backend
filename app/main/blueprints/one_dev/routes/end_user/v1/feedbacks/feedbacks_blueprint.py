@@ -6,12 +6,12 @@ from torpedo import Request, send_response
 from torpedo.exceptions import BadRequestException
 from torpedo.response import ResponseDict
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.services.feedback.feedback_service import FeedbackService
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 feedbacks_v1_bp = Blueprint("feedbacks_v1_bp", url_prefix="/feedbacks")

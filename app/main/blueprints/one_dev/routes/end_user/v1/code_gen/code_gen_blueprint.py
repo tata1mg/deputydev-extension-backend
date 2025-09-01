@@ -5,6 +5,8 @@ from sanic.response import JSONResponse
 from torpedo import Request, send_response
 from torpedo.response import ResponseDict
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.services.embedding.dataclasses.main import (
     OneDevEmbeddingPayload,
 )
@@ -14,12 +16,9 @@ from app.main.blueprints.one_dev.services.embedding.manager import (
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 code_gen_v1_bp = Blueprint("code_gen_v1_bp", url_prefix="/code-gen")
 
