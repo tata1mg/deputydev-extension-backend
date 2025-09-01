@@ -6,7 +6,6 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
-    InfoMessageData,
     TextMessageData,
     ToolStatus,
     ToolUseMessageData,
@@ -53,7 +52,7 @@ class PastCodeGenAgentChatsManager:
                         timestamp=chat_data.created_at,
                     )
                 )
-                if chat_data.message_data.tool_response:
+                if chat_data.message_data.tool_response and "user_response" in chat_data.message_data.tool_response:
                     all_elements.append(
                         ChatElement(
                             actor=ActorType.USER,
@@ -61,10 +60,6 @@ class PastCodeGenAgentChatsManager:
                             timestamp=chat_data.created_at,
                         )
                     )
-                continue
-
-            # skip info message for now
-            if isinstance(chat_data.message_data, InfoMessageData):
                 continue
 
             # formatting
