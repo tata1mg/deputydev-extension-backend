@@ -14,9 +14,11 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
     AgentChatUpdateRequest,
+    CodeBlockData,
     InfoMessageData,
     MessageType,
     TextMessageData,
+    ThinkingInfoData,
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
@@ -51,8 +53,11 @@ class ChatHistoryHandler:
         agent_chats, _summary = self.query_id_to_chats_and_summary_map[query_id]
         message_data_text: str = ""
         for message_thread in agent_chats:
-            if isinstance(message_thread.message_data, TextMessageData) or isinstance(
-                message_thread.message_data, ToolUseMessageData
+            if (
+                isinstance(message_thread.message_data, TextMessageData)
+                or isinstance(message_thread.message_data, ToolUseMessageData)
+                or isinstance(message_thread.message_data, ThinkingInfoData)
+                or isinstance(message_thread.message_data, CodeBlockData)
             ):
                 message_data_text += json.dumps(message_thread.message_data.model_dump(mode="json"))
         return message_data_text
