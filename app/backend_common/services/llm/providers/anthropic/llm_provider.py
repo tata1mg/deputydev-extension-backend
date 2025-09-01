@@ -78,6 +78,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
 from app.backend_common.services.llm.providers.anthropic.dataclasses.main import (
     AnthropicResponseTypes,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Reasoning
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
@@ -706,6 +707,7 @@ class Anthropic(BaseLLMProvider):
         response_type: Optional[str] = None,
         parallel_tool_calls: bool = True,
         text_format: Optional[Type[BaseModel]] = None,
+        reasoning: Optional[Reasoning] = None,
     ) -> UnparsedLLMCallResponse:
         model_config = self._get_model_config(model)
         anthropic_client, model_identifier = await self._get_service_client_and_model_name(
