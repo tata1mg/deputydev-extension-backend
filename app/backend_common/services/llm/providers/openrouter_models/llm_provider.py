@@ -66,6 +66,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolRequestConversationTurnContent,
     UserConversationTurn,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Reasoning
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 
@@ -315,6 +316,7 @@ class OpenRouter(BaseLLMProvider):
         response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         parallel_tool_calls: bool = False,
         text_format: Optional[Type[BaseModel]] = None,
+        reasoning: Optional[Reasoning] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenRouter service client.
@@ -335,7 +337,7 @@ class OpenRouter(BaseLLMProvider):
                 messages=llm_payload["messages"],
                 tools=llm_payload["tools"],
                 tool_choice=llm_payload["tool_choice"],
-                reasoning=model_config.get("REASONING", None),
+                reasoning=reasoning,
                 provider=model_config.get("PROVIDER", None),
                 response_format=response_type,
                 structured_outputs=llm_payload.get("structured_outputs", None),
@@ -351,7 +353,7 @@ class OpenRouter(BaseLLMProvider):
                 conversation_messages=llm_payload["conversation_messages"],
                 tools=llm_payload["tools"],
                 tool_choice=llm_payload["tool_choice"],
-                reasoning=model_config["REASONING"],
+                reasoning=reasoning,
                 provider=model_config["PROVIDER"],
                 response_format=response_type,
                 structured_outputs=llm_payload["structured_outputs"],
