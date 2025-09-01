@@ -1,9 +1,10 @@
 from typing import Any
-from app.backend_common.utils.redis_wrapper.registry import cache_registry
+
 from sanic import Sanic
+
+from app.backend_common.utils.redis_wrapper.registry import cache_registry
 from app.backend_common.utils.sanic_wrapper.constants import ListenerEventTypes
 from app.backend_common.utils.tortoise_wrapper import TortoiseWrapper
-
 from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
     MessageQueueFactory,
 )

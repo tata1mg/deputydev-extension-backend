@@ -3,10 +3,10 @@ from typing import Any, Dict, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import ReviewAgentStatusDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (

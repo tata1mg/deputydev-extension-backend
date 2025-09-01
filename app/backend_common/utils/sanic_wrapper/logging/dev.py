@@ -57,9 +57,7 @@ def setup_rich_logging(
         locals_max_length=3,
         tracebacks_theme=traceback_theme,
     )
-    access_fmt = logging.Formatter(
-        "%(method)s | %(host)s%(uri)s %(status_code)s  -  %(response_time)sms"
-    )
+    access_fmt = logging.Formatter("%(method)s | %(host)s%(uri)s %(status_code)s  -  %(response_time)sms")
     access_rich_handler.setFormatter(access_fmt)
 
     access_logger = logging.getLogger("sanic.access")

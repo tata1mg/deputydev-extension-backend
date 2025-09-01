@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List
 import mmh3
 from deputydev_core.services.tiktoken import TikToken
 from sanic.log import logger
+
 from app.backend_common.utils.sanic_wrapper import CONFIG, Task, TaskExecutor
 
 

@@ -1,13 +1,12 @@
 import asyncio
 from typing import Any, Dict, Optional
 
-from app.backend_common.utils.sanic_wrapper import CONFIG
-
 from app.backend_common.constants.constants import PRStatus, VCSTypes
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import convert_to_datetime
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.constants.constants import (
     GithubActions,
     MetaStatCollectionTypes,

@@ -141,9 +141,7 @@ class HTTPRequestException(BaseTorpedoException):
         error_code: int | None = None,
         sentry_raise: bool = True,
     ):
-        super().__init__(
-            error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise
-        )
+        super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
 class HTTPRequestTimeoutException(BaseTorpedoException):
@@ -156,9 +154,7 @@ class HTTPRequestTimeoutException(BaseTorpedoException):
         error_code: int | None = None,
         sentry_raise: bool = True,
     ):
-        super().__init__(
-            error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise
-        )
+        super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
 class BadRequestException(BaseTorpedoException):
@@ -193,9 +189,7 @@ class JsonDecodeException(BaseTorpedoException):
         error_code: int | None = None,
         sentry_raise: bool = True,
     ):
-        super().__init__(
-            error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise
-        )
+        super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
 class ForbiddenException(BaseTorpedoException):
@@ -210,9 +204,7 @@ class ForbiddenException(BaseTorpedoException):
         custom_http_codes_mapping_enabled: bool = True,
     ):
         self.custom_http_codes_mapping_enabled = custom_http_codes_mapping_enabled
-        super().__init__(
-            error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise
-        )
+        super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
 class NotFoundException(BaseTorpedoException):

@@ -1,5 +1,6 @@
-from sanic.log import error_logger, logger
 import ujson
+from sanic.log import error_logger
+
 
 def json_file_to_dict(file: str) -> dict:
     """Parse json file into a dict.
@@ -18,6 +19,7 @@ def json_file_to_dict(file: str) -> dict:
     except (TypeError, FileNotFoundError, ValueError) as exception:
         error_logger.exception("Failed to parse json file: %s", file)
         raise exception
+
 
 class CONFIG:
     # NOTE: attribute with same name as class is a code smell

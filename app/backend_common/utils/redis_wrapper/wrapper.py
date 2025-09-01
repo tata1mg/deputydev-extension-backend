@@ -19,11 +19,10 @@ class RedisWrapper:
 
     Example:
         ```python
-
         from app.backend_common.utils.redis_wrapper.wrapper import RedisWrapper
 
-        rw = RedisWrapper(host='localhost', port=6379)
-        await rw.incr('my_counter')
+        rw = RedisWrapper(host="localhost", port=6379)
+        await rw.incr("my_counter")
         ```
         # or pass a custom already instantiated redis instance.
 

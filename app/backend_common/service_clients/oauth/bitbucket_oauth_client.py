@@ -4,6 +4,7 @@ from enum import Enum
 
 from aiohttp import BasicAuth
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
+
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
 

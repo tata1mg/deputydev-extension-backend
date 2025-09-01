@@ -1,8 +1,8 @@
 from typing import Any, Dict
 
 from sanic.log import logger
-from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.constants.serializers_constants import (
     SerializerTypes,
 )

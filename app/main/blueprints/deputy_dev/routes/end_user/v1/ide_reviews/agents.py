@@ -3,11 +3,11 @@ from typing import Any
 from deputydev_core.utils.app_logger import AppLogger
 from pydantic import ValidationError
 from sanic import Blueprint
+from sanic.response import JSONResponse
+
 from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
-from sanic.response import JSONResponse
 from app.backend_common.utils.sanic_wrapper.types import ResponseDict
-
 from app.main.blueprints.deputy_dev.models.agent_crud_params import AgentCreateParams, AgentUpdateParams
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.managers.agent_manager import (
     AgentManager,

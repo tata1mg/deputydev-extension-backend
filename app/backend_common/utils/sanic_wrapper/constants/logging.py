@@ -27,6 +27,7 @@ class TracebackTheme(StrEnum):
 
     ```python
     from pygments.styles import get_all_styles
+
     list(get_all_styles())
     ```
 

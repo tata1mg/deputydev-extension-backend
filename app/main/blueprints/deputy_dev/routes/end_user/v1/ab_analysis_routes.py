@@ -5,9 +5,9 @@ from sanic.log import logger
 from sanic.response import JSONResponse
 from sanic_ext import openapi
 from sanic_ext.extensions.openapi.definitions import Response
+
 from app.backend_common.utils.sanic_wrapper import Request, send_response
 from app.backend_common.utils.sanic_wrapper.types import ResponseDict
-
 from app.main.blueprints.deputy_dev.services.ab_analysis.ab_analysis_svc import (
     AbAnalysisFetchingData,
 )

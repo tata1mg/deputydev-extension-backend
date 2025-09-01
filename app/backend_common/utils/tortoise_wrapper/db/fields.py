@@ -1,5 +1,6 @@
 import datetime
 from typing import Any, Optional, Type, Union
+
 from tortoise.exceptions import ConfigurationError
 from tortoise.fields import CharField, DatetimeField
 from tortoise.models import Model

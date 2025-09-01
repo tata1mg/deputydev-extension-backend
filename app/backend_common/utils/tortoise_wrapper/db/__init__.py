@@ -5,9 +5,4 @@ from .fields import (
 )
 from .mixins import ModelUtilMixin
 
-__all__ = [
-    "CITextField",
-    "CustomTextField",
-    "NaiveDatetimeField",
-    "ModelUtilMixin"
-]
+__all__ = ["CITextField", "CustomTextField", "NaiveDatetimeField", "ModelUtilMixin"]
