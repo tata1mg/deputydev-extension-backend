@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
@@ -13,8 +14,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadDTO,
     MessageType,
-    ToolUseResponseContent,
-    ToolUseResponseData,
 )
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,
@@ -47,7 +46,6 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
 from app.backend_common.services.llm.handler import LLMHandler
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
-from app.main.blueprints.one_dev.constants.tool_fallback import EXCEPTION_RAISED_FALLBACK
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
@@ -55,6 +53,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     AgentChatDTO,
     AgentChatUpdateRequest,
     CodeBlockData,
+    InfoMessageData,
     MessageData,
     TextMessageData,
     ThinkingInfoData,
@@ -72,6 +71,7 @@ from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solv
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
     QuerySolverInput,
+    Reasoning,
     ResponseMetadataBlock,
     ResponseMetadataContent,
     RetryReasons,
@@ -324,6 +324,7 @@ class QuerySolver:
         previous_queries: List[str],
         llm_model: LLModels,
         agent_name: str,
+        reasoning: Optional[Reasoning],
     ) -> AsyncIterator[BaseModel]:
         query_summary: Optional[str] = None
         tool_use_detected: bool = False
@@ -347,7 +348,11 @@ class QuerySolver:
                         actor=ActorType.ASSISTANT,
                         message_data=current_message_data,
                         message_type=ChatMessageType.TEXT,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -384,7 +389,11 @@ class QuerySolver:
                         actor=ActorType.ASSISTANT,
                         message_data=current_message_data,
                         message_type=ChatMessageType.THINKING,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -420,7 +429,11 @@ class QuerySolver:
                             diff=event.content.diff,
                         ),
                         message_type=ChatMessageType.CODE_BLOCK,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -462,7 +475,11 @@ class QuerySolver:
                             tool_use_id=current_message_data.tool_use_id,
                         ),
                         message_type=ChatMessageType.TOOL_USE,
-                        metadata={"llm_model": llm_model.value, "agent_name": agent_name},
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
                         query_id=query_id,
                         previous_queries=previous_queries,
                     )
@@ -657,14 +674,80 @@ class QuerySolver:
     def _get_model_change_text(
         self, current_model: LLModels, new_model: LLModels, retry_reason: Optional[RetryReasons]
     ) -> str:
+        """Return a human-readable explanation of why the LLM model was changed."""
+
+        def get_model_display_name(model_name: str) -> str:
+            """Get the display name for a model from the configuration."""
+            chat_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
+            for model in chat_models:
+                if model.get("name") == model_name:
+                    return model.get("display_name", model_name)
+            return model_name
+
+        current_display = get_model_display_name(current_model.value)
+        new_display = get_model_display_name(new_model.value)
+
         if retry_reason == RetryReasons.TOOL_USE_FAILED:
-            return f"LLM model changed from {current_model} to {new_model} due to tool use failure."
+            return f"LLM model changed from {current_display} to {new_display} due to tool use failure."
         elif retry_reason == RetryReasons.THROTTLED:
-            return f"LLM model changed from {current_model} to {new_model} due to throttling."
+            return f"LLM model changed from {current_display} to {new_display} due to throttling."
         elif retry_reason == RetryReasons.TOKEN_LIMIT_EXCEEDED:
-            return f"LLM model changed from {current_model} to {new_model} due to token limit exceeded."
+            return f"LLM model changed from {current_display} to {new_display} due to token limit exceeded."
         else:
-            return f"LLM model changed from {current_model} to {new_model} by the user."
+            return f"LLM model changed from {current_display} to {new_display} by the user."
+
+    async def _set_required_model(
+        self,
+        llm_model: LLModels,
+        session_id: int,
+        query_id: str,
+        agent_name: str,
+        retry_reason: Optional[RetryReasons],
+        user_team_id: int,
+        session_type: str,
+        reasoning: Optional[Reasoning],
+    ) -> None:
+        """
+        Set the required model for the session.
+        """
+        current_session = await ExtensionSessionsRepository.get_by_id(session_id=session_id)
+
+        if not current_session:
+            current_session = await ExtensionSessionsRepository.create_extension_session(
+                extension_session_data=ExtensionSessionData(
+                    session_id=session_id,
+                    user_team_id=user_team_id,
+                    session_type=session_type,
+                    current_model=llm_model,
+                )
+            )
+
+        if current_session.current_model != llm_model:
+            # update current model in session
+            await asyncio.gather(
+                ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
+                AgentChatsRepository.create_chat(
+                    chat_data=AgentChatCreateRequest(
+                        session_id=session_id,
+                        actor=ActorType.SYSTEM,
+                        message_data=InfoMessageData(
+                            info=self._get_model_change_text(
+                                current_model=LLModels(current_session.current_model),
+                                new_model=llm_model,
+                                retry_reason=retry_reason,
+                            )
+                        ),
+                        message_type=ChatMessageType.INFO,
+                        metadata={
+                            "llm_model": llm_model.value,
+                            "agent_name": agent_name,
+                            **({"reasoning": reasoning.value} if reasoning else {}),
+                        },
+                        query_id=query_id,
+                        previous_queries=[],
+                    )
+                ),
+            )
 
     async def solve_query(
         self,
@@ -678,23 +761,10 @@ class QuerySolver:
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
-
+        reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
-            current_session = await ExtensionSessionsRepository.get_by_id(
-                session_id=payload.session_id,
-            )
-
-            if not current_session:
-                current_session = await ExtensionSessionsRepository.create_extension_session(
-                    extension_session_data=ExtensionSessionData(
-                        session_id=payload.session_id,
-                        user_team_id=payload.user_team_id,
-                        session_type=payload.session_type,
-                        current_model=LLModels(payload.llm_model.value),
-                    )
-                )
 
             if not payload.llm_model:
                 raise ValueError("LLM model is required for query solving.")
@@ -704,6 +774,17 @@ class QuerySolver:
 
             agent_instance = await self._get_query_solver_agent_instance(
                 payload=payload, llm_handler=llm_handler, previous_agent_chats=session_chats
+            )
+
+            await self._set_required_model(
+                llm_model=LLModels(payload.llm_model.value),
+                session_id=payload.session_id,
+                query_id=generated_query_id,
+                agent_name=agent_instance.agent_name,
+                retry_reason=payload.retry_reason,
+                user_team_id=payload.user_team_id,
+                session_type=payload.session_type,
+                reasoning=reasoning,
             )
 
             new_query_chat = await AgentChatsRepository.create_chat(
@@ -759,6 +840,7 @@ class QuerySolver:
             llm_response = await llm_handler.start_llm_query(
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
                 llm_model=model_to_use,
+                reasoning=reasoning,
                 prompt_vars=prompt_vars_to_use,
                 attachments=payload.attachments,
                 conversation_turns=llm_inputs.messages,
@@ -771,6 +853,7 @@ class QuerySolver:
                 prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
                 metadata={
                     "agent_name": agent_instance.agent_name,
+                    **({"reasoning": reasoning.value} if reasoning else {}),
                 },
             )
             return await self.get_final_stream_iterator(
@@ -781,6 +864,7 @@ class QuerySolver:
                 previous_queries=previous_queries,
                 llm_model=model_to_use,
                 agent_name=agent_instance.agent_name,
+                reasoning=reasoning,
             )
 
         elif payload.batch_tool_responses:
@@ -801,45 +885,31 @@ class QuerySolver:
                 "deputy_dev_rules": payload.deputy_dev_rules,
             }
 
-            tool_responses: List[ToolUseResponseData] = []
-            for resp in payload.batch_tool_responses:
-                if resp.status == ToolStatus.COMPLETED:
-                    response_data = self._format_tool_response(
-                        resp, vscode_env=payload.vscode_env, focus_items=payload.focus_items
-                    )
-                else:
-                    if resp.tool_name not in {"replace_in_file", "write_to_file"}:
-                        response_data = {
-                            "error_message": EXCEPTION_RAISED_FALLBACK.format(
-                                tool_name=resp.tool_name,
-                                error_type=resp.response.get("error_type", "Unknown") if resp.response else "Unknown",
-                                error_message=resp.response.get(
-                                    "error_message", "An error occurred while using the tool."
-                                )
-                                if resp.response
-                                else "An error occurred while using the tool.",
-                            )
-                        }
-                    else:
-                        response_data = resp.response
-
-                tool_responses.append(
-                    ToolUseResponseData(
-                        content=ToolUseResponseContent(
-                            tool_name=resp.tool_name,
-                            tool_use_id=resp.tool_use_id,
-                            response=response_data,
-                        )
-                    )
-                )
-
             agent_instance = await self._get_query_solver_agent_instance(
                 payload=payload, llm_handler=llm_handler, previous_agent_chats=inserted_tool_responses
             )
+            llm_to_use = LLModels(inserted_tool_responses[0].metadata["llm_model"])
+            reasoning_val = inserted_tool_responses[0].metadata.get("reasoning")
+            reasoning = Reasoning(reasoning_val) if reasoning_val else None
+            if payload.retry_reason is not None:
+                llm_to_use = LLModels(payload.llm_model.value)
+                reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
+
+            await self._set_required_model(
+                llm_model=llm_to_use,
+                session_id=payload.session_id,
+                query_id=inserted_tool_responses[0].query_id,
+                agent_name=agent_instance.agent_name,
+                retry_reason=payload.retry_reason,
+                user_team_id=payload.user_team_id,
+                session_type=payload.session_type,
+                reasoning=reasoning,
+            )
+
             llm_inputs, previous_queries = await agent_instance.get_llm_inputs_and_previous_queries(
                 payload=payload,
                 _client_data=client_data,
-                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
+                llm_model=llm_to_use,
             )
             prompt_vars_to_use = {**prompt_vars, **llm_inputs.extra_prompt_vars}
             llm_response = await llm_handler.start_llm_query(
@@ -850,7 +920,8 @@ class QuerySolver:
                 checker=task_checker,
                 parallel_tool_calls=True,
                 prompt_feature=PromptFeatures(llm_inputs.prompt.prompt_type),
-                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
+                llm_model=llm_to_use,
+                reasoning=reasoning,
                 conversation_turns=llm_inputs.messages,
             )
 
@@ -860,8 +931,9 @@ class QuerySolver:
                 llm_handler=llm_handler,
                 query_id=inserted_tool_responses[0].query_id,
                 previous_queries=previous_queries,
-                llm_model=LLModels(inserted_tool_responses[0].metadata["llm_model"]),
+                llm_model=llm_to_use,
                 agent_name=agent_instance.agent_name,
+                reasoning=reasoning,
             )
 
         else:

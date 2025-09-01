@@ -97,6 +97,13 @@ class LLMModel(Enum):
     OPENROUTER_GPT_5_NANO = "OPENROUTER_GPT_5_NANO"
 
 
+class Reasoning(Enum):
+    MINIMAL = "MINIMAL"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
 class RetryReasons(Enum):
     TOOL_USE_FAILED = "TOOL_USE_FAILED"
     THROTTLED = "THROTTLED"
@@ -132,8 +139,6 @@ class QuerySolverInput(BaseModel):
     write_mode: bool = False
     session_id: int
     batch_tool_responses: Optional[List[ToolUseResponseInput]] = None
-    tool_use_response: Optional[ToolUseResponseInput] = None
-    previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
     user_team_id: int
     session_type: str
@@ -144,6 +149,7 @@ class QuerySolverInput(BaseModel):
     search_web: Optional[bool] = False
     is_lsp_ready: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
+    reasoning: Optional[str] = None
     client_tools: List[ClientTool] = []
     is_embedding_done: Optional[bool] = True
     retry_reason: Optional[RetryReasons] = None

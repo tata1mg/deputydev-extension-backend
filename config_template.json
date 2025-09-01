@@ -528,7 +528,13 @@
             "INPUT_TOKENS_LIMIT": 120000,
             "TEMPERATURE": 0.5,
             "STREAM_BATCH_SIZE": 30,
-            "PROVIDER": {},
+            "PROVIDER": {
+                "only": [
+                    "fireworks",
+                    "groq",
+                    "deepinfra"
+                ]
+            },
             "LIMITS": {
                 "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
                 "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
@@ -541,7 +547,15 @@
             "INPUT_TOKENS_LIMIT": 230000,
             "TEMPERATURE": 0.5,
             "STREAM_BATCH_SIZE": 30,
-            "PROVIDER": {},
+            "PROVIDER": {
+                "only": [
+                    "fireworks",
+                    "baseten",
+                    "google-vertex",
+                    "together",
+                    "cerebras"
+                ]
+            },
             "LIMITS": {
                 "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
                 "SAFE_HISTORY_CHARACTER_LIMIT": 50000,

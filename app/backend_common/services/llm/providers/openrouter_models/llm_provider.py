@@ -66,6 +66,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolRequestConversationTurnContent,
     UserConversationTurn,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Reasoning
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 
@@ -315,6 +316,7 @@ class OpenRouter(BaseLLMProvider):
         response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         parallel_tool_calls: bool = False,
         text_format: Optional[Type[BaseModel]] = None,
+        reasoning: Optional[Reasoning] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenRouter service client.
@@ -335,7 +337,7 @@ class OpenRouter(BaseLLMProvider):
                 messages=llm_payload["messages"],
                 tools=llm_payload["tools"],
                 tool_choice=llm_payload["tool_choice"],
-                reasoning=model_config.get("REASONING", None),
+                reasoning=reasoning,
                 provider=model_config.get("PROVIDER", None),
                 response_format=response_type,
                 structured_outputs=llm_payload.get("structured_outputs", None),
@@ -351,7 +353,7 @@ class OpenRouter(BaseLLMProvider):
                 conversation_messages=llm_payload["conversation_messages"],
                 tools=llm_payload["tools"],
                 tool_choice=llm_payload["tool_choice"],
-                reasoning=model_config["REASONING"],
+                reasoning=reasoning,
                 provider=model_config["PROVIDER"],
                 response_format=response_type,
                 structured_outputs=llm_payload["structured_outputs"],
@@ -378,7 +380,14 @@ class OpenRouter(BaseLLMProvider):
             self._active_streams[stream_id] = response
 
             buffer: List[StreamingEvent] = []
-            non_combinable_types = {TextBlockStart, TextBlockEnd, ToolUseRequestStart, ToolUseRequestEnd}
+            non_combinable_types = {
+                TextBlockStart,
+                TextBlockEnd,
+                ToolUseRequestStart,
+                ToolUseRequestEnd,
+                ExtendedThinkingBlockStart,
+                ExtendedThinkingBlockEnd,
+            }
             batch_size = model_config.get("STREAM_BATCH_SIZE", 1)
 
             tool_usage_state: dict[str, bool] = defaultdict(bool)
@@ -388,19 +397,21 @@ class OpenRouter(BaseLLMProvider):
             extended_thinking_open = False
             try:
                 async for chunk in response:
-                    # Cancellation check
+                    # --- Cancellation ---
                     if self.checker and self.checker.is_cancelled():
                         await CodeGenTasksCache.cleanup_session_data(session_id)
                         raise asyncio.CancelledError()
 
-                    # Usage and cost handling
+                    # --- Usage and cost ---
                     if chunk.usage:
                         details = chunk.usage.prompt_tokens_details
                         cached_tokens = getattr(details, "cached_tokens", 0) if details else 0
                         prompt_tokens = chunk.usage.prompt_tokens or 0
                         completion_tokens = chunk.usage.completion_tokens or 0
                         usage += LLMUsage(
-                            input=prompt_tokens - cached_tokens, output=completion_tokens, cache_read=cached_tokens
+                            input=prompt_tokens - cached_tokens,
+                            output=completion_tokens,
+                            cache_read=cached_tokens,
                         )
                         if chunk.usage.cost is not None:
                             streaming_cost = chunk.usage.cost
@@ -412,16 +423,16 @@ class OpenRouter(BaseLLMProvider):
                     tool_calls = getattr(delta, "tool_calls", []) or []
                     reasoning_text = getattr(delta, "reasoning", None)
                     reasoning_details = getattr(delta, "reasoning_details", None)
+
                     # --- Extended Thinking Handling ---
                     if reasoning_details:
-                        # Normalize for type safety
                         if isinstance(reasoning_details, dict):
-                            reasoning_dict: Dict[str, Any] = reasoning_details
-                            if reasoning_dict.get("type") == "reasoning.encrypted":
+                            if reasoning_details.get("type") == "reasoning.encrypted":
                                 continue
                         elif isinstance(reasoning_details, list):
-                            reasoning_list: List[Dict[str, Any]] = [d for d in reasoning_details if isinstance(d, dict)]
-                            if any(d.get("type") == "reasoning.encrypted" for d in reasoning_list):
+                            if any(
+                                d.get("type") == "reasoning.encrypted" for d in reasoning_details if isinstance(d, dict)
+                            ):
                                 continue
 
                     if reasoning_text or reasoning_details:
@@ -431,15 +442,13 @@ class OpenRouter(BaseLLMProvider):
                             yield start_event
                             extended_thinking_open = True
 
-                        # Normalize reasoning_details into a list of dicts
                         details_list: List[Dict[str, Any]] = []
                         if reasoning_details:
                             if isinstance(reasoning_details, dict):
-                                details_list = [reasoning_details]  # wrap single dict
+                                details_list = [reasoning_details]
                             elif isinstance(reasoning_details, list):
                                 details_list = [d for d in reasoning_details if isinstance(d, dict)]
 
-                        # Prefer reasoning_text, else join summaries or data fields
                         thinking_delta: str = reasoning_text or " ".join(
                             str(d.get("summary") or d.get("data") or "") for d in details_list
                         )
@@ -449,11 +458,17 @@ class OpenRouter(BaseLLMProvider):
                             content=ExtendedThinkingBlockDeltaContent(thinking_delta=thinking_delta),
                         )
                         accumulated_events.append(delta_event)
-                        yield delta_event
+                        if buffer and (type(buffer[0]) in non_combinable_types or len(buffer) >= batch_size):
+                            yield reduce(lambda a, b: a + b, buffer)
+                            buffer.clear()
+                        buffer.append(delta_event)
                         continue  # don’t drop into text/tool flow
 
-                    # If reasoning was open and now we see text/tool/stop → close it
+                    # close thinking if switching
                     if extended_thinking_open and (text_part or tool_calls or finish_reason in {"stop", "tool_calls"}):
+                        if buffer:
+                            yield reduce(lambda a, b: a + b, buffer)
+                            buffer.clear()
                         end_event = ExtendedThinkingBlockEnd(
                             type=StreamingEventType.EXTENDED_THINKING_BLOCK_END,
                             content=ExtendedThinkingBlockEndContent(signature=""),
@@ -462,7 +477,7 @@ class OpenRouter(BaseLLMProvider):
                         yield end_event
                         extended_thinking_open = False
 
-                    # Tool-call event handling
+                    # --- Tool-call handling ---
                     if tool_calls:
                         if text_block_open:
                             if buffer:
@@ -513,7 +528,7 @@ class OpenRouter(BaseLLMProvider):
 
                         continue
 
-                    # If switching from tool-call to text
+                    # close tool if switching to text
                     if current_tool_id and tool_usage_state[current_tool_id]:
                         end_event = ToolUseRequestEnd(type=StreamingEventType.TOOL_USE_REQUEST_END)
                         accumulated_events.append(end_event)
@@ -521,7 +536,7 @@ class OpenRouter(BaseLLMProvider):
                         tool_usage_state[current_tool_id] = False
                         current_tool_id = current_tool_name = None
 
-                    # Text block streaming
+                    # --- Text block handling ---
                     if text_part and not text_block_open:
                         start_event = TextBlockStart(type=StreamingEventType.TEXT_BLOCK_START)
                         if buffer:
@@ -542,7 +557,6 @@ class OpenRouter(BaseLLMProvider):
                             buffer.clear()
                         buffer.append(delta_event)
 
-                    # End text block on "stop"
                     if finish_reason == "stop" and text_block_open:
                         if buffer:
                             yield reduce(lambda a, b: a + b, buffer)
@@ -552,12 +566,21 @@ class OpenRouter(BaseLLMProvider):
                         yield end_event
                         text_block_open = False
 
-                # Stream cleanup
+                # --- Stream cleanup ---
+                if buffer:
+                    yield reduce(lambda a, b: a + b, buffer)
+                    buffer.clear()
+
                 if text_block_open:
-                    if buffer:
-                        yield reduce(lambda a, b: a + b, buffer)
-                        buffer.clear()
                     end_event = TextBlockEnd(type=StreamingEventType.TEXT_BLOCK_END)
+                    accumulated_events.append(end_event)
+                    yield end_event
+
+                if extended_thinking_open:
+                    end_event = ExtendedThinkingBlockEnd(
+                        type=StreamingEventType.EXTENDED_THINKING_BLOCK_END,
+                        content=ExtendedThinkingBlockEndContent(signature=""),
+                    )
                     accumulated_events.append(end_event)
                     yield end_event
 
