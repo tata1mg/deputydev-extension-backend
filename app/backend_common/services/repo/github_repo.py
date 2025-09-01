@@ -3,7 +3,6 @@ from typing import Any, Dict, Optional, Tuple
 
 import toml
 from git.util import Actor
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.constants.constants import (
     SETTING_ERROR_MESSAGE,
@@ -15,6 +14,7 @@ from app.backend_common.service_clients.github.github_repo_client import (
 )
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 
 class GithubRepo(BaseRepo):

@@ -3,10 +3,10 @@ from typing import Any, Dict, List, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.repository.db import DB
 from app.backend_common.services.pr.base_pr import BasePR
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.constants.constants import (
     CODE_REVIEW_ERRORS,
     ExperimentStatusTypes,

@@ -8,7 +8,6 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.caches.common import CommonCache
 from app.backend_common.constants.error_messages import ErrorMessages
@@ -16,6 +15,7 @@ from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.openai.base_client import BaseClient
 from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.app_utils import hash_sha256
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 openai_key = CONFIG.config.get("OPENAI_KEY")
 EMBEDDING_MODEL = CONFIG.config.get("EMBEDDING").get("MODEL")

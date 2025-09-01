@@ -3,7 +3,6 @@
 Author: Lakshay Bansal <lakshay.bansal@1mg.com>
 """
 
-import importlib.metadata
 import platform
 
 from rich import box
@@ -82,9 +81,7 @@ class Wall:
 
         for (err, route), handler in self.app.error_handler.cached_handlers.items():
             route = route or "ALL"
-            table.add_row(
-                err.__name__, handler.__name__, Text(route, overflow="ellipsis")
-            )
+            table.add_row(err.__name__, handler.__name__, Text(route, overflow="ellipsis"))
 
         return Panel(table, expand=False, title="Error Handlers")
 
@@ -129,9 +126,7 @@ class Wall:
 
         t.add_row(Text(LOGO_1MG, style="reverse #fe6f61"), LOGO_TORPEDO)
 
-        return Panel(
-            t, expand=False, box=box.HORIZONTALS, padding=0, border_style="bold #fe6f61"
-        )
+        return Panel(t, expand=False, box=box.HORIZONTALS, padding=0, border_style="bold #fe6f61")
 
     def _meta_info(self):
         host_config = self.app.ctx.host_config
@@ -142,7 +137,6 @@ class Wall:
             SINGLE_PROCESS = "[green]ON"
         else:
             SINGLE_PROCESS = "[yellow]OFF"
-
 
         if host_config.HOST:
             host = host_config.HOST
@@ -176,15 +170,9 @@ class Wall:
             Text(f"{self.app.config.get('WORKERS')}"),
         )
         t.add_section()
-        t.add_row(
-            "[bold white][red]☵[/red] python", f"[bold blue]{platform.python_version()}"
-        )
+        t.add_row("[bold white][red]☵[/red] python", f"[bold blue]{platform.python_version()}")
         t.add_row("[bold white][red]☵[/red] sanic", "[bold green]23.12.2")  # HARDCODED
-        t.add_row(
-            "[bold white][red]☵[/red] sanic-ext", "[bold green]23.12.0"
-        )  # HARDCODED
-        t.add_row(
-            "[bold white][red]☵[/red] sanic-routing", "[bold green]23.12.0"
-        )  # HARDCODED
+        t.add_row("[bold white][red]☵[/red] sanic-ext", "[bold green]23.12.0")  # HARDCODED
+        t.add_row("[bold white][red]☵[/red] sanic-routing", "[bold green]23.12.0")  # HARDCODED
 
         return Panel(t, expand=False, box=box.SIMPLE, highlight=True)

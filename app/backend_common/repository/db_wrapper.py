@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from tortoise import Tortoise, timezone
-from tortoise.contrib.postgres.functions import Random
-from tortoise.models import Model
-
-from app.backend_common.utils.tortoise_wrapper.constants import DEFAULT_LIMIT, DEFAULT_OFFSET
-from app.backend_common.utils.tortoise_wrapper.exceptions import BadRequestException
-
 # ---------------------------------------------------------------------------- #
 # TODO: add type hints
 # TODO: add usage examples in docstrings
 # TODO: improve documentation, convert to google style doctrings
 # ---------------------------------------------------------------------------- #
 from contextvars import ContextVar
+
+from tortoise import Tortoise, timezone
+from tortoise.contrib.postgres.functions import Random
+from tortoise.models import Model
+
+from app.backend_common.utils.tortoise_wrapper.constants import DEFAULT_LIMIT, DEFAULT_OFFSET
+from app.backend_common.utils.tortoise_wrapper.exceptions import BadRequestException
 
 user_context_ctx: ContextVar[dict] = ContextVar("__tortoise_user_context", default={})
 
@@ -59,9 +59,7 @@ class ORMWrapper:
         return await queryset
 
     @classmethod
-    def add_audit_fields(
-        cls, model: Model, payload: dict, update_fields: list = None
-    ) -> tuple:
+    def add_audit_fields(cls, model: Model, payload: dict, update_fields: list = None) -> tuple:
         """
         Adds audit fields to the payload dictionary and updates the list of fields to
         be updated.
@@ -104,9 +102,7 @@ class ORMWrapper:
     # FIXME: either seperate update given row from where clause
     # or rearrange args/kwargs (hint: use *, / seperator for args/lwargs)
     @classmethod
-    async def update_with_filters(
-        cls, row, model: Model, payload: dict, where_clause=None, update_fields=None
-    ):
+    async def update_with_filters(cls, row, model: Model, payload: dict, where_clause=None, update_fields=None):
         """
         :param row: database model instance which needs to be updated
         :param model: database model class on which filters and
@@ -202,9 +198,7 @@ class ORMWrapper:
                     created_by = user_context.get("email", "")
                     payload_obj.created_by = created_by
 
-        row = await model.bulk_create(
-            objects, batch_size, ignore_conflicts, update_fields, on_conflict, using_db
-        )
+        row = await model.bulk_create(objects, batch_size, ignore_conflicts, update_fields, on_conflict, using_db)
         return row
 
     @classmethod
@@ -246,9 +240,7 @@ class ORMWrapper:
         return result
 
     @classmethod
-    async def get_by_filters_count(
-        cls, model: Model, filters, order_by=None, limit=None, offset=None
-    ):
+    async def get_by_filters_count(cls, model: Model, filters, order_by=None, limit=None, offset=None):
         """
         :param model: database model class
         :param filters: where conditions for filter
@@ -307,11 +299,7 @@ class ORMWrapper:
             raise BadRequestException(f"Invalid function name: {function}") from ex
 
         values.append(agg_col_name)
-        queryset = (
-            model.annotate(**{agg_col_name: function(column)})
-            .filter(**filters)
-            .group_by(group_by)
-        )
+        queryset = model.annotate(**{agg_col_name: function(column)}).filter(**filters).group_by(group_by)
         if order_by:
             queryset = queryset.order_by(order_by)
         queryset = await queryset.values(*values)

@@ -334,7 +334,6 @@ class BaseAPIClient:
         return result
 
 
-
 class TorpedoClient(BaseAPIClient):
     _config: dict = CONFIG.config
     _health_check_config: dict = _config.get("HEALTH_CHECK", {})

@@ -1,6 +1,8 @@
 from typing import Any, Dict, List
-from app.backend_common.utils.sanic_wrapper import CONFIG
+
 from typing_extensions import override
+
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from ..base_scm_client import BaseSCMClient
 

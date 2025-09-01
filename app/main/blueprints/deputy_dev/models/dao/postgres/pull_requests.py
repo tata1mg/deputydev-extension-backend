@@ -1,6 +1,7 @@
 from enum import Enum
 
 from tortoise import fields
+
 from app.backend_common.utils.tortoise_wrapper.db import CITextField, NaiveDatetimeField
 
 from .......backend_common.models.dao.postgres.base import Base

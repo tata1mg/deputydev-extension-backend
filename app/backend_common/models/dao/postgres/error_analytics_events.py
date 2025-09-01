@@ -1,4 +1,5 @@
 from tortoise import fields
+
 from app.backend_common.utils.tortoise_wrapper.db import NaiveDatetimeField
 
 from .base import Base

@@ -3,13 +3,13 @@ from typing import Any, Dict, Optional
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from app.backend_common.service_clients.github.github_repo_client import (
     GithubRepoClient,
 )
 from app.backend_common.services.credentials import AuthHandler
 from app.backend_common.services.pr.dataclasses.main import PullRequestResponse
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.models.chat_request import ChatRequest
 from app.main.blueprints.deputy_dev.services.comment.base_comment import BaseComment
 from app.main.blueprints.deputy_dev.services.comment.helpers.github_comment_helper import (

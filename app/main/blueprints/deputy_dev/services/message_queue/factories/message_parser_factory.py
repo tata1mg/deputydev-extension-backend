@@ -1,7 +1,6 @@
 from typing import Type, Union
 
 from app.backend_common.utils.sanic_wrapper import CONFIG
-
 from app.backend_common.utils.types.types import CloudProviders
 from app.main.blueprints.deputy_dev.services.message_queue.parsers.message_parser.azure_bus_service_message_parser import (
     AzureBusServiceMessageParser,

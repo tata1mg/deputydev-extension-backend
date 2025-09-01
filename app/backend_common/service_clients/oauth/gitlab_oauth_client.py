@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import Enum
 
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
+
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
 

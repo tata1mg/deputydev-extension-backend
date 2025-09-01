@@ -6,7 +6,6 @@ from tortoise import Tortoise
 from app.backend_common.utils.tortoise_wrapper.config import PostgresConfig
 from app.backend_common.utils.tortoise_wrapper.constants import ASYNCPG_ENGINE
 from app.backend_common.utils.tortoise_wrapper.exceptions import ConfigError
-    
 
 
 class TortoiseWrapper:
@@ -35,11 +34,7 @@ class TortoiseWrapper:
             await Tortoise.init(config=orm_config)
 
         else:
-            _name = (
-                config.NAME
-                if isinstance(config, PostgresConfig)
-                else config.get("NAME")
-            )
+            _name = config.NAME if isinstance(config, PostgresConfig) else config.get("NAME")
             orm_config = {
                 "apps": {
                     _name: {

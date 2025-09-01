@@ -15,9 +15,7 @@ from app.backend_common.utils.sanic_wrapper.request import Request
 
 class _TaskContext:
     req_id_ctx: ContextVar[str] = ContextVar("__torpedo__req_id", default="-")
-    global_headers_ctx: ContextVar[dict] = ContextVar(
-        "__torpedo__global_headers", default={}
-    )  # noqa: E501
+    global_headers_ctx: ContextVar[dict] = ContextVar("__torpedo__global_headers", default={})  # noqa: E501
 
     def __call__(self):
         return self

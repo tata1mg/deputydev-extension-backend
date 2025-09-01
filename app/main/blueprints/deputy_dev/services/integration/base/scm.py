@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 from deputydev_core.utils.jwt_handler import JWTHandler
+
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
 from .......backend_common.services.credentials import AuthHandler
