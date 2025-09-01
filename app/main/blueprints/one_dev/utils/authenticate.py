@@ -7,8 +7,6 @@ from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.context_value import ContextValue
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sanic.server.websockets.impl import WebsocketImplProtocol
-from torpedo import CONFIG, Request
-from torpedo.exceptions import BadRequestException
 
 from app.backend_common.constants.onboarding import SubscriptionStatus
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
@@ -21,6 +19,8 @@ from app.backend_common.services.auth.session_encryption_service import (
     SessionEncryptionService,
 )
 from app.backend_common.services.auth.supabase.auth import SupabaseAuth
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.one_dev.services.auth.signup import SignUp
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData

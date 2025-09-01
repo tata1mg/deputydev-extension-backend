@@ -1,0 +1,2 @@
+class HealthCheckException(Exception):
+    pass

@@ -17,7 +17,8 @@ from openai.types.shared_params.response_format_json_object import ResponseForma
 from openai.types.shared_params.response_format_text import ResponseFormatText
 from openai.types.shared_params.responses_model import ResponsesModel
 from pydantic import BaseModel
-from torpedo import CONFIG
+
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 config = CONFIG.config
 

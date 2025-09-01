@@ -1,0 +1,7 @@
+HANDLED_ERR = "Handled exception {}, for method {}"
+UNHANDLED_ERR = "Unhandled exception {}, for method {}"
+INTERSERVICE_ERR = "Inter Service exception {}, for method {}"
+SOMETHING_WENT_WRONG = "Something went wrong!"
+APP_NOT_INIT_ERR = "No app initialised. Run `create_app` before running the service."
+EVENT_LOOP_STARVED_ERROR = "Event loop is starved."
+SERVICE_RESPONSE_HEALTH_CHECK_FAILED = "Service response health check failed."

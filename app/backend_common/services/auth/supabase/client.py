@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
-from torpedo import CONFIG
-
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from supabase import Client, create_client
 from supabase.lib.client_options import SyncClientOptions
 

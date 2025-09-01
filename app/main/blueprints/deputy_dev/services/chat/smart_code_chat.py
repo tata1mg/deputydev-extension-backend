@@ -2,7 +2,6 @@ from typing import Any, Dict
 
 from deputydev_core.utils.context_vars import set_context_values
 from sanic.log import logger
-from torpedo import CONFIG
 
 from app.backend_common.constants.constants import LARGE_PR_DIFF, PR_NOT_FOUND, VCSTypes
 from app.backend_common.repository.repo.repository import RepoRepository
@@ -12,6 +11,7 @@ from app.backend_common.services.repo.repo_factory import RepoFactory
 from app.backend_common.services.workspace.workspace_service import WorkspaceService
 from app.backend_common.utils.app_utils import build_openai_conversation_message
 from app.backend_common.utils.formatting import format_code_blocks
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.constants.constants import (
     CHAT_ERRORS,
     BitbucketBots,

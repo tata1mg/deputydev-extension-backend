@@ -4,9 +4,9 @@ from sanic import Blueprint
 from sanic.response import JSONResponse
 from sanic_ext import openapi
 from sanic_ext.extensions.openapi.definitions import Response
-from torpedo import Request, send_response
-from torpedo.types import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.main.blueprints.deputy_dev.models.analytics import AnalyticsData
 from app.main.blueprints.deputy_dev.services.analytics.analytics_service import (
     AnalyticsManager,

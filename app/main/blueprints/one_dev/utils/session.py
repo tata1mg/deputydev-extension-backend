@@ -3,8 +3,6 @@ from functools import wraps
 from typing import Any, Optional
 
 from deputydev_core.utils.app_logger import AppLogger
-from torpedo import Request
-from torpedo.exceptions import BadRequestException
 
 from app.backend_common.models.dto.message_sessions_dto import (
     MessageSessionData,
@@ -13,6 +11,8 @@ from app.backend_common.models.dto.message_sessions_dto import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
+from app.backend_common.utils.sanic_wrapper import Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
