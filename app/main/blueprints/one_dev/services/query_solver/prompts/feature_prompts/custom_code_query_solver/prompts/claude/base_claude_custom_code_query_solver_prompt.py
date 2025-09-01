@@ -302,6 +302,7 @@ class BaseClaudeQuerySolverPrompt:
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
+        focus_chunks_message = ""
         if self.params.get("focus_items"):
             code_snippet_based_items = [
                 item
