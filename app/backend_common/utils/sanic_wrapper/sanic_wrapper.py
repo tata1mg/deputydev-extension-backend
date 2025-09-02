@@ -13,7 +13,7 @@ from typing_extensions import final
 
 from app.backend_common.utils.sanic_wrapper.blueprints import health_bp
 from app.backend_common.utils.sanic_wrapper.common_utils import CONFIG
-from app.backend_common.utils.sanic_wrapper.config import HostConfig, TorpedoConfig
+from app.backend_common.utils.sanic_wrapper.config import HostConfig, SanicConfig
 from app.backend_common.utils.sanic_wrapper.constants import ENV
 from app.backend_common.utils.sanic_wrapper.constants.errors import APP_NOT_INIT_ERR
 from app.backend_common.utils.sanic_wrapper.constants.sanic import ListenerEvent, MiddlewareLocation
@@ -25,7 +25,7 @@ from app.backend_common.utils.sanic_wrapper.logging.dev import setup_rich_loggin
 from app.backend_common.utils.sanic_wrapper.logging.factory import patch_log_record_factory
 from app.backend_common.utils.sanic_wrapper.logging.patch import patch_standard_logging
 from app.backend_common.utils.sanic_wrapper.middlewares import add_start_time, task_ctx_factory
-from app.backend_common.utils.sanic_wrapper.request import TorpedoRequest
+from app.backend_common.utils.sanic_wrapper.request import SanicRequest
 from app.backend_common.utils.sanic_wrapper.signals import log_request_info, log_rich_request_info
 from app.backend_common.utils.sanic_wrapper.types import (
     HandlerExceptionTuple,
@@ -34,12 +34,11 @@ from app.backend_common.utils.sanic_wrapper.types import (
     SignalHandlerTuple,
 )
 from app.backend_common.utils.sanic_wrapper.utils import is_atty, is_local
-from app.backend_common.utils.sanic_wrapper.wall import Wall
 
 
 @final
-class Torpedo:
-    """Entrypoint for a Torpedo application.
+class SanicWrapper:
+    """Entrypoint for a Sanic application.
 
     It encapsulates the configuration, setup, and execution of a Sanic application.
     It provides a simple and intuitive way to create, configure, and run a Sanic
@@ -60,7 +59,7 @@ class Torpedo:
         default_config (Config, optional):
             The default configuration for the application. Defaults to None.
         request_cls (Type[Request], optional):
-            The request class to use for the application. Defaults to TorpedoRequest.
+            The request class to use for the application. Defaults to SanicRequest.
         error_handler (ErrorHandler, optional):
             The error handler for the application. Defaults to None.
 
@@ -72,22 +71,22 @@ class Torpedo:
 
     Example:
         ```python
-        from app.backend_common.utils.sanic_wrapper import Torpedo
+        from app.backend_common.utils.sanic_wrapper import SanicWrapper
 
         middlewares = [(parse_response_headers, "request"), (append_headers, "response")]
 
-        torpedo = Torpedo(blueprints=blueprints, middlewares=middlewares)
-        app = torpedo.create_app()
+        sanic_wrapper = SanicWrapper(blueprints=blueprints, middlewares=middlewares)
+        app = sanic_wrapper.create_app()
         ```
 
     Example:
         ```python
-        from app.backend_common.utils.sanic_wrapper import Torpedo
+        from app.backend_common.utils.sanic_wrapper import SanicWrapper
 
         middlewares = [(parse_response_headers, "request"), (append_headers, "response")]
 
-        torpedo = Torpedo(blueprints=blueprints, middlewares=middlewares)
-        app = torpedo.create_app()
+        sanic_wrapper = SanicWrapper(blueprints=blueprints, middlewares=middlewares)
+        app = sanic_wrapper.create_app()
         ```
 
     """  # noqa: E501
@@ -121,7 +120,7 @@ class Torpedo:
         *,
         service_config: t.Dict[str, t.Any] | None = None,
         default_config: Config | None = None,
-        request_cls: t.Type[Request] = TorpedoRequest,
+        request_cls: t.Type[Request] = SanicRequest,
         error_handler: ErrorHandler | None = None,
     ) -> None:
         self._app: Sanic | None = None
@@ -138,7 +137,7 @@ class Torpedo:
         self._host_config: HostConfig = HostConfig.from_dict(self._service_config)
 
         # Set custom classes for sanic application
-        self._default_config = default_config or TorpedoConfig()
+        self._default_config = default_config or SanicConfig()
         self._request_cls = request_cls
         self._error_handler = error_handler if error_handler else None
 
@@ -256,20 +255,7 @@ class Torpedo:
             self._app.add_signal(handler, event)
 
     def __render_wall(self) -> None:
-        """Display rich app info in debug mode.
-
-        Skips if terminal not tty.
-        """
-        if not self._host_config.DEBUG:
-            return
-
-        # NOTE: now using config instead to turn motd OFF
-        # patch sanic motd method to supress banner
-        # need to be patched before running app
-        # Sanic.motd = lambda *_, **__: ...
-
-        if is_local() and is_atty():
-            Wall(self._app).render()
+        pass
 
     def _configure_logging(self) -> None:
         """Configure application logging.
