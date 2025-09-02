@@ -6,6 +6,8 @@ from sanic.response import JSONResponse
 from torpedo import CONFIG, Request, send_response
 from torpedo.types import ResponseDict
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.models.dto.ide_review_feedback_dto import IdeReviewFeedbackDTO
 from app.main.blueprints.deputy_dev.models.ide_review_history_params import ReviewHistoryParams
@@ -24,11 +26,9 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processo
 from app.main.blueprints.deputy_dev.services.repository.ide_review_feedbacks.repository import (
     IdeReviewFeedbacksRepository,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 ide_review = Blueprint("ide_review", "")
 
