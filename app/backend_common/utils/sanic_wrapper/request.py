@@ -17,8 +17,8 @@ from app.backend_common.utils.sanic_wrapper.constants.headers import (
 from app.backend_common.utils.sanic_wrapper.exceptions import JsonDecodeException
 
 
-class TorpedoRequest(sanic.Request):
-    """Custom request class for Torpedo, extending Sanic's Request.
+class SanicRequest(sanic.Request):
+    """Custom request class for Sanic, extending Sanic's Request.
 
     Provides additional methods for handling request parameters and JSON data.
     """
@@ -103,7 +103,7 @@ class TorpedoRequest(sanic.Request):
         }
 
 
-Request = TorpedoRequest
+Request = SanicRequest
 """We alias this for ease of type hints.
 Ideally services should import this and
 use as type hint for request param in the handler.

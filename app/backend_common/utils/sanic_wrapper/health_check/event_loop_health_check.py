@@ -4,7 +4,7 @@ from sanic.log import error_logger
 
 from app.backend_common.utils.sanic_wrapper.common_utils import CONFIG
 from app.backend_common.utils.sanic_wrapper.constants.errors import EVENT_LOOP_STARVED_ERROR
-from app.backend_common.utils.sanic_wrapper.exceptions import BaseTorpedoException
+from app.backend_common.utils.sanic_wrapper.exceptions import BaseSanicException
 from app.backend_common.utils.sanic_wrapper.health_check.health_check_strategy import HealthCheckStrategy
 
 
@@ -19,4 +19,4 @@ class EventLoopHealthCheck(HealthCheckStrategy):
             return "healthy"
         except asyncio.TimeoutError:
             error_logger.error(EVENT_LOOP_STARVED_ERROR)
-            raise BaseTorpedoException(EVENT_LOOP_STARVED_ERROR)
+            raise BaseSanicException(EVENT_LOOP_STARVED_ERROR)
