@@ -5,9 +5,8 @@ from typing import Any, Dict, Tuple
 
 from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.context_value import ContextValue
-from jwt import ExpiredSignatureError, InvalidTokenError
 from sanic.server.websockets.impl import WebsocketImplProtocol
-from torpedo import CONFIG, Request
+from torpedo import Request
 from torpedo.exceptions import BadRequestException
 
 from app.backend_common.constants.onboarding import SubscriptionStatus
@@ -17,72 +16,27 @@ from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
 from app.backend_common.repository.users.user_repository import UserRepository
-from app.backend_common.services.auth.session_encryption_service import (
-    SessionEncryptionService,
-)
-from app.backend_common.services.auth.supabase.auth import SupabaseAuth
-from app.main.blueprints.one_dev.services.auth.signup import SignUp
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
-from app.main.blueprints.one_dev.utils.session import get_stored_session
+from app.backend_common.services.auth.auth_factory import AuthFactory
+from app.backend_common.services.auth.signup import SignUp
+from app.backend_common.utils.dataclasses.main import AuthData, AuthSessionData, ClientData
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
     """
     Get the auth data from the request
     """
-    # TODO: SLIGHTLY FUCKED UP. DUPLICATE OF verify_auth_token
-    # Check if the session ID is present in the headers
     response_headers = {}
-    authorization_header: str = request.headers.get("Authorization")
-    use_grace_period: bool = False
-    enable_grace_period: bool = False
-    bypass_token = CONFIG.config.get("REVIEW_AUTH_TOKEN")
-    if authorization_header and bypass_token and authorization_header.split(" ")[1].strip() == bypass_token:
-        session_id = request.headers.get("X-Session-ID")
-        session = await get_stored_session(session_id)
-        if not session:
-            raise BadRequestException("Invalid or missing session for bypass token")
-        auth_data = AuthData(user_team_id=session.user_team_id)
-        response_headers["_bypass_review_auth"] = True
-        return auth_data, response_headers
+    auth_provider = AuthFactory.get_auth_provider()
+    verification_result: AuthSessionData = await auth_provider.extract_and_verify_token(request)
 
-    try:
-        payload: Dict[str, Any] = request.custom_json() if request.method == "POST" else request.request_params()
-        use_grace_period = payload.get("use_grace_period") or False
-        enable_grace_period = payload.get("enable_grace_period") or False
-    except Exception:  # noqa: BLE001
-        pass
-    if not authorization_header:
-        raise Exception("Authorization header is missing")
+    if verification_result.status == AuthStatus.NOT_VERIFIED:
+        raise BadRequestException(verification_result.error_message or AuthStatus.NOT_VERIFIED.value)
 
-    session_data: Dict[str, Any] = {}
-    # decode encrypted session data and get the supabase access token
-    encrypted_session_data = authorization_header.split(" ")[1].strip()
-    try:
-        # first decrypt the token using session encryption service
-        session_data_string = SessionEncryptionService.decrypt(encrypted_session_data)
-        # convert back to json object
-        session_data = json.loads(session_data_string)
-        # extract supabase access token
-        access_token = session_data.get("access_token")
-        token_data = await SupabaseAuth.verify_auth_token(
-            access_token.strip(), use_grace_period=use_grace_period, enable_grace_period=enable_grace_period
-        )
-        if not token_data["valid"]:
-            raise BadRequestException(AuthStatus.NOT_VERIFIED.value)
-    except ExpiredSignatureError:
-        # refresh the current session
-        refresh_session_data = await SupabaseAuth.refresh_session(session_data)
-        # add the session data to the kwargs
-        response_headers = {"new_session_data": refresh_session_data[0]}
-    except InvalidTokenError:
-        raise BadRequestException("Invalid token")
-    except Exception:  # noqa: BLE001
-        raise BadRequestException(AuthStatus.NOT_VERIFIED.value)
+    if verification_result.status == AuthStatus.EXPIRED:
+        response_headers = {"new_session_data": verification_result.encrypted_session_data}
 
     # Extract the email from the user response
-    email = session_data.get("email")
+    email = verification_result.user_email
     if not email:
         raise BadRequestException("Email not found in session data")
 

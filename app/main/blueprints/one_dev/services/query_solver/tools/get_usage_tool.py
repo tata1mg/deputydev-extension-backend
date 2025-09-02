@@ -41,7 +41,7 @@ GET_USAGE_TOOL = ConversationTool(
             "file_paths": JSONSchema(
                 type="array",
                 items=JSONSchema(type="string"),
-                description="Optional. Candidate absolute file paths narrow the search.",
+                description="Optional. Candidate absolute file paths to narrow the search.",
             ),
         },
         required=["symbol_name"],

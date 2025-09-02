@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.services.llm.dataclasses.main import JSONSchema
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 MAX_DEPUTY_DEV_RULES_LENGTH = ConfigManager.configs["MAX_DEPUTY_DEV_RULES_LENGTH"]
 
@@ -92,6 +92,16 @@ class LLMModel(Enum):
     CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
     QWEN_3_CODER = "QWEN_3_CODER"
     KIMI_K2 = "KIMI_K2"
+    OPENROUTER_GPT_5 = "OPENROUTER_GPT_5"
+    OPENROUTER_GPT_5_MINI = "OPENROUTER_GPT_5_MINI"
+    OPENROUTER_GPT_5_NANO = "OPENROUTER_GPT_5_NANO"
+
+
+class Reasoning(Enum):
+    MINIMAL = "MINIMAL"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
 
 
 class RetryReasons(Enum):
@@ -129,8 +139,6 @@ class QuerySolverInput(BaseModel):
     write_mode: bool = False
     session_id: int
     batch_tool_responses: Optional[List[ToolUseResponseInput]] = None
-    tool_use_response: Optional[ToolUseResponseInput] = None
-    previous_query_ids: List[int] = []
     deputy_dev_rules: Optional[str] = None
     user_team_id: int
     session_type: str
@@ -141,6 +149,7 @@ class QuerySolverInput(BaseModel):
     search_web: Optional[bool] = False
     is_lsp_ready: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
+    reasoning: Optional[str] = None
     client_tools: List[ClientTool] = []
     is_embedding_done: Optional[bool] = True
     retry_reason: Optional[RetryReasons] = None

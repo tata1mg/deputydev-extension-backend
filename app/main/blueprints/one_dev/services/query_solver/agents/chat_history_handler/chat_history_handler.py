@@ -14,8 +14,11 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
     AgentChatUpdateRequest,
+    CodeBlockData,
+    InfoMessageData,
     MessageType,
     TextMessageData,
+    ThinkingInfoData,
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
@@ -50,8 +53,11 @@ class ChatHistoryHandler:
         agent_chats, _summary = self.query_id_to_chats_and_summary_map[query_id]
         message_data_text: str = ""
         for message_thread in agent_chats:
-            if isinstance(message_thread.message_data, TextMessageData) or isinstance(
-                message_thread.message_data, ToolUseMessageData
+            if (
+                isinstance(message_thread.message_data, TextMessageData)
+                or isinstance(message_thread.message_data, ToolUseMessageData)
+                or isinstance(message_thread.message_data, ThinkingInfoData)
+                or isinstance(message_thread.message_data, CodeBlockData)
             ):
                 message_data_text += json.dumps(message_thread.message_data.model_dump(mode="json"))
         return message_data_text
@@ -218,6 +224,10 @@ class ChatHistoryHandler:
         tool_response_ids = [tool_response.tool_use_id for tool_response in self.payload.batch_tool_responses or []]
 
         all_agent_chats = await AgentChatsRepository.get_chats_by_session_id(session_id=self.payload.session_id)
+        all_agent_chats = [
+            _agent_chat for _agent_chat in all_agent_chats if not isinstance(_agent_chat.message_data, InfoMessageData)
+        ]
+        all_agent_chats.sort(key=lambda x: x.created_at)
 
         # get the tool request from the last agent_chat
         if not isinstance(all_agent_chats[-1].message_data, ToolUseMessageData):

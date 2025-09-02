@@ -23,6 +23,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UserConversationTurn,
 )
 from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,
@@ -55,7 +56,6 @@ from app.main.blueprints.one_dev.services.repository.agent_chats.repository impo
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 from .prompts.factory import PromptFeatureFactory
 
