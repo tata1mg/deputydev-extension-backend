@@ -728,7 +728,9 @@
                 "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
                 "LIMIT_RESOURCES": true,
                 "LOG_LEVEL": "debug",
-                "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes"
+                "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes",
+                "DISK_USE_READONLY_PERCENTAGE": "99",
+                "DISK_USE_WARNING_PERCENTAGE": "95"
             }
         },
         "EMBEDDING": {
@@ -873,7 +875,9 @@
     "WEAVIATE_ENV_VARIABLES": {
         "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
         "LIMIT_RESOURCES": true,
-        "LOG_LEVEL": "debug"
+        "LOG_LEVEL": "debug",
+        "DISK_USE_READONLY_PERCENTAGE": "99",
+        "DISK_USE_WARNING_PERCENTAGE": "95"
     },
     "WEAVIATE_CLIENT_TIMEOUTS": {
         "INIT": 30,
@@ -912,18 +916,36 @@
             "display_name": "GPT 5",
             "name": "OPENROUTER_GPT_5",
             "provider": "OPENAI",
-            "multimodal": true
+            "multimodal": true,
+            "reasoning": {
+                "supported": [
+                    "MINIMAL",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ],
+                "default": "MEDIUM"
+            }
         },
         {
             "id": 4,
-            "display_name": "GPT 5 MINI",
+            "display_name": "GPT 5 Mini",
             "name": "OPENROUTER_GPT_5_MINI",
             "provider": "OPENAI",
-            "multimodal": true
+            "multimodal": true,
+            "reasoning": {
+                "supported": [
+                    "MINIMAL",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ],
+                "default": "MEDIUM"
+            }
         },
         {
             "id": 5,
-            "display_name": "GPT 5 NANO",
+            "display_name": "GPT 5 Nano",
             "name": "OPENROUTER_GPT_5_NANO",
             "provider": "OPENAI",
             "multimodal": true
