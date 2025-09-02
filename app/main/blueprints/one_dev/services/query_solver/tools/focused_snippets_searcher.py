@@ -6,20 +6,20 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
     name="focused_snippets_searcher",
     description=textwrap.dedent("""
         This is a built-in tool.
-        Searches the codebase for specific code definitions or snippets based on a given class name, function name, or file name.
+        Searches the codebase for specific code definitions or snippets based on a given class name or function name.
         View the content of a code item node, such as a class or a function in a file using a fully qualified code item name.
         Use this tool to retrieve relevant code snippets that contain or define the specified search terms.
         You can provide multiple search terms at once, and the tool will return the most relevant code snippets for each.
-        The search can be good for finding specific code snippets related to a class, function, or file in the codebase, and therefore should ideally be used to
+        The search can be good for finding specific code snippets related to a class or function in the codebase, and therefore should ideally be used to
         search for specific code snippets rather than general code search queries. Also, it works best when there is ground truth in the search term, i.e.
-        the search term is valid class, function or file name in the codebase (for eg. search terms directly picked from the relevant code snippets).
+        the search term is valid class or function name in the codebase (for eg. search terms directly picked from the relevant code snippets).
 
         If search term is not valid in the codebase, it would basically work as a lexical search and return the code snippets containing the search term or containing similar terms.
 
         ### Expected Input Format:
         Each search term should include:
-        - A **keyword**: The name of the class, function, or file to search for.
-        - A **type**: Must be one of 'class', 'function', or 'file' to specify what is being searched.
+        - A **keyword**: The name of the class or function to search for.
+        - A **type**: Must be one of 'class', or 'function' to specify what is being searched.
         - An optional **file path**: To narrow down the search to a specific location in the codebase.
 
         ### Example Input:
@@ -34,10 +34,6 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
                 {
                     "keyword": "serialize_feeds_data",
                     "type": "function"
-                },
-                {
-                    "keyword": "app.py",
-                    "type": "file"
                 }
             ]
         }
@@ -60,11 +56,12 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
                     properties={
                         "keyword": JSONSchema(
                             type="string",
-                            description="The search keyword, which can be a class, function, or file name whose content needs to be searched.",
+                            description="The search keyword, which can be a class or function name whose content needs to be searched.",
                         ),
                         "type": JSONSchema(
                             type="string",
-                            description="Specifies the type of the keyword being searched. Allowed values: 'class', 'function', or 'file'.",
+                            enum=["class", "function"],
+                            description="Specifies the type of the keyword being searched. Allowed values: 'class' or 'function'.",
                         ),
                         "file_path": JSONSchema(
                             type="string",
@@ -76,7 +73,7 @@ FOCUSED_SNIPPETS_SEARCHER = ConversationTool(
             ),
             "repo_path": JSONSchema(
                 type="string",
-                description="Expects absolute path of the repository",
+                description="The absolute path to the root of the repository.",
             ),
         },
         required=["search_terms", "repo_path"],

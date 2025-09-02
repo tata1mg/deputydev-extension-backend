@@ -4,13 +4,13 @@ from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
 from app.backend_common.services.llm.dataclasses.main import ConversationTool
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import AgentChatDTO
 from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.factory import (
     CustomCodeQuerySolverPromptFactory,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 
 class CustomQuerySolverAgent(QuerySolverAgent):
