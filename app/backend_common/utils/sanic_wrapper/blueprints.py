@@ -1,11 +1,11 @@
-"""Torpedo Internal Routes."""
+"""Sanic Internal Routes."""
 
 from sanic import Blueprint, response
 
 from app.backend_common.utils.sanic_wrapper.constants.constants import HEALTHY_STATUS, UNHEALTHY_STATUS
 from app.backend_common.utils.sanic_wrapper.health_check.health_checker import HealthChecker
 
-health_bp = Blueprint("__torpedo__health")
+health_bp = Blueprint("__sanic__health")
 
 
 @health_bp.get("/ping")

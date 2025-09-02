@@ -1,4 +1,4 @@
-"""Torpedo Exception Classes."""
+"""Sanic Exception Classes."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ import typing as t
 from app.backend_common.utils.sanic_wrapper.constants.http import HTTPStatusCodes
 
 
-class BaseTorpedoException(Exception):
-    """Base Torpedo Exception.
+class BaseSanicException(Exception):
+    """Base Sanic Exception.
 
     Attributes:
         error (str): The error message associated with the exception.
@@ -19,7 +19,7 @@ class BaseTorpedoException(Exception):
         sentry_raise (bool): Whether to raise the exception to Sentry. Defaults to True.
 
     Note:
-        This class serves as a base exception for the Torpedo services. It is recommended
+        This class serves as a base exception for the Sanic services. It is recommended
         to extend this class when creating custom exceptions for specific use cases within the service.
 
     """  # noqa : E501
@@ -61,7 +61,7 @@ class BaseTorpedoException(Exception):
 
     @property
     def quiet(self) -> bool:
-        """Not used internally by torpedo."""
+        """Not used internally by sanic."""
         return self._quiet
 
     @property
@@ -76,7 +76,7 @@ class BaseTorpedoException(Exception):
 
     @property
     def code(self) -> t.Any:
-        """Not used internally by torpedo."""
+        """Not used internally by sanic."""
         return self._code
 
     @property
@@ -85,11 +85,11 @@ class BaseTorpedoException(Exception):
         return self._sentry_raise
 
 
-BaseSanicException = BaseTorpedoException
+BaseSanicException = BaseSanicException
 """Aliased for backward compatibility."""
 
 
-class TaskExecutorException(BaseTorpedoException):
+class TaskExecutorException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -101,7 +101,7 @@ class TaskExecutorException(BaseTorpedoException):
         super().__init__(error, status_code, meta, quiet, sentry_raise=sentry_raise)
 
 
-class InterServiceRequestException(BaseTorpedoException):
+class InterServiceRequestException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -131,7 +131,7 @@ HTTPInterServiceRequestException = InterServiceRequestException
 """Aliased for backward compatibility."""
 
 
-class HTTPRequestException(BaseTorpedoException):
+class HTTPRequestException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -144,7 +144,7 @@ class HTTPRequestException(BaseTorpedoException):
         super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
-class HTTPRequestTimeoutException(BaseTorpedoException):
+class HTTPRequestTimeoutException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -157,7 +157,7 @@ class HTTPRequestTimeoutException(BaseTorpedoException):
         super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
-class BadRequestException(BaseTorpedoException):
+class BadRequestException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -179,7 +179,7 @@ class BadRequestException(BaseTorpedoException):
         )
 
 
-class JsonDecodeException(BaseTorpedoException):
+class JsonDecodeException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -192,7 +192,7 @@ class JsonDecodeException(BaseTorpedoException):
         super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
-class ForbiddenException(BaseTorpedoException):
+class ForbiddenException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -207,7 +207,7 @@ class ForbiddenException(BaseTorpedoException):
         super().__init__(error, status_code, meta, quiet, error_code, sentry_raise=sentry_raise)
 
 
-class NotFoundException(BaseTorpedoException):
+class NotFoundException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -231,7 +231,7 @@ class NotFoundException(BaseTorpedoException):
         )
 
 
-class OpenCircuitException(BaseTorpedoException):
+class OpenCircuitException(BaseSanicException):
     def __init__(
         self,
         error: str,
@@ -255,5 +255,5 @@ class OpenCircuitException(BaseTorpedoException):
         )
 
 
-class StartupException(BaseTorpedoException):
+class StartupException(BaseSanicException):
     """Service startup related errors."""
