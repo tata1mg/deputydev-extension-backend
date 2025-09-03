@@ -6,7 +6,7 @@ from __future__ import annotations
 # TODO: improve documentation, convert to google style doctrings
 # ---------------------------------------------------------------------------- #
 from contextvars import ContextVar
-
+from typing import Type
 from tortoise import Tortoise, timezone
 from tortoise.contrib.postgres.functions import Random
 from tortoise.models import Model
@@ -155,7 +155,7 @@ class ORMWrapper:
             await row.save(update_fields=update_fields)
 
     @classmethod
-    async def create(cls, model: Model, payload):
+    async def create(cls, model: Type[Model], payload):
         """
         :param model: db model
         :param payload: create payload
