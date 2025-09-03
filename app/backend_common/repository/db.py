@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Union, overload
+from typing import Any, Dict, List, Union, overload, Type
 
 from tortoise import Model
 
@@ -8,7 +8,7 @@ from app.backend_common.repository.db_wrapper import ORMWrapper
 
 class DB(ORMWrapper):
     @classmethod
-    async def insert_row(cls, model_name: Model, payload: Dict[str, Any]) -> Model:
+    async def insert_row(cls, model_name: Type[Model], payload: Dict[str, Any]) -> Model:
         payload["created_at"] = datetime.now().replace(tzinfo=timezone.utc)
         payload["updated_at"] = datetime.now().replace(tzinfo=timezone.utc)
         return await DB.create(model_name, payload)
