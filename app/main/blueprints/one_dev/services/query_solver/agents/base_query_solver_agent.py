@@ -29,6 +29,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UserConversationTurn,
 )
 from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
@@ -88,7 +89,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 
 class QuerySolverAgent(ABC):
@@ -233,8 +233,7 @@ class QuerySolverAgent(ABC):
                     )
                 )
 
-        text = f"User Query: {message_data.text}"
-
+        text = f"<task>{message_data.text}</task>"
         if message_data.focus_items:
             code_snippet_based_items = [
                 item
@@ -273,7 +272,7 @@ class QuerySolverAgent(ABC):
                 text += f"\nThe user has also provided the following URLs for reference: {[url.url for url in url_focus_items]}\n"
         if message_data.vscode_env:
             text += f"""\n====
-                                            
+
             Below is the information about the current vscode environment:
             {message_data.vscode_env}
 
@@ -402,7 +401,8 @@ class QuerySolverAgent(ABC):
             raise ValueError(
                 f"Expected message_data to be of type ThinkingInfoData, got {type(agent_chat.message_data)}"
             )
-
+        if agent_chat.message_data.ignore_in_chat:
+            return []
         return [
             AssistantConversationTurn(
                 role=UnifiedConversationRole.ASSISTANT,

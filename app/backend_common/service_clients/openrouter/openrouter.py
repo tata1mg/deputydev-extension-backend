@@ -14,6 +14,9 @@ from openai.types.chat import (
 )
 from openai.types.responses.response_stream_event import ResponseStreamEvent
 
+from app.backend_common.service_clients.exceptions import OpenrouterThrottledError
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Reasoning
+
 
 class FunctionDict(TypedDict):
     name: str
@@ -66,7 +69,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
         parallel_tool_calls: bool = False,
         tool_choice: ToolChoice = "none",
         transformation: Optional[List[str]] = None,
-        reasoning: Optional[Dict[str, Any]] = None,
+        reasoning: Optional[Reasoning] = None,
         provider: Optional[Dict[str, Any]] = None,
         response_format: Optional[Literal["text", "json_object", "json_schema"]] = None,
         structured_outputs: Optional[bool] = None,
@@ -92,8 +95,17 @@ class OpenRouterServiceClient(metaclass=Singleton):
             session_id=session_id,
         )
 
-        response: ChatCompletion = await self._client.chat.completions.create(**kwargs)  # type: ignore[arg-type]
-        return response
+        try:
+            response: ChatCompletion = await self._client.chat.completions.create(**kwargs)  # type: ignore[arg-type]
+            return response
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                raise OpenrouterThrottledError(
+                    model=model,
+                    retry_after=e.response.headers.get("Retry-After"),
+                    detail=str(e),
+                ) from e
+            raise
 
     async def get_llm_stream_response(
         self,
@@ -106,7 +118,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
         tools: Optional[List[ChatCompletionToolParam]] = None,
         tool_choice: ToolChoice = "none",
         transformation: Optional[List[str]] = None,
-        reasoning: Optional[Dict[str, Any]] = None,
+        reasoning: Optional[Reasoning] = None,
         provider: Optional[Dict[str, Any]] = None,
         response_format: ResponseType = "text",
         structured_outputs: Optional[bool] = None,
@@ -133,13 +145,25 @@ class OpenRouterServiceClient(metaclass=Singleton):
             parallel_tool_calls=parallel_tool_calls,
         )
 
-        # type: ignore[arg-type]
-        response: AsyncStream[ResponseStreamEvent] = await self._client.chat.completions.create(**kwargs)
-        return response.__stream__()
+        try:
+            response: AsyncStream[ResponseStreamEvent] = await self._client.chat.completions.create(**kwargs)  # type: ignore[arg-type]
+            return response.__stream__()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                raise OpenrouterThrottledError(
+                    model=model,
+                    retry_after=e.response.headers.get("Retry-After"),
+                    detail=str(e),
+                ) from e
+            raise
 
     @staticmethod
-    def _build_extra_body(session_id: int, provider: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _build_extra_body(
+        session_id: int, reasoning: Optional[Reasoning], provider: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
         extra_body: Optional[Dict[str, Any]] = {}
+        if reasoning is not None:
+            extra_body["reasoning"] = {"effort": reasoning.name.lower()}
         if provider is not None:
             extra_body["provider"] = provider
         extra_body["user"] = str(session_id)
@@ -157,7 +181,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         transformation: Optional[List[str]] = None,
-        reasoning: Optional[Dict[str, Any]] = None,
+        reasoning: Optional[Reasoning] = None,
         provider: Optional[Dict[str, Any]] = None,
         response_format: Optional[str] = None,
         structured_outputs: Optional[bool] = None,
@@ -172,8 +196,7 @@ class OpenRouterServiceClient(metaclass=Singleton):
             "max_tokens": max_tokens,
             "temperature": temperature,
             "transformation": transformation,
-            "reasoning": reasoning,
-            "extra_body": OpenRouterServiceClient._build_extra_body(session_id, provider),
+            "extra_body": OpenRouterServiceClient._build_extra_body(session_id, reasoning, provider),
             "response_format": {"type": response_format} if response_format and response_format != "text" else None,
             "structured_outputs": structured_outputs,
             "stream_options": {"include_usage": True},  # <-- Hardcoded usage block

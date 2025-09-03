@@ -17,7 +17,7 @@ from app.backend_common.utils.sanic_wrapper.constants.errors import (
 from app.backend_common.utils.sanic_wrapper.constants.headers import USER_AGENT, X_SERVICE_NAME
 from app.backend_common.utils.sanic_wrapper.constants.http import STATUS_CODE_4XX, STATUS_CODE_MAPPING, HTTPStatusCodes
 from app.backend_common.utils.sanic_wrapper.ctx import app_ctx
-from app.backend_common.utils.sanic_wrapper.request import TorpedoRequest
+from app.backend_common.utils.sanic_wrapper.request import SanicRequest
 from app.backend_common.utils.sanic_wrapper.types import ErrorResponseDict
 from app.backend_common.utils.sanic_wrapper.utils import capture_exception, name
 
@@ -89,19 +89,19 @@ HANDLED_SANIC_EXC = (
 )
 
 ###########################
-# import torpedo excpetions
+# import custom excpetions
 ###########################
 
 from app.backend_common.utils.sanic_wrapper.exceptions import (  # noqa: E402
     BadRequestException,
-    BaseTorpedoException,
+    BaseSanicException,
     ForbiddenException,
     InterServiceRequestException,
     JsonDecodeException,
     NotFoundException,
 )
 
-HANDLED_TORPEDO_EXC = (
+HANDLED_CUSTOM_EXC = (
     BadRequestException,
     JsonDecodeException,
     NotFoundException,
@@ -173,14 +173,14 @@ def exception_response(
 
 class DDErrorHandler(ErrorHandler):
     @override
-    def default(self, req: TorpedoRequest, exc: Exception) -> response.JSONResponse:  # noqa:PLR0911
+    def default(self, req: SanicRequest, exc: Exception) -> response.JSONResponse:  # noqa:PLR0911
         """Handle exceptions and send error response.
 
         Default handler for exceptions. All uncaught exceptions, if not handled
         by any service level exception handler, are handled here.
 
         Args:
-            req (TorpedoRequest): request object
+            req (SanicRequest): request object
             exc (Exception): uncaught exception
 
         Returns:
@@ -201,10 +201,10 @@ class DDErrorHandler(ErrorHandler):
                 return self._handle_tortoise_exceptions(req, exc)
 
         # ---------------------------------------------------------------------------- #
-        #                    BaseTorpedoException derived exceptions                   #
+        #                    BaseSanicException derived exceptions                   #
         # ---------------------------------------------------------------------------- #
 
-        if isinstance(exc, HANDLED_TORPEDO_EXC):
+        if isinstance(exc, HANDLED_CUSTOM_EXC):
             error_logger.info(HANDLED_ERR.format(name(exc), req.endpoint))
             return exception_response(exc, error=exc.error, response_headers=response_headers)
 
@@ -220,7 +220,7 @@ class DDErrorHandler(ErrorHandler):
 
         ...
 
-        if isinstance(exc, BaseTorpedoException):
+        if isinstance(exc, BaseSanicException):
             error_logger.error(f"[{name(exc)}] {str(exc)}", extra=req_info)
             error_logger.exception(UNHANDLED_ERR.format(name(exc), req.endpoint))
             capture_exception(handled=False)
@@ -258,7 +258,7 @@ class DDErrorHandler(ErrorHandler):
             response_headers=response_headers,
         )
 
-    def __get_req_info(self, request: TorpedoRequest):
+    def __get_req_info(self, request: SanicRequest):
         req_info = {
             "method": request.method,
             "uri": request.path,
@@ -281,7 +281,7 @@ class DDErrorHandler(ErrorHandler):
 
     # ---------------------------------------------------------------------------- #
 
-    def _handle_tortoise_exceptions(self, req: TorpedoRequest, exc: BaseORMException):
+    def _handle_tortoise_exceptions(self, req: SanicRequest, exc: BaseORMException):
         """Default handler for tortoise exceptions."""
 
         if isinstance(exc, TORTOISE_400_EXC):
