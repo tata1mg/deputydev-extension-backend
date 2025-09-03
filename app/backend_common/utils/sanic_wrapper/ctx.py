@@ -1,4 +1,4 @@
-"""Task context management for Torpedo.
+"""Task context management for Sanic.
 
 Context management at different levels: task, request & application.
 

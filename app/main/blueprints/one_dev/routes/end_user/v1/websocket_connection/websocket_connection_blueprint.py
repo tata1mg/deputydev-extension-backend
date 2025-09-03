@@ -8,11 +8,10 @@ from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
 from app.backend_common.utils.sanic_wrapper import Request
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_headers_only,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 websocket_connection_v1_bp = Blueprint("websocket_connection_v1_bp", url_prefix="/websocket-connection")
 

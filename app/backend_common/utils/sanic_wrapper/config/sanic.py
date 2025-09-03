@@ -1,8 +1,8 @@
 from sanic.config import Config
 
 
-class TorpedoConfig(Config):
-    """Custom Torpedo config, extending Sanic's Config.
+class SanicConfig(Config):
+    """Custom Sanic config, extending Sanic's Config.
 
     Use it to define default values for sanic specific configuration.
     """
