@@ -6,14 +6,13 @@ from sanic.response import JSONResponse
 from app.backend_common.utils.sanic_wrapper import Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.backend_common.utils.sanic_wrapper.response import ResponseDict
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.models.dto.url import UrlDto
 from app.main.blueprints.one_dev.services.urls.url_service import UrlService
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 urls_v1_bp = Blueprint("urls_v1_bp", url_prefix="/urls")

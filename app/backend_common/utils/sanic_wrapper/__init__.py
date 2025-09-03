@@ -1,17 +1,17 @@
 from .clients import BaseAPIClient
 from .common_utils import CONFIG
 from .constants import ListenerEvent, MiddlewareLocation
-from .exceptions import BaseTorpedoException, InterServiceRequestException
+from .exceptions import BaseSanicException, InterServiceRequestException
 from .request import Request
 from .response import get_error_body_response, send_error_response, send_response
 from .task import AsyncTaskResponse, Task, TaskExecutor
-from .torpedo import Torpedo
+from .sanic_wrapper import SanicWrapper
 from .utils import capture_exception
 
 # NOTE: group exports neatly
 __all__ = [
     # core
-    "Torpedo",
+    "SanicWrapper",
     "CONFIG",
     "Request",
     # clients
@@ -31,6 +31,6 @@ __all__ = [
     # utils
     "capture_exception",
     # exceptions
-    "BaseTorpedoException",
+    "BaseSanicException",
     "InterServiceRequestException",
 ]

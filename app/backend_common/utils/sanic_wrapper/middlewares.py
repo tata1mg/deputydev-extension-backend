@@ -1,4 +1,4 @@
-"""Sanic middlewares for Torpedo."""
+"""Sanic middlewares for Sanic."""
 
 import time
 
