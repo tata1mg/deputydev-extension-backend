@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from deputydev_core.clients.http.base_http_session_manager import SessionManager
-from torpedo import CONFIG
+
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 
 class AtlassianOAuthClient:

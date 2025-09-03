@@ -1,7 +1,5 @@
 from typing import Any, Dict, List
 
-from torpedo.exceptions import BadRequestException
-
 from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,
@@ -9,6 +7,7 @@ from app.backend_common.repository.extension_sessions.repository import (
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 
 class UIProfile:

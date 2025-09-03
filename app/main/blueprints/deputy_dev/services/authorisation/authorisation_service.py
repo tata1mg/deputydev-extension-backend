@@ -1,5 +1,4 @@
-from torpedo.exceptions import BadRequestException
-
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.services.authorisation.authorisation_util import (
     validate_bitbucket_request,
 )

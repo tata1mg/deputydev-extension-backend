@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
-from torpedo import CONFIG
-
+from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.backend_common.utils.types.types import CloudProviders
 
 config = CONFIG.config

@@ -8,8 +8,8 @@ from deputydev_core.utils.constants.auth import AuthStatus
 from gotrue.types import AuthResponse
 from jwt import ExpiredSignatureError, InvalidTokenError
 from postgrest.exceptions import APIError
-from torpedo import Request
-from torpedo.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper import Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
 from app.backend_common.repository.users.user_repository import UserRepository
