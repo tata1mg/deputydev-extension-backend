@@ -1,6 +1,5 @@
-from torpedo import CONFIG
-
 from app.backend_common.service_clients.base_scm_client import BaseSCMClient
+from app.backend_common.utils.sanic_wrapper import CONFIG
 
 config = CONFIG.config
 

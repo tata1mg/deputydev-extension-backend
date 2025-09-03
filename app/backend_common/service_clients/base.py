@@ -1,4 +1,4 @@
-from torpedo import CONFIG, BaseAPIClient
+from app.backend_common.utils.sanic_wrapper import CONFIG, BaseAPIClient
 
 
 class Base(BaseAPIClient):

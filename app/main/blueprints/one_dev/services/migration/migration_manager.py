@@ -4,8 +4,6 @@ from typing import Any, Dict, List, Tuple
 
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
-from torpedo import CONFIG
-from tortoise_wrapper import TortoiseWrapper
 
 from app.backend_common.models.dto.message_thread_dto import (
     ExtendedThinkingData,
@@ -20,6 +18,8 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
+from app.backend_common.utils.sanic_wrapper import CONFIG
+from app.backend_common.utils.tortoise_wrapper import TortoiseWrapper
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,

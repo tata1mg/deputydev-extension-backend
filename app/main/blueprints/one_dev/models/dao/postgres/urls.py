@@ -1,7 +1,7 @@
 from tortoise import fields
-from tortoise_wrapper.db import NaiveDatetimeField
 
 from app.backend_common.models.dao.postgres.base import Base
+from app.backend_common.utils.tortoise_wrapper.db import NaiveDatetimeField
 
 
 class Url(Base):

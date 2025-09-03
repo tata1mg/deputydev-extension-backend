@@ -1,8 +1,8 @@
 from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint
-from torpedo import Torpedo
 
 from app.backend_common.utils.error_handler import DDErrorHandler
+from app.backend_common.utils.sanic_wrapper import SanicWrapper
 
 ConfigManager.initialize()
 
@@ -16,7 +16,7 @@ from app.main.blueprints.one_dev.routes.end_user import (  # noqa : E402
 
 main_app_bp = Blueprint.group(deputy_dev_end_user_bp, one_dev_end_user_bp, url_prefix="/")
 
-torpedo = Torpedo(blueprints=main_app_bp, listeners=listeners, error_handler=DDErrorHandler())
-_app = torpedo.create_app()
+sanic_wrapper = SanicWrapper(blueprints=main_app_bp, listeners=listeners, error_handler=DDErrorHandler())
+_app = sanic_wrapper.create_app()
 if __name__ == "__main__":
-    torpedo.run()
+    sanic_wrapper.run()

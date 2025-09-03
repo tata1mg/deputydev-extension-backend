@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from torpedo import Request
+from app.backend_common.utils.sanic_wrapper import Request
 
 from app.backend_common.utils.dataclasses.main import AuthSessionData
 

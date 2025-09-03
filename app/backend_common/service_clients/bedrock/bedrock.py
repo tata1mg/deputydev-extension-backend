@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional, Tuple
 from aiobotocore.config import AioConfig  # type: ignore
 from aiobotocore.session import get_session  # type: ignore
 from botocore.exceptions import ClientError
-from torpedo import CONFIG  # type: ignore
 from types_aiobotocore_bedrock_runtime import BedrockRuntimeClient
 from types_aiobotocore_bedrock_runtime.type_defs import (
     InvokeModelResponseTypeDef,
@@ -12,6 +11,7 @@ from types_aiobotocore_bedrock_runtime.type_defs import (
 )
 
 from app.backend_common.service_clients.exceptions import AnthropicThrottledError
+from app.backend_common.utils.sanic_wrapper import CONFIG  # type: ignore
 
 
 class BedrockServiceClient:

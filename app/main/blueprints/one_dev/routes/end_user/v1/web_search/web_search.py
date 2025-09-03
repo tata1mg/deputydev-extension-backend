@@ -3,10 +3,10 @@ from typing import Any
 from sanic import Blueprint
 from sanic.exceptions import ServerError
 from sanic.response import JSONResponse
-from torpedo import Request, send_response
-from torpedo.exceptions import BadRequestException
-from torpedo.response import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.services.web_search.web_search_service import (
