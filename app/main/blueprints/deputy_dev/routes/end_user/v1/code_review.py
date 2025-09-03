@@ -6,9 +6,9 @@ from deputydev_core.services.chunking.utils.snippet_renderer import render_snipp
 from sanic import Blueprint, Sanic
 from sanic.log import logger
 from sanic.response import JSONResponse
-from torpedo import CONFIG, Request, send_response
-from torpedo.types import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.services.chat.smart_code_chat import (
     SmartCodeChatManager,

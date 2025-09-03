@@ -3,9 +3,9 @@ from typing import Any
 from deputydev_core.utils.app_logger import AppLogger
 from sanic import Blueprint
 from sanic.response import JSONResponse
-from torpedo import CONFIG, Request, send_response
-from torpedo.types import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import GetRepoIdRequest

@@ -7,9 +7,9 @@ from deputydev_core.utils.context_vars import (
     get_context_value,
     set_context_values,
 )
-from torpedo.exceptions import BadRequestException
 
 from app.backend_common.services.repo.base_repo import BaseRepo
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.deputy_dev.caches.repo_setting_cache import RepoSettingCache
 from app.main.blueprints.deputy_dev.constants.constants import SettingLevel
 from app.main.blueprints.deputy_dev.models.dao.postgres import (

@@ -2,12 +2,12 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.response import JSONResponse
-from torpedo import Request, send_response
-from torpedo.response import ResponseDict
 
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import (
     LLMBasedChunkReranker,
 )
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.models.dto.reranking_input import RerankingInput

@@ -2,9 +2,6 @@ import traceback
 from typing import Any
 
 from sanic import Blueprint, response
-from torpedo import Request, send_response
-from torpedo.exceptions import BadRequestException
-from torpedo.types import ResponseDict
 
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,
@@ -12,6 +9,9 @@ from app.backend_common.repository.extension_sessions.repository import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
+from app.backend_common.utils.sanic_wrapper import Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.services.history.code_gen_agent_chats.code_gen_agent_chats_manager import (
