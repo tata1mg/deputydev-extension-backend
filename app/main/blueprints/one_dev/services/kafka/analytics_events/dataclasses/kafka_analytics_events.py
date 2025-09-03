@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, field_validator
 
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import Clients
+from app.backend_common.utils.dataclasses.main import Clients
 
 
 class EventTypes(Enum):
