@@ -1,4 +1,4 @@
-"""Sanic signal handlers for Torpedo."""
+"""Custom Sanic signal handlers."""
 
 import time
 
