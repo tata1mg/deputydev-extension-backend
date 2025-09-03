@@ -2,10 +2,10 @@ from typing import Any
 
 from sanic import Blueprint
 from sanic.response import JSONResponse
-from torpedo import CONFIG, Request, send_response
-from torpedo.exceptions import BadRequestException, HTTPRequestException
-from torpedo.response import ResponseDict
 
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException, HTTPRequestException
+from app.backend_common.utils.sanic_wrapper.response import ResponseDict
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import (
     AuthData,

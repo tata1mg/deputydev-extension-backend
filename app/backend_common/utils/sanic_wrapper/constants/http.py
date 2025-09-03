@@ -1,0 +1,26 @@
+from enum import IntEnum, StrEnum
+
+
+class HTTPStatusCodes(IntEnum):
+    SUCCESS = 200
+    BAD_REQUEST = 400
+    NOT_FOUND = 404
+    FORBIDDEN = 403
+    UNAUTHORIZED = 401
+    MOVED_TEMPORARILY = 302
+    INTERNAL_SERVER_ERROR = 500
+    REQUEST_TIMEOUT = 408
+    SERVICE_UNAVAILABLE = 503
+
+
+class HTTPMethod(StrEnum):
+    GET = "get"
+    POST = "post"
+    PUT = "put"
+    PATCH = "patch"
+    DELETE = "delete"
+
+
+STATUS_CODE_MAPPING = {404: 400, 403: 401, 405: 400}
+
+STATUS_CODE_4XX = {400, 404, 401, 403}

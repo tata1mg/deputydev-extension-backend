@@ -1,3 +1,0 @@
-git+ssh://git@bitbucket.org/tata1mg/torpedo.git@3.1.0
-git+ssh://git@bitbucket.org/tata1mg/commonutils.git@1.4.1
-git+ssh://git@bitbucket.org/tata1mg/tortoise_wrapper.git@0.5.4

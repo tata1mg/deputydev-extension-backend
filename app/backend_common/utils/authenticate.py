@@ -6,8 +6,6 @@ from typing import Any, Dict, Tuple
 from deputydev_core.utils.constants.auth import AuthStatus
 from deputydev_core.utils.context_value import ContextValue
 from sanic.server.websockets.impl import WebsocketImplProtocol
-from torpedo import Request
-from torpedo.exceptions import BadRequestException
 
 from app.backend_common.constants.onboarding import SubscriptionStatus
 from app.backend_common.models.dto.user_team_dto import UserTeamDTO
@@ -16,6 +14,8 @@ from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
 from app.backend_common.repository.users.user_repository import UserRepository
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.backend_common.services.auth.auth_factory import AuthFactory
 from app.backend_common.services.auth.signup import SignUp
 from app.backend_common.utils.dataclasses.main import AuthData, AuthSessionData, ClientData
