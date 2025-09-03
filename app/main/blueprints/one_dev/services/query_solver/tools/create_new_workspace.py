@@ -12,13 +12,13 @@ def get_create_new_workspace_tool(write_mode: Optional[bool] = False) -> Convers
         Given a natural-language query (e.g. “Create a Next.js blog with TypeScript” or “Start a Vite React dashboard”, etc.),
         
         This tool is intended to be used as the first step when the user expresses intent to start
-        a new coding project. This tool does not execute any code; it only outputs instructions and metadata.
+        a new coding project. This tool does not execute any command; it only outputs instructions and metadata.
 
         # Do not use this tool if the user is asking for help with an existing project or codebase, like "Fix this bug in my React app" or "How do I add a new route to my Express server?". (IMPORTANT)
 
         The tool will return the status of the workspace creation:
         - If the workspace is created successfully, then proceed next steps.
-        - First think(a lot first step-by-step) inside <thinking> tag about the initial project requirements , workspace structure and files, libraries needed for the project.
+        - First think (a lot first step-by-step) about the initial project requirements , workspace structure and files, libraries needed for the project.
         - If the workspace requires additional libraries for setup or configuration, then use the `execute_command` tool.
         - Freely use other tools to complete the task.
     """)
