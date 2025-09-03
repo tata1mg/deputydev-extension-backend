@@ -76,6 +76,7 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolRequestConversationTurnContent,
     UserConversationTurn,
 )
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Reasoning
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
@@ -408,6 +409,7 @@ class OpenAI(BaseLLMProvider):
         response_type: Optional[Literal["text", "json_object", "json_schema"]] = None,
         parallel_tool_calls: bool = True,
         text_format: Optional[Type[BaseModel]] = None,
+        reasoning: Optional[Reasoning] = None,
     ) -> UnparsedLLMCallResponse:
         """
         Calls the OpenAI service client.

@@ -12,6 +12,8 @@ from app.backend_common.repository.message_sessions.repository import (
 from app.backend_common.utils.sanic_wrapper import Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.backend_common.utils.sanic_wrapper.types import ResponseDict
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.services.history.code_gen_agent_chats.code_gen_agent_chats_manager import (
     PastCodeGenAgentChatsManager,
 )
@@ -20,12 +22,9 @@ from app.main.blueprints.one_dev.services.history.sessions.dataclasses.sessions 
     PinnedRankUpdateInput,
 )
 from app.main.blueprints.one_dev.services.history.sessions.sessions_manager import PastSessionsManager
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.utils.session import ensure_session_id
 
 history_v1_bp = Blueprint("history_v1_bp", url_prefix="/history")
