@@ -50,7 +50,7 @@ services:
       - localstack_data:/var/lib/localstack
       - "/var/run/docker.sock:/var/run/docker.sock"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/health | grep '""running""' >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/health | grep running >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -62,7 +62,7 @@ services:
       context: ../deputydev-binary
       dockerfile: Dockerfile
       target: runtime
-    image: deputydev-binary:local
+    # image: deputydev-binary:local
     platform: linux/amd64
     container_name: deputydev-binary
     ports:
@@ -81,7 +81,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: genai:local
+    # image: genai:local
     platform: linux/amd64
     container_name: genai-backend
     ports:
