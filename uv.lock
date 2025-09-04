@@ -566,7 +566,7 @@ requires-dist = [
     { name = "azure-servicebus", specifier = "==7.14.1" },
     { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.38.42" },
     { name = "botocore", specifier = ">=1.35.0,<2.0.0" },
-    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=securrity-dependencies-issue-fixes" },
+    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.6" },
     { name = "elastic-apm", specifier = "==6.22.3" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
@@ -607,8 +607,8 @@ dev = [
 
 [[package]]
 name = "deputydev-core"
-version = "7.0.5"
-source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=securrity-dependencies-issue-fixes#e54a98e5f5e60ae6bfa213e684b9b1f62a8f79ab" }
+version = "7.0.6"
+source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.6#051ae4308d7896eeabbe18731022f86da99d8a9f" }
 dependencies = [
     { name = "aiohttp" },
     { name = "diff-match-patch" },
@@ -621,12 +621,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-levenshtein" },
     { name = "pyyaml" },
-    { name = "requests" },
-    { name = "starlette" },
     { name = "tiktoken" },
     { name = "tree-sitter" },
     { name = "tree-sitter-language-pack" },
-    { name = "urllib3" },
     { name = "weaviate-client" },
     { name = "xxhash" },
 ]
