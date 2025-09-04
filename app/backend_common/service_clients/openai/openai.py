@@ -20,16 +20,14 @@ from pydantic import BaseModel
 
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
-config = CONFIG.config
-
 
 class OpenAIServiceClient(metaclass=Singleton):
     def __init__(self) -> None:
         self.__client = AsyncOpenAI(
-            api_key=config.get("OPENAI_KEY"),
-            timeout=config.get("OPENAI_TIMEOUT"),
+            api_key=CONFIG.config["OPENAI"]["API_KEY"],
+            timeout=CONFIG.config["OPENAI"]["TIMEOUT"],
             http_client=httpx.AsyncClient(
-                timeout=config.get("OPENAI_TIMEOUT"),
+                timeout=CONFIG.config["OPENAI"]["TIMEOUT"],
                 limits=httpx.Limits(
                     max_connections=1000,
                     max_keepalive_connections=100,
