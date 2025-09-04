@@ -144,7 +144,6 @@ class OpenRouterServiceClient(metaclass=Singleton):
             session_id=session_id,
             parallel_tool_calls=parallel_tool_calls,
         )
-
         try:
             response: AsyncStream[ResponseStreamEvent] = await self._client.chat.completions.create(**kwargs)  # type: ignore[arg-type]
             return response.__stream__()

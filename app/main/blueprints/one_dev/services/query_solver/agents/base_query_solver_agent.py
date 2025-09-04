@@ -244,7 +244,7 @@ class QuerySolverAgent(ABC):
                 or isinstance(item, FunctionFocusItem)
             ]
             if code_snippet_based_items:
-                text = "The user has asked to focus on the following\n"
+                text += "The user has asked to focus on the following\n"
                 for focus_item in code_snippet_based_items:
                     text += (
                         "<item>"
