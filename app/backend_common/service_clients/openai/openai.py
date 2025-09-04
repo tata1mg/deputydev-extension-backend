@@ -1,6 +1,7 @@
 from typing import Any, AsyncIterator, Dict, Iterable, List, Literal, Optional, Type, Union, cast
 
 import httpx
+from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.singleton import Singleton
 from openai import AsyncOpenAI
 from openai._streaming import AsyncStream
@@ -18,16 +19,14 @@ from openai.types.shared_params.response_format_text import ResponseFormatText
 from openai.types.shared_params.responses_model import ResponsesModel
 from pydantic import BaseModel
 
-from app.backend_common.utils.sanic_wrapper import CONFIG
-
 
 class OpenAIServiceClient(metaclass=Singleton):
     def __init__(self) -> None:
         self.__client = AsyncOpenAI(
-            api_key=CONFIG.config["OPENAI"]["API_KEY"],
-            timeout=CONFIG.config["OPENAI"]["TIMEOUT"],
+            api_key=ConfigManager.configs["OPENAI"]["API_KEY"],
+            timeout=ConfigManager.configs["OPENAI"]["TIMEOUT"],
             http_client=httpx.AsyncClient(
-                timeout=CONFIG.config["OPENAI"]["TIMEOUT"],
+                timeout=ConfigManager.configs["OPENAI"]["TIMEOUT"],
                 limits=httpx.Limits(
                     max_connections=1000,
                     max_keepalive_connections=100,
