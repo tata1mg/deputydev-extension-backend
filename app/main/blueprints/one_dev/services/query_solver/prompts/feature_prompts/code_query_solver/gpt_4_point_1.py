@@ -472,7 +472,6 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 {self.params.get("deputy_dev_rules")}
                 </user_rules_or_info>
                 """)
-
         if focus_chunks_message:
             user_message = user_message + "\n" + focus_chunks_message
         return UserAndSystemMessages(
