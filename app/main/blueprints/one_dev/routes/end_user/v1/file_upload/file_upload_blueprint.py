@@ -8,14 +8,14 @@ from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFi
 from app.backend_common.utils.sanic_wrapper import Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import HTTPRequestException
 from app.backend_common.utils.sanic_wrapper.response import ResponseDict
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.models.dto.file_upload_input import (
     FileDeleteInput,
     FileUploadGetInput,
     FileUploadPostInput,
 )
-from app.main.blueprints.one_dev.utils.authenticate import authenticate
 from app.main.blueprints.one_dev.utils.client.client_validator import validate_client_version
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
 
 file_upload_v1_bp = Blueprint("file_upload_v1_bp", url_prefix="/file-upload")
 

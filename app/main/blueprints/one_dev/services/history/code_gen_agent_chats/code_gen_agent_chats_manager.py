@@ -4,6 +4,7 @@ from app.backend_common.repository.chat_attachments.repository import ChatAttach
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
+    ActorType,
     AgentChatDTO,
     TextMessageData,
     ToolStatus,
@@ -19,6 +20,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FileFocusItem,
     FunctionFocusItem,
 )
+from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import ASK_USER_INPUT
 from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 
 
@@ -36,7 +38,31 @@ class PastCodeGenAgentChatsManager:
 
         attachment_data_task_map = ChatFileUpload.get_attachment_data_task_map(all_attachments=all_attachments)
         all_elements: List[ChatElement] = []
+
         for chat_data in raw_agent_chats:
+            # special handling for ask user input
+            if (
+                isinstance(chat_data.message_data, ToolUseMessageData)
+                and chat_data.message_data.tool_name == ASK_USER_INPUT.name
+            ):
+                all_elements.append(
+                    ChatElement(
+                        actor=ActorType.ASSISTANT,
+                        message_data=TextMessageData(text=chat_data.message_data.tool_input["prompt"]),
+                        timestamp=chat_data.created_at,
+                    )
+                )
+                if chat_data.message_data.tool_response and "user_response" in chat_data.message_data.tool_response:
+                    all_elements.append(
+                        ChatElement(
+                            actor=ActorType.USER,
+                            message_data=TextMessageData(text=chat_data.message_data.tool_response["user_response"]),
+                            timestamp=chat_data.created_at,
+                        )
+                    )
+                continue
+
+            # formatting
             if isinstance(chat_data.message_data, TextMessageData):
                 for focus_item in chat_data.message_data.focus_items:
                     if isinstance(focus_item, DirectoryFocusItem):
