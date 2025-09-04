@@ -68,8 +68,8 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
 
                 ## General Guidelines
-                1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
-                2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the list_files tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
+                1. In the thinking key in response format, assess what information you already have and what information you need to proceed with the task.
+                2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the file_path_searcher tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
                 3. If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
                 4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
                 5. Information about whether the tool succeeded or failed, along with any reasons for failure.
@@ -205,7 +205,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
                 You are expected to answer the user query in a structured JSON format, adhering to the given schema.
 
                 If you are thinking something, please provide that with thinking key.
-                Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format within <code_block>.
+                Please answer the user query in the best way possible. If you need to display normal code snippets then send in given format.
                 """
                 + f"""<file_editing_guidelines>
                 First explain the changes you are going to make in the file to user in text blocks.

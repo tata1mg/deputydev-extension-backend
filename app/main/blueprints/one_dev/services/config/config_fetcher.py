@@ -4,8 +4,8 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.enums import ConfigConsumer
 
 from app.backend_common.service_clients.aws.services.cloudfront import AWSCloudFrontServiceClient
+from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.services.config.dataclasses.main import ConfigParams, ConfigType
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
 
 ConfigManager.configs
 
@@ -18,7 +18,7 @@ class ConfigFetcher:
                 "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
-            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
+            "BROWSER_HOST": ConfigManager.configs["BROWSER_HOST"],
         },
         ConfigConsumer.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
@@ -26,7 +26,9 @@ class ConfigFetcher:
                 "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
-            "DD_BROWSER_HOST": ConfigManager.configs["DD_BROWSER_HOST"],
+            "BROWSER_HOST": ConfigManager.configs["FAKE_AUTH"]["FAKE_BROWSER_HOST"]
+            if ConfigManager.configs["FAKE_AUTH"]["ENABLED"]
+            else ConfigManager.configs["BROWSER_HOST"],
             "BINARY": {},
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "DD_HOST_WS_NON_GATEWAY": ConfigManager.configs["DD_HOST_WS_NON_GATEWAY"],
