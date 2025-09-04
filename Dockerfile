@@ -1,78 +1,49 @@
-ARG cloud
-FROM --platform=linux/amd64 ${cloud:+"831059512818.dkr.ecr.ap-south-1.amazonaws.com/utility/docker/library/"}python:3.11.9-slim
+FROM --platform=linux/amd64 python:3.11-slim AS builder
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
+# Environment for reproducible, quiet Python
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
+# System deps for installs and diagnostics
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git \
+      curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Args passed in the build command
-ARG SSH_PRIVATE_KEY
-ARG SSH_PUBLIC_KEY
-ARG SERVICE_NAME
+# Install uv for fast, reproducible installs
+RUN pip install --no-cache-dir uv
 
-RUN apt-get update && apt-get install -y \
-        openssh-server \
-        gcc \
-        wget \
-        ca-certificates \
-        build-essential \
-        libssl-dev \
-        libcurl4-gnutls-dev \
-        libexpat1-dev \
-        gettext \
-        unzip \
-        zlib1g-dev \
-        procps \
-        curl
+WORKDIR /app
 
-# Define Git version
-ARG GIT_VERSION=2.42.0
+# Use Docker layer caching for dependencies
+COPY pyproject.toml uv.lock ./
 
-# Download and compile Git
-RUN wget https://github.com/git/git/archive/refs/tags/v$GIT_VERSION.zip -O git.zip && \
-    unzip git.zip && \
-    cd git-$GIT_VERSION && \
-    make prefix=/usr/local all && \
-    make prefix=/usr/local install && \
-    cd .. && \
-    rm -rf git-$GIT_VERSION git.zip
+# Create and populate a local virtual environment under /app/.venv
+RUN uv sync --frozen
 
-# Verify Git installation
-RUN git --version
-
-RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 && chmod +x /usr/local/bin/dbmate
-RUN apt-get remove -y libaom3 && apt-get autoremove -y
-
-# Authorize SSH Host
-RUN mkdir -p /root/.ssh && \
-    chmod 0700 /root/.ssh && \
-    ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts && \
-    ssh-keyscan github.com >> /root/.ssh/known_hosts
-
-# Add the keys and set permissions
-RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
-    echo "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
-    chmod 600 /root/.ssh/id_ed25519 && \
-    chmod 600 /root/.ssh/id_ed25519.pub
-
-
-RUN pip install uv
-
-COPY uv.lock pyproject.toml ./
-
-RUN uv sync
-
-# Create home ubuntu service hydra
-RUN mkdir -p /home/ubuntu/1mg/$SERVICE_NAME/logs
-
-# switch to code folder
-WORKDIR /home/ubuntu/1mg/$SERVICE_NAME
-
-# Copy and install requirements
-ENV PATH="/.venv/bin:$PATH"
-RUN pip install click==8.1.3
-
-# Copy code folder
+# Copy the application source
 COPY . .
+
+# ---------------- Runtime ----------------
+FROM --platform=linux/amd64 python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH=/app/.venv/bin:$PATH
+
+# Minimal runtime tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Bring app and virtualenv from builder
+COPY --from=builder /app /app
+
+# Expose service port
+EXPOSE 8084
+
+# Default command (same startup pattern)
+CMD ["python", "-m", "app.service"]
