@@ -21,34 +21,9 @@
             "team_id": 1,
             "org_name": "TATA 1mg"
         },
-        "TRAYA": {
-            "domain": "traya.com",
-            "team_id": 3,
-            "org_name": "Traya"
-        },
-        "TBO": {
-            "domain": "tbo.com",
-            "team_id": 5,
-            "org_name": "TBO"
-        },
         "DEPUTYDEV_PRIVATE": {
             "team_id": 6,
             "org_name": "DeputyDev Private"
-        },
-        "CARATLANE": {
-            "domain": "caratlane.com",
-            "team_id": 5,
-            "org_name": "Caratlane"
-        },
-        "HSV_DIGITAL": {
-            "domain": "hsv.digital",
-            "team_id": 329,
-            "org_name": "HSV digital"
-        },
-        "ROZANA": {
-            "domain": "rozana.in",
-            "team_id": 332,
-            "org_name": "Rozana"
         }
     },
     "DEBUG": false,
@@ -66,12 +41,6 @@
     },
     "WORKERS": 1,
     "CONCURRENCY_LIMIT": 500,
-    "DB_CONNECTION": {
-        "CONNECTION_STRING": "",
-        "LABS_COLLECTION": "labs"
-    },
-    "OPENAI_KEY": "",
-    "GOOGLE_API_KEY": "",
     "EXPERIMENT": {},
     "ENCRYPTION_PASSWORD": "",
     "WEBHOOK_JWT_SIGNING_KEY": "",
@@ -137,8 +106,6 @@
         "CLIENT_ID": "",
         "CLIENT_SECRET": ""
     },
-    "OPENAPI_API": "gpt3",
-    "ASSISTANT_ID": "",
     "REDIS_CACHE_HOSTS": {
         "genai": {
             "LABEL": "",
@@ -187,12 +154,6 @@
             }
         }
     },
-    "FINETUNED_SCRIT_MODEL": {
-        "MODEL": "",
-        "CONFIDENCE_SCORE": 1,
-        "BITBUCKET_TOKEN": "",
-        "ENABLED": true
-    },
     "SCRIT_MODEL": {
         "MODEL": "",
         "CONFIDENCE_SCORE": 1,
@@ -213,12 +174,6 @@
         "TOKEN_LIMIT": 8192,
         "MAX_PARALLEL_TASKS": 60
     },
-    "IGNORE_FILES": [
-        "Pipfile",
-        "Pipfile.lock",
-        "bitbucket-pipelines.yml",
-        "package-lock.json"
-    ],
     "ATLASSIAN": {
         "CLIENT_ID": "",
         "CLIENT_SECRET": ""
@@ -289,33 +244,9 @@
         "ControlSet1",
         "ControlSet2"
     ],
-    "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00",
     "PR_REVIEW_SETTINGS": {
         "MULTI_AGENT_ENABLED": true,
         "REFLECTION_ENABLED": true
-    },
-    "AGENT_SETTINGS": {
-        "security": {
-            "confidence_score_limit": 0.9
-        },
-        "code_communication": {
-            "confidence_score_limit": 0.95
-        },
-        "performance_optimisation": {
-            "confidence_score_limit": 0.9
-        },
-        "code_maintainability": {
-            "confidence_score_limit": 0.9
-        },
-        "error": {
-            "confidence_score_limit": 0.9
-        },
-        "business_logic_validation": {
-            "confidence_score_limit": 0.9
-        },
-        "pr_description": {
-            "confidence_score_limit": 0.9
-        }
     },
     "AWS": {
         "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
@@ -668,7 +599,6 @@
         "LIMIT_PER_HOST": 0,
         "TTL_DNS_CACHE": 10
     },
-    "OPENAI_TIMEOUT": 1000,
     "TEAMS_ENABLED_FOR_EXPERIMENT": [
         123456,
         23456
@@ -683,13 +613,6 @@
         "LIMIT_PER_HOST": 0,
         "TTL_DNS_CACHE": 10
     },
-    "VALID_ADVOCACY_IDS": [
-        1,
-        2,
-        3,
-        4
-    ],
-    "AUTH_TOKEN_GRACE_PERIOD": 1800,
     "RUDDER": {
         "WRITE_KEY": "",
         "WRITE_KEY_ERROR_TRACKING": "",
@@ -851,6 +774,10 @@
     "OPENROUTER": {
         "BASE_URL": "https://openrouter.ai/api/v1",
         "API_KEY": ""
+    },
+    "OPENAI": {
+        "API_KEY": "",
+        "TIMEOUT": 1000
     },
     "MAX_REVIEW_TOOL_ITERATIONS": 25,
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",

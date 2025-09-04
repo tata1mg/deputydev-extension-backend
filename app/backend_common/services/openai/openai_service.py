@@ -17,7 +17,6 @@ from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.app_utils import hash_sha256
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
-openai_key = CONFIG.config.get("OPENAI_KEY")
 EMBEDDING_MODEL = CONFIG.config.get("EMBEDDING").get("MODEL")
 EMBEDDING_TOKEN_LIMIT = ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"]
 
