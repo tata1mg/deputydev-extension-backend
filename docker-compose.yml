@@ -1,0 +1,102 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: genai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: genai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d genai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: genai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: genai-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,apigateway
+      - DEBUG=1
+      - AWS_DEFAULT_REGION=ap-south-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - LS_LOG=trace
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/health | grep '""running""' >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # If you want to run deputydev-binary inside Compose, enable this service.
+  # If you already run it on your host at port 8001, you can comment this out.
+  deputydev-binary:
+    build:
+      context: ../deputydev-binary
+      dockerfile: Dockerfile
+      target: runtime
+    image: deputydev-binary:local
+    platform: linux/amd64
+    container_name: deputydev-binary
+    ports:
+      - "8001:8001"
+    depends_on:
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8001/ping >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  genai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: genai:local
+    platform: linux/amd64
+    container_name: genai-backend
+    ports:
+      - "8084:8084"
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  redis_data:
+  localstack_data:
