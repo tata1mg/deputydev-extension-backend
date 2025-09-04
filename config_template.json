@@ -8,7 +8,7 @@
         "SPAN_FRAMES_MIN_DURATION": "5ms",
         "TRANSACTION_SAMPLE_RATE": 1
     },
-    "DD_BROWSER_HOST": "https://deputydev.ai",
+    "BROWSER_HOST": "https://deputydev.ai",
     "SUPABASE": {
         "URL": "",
         "KEY": "",
@@ -475,30 +475,83 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 0
             }
         },
+        "OPENROUTER_GPT_5": {
+            "NAME": "openai/gpt-5",
+            "MAX_TOKENS": 24576,
+            "INPUT_TOKENS_LIMIT": 272000,
+            "TEMPERATURE": 0.3,
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER": {},
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+            }
+        },
+        "OPENROUTER_GPT_5_MINI": {
+            "NAME": "openai/gpt-5-mini",
+            "MAX_TOKENS": 24576,
+            "INPUT_TOKENS_LIMIT": 272000,
+            "TEMPERATURE": 0.3,
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER": {},
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+            }
+        },
+        "OPENROUTER_GPT_5_NANO": {
+            "NAME": "openai/gpt-5-nano",
+            "MAX_TOKENS": 24576,
+            "INPUT_TOKENS_LIMIT": 272000,
+            "TEMPERATURE": 0.3,
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER": {},
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+            }
+        },
         "KIMI_K2": {
             "NAME": "moonshotai/kimi-k2",
-            "MAX_TOKENS": 8192,
+            "MAX_TOKENS": 12288,
             "INPUT_TOKENS_LIMIT": 120000,
             "TEMPERATURE": 0.5,
             "STREAM_BATCH_SIZE": 30,
-            "PROVIDER": {},
+            "PROVIDER": {
+                "only": [
+                    "fireworks",
+                    "groq",
+                    "deepinfra"
+                ]
+            },
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
-                "SAFE_HISTORY_TOKEN_LIMIT": 0
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 20000
             }
         },
         "QWEN_3_CODER": {
             "NAME": "qwen/qwen3-coder",
-            "MAX_TOKENS": 8192,
+            "MAX_TOKENS": 12288,
             "INPUT_TOKENS_LIMIT": 230000,
             "TEMPERATURE": 0.5,
             "STREAM_BATCH_SIZE": 30,
-            "PROVIDER": {},
+            "PROVIDER": {
+                "only": [
+                    "fireworks",
+                    "baseten",
+                    "google-vertex",
+                    "together",
+                    "cerebras"
+                ]
+            },
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
-                "SAFE_HISTORY_TOKEN_LIMIT": 0
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 20000
             }
         },
         "GPT_4O": {
@@ -667,7 +720,9 @@
                 "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
                 "LIMIT_RESOURCES": true,
                 "LOG_LEVEL": "debug",
-                "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes"
+                "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes",
+                "DISK_USE_READONLY_PERCENTAGE": "99",
+                "DISK_USE_WARNING_PERCENTAGE": "95"
             }
         },
         "EMBEDDING": {
@@ -798,7 +853,6 @@
         "API_KEY": ""
     },
     "MAX_REVIEW_TOOL_ITERATIONS": 25,
-    "REVIEW_AUTH_TOKEN": "DUMMY_TOKEN",
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
     "WEAVIATE_EMBEDDED_DB_PATH": "~/.deputydev/indexes",
     "WEAVIATE_EMBEDDED_DB_BINARY_PATH": "~/.deputydev/embedded_db_binary",
@@ -812,7 +866,9 @@
     "WEAVIATE_ENV_VARIABLES": {
         "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
         "LIMIT_RESOURCES": true,
-        "LOG_LEVEL": "debug"
+        "LOG_LEVEL": "debug",
+        "DISK_USE_READONLY_PERCENTAGE": "99",
+        "DISK_USE_WARNING_PERCENTAGE": "95"
     },
     "WEAVIATE_CLIENT_TIMEOUTS": {
         "INIT": 30,
@@ -845,48 +901,86 @@
             "name": "CLAUDE_3_POINT_7_SONNET",
             "provider": "ANTHROPIC",
             "multimodal": true
-
         },
         {
             "id": 3,
-            "display_name": "GPT-4.1",
+            "display_name": "GPT 5",
+            "name": "OPENROUTER_GPT_5",
+            "provider": "OPENAI",
+            "multimodal": true,
+            "reasoning": {
+                "supported": [
+                    "MINIMAL",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ],
+                "default": "MEDIUM"
+            }
+        },
+        {
+            "id": 4,
+            "display_name": "GPT 5 Mini",
+            "name": "OPENROUTER_GPT_5_MINI",
+            "provider": "OPENAI",
+            "multimodal": true,
+            "reasoning": {
+                "supported": [
+                    "MINIMAL",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ],
+                "default": "MEDIUM"
+            }
+        },
+        {
+            "id": 5,
+            "display_name": "GPT 5 Nano",
+            "name": "OPENROUTER_GPT_5_NANO",
+            "provider": "OPENAI",
+            "multimodal": true
+        },
+        {
+            "id": 6,
+            "display_name": "GPT 4.1",
             "name": "GPT_4_POINT_1",
             "provider": "OPENAI",
             "multimodal": true
         },
         {
-            "id": 4,
+            "id": 7,
             "display_name": "Gemini 2.5 Pro",
             "name": "GEMINI_2_POINT_5_PRO",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
-            "id": 5,
+            "id": 8,
             "display_name": "Gemini 2.5 Flash",
             "name": "GEMINI_2_POINT_5_FLASH",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
-            "id": 6,
+            "id": 9,
             "display_name": "Gemini 2.5 Flash Lite",
             "name": "GEMINI_2_POINT_5_FLASH_LITE",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
-            "id": 7,
+            "id": 10,
             "display_name": "Qwen 3 Coder",
             "name": "QWEN_3_CODER",
-            "provider": "OPENROUTER",
+            "provider": "OPEN SOURCE",
             "multimodal": false
         },
         {
-            "id": 8,
+            "id": 11,
             "display_name": "Kimi K2",
             "name": "KIMI_K2",
-            "provider": "OPENROUTER",
+            "provider": "OPEN SOURCE",
             "multimodal": false
         }
     ],
@@ -918,5 +1012,12 @@
         "AUTH_KEY": ""
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3,
-    "AUTO_REVIEW_ENABLED": true
+    "AUTO_REVIEW_ENABLED": true,
+    "FAKE_AUTH": {
+        "ENABLED": false,
+        "USER_EMAIL": "",
+        "USER_NAME": "",
+        "ENCRYPTED_SESSION_DATA": "",
+        "FAKE_BROWSER_HOST": ""
+    }
 }

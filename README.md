@@ -24,7 +24,7 @@
 ## Tech Stack
 
 - **Programming Language:** Python (>=3.11)
-- **Framework:** Sanic, Torpedo (custom framework)
+- **Framework:** Sanic
 - **AI/ML:** OpenAI API, Google Generative AI API, Anthropic API
 - **Database:** PostgreSQL, pgvector
 - **SCM Clients:** Custom clients for GitHub, GitLab, Bitbucket
@@ -83,21 +83,17 @@
     cd deputydev-backend
     ```
 
-3. **Set up SSH Keys:**
-
-    Ensure your SSH keys are configured to access private repositories on Bitbucket and GitHub if required by dependencies (e.g., `cache_wrapper`, `torpedo`, `tortoise_wrapper`, `deputydev-core`).
-
-4. **Install dependencies:**
+3. **Install dependencies:**
 
     It is highly recommended to use a virtual environment:
 
     ```bash
-    python -m venv .venv
+    uv venv
     source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
     uv sync
     ```
 
-5. **Configure Environment Variables:**
+4**Configure Environment Variables:**
 
     - Copy `config_template.json` to `config.json`.
     - Populate `config.json` with credentials/configs:
@@ -110,7 +106,7 @@
       - Supabase URL and key
     - Refer to `config_template.json` and `settings.toml` for required keys.
 
-6. **Database Setup:**
+5**Database Setup:**
 
     - Ensure PostgreSQL is running.
     - If using `dbmate`:
@@ -131,12 +127,8 @@
 
 2. **Build the Docker image:**
 
-    If private dependencies require SSH access, pass SSH keys during build. Also set `SERVICE_NAME`.
-
     ```bash
     docker build \
-      --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_ed25519)" \
-      --build-arg SSH_PUBLIC_KEY="$(cat ~/.ssh/id_ed25519.pub)" \
       --build-arg SERVICE_NAME="deputydev" \
       -t deputydev-backend .
     ```

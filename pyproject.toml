@@ -1,6 +1,6 @@
 [project]
 name = "deputydev"
-version = "13.0.6"
+version = "14.0.0"
 description = ""
 authors = [{ name = "Deputy Dev", email = "deputydev@1mg.com" }]
 readme = "README.md"
@@ -44,7 +44,6 @@ dependencies = [
   "mmh3==5.1.0",
   "toml==0.10.2",
   "google-genai==1.13.0",
-  "partial-json-parser==0.2.1.1.post5",
   "boto3-stubs[essential]>=1.38.42",
   "urllib3>=2.2.2,<3.0.0",   
 ]
