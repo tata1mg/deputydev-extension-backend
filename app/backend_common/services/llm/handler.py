@@ -65,6 +65,7 @@ from app.backend_common.services.llm.providers.anthropic.llm_provider import Ant
 from app.backend_common.services.llm.providers.google.llm_provider import Google
 from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 from app.backend_common.services.llm.providers.openrouter_models.llm_provider import OpenRouter
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import Reasoning
 from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
@@ -90,6 +91,9 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.GPT_O3_MINI: OpenAI,
         LLModels.KIMI_K2: OpenRouter,
         LLModels.QWEN_3_CODER: OpenRouter,
+        LLModels.OPENROUTER_GPT_5: OpenRouter,
+        LLModels.OPENROUTER_GPT_5_MINI: OpenRouter,
+        LLModels.OPENROUTER_GPT_5_NANO: OpenRouter,
     }
 
     def __init__(
@@ -352,6 +356,7 @@ class LLMHandler(Generic[PromptFeatures]):
         query_id: int,
         prompt_handler: BasePrompt,
         call_chain_category: MessageCallChainCategory,
+        reasoning: Optional[Reasoning] = None,
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
         user_and_system_messages: Optional[UserAndSystemMessages] = None,
@@ -428,6 +433,7 @@ class LLMHandler(Generic[PromptFeatures]):
                     session_id=session_id,
                     llm_payload=llm_payload,
                     model=llm_model,
+                    reasoning=reasoning,
                     stream=stream,
                     response_type=response_type,
                     parallel_tool_calls=parallel_tool_calls,
@@ -618,6 +624,7 @@ class LLMHandler(Generic[PromptFeatures]):
         llm_model: LLModels,
         prompt_vars: Dict[str, Any],
         attachments: List[Attachment] = [],
+        reasoning: Optional[Reasoning] = None,
         tools: Optional[List[ConversationTool]] = None,
         tool_choice: Literal["none", "auto", "required"] = "auto",
         previous_responses: List[int] = [],
@@ -686,6 +693,7 @@ class LLMHandler(Generic[PromptFeatures]):
             session_id=session_id,
             prompt_type=prompt_handler.prompt_type,
             llm_model=prompt_handler.model_name,
+            reasoning=reasoning,
             query_id=prompt_thread.id,
             prompt_handler=prompt_handler,
             call_chain_category=call_chain_category,

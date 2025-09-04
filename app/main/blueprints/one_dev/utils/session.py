@@ -13,8 +13,7 @@ from app.backend_common.repository.message_sessions.repository import (
 )
 from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
-from app.main.blueprints.one_dev.utils.client.dataclasses.main import ClientData
-from app.main.blueprints.one_dev.utils.dataclasses.main import AuthData
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 
 
 async def get_stored_session(session_id: Optional[int] = None) -> Optional[MessageSessionDTO]:
@@ -84,10 +83,6 @@ def ensure_session_id(auto_create: bool = False) -> Any:
         async def wrapper(_request: Request, *args: Any, **kwargs: Any) -> Any:
             client_data: ClientData = kwargs.get("client_data")
             auth_data: AuthData = kwargs.get("auth_data")
-            ##########################  Bypass Auth Token Flow  ##########################
-            if kwargs.get("response_headers", {}).get("_bypass_review_auth"):
-                kwargs["session_id"] = _request.headers.get("X-Session-ID")
-                return await func(_request, *args, **kwargs)
 
             valid_session_data = await get_valid_session_data(
                 _request=_request,
