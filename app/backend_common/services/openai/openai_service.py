@@ -15,9 +15,8 @@ from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.openai.base_client import BaseClient
 from app.backend_common.services.workspace.context_var import identifier
 from app.backend_common.utils.app_utils import hash_sha256
-from app.backend_common.utils.sanic_wrapper import CONFIG
 
-EMBEDDING_MODEL = CONFIG.config.get("EMBEDDING").get("MODEL")
+EMBEDDING_MODEL = ConfigManager.configs["EMBEDDING"]["MODEL"]
 EMBEDDING_TOKEN_LIMIT = ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"]
 
 
