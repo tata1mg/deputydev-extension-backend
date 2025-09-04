@@ -93,7 +93,7 @@
     uv sync
     ```
 
-4**Configure Environment Variables:**
+4. **Configure Environment Variables:**
 
     - Copy `config_template.json` to `config.json`.
     - Populate `config.json` with credentials/configs:
@@ -106,7 +106,7 @@
       - Supabase URL and key
     - Refer to `config_template.json` and `settings.toml` for required keys.
 
-5**Database Setup:**
+5. **Database Setup:**
 
     - Ensure PostgreSQL is running.
     - If using `dbmate`:
@@ -161,3 +161,18 @@ source .venv/bin/activate
 uv sync
 python -m app.service
 ```
+
+## Local checks
+
+- pre-commit install
+- pre-commit run --all-files
+- ruff format .
+- ruff check .
+
+## Contributing
+
+Please read CONTRIBUTING.md for contribution guidelines (project layout, code style, workflows, and PR process).
+
+## Code of Conduct
+
+By participating, you agree to follow our Code of Conduct (CODE_OF_CONDUCT.md).
