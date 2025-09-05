@@ -28,7 +28,6 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
 )
-from app.backend_common.services.llm.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
@@ -52,6 +51,9 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     Repository,
     UrlFocusItem,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.factory import (
+    CustomCodeQuerySolverPromptFactory,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
@@ -97,7 +99,7 @@ class QuerySolverAgent(ABC):
     This class should be extended by specific query solver agents.
     """
 
-    prompt_factory: Type[BaseFeaturePromptFactory]
+    prompt_factory: Type[CustomCodeQuerySolverPromptFactory] = CustomCodeQuerySolverPromptFactory
     all_tools: List[ConversationTool]
 
     def __init__(self, agent_name: str, agent_description: str) -> None:
