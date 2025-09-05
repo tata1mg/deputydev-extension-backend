@@ -76,7 +76,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.dataclasses.main import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockEnd,
     CodeBlockStart,
@@ -614,7 +614,7 @@ class QuerySolver:
             for message in messages:
                 if message.message_type == MessageType.QUERY and message.prompt_type in [
                     "CODE_QUERY_SOLVER",
-                    "CUSTOM_CODE_QUERY_SOLVER",
+                    "CODE_QUERY_SOLVER",
                 ]:
                     last_query_message = message
             return last_query_message
