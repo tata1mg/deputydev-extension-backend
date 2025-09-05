@@ -22,11 +22,11 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryDTO
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.dataclasses.main import (
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import (
     PreviousChats,
     RerankerDecision,
 )
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.reranking.main import (
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.reranking.main import (
     LLMBasedChatFiltration,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
