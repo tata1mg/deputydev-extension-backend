@@ -2,11 +2,10 @@ import json
 from functools import wraps
 from typing import Any, Dict, Tuple
 
-import aiohttp
-from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.context_value import ContextValue
 from sanic.server.websockets.impl import WebsocketImplProtocol
 
+from app.backend_common.service_clients.deputydev_auth.deputydev_auth import DeputyDevAuthClient
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
@@ -31,10 +30,6 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  #
     except Exception:  # noqa: BLE001
         pass
 
-    dd_auth_service_host = ConfigManager.configs["DD_AUTH_SERVICE_HOST"]
-    dd_get_auth_endpoint = ConfigManager.config["DD_AUTH_SERVICE_GET_AUTH_DATA_ENDPOINT"]
-    auth_service_url = f"{dd_auth_service_host}{dd_get_auth_endpoint}"
-
     headers = {"Authorization": authorization_header}
 
     params = {
@@ -42,15 +37,10 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  #
         "enable_grace_period": str(enable_grace_period).lower(),
     }
 
-    async with aiohttp.ClientSession() as session:
-        response = await session.get(auth_service_url, headers=headers, params=params)
-        response_data = await response.json()
-        if response_data:
-            auth_data = AuthData(**response_data.get("auth_data"))
-            response_headers = response_data.get("response_headers", {})
-            return auth_data, response_headers
-        else:
-            raise BadRequestException("Auth Data is missing")
+    auth_response = await DeputyDevAuthClient().get_auth_data(headers=headers, params=params)
+    auth_data: AuthData = AuthData(**auth_response["auth_data"])
+
+    return auth_data, auth_response["response_headers"]
 
 
 def authenticate(func: Any) -> Any:
