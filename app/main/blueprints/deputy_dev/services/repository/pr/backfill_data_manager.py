@@ -136,7 +136,7 @@ class BackfillManager:
 
         for row in pr_rows:
             try:
-                repo_dto = await RepoRepository.db_get({"id": row["repo_id"]})
+                repo_dto = (await RepoRepository.db_get({"id": row["repo_id"]}))[0]
                 if repo_dto.team_id == 1 and repo_dto.scm == "bitbucket":
                     onemg_workspace_id = "{eac19072-5edc-44b0-a9fc-206356051d1e}"
                     auth_handler = await get_vcs_auth_handler(onemg_workspace_id, "bitbucket")
