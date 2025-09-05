@@ -1,5 +1,4 @@
 import textwrap
-from abc import ABC
 from asyncio import Task
 from typing import Dict, List, Optional, Tuple, Type
 
@@ -37,7 +36,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ThinkingInfoData,
     ToolUseMessageData,
 )
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.chat_history_handler import (
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.chat_history_handler import (
     ChatHistoryHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -93,7 +92,7 @@ from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
 
 
-class QuerySolverAgent(ABC):
+class QuerySolverAgent:
     """
     Base class for query solver agents.
     This class should be extended by specific query solver agents.
@@ -102,7 +101,13 @@ class QuerySolverAgent(ABC):
     prompt_factory: Type[CustomCodeQuerySolverPromptFactory] = CustomCodeQuerySolverPromptFactory
     all_tools: List[ConversationTool]
 
-    def __init__(self, agent_name: str, agent_description: str) -> None:
+    def __init__(
+        self,
+        agent_name: str,
+        agent_description: str,
+        allowed_tools: Optional[List[str]] = None,
+        prompt_intent: Optional[str] = None,
+    ) -> None:
         """
         Initialize the agent with previous messages.
 
@@ -111,6 +116,8 @@ class QuerySolverAgent(ABC):
         self.agent_name = agent_name
         self.agent_description = agent_description
         self.attachment_data_task_map: Dict[int, Task[ChatAttachmentDataWithObjectBytes]] = {}
+        self.allowed_tools = allowed_tools
+        self.prompt_intent = prompt_intent
 
     def generate_conversation_tool_from_client_tool(self, client_tool: ClientTool) -> ConversationTool:
         # check if tool is MCP type tool
@@ -160,11 +167,6 @@ class QuerySolverAgent(ABC):
         tools_to_use: List[ConversationTool] = []
         for client_tool in payload.client_tools:
             tools_to_use.append(self.generate_conversation_tool_from_client_tool(client_tool))
-        return tools_to_use
-
-    def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
-        tools_to_use: List[ConversationTool] = self.get_all_first_party_tools(payload, _client_data)
-        tools_to_use.extend(self.get_all_client_tools(payload, _client_data))
         return tools_to_use
 
     def get_repository_context(self, repositories: List[Repository]) -> str:
@@ -514,6 +516,27 @@ class QuerySolverAgent(ABC):
 
         return await self._convert_agent_chats_to_conversation_turns(previous_chat_queries), previous_queries
 
+    def _filter_tools(self, tools: List[ConversationTool]) -> List[ConversationTool]:
+        """
+        Filter the tools based on the allowed tools for this agent.
+        :param tools: List of all available tools.
+        :return: Filtered list of tools.
+        """
+        return [tool for tool in tools if tool.name in self.allowed_tools]
+
+    def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
+        """
+        Get all tools available for this agent, filtered by allowed tools.
+        :param payload: QuerySolverInput containing the task details.
+        :param _client_data: ClientData containing client information.
+        :return: List of ConversationTool objects.
+        """
+        all_tools = self.get_all_first_party_tools(payload, _client_data)
+        all_tools = self._filter_tools(all_tools)
+        all_tools.extend(self.get_all_client_tools(payload, _client_data))
+
+        return all_tools
+
     async def get_llm_inputs_and_previous_queries(
         self,
         payload: QuerySolverInput,
@@ -534,4 +557,7 @@ class QuerySolverAgent(ABC):
             tools=tools,
             prompt=self.prompt_factory.get_prompt(model_name=llm_model),
             messages=messages,
+            extra_prompt_vars={
+                "prompt_intent": self.prompt_intent,
+            },
         ), previous_queries
