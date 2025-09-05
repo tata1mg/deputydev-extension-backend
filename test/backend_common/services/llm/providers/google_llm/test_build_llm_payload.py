@@ -319,9 +319,10 @@ class TestGoogleBuildLLMPayloadWithTools:
         simple_user_and_system_messages,
         complex_conversation_tools,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with multiple tools."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -343,9 +344,10 @@ class TestGoogleBuildLLMPayloadWithTools:
         simple_user_and_system_messages,
         simple_conversation_tool,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with different tool choice options."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             # Test with 'auto' (default)
             result_auto = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
@@ -390,9 +392,10 @@ class TestGoogleBuildLLMPayloadWebSearch:
         google_provider,
         simple_user_and_system_messages,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with web search enabled."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -412,9 +415,10 @@ class TestGoogleBuildLLMPayloadWebSearch:
         simple_user_and_system_messages,
         simple_conversation_tool,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test that web search conflicts with functional tools."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with pytest.raises(BadRequestException):
                 await google_provider.build_llm_payload(
                     llm_model=LLModels.GEMINI_2_POINT_5_PRO,
@@ -430,9 +434,10 @@ class TestGoogleBuildLLMPayloadWebSearch:
         google_provider,
         simple_user_and_system_messages,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test web search without functional tools (should work)."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -485,9 +490,10 @@ class TestGoogleBuildLLMPayloadWithAttachments:
         simple_user_and_system_messages,
         simple_attachments,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload when attachments are not in task map."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -512,9 +518,10 @@ class TestGoogleBuildLLMPayloadWithConversationHistory:
         google_provider,
         simple_previous_responses,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with previous conversation responses."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with patch.object(google_provider, 'get_conversation_turns', new_callable=AsyncMock) as mock_get_turns:
                 # Mock conversation turns
                 mock_content1 = MagicMock()
@@ -548,9 +555,10 @@ class TestGoogleBuildLLMPayloadWithConversationHistory:
         google_provider,
         complex_previous_responses,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with complex previous responses including tools."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with patch.object(google_provider, 'get_conversation_turns', new_callable=AsyncMock) as mock_get_turns:
                 # Mock more complex conversation turns
                 mock_turns = [MagicMock() for _ in range(3)]  # User, Assistant with tool, Tool response
@@ -571,9 +579,10 @@ class TestGoogleBuildLLMPayloadWithConversationHistory:
         google_provider,
         complex_unified_conversation_turns,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with conversation turns instead of previous responses."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with patch.object(google_provider, '_get_google_content_from_conversation_turns', new_callable=AsyncMock) as mock_get_content:
                 # Mock conversation content
                 mock_content = [MagicMock(), MagicMock(), MagicMock()]
@@ -602,9 +611,10 @@ class TestGoogleBuildLLMPayloadWithToolUseResponse:
         google_provider,
         simple_tool_use_response,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with tool use response."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -623,9 +633,10 @@ class TestGoogleBuildLLMPayloadWithToolUseResponse:
         simple_tool_use_response,
         user_text_conversation_turn,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test that tool_use_response is ignored when conversation_turns are provided."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with patch.object(google_provider, '_get_google_content_from_conversation_turns', new_callable=AsyncMock) as mock_get_content:
                 mock_content = [MagicMock()]
                 mock_get_content.return_value = mock_content
@@ -651,9 +662,10 @@ class TestGoogleBuildLLMPayloadCacheConfigs:
         simple_user_and_system_messages,
         default_cache_config: PromptCacheConfig,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with default cache configuration."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -672,9 +684,10 @@ class TestGoogleBuildLLMPayloadCacheConfigs:
         simple_user_and_system_messages,
         disabled_cache_config: PromptCacheConfig,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with disabled cache configuration."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -697,9 +710,10 @@ class TestGoogleBuildLLMPayloadEdgeCases:
         google_provider,
         empty_user_and_system_messages,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with empty system and user messages."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -718,9 +732,10 @@ class TestGoogleBuildLLMPayloadEdgeCases:
         google_provider,
         simple_user_and_system_messages,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test building payload with feedback parameter."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             result = await google_provider.build_llm_payload(
                 llm_model=LLModels.GEMINI_2_POINT_5_PRO,
                 attachment_data_task_map=empty_attachment_data_task_map,
@@ -738,11 +753,12 @@ class TestGoogleBuildLLMPayloadEdgeCases:
         google_provider,
         large_conversation_flow,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test performance with large conversation data."""
         import time
         
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with patch.object(google_provider, '_get_google_content_from_conversation_turns', new_callable=AsyncMock) as mock_get_content:
                 # Mock large content
                 mock_content = [MagicMock() for _ in range(30)]  # Large number of content blocks
@@ -771,9 +787,10 @@ class TestGoogleBuildLLMPayloadEdgeCases:
         simple_previous_responses,
         user_text_conversation_turn,
         empty_attachment_data_task_map: Dict[int, Any],
+        mock_model_config_gemini_pro: Dict[str, Any],
     ) -> None:
         """Test that conversation_turns takes priority over previous_responses."""
-        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro()):
+        with patch.object(google_provider, '_get_model_config', return_value=mock_model_config_gemini_pro):
             with patch.object(google_provider, 'get_conversation_turns', new_callable=AsyncMock) as mock_get_turns:
                 with patch.object(google_provider, '_get_google_content_from_conversation_turns', new_callable=AsyncMock) as mock_get_content:
                     mock_content = [MagicMock()]
