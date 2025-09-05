@@ -51,8 +51,8 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     Repository,
     UrlFocusItem,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.factory import (
-    CustomCodeQuerySolverPromptFactory,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
+    CodeQuerySolverPromptFactory,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.ask_user_input import (
     ASK_USER_INPUT,
@@ -98,7 +98,7 @@ class QuerySolverAgent:
     This class should be extended by specific query solver agents.
     """
 
-    prompt_factory: Type[CustomCodeQuerySolverPromptFactory] = CustomCodeQuerySolverPromptFactory
+    prompt_factory: Type[CodeQuerySolverPromptFactory] = CodeQuerySolverPromptFactory
     all_tools: List[ConversationTool]
 
     def __init__(
