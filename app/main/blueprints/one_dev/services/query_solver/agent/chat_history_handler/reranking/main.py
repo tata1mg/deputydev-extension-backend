@@ -8,7 +8,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.dataclasses.main import PreviousChats
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 
 from ....prompts.dataclasses.main import PromptFeatures
 from ....prompts.factory import PromptFeatureFactory
