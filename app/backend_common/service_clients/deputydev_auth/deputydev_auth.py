@@ -7,8 +7,8 @@ from app.backend_common.service_clients.deputydev_auth.endpoints import AuthEndp
 
 
 class DeputyDevAuthClient(BaseHTTPClient):
-    def __init__(self, config: Dict[str, Any] | None = None) -> None:
-        timeout = 0
+    def __init__(self) -> None:
+        timeout = ConfigManager.configs["DEPUTY_DEV_AUTH"]["TIMEOUT"]
         # The total number of simultaneous connections allowed (default is 100). (set 0 for unlimited)
         limit = 0
         # The maximum number of connections allowed per host (default is 0, meaning unlimited).
@@ -23,7 +23,7 @@ class DeputyDevAuthClient(BaseHTTPClient):
         )
 
     def get_auth_base_url(self) -> str:
-        return ConfigManager.configs["DD_AUTH_SERVICE_HOST"]
+        return ConfigManager.configs["DEPUTY_DEV_AUTH"]["HOST"]
 
     async def get_auth_data(self, headers: Dict[str, str], params: Dict[str, str]) -> Dict[str, Any]:
         path = f"{self.get_auth_base_url()}{AuthEndpoint.GET_AUTH_DATA.value}"

@@ -1020,5 +1020,8 @@
         "ENCRYPTED_SESSION_DATA": "",
         "FAKE_BROWSER_HOST": ""
     },
-    "DD_AUTH_SERVICE_HOST": "http://localhost:8085"
+    "DEPUTY_DEV_AUTH": {
+        "HOST": "http://localhost:8085",
+        "TIMEOUT": 10
+    }
 }
