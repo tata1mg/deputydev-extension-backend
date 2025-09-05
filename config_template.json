@@ -1020,6 +1020,5 @@
         "ENCRYPTED_SESSION_DATA": "",
         "FAKE_BROWSER_HOST": ""
     },
-    "DD_AUTH_SERVICE_HOST": "http://localhost:8085",
-    "DD_AUTH_SERVICE_GET_AUTH_DATA_ENDPOINT": "/get-auth-data"
+    "DD_AUTH_SERVICE_HOST": "http://localhost:8085"
 }
