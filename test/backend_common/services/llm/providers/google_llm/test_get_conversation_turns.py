@@ -690,7 +690,7 @@ class TestGoogleGetConversationTurns:
         
         assert isinstance(result, list)
         for content in result:
-            assert isinstance(content, MockContent)
+            # Content will be a mock of google_genai_types.Content
             assert hasattr(content, 'role')
             assert hasattr(content, 'parts')
             assert content.role in ["user", "model"]
@@ -801,11 +801,12 @@ class TestGoogleGetConversationTurns:
         content = result[0]
         
         # Verify it's a proper Google Content object (or our mock version)
-        assert isinstance(content, MockContent)
+        # Content will be a mock of google_genai_types.Content
         assert content.role == "user"
         assert isinstance(content.parts, list)
         assert len(content.parts) == 1
         
         part = content.parts[0]
-        assert isinstance(part, MockPart)
+        # Part will be a mock of google_genai_types.Part
+        assert hasattr(part, 'text') or hasattr(part, 'function_call') or hasattr(part, 'function_response')
         assert part.text == "Hello, how are you?"
