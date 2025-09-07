@@ -446,16 +446,17 @@
             }
         },
         "KIMI_K2": {
-            "NAME": "moonshotai/kimi-k2",
+            "NAME": "moonshotai/kimi-k2-0905",
             "MAX_TOKENS": 12288,
-            "INPUT_TOKENS_LIMIT": 120000,
+            "INPUT_TOKENS_LIMIT": 240000,
             "TEMPERATURE": 0.5,
             "STREAM_BATCH_SIZE": 30,
             "PROVIDER": {
                 "only": [
                     "fireworks",
                     "groq",
-                    "deepinfra"
+                    "together",
+                    "moonshotai"
                 ]
             },
             "LIMITS": {
@@ -677,14 +678,16 @@
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": false
                     },
                     "x64": {
                         "directory": "",
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": true
                     }
                 },
                 "linux": {
@@ -693,7 +696,8 @@
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": true
                     }
                 },
                 "win32": {
@@ -702,7 +706,8 @@
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": true
                     }
                 }
             }
