@@ -540,7 +540,11 @@ class QuerySolverAgent:
         :param tools: List of all available tools.
         :return: Filtered list of tools.
         """
-        return [tool for tool in tools if tool.name in self.allowed_tools]
+        return [
+            tool
+            for tool in tools
+            if ((self.allowed_tools and tool.name in self.allowed_tools) or not self.allowed_tools)
+        ]
 
     def get_all_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         """
