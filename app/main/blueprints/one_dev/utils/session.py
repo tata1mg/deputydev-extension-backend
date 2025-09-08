@@ -11,9 +11,9 @@ from app.backend_common.models.dto.message_sessions_dto import (
 from app.backend_common.repository.message_sessions.repository import (
     MessageSessionsRepository,
 )
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
-from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 
 
 async def get_stored_session(session_id: Optional[int] = None) -> Optional[MessageSessionDTO]:
