@@ -262,9 +262,7 @@ class TextBlockEventParser:
             for e in events:
                 yield e
 
-    async def _handle_previous_block(
-        self, parsed_response: Dict[str, Any]
-    ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
+    async def _handle_previous_block(self, parsed_response: Dict[str, Any]) -> AsyncIterator[StreamingContentBlock]:
         block_data = parsed_response.get(self.prev_block, "")
         if self.prev_block == "thinking":
             delta = block_data[self.parsed_index :]
