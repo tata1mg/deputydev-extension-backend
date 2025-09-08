@@ -1,6 +1,6 @@
 import json
 import textwrap
-from typing import Any, AsyncIterator, Dict, List, Tuple, Union
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
@@ -42,6 +42,15 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
+
+    def get_intent_text(self, prompt_intent: Optional[str]) -> str:
+        if prompt_intent:
+            return textwrap.dedent(f"""
+            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
+            You should follow the below guidelines while creating the backend application:
+            {prompt_intent}
+            """)
+        return ""
 
     def get_system_prompt(self) -> str:
         if self.params.get("write_mode") is True:
@@ -392,10 +401,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             </extra_important>
                                            
 
-            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
-            You should follow the below guidelines while creating the backend application:
-                                           
-            {self.params["prompt_intent"]}
+            {self.get_intent_text(self.params.get("prompt_intent"))}
                                            
             {self.tool_usage_guidelines(is_write_mode=True)}
 
@@ -412,10 +418,7 @@ class Gpt4Point1Prompt(BaseGpt4Point1Prompt):
             user_message = textwrap.dedent(f"""
             You are expected to answer the user query in a structured JSON format, adhering to the given schema.
                                            
-            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
-            You should follow the below guidelines while creating the backend application:
-                                           
-            {self.params["prompt_intent"]}
+            {self.get_intent_text(self.params.get("prompt_intent"))}
 
             <code_block_guidelines>
             There are two types of code blocks you can use:

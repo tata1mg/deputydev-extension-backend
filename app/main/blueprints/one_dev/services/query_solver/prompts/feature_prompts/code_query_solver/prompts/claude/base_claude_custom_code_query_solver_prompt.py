@@ -1,6 +1,6 @@
 import re
 import textwrap
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import (
@@ -29,6 +29,15 @@ class BaseClaudeQuerySolverPrompt:
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
+
+    def get_intent_text(self, prompt_intent: Optional[str]) -> str:
+        if prompt_intent:
+            return textwrap.dedent(f"""
+            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
+            You should follow the below guidelines while creating the backend application:
+            {prompt_intent}
+            """)
+        return ""
 
     def get_system_prompt(self) -> str:
         if self.params.get("write_mode") is True:
@@ -351,18 +360,12 @@ class BaseClaudeQuerySolverPrompt:
             user_message = textwrap.dedent(f"""
             Here is the user's query for task - {self.params.get("query")}
 
-            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
-            You should follow the below guidelines while creating the backend application:
-
-            {self.params["prompt_intent"]}
+            {self.get_intent_text(self.params.get("prompt_intent"))}
             """)
         else:
             user_message = textwrap.dedent(f"""
             User Query: {self.params.get("query")}
-            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
-            You should follow the below guidelines while creating the backend application:
-                                           
-            {self.params["prompt_intent"]}
+            {self.get_intent_text(self.params.get("prompt_intent"))}
             """)
 
         if self.params.get("os_name") and self.params.get("shell"):
