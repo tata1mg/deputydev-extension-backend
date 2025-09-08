@@ -35,6 +35,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_nano_handler import (
     Gpt5NanoCustomCodeQuerySolverPromptHandler,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.grok_code_fast_1_handler import (
+    GrokCodeFast1CustomCodeQuerySolverPromptHandler,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.kimi_k2_coder_handler import (
     KimiK2CustomCodeQuerySolverPromptHandler,
 )
@@ -55,6 +58,7 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
         LLModels.KIMI_K2: KimiK2CustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5: Gpt5CustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_GROK_CODE_FAST_1: GrokCodeFast1CustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_MINI: Gpt5MiniCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_NANO: Gpt5NanoCustomCodeQuerySolverPromptHandler,
     }
