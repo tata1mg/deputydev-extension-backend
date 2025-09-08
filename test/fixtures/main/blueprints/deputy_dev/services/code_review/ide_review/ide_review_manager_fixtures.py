@@ -477,6 +477,223 @@ def large_agent_result_with_many_comments() -> AgentRunResult:
     return result
 
 
+# Additional AgentRequestItem fixtures
+@pytest.fixture
+def sample_agent_request_tool_use_failed() -> AgentRequestItem:
+    """Create a sample AgentRequestItem for tool use failed type."""
+    return AgentRequestItem(
+        agent_id=1,
+        review_id=100,
+        type=RequestType.TOOL_USE_FAILED,
+        tool_use_response=None
+    )
+
+
+# Additional User Agent DTO fixtures
+@pytest.fixture
+def sample_user_agent_dto_custom() -> MagicMock:
+    """Create a sample user agent DTO with custom agent settings."""
+    dto = MagicMock()
+    dto.id = 1
+    dto.agent_name = "security"
+    dto.display_name = "Custom Security Agent"
+    dto.confidence_score = 0.8
+    dto.custom_prompt = "Custom security review instructions"
+    dto.exclusions = ["test_files", "docs"]
+    dto.inclusions = ["src_files", "core"]
+    dto.objective = "Find security vulnerabilities"
+    dto.is_custom_agent = True
+    return dto
+
+
+@pytest.fixture
+def sample_user_agent_dto_exception() -> MagicMock:
+    """Create a sample user agent DTO that raises exception when accessing agent_name."""
+    dto = MagicMock()
+    dto.agent_name = MagicMock(side_effect=Exception("Agent name access failed"))
+    return dto
+
+
+# Additional AgentRunResult fixtures
+@pytest.fixture
+def sample_agent_run_result_partial_tool_use() -> AgentRunResult:
+    """Create a sample AgentRunResult with partial tool use data."""
+    result = MagicMock()
+    result.agent_result = {
+        "type": "tool_use_request",
+        "tool_name": "incomplete_tool",
+        "tool_input": {},  # Present but empty
+        "tool_use_id": "tool_partial_123"
+    }
+    result.display_name = "Test Agent"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_nested_error() -> AgentRunResult:
+    """Create a sample AgentRunResult with nested error message."""
+    result = MagicMock()
+    result.agent_result = {
+        "status": "error",
+        "error": {
+            "code": "PROCESSING_FAILED",
+            "message": "Nested error occurred",
+            "details": {"reason": "Invalid input"}
+        }
+    }
+    result.display_name = "Test Agent"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_with_extra_fields() -> AgentRunResult:
+    """Create a sample AgentRunResult with extra fields."""
+    result = MagicMock()
+    result.agent_result = {
+        "status": "success",
+        "extra_field": "should_be_ignored",
+        "internal_data": {"debug": "info"}
+    }
+    result.display_name = "Test Agent"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_empty_dict() -> AgentRunResult:
+    """Create a sample AgentRunResult with empty dictionary."""
+    result = MagicMock()
+    result.agent_result = {}
+    result.display_name = "Test Agent"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_mixed_case_status() -> AgentRunResult:
+    """Create a sample AgentRunResult with mixed case status."""
+    result = MagicMock()
+    result.agent_result = {"status": "Success"}  # Capital S
+    result.display_name = "Test Agent"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_special_chars_display_name() -> AgentRunResult:
+    """Create a sample AgentRunResult with special characters in display name."""
+    comment1 = MagicMock()
+    comment1.bucket = "original_bucket_1"
+    comment2 = MagicMock()
+    comment2.bucket = "original_bucket_2"
+    
+    result = MagicMock()
+    result.agent_result = {"comments": [comment1, comment2]}
+    result.display_name = "Test-Agent@#$ Name!"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_unicode_display_name() -> AgentRunResult:
+    """Create a sample AgentRunResult with unicode characters in display name."""
+    comment1 = MagicMock()
+    comment1.bucket = "original_bucket_1"
+    
+    result = MagicMock()
+    result.agent_result = {"comments": [comment1]}
+    result.display_name = "測試 Agent Naïve Résumé"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_single_word_display_name() -> AgentRunResult:
+    """Create a sample AgentRunResult with single word display name."""
+    comment1 = MagicMock()
+    comment1.bucket = "original_bucket_1"
+    
+    result = MagicMock()
+    result.agent_result = {"comments": [comment1]}
+    result.display_name = "SecurityAgent"
+    return result
+
+
+@pytest.fixture
+def sample_agent_run_result_large_tool_input() -> AgentRunResult:
+    """Create a sample AgentRunResult with large tool input data."""
+    large_input = {"code": "def function():\n    pass\n" * 1000}  # Large code input
+    result = MagicMock()
+    result.agent_result = {
+        "type": "tool_use_request",
+        "tool_name": "code_analyzer",
+        "tool_input": large_input,
+        "tool_use_id": "tool_large_123"
+    }
+    result.display_name = "Test Agent"
+    return result
+
+
+# Additional Comment DTO fixtures
+@pytest.fixture
+def sample_comment_dto_very_long() -> MagicMock:
+    """Create a sample comment DTO with very long content."""
+    dto = MagicMock()
+    dto.id = 1
+    dto.file_path = "src/models/user.py"
+    dto.line_number = 25
+    dto.title = "Performance Issue " * 50  # Very long title
+    dto.comment = "This is a very long comment that explains in detail " * 20  # Very long comment
+    dto.corrective_code = "def optimized_function():\n    pass\n" * 10  # Long corrective code
+    dto.rationale = "The rationale for this change is extensive " * 15  # Long rationale
+    return dto
+
+
+# Additional Extension Review DTO fixtures
+@pytest.fixture
+def sample_extension_review_dto_cancelled() -> MagicMock:
+    """Create a sample extension review DTO that is already cancelled."""
+    dto = MagicMock()
+    dto.id = 100
+    dto.session_id = "session_123"
+    dto.review_status = "Cancelled"
+    dto.repo_id = 50
+    return dto
+
+
+# Expected response fixtures for new tests
+@pytest.fixture
+def expected_nested_error_response() -> Dict[str, Any]:
+    """Create expected response for nested error."""
+    return {
+        "type": "AGENT_FAIL",
+        "data": {"message": "An error occurred"},  # Default message since nested error doesn't have direct message
+        "agent_id": 1,
+    }
+
+
+# Scenario-based fixtures for advanced testing
+@pytest.fixture
+def all_valid_agent_types_scenarios() -> List[Dict[str, Any]]:
+    """Create scenarios for all valid agent types."""
+    return [
+        {"agent_name": "security", "should_succeed": True},
+        {"agent_name": "code_communication", "should_succeed": True},
+        {"agent_name": "performance_optimisation", "should_succeed": True},
+        {"agent_name": "code_maintainability", "should_succeed": True},
+        {"agent_name": "error", "should_succeed": True},
+        {"agent_name": "invalid_agent", "should_succeed": False},
+        {"agent_name": "", "should_succeed": False},
+    ]
+
+
+@pytest.fixture
+def case_sensitive_agent_scenarios() -> List[Dict[str, Any]]:
+    """Create case sensitivity scenarios for agents."""
+    return [
+        {"agent_name": "security", "should_succeed": True},
+        {"agent_name": "Security", "should_succeed": False},  # Case sensitive
+        {"agent_name": "SECURITY", "should_succeed": False},  # Case sensitive
+        {"agent_name": "code_communication", "should_succeed": True},
+        {"agent_name": "Code_Communication", "should_succeed": False},  # Case sensitive
+    ]
+
+
 # Edge case fixtures
 @pytest.fixture
 def edge_case_comment_scenarios() -> List[Dict[str, Any]]:
