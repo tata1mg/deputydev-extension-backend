@@ -178,11 +178,13 @@ class QuerySolverAgent:
                 <context_repository_{index + 1}>
                     <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
                     <repo_name>{context_repo.repo_name}</repo_name>
-                    <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
+                    <root_directory_context>
+                    {context_repo.root_directory_context}
+                    </root_directory_context>
                 </context_repository_{index + 1}>
                 """
 
-        return f"""
+        return textwrap.dedent(f"""
             ====
             <repository_context>
             You are working with two types of repositories:
@@ -210,7 +212,7 @@ class QuerySolverAgent:
             </context_repositories>
             </repository_context>
             ====
-            """
+            """)
 
     async def _get_unified_user_conv_turns(  # noqa: C901
         self, message_data: TextMessageData, prompt_intent: Optional[str] = None
