@@ -212,7 +212,9 @@ class QuerySolverAgent:
             ====
             """
 
-    async def _get_unified_user_conv_turns(self, message_data: TextMessageData) -> List[UnifiedConversationTurn]:  # noqa: C901
+    async def _get_unified_user_conv_turns(  # noqa: C901
+        self, message_data: TextMessageData, prompt_intent: Optional[str] = None
+    ) -> List[UnifiedConversationTurn]:
         """
         Get unified text conversation turn content for user messages.
         :param message_data: TextMessageData containing the text message.
@@ -238,6 +240,14 @@ class QuerySolverAgent:
                 )
 
         text = f"<task>{message_data.text}</task>"
+
+        if prompt_intent:
+            text += f"""
+            The user's query is focused on creating a backend application, so you should focus on backend technologies and frameworks.
+            You should follow the below guidelines while creating the backend application:
+            {prompt_intent}
+        """
+
         if message_data.focus_items:
             code_snippet_based_items = [
                 item
@@ -300,7 +310,7 @@ class QuerySolverAgent:
         return all_turns
 
     async def _convert_text_agent_chat_to_conversation_turn(
-        self, agent_chat: AgentChatDTO
+        self, agent_chat: AgentChatDTO, prompt_intent: Optional[str] = None
     ) -> List[UnifiedConversationTurn]:
         """
         Convert AgentChatDTO object to UnifiedConversationTurn object for text messages.
@@ -315,7 +325,7 @@ class QuerySolverAgent:
             )
 
         if agent_chat.actor == ActorType.USER:
-            return await self._get_unified_user_conv_turns(agent_chat.message_data)
+            return await self._get_unified_user_conv_turns(agent_chat.message_data, prompt_intent)
         else:
             return [
                 AssistantConversationTurn(
@@ -444,7 +454,7 @@ class QuerySolverAgent:
         ]
 
     async def _convert_agent_chats_to_conversation_turns(
-        self, agent_chats: List[AgentChatDTO]
+        self, agent_chats: List[AgentChatDTO], prompt_intent: Optional[str] = None
     ) -> List[UnifiedConversationTurn]:
         """
         Convert AgentChatDTO objects to UnifiedConversationTurn objects.
@@ -456,7 +466,9 @@ class QuerySolverAgent:
 
         for agent_chat in agent_chats:
             if agent_chat.message_type == "TEXT":
-                conversation_turns.extend(await self._convert_text_agent_chat_to_conversation_turn(agent_chat))
+                conversation_turns.extend(
+                    await self._convert_text_agent_chat_to_conversation_turn(agent_chat, prompt_intent)
+                )
             elif agent_chat.message_type == "TOOL_USE":
                 conversation_turns.extend(self._convert_tool_use_agent_chat_to_conversation_turn(agent_chat))
             elif agent_chat.message_type == "THINKING":
@@ -488,7 +500,11 @@ class QuerySolverAgent:
         return [Attachment(attachment_id=attachment_id) for attachment_id in filtered_attachment_ids]
 
     async def _get_conversation_turns_and_previous_queries(
-        self, payload: QuerySolverInput, _client_data: ClientData, new_query_chat: Optional[AgentChatDTO] = None
+        self,
+        payload: QuerySolverInput,
+        _client_data: ClientData,
+        new_query_chat: Optional[AgentChatDTO] = None,
+        prompt_intent: Optional[str] = None,
     ) -> Tuple[List[UnifiedConversationTurn], List[str]]:
         # first, we need to get the previous history of messages in case of a new query
 
@@ -514,7 +530,9 @@ class QuerySolverAgent:
         filtered_attachments = await self.get_all_chat_attachments(previous_chat_queries)
         self.attachment_data_task_map = ChatFileUpload.get_attachment_data_task_map(filtered_attachments)
 
-        return await self._convert_agent_chats_to_conversation_turns(previous_chat_queries), previous_queries
+        return await self._convert_agent_chats_to_conversation_turns(
+            previous_chat_queries, prompt_intent
+        ), previous_queries
 
     def _filter_tools(self, tools: List[ConversationTool]) -> List[ConversationTool]:
         """
@@ -551,7 +569,7 @@ class QuerySolverAgent:
 
         tools = self.get_all_tools(payload, _client_data)
         messages, previous_queries = await self._get_conversation_turns_and_previous_queries(
-            payload, _client_data, new_query_chat
+            payload, _client_data, new_query_chat, self.prompt_intent
         )
         return LLMHandlerInputs(
             tools=tools,
