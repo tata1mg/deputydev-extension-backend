@@ -8,8 +8,6 @@ from deputydev_core.utils.constants.auth import AuthStatus
 from gotrue.types import AuthResponse
 from jwt import ExpiredSignatureError, InvalidTokenError
 from postgrest.exceptions import APIError
-from app.backend_common.utils.sanic_wrapper import Request
-from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 from app.backend_common.caches.auth_token_grace_period_cache import AuthTokenGracePeriod
 from app.backend_common.repository.users.user_repository import UserRepository
@@ -17,6 +15,8 @@ from app.backend_common.services.auth.base_auth import BaseAuth
 from app.backend_common.services.auth.session_encryption_service import SessionEncryptionService
 from app.backend_common.services.auth.supabase.client import SupabaseClient
 from app.backend_common.utils.dataclasses.main import AuthSessionData, AuthTokenData, RefreshedSessionData
+from app.backend_common.utils.sanic_wrapper import Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 
 class SupabaseAuth(BaseAuth):

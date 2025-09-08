@@ -92,6 +92,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.KIMI_K2: OpenRouter,
         LLModels.QWEN_3_CODER: OpenRouter,
         LLModels.OPENROUTER_GPT_5: OpenRouter,
+        LLModels.OPENROUTER_GROK_CODE_FAST_1: OpenRouter,
         LLModels.OPENROUTER_GPT_5_MINI: OpenRouter,
         LLModels.OPENROUTER_GPT_5_NANO: OpenRouter,
     }

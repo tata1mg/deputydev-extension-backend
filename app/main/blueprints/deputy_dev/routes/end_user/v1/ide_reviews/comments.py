@@ -4,10 +4,10 @@ from deputydev_core.utils.app_logger import AppLogger
 from sanic import Blueprint
 from sanic.response import JSONResponse
 
-from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
-from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import AuthData
+from app.backend_common.utils.sanic_wrapper import CONFIG, Request, send_response
+from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.backend_common.utils.wrapper import exception_logger
 from app.main.blueprints.deputy_dev.models.dto.ide_review_comment_feedback_dto import IdeReviewCommentFeedbackDTO
 from app.main.blueprints.deputy_dev.models.request.ide_review_feedback.ide_review_comment_feedback_payload import (
