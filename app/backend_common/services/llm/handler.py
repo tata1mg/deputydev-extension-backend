@@ -95,6 +95,7 @@ class LLMHandler(Generic[PromptFeatures]):
         LLModels.OPENROUTER_GROK_CODE_FAST_1: OpenRouter,
         LLModels.OPENROUTER_GPT_5_MINI: OpenRouter,
         LLModels.OPENROUTER_GPT_5_NANO: OpenRouter,
+        LLModels.OPENROUTER_GPT_4_POINT_1: OpenRouter,
     }
 
     def __init__(
