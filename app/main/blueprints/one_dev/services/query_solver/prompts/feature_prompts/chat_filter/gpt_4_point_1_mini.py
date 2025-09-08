@@ -16,7 +16,7 @@ from app.backend_common.services.llm.dataclasses.main import (
 from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1_mini import (
     BaseGpt4Point1MiniPrompt,
 )
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.dataclasses.main import PreviousChats
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 
 
 class SortedAndFilteredChatIDs(BaseModel):

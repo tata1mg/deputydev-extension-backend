@@ -14,11 +14,11 @@ from app.backend_common.repository.user_teams.user_team_repository import (
     UserTeamRepository,
 )
 from app.backend_common.repository.users.user_repository import UserRepository
-from app.backend_common.utils.sanic_wrapper import CONFIG, Request
-from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.backend_common.services.auth.auth_factory import AuthFactory
 from app.backend_common.services.auth.signup import SignUp
 from app.backend_common.utils.dataclasses.main import AuthData, AuthSessionData, ClientData
+from app.backend_common.utils.sanic_wrapper import Request
+from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
