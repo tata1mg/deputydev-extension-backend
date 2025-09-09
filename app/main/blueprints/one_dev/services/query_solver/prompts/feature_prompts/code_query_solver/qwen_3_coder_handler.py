@@ -18,15 +18,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.qwen_3_coder_thinking_parser import (
     Qwen3CoderThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.qwen.qwen_3_coder_code_query_solver_prompt import (
-    Qwen3CoderQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.qwen.qwen_3_coder_custom_code_query_solver_prompt import (
+    Qwen3CoderCustomCodeQuerySolverPrompt,
 )
 
 
-class Qwen3CoderQuerySolverPromptHandler(BaseQwen3CoderPrompt):
+class Qwen3CoderCustomCodeQuerySolverPromptHandler(BaseQwen3CoderPrompt):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Qwen3CoderQuerySolverPrompt
+    prompt_class = Qwen3CoderCustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
