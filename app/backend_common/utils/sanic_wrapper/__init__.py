@@ -4,8 +4,8 @@ from .constants import ListenerEvent, MiddlewareLocation
 from .exceptions import BaseSanicException, InterServiceRequestException
 from .request import Request
 from .response import get_error_body_response, send_error_response, send_response
-from .task import AsyncTaskResponse, Task, TaskExecutor
 from .sanic_wrapper import SanicWrapper
+from .task import AsyncTaskResponse, Task, TaskExecutor
 from .utils import capture_exception
 
 # NOTE: group exports neatly

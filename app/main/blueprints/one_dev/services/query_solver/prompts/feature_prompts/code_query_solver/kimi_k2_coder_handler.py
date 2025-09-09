@@ -18,15 +18,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
     KimiK2ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_code_query_solver_prompt import (
-    KimiK2QuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_custom_code_query_solver_prompt import (
+    KimiK2CustomQuerySolverPrompt,
 )
 
 
-class KimiK2QuerySolverPromptHandler(BaseKimiK2Prompt):
+class KimiK2CustomCodeQuerySolverPromptHandler(BaseKimiK2Prompt):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = KimiK2QuerySolverPrompt
+    prompt_class = KimiK2CustomQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
