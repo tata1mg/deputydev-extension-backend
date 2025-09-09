@@ -1,12 +1,12 @@
 from typing import Any, Dict
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import UserAndSystemMessages
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.base_prompts.claude_3_point_5_sonnet_comment_creation import (
     BaseClaude3Point5SonnetCommentCreationPrompt,
 )
+from deputydev_core.llm_handler.dataclasses.main import UserAndSystemMessages
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class Claude3Point7CustomAgentCommentGenerationPrompt(BaseClaude3Point5SonnetCommentCreationPrompt):

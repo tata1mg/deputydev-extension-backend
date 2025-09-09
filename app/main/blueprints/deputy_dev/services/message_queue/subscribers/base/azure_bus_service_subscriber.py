@@ -11,7 +11,6 @@ from sanic.log import logger
 
 from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.constants.success_messages import SuccessMessages
-from app.backend_common.exception import RetryException
 from app.backend_common.exception.exception import RateLimitError
 from app.main.blueprints.deputy_dev.services.message_queue.factories.message_parser_factory import (
     MessageParserFactory,
@@ -22,6 +21,7 @@ from app.main.blueprints.deputy_dev.services.message_queue.parsers.subscribe_res
 from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
     BaseSubscriber,
 )
+from deputydev_core.exceptions.exceptions import RetryException
 
 
 class AzureBusServiceSubscriber(BaseSubscriber):

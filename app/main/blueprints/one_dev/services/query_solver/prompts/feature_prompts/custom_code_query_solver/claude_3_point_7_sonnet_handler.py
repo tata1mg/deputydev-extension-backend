@@ -3,15 +3,6 @@ from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_7_sonnet_prompt_handler import (
-    BaseClaude3Point7SonnetPromptHandler,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.claude.code_block.claude_3_point_7_code_block_parser import (
     Claude3Point7CodeBlockParser,
 )
@@ -23,6 +14,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.prompts.claude.claude_3_point_7_sonnet_custom_code_query_solver_prompt import (
     Claude3Point7CustomCodeQuerySolverPrompt,
+)
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
+from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_claude_3_point_7_sonnet_prompt_handler import (
+    BaseClaude3Point7SonnetPromptHandler,
 )
 
 

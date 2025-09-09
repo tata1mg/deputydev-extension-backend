@@ -2,15 +2,15 @@ import json
 import textwrap
 from typing import Any, List, Type
 
-from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
-from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
-from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1_mini import (
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
+from deputydev_core.llm_handler.providers.openai.prompts.base_prompts.base_gpt_4_point_1_mini import (
     BaseGpt4Point1MiniPrompt,
 )
+from deputydev_core.utils.app_logger import AppLogger
 
 from ...dataclasses.main import PromptFeatures
 

@@ -2,15 +2,15 @@ from typing import List
 
 from pydantic import BaseModel
 
-from app.backend_common.services.llm.dataclasses.main import TextBlockDelta
-from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
-    BaseAnthropicTextDeltaParser,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.dataclasses.main import (
     ThinkingBlockDelta,
     ThinkingBlockDeltaContent,
     ThinkingBlockEnd,
     ThinkingBlockStart,
+)
+from deputydev_core.llm_handler.dataclasses.main import TextBlockDelta
+from deputydev_core.llm_handler.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
+    BaseAnthropicTextDeltaParser,
 )
 
 

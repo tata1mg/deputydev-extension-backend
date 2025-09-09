@@ -3,15 +3,6 @@ from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageData
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.openrouter_models.prompts.base_prompts.base_gpt_5 import (
-    BaseGpt5Prompt,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.parsers.openrouter_models.code_block.gpt_5_code_block_parser import (
     Gpt5CodeBlockParser,
 )
@@ -20,6 +11,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.prompts.gpt.gpt_5_custom_code_query_solver_prompt import (
     Gpt5CustomQuerySolverPrompt,
+)
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageData
+from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_gpt_5 import (
+    BaseGpt5Prompt,
 )
 
 

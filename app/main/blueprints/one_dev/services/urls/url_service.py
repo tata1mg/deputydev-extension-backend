@@ -1,15 +1,6 @@
 from typing import Any, Dict, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    MessageCallChainCategory,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.main.blueprints.one_dev.models.dto.url import UrlDto
 from app.main.blueprints.one_dev.repository.url_repository import UrlRepository
 from app.main.blueprints.one_dev.services.urls.prompts.dataclasses.main import (
@@ -18,6 +9,14 @@ from app.main.blueprints.one_dev.services.urls.prompts.dataclasses.main import (
 from app.main.blueprints.one_dev.services.urls.prompts.factory import (
     PromptFeatureFactory,
 )
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+    MessageCallChainCategory,
+)
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class UrlService:
@@ -38,7 +37,10 @@ class UrlService:
 
     @classmethod
     async def summarize_urls_long_content(cls, session_id: int, content: str) -> str:
-        llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
+        llm_handler = LLMServiceManager().create_llm_handler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
         response: Optional[NonStreamingParsedLLMCallResponse] = None
         try:
             llm_response = await llm_handler.start_llm_query(

@@ -1,7 +1,7 @@
 import textwrap
 from typing import Optional
 
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
 
 
 def get_create_new_workspace_tool(write_mode: Optional[bool] = False) -> ConversationTool:

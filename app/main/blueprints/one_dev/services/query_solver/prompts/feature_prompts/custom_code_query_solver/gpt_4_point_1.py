@@ -5,21 +5,6 @@ from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    MessageData,
-    TextBlockData,
-    ToolUseRequestData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    StreamingEvent,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1 import (
-    BaseGpt4Point1Prompt,
-)
 from app.backend_common.utils.sanic_wrapper import CONFIG  # type: ignore
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClassFocusItem,
@@ -33,6 +18,21 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     StreamingTextEventProcessor,
     TextBlockEventParser,
     ToolUseEventParser,
+)
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingEvent,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+    MessageData,
+    TextBlockData,
+    ToolUseRequestData,
+)
+from deputydev_core.llm_handler.providers.openai.prompts.base_prompts.base_gpt_4_point_1 import (
+    BaseGpt4Point1Prompt,
 )
 
 

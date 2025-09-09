@@ -1,14 +1,14 @@
 from typing import List
 
-from app.backend_common.models.dto.message_thread_dto import (
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
+from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.dataclasses.main import PreviousChats
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.dataclasses.main import PreviousChats
 
 from ....prompts.dataclasses.main import PromptFeatures
 from ....prompts.factory import PromptFeatureFactory
@@ -22,7 +22,10 @@ class LLMBasedChatFiltration:
         query: str,
         session_id: int,
     ) -> List[int]:
-        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+        llm_handler = LLMServiceManager().create_llm_handler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
 
         llm_response = await llm_handler.start_llm_query(
             session_id=session_id,
