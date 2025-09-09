@@ -1,21 +1,9 @@
 import json
 from typing import Any, AsyncIterator, Dict, List, Type
 
-from deputydev_core.utils.app_logger import AppLogger
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.openai.prompts.base_prompts.base_gpt_4_point_1_mini import (
-    BaseGpt4Point1MiniPrompt,
-)
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClassFocusItem,
     CodeSnippetFocusItem,
@@ -23,6 +11,18 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FileFocusItem,
     FunctionFocusItem,
 )
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+)
+from deputydev_core.llm_handler.providers.openai.prompts.base_prompts.base_gpt_4_point_1_mini import (
+    BaseGpt4Point1MiniPrompt,
+)
+from deputydev_core.utils.app_logger import AppLogger
 
 
 class SortedAndFilteredIntents(BaseModel):

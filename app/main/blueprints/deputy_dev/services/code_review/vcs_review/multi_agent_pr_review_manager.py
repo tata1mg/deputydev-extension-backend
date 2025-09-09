@@ -1,11 +1,7 @@
 import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
-from deputydev_core.services.tiktoken import TikToken
-from deputydev_core.utils.config_manager import ConfigManager
-
-from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.utils.formatting import format_summary_with_metadata
@@ -33,6 +29,9 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.agent
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
+from deputydev_core.services.tiktoken import TikToken
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class MultiAgentPRReviewManager:
@@ -66,7 +65,7 @@ class MultiAgentPRReviewManager:
         self.eligible_agents = eligible_agents
         self._is_large_pr: bool = False
         self.pr_diff_handler = pr_diff_handler
-        self.llm_handler = LLMHandler(
+        self.llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),

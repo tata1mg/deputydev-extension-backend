@@ -1,7 +1,6 @@
 from typing import Any, Dict, List
 
-from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
@@ -22,6 +21,7 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.fact
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
 
 
 class IdeReviewPostProcessor:
@@ -33,7 +33,7 @@ class IdeReviewPostProcessor:
         formatted_comments = cls.format_comments(comments)
         context_service = IdeReviewContextService(review_id=review_id)
         user_agents = await UserAgentRepository.db_get({"user_team_id": user_team_id})
-        llm_handler = LLMHandler(
+        llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),

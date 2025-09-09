@@ -2,14 +2,9 @@ import asyncio
 import json
 from typing import Dict, List, Tuple
 
-from deputydev_core.utils.config_manager import ConfigManager
-
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-)
 from app.backend_common.services.chunking.rerankers.handler.llm_based.prompts.dataclasses.main import PromptFeatures
 from app.backend_common.services.chunking.rerankers.handler.llm_based.prompts.factory import PromptFeatureFactory
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
@@ -34,6 +29,10 @@ from app.main.blueprints.one_dev.services.repository.agent_chats.repository impo
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+)
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class ChatHistoryHandler:
@@ -121,7 +120,10 @@ class ChatHistoryHandler:
             complete_content: str = ""
             for chat in self.previous_chats:
                 complete_content += self._get_approx_chat_text(chat.id)
-            handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
+            handler = LLMServiceManager().create_llm_handler(
+                prompt_factory=PromptFeatureFactory,
+                prompt_features=PromptFeatures,
+            )
             precise_token_count = await handler.get_token_count(complete_content, self.current_model)
             if precise_token_count <= token_limit:
                 # We can fit all chats within the limit

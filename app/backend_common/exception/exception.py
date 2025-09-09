@@ -1,9 +1,3 @@
-class RetryException(Exception):  # noqa : N818
-    def __init__(self, message: str) -> None:
-        self.message = message
-        super().__init__(f"Retrying event: {self.message}")
-
-
 class ParseException(Exception):  # noqa : N818
     def __init__(self, message: str) -> None:
         self.message = message
