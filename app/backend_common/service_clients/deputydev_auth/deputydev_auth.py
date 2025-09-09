@@ -9,7 +9,7 @@ from app.backend_common.service_clients.deputydev_auth.endpoints import AuthEndp
 class DeputyDevAuthClient:
     def __init__(
         self,
-        timeout: int = ConfigManager.configs["DEPUTY_DEV_AUTH"]["TIMEOUT"],
+        timeout: int = ConfigManager.configs["DEPUTYDEV_AUTH"]["TIMEOUT"],
     ) -> None:
         """
         Simple aiohttp-based HTTP client for DeputyDev Auth service.
@@ -20,7 +20,7 @@ class DeputyDevAuthClient:
         self.connector = aiohttp.TCPConnector()
 
     def get_auth_base_url(self) -> str:
-        return ConfigManager.configs["DEPUTY_DEV_AUTH"]["HOST"]
+        return ConfigManager.configs["DEPUTYDEV_AUTH"]["HOST"]
 
     async def _request(
         self,

@@ -1040,7 +1040,7 @@
         "ENCRYPTED_SESSION_DATA": "",
         "FAKE_BROWSER_HOST": ""
     },
-    "DEPUTY_DEV_AUTH": {
+    "DEPUTYDEV_AUTH": {
         "HOST": "http://localhost:8085",
         "TIMEOUT": 10
     }
