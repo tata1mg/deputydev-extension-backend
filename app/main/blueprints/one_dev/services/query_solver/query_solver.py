@@ -3,47 +3,16 @@ import json
 from typing import Any, AsyncIterator, Dict, List, Optional
 from uuid import uuid4
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    MessageCallChainCategory,
-    MessageThreadDTO,
-    MessageType,
-)
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,
 )
 from app.backend_common.repository.message_threads.repository import (
     MessageThreadsRepository,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-    ParsedLLMCallResponse,
-    PromptCacheConfig,
-    StreamingEventType,
-    StreamingParsedLLMCallResponse,
-    TextBlockDelta,
-    TextBlockEnd,
-    TextBlockStart,
-    ToolUseRequestDelta,
-    ToolUseRequestEnd,
-    ToolUseRequestStart,
-)
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedConversationTurn,
-    UnifiedTextConversationTurnContent,
-    UnifiedToolRequestConversationTurnContent,
-    UnifiedToolResponseConversationTurnContent,
-    UserConversationTurn,
-)
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
@@ -98,6 +67,38 @@ from app.main.blueprints.one_dev.services.repository.query_summaries.query_summa
 from app.main.blueprints.one_dev.utils.cancellation_checker import (
     CancellationChecker,
 )
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+    ParsedLLMCallResponse,
+    PromptCacheConfig,
+    StreamingEventType,
+    StreamingParsedLLMCallResponse,
+    TextBlockDelta,
+    TextBlockEnd,
+    TextBlockStart,
+    ToolUseRequestDelta,
+    ToolUseRequestEnd,
+    ToolUseRequestStart,
+)
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+    MessageCallChainCategory,
+    MessageThreadDTO,
+    MessageType,
+)
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
@@ -756,11 +757,12 @@ class QuerySolver:
         save_to_redis: bool = False,
         task_checker: Optional[CancellationChecker] = None,
     ) -> AsyncIterator[BaseModel]:
-        llm_handler = LLMHandler(
+        llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
+
         reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat

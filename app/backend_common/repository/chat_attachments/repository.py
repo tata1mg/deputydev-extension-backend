@@ -3,8 +3,8 @@ from typing import List, Optional
 from sanic.log import logger
 
 from app.backend_common.models.dao.postgres.chat_attachments import ChatAttachments
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsData, ChatAttachmentsDTO
 from app.backend_common.repository.db import DB
+from deputydev_core.llm_handler.models.dto.chat_attachments_dto import ChatAttachmentsData, ChatAttachmentsDTO
 
 
 class ChatAttachmentsRepository:

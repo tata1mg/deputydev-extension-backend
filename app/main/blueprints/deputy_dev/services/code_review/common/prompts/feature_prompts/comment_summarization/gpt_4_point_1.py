@@ -2,13 +2,13 @@ import json
 from typing import Any, AsyncIterator, Dict, List
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData, TextBlockData
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.prompts.llm_base_prompts.gpt_4o import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData, TextBlockData
+from deputydev_core.llm_handler.prompts.llm_base_prompts.gpt_40 import (
     BaseGPT4POINT1Prompt,
 )
 

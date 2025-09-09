@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
 
 TASK_COMPLETION = ConversationTool(
     name="task_completion",

@@ -2,27 +2,7 @@ import asyncio
 from typing import Any, Dict, List
 from uuid import uuid4
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
-from deputydev_core.utils.config_manager import ConfigManager
-
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedConversationRole,
-    UnifiedConversationTurn,
-    UnifiedConversationTurnContentType,
-    UnifiedTextConversationTurnContent,
-    UnifiedToolRequestConversationTurnContent,
-    UnifiedToolResponseConversationTurnContent,
-    UserConversationTurn,
-)
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
@@ -56,6 +36,25 @@ from app.main.blueprints.one_dev.services.repository.agent_chats.repository impo
 from app.main.blueprints.one_dev.services.repository.code_generation_job.main import (
     JobService,
 )
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationRole,
+    UnifiedConversationTurn,
+    UnifiedConversationTurnContentType,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+)
+from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
+from deputydev_core.utils.config_manager import ConfigManager
 
 from .prompts.factory import PromptFeatureFactory
 
@@ -194,7 +193,10 @@ class InlineEditGenerator:
     async def get_inline_edit_diff_suggestion(
         self, payload: InlineEditInput, client_data: ClientData
     ) -> Dict[str, Any]:
-        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+        llm_handler = LLMServiceManager().create_llm_handler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
         tools_to_use = [FOCUSED_SNIPPETS_SEARCHER, ITERATIVE_FILE_READER]
         if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
             tools_to_use.append(RELATED_CODE_SEARCHER)

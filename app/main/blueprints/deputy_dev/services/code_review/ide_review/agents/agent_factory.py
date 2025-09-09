@@ -1,7 +1,5 @@
 from typing import List, Optional, Union
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
@@ -50,6 +48,8 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class AgentFactory:

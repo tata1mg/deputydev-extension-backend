@@ -3,10 +3,6 @@ from typing import List, Optional, Tuple
 
 from pydantic import BaseModel
 
-from app.backend_common.services.llm.dataclasses.main import TextBlockDelta
-from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
-    BaseAnthropicTextDeltaParser,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockDeltaContent,
@@ -14,6 +10,10 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     CodeBlockEndContent,
     CodeBlockStart,
     CodeBlockStartContent,
+)
+from deputydev_core.llm_handler.dataclasses.main import TextBlockDelta
+from deputydev_core.llm_handler.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
+    BaseAnthropicTextDeltaParser,
 )
 
 

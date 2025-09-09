@@ -1,13 +1,5 @@
 from typing import Dict, Type
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
-    BaseFeaturePromptFactory,
-)
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
-    BasePromptFeatureFactory,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -38,6 +30,10 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.t
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.factory import (
     UserQueryEnhancerPromptFactory,
 )
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+from deputydev_core.llm_handler.prompts.base_prompt_feature_factory import BasePromptFeatureFactory
 
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):

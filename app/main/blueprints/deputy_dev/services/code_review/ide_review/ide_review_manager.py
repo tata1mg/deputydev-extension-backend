@@ -1,11 +1,9 @@
 import textwrap
 from typing import Any, Dict, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
 from sanic.log import logger
 
-from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.sanic_wrapper import CONFIG
 from app.main.blueprints.deputy_dev.models.dto.review_agent_status_dto import ReviewAgentStatusDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
@@ -29,6 +27,8 @@ from app.main.blueprints.deputy_dev.services.repository.review_agents_status.rep
     ReviewAgentStatusRepository,
 )
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
+from deputydev_core.utils.app_logger import AppLogger
 
 NO_OF_CHUNKS = CONFIG.config["CHUNKING"]["NUMBER_OF_CHUNKS"]
 config = CONFIG.config
@@ -48,7 +48,7 @@ class IdeReviewManager:
 
         context_service = IdeReviewContextService(review_id=review_id)
 
-        llm_handler = LLMHandler(
+        llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),

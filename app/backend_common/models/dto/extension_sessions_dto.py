@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.backend_common.services.llm.dataclasses.main import LLModels
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class ExtensionSessionData(BaseModel):

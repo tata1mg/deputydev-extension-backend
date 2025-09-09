@@ -1,10 +1,5 @@
 from typing import Dict, Type
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
-    BaseFeaturePromptFactory,
-)
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_3_point_5_sonnet_handler import (
     Claude3Point5CodeQuerySolverPromptHandler,
 )
@@ -44,6 +39,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.qwen_3_coder_handler import (
     Qwen3CoderQuerySolverPromptHandler,
 )
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
 
 
 class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
