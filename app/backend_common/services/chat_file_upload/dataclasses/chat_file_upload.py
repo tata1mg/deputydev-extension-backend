@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
+from deputydev_core.llm_handler.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 
 
 class PresignedDownloadUrls(BaseModel):

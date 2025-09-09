@@ -4,7 +4,7 @@ from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     MalformedToolUseRequest,
     TextBlockDelta,
     TextBlockEnd,

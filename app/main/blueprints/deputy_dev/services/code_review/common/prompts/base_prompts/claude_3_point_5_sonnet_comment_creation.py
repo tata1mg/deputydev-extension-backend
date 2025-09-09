@@ -2,21 +2,7 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
-from deputydev_core.utils.context_vars import get_context_value
-
 from app.backend_common.exception.exception import ParseException
-from app.backend_common.models.dto.message_thread_dto import (
-    MessageData,
-    ToolUseRequestData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingResponse,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
-    BaseClaude3Point5SonnetPromptHandler,
-)
 from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
@@ -24,6 +10,19 @@ from app.backend_common.utils.formatting import (
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
 )
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    MessageData,
+    ToolUseRequestData,
+)
+from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
+    BaseClaude3Point5SonnetPromptHandler,
+)
+from deputydev_core.utils.context_vars import get_context_value
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPromptHandler):

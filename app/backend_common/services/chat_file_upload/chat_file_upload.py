@@ -2,9 +2,6 @@ import asyncio
 import uuid
 from typing import Any, Dict, List
 
-from deputydev_core.utils.config_manager import ConfigManager
-
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsData
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws.services.s3 import AWSS3ServiceClient
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
@@ -12,6 +9,8 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
     ChatAttachmentDataWithObjectBytes,
     PresignedDownloadUrls,
 )
+from deputydev_core.llm_handler.models.dto.chat_attachments_dto import ChatAttachmentsData
+from deputydev_core.utils.config_manager import ConfigManager
 
 
 class ChatFileUpload:

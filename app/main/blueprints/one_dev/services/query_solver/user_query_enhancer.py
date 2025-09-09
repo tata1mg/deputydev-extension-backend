@@ -1,16 +1,16 @@
 from typing import Any, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     UserQueryEnhancerInput,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 from .prompts.factory import PromptFeatureFactory
 
@@ -29,7 +29,10 @@ class UserQueryEnhancer:
         }
 
     async def get_enhanced_user_query(self, payload: UserQueryEnhancerInput) -> Dict[str, Any]:
-        llm_handler = LLMHandler(prompt_factory=PromptFeatureFactory, prompt_features=PromptFeatures)
+        llm_handler = LLMServiceManager().create_llm_handler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
 
         if payload.user_query:
             llm_response = await llm_handler.start_llm_query(
