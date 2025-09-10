@@ -488,6 +488,19 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 20000
             }
         },
+        "OPENROUTER_GPT_4_POINT_1": {
+            "NAME": "openai/gpt-4.1",
+            "MAX_TOKENS": 16576,
+            "INPUT_TOKENS_LIMIT": 524288,
+            "TEMPERATURE": 0.3,
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER": {},
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 100000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 100000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 40000
+            }
+        },
         "OPENROUTER_GROK_CODE_FAST_1": {
             "NAME": "x-ai/grok-code-fast-1",
             "MAX_TOKENS": 10000,
@@ -957,7 +970,7 @@
         {
             "id": 6,
             "display_name": "GPT 4.1",
-            "name": "GPT_4_POINT_1",
+            "name": "OPENROUTER_GPT_4_POINT_1",
             "provider": "OPENAI",
             "multimodal": true
         },
