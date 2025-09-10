@@ -64,6 +64,7 @@ from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryD
 from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
+    LLMModel,
     QuerySolverInput,
     Reasoning,
     ResponseMetadataBlock,
@@ -720,6 +721,16 @@ class QuerySolver:
             )
 
         if current_session.current_model != llm_model:
+            # TODO: remove after v15 Force upgrade
+            if (
+                llm_model == LLModels.OPENROUTER_GPT_4_POINT_1
+                and current_session.current_model == LLModels.GPT_4_POINT_1
+            ):
+                await asyncio.gather(
+                    ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
+                )
+                return  # no need to store a message in chat as the models are equivalent
+
             # update current model in session
             await asyncio.gather(
                 ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
@@ -759,6 +770,11 @@ class QuerySolver:
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
         reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
+
+        # TODO: remove after v15 Force upgrade
+        if payload.llm_model and LLMModel(payload.llm_model.value) == LLMModel.GPT_4_POINT_1:
+            payload.llm_model = LLMModel.OPENROUTER_GPT_4_POINT_1
+
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
