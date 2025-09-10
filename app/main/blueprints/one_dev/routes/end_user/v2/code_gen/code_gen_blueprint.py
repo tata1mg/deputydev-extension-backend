@@ -556,6 +556,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                     data = await QuerySolver().solve_query(
                         payload=payload, client_data=client_data, save_to_redis=True, task_checker=task_checker
                     )
+
                     last_block = None
                     async for data_block in data:
                         last_block = data_block

@@ -7,8 +7,8 @@ from sanic.response import JSONResponse
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
-from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
+from app.backend_common.utils.sanic_wrapper import Request
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_headers_only,
 )

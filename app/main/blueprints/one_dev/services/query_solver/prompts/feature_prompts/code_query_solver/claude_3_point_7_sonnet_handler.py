@@ -12,8 +12,8 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_3_point_7_thinking_parser import (
     Claude3Point7ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_3_point_7_sonnet_code_query_solver_prompt import (
-    Claude3Point7CodeQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_3_point_7_sonnet_custom_code_query_solver_prompt import (
+    Claude3Point7CustomCodeQuerySolverPrompt,
 )
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
@@ -26,10 +26,10 @@ from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_cl
 )
 
 
-class Claude3Point7CodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPromptHandler):
+class Claude3Point7CustomCodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Claude3Point7CodeQuerySolverPrompt
+    prompt_class = Claude3Point7CustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params

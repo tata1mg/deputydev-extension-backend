@@ -4,7 +4,7 @@ from typing import Any, AsyncIterator, Dict, List, Type
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.one_dev.services.query_solver.agents.chat_history_handler.dataclasses.main import PreviousChats
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
