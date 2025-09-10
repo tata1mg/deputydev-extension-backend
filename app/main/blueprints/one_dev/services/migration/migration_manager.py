@@ -64,7 +64,7 @@ class MessageThreadMigrationManager:
             message_threads = await MessageThreadsRepository.get_message_threads_for_session(
                 session_id=session.session_id,
                 call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
-                prompt_types=["CODE_QUERY_SOLVER", "CUSTOM_CODE_QUERY_SOLVER"],
+                prompt_types=["CODE_QUERY_SOLVER", "CODE_QUERY_SOLVER"],
             )
             message_threads.sort(key=lambda x: x.created_at)
             corresponding_agent_chats_and_dates: List[Tuple[AgentChatData, datetime, datetime, int]] = []

@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from app.backend_common.utils.sanic_wrapper import Request
-
 from app.backend_common.utils.dataclasses.main import AuthSessionData
+from app.backend_common.utils.sanic_wrapper import Request
 
 
 class BaseAuth(ABC):
