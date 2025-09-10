@@ -1,8 +1,11 @@
+from pathlib import Path
+from typing import Any, Dict
+
 import ujson
 from sanic.log import error_logger
 
 
-def json_file_to_dict(file: str) -> dict:
+def json_file_to_dict(file: str) -> Dict[str, Any]:
     """Parse json file into a dict.
 
     Args:
@@ -12,7 +15,7 @@ def json_file_to_dict(file: str) -> dict:
         dict: parsed data
     """
     try:
-        with open(file=file) as config_file:
+        with Path(file).open() as config_file:
             config = ujson.load(config_file)
             return config
 
@@ -24,4 +27,4 @@ def json_file_to_dict(file: str) -> dict:
 class CONFIG:
     # NOTE: attribute with same name as class is a code smell
     # this is kept anyways for backward compatiblity.
-    config: dict = json_file_to_dict("./config.json")
+    config: Dict[str, Any] = json_file_to_dict("./config.json")

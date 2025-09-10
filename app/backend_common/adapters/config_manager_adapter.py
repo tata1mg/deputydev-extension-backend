@@ -47,13 +47,3 @@ class ConfigManagerAdapter(ConfigInterface):
 
     def get_aws_config(self) -> Optional[Dict[str, Any]]:
         return self.config_manager.configs.get("AWS", {})
-
-    # FileUploadConfigInterface implementation
-    def get_s3_config(self) -> Dict[str, Any]:
-        return self.config_manager.configs["AWS_S3_BUCKET"]
-
-    def get_file_upload_paths(self) -> Dict[str, str]:
-        return {
-            "PAYLOAD_FOLDER_PATH": self.config_manager.configs["CHAT_FILE_UPLOAD"]["PAYLOAD_FOLDER_PATH"],
-            "IMAGE_FOLDER_PATH": self.config_manager.configs["CHAT_IMAGE_UPLOAD"]["IMAGE_FOLDER_PATH"],
-        }
