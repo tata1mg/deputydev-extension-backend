@@ -3,13 +3,13 @@ import textwrap
 from typing import Any, Dict, List
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    TextBlockData,
-)
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    TextBlockData,
 )
 from deputydev_core.llm_handler.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
     BaseGemini2Point5FlashPromptHandler,

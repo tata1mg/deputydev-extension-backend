@@ -5,13 +5,14 @@ from typing import Any, Dict, List, Tuple, Union
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
 from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ExtendedThinkingData,
     MessageData,
     TextBlockData,
     ToolUseRequestData,
 )
 
 
-class BaseGrokCustomCodeQuerySolverPrompt:
+class Gpt4Point1CustomQuerySolverPrompt:
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 
@@ -41,12 +42,13 @@ class BaseGrokCustomCodeQuerySolverPrompt:
 
                 # Tool Use Guidelines
 
-                1. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the file_path_searcher tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
-                2. If multiple actions are needed, you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
-                3. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
-                4. Information about whether the tool succeeded or failed, along with any reasons for failure.
-                5. New terminal output in reaction to the changes, which you may need to consider or act upon.
-                6. Any other relevant feedback or information related to the tool use.
+                1. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.
+                2. Choose the most appropriate tool based on the task and the tool descriptions provided. Assess if you need additional information to proceed, and which of the available tools would be most effective for gathering this information. For example using the file_path_searcher tool is more effective than running a command like `ls` in the terminal. It's critical that you think about each available tool and use the one that best fits the current step in the task.
+                3. If multiple actions are needed, you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+                4. After each tool use, the user will respond with the result of that tool use. This result will provide you with the necessary information to continue your task or make further decisions. This response may include:
+                5. Information about whether the tool succeeded or failed, along with any reasons for failure.
+                6. New terminal output in reaction to the changes, which you may need to consider or act upon.
+                7. Any other relevant feedback or information related to the tool use.
 
 
 
@@ -168,10 +170,11 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 9. Avoid generating long hashes or binary code
                 10. Build beautiful and modern UIs for web apps
                 11. Its super important that if there are previous chats (or code within them) with the user, you should consider them wisely w.r.t the current query, and provide the best possible solution, taking into account whether the previous context is relevant or not.
-                12. Try to go deep into downstream functions and classes to understand the codebase at a deeper level and decide to change the code accordingly. Use the tools provided to you to help you with the task.
-                13. This is very important - Do not assume things (like meanings, full forms etc. on your own). Rely on facts to be sure of them. Say for example, you can get this information by searching for various classes, functions etc. in the codebase.
-                14. This is very important - If a class or function you have searched and not found in tool response plz don't assume they exist in codebase.
-                15. Use as much as tool use to go deep into solution for complex query. We want the solution to be complete.
+                12. Use think before you do approach, do not think at the end.
+                13. Try to go deep into downstream functions and classes to understand the codebase at a deeper level and decide to change the code accordingly. Use the tools provided to you to help you with the task.
+                14. This is very important - Do not assume things (like meanings, full forms etc. on your own). Rely on facts to be sure of them. Say for example, you can get this information by searching for various classes, functions etc. in the codebase.
+                15. This is very important - If a class or function you have searched and not found in tool response plz don't assume they exist in codebase.
+                16. Use as much as tool use to go deep into solution for complex query. We want the solution to be complete.
 
                 Debugging Guidelines
                 1. Address root causes, not symptoms
@@ -197,6 +200,7 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 # Parallel Tool Usage Guidelines
                 If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
 
+                If you are thinking something, please provide that in <thinking> tag.
                 Please answer the user query in the best way possible. 
                 
                 <code_block_guidelines>
@@ -384,6 +388,13 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 }
                 final_content.append(tool_use_request_block)
                 tool_use_map[block.content.tool_use_id] = tool_use_request_block
+            elif isinstance(block, ExtendedThinkingData) and block.content.type == "thinking":
+                final_content.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": block.content.thinking},
+                    }
+                )
 
         return final_content, tool_use_map
 
@@ -398,6 +409,7 @@ class BaseGrokCustomCodeQuerySolverPrompt:
         result: List[Dict[str, Any]] = []
 
         # Define the patterns
+        thinking_pattern = r"<thinking>(.*?)</thinking>"
         code_block_pattern = r"<code_block>(.*?)</code_block>"
 
         # edge case, check if there is <code_block> tag in the input_string, and if it is not inside any other tag, and there
@@ -407,10 +419,18 @@ class BaseGrokCustomCodeQuerySolverPrompt:
         if last_code_block_tag != -1 and input_string[last_code_block_tag:].rfind("</code_block>") == -1:
             input_string += "</code_block>"
 
+        # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
+        last_thinking_tag = input_string.rfind("<thinking>")
+        if last_thinking_tag != -1 and input_string[last_thinking_tag:].rfind("</thinking>") == -1:
+            # remove the last thinking tag
+            input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
+
+        # Find all occurrences of either pattern
+        matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
         matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
-        matches = list(matches_code_block)
+        matches = list(matches_thinking) + list(matches_code_block)
         matches.sort(key=lambda match: match.start())
 
         last_end = 0
@@ -427,6 +447,13 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 code_block_string = match.group(1).strip()
                 code_block_info = cls.extract_code_block_info(code_block_string)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
+            elif match.re.pattern == thinking_pattern:
+                result.append(
+                    {
+                        "type": "THINKING_BLOCK",
+                        "content": {"text": match.group(1).strip()},
+                    }
+                )
 
             last_end = end_index
 

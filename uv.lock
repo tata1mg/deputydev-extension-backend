@@ -564,7 +564,7 @@ requires-dist = [
     { name = "azure-servicebus", specifier = "==7.14.1" },
     { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.38.42" },
     { name = "botocore", specifier = ">=1.35.0,<2.0.0" },
-    { name = "deputydev-core", directory = "../deputydev-core" },
+    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.6" },
     { name = "elastic-apm", specifier = "==6.22.3" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
@@ -604,19 +604,15 @@ dev = [
 [[package]]
 name = "deputydev-core"
 version = "7.0.6"
-source = { directory = "../deputydev-core" }
+source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.6#051ae4308d7896eeabbe18731022f86da99d8a9f" }
 dependencies = [
-    { name = "aiobotocore" },
     { name = "aiohttp" },
-    { name = "botocore" },
     { name = "diff-match-patch" },
     { name = "fastmcp" },
     { name = "gitpython" },
     { name = "giturlparse" },
-    { name = "google-genai" },
     { name = "mcp", extra = ["cli"] },
     { name = "numpy" },
-    { name = "openai" },
     { name = "protobuf" },
     { name = "pydantic" },
     { name = "python-levenshtein" },
@@ -624,44 +620,8 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tree-sitter" },
     { name = "tree-sitter-language-pack" },
-    { name = "types-aiobotocore-apigatewaymanagementapi" },
-    { name = "types-aiobotocore-bedrock-runtime" },
-    { name = "types-aiobotocore-s3" },
     { name = "weaviate-client" },
     { name = "xxhash" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiobotocore", specifier = ">=2.15.0,<3.0.0" },
-    { name = "aiohttp", specifier = ">=3.12.14" },
-    { name = "botocore", specifier = ">=1.35.0,<2.0.0" },
-    { name = "diff-match-patch", specifier = "==20241021" },
-    { name = "fastmcp", specifier = "==2.3.4" },
-    { name = "gitpython", specifier = "==3.1.41" },
-    { name = "giturlparse", specifier = "==0.12.0" },
-    { name = "google-genai", specifier = "==1.13.0" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.10.0" },
-    { name = "numpy", specifier = "==1.26.2" },
-    { name = "openai", specifier = "==1.78.0" },
-    { name = "protobuf", specifier = ">=5.29.5" },
-    { name = "pydantic", specifier = "==2.10.3" },
-    { name = "python-levenshtein", specifier = "==0.27.1" },
-    { name = "pyyaml", specifier = "==6.0.2" },
-    { name = "tiktoken", specifier = "==0.7.0" },
-    { name = "tree-sitter", specifier = "==0.23.2" },
-    { name = "tree-sitter-language-pack", specifier = "==0.8.0" },
-    { name = "types-aiobotocore-apigatewaymanagementapi", specifier = "==2.11.2" },
-    { name = "types-aiobotocore-bedrock-runtime", specifier = "==2.11.2" },
-    { name = "types-aiobotocore-s3", specifier = "==2.11.2" },
-    { name = "weaviate-client", specifier = "==4.10.3" },
-    { name = "xxhash", specifier = "==3.5.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pre-commit", specifier = ">=4.2.0" },
-    { name = "ruff", specifier = "==0.12.0" },
 ]
 
 [[package]]

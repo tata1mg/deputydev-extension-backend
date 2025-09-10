@@ -21,13 +21,11 @@ class LLMServiceManager:
     """Factory class to create LLMHandler instances with proper dependencies"""
 
     def __init__(self) -> None:
-        # Initialize all dependencies once
         self.config_manager = ConfigManager()
         self.message_threads_repo = MessageThreadsRepository()
         self.chat_attachments_repo = ChatAttachmentsRepository()
         self.code_gen_cache = CodeGenTasksCache()
 
-        # Create adapters
         self.config_adapter = ConfigManagerAdapter(self.config_manager)
         self.message_threads_adapter = MessageThreadsRepositoryAdapter(self.message_threads_repo)
         self.chat_attachments_adapter = ChatAttachmentsRepositoryAdapter(self.chat_attachments_repo)
