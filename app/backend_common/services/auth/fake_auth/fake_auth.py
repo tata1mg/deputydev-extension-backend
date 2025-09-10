@@ -2,10 +2,10 @@ from typing import Dict
 
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.auth import AuthStatus
-from app.backend_common.utils.sanic_wrapper import Request
 
 from app.backend_common.services.auth.base_auth import BaseAuth
 from app.backend_common.utils.dataclasses.main import AuthSessionData
+from app.backend_common.utils.sanic_wrapper import Request
 
 
 class FakeAuth(BaseAuth):

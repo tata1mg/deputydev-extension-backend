@@ -9,9 +9,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
     CodeQuerySolverPromptFactory,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.factory import (
-    CustomCodeQuerySolverPromptFactory,
-)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.inline_editor.factory import (
     InlineEditorPromptFactory,
 )
@@ -38,13 +35,12 @@ from deputydev_core.llm_handler.prompts.base_prompt_feature_factory import BaseP
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
     feature_prompt_factory_map: Dict[PromptFeatures, Type[BaseFeaturePromptFactory]] = {
-        PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
         PromptFeatures.SESSION_SUMMARY_GENERATOR: SessionSummaryGeneratorPromptFactory,
         PromptFeatures.INLINE_EDITOR: InlineEditorPromptFactory,
         PromptFeatures.TERMINAL_COMMAND_EDITOR: TerminalCommandEditorPromptFactory,
         PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
         PromptFeatures.INTENT_SELECTOR: IntentSelectorPromptFactory,
-        PromptFeatures.CUSTOM_CODE_QUERY_SOLVER: CustomCodeQuerySolverPromptFactory,
+        PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
         PromptFeatures.QUERY_SUMMARY_GENERATOR: QuerySummaryGeneratorPromptFactory,
         PromptFeatures.CHAT_RERANKING: ChatRankingPromptFactory,
     }

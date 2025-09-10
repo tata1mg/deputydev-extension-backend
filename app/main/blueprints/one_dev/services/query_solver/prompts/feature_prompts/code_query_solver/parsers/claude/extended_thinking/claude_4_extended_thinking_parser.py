@@ -6,16 +6,18 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from deputydev_core.llm_handler.dataclasses.main import (
     ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockEnd,
     ExtendedThinkingBlockStart,
-    ExtendedThinkingEvents,
 )
 
 
 class Claude4ExtendedThinkingParser:
-    def parse(self, event: ExtendedThinkingEvents) -> ThinkingBlockStart | ThinkingBlockDelta | ThinkingBlockEnd:
+    def parse(
+        self, event: ExtendedThinkingBlockStart | ExtendedThinkingBlockDelta | ExtendedThinkingBlockEnd
+    ) -> ThinkingBlockDelta | ThinkingBlockStart | ThinkingBlockEnd:
         if isinstance(event, ExtendedThinkingBlockStart):
             return ThinkingBlockStart()
         if isinstance(event, ExtendedThinkingBlockDelta):
             return ThinkingBlockDelta(content=ThinkingBlockDeltaContent(thinking_delta=event.content.thinking_delta))
-        else:  # ExtendedThinkingBlockEnd
+        if isinstance(event, ExtendedThinkingBlockEnd):
             return ThinkingBlockEnd()
