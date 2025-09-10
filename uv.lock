@@ -504,7 +504,7 @@ wheels = [
 
 [[package]]
 name = "deputydev"
-version = "14.0.3"
+version = "14.0.6"
 source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
@@ -541,7 +541,6 @@ dependencies = [
     { name = "toml" },
     { name = "tortoise-orm" },
     { name = "types-aiobotocore-apigatewaymanagementapi" },
-    { name = "types-aiobotocore-bedrock-runtime" },
     { name = "types-aiobotocore-s3" },
     { name = "ujson" },
     { name = "websockets" },
@@ -564,7 +563,7 @@ requires-dist = [
     { name = "azure-servicebus", specifier = "==7.14.1" },
     { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.38.42" },
     { name = "botocore", specifier = ">=1.35.0,<2.0.0" },
-    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.6" },
+    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.8" },
     { name = "elastic-apm", specifier = "==6.22.3" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
@@ -589,7 +588,6 @@ requires-dist = [
     { name = "toml", specifier = "==0.10.2" },
     { name = "tortoise-orm", specifier = ">=0.19,<0.22.0" },
     { name = "types-aiobotocore-apigatewaymanagementapi", specifier = "==2.11.2" },
-    { name = "types-aiobotocore-bedrock-runtime", specifier = "==2.11.2" },
     { name = "types-aiobotocore-s3", specifier = "==2.11.2" },
     { name = "ujson", specifier = "==5.9.0" },
     { name = "websockets", specifier = "==14.0" },
@@ -603,16 +601,20 @@ dev = [
 
 [[package]]
 name = "deputydev-core"
-version = "7.0.6"
-source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.6#051ae4308d7896eeabbe18731022f86da99d8a9f" }
+version = "7.0.8"
+source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=7.0.8#18080d22b4319cde713efabd767a02f64aa1b0a4" }
 dependencies = [
+    { name = "aiobotocore" },
     { name = "aiohttp" },
+    { name = "botocore" },
     { name = "diff-match-patch" },
     { name = "fastmcp" },
     { name = "gitpython" },
     { name = "giturlparse" },
+    { name = "google-genai" },
     { name = "mcp", extra = ["cli"] },
     { name = "numpy" },
+    { name = "openai" },
     { name = "protobuf" },
     { name = "pydantic" },
     { name = "python-levenshtein" },
@@ -620,6 +622,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tree-sitter" },
     { name = "tree-sitter-language-pack" },
+    { name = "types-aiobotocore-apigatewaymanagementapi" },
+    { name = "types-aiobotocore-bedrock-runtime" },
+    { name = "types-aiobotocore-s3" },
     { name = "weaviate-client" },
     { name = "xxhash" },
 ]
