@@ -5,33 +5,12 @@ from sanic import Sanic
 from app.backend_common.utils.redis_wrapper.registry import cache_registry
 from app.backend_common.utils.sanic_wrapper.constants import ListenerEventTypes
 from app.backend_common.utils.tortoise_wrapper import TortoiseWrapper
-from app.main.blueprints.deputy_dev.services.message_queue.factories.message_queue_factory import (
-    MessageQueueFactory,
-)
-from app.main.blueprints.deputy_dev.services.message_queue.message_queue_helper import (
-    MessageQueueHelper,
-)
 from app.main.blueprints.one_dev.services.kafka.analytics_events.analytics_event_subscriber import (
     AnalyticsEventSubscriber,
 )
 from app.main.blueprints.one_dev.services.kafka.error_analytics_events.error_analytics_event_subscriber import (
     ErrorAnalyticsEventSubscriber,
 )
-
-
-async def initialize_message_queue_subscribers(_app: Sanic, loop: Any) -> None:
-    """
-
-    :param _app:
-    :param loop:
-    :return:
-    """
-    if MessageQueueHelper.is_queue_enabled(_app.config, "GENAI"):
-        genai_subscribe = MessageQueueFactory.genai_subscriber()(_app.config)
-        _app.add_task(await genai_subscribe.subscribe())
-    if MessageQueueHelper.is_queue_enabled(_app.config, "METASYNC"):
-        meta_subscribe = MessageQueueFactory.meta_subscriber()(_app.config)
-        _app.add_task(await meta_subscribe.subscribe())
 
 
 async def initialize_kafka_subscriber(_app: Sanic, loop: Any) -> None:
@@ -76,7 +55,6 @@ listeners = [
     (close_weaviate_server, ListenerEventTypes.BEFORE_SERVER_STOP.value),
     (setup_caches, ListenerEventTypes.BEFORE_SERVER_START.value),
     (initialize_kafka_subscriber, ListenerEventTypes.AFTER_SERVER_START.value),
-    (initialize_message_queue_subscribers, ListenerEventTypes.AFTER_SERVER_START.value),
     (setup_tortoise, ListenerEventTypes.BEFORE_SERVER_START.value),
     (teardown_tortoise, ListenerEventTypes.AFTER_SERVER_STOP.value),
 ]
