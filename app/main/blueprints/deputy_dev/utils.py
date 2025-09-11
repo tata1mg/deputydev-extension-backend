@@ -14,7 +14,6 @@ from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestExceptio
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.repository.db import DB
-from app.backend_common.services.credentials import AuthHandler, AuthHandlerFactory
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
     BitbucketBots,
