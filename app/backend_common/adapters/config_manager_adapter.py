@@ -20,10 +20,7 @@ class ConfigManagerAdapter(ConfigInterface):
     # ProviderConfigInterface implementation
     def get_openai_config(self) -> Optional[Dict[str, Any]]:
         return {
-            "OPENAI": {
-                "OPENAI_KEY": self.config_manager.configs.get("OPENAI_KEY"),
-                "OPENAI_TIMEOUT": self.config_manager.configs.get("OPENAI_TIMEOUT", 60),
-            },
+            "OPENAI": self.config_manager.configs.get("OPENAI", {}),
             "LLM_MODELS": self.config_manager.configs["LLM_MODELS"],
         }
 
