@@ -1,8 +1,9 @@
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     ExtendedThinkingBlockDelta,
     ExtendedThinkingBlockStart,
     ExtendedThinkingEvents,
 )
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     ThinkingBlockDelta,
     ThinkingBlockDeltaContent,

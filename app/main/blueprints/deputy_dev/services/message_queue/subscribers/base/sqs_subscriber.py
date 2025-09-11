@@ -2,11 +2,11 @@ import asyncio
 from typing import Any
 
 import botocore.exceptions
+from deputydev_core.exceptions.exceptions import RetryException
 from sanic.log import logger
 
 from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.constants.success_messages import SuccessMessages
-from app.backend_common.exception import RetryException
 from app.backend_common.exception.exception import RateLimitError
 from app.main.blueprints.deputy_dev.services.message_queue.factories.message_parser_factory import (
     MessageParserFactory,

@@ -1,17 +1,18 @@
 from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    LLModels,
-    MessageData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    LLModels,
+    MessageData,
+)
+from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.deputy_dev.services.code_review.common.review_planner.prompts.dataclasses.main import (
     PromptFeatures,
 )
