@@ -22,9 +22,6 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.pr_review_ma
 from app.main.blueprints.deputy_dev.services.repository.pr.backfill_data_manager import (
     BackfillManager,
 )
-from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_trigger import (
-    StatsCollectionTrigger,
-)
 
 smart_code = Blueprint("smart_code", "/smart_code_review")
 
@@ -67,26 +64,6 @@ async def chat_assistance_api(_request: Request, **kwargs: Any) -> ResponseDict 
     # TODO - Unfulfilled parameter - comment
     asyncio.ensure_future(SmartCodeChatManager.chat(payload, query_params))
     return send_response(f"Processing Started with Request ID : {request_id}")
-
-
-@smart_code.route("/stats-collection", methods=["POST"])
-@exception_logger
-async def compute_pr_close_metrics(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
-    logger.info("Request received for stats-collection")
-    payload = _request.custom_json()
-    query_params = _request.request_params()
-    await StatsCollectionTrigger().select_stats_and_publish(payload=payload, query_params=query_params)
-    return send_response("Success")
-
-
-# The below url is temporary to carter the merge flow, once the "/stats-collection" url is integrated,
-# the API below will be deprecated.
-@smart_code.route("/merge", methods=["POST"])
-async def compute_merge_metrics(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
-    payload = _request.custom_json()
-    query_params = _request.request_params()
-    await StatsCollectionTrigger().select_stats_and_publish(payload=payload, query_params=query_params)
-    return send_response("Success")
 
 
 # The route defined below acts like a script, which when called upon is used to backfill data.
