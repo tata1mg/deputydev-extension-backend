@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from sanic.log import logger
 
 from app.backend_common.constants.past_workflows import SessionStatus
@@ -11,7 +12,6 @@ from app.backend_common.models.dto.extension_sessions_dto import (
     ExtensionSessionDTO,
 )
 from app.backend_common.repository.db import DB
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class ExtensionSessionsRepository:

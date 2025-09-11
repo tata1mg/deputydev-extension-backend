@@ -1,8 +1,5 @@
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -15,6 +12,9 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
 from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_claude_3_point_7_sonnet_prompt_handler import (
     BaseClaude3Point7SonnetPromptHandler,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
 class Claude3Point7UserQueryEnhancerPrompt(BaseClaude3Point7SonnetPromptHandler):

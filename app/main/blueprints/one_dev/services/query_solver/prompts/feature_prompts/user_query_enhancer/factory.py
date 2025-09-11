@@ -1,11 +1,12 @@
 from typing import Type
 
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.claude_3_point_7_sonnet import (
-    Claude3Point7UserQueryEnhancerPrompt,
-)
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from deputydev_core.llm_handler.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
 from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.user_query_enhancer.claude_3_point_7_sonnet import (
+    Claude3Point7UserQueryEnhancerPrompt,
+)
 
 
 class UserQueryEnhancerPromptFactory(BaseFeaturePromptFactory):

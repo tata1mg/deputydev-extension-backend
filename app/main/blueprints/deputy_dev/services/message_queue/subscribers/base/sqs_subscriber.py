@@ -2,6 +2,7 @@ import asyncio
 from typing import Any
 
 import botocore.exceptions
+from deputydev_core.exceptions.exceptions import RetryException
 from sanic.log import logger
 
 from app.backend_common.constants.error_messages import ErrorMessages
@@ -16,7 +17,6 @@ from app.main.blueprints.deputy_dev.services.message_queue.parsers.subscribe_res
 from app.main.blueprints.deputy_dev.services.message_queue.subscribers.base.base_subscriber import (
     BaseSubscriber,
 )
-from deputydev_core.exceptions.exceptions import RetryException
 
 
 class SQSSubscriber(BaseSubscriber):

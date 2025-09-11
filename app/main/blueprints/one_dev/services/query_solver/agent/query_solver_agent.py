@@ -2,6 +2,25 @@ import textwrap
 from asyncio import Task
 from typing import Dict, List, Optional, Tuple, Type
 
+from deputydev_core.llm_handler.dataclasses.agent import LLMHandlerInputs
+from deputydev_core.llm_handler.dataclasses.main import (
+    ConversationTool,
+)
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationRole,
+    UnifiedConversationTurn,
+    UnifiedConversationTurnContentType,
+    UnifiedImageConversationTurnContent,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
@@ -71,24 +90,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
-from deputydev_core.llm_handler.dataclasses.agent import LLMHandlerInputs
-from deputydev_core.llm_handler.dataclasses.main import (
-    ConversationTool,
-)
-from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedConversationRole,
-    UnifiedConversationTurn,
-    UnifiedConversationTurnContentType,
-    UnifiedImageConversationTurnContent,
-    UnifiedTextConversationTurnContent,
-    UnifiedToolRequestConversationTurnContent,
-    UnifiedToolResponseConversationTurnContent,
-    UserConversationTurn,
-)
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
-from deputydev_core.utils.config_manager import ConfigManager
 
 
 class QuerySolverAgent:

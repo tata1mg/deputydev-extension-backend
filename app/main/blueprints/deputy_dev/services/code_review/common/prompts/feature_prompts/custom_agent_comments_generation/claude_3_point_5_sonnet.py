@@ -1,7 +1,8 @@
 from typing import Any, Dict
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
 from deputydev_core.llm_handler.dataclasses.main import UserAndSystemMessages
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
     BaseClaude3Point5SonnetCommentCreationPrompt,

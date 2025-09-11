@@ -1,8 +1,6 @@
 import json
 from typing import Any, AsyncIterator, Dict, List
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -12,6 +10,9 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
 from deputydev_core.llm_handler.prompts.llm_base_prompts.gpt_40 import (
     BaseGPT4POINT1Prompt,
 )
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import PromptFeatures
 
 
 class GPT4Point1CommentValidationPrompt(BaseGPT4POINT1Prompt):
