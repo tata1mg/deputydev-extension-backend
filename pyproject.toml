@@ -21,7 +21,7 @@ dependencies = [
   "python-json-logger==3.3.0",
   "rich==14.0.0",
   "setuptools>=78.1.1,<79.0.0",
-  "deputydev-core @ git+ssh://git@github.com/DeputyDev-1mg/deputydev-core.git@7.0.8",
+  "deputydev-core @ git+ssh://git@github.com/DeputyDev-1mg/deputydev-core.git@8.0.0",
   "psycopg2-binary==2.9.9",
   "pgvector==0.2.4",
   "pandas==2.1.3",
