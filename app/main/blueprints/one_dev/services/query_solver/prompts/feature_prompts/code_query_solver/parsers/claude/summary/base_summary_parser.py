@@ -1,13 +1,13 @@
 from typing import List
 
-from pydantic import BaseModel
-
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     TextBlockDelta,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
+from deputydev_core.llm_handler.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
     BaseAnthropicTextDeltaParser,
 )
+from pydantic import BaseModel
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     SummaryBlockDelta,
     SummaryBlockDeltaContent,

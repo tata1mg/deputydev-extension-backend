@@ -1,6 +1,6 @@
 import textwrap
 
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
 
 PUBLIC_URL_CONTENT_READER = ConversationTool(
     name="public_url_content_reader",

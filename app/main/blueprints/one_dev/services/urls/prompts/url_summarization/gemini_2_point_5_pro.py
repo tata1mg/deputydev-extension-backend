@@ -1,21 +1,21 @@
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    MessageData,
-    TextBlockData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro_prompt_handler import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    MessageData,
+    TextBlockData,
+)
+from deputydev_core.llm_handler.providers.google.prompts.base_prompts.base_gemini_2_point_5_pro_prompt_handler import (
     BaseGemini2Point5ProPromptHandler,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.backend_common.utils.sanic_wrapper import CONFIG
 
 

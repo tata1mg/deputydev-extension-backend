@@ -46,6 +46,17 @@ class CancellationChecker:
         """Check if cancellation has been detected"""
         return self.cancelled_event.is_set()
 
+    async def enforce_cancellation_with_cleanup(
+        self,
+    ) -> None:
+        """
+        If cancelled, cleanup session data and raise asyncio.CancelledError.
+        Call at safe interruption points to honor user cancellation.
+        """
+        if self.is_cancelled():
+            await CodeGenTasksCache.cleanup_session_data(self.session_id)
+            raise asyncio.CancelledError()
+
     async def __aenter__(self) -> "CancellationChecker":
         await self.start_monitoring()
         return self
