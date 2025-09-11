@@ -1,17 +1,17 @@
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.openrouter_models.prompts.base_prompts.base_gpt_4_point_1 import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
+from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_gpt_4_point_1 import (
     BaseGpt4Point1Prompt,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.gpt_4_point_1_block_parser import (
     Gpt4Point1CodeBlockParser,
 )

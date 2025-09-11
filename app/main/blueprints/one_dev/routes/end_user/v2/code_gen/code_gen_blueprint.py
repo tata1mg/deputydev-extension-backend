@@ -4,6 +4,11 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+from deputydev_core.exceptions.exceptions import InputTokenLimitExceededError
+from deputydev_core.exceptions.llm_exceptions import (
+    LLMThrottledError,
+)
+from deputydev_core.llm_handler.dataclasses.main import StreamingEventType
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.constants.error_codes import APIErrorCodes
@@ -16,17 +21,12 @@ from app.backend_common.caches.code_gen_tasks_cache import (
 from app.backend_common.caches.websocket_connections_cache import (
     WebsocketConnectionCache,
 )
-from app.backend_common.exception.exception import InputTokenLimitExceededError
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.service_clients.aws_api_gateway.aws_api_gateway_service_client import (
     AWSAPIGatewayServiceClient,
     SocketClosedError,
 )
-from app.backend_common.service_clients.exceptions import (
-    LLMThrottledError,
-)
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
-from app.backend_common.services.llm.dataclasses.main import StreamingEventType
 from app.backend_common.utils.authenticate import authenticate, get_auth_data
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.backend_common.utils.sanic_wrapper import Request, send_response
