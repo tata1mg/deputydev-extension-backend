@@ -1,5 +1,10 @@
 from typing import Any, Dict, List
 
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
@@ -8,10 +13,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from deputydev_core.llm_handler.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 from .prompts.factory import PromptFeatureFactory
 

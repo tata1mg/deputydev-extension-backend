@@ -1,11 +1,12 @@
 from typing import Type
 
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.query_summary_generator.gpt_4_point_1_nano import (
-    Gpt4Point1NanoQuerySummaryGeneratorPrompt,
-)
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from deputydev_core.llm_handler.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
 from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.query_summary_generator.gpt_4_point_1_nano import (
+    Gpt4Point1NanoQuerySummaryGeneratorPrompt,
+)
 
 
 class QuerySummaryGeneratorPromptFactory(BaseFeaturePromptFactory):

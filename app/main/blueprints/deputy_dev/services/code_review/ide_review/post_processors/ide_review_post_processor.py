@@ -1,5 +1,7 @@
 from typing import Any, Dict, List
 
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
+
 from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
@@ -21,7 +23,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.fact
 from app.main.blueprints.deputy_dev.services.repository.extension_reviews.repository import ExtensionReviewsRepository
 from app.main.blueprints.deputy_dev.services.repository.ide_reviews_comments.repository import IdeCommentRepository
 from app.main.blueprints.deputy_dev.services.repository.user_agents.repository import UserAgentRepository
-from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
 
 
 class IdeReviewPostProcessor:

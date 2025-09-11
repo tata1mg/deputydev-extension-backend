@@ -2,6 +2,11 @@ import asyncio
 import json
 from typing import Dict, List, Tuple
 
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+)
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.services.chunking.rerankers.handler.llm_based.prompts.dataclasses.main import PromptFeatures
 from app.backend_common.services.chunking.rerankers.handler.llm_based.prompts.factory import PromptFeatureFactory
 from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
@@ -29,10 +34,6 @@ from app.main.blueprints.one_dev.services.repository.agent_chats.repository impo
 from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
     QuerySummarysRepository,
 )
-from deputydev_core.llm_handler.models.dto.message_thread_dto import (
-    LLModels,
-)
-from deputydev_core.utils.config_manager import ConfigManager
 
 
 class ChatHistoryHandler:

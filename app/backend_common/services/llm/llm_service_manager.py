@@ -2,6 +2,11 @@
 from enum import Enum
 from typing import Type, TypeVar
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
+from deputydev_core.llm_handler.prompts.base_prompt_feature_factory import BasePromptFeatureFactory
+from deputydev_core.utils.config_manager import ConfigManager
+
 from app.backend_common.adapters.chat_attachments_repository_adapter import ChatAttachmentsRepositoryAdapter
 from app.backend_common.adapters.codegen_task_cache import CodeGenTasksCacheAdapter
 from app.backend_common.adapters.config_manager_adapter import ConfigManagerAdapter
@@ -9,10 +14,6 @@ from app.backend_common.adapters.message_threads_repository_adapter import Messa
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
-from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
-from deputydev_core.llm_handler.prompts.base_prompt_feature_factory import BasePromptFeatureFactory
-from deputydev_core.utils.config_manager import ConfigManager
 
 PromptFeatures = TypeVar("PromptFeatures", bound=Enum)
 

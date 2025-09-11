@@ -1,12 +1,13 @@
 from typing import List
 
-from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 from deputydev_core.llm_handler.interfaces.repositories_interface import MessageThreadsRepositoryInterface
 from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadData,
     MessageThreadDTO,
 )
+
+from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
 
 class MessageThreadsRepositoryAdapter(MessageThreadsRepositoryInterface):

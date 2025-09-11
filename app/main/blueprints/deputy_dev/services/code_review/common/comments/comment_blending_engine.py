@@ -2,6 +2,10 @@ import asyncio
 import json
 from typing import Any, Dict, List, Optional, Tuple
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.context_vars import get_context_value
+
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,
@@ -27,9 +31,6 @@ from app.main.blueprints.deputy_dev.services.setting.setting_service import (
     SettingService,
 )
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
-from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.context_vars import get_context_value
 
 
 class CommentBlendingEngine:

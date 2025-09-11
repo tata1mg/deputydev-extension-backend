@@ -1,6 +1,9 @@
 import json
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
@@ -16,8 +19,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.base_
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class CommentValidatorAgent(BaseCodeReviewAgent):

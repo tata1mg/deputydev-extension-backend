@@ -1,7 +1,6 @@
 import re
 from typing import Any, Dict, List
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     UserAndSystemMessages,
@@ -13,6 +12,8 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
 from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_claude_3_point_5_sonnet_prompt_handler import (
     BaseClaude3Point5SonnetPromptHandler,
 )
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 from ...dataclasses.main import PromptFeatures
 

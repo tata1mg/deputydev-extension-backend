@@ -1,5 +1,8 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.main.blueprints.deputy_dev.constants.constants import TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
@@ -13,8 +16,6 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_a
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
 )
-from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class CustomAgent(BaseCommenterAgent):
