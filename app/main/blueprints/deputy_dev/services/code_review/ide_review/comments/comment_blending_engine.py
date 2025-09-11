@@ -2,6 +2,9 @@ import asyncio
 import json
 from typing import Any, Dict, List, Optional, Tuple
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     CommentBuckets,
@@ -21,8 +24,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_
     IdeReviewContextService,
 )
 from app.main.blueprints.deputy_dev.utils import extract_line_number_from_llm_response
-from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.utils.app_logger import AppLogger
 
 
 class CommentBlendingEngine:

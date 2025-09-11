@@ -1,13 +1,14 @@
 from typing import Any, Dict, List, Optional
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
+
 from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import (
     QuerySolverAgent,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItem
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
-from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
 
 
 class QuerySolverAgentSelector:

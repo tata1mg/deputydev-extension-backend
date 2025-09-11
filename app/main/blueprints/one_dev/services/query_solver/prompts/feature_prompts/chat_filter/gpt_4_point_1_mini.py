@@ -1,10 +1,6 @@
 import json
 from typing import Any, AsyncIterator, Dict, List, Type
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -17,6 +13,10 @@ from deputydev_core.llm_handler.providers.openai.prompts.base_prompts.base_gpt_4
     BaseGpt4Point1MiniPrompt,
 )
 from deputydev_core.utils.app_logger import AppLogger
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 
 
 class SortedAndFilteredChatIDs(BaseModel):

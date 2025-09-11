@@ -1,11 +1,12 @@
 from typing import Any, Dict
 
+from deputydev_core.llm_handler.dataclasses.main import UserAndSystemMessages
+
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
     AgentFocusArea,
 )
-from deputydev_core.llm_handler.dataclasses.main import UserAndSystemMessages
 
 from ...base_prompts.claude_3_point_5_sonnet_comment_creation import (
     BaseClaude3Point5SonnetCommentCreationPrompt,

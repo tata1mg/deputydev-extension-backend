@@ -1,9 +1,6 @@
 import json
 from typing import Any, AsyncIterator, Dict, List, Type
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -16,6 +13,9 @@ from deputydev_core.llm_handler.providers.openai.prompts.base_prompts.base_gpt_4
     BaseGpt4Point1NanoPrompt,
 )
 from deputydev_core.utils.app_logger import AppLogger
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
 class QuerySummary(BaseModel):

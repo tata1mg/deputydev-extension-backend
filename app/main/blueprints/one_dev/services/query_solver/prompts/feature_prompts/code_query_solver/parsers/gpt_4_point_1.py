@@ -1,6 +1,17 @@
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
+from deputydev_core.llm_handler.dataclasses.main import (
+    StreamingEvent,
+    StreamingEventType,
+    TextBlockDelta,
+    TextBlockDeltaContent,
+    TextBlockEnd,
+    TextBlockStart,
+    ToolUseRequestDelta,
+    ToolUseRequestEnd,
+    ToolUseRequestStart,
+)
 from pydantic import BaseModel
 from pydantic_core import from_json
 
@@ -20,17 +31,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     ThinkingBlockDeltaContent,
     ThinkingBlockEnd,
     ThinkingBlockStart,
-)
-from deputydev_core.llm_handler.dataclasses.main import (
-    StreamingEvent,
-    StreamingEventType,
-    TextBlockDelta,
-    TextBlockDeltaContent,
-    TextBlockEnd,
-    TextBlockStart,
-    ToolUseRequestDelta,
-    ToolUseRequestEnd,
-    ToolUseRequestStart,
 )
 
 

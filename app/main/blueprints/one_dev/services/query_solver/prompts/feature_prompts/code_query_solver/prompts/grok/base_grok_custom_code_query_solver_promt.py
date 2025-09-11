@@ -2,13 +2,14 @@ import re
 import textwrap
 from typing import Any, Dict, List, Tuple, Union
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
 from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
 from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     MessageData,
     TextBlockData,
     ToolUseRequestData,
 )
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
 class BaseGrokCustomCodeQuerySolverPrompt:

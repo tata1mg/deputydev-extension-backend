@@ -1,11 +1,12 @@
 from typing import Type
 
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.session_summary_generator.gemini_2_point_5_flash import (
-    Gemini2Point5FlashSessionSummaryGeneratorPrompt,
-)
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from deputydev_core.llm_handler.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
 from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.session_summary_generator.gemini_2_point_5_flash import (
+    Gemini2Point5FlashSessionSummaryGeneratorPrompt,
+)
 
 
 class SessionSummaryGeneratorPromptFactory(BaseFeaturePromptFactory):

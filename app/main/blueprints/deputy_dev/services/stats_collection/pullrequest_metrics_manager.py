@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from deputydev_core.exceptions.exceptions import RetryException
 from pydantic import ValidationError
 from sanic.log import logger
 
@@ -20,7 +21,6 @@ from app.main.blueprints.deputy_dev.services.stats_collection.stats_collection_b
 from app.main.blueprints.deputy_dev.services.webhook.pullrequest_close_webhook import (
     PullRequestCloseWebhook,
 )
-from deputydev_core.exceptions.exceptions import RetryException
 
 
 class PullRequestMetricsManager(StatsCollectionBase):

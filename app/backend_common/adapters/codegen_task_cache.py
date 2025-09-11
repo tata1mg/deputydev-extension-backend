@@ -1,5 +1,6 @@
-from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from deputydev_core.llm_handler.interfaces.caches_interface import SessionCacheInterface
+
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 
 
 class CodeGenTasksCacheAdapter(SessionCacheInterface):
