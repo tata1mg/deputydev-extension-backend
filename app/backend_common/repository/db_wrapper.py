@@ -7,7 +7,6 @@ from __future__ import annotations
 # ---------------------------------------------------------------------------- #
 from contextvars import ContextVar
 from typing import Type
-
 from tortoise import Tortoise, timezone
 from tortoise.contrib.postgres.functions import Random
 from tortoise.models import Model
