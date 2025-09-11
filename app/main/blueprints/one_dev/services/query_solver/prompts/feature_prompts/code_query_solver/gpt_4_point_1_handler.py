@@ -1,5 +1,14 @@
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingResponse,
+    StreamingResponse,
+    UserAndSystemMessages,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
+from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_gpt_4_point_1 import (
+    BaseGpt4Point1Prompt,
+)
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
@@ -11,15 +20,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gpt.gpt_4_1.gpt_4_point_1_custom_code_query_solver_prompt import (
     Gpt4Point1CustomQuerySolverPrompt,
-)
-from deputydev_core.llm_handler.dataclasses.main import (
-    NonStreamingResponse,
-    StreamingResponse,
-    UserAndSystemMessages,
-)
-from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
-from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_gpt_4_point_1 import (
-    BaseGpt4Point1Prompt,
 )
 
 

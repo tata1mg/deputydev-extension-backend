@@ -1,7 +1,5 @@
 from typing import List
 
-from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
-from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
@@ -9,6 +7,9 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
 )
+
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
+from app.main.blueprints.one_dev.services.query_solver.agent.chat_history_handler.dataclasses.main import PreviousChats
 
 from ....prompts.dataclasses.main import PromptFeatures
 from ....prompts.factory import PromptFeatureFactory

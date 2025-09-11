@@ -1,10 +1,6 @@
 import json
 from typing import Dict, List, Optional, Union
 
-from sanic.log import logger
-
-from app.backend_common.models.dao.postgres.message_threads import MessageThread
-from app.backend_common.repository.db import DB
 from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadActor,
@@ -12,6 +8,10 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     MessageThreadDTO,
     MessageType,
 )
+from sanic.log import logger
+
+from app.backend_common.models.dao.postgres.message_threads import MessageThread
+from app.backend_common.repository.db import DB
 
 
 class MessageThreadsRepository:

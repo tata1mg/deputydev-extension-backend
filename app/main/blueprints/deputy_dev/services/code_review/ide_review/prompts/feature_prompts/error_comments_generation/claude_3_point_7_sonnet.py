@@ -1,5 +1,8 @@
 from typing import Any, Dict
 
+from deputydev_core.llm_handler.dataclasses.main import UserAndSystemMessages
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.deputy_dev.constants.constants import (
     CUSTOM_PROMPT_INSTRUCTIONS,
@@ -9,8 +12,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclas
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.prompts.base_prompts.claude_3_point_5_sonnet_comment_creation import (
     BaseClaude3Point5SonnetCommentCreationPrompt,
 )
-from deputydev_core.llm_handler.dataclasses.main import UserAndSystemMessages
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 
 class Claude3Point7ErrorCommentsGenerationPrompt(BaseClaude3Point5SonnetCommentCreationPrompt):

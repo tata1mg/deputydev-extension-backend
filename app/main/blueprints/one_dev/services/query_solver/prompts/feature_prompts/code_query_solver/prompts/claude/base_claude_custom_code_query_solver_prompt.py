@@ -2,15 +2,6 @@ import re
 import textwrap
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    ClassFocusItem,
-    CodeSnippetFocusItem,
-    DirectoryFocusItem,
-    FileFocusItem,
-    FunctionFocusItem,
-    UrlFocusItem,
-)
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     UserAndSystemMessages,
@@ -20,6 +11,16 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     MessageData,
     TextBlockData,
     ToolUseRequestData,
+)
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FunctionFocusItem,
+    UrlFocusItem,
 )
 
 

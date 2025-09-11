@@ -1,7 +1,8 @@
 from typing import Optional
 
-from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 from deputydev_core.llm_handler.interfaces.cancellation_interface import CancellationCheckerInterface
+
+from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 
 
 class CancellationCheckerAdapter(CancellationCheckerInterface):

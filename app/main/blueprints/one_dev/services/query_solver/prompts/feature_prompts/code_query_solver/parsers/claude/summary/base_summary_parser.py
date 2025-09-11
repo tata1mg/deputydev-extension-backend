@@ -1,5 +1,11 @@
 from typing import List
 
+from deputydev_core.llm_handler.dataclasses.main import (
+    TextBlockDelta,
+)
+from deputydev_core.llm_handler.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
+    BaseAnthropicTextDeltaParser,
+)
 from pydantic import BaseModel
 
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
@@ -7,12 +13,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     SummaryBlockDeltaContent,
     SummaryBlockEnd,
     SummaryBlockStart,
-)
-from deputydev_core.llm_handler.dataclasses.main import (
-    TextBlockDelta,
-)
-from deputydev_core.llm_handler.providers.anthropic.prompts.parsers.event_based.text_block_xml_parser import (
-    BaseAnthropicTextDeltaParser,
 )
 
 

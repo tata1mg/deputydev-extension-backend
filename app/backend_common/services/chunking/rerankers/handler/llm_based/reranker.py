@@ -2,7 +2,6 @@ import asyncio
 import time
 from typing import List, Optional
 
-from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
@@ -14,6 +13,8 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from deputydev_core.services.reranker.base_chunk_reranker import BaseChunkReranker
 from deputydev_core.utils.app_logger import AppLogger
+
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 
 from .prompts.dataclasses.main import PromptFeatures
 from .prompts.factory import PromptFeatureFactory

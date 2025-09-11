@@ -1,16 +1,5 @@
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    ClassFocusItem,
-    CodeSnippetFocusItem,
-    DirectoryFocusItem,
-    FileFocusItem,
-    FunctionFocusItem,
-    UrlFocusItem,
-)
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -22,6 +11,17 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
 )
 from deputydev_core.llm_handler.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
     BaseGemini2Point5FlashPromptHandler,
+)
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
+    ClassFocusItem,
+    CodeSnippetFocusItem,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FunctionFocusItem,
+    UrlFocusItem,
 )
 
 

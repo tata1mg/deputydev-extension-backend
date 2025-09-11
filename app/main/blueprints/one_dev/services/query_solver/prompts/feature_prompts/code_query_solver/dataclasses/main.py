@@ -2,8 +2,6 @@
 from enum import Enum
 from typing import Annotated, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
-
 from deputydev_core.llm_handler.dataclasses.main import (
     MalformedToolUseRequest,
     TextBlockDelta,
@@ -13,6 +11,7 @@ from deputydev_core.llm_handler.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
+from pydantic import BaseModel, Field
 
 
 class StreamingContentBlockType(Enum):

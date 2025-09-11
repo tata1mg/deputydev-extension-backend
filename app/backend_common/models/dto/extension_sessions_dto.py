@@ -1,9 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
-
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+from pydantic import BaseModel
 
 
 class ExtensionSessionData(BaseModel):

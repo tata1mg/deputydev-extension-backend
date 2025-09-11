@@ -2,14 +2,6 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
-from app.backend_common.exception.exception import ParseException
-from app.backend_common.utils.formatting import (
-    format_code_blocks,
-    format_comment_bucket_name,
-)
-from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
-    LLMCommentData,
-)
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
@@ -23,6 +15,15 @@ from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_cl
     BaseClaude3Point5SonnetPromptHandler,
 )
 from deputydev_core.utils.context_vars import get_context_value
+
+from app.backend_common.exception.exception import ParseException
+from app.backend_common.utils.formatting import (
+    format_code_blocks,
+    format_comment_bucket_name,
+)
+from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
+    LLMCommentData,
+)
 
 
 class BaseClaude3Point5SonnetCommentCreationPrompt(BaseClaude3Point5SonnetPromptHandler):
