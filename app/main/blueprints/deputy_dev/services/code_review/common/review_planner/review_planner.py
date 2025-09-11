@@ -1,16 +1,16 @@
 import asyncio
 from typing import Any, Dict, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.utils.app_logger import AppLogger
+
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 
 from .prompts.dataclasses.main import PromptFeatures
 from .prompts.factory import PromptFeatureFactory
@@ -21,9 +21,13 @@ class ReviewPlanner:
         super().__init__()
         self.session_id = session_id
         self.prompt_vars = prompt_vars
+        self.llm_service_manager = LLMServiceManager()
 
     async def get_review_plan(self) -> Optional[Dict[str, Any]]:
-        llm_handler = LLMHandler(prompt_features=PromptFeatures, prompt_factory=PromptFeatureFactory)
+        llm_handler = self.llm_service_manager.create_llm_handler(
+            prompt_factory=PromptFeatureFactory,
+            prompt_features=PromptFeatures,
+        )
 
         max_retries = 2
         response: Optional[Dict[str, Any]] = None
