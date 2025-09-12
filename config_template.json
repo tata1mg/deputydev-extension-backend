@@ -9,23 +9,6 @@
         "TRANSACTION_SAMPLE_RATE": 1
     },
     "BROWSER_HOST": "https://deputydev.ai",
-    "SUPABASE": {
-        "URL": "",
-        "KEY": "",
-        "JWT_SECRET_KEY": ""
-    },
-    "SESSION_ENCRYPTION_PASSWORD": "",
-    "ORG_INFO": {
-        "TATA_1MG": {
-            "domain": "1mg.com",
-            "team_id": 1,
-            "org_name": "TATA 1mg"
-        },
-        "DEPUTYDEV_PRIVATE": {
-            "team_id": 6,
-            "org_name": "DeputyDev Private"
-        }
-    },
     "DEBUG": false,
     "ACCESS_LOG": true,
     "ENABLE_WORKER": false,

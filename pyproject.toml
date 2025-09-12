@@ -30,7 +30,6 @@ dependencies = [
   "pillow>=10.3.0,<11.0.0",
   "websockets==14.0",
   "pyjwt==2.9.0",
-  "supabase==2.11.0",
   "types-aiobotocore-apigatewaymanagementapi==2.11.2",
   "types-aiobotocore-s3==2.11.2",
   "fuzzywuzzy",
