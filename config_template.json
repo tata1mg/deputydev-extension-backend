@@ -961,13 +961,6 @@
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3,
     "AUTO_REVIEW_ENABLED": true,
-    "FAKE_AUTH": {
-        "ENABLED": false,
-        "USER_EMAIL": "",
-        "USER_NAME": "",
-        "ENCRYPTED_SESSION_DATA": "",
-        "FAKE_BROWSER_HOST": ""
-    },
     "DEPUTYDEV_AUTH": {
         "HOST": "http://localhost:8085",
         "TIMEOUT": 10
