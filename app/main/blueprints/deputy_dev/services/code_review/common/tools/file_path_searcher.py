@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
 
 FILE_PATH_SEARCHER = ConversationTool(
     name="file_path_searcher",

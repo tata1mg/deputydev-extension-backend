@@ -1,11 +1,11 @@
 from typing import Any, Dict, Optional
 
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
 from deputydev_core.utils.context_vars import get_context_value
 
 from app.backend_common.constants.constants import PRStatus
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.handler import LLMHandler
 from app.main.blueprints.deputy_dev.constants.constants import FeatureFlows, TokenTypes
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,

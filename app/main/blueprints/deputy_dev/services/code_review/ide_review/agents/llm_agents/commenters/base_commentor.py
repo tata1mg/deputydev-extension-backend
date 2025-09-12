@@ -1,21 +1,11 @@
 from typing import Any, Dict, List, Optional
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
-from deputydev_core.utils.app_logger import AppLogger
-
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    LLModels,
-    ToolUseRequestData,
-    ToolUseResponseContent,
-    ToolUseResponseData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import (
     ConversationTool,
     NonStreamingParsedLLMCallResponse,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
     UnifiedConversationTurn,
@@ -24,8 +14,18 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
 )
-from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    LLModels,
+    ToolUseRequestData,
+    ToolUseResponseContent,
+    ToolUseResponseData,
+)
+from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.services.chunking.utils.snippet_renderer import render_snippet_array
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (

@@ -1,13 +1,13 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from deputydev_core.utils.app_logger import AppLogger
-
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,

@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
+
 from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import (
     QuerySolverAgent,
 )
