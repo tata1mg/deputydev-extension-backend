@@ -984,5 +984,9 @@
         "USER_NAME": "",
         "ENCRYPTED_SESSION_DATA": "",
         "FAKE_BROWSER_HOST": ""
+    },
+    "DEPUTYDEV_AUTH": {
+        "HOST": "http://localhost:8085",
+        "TIMEOUT": 10
     }
 }
