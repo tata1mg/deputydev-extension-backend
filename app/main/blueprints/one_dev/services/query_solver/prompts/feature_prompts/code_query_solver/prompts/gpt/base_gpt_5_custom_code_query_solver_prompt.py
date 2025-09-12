@@ -2,21 +2,14 @@ import re
 import textwrap
 from typing import Any, Dict, List, Tuple, Union
 
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     MessageData,
     TextBlockData,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    ClassFocusItem,
-    CodeSnippetFocusItem,
-    DirectoryFocusItem,
-    FileFocusItem,
-    FunctionFocusItem,
-    UrlFocusItem,
-)
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
 class BaseGpt5CustomCodeQuerySolverPrompt:
@@ -295,152 +288,11 @@ class BaseGpt5CustomCodeQuerySolverPrompt:
 
     def get_prompt(self) -> UserAndSystemMessages:  # noqa: C901
         system_message = self.get_system_prompt()
-        focus_chunks_message = ""
-        if self.params.get("focus_items"):
-            code_snippet_based_items = [
-                item
-                for item in self.params["focus_items"]
-                if isinstance(item, CodeSnippetFocusItem)
-                or isinstance(item, FileFocusItem)
-                or isinstance(item, ClassFocusItem)
-                or isinstance(item, FunctionFocusItem)
-            ]
-            if code_snippet_based_items:
-                focus_chunks_message = "The user has asked to focus on the following\n"
-                for focus_item in code_snippet_based_items:
-                    if (
-                        isinstance(focus_item, FileFocusItem)
-                        or isinstance(focus_item, ClassFocusItem)
-                        or isinstance(focus_item, FunctionFocusItem)
-                    ):
-                        focus_chunks_message += (
-                            "<item>"
-                            + f"<type>{focus_item.type.value}</type>"
-                            + (f"<value>{focus_item.value}</value>" if focus_item.value else "")
-                            + (f"<path>{focus_item.path}</path>")
-                            + "\n".join([chunk.get_xml() for chunk in focus_item.chunks])
-                            + "</item>"
-                        )
-
-            directory_items = [item for item in self.params["focus_items"] if isinstance(item, DirectoryFocusItem)]
-            if directory_items:
-                focus_chunks_message += (
-                    "\nThe user has also asked to explore the contents of the following directories:\n"
-                )
-                for directory_item in directory_items:
-                    focus_chunks_message += (
-                        "<item>" + "<type>directory</type>" + f"<path>{directory_item.path}</path>" + "<structure>\n"
-                    )
-                    for entry in directory_item.structure or []:
-                        label = "file" if entry.type == "file" else "folder"
-                        focus_chunks_message += f"{label}: {entry.name}\n"
-                    focus_chunks_message += "</structure></item>"
-
-            url_focus_items = [item for item in self.params["focus_items"] if isinstance(item, UrlFocusItem)]
-            if url_focus_items:
-                focus_chunks_message += f"\nThe user has also provided the following URLs for reference: {[url.url for url in url_focus_items]}\n"
-        if self.params.get("write_mode") is True:
-            user_message = textwrap.dedent(
-                f"""
-            Here is the user's query for editing - {self.params.get("query")}
-            """
-            )
-        else:
-            user_message = textwrap.dedent(
-                f"""
-            User Query: {self.params.get("query")}
-            """
-            )
-
-        if self.params.get("os_name") and self.params.get("shell"):
-            user_message += textwrap.dedent(
-                f"""
-            ====
-            SYSTEM INFORMATION:
-
-            Operating System: {self.params.get("os_name")}
-            Default Shell: {self.params.get("shell")}
-            ====
-            """
-            )
-        if self.params.get("vscode_env"):
-            user_message += textwrap.dedent(
-                f"""
-            ====
-            Below is the information about the current vscode environment:
-            {self.params.get("vscode_env")}
-            ====
-            """
-            )
-        if self.params.get("repositories"):
-            user_message += textwrap.dedent(self.get_repository_context())
-        if self.params.get("deputy_dev_rules"):
-            user_message += textwrap.dedent(
-                f"""
-            Here are some more user provided rules and information that you can take reference from:
-            <important>
-            Follow these guidelines while using user provided rules or information:
-            1. Do not change anything in the response format.
-            2. If any conflicting instructions arise between the default instructions and user-provided instructions, give precedence to the default instructions.
-            3. Only respond to coding, software development, or technical instructions relevant to programming.
-            4. Do not include opinions or non-technical content.
-            </important>
-            <user_rules_or_info>
-            {self.params.get("deputy_dev_rules")}
-            </user_rules_or_info>
-            """
-            )
-
-        if focus_chunks_message:
-            user_message = focus_chunks_message + "\n" + user_message
-
+        user_message = ""
         return UserAndSystemMessages(
             user_message=user_message,
             system_message=system_message,
         )
-
-    def get_repository_context(self) -> str:
-        working_repo = next(repo for repo in self.params.get("repositories") if repo.is_working_repository)
-        context_repos = [repo for repo in self.params.get("repositories") if not repo.is_working_repository]
-        context_repos_str = ""
-        for index, context_repo in enumerate(context_repos):
-            context_repos_str += f"""
-              <context_repository_{index + 1}>
-                <absolute_repo_path>{context_repo.repo_path}</absolute_repo_path>
-                <repo_name>{context_repo.repo_name}</repo_name>
-                <root_directory_context>{context_repo.root_directory_context}</root_directory_context>
-              </context_repository_{index + 1}>
-            """
-
-        return f"""
-        ====
-        <repository_context>
-          You are working with two types of repositories:
-          <working_repository>
-            <purpose>The primary repository where you will make changes and apply modifications</purpose>
-            <access_level>Full read/write access</access_level>
-            <allowed_operations>All read and write operations</allowed_operations>
-            <restrictions>No restrictions</restrictions>
-            <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
-            <repo_name>{working_repo.repo_name}</repo_name>
-            <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
-          </working_repository>
-          <context_repositories>
-            <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>
-            <access_level>Read-only access</access_level>
-            <allowed_operations>Read operations only. Only use those tools that are reading context from the repository</allowed_operations>
-            <restrictions>
-              1. NO write operations allowed
-              2. NO file creation or modification
-              3. NO diff application
-            </restrictions>
-            <list_of_context_repositories>
-                {context_repos_str}
-            </list_of_context_repositories>
-          </context_repositories>
-        </repository_context>
-        ====
-        """
 
     def tool_usage_guidelines(self, is_write_mode: bool) -> str:
         write_mode_specific_guidelines = ""

@@ -3,25 +3,8 @@ import json
 from typing import Any, AsyncIterator, Dict, List, Optional
 from uuid import uuid4
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
-from pydantic import BaseModel
-
-from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    MessageCallChainCategory,
-    MessageThreadDTO,
-    MessageType,
-)
-from app.backend_common.repository.extension_sessions.repository import (
-    ExtensionSessionsRepository,
-)
-from app.backend_common.repository.message_threads.repository import (
-    MessageThreadsRepository,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
@@ -34,7 +17,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
     UnifiedConversationTurn,
@@ -43,7 +26,25 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
 )
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+    MessageCallChainCategory,
+    MessageThreadDTO,
+    MessageType,
+)
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+from pydantic import BaseModel
+
+from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
+from app.backend_common.repository.extension_sessions.repository import (
+    ExtensionSessionsRepository,
+)
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
@@ -64,6 +65,7 @@ from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryD
 from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
+    LLMModel,
     QuerySolverInput,
     Reasoning,
     ResponseMetadataBlock,
@@ -720,6 +722,16 @@ class QuerySolver:
             )
 
         if current_session.current_model != llm_model:
+            # TODO: remove after v15 Force upgrade
+            if (
+                llm_model == LLModels.OPENROUTER_GPT_4_POINT_1
+                and current_session.current_model == LLModels.GPT_4_POINT_1
+            ):
+                await asyncio.gather(
+                    ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
+                )
+                return  # no need to store a message in chat as the models are equivalent
+
             # update current model in session
             await asyncio.gather(
                 ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
@@ -753,12 +765,18 @@ class QuerySolver:
         save_to_redis: bool = False,
         task_checker: Optional[CancellationChecker] = None,
     ) -> AsyncIterator[BaseModel]:
-        llm_handler = LLMHandler(
+        llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
+
         reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
+
+        # TODO: remove after v15 Force upgrade
+        if payload.llm_model and LLMModel(payload.llm_model.value) == LLMModel.GPT_4_POINT_1:
+            payload.llm_model = LLMModel.OPENROUTER_GPT_4_POINT_1
+
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
