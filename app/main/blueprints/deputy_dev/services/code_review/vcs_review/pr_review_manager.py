@@ -1,13 +1,13 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.context_vars import set_context_values
 from pydantic import ValidationError
 from sanic.log import logger
 
-from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
-from app.backend_common.services.llm.handler import LLMHandler
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.services.pr.base_pr import BasePR
 from app.backend_common.services.repo.base_repo import BaseRepo
 from app.backend_common.services.workspace.context_var import identifier
@@ -302,7 +302,7 @@ class PRReviewManager(BasePRReviewManager):
         # Set up context service and LLM handler for comment blending
         context_service = ContextService(repo_service, pr_service, pr_diff_handler=pr_diff_handler)
 
-        llm_handler = LLMHandler(
+        llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),

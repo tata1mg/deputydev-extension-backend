@@ -1,10 +1,7 @@
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
-from pydantic import BaseModel
-from pydantic_core import from_json
-
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     StreamingEvent,
     StreamingEventType,
     TextBlockDelta,
@@ -15,6 +12,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
+from pydantic import BaseModel
+from pydantic_core import from_json
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockDeltaContent,

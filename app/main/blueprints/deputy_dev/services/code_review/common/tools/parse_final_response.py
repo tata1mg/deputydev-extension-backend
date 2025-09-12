@@ -1,4 +1,4 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
 
 PARSE_FINAL_RESPONSE = ConversationTool(
     name="parse_final_response",

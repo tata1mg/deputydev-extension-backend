@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
+from deputydev_core.llm_handler.dataclasses.main import JSONSchema
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel, Field, field_validator
 
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
-from app.backend_common.services.llm.dataclasses.main import JSONSchema
 from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 
@@ -96,6 +96,7 @@ class LLMModel(Enum):
     OPENROUTER_GROK_CODE_FAST_1 = "OPENROUTER_GROK_CODE_FAST_1"
     OPENROUTER_GPT_5_MINI = "OPENROUTER_GPT_5_MINI"
     OPENROUTER_GPT_5_NANO = "OPENROUTER_GPT_5_NANO"
+    OPENROUTER_GPT_4_POINT_1 = "OPENROUTER_GPT_4_POINT_1"
 
 
 class Reasoning(Enum):
