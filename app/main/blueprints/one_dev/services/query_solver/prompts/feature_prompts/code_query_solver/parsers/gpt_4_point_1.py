@@ -1,10 +1,7 @@
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
-from pydantic import BaseModel
-from pydantic_core import from_json
-
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     StreamingEvent,
     StreamingEventType,
     TextBlockDelta,
@@ -15,6 +12,9 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
+from pydantic import BaseModel
+from pydantic_core import from_json
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockDeltaContent,
@@ -262,9 +262,7 @@ class TextBlockEventParser:
             for e in events:
                 yield e
 
-    async def _handle_previous_block(
-        self, parsed_response: Dict[str, Any]
-    ) -> AsyncIterator[Union[StreamingEvent, BaseModel]]:
+    async def _handle_previous_block(self, parsed_response: Dict[str, Any]) -> AsyncIterator[StreamingContentBlock]:
         block_data = parsed_response.get(self.prev_block, "")
         if self.prev_block == "thinking":
             delta = block_data[self.parsed_index :]

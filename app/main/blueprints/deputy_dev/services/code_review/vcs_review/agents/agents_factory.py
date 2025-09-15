@@ -1,7 +1,8 @@
 from typing import List, Union
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,
@@ -31,9 +32,6 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_a
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.code_maintainability_agent import (
     CodeMaintainabilityAgent,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.custom_agent import (
-    CustomAgent,
-)
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.error_agent import (
     ErrorAgent,
 )
@@ -42,9 +40,6 @@ from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_a
 )
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.commenters.commenter_agents.security_agent import (
     SecurityAgent,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.llm_agents.pr_summarizer.pr_summarizer_agent import (
-    PRSummarizerAgent,
 )
 from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
     ContextService,
@@ -72,8 +67,8 @@ class AgentFactory:
         AgentTypes.ERROR: ErrorAgent,
         AgentTypes.PERFORMANCE_OPTIMIZATION: PerformanceOptimizationAgent,
         AgentTypes.SECURITY: SecurityAgent,
-        AgentTypes.PR_SUMMARY: PRSummarizerAgent,
-        AgentTypes.CUSTOM_COMMENTER_AGENT: CustomAgent,
+        # AgentTypes.PR_SUMMARY: PRSummarizerAgent,
+        # AgentTypes.CUSTOM_COMMENTER_AGENT: CustomAgent,
     }
 
     review_finalization_agents = {

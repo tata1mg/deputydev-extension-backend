@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
-from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import (
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageCallChainCategory
+
+from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import (
     QuerySolverAgent,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import FocusItem
@@ -23,7 +24,6 @@ class QuerySolverAgentSelector:
         all_agents: List[QuerySolverAgent],
         llm_handler: LLMHandler[PromptFeatures],
         session_id: int,
-        default_agent: Optional[QuerySolverAgent] = None,
     ) -> None:
         # Initialize with the user query.
         self.user_query = user_query
@@ -31,10 +31,9 @@ class QuerySolverAgentSelector:
         self.all_agents = all_agents
         self.llm_handler = llm_handler
         self.session_id = session_id
-        self.default_agent = default_agent
         self.last_agent = last_agent
 
-    async def select_agent(self) -> Optional[QuerySolverAgent]:
+    async def select_agent(self) -> QuerySolverAgent:
         """
         Select the appropriate agent for the user query.
         """
@@ -43,9 +42,6 @@ class QuerySolverAgentSelector:
         # and determine which task is most appropriate.
         # For simplicity, we will return a placeholder agent name.
         # return the agent that is most appropriate for the user query
-
-        if not self.all_agents:
-            return self.default_agent or None
 
         prompt_vars: Dict[str, Any] = {
             "query": self.user_query,
@@ -77,10 +73,5 @@ class QuerySolverAgentSelector:
                 for agent in self.all_agents
                 if agent.agent_name == selected_intent.parsed_content[0]["intent_name"]
             ),
-            None,
         )
-
-        if agent:
-            return agent
-
-        return self.default_agent or None
+        return agent

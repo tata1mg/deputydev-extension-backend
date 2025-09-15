@@ -3,25 +3,8 @@ import json
 from typing import Any, AsyncIterator, Dict, List, Optional
 from uuid import uuid4
 
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
-from deputydev_core.utils.app_logger import AppLogger
-from deputydev_core.utils.config_manager import ConfigManager
-from pydantic import BaseModel
-
-from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    MessageCallChainCategory,
-    MessageThreadDTO,
-    MessageType,
-)
-from app.backend_common.repository.extension_sessions.repository import (
-    ExtensionSessionsRepository,
-)
-from app.backend_common.repository.message_threads.repository import (
-    MessageThreadsRepository,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
     PromptCacheConfig,
@@ -34,7 +17,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
     UnifiedConversationTurn,
@@ -43,7 +26,25 @@ from app.backend_common.services.llm.dataclasses.unified_conversation_turn impor
     UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
 )
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    LLModels,
+    MessageCallChainCategory,
+    MessageThreadDTO,
+    MessageType,
+)
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+from deputydev_core.utils.app_logger import AppLogger
+from deputydev_core.utils.config_manager import ConfigManager
+from pydantic import BaseModel
+
+from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
+from app.backend_common.repository.extension_sessions.repository import (
+    ExtensionSessionsRepository,
+)
+from app.backend_common.repository.message_threads.repository import (
+    MessageThreadsRepository,
+)
+from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
@@ -61,15 +62,10 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
 )
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
-from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
-    CustomQuerySolverAgent,
-)
-from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import (
-    DefaultQuerySolverAgentInstance,
-)
+from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
+    LLMModel,
     QuerySolverInput,
     Reasoning,
     ResponseMetadataBlock,
@@ -585,16 +581,20 @@ class QuerySolver:
 
         return _streaming_content_block_generator()
 
-    async def _generate_dynamic_query_solver_agents(self) -> List[CustomQuerySolverAgent]:
+    async def _generate_dynamic_query_solver_agents(self) -> List[QuerySolverAgent]:
         # get all the intents from the database
+        default_agent = QuerySolverAgent(
+            agent_name="DEFAULT_QUERY_SOLVER_AGENT",
+            agent_description="This is the default query solver agent that should used when no specific agent is solves the purpose",
+        )
         all_agents = await QuerySolverAgentsRepository.get_query_solver_agents()
         if not all_agents:
-            return []
+            return [default_agent]
 
         # create a list of agent classes based on the data from the database
-        agent_classes: List[CustomQuerySolverAgent] = []
+        agent_classes: List[QuerySolverAgent] = []
         for agent_data in all_agents:
-            agent_class = CustomQuerySolverAgent(
+            agent_class = QuerySolverAgent(
                 agent_name=agent_data.name,
                 agent_description=agent_data.description,
                 allowed_tools=agent_data.allowed_first_party_tools,
@@ -602,7 +602,7 @@ class QuerySolver:
             )
             agent_classes.append(agent_class)
 
-        return agent_classes
+        return agent_classes + [default_agent]
 
     async def _get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
         """
@@ -616,7 +616,7 @@ class QuerySolver:
             for message in messages:
                 if message.message_type == MessageType.QUERY and message.prompt_type in [
                     "CODE_QUERY_SOLVER",
-                    "CUSTOM_CODE_QUERY_SOLVER",
+                    "CODE_QUERY_SOLVER",
                 ]:
                     last_query_message = message
             return last_query_message
@@ -628,10 +628,10 @@ class QuerySolver:
         """
         Get the agent instance by its name.
         """
-        for agent in all_agents:
-            if agent.agent_name == agent_name:
-                return agent
-        return DefaultQuerySolverAgentInstance
+        agent = next((agent for agent in all_agents if agent.agent_name == agent_name), None)
+        if not agent:
+            raise ValueError(f"Agent with name {agent_name} not found")
+        return agent
 
     async def _get_query_solver_agent_instance(
         self,
@@ -639,8 +639,11 @@ class QuerySolver:
         llm_handler: LLMHandler[PromptFeatures],
         previous_agent_chats: List[AgentChatDTO],
     ) -> QuerySolverAgent:
-        all_custom_agents = await self._generate_dynamic_query_solver_agents()
+        all_agents = await self._generate_dynamic_query_solver_agents()  # this will have default agent as well
         agent_instance: QuerySolverAgent
+
+        if not all_agents:
+            raise Exception("No query solver agents found in the system")
 
         if payload.query:
             agent_selector = QuerySolverAgentSelector(
@@ -649,16 +652,12 @@ class QuerySolver:
                 last_agent=previous_agent_chats[-1].metadata.get("agent_name")
                 if previous_agent_chats and previous_agent_chats[-1].metadata
                 else None,
-                all_agents=[*all_custom_agents, DefaultQuerySolverAgentInstance],
+                all_agents=all_agents,
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
             )
 
-            agent_instance = (
-                (await agent_selector.select_agent() or DefaultQuerySolverAgentInstance)
-                if all_custom_agents
-                else DefaultQuerySolverAgentInstance
-            )
+            agent_instance = await agent_selector.select_agent()
         else:
             agent_name = (
                 previous_agent_chats[-1].metadata.get("agent_name")
@@ -666,8 +665,8 @@ class QuerySolver:
                 else None
             )
             agent_instance: QuerySolverAgent = self._get_agent_instance_by_name(
-                agent_name=agent_name or DefaultQuerySolverAgentInstance.agent_name,
-                all_agents=[*await self._generate_dynamic_query_solver_agents(), DefaultQuerySolverAgentInstance],
+                agent_name=agent_name or "DEFAULT_QUERY_SOLVER_AGENT",
+                all_agents=all_agents,
             )
         return agent_instance
 
@@ -723,6 +722,16 @@ class QuerySolver:
             )
 
         if current_session.current_model != llm_model:
+            # TODO: remove after v15 Force upgrade
+            if (
+                llm_model == LLModels.OPENROUTER_GPT_4_POINT_1
+                and current_session.current_model == LLModels.GPT_4_POINT_1
+            ):
+                await asyncio.gather(
+                    ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
+                )
+                return  # no need to store a message in chat as the models are equivalent
+
             # update current model in session
             await asyncio.gather(
                 ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
@@ -756,12 +765,18 @@ class QuerySolver:
         save_to_redis: bool = False,
         task_checker: Optional[CancellationChecker] = None,
     ) -> AsyncIterator[BaseModel]:
-        llm_handler = LLMHandler(
+        llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
             cache_config=PromptCacheConfig(conversation=True, tools=True, system_message=True),
         )
+
         reasoning = Reasoning(payload.reasoning) if payload.reasoning else None
+
+        # TODO: remove after v15 Force upgrade
+        if payload.llm_model and LLMModel(payload.llm_model.value) == LLMModel.GPT_4_POINT_1:
+            payload.llm_model = LLMModel.OPENROUTER_GPT_4_POINT_1
+
         if payload.query:
             # get current model and check if it is changed, if yes, store a note in chat
             generated_query_id = uuid4().hex
