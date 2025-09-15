@@ -1,9 +1,8 @@
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from pydantic import BaseModel
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
 
 
 class AgentTypes(Enum):
