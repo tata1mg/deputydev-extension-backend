@@ -9,48 +9,6 @@
         "TRANSACTION_SAMPLE_RATE": 1
     },
     "BROWSER_HOST": "https://deputydev.ai",
-    "SUPABASE": {
-        "URL": "",
-        "KEY": "",
-        "JWT_SECRET_KEY": ""
-    },
-    "SESSION_ENCRYPTION_PASSWORD": "",
-    "ORG_INFO": {
-        "TATA_1MG": {
-            "domain": "1mg.com",
-            "team_id": 1,
-            "org_name": "TATA 1mg"
-        },
-        "TRAYA": {
-            "domain": "traya.com",
-            "team_id": 3,
-            "org_name": "Traya"
-        },
-        "TBO": {
-            "domain": "tbo.com",
-            "team_id": 5,
-            "org_name": "TBO"
-        },
-        "DEPUTYDEV_PRIVATE": {
-            "team_id": 6,
-            "org_name": "DeputyDev Private"
-        },
-        "CARATLANE": {
-            "domain": "caratlane.com",
-            "team_id": 5,
-            "org_name": "Caratlane"
-        },
-        "HSV_DIGITAL": {
-            "domain": "hsv.digital",
-            "team_id": 329,
-            "org_name": "HSV digital"
-        },
-        "ROZANA": {
-            "domain": "rozana.in",
-            "team_id": 332,
-            "org_name": "Rozana"
-        }
-    },
     "DEBUG": false,
     "ACCESS_LOG": true,
     "ENABLE_WORKER": false,
@@ -66,12 +24,6 @@
     },
     "WORKERS": 1,
     "CONCURRENCY_LIMIT": 500,
-    "DB_CONNECTION": {
-        "CONNECTION_STRING": "",
-        "LABS_COLLECTION": "labs"
-    },
-    "OPENAI_KEY": "",
-    "GOOGLE_API_KEY": "",
     "EXPERIMENT": {},
     "ENCRYPTION_PASSWORD": "",
     "WEBHOOK_JWT_SIGNING_KEY": "",
@@ -137,8 +89,6 @@
         "CLIENT_ID": "",
         "CLIENT_SECRET": ""
     },
-    "OPENAPI_API": "gpt3",
-    "ASSISTANT_ID": "",
     "REDIS_CACHE_HOSTS": {
         "genai": {
             "LABEL": "",
@@ -187,12 +137,6 @@
             }
         }
     },
-    "FINETUNED_SCRIT_MODEL": {
-        "MODEL": "",
-        "CONFIDENCE_SCORE": 1,
-        "BITBUCKET_TOKEN": "",
-        "ENABLED": true
-    },
     "SCRIT_MODEL": {
         "MODEL": "",
         "CONFIDENCE_SCORE": 1,
@@ -213,12 +157,6 @@
         "TOKEN_LIMIT": 8192,
         "MAX_PARALLEL_TASKS": 60
     },
-    "IGNORE_FILES": [
-        "Pipfile",
-        "Pipfile.lock",
-        "bitbucket-pipelines.yml",
-        "package-lock.json"
-    ],
     "ATLASSIAN": {
         "CLIENT_ID": "",
         "CLIENT_SECRET": ""
@@ -289,33 +227,9 @@
         "ControlSet1",
         "ControlSet2"
     ],
-    "EXPERIMENT_START_TIME": "2024-07-29T11:30:00+00:00",
     "PR_REVIEW_SETTINGS": {
         "MULTI_AGENT_ENABLED": true,
         "REFLECTION_ENABLED": true
-    },
-    "AGENT_SETTINGS": {
-        "security": {
-            "confidence_score_limit": 0.9
-        },
-        "code_communication": {
-            "confidence_score_limit": 0.95
-        },
-        "performance_optimisation": {
-            "confidence_score_limit": 0.9
-        },
-        "code_maintainability": {
-            "confidence_score_limit": 0.9
-        },
-        "error": {
-            "confidence_score_limit": 0.9
-        },
-        "business_logic_validation": {
-            "confidence_score_limit": 0.9
-        },
-        "pr_description": {
-            "confidence_score_limit": 0.9
-        }
     },
     "AWS": {
         "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
@@ -488,6 +402,32 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 20000
             }
         },
+        "OPENROUTER_GPT_4_POINT_1": {
+            "NAME": "openai/gpt-4.1",
+            "MAX_TOKENS": 16576,
+            "INPUT_TOKENS_LIMIT": 524288,
+            "TEMPERATURE": 0.3,
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER": {},
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 100000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 100000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 40000
+            }
+        },
+        "OPENROUTER_GROK_CODE_FAST_1": {
+            "NAME": "x-ai/grok-code-fast-1",
+            "MAX_TOKENS": 10000,
+            "INPUT_TOKENS_LIMIT": 200000,
+            "TEMPERATURE": 0.3,
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER": {},
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+            }
+        },
         "OPENROUTER_GPT_5_MINI": {
             "NAME": "openai/gpt-5-mini",
             "MAX_TOKENS": 24576,
@@ -515,16 +455,17 @@
             }
         },
         "KIMI_K2": {
-            "NAME": "moonshotai/kimi-k2",
+            "NAME": "moonshotai/kimi-k2-0905",
             "MAX_TOKENS": 12288,
-            "INPUT_TOKENS_LIMIT": 120000,
+            "INPUT_TOKENS_LIMIT": 240000,
             "TEMPERATURE": 0.5,
             "STREAM_BATCH_SIZE": 30,
             "PROVIDER": {
                 "only": [
                     "fireworks",
                     "groq",
-                    "deepinfra"
+                    "together",
+                    "moonshotai"
                 ]
             },
             "LIMITS": {
@@ -668,7 +609,6 @@
         "LIMIT_PER_HOST": 0,
         "TTL_DNS_CACHE": 10
     },
-    "OPENAI_TIMEOUT": 1000,
     "TEAMS_ENABLED_FOR_EXPERIMENT": [
         123456,
         23456
@@ -683,13 +623,6 @@
         "LIMIT_PER_HOST": 0,
         "TTL_DNS_CACHE": 10
     },
-    "VALID_ADVOCACY_IDS": [
-        1,
-        2,
-        3,
-        4
-    ],
-    "AUTH_TOKEN_GRACE_PERIOD": 1800,
     "RUDDER": {
         "WRITE_KEY": "",
         "WRITE_KEY_ERROR_TRACKING": "",
@@ -754,14 +687,16 @@
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": false
                     },
                     "x64": {
                         "directory": "",
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": true
                     }
                 },
                 "linux": {
@@ -770,7 +705,8 @@
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": true
                     }
                 },
                 "win32": {
@@ -779,7 +715,8 @@
                         "service_path": "",
                         "s3_key": "",
                         "file_checksum": "",
-                        "file_path": ""
+                        "file_path": "",
+                        "use_python_module": true
                     }
                 }
             }
@@ -851,6 +788,10 @@
     "OPENROUTER": {
         "BASE_URL": "https://openrouter.ai/api/v1",
         "API_KEY": ""
+    },
+    "OPENAI": {
+        "API_KEY": "",
+        "TIMEOUT": 1000
     },
     "MAX_REVIEW_TOOL_ITERATIONS": 25,
     "EMBEDDING_SERVICE_HOST": "http://localhost:8084",
@@ -944,7 +885,7 @@
         {
             "id": 6,
             "display_name": "GPT 4.1",
-            "name": "GPT_4_POINT_1",
+            "name": "OPENROUTER_GPT_4_POINT_1",
             "provider": "OPENAI",
             "multimodal": true
         },
@@ -982,6 +923,13 @@
             "name": "KIMI_K2",
             "provider": "OPEN SOURCE",
             "multimodal": false
+        },
+        {
+            "id": 12,
+            "display_name": "Grok Code Fast 1",
+            "name": "OPENROUTER_GROK_CODE_FAST_1",
+            "provider": "xAI",
+            "multimodal": false
         }
     ],
     "LLM_MAX_RETRY": 2,
@@ -1013,11 +961,8 @@
     },
     "ALLOWED_PR_REVIEW_RETRIES": 3,
     "AUTO_REVIEW_ENABLED": true,
-    "FAKE_AUTH": {
-        "ENABLED": false,
-        "USER_EMAIL": "",
-        "USER_NAME": "",
-        "ENCRYPTED_SESSION_DATA": "",
-        "FAKE_BROWSER_HOST": ""
+    "DEPUTYDEV_AUTH": {
+        "HOST": "http://localhost:8085",
+        "TIMEOUT": 10
     }
 }

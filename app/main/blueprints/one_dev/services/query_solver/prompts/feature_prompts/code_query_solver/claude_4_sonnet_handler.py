@@ -1,17 +1,17 @@
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
+from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
     BaseClaude4SonnetPromptHandler,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.code_block.claude_4_code_block_parser import (
     Claude4CodeBlockParser,
 )
@@ -24,15 +24,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_4_thinking_parser import (
     Claude4ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_4_sonnet_code_query_solver_prompt import (
-    Claude4CodeQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_4_sonnet_custom_code_query_solver_prompt import (
+    Claude4CustomCodeQuerySolverPrompt,
 )
 
 
-class Claude4CodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
+class Claude4CustomCodeQuerySolverPromptHandler(BaseClaude4SonnetPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Claude4CodeQuerySolverPrompt
+    prompt_class = Claude4CustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params

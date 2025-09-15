@@ -3,11 +3,11 @@ from typing import Any
 from sanic import Blueprint
 from sanic.response import JSONResponse
 
+from app.backend_common.utils.authenticate import authenticate
+from app.backend_common.utils.dataclasses.main import AuthData
 from app.backend_common.utils.sanic_wrapper import Request, send_response
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.backend_common.utils.sanic_wrapper.response import ResponseDict
-from app.backend_common.utils.authenticate import authenticate
-from app.backend_common.utils.dataclasses.main import AuthData
 from app.main.blueprints.one_dev.services.feedback.feedback_service import FeedbackService
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,

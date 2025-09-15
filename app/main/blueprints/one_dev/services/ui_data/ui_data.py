@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import MessageCallChainCategory
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageCallChainCategory
+
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,
 )

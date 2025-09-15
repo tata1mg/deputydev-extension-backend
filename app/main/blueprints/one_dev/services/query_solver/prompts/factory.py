@@ -1,13 +1,10 @@
 from typing import Dict, Type
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.prompts.base_feature_prompt_factory import (
-    BaseFeaturePromptFactory,
-)
-from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
-from app.backend_common.services.llm.prompts.base_prompt_feature_factory import (
-    BasePromptFeatureFactory,
-)
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.prompts.base_feature_prompt_factory import BaseFeaturePromptFactory
+from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+from deputydev_core.llm_handler.prompts.base_prompt_feature_factory import BasePromptFeatureFactory
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
@@ -16,9 +13,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.factory import (
     CodeQuerySolverPromptFactory,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.factory import (
-    CustomCodeQuerySolverPromptFactory,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.inline_editor.factory import (
     InlineEditorPromptFactory,
@@ -42,13 +36,12 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.u
 
 class PromptFeatureFactory(BasePromptFeatureFactory[PromptFeatures]):
     feature_prompt_factory_map: Dict[PromptFeatures, Type[BaseFeaturePromptFactory]] = {
-        PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
         PromptFeatures.SESSION_SUMMARY_GENERATOR: SessionSummaryGeneratorPromptFactory,
         PromptFeatures.INLINE_EDITOR: InlineEditorPromptFactory,
         PromptFeatures.TERMINAL_COMMAND_EDITOR: TerminalCommandEditorPromptFactory,
         PromptFeatures.USER_QUERY_ENHANCER: UserQueryEnhancerPromptFactory,
         PromptFeatures.INTENT_SELECTOR: IntentSelectorPromptFactory,
-        PromptFeatures.CUSTOM_CODE_QUERY_SOLVER: CustomCodeQuerySolverPromptFactory,
+        PromptFeatures.CODE_QUERY_SOLVER: CodeQuerySolverPromptFactory,
         PromptFeatures.QUERY_SUMMARY_GENERATOR: QuerySummaryGeneratorPromptFactory,
         PromptFeatures.CHAT_RERANKING: ChatRankingPromptFactory,
     }

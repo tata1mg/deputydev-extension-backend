@@ -1,15 +1,15 @@
 import json
 from typing import Any, Awaitable, Callable, Dict, List
 
-from deputydev_core.utils.app_logger import AppLogger
-
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, NonStreamingParsedLLMCallResponse
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestData,
     ToolUseResponseContent,
     ToolUseResponseData,
 )
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, NonStreamingParsedLLMCallResponse
+from deputydev_core.utils.app_logger import AppLogger
+
 from app.backend_common.utils.formatting import (
     format_code_blocks,
     format_comment_bucket_name,
