@@ -492,7 +492,7 @@ wheels = [
 
 [[package]]
 name = "deputydev"
-version = "14.1.1"
+version = "14.1.2"
 source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
@@ -550,7 +550,7 @@ requires-dist = [
     { name = "azure-servicebus", specifier = "==7.14.1" },
     { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.38.42" },
     { name = "botocore", specifier = ">=1.35.0,<2.0.0" },
-    { name = "deputydev-core", git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=8.0.1" },
+    { name = "deputydev-core", git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=8.0.1" },
     { name = "elastic-apm", specifier = "==6.22.3" },
     { name = "fuzzywuzzy" },
     { name = "google-genai", specifier = "==1.13.0" },
@@ -588,7 +588,7 @@ dev = [
 [[package]]
 name = "deputydev-core"
 version = "8.0.0"
-source = { git = "ssh://git@github.com/DeputyDev-1mg/deputydev-core.git?rev=8.0.1#fafbebbcd64072f5977aa9d71265c6d3008a43b4" }
+source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=8.0.1#fafbebbcd64072f5977aa9d71265c6d3008a43b4" }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
