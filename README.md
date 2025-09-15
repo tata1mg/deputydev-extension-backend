@@ -30,7 +30,7 @@
 - **SCM Clients:** Custom clients for GitHub, GitLab, Bitbucket
 - **Issue Tracker Clients:** Custom client for Jira
 - **Messaging/Queueing:** Azure Service Bus, AioKafka (potentially)
-- **Cloud Services:** AWS (Bedrock, SQS, API Gateway), Supabase
+- **Cloud Services:** AWS (Bedrock, SQS, API Gateway)
 - **Containerization:** Docker
 - **Package Management:** [`uv`](https://github.com/astral-sh/uv) (via `uv.lock`)
 - **Linting/Formatting:** Ruff, Flake8, Pylint
@@ -103,7 +103,6 @@
       - AI service keys (OpenAI, Google Gemini, etc.)
       - Azure Service Bus connection string
       - AWS credentials (for Bedrock, SQS, API Gateway)
-      - Supabase URL and key
     - Refer to `config_template.json` and `settings.toml` for required keys.
 
 5. **Database Setup:**
