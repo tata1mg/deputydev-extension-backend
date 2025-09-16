@@ -147,7 +147,7 @@ def mock_llm_handler():
 @pytest.fixture
 def successful_llm_response():
     """Mock successful LLM response."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = [{"chunks_source": ["focus_1", "related_2", "related_1"]}]
@@ -157,7 +157,7 @@ def successful_llm_response():
 @pytest.fixture
 def successful_llm_response_partial():
     """Mock LLM response with partial chunk matches."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = [{"chunks_source": ["focus_1", "non_existent_chunk", "related_1"]}]
@@ -167,7 +167,7 @@ def successful_llm_response_partial():
 @pytest.fixture
 def successful_llm_response_empty_chunks():
     """Mock LLM response with empty chunks list."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = [{"chunks_source": []}]
@@ -177,7 +177,7 @@ def successful_llm_response_empty_chunks():
 @pytest.fixture
 def malformed_llm_response_missing_key():
     """Mock malformed LLM response missing chunks_source key."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = [{"invalid_key": ["focus_1", "related_1"]}]
@@ -187,7 +187,7 @@ def malformed_llm_response_missing_key():
 @pytest.fixture
 def malformed_llm_response_wrong_type():
     """Mock malformed LLM response with wrong type."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = [
@@ -201,7 +201,7 @@ def malformed_llm_response_wrong_type():
 @pytest.fixture
 def malformed_llm_response_empty_list():
     """Mock malformed LLM response with empty parsed_content."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = []
@@ -211,7 +211,7 @@ def malformed_llm_response_empty_list():
 @pytest.fixture
 def malformed_llm_response_none():
     """Mock malformed LLM response with None parsed_content."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = None

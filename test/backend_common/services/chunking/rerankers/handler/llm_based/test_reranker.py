@@ -13,15 +13,15 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
 )
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import LLMBasedChunkReranker
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-)
 
 # Import fixtures
 

@@ -2,20 +2,20 @@ from typing import Any, Dict
 from unittest.mock import Mock
 
 import pytest
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gemini_2_point_5_flash_handler import (
-    Gemini2Point5FlashCodeQuerySolverPromptHandler,
+    Gemini2Point5FlashCustomCodeQuerySolverPromptHandler,
 )
 
 
-class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
-    """Test suite for Gemini2Point5FlashCodeQuerySolverPromptHandler functionality."""
+class TestGemini2Point5FlashCustomCodeQuerySolverPromptHandler:
+    """Test suite for Gemini2Point5FlashCustomCodeQuerySolverPromptHandler functionality."""
 
     @pytest.fixture
     def sample_params(self) -> Dict[str, Any]:
@@ -28,20 +28,20 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         }
 
     @pytest.fixture
-    def handler(self, sample_params: Dict[str, Any]) -> Gemini2Point5FlashCodeQuerySolverPromptHandler:
+    def handler(self, sample_params: Dict[str, Any]) -> Gemini2Point5FlashCustomCodeQuerySolverPromptHandler:
         """Create a handler instance for testing."""
-        return Gemini2Point5FlashCodeQuerySolverPromptHandler(sample_params)
+        return Gemini2Point5FlashCustomCodeQuerySolverPromptHandler(sample_params)
 
     def test_handler_initialization(self, sample_params: Dict[str, Any]) -> None:
         """Test proper handler initialization with parameters."""
-        handler = Gemini2Point5FlashCodeQuerySolverPromptHandler(sample_params)
+        handler = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler(sample_params)
 
         assert handler.params == sample_params
         assert handler.prompt_type == "CODE_QUERY_SOLVER"
         assert handler.prompt_category == PromptCategories.CODE_GENERATION.value
         assert handler.prompt is not None
 
-    def test_get_system_prompt(self, handler: Gemini2Point5FlashCodeQuerySolverPromptHandler) -> None:
+    def test_get_system_prompt(self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler) -> None:
         """Test system prompt generation."""
         system_prompt = handler.get_system_prompt()
 
@@ -49,7 +49,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         assert len(system_prompt) > 0
         assert "assistant" in system_prompt.lower() or "system" in system_prompt.lower()
 
-    def test_get_prompt(self, handler: Gemini2Point5FlashCodeQuerySolverPromptHandler) -> None:
+    def test_get_prompt(self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler) -> None:
         """Test prompt generation returns proper UserAndSystemMessages."""
         prompt = handler.get_prompt()
 
@@ -71,7 +71,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
             ),
         ]
 
-        parsed_blocks, metadata = Gemini2Point5FlashCodeQuerySolverPromptHandler.get_parsed_response_blocks(
+        parsed_blocks, metadata = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.get_parsed_response_blocks(
             message_data
         )
 
@@ -91,7 +91,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
             )
         ]
 
-        result = Gemini2Point5FlashCodeQuerySolverPromptHandler.get_parsed_result(mock_response)
+        result = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.get_parsed_result(mock_response)
 
         assert isinstance(result, tuple)
         assert len(result) == 2
@@ -110,7 +110,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         mock_streaming_response.content = mock_async_generator()
 
         events = []
-        async_iterator = await Gemini2Point5FlashCodeQuerySolverPromptHandler.get_parsed_streaming_events(
+        async_iterator = await Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.get_parsed_streaming_events(
             mock_streaming_response
         )
         async for event in async_iterator:
@@ -132,7 +132,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         <summary>This is a summary</summary>
         """
 
-        result = Gemini2Point5FlashCodeQuerySolverPromptHandler._get_parsed_custom_blocks(input_string)
+        result = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(input_string)
 
         assert isinstance(result, list)
 
@@ -146,7 +146,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
             pass
         """
 
-        result = Gemini2Point5FlashCodeQuerySolverPromptHandler.extract_code_block_info(code_block_string)
+        result = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.extract_code_block_info(code_block_string)
 
         assert isinstance(result, dict)
         if result:  # Only check if extraction was successful
@@ -154,7 +154,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
             assert "file_path" in result
             assert "is_diff" in result
 
-    def test_handler_attributes_consistency(self, handler: Gemini2Point5FlashCodeQuerySolverPromptHandler) -> None:
+    def test_handler_attributes_consistency(self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler) -> None:
         """Test that handler attributes are consistent and properly set."""
         assert hasattr(handler, "prompt_type")
         assert hasattr(handler, "prompt_category")
@@ -183,12 +183,12 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         ]
 
         for params in test_cases:
-            handler = Gemini2Point5FlashCodeQuerySolverPromptHandler(params)
+            handler = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler(params)
             assert handler.params == params
             assert handler.get_system_prompt() is not None
             assert handler.get_prompt() is not None
 
-    def test_prompt_class_inheritance(self, handler: Gemini2Point5FlashCodeQuerySolverPromptHandler) -> None:
+    def test_prompt_class_inheritance(self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler) -> None:
         """Test that the prompt class is properly inherited and instantiated."""
         assert handler.prompt_class is not None
         assert handler.prompt is not None
@@ -208,7 +208,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
 
         try:
             events = []
-            async for event in Gemini2Point5FlashCodeQuerySolverPromptHandler.get_parsed_streaming_events(
+            async for event in Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.get_parsed_streaming_events(
                 mock_streaming_response
             ):
                 events.append(event)
@@ -220,7 +220,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         """Test handling of empty or minimal inputs."""
         # Test with minimal parameters
         minimal_params = {"query": ""}
-        handler = Gemini2Point5FlashCodeQuerySolverPromptHandler(minimal_params)
+        handler = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler(minimal_params)
 
         assert handler.params == minimal_params
         system_prompt = handler.get_system_prompt()
@@ -239,7 +239,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         ]
 
         for malformed_input in malformed_inputs:
-            result = Gemini2Point5FlashCodeQuerySolverPromptHandler._get_parsed_custom_blocks(malformed_input)
+            result = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(malformed_input)
             assert isinstance(result, list)
 
         # Test that malformed code blocks raise expected exceptions
@@ -249,7 +249,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
 
         for malformed_input in malformed_code_blocks:
             with pytest.raises(AttributeError):
-                Gemini2Point5FlashCodeQuerySolverPromptHandler._get_parsed_custom_blocks(malformed_input)
+                Gemini2Point5FlashCustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(malformed_input)
 
     def test_code_block_info_extraction_edge_cases(self) -> None:
         """Test code block info extraction with edge cases."""
@@ -259,7 +259,7 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
         ]
 
         for edge_case in valid_edge_cases:
-            result = Gemini2Point5FlashCodeQuerySolverPromptHandler.extract_code_block_info(edge_case)
+            result = Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.extract_code_block_info(edge_case)
             assert isinstance(result, dict)
 
         # Test that incomplete edge cases raise AttributeError (due to app code bug)
@@ -272,10 +272,10 @@ class TestGemini2Point5FlashCodeQuerySolverPromptHandler:
 
         for edge_case in invalid_edge_cases:
             with pytest.raises(AttributeError):
-                Gemini2Point5FlashCodeQuerySolverPromptHandler.extract_code_block_info(edge_case)
+                Gemini2Point5FlashCustomCodeQuerySolverPromptHandler.extract_code_block_info(edge_case)
 
     def test_handler_immutability_after_initialization(
-        self, handler: Gemini2Point5FlashCodeQuerySolverPromptHandler
+        self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler
     ) -> None:
         """Test that handler core attributes remain immutable after initialization."""
         original_prompt_type = handler.prompt_type

@@ -11,6 +11,13 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    ConversationRole,
+    ConversationTurn,
+    LLMCallResponseTypes,
+    NonStreamingResponse,
+    StreamingResponse,
+)
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
@@ -21,20 +28,13 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    ConversationRole,
-    ConversationTurn,
-    LLMCallResponseTypes,
-    NonStreamingResponse,
-    StreamingResponse,
-)
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
     UnifiedConversationTurn,
     UserConversationTurn,
 )
-from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 from test.fixtures.anthropic.remaining_methods_fixtures import *
 
 
@@ -286,7 +286,7 @@ class TestAnthropicRegionAndServiceClient:
     ) -> None:
         """Test that service clients are cached by region."""
         with patch(
-            "app.backend_common.services.llm.providers.anthropic.llm_provider.BedrockServiceClient"
+            "deputydev_core.llm_handler.providers.anthropic.llm_provider.BedrockServiceClient"
         ) as mock_bedrock:
             mock_client = MagicMock()
             mock_bedrock.return_value = mock_client
@@ -326,7 +326,7 @@ class TestAnthropicRegionAndServiceClient:
     ) -> None:
         """Test that service client method uses consistent region selection."""
         with patch(
-            "app.backend_common.services.llm.providers.anthropic.llm_provider.BedrockServiceClient"
+            "deputydev_core.llm_handler.providers.anthropic.llm_provider.BedrockServiceClient"
         ) as mock_bedrock:
             mock_client = MagicMock()
             mock_bedrock.return_value = mock_client
@@ -488,7 +488,7 @@ class TestAnthropicTokenCounting:
     async def test_get_tokens(self, anthropic_provider: Anthropic, mock_tiktoken_client: MagicMock) -> None:
         """Test get_tokens method."""
         with patch(
-            "app.backend_common.services.llm.providers.anthropic.llm_provider.TikToken",
+            "deputydev_core.llm_handler.providers.anthropic.llm_provider.TikToken",
             return_value=mock_tiktoken_client,
         ):
             content = "Hello, how are you doing today?"
@@ -577,7 +577,7 @@ class TestAnthropicTokenCounting:
             "tools": [NonSerializable()],  # This will cause JSON serialization to fail
         }
 
-        with patch("app.backend_common.services.llm.providers.anthropic.llm_provider.AppLogger") as mock_logger:
+        with patch("deputydev_core.llm_handler.providers.anthropic.llm_provider.AppLogger") as mock_logger:
             result = anthropic_provider._extract_payload_content_for_token_counting(payload)
 
             # Should still return system message and handle tools error gracefully
@@ -592,7 +592,7 @@ class TestAnthropicEdgeCases:
     @pytest.mark.asyncio
     async def test_conversation_turn_conversion_empty_content(self, anthropic_provider: Anthropic) -> None:
         """Test conversation turn conversion with empty content lists."""
-        from app.backend_common.services.llm.dataclasses.unified_conversation_turn import UserConversationTurn
+        from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import UserConversationTurn
 
         empty_user_turn = UserConversationTurn(content=[])
         result = anthropic_provider._get_anthropic_conversation_turn_from_user_conversation_turn(empty_user_turn)
@@ -696,7 +696,7 @@ class TestAnthropicParameterValidation:
     ) -> None:
         """Test return type for get_tokens method."""
         with patch(
-            "app.backend_common.services.llm.providers.anthropic.llm_provider.TikToken",
+            "deputydev_core.llm_handler.providers.anthropic.llm_provider.TikToken",
             return_value=mock_tiktoken_client,
         ):
             result = await anthropic_provider.get_tokens("test content", LLModels.CLAUDE_3_POINT_5_SONNET)

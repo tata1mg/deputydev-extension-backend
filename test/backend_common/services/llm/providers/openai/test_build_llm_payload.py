@@ -24,15 +24,15 @@ import json
 from typing import Any, Dict, List
 
 import pytest
-
-# Import necessary DTOs and classes
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     ConversationTool,
     PromptCacheConfig,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+
+# Import necessary DTOs and classes
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import all build_llm_payload specific fixtures
 from test.fixtures.openai.build_llm_payload_fixtures import *

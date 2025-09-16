@@ -11,9 +11,7 @@ from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     ParsedLLMCallResponse,
     StreamingEventType,
     StreamingParsedLLMCallResponse,
@@ -27,6 +25,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
     ToolUseRequestStartContent,
 )
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     Reasoning,
 )
@@ -50,8 +50,9 @@ def mock_llm_handler_for_stream() -> MagicMock:
     """Create a mock LLM handler for stream iterator tests."""
     from unittest.mock import Mock
 
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
-    from app.backend_common.services.llm.handler import LLMHandler
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
+    from deputydev_core.llm_handler.core.handler import LLMHandler
 
     handler = MagicMock(spec=LLMHandler)
 

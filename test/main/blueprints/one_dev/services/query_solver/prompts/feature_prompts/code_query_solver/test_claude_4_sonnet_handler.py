@@ -2,23 +2,23 @@ from typing import Any, Dict
 from unittest.mock import Mock
 
 import pytest
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_4_sonnet_handler import (
-    Claude4CodeQuerySolverPromptHandler,
+    Claude4CustomCodeQuerySolverPromptHandler,
 )
 from test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_4_sonnet_handler_fixtures import (
     Claude4SonnetHandlerFixtures,
 )
 
 
-class TestClaude4CodeQuerySolverPromptHandler:
-    """Test suite for Claude4CodeQuerySolverPromptHandler functionality."""
+class TestClaude4CustomCodeQuerySolverPromptHandler:
+    """Test suite for Claude4CustomCodeQuerySolverPromptHandler functionality."""
 
     @pytest.fixture
     def sample_params(self) -> Dict[str, Any]:
@@ -26,26 +26,26 @@ class TestClaude4CodeQuerySolverPromptHandler:
         return Claude4SonnetHandlerFixtures.get_sample_params()
 
     @pytest.fixture
-    def handler(self, sample_params: Dict[str, Any]) -> Claude4CodeQuerySolverPromptHandler:
+    def handler(self, sample_params: Dict[str, Any]) -> Claude4CustomCodeQuerySolverPromptHandler:
         """Create a handler instance for testing."""
-        return Claude4CodeQuerySolverPromptHandler(sample_params)
+        return Claude4CustomCodeQuerySolverPromptHandler(sample_params)
 
     def test_handler_initialization(self, sample_params: Dict[str, Any]) -> None:
         """Test proper handler initialization with parameters."""
-        handler = Claude4CodeQuerySolverPromptHandler(sample_params)
+        handler = Claude4CustomCodeQuerySolverPromptHandler(sample_params)
 
         assert handler.params == sample_params
         assert handler.prompt_type == "CODE_QUERY_SOLVER"
         assert handler.prompt_category == PromptCategories.CODE_GENERATION.value
         assert handler.prompt is not None
 
-    def test_prompt_type_consistency(self, handler: Claude4CodeQuerySolverPromptHandler) -> None:
+    def test_prompt_type_consistency(self, handler: Claude4CustomCodeQuerySolverPromptHandler) -> None:
         """Test that prompt type is consistently set."""
         assert handler.prompt_type == "CODE_QUERY_SOLVER"
         assert hasattr(handler, "prompt_category")
         assert handler.prompt_category == PromptCategories.CODE_GENERATION.value
 
-    def test_get_system_prompt(self, handler: Claude4CodeQuerySolverPromptHandler) -> None:
+    def test_get_system_prompt(self, handler: Claude4CustomCodeQuerySolverPromptHandler) -> None:
         """Test system prompt generation."""
         system_prompt = handler.get_system_prompt()
 
@@ -54,7 +54,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         # Claude prompts often contain specific instructions
         assert any(keyword in system_prompt.lower() for keyword in ["assistant", "helpful", "code", "programming"])
 
-    def test_get_prompt_structure(self, handler: Claude4CodeQuerySolverPromptHandler) -> None:
+    def test_get_prompt_structure(self, handler: Claude4CustomCodeQuerySolverPromptHandler) -> None:
         """Test that get_prompt returns properly structured UserAndSystemMessages."""
         prompt = handler.get_prompt()
 
@@ -71,7 +71,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         """Test parsing of response blocks with Claude-specific formatting."""
         message_data = Claude4SonnetHandlerFixtures.get_sample_message_data()
 
-        parsed_blocks, metadata = Claude4CodeQuerySolverPromptHandler.get_parsed_response_blocks(message_data)
+        parsed_blocks, metadata = Claude4CustomCodeQuerySolverPromptHandler.get_parsed_response_blocks(message_data)
 
         assert isinstance(parsed_blocks, list)
         assert isinstance(metadata, dict)
@@ -81,7 +81,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         mock_response = Mock(spec=NonStreamingResponse)
         mock_response.content = Claude4SonnetHandlerFixtures.get_sample_message_data()
 
-        result = Claude4CodeQuerySolverPromptHandler.get_parsed_result(mock_response)
+        result = Claude4CustomCodeQuerySolverPromptHandler.get_parsed_result(mock_response)
 
         assert isinstance(result, tuple)
         assert len(result) == 2
@@ -100,7 +100,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         mock_streaming_response.content = mock_async_generator()
 
         events = []
-        async_iterator = await Claude4CodeQuerySolverPromptHandler.get_parsed_streaming_events(mock_streaming_response)
+        async_iterator = await Claude4CustomCodeQuerySolverPromptHandler.get_parsed_streaming_events(mock_streaming_response)
         async for event in async_iterator:
             events.append(event)
 
@@ -109,13 +109,13 @@ class TestClaude4CodeQuerySolverPromptHandler:
     def test_custom_blocks_parsing(self) -> None:
         """Test parsing of Claude-specific custom blocks."""
         for example in Claude4SonnetHandlerFixtures.get_code_block_examples():
-            result = Claude4CodeQuerySolverPromptHandler._get_parsed_custom_blocks(example)
+            result = Claude4CustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(example)
             assert isinstance(result, list)
 
     def test_code_block_info_extraction(self) -> None:
         """Test extraction of code block information from Claude format."""
         for code_example in Claude4SonnetHandlerFixtures.get_code_block_examples():
-            result = Claude4CodeQuerySolverPromptHandler.extract_code_block_info(code_example)
+            result = Claude4CustomCodeQuerySolverPromptHandler.extract_code_block_info(code_example)
             assert isinstance(result, dict)
 
     def test_different_parameter_types(self) -> None:
@@ -131,7 +131,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         ]
 
         for params in test_cases:
-            handler = Claude4CodeQuerySolverPromptHandler(params)
+            handler = Claude4CustomCodeQuerySolverPromptHandler(params)
             assert handler.params == params
 
             system_prompt = handler.get_system_prompt()
@@ -154,7 +154,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
             "refactor_type": "composition_pattern",
         }
 
-        handler = Claude4CodeQuerySolverPromptHandler(params)
+        handler = Claude4CustomCodeQuerySolverPromptHandler(params)
         prompt = handler.get_prompt()
 
         # Check that file content is included in the prompt
@@ -168,7 +168,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
 
         for malformed_input in malformed_examples:
             try:
-                result = Claude4CodeQuerySolverPromptHandler._get_parsed_custom_blocks(malformed_input)
+                result = Claude4CustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(malformed_input)
                 assert isinstance(result, list)  # Should handle gracefully
             except Exception as e:
                 # If an exception is raised, it should be a known, handled exception
@@ -179,7 +179,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         thinking_examples = Claude4SonnetHandlerFixtures.get_thinking_examples()
 
         for thinking_example in thinking_examples:
-            result = Claude4CodeQuerySolverPromptHandler._get_parsed_custom_blocks(thinking_example)
+            result = Claude4CustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(thinking_example)
             assert isinstance(result, list)
 
     def test_summary_blocks_parsing(self) -> None:
@@ -187,7 +187,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         summary_examples = Claude4SonnetHandlerFixtures.get_summary_examples()
 
         for summary_example in summary_examples:
-            result = Claude4CodeQuerySolverPromptHandler._get_parsed_custom_blocks(summary_example)
+            result = Claude4CustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(summary_example)
             assert isinstance(result, list)
 
     def test_mixed_content_parsing(self) -> None:
@@ -195,10 +195,10 @@ class TestClaude4CodeQuerySolverPromptHandler:
         mixed_examples = Claude4SonnetHandlerFixtures.get_mixed_content_examples()
 
         for mixed_example in mixed_examples:
-            result = Claude4CodeQuerySolverPromptHandler._get_parsed_custom_blocks(mixed_example)
+            result = Claude4CustomCodeQuerySolverPromptHandler._get_parsed_custom_blocks(mixed_example)
             assert isinstance(result, list)
 
-    def test_handler_prompt_class_integration(self, handler: Claude4CodeQuerySolverPromptHandler) -> None:
+    def test_handler_prompt_class_integration(self, handler: Claude4CustomCodeQuerySolverPromptHandler) -> None:
         """Test that handler properly integrates with its prompt class."""
         assert handler.prompt_class is not None
         assert handler.prompt is not None
@@ -208,7 +208,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
         assert hasattr(handler.prompt, "get_system_prompt")
         assert hasattr(handler.prompt, "get_prompt")
 
-    def test_claude_specific_features(self, handler: Claude4CodeQuerySolverPromptHandler) -> None:
+    def test_claude_specific_features(self, handler: Claude4CustomCodeQuerySolverPromptHandler) -> None:
         """Test Claude-specific features and formatting."""
         system_prompt = handler.get_system_prompt()
 
@@ -228,8 +228,8 @@ class TestClaude4CodeQuerySolverPromptHandler:
         params1 = {"query": "First query", "context": "context1"}
         params2 = {"query": "Second query", "context": "context2"}
 
-        handler1 = Claude4CodeQuerySolverPromptHandler(params1)
-        handler2 = Claude4CodeQuerySolverPromptHandler(params2)
+        handler1 = Claude4CustomCodeQuerySolverPromptHandler(params1)
+        handler2 = Claude4CustomCodeQuerySolverPromptHandler(params2)
 
         # Test that they maintain separate state
         assert handler1.params != handler2.params
@@ -257,7 +257,7 @@ class TestClaude4CodeQuerySolverPromptHandler:
 
         for params in edge_cases:
             try:
-                handler = Claude4CodeQuerySolverPromptHandler(params)
+                handler = Claude4CustomCodeQuerySolverPromptHandler(params)
                 system_prompt = handler.get_system_prompt()
                 assert isinstance(system_prompt, str)
 
@@ -295,7 +295,7 @@ print("Hello")
         ]
 
         for test_case in test_cases:
-            result = Claude4CodeQuerySolverPromptHandler.extract_code_block_info(test_case["input"])
+            result = Claude4CustomCodeQuerySolverPromptHandler.extract_code_block_info(test_case["input"])
 
             if result:  # Only check if extraction was successful
                 for key in test_case["expected_keys"]:

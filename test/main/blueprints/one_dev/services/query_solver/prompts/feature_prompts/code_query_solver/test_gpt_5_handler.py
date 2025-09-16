@@ -2,17 +2,17 @@ from typing import Any, Dict
 from unittest.mock import Mock
 
 import pytest
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.gpt_5_handler import (
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_handler import (
     Gpt5CustomCodeQuerySolverPromptHandler,
 )
-from test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.gpt_5_handler_fixtures import (
+from test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_handler_fixtures import (
     Gpt5CustomHandlerFixtures,
 )
 

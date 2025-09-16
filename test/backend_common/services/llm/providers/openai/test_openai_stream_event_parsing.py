@@ -19,10 +19,7 @@ from typing import Optional, Tuple
 from unittest.mock import MagicMock
 
 import pytest
-
-# ConfigManager is automatically initialized by conftest.py fixture
-from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     LLMUsage,
     StreamingEvent,
     StreamingEventType,
@@ -33,7 +30,10 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+
+# ConfigManager is automatically initialized by conftest.py fixture
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import fixtures from organized fixture modules
 from test.fixtures.openai import (

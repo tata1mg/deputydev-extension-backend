@@ -40,7 +40,7 @@ def mock_external_dependencies():
     """
     from unittest.mock import Mock
 
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     # Create a mock NonStreamingParsedLLMCallResponse
     mock_non_streaming_response = Mock(spec=NonStreamingParsedLLMCallResponse)

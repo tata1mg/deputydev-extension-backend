@@ -26,7 +26,7 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 
 class TestOpenAIGetConversationTurns:

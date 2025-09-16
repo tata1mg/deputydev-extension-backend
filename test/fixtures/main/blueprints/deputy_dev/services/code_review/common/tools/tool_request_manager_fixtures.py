@@ -1,12 +1,13 @@
 from typing import Any, Dict, List
 from unittest.mock import Mock
 
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     ToolUseRequestContent,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 
 
 class ToolRequestManagerFixtures:

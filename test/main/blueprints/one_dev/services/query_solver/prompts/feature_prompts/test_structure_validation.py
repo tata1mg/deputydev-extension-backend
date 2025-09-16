@@ -58,7 +58,7 @@ class TestStructureValidation:
     def test_custom_handler_fixture_structure(self) -> None:
         """Test custom handler fixture structure."""
         try:
-            from test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.gpt_5_handler_fixtures import (
+            from test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_handler_fixtures import (
                 Gpt5CustomHandlerFixtures,
             )
 
@@ -98,7 +98,7 @@ class TestStructureValidation:
             "test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.thinking.base_thinking_parser_fixtures",
             "test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.code_block.base_code_block_parser_fixtures",
             "test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gpt_4_point_1_fixtures",
-            "test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.custom_code_query_solver.gpt_5_handler_fixtures",
+            "test.fixtures.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_handler_fixtures",
         ]
 
         for fixture_module in required_fixtures:
