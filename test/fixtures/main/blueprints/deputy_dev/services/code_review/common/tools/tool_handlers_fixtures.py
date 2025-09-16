@@ -6,7 +6,7 @@ including sample data, mocked objects, and test configurations.
 """
 
 from typing import Any, Dict, List
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -14,17 +14,13 @@ import pytest
 @pytest.fixture
 def sample_related_code_search_input() -> Dict[str, Any]:
     """Create sample input for related code searcher."""
-    return {
-        "search_query": "authentication function implementation"
-    }
+    return {"search_query": "authentication function implementation"}
 
 
 @pytest.fixture
 def sample_related_code_search_input_empty() -> Dict[str, Any]:
     """Create sample input for related code searcher with empty query."""
-    return {
-        "search_query": ""
-    }
+    return {"search_query": ""}
 
 
 @pytest.fixture
@@ -36,98 +32,65 @@ def sample_related_code_search_response() -> Dict[str, Any]:
                 "content": "def authenticate(username, password):",
                 "file_path": "src/auth.py",
                 "line_number": 15,
-                "relevance_score": 0.95
+                "relevance_score": 0.95,
             },
             {
                 "content": "class AuthenticationManager:",
-                "file_path": "src/auth_manager.py", 
+                "file_path": "src/auth_manager.py",
                 "line_number": 8,
-                "relevance_score": 0.87
-            }
+                "relevance_score": 0.87,
+            },
         ],
-        "total_chunks": 2
+        "total_chunks": 2,
     }
 
 
 @pytest.fixture
 def sample_grep_search_input() -> Dict[str, Any]:
     """Create sample input for grep search."""
-    return {
-        "search_path": "src/",
-        "query": "TODO",
-        "case_insensitive": False,
-        "use_regex": False
-    }
+    return {"search_path": "src/", "query": "TODO", "case_insensitive": False, "use_regex": False}
 
 
 @pytest.fixture
 def sample_grep_search_input_string_query() -> Dict[str, Any]:
     """Create sample input for grep search with string query."""
-    return {
-        "search_path": "src/",
-        "query": "FIXME",
-        "case_insensitive": True,
-        "use_regex": False
-    }
+    return {"search_path": "src/", "query": "FIXME", "case_insensitive": True, "use_regex": False}
 
 
 @pytest.fixture
 def sample_grep_search_input_invalid_regex() -> Dict[str, Any]:
     """Create sample input for grep search with invalid regex."""
-    return {
-        "search_path": "src/",
-        "query": "[invalid regex",
-        "case_insensitive": False,
-        "use_regex": True
-    }
+    return {"search_path": "src/", "query": "[invalid regex", "case_insensitive": False, "use_regex": True}
 
 
 @pytest.fixture
 def sample_grep_search_response() -> List[Dict[str, Any]]:
     """Create sample response for grep search."""
     mock_chunk_info = MagicMock()
-    mock_chunk_info.model_dump.return_value = {
-        "file_path": "src/main.py",
-        "line_number": 42,
-        "context_lines": 2
-    }
-    
+    mock_chunk_info.model_dump.return_value = {"file_path": "src/main.py", "line_number": 42, "context_lines": 2}
+
     return [
-        {
-            "chunk_info": mock_chunk_info,
-            "matched_line": "# TODO: Implement error handling"
-        },
-        {
-            "chunk_info": mock_chunk_info,
-            "matched_line": "# TODO: Add validation"
-        }
+        {"chunk_info": mock_chunk_info, "matched_line": "# TODO: Implement error handling"},
+        {"chunk_info": mock_chunk_info, "matched_line": "# TODO: Add validation"},
     ]
 
 
 @pytest.fixture
 def sample_iterative_file_reader_input() -> Dict[str, Any]:
     """Create sample input for iterative file reader."""
-    return {
-        "file_path": "src/main.py"
-    }
+    return {"file_path": "src/main.py"}
 
 
 @pytest.fixture
 def sample_iterative_file_reader_input_with_range() -> Dict[str, Any]:
     """Create sample input for iterative file reader with line range."""
-    return {
-        "file_path": "src/utils.py",
-        "start_line": 10,
-        "end_line": 50
-    }
+    return {"file_path": "src/utils.py", "start_line": 10, "end_line": 50}
 
 
 @pytest.fixture
 def sample_iterative_file_reader_input_nonexistent() -> Dict[str, Any]:
     """Create sample input for iterative file reader with non-existent file."""
-    return {
-        "file_path": "src/nonexistent.py"
-    }
+    return {"file_path": "src/nonexistent.py"}
 
 
 @pytest.fixture
@@ -140,7 +103,7 @@ def sample_iterative_file_reader_response() -> MagicMock:
         "end_line": 3,
         "total_lines": 3,
         "eof": True,
-        "eof_reached": True
+        "eof_reached": True,
     }
     return mock_response
 
@@ -150,14 +113,8 @@ def sample_focused_snippets_search_input() -> Dict[str, Any]:
     """Create sample input for focused snippets searcher."""
     return {
         "search_terms": [
-            {
-                "keyword": "AuthenticationManager",
-                "type": "class"
-            },
-            {
-                "keyword": "validate_token",
-                "type": "function"
-            }
+            {"keyword": "AuthenticationManager", "type": "class"},
+            {"keyword": "validate_token", "type": "function"},
         ]
     }
 
@@ -174,9 +131,9 @@ def sample_focused_snippets_search_response() -> Dict[str, Any]:
                     {
                         "file_path": "src/auth.py",
                         "line_number": 10,
-                        "content": "class AuthenticationManager:\n    def __init__(self):\n        pass"
+                        "content": "class AuthenticationManager:\n    def __init__(self):\n        pass",
                     }
-                ]
+                ],
             },
             {
                 "keyword": "validate_token",
@@ -185,10 +142,10 @@ def sample_focused_snippets_search_response() -> Dict[str, Any]:
                     {
                         "file_path": "src/auth.py",
                         "line_number": 25,
-                        "content": "def validate_token(token: str) -> bool:\n    return token is not None"
+                        "content": "def validate_token(token: str) -> bool:\n    return token is not None",
                     }
-                ]
-            }
+                ],
+            },
         ]
     }
 
@@ -196,38 +153,25 @@ def sample_focused_snippets_search_response() -> Dict[str, Any]:
 @pytest.fixture
 def sample_file_path_search_input() -> Dict[str, Any]:
     """Create sample input for file path searcher."""
-    return {
-        "directory": "src/"
-    }
+    return {"directory": "src/"}
 
 
 @pytest.fixture
 def sample_file_path_search_input_with_terms() -> Dict[str, Any]:
     """Create sample input for file path searcher with search terms."""
-    return {
-        "directory": "src/",
-        "search_terms": ["main", "utils"]
-    }
+    return {"directory": "src/", "search_terms": ["main", "utils"]}
 
 
 @pytest.fixture
 def sample_file_path_search_input_invalid_dir() -> Dict[str, Any]:
     """Create sample input for file path searcher with invalid directory."""
-    return {
-        "directory": "nonexistent/"
-    }
+    return {"directory": "nonexistent/"}
 
 
 @pytest.fixture
 def sample_file_path_search_response() -> List[str]:
     """Create sample response for file path searcher."""
-    return [
-        "src/main.py",
-        "src/utils.py",
-        "src/auth.py",
-        "src/models/__init__.py",
-        "src/models/user.py"
-    ]
+    return ["src/main.py", "src/utils.py", "src/auth.py", "src/models/__init__.py", "src/models/user.py"]
 
 
 @pytest.fixture
@@ -239,16 +183,16 @@ def sample_parse_final_response_input() -> Dict[str, Any]:
                 "line_number": 15,
                 "message": "Consider using more descriptive variable names",
                 "confidence_score": 0.8,
-                "category": "maintainability"
+                "category": "maintainability",
             },
             {
                 "line_number": 23,
                 "message": "Add input validation for security",
                 "confidence_score": 0.9,
-                "category": "security"
-            }
+                "category": "security",
+            },
         ],
-        "summary": "Found 2 issues that should be addressed"
+        "summary": "Found 2 issues that should be addressed",
     }
 
 
@@ -261,9 +205,7 @@ def sample_parse_final_response_input_missing_fields() -> Dict[str, Any]:
 @pytest.fixture
 def sample_pr_review_planner_input() -> Dict[str, Any]:
     """Create sample input for PR review planner."""
-    return {
-        "review_focus": "security and performance"
-    }
+    return {"review_focus": "security and performance"}
 
 
 @pytest.fixture
@@ -274,24 +216,16 @@ def sample_pr_review_plan() -> Dict[str, Any]:
             {
                 "area": "security",
                 "priority": "high",
-                "specific_checks": [
-                    "Input validation",
-                    "Authentication mechanisms",
-                    "Data sanitization"
-                ]
+                "specific_checks": ["Input validation", "Authentication mechanisms", "Data sanitization"],
             },
             {
                 "area": "performance",
-                "priority": "medium", 
-                "specific_checks": [
-                    "Algorithm efficiency",
-                    "Memory usage",
-                    "Database queries"
-                ]
-            }
+                "priority": "medium",
+                "specific_checks": ["Algorithm efficiency", "Memory usage", "Database queries"],
+            },
         ],
         "estimated_review_time": "30 minutes",
-        "complexity_score": 7.5
+        "complexity_score": 7.5,
     }
 
 
@@ -308,13 +242,7 @@ def sample_context_service() -> MagicMock:
 @pytest.fixture
 def sample_concurrent_tool_inputs() -> List[Dict[str, Any]]:
     """Create sample inputs for concurrent tool testing."""
-    return [
-        {
-            "comments": [f"Comment {i}"],
-            "summary": f"Summary {i}"
-        }
-        for i in range(10)
-    ]
+    return [{"comments": [f"Comment {i}"], "summary": f"Summary {i}"} for i in range(10)]
 
 
 @pytest.fixture
@@ -324,13 +252,14 @@ def sample_large_tool_input() -> Dict[str, Any]:
         "comments": [
             {
                 "line_number": i,
-                "message": f"This is a very long comment message that contains detailed information about issue {i} " * 10,
+                "message": f"This is a very long comment message that contains detailed information about issue {i} "
+                * 10,
                 "confidence_score": 0.5 + (i % 5) * 0.1,
-                "category": ["security", "performance", "maintainability", "error", "communication"][i % 5]
+                "category": ["security", "performance", "maintainability", "error", "communication"][i % 5],
             }
             for i in range(100)
         ],
-        "summary": "This is a comprehensive summary that covers all the major issues found in the code review. " * 50
+        "summary": "This is a comprehensive summary that covers all the major issues found in the code review. " * 50,
     }
 
 
@@ -378,11 +307,7 @@ def sample_process_pool_executor() -> MagicMock:
 @pytest.fixture
 def sample_config_manager_config() -> Dict[str, Any]:
     """Create sample ConfigManager configuration."""
-    return {
-        "NUMBER_OF_WORKERS": 4,
-        "MAX_CONCURRENT_REQUESTS": 10,
-        "TIMEOUT_SECONDS": 30
-    }
+    return {"NUMBER_OF_WORKERS": 4, "MAX_CONCURRENT_REQUESTS": 10, "TIMEOUT_SECONDS": 30}
 
 
 @pytest.fixture
@@ -402,9 +327,7 @@ def sample_grep_search_results_empty() -> List[Dict[str, Any]]:
 @pytest.fixture
 def sample_focused_snippets_empty_response() -> Dict[str, Any]:
     """Create empty focused snippets response."""
-    return {
-        "results": []
-    }
+    return {"results": []}
 
 
 @pytest.fixture
@@ -420,23 +343,23 @@ def sample_error_scenarios() -> List[Dict[str, Any]]:
         {
             "error_type": "file_not_found",
             "exception": FileNotFoundError("File not found"),
-            "expected_behavior": "raise_exception"
+            "expected_behavior": "raise_exception",
         },
         {
             "error_type": "permission_error",
             "exception": PermissionError("Permission denied"),
-            "expected_behavior": "raise_exception"
+            "expected_behavior": "raise_exception",
         },
         {
             "error_type": "timeout_error",
             "exception": TimeoutError("Operation timed out"),
-            "expected_behavior": "raise_exception"
+            "expected_behavior": "raise_exception",
         },
         {
             "error_type": "network_error",
             "exception": ConnectionError("Network error"),
-            "expected_behavior": "raise_exception"
-        }
+            "expected_behavior": "raise_exception",
+        },
     ]
 
 
@@ -448,7 +371,7 @@ def sample_tool_performance_data() -> Dict[str, Any]:
         "medium_input_size": 100,
         "large_input_size": 1000,
         "max_execution_time": 5.0,  # seconds
-        "concurrent_requests": 20
+        "concurrent_requests": 20,
     }
 
 
@@ -458,11 +381,11 @@ def sample_integration_workflow_data() -> Dict[str, Any]:
     return {
         "workflow_steps": [
             "file_path_search",
-            "iterative_file_reader", 
+            "iterative_file_reader",
             "grep_search",
             "focused_snippets_search",
             "related_code_search",
-            "parse_final_response"
+            "parse_final_response",
         ],
         "expected_results": {
             "file_path_search": {"data": ["file1.py", "file2.py"]},
@@ -470,8 +393,8 @@ def sample_integration_workflow_data() -> Dict[str, Any]:
             "grep_search": {"data": []},
             "focused_snippets_search": {"results": []},
             "related_code_search": {"chunks": []},
-            "parse_final_response": {"comments": [], "summary": ""}
-        }
+            "parse_final_response": {"comments": [], "summary": ""},
+        },
     }
 
 
@@ -483,7 +406,7 @@ def sample_special_character_inputs() -> Dict[str, Any]:
         "regex_special_chars": "function.*\\([^)]*\\)",
         "json_breaking_chars": '{"test": "value with \\"quotes\\""}',
         "newline_chars": "function\nwith\nnewlines",
-        "emoji_chars": "🔍 Search for authentication 🔐"
+        "emoji_chars": "🔍 Search for authentication 🔐",
     }
 
 
@@ -491,21 +414,13 @@ def sample_special_character_inputs() -> Dict[str, Any]:
 def sample_boundary_conditions() -> Dict[str, Any]:
     """Create boundary condition test data."""
     return {
-        "empty_strings": {
-            "search_query": "",
-            "file_path": "",
-            "directory": ""
-        },
+        "empty_strings": {"search_query": "", "file_path": "", "directory": ""},
         "very_long_strings": {
             "search_query": "x" * 10000,
             "file_path": "path/" * 1000 + "file.py",
-            "directory": "dir/" * 500
+            "directory": "dir/" * 500,
         },
-        "null_values": {
-            "search_query": None,
-            "file_path": None,
-            "directory": None
-        }
+        "null_values": {"search_query": None, "file_path": None, "directory": None},
     }
 
 
@@ -515,7 +430,7 @@ def sample_async_operation_data() -> Dict[str, Any]:
     return {
         "operation_delays": [0.01, 0.05, 0.1, 0.5],
         "concurrent_operations": [1, 5, 10, 20],
-        "timeout_values": [1, 5, 10, 30]
+        "timeout_values": [1, 5, 10, 30],
     }
 
 
@@ -523,15 +438,14 @@ def sample_async_operation_data() -> Dict[str, Any]:
 def sample_mocked_dependencies() -> Dict[str, MagicMock]:
     """Create all mocked dependencies in one fixture."""
     return {
-        "context_value": MagicMock(side_effect=lambda key: {
-            "repo_path": "/test/repo",
-            "session_id": "test-123"
-        }.get(key)),
+        "context_value": MagicMock(
+            side_effect=lambda key: {"repo_path": "/test/repo", "session_id": "test-123"}.get(key)
+        ),
         "one_dev_client": MagicMock(),
         "embedding_manager": MagicMock(),
         "weaviate_client": MagicMock(),
         "init_manager": MagicMock(),
         "process_executor": MagicMock(),
         "config_manager": MagicMock(),
-        "llm_formatter": MagicMock()
+        "llm_formatter": MagicMock(),
     }

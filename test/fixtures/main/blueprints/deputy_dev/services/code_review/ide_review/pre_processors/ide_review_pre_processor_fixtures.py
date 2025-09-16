@@ -7,12 +7,11 @@ mock data, and edge cases.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
-from app.backend_common.models.dto.message_sessions_dto import MessageSessionData
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import ChatAttachmentDataWithObjectBytes
 from app.main.blueprints.deputy_dev.constants.constants import IdeReviewStatusTypes, ReviewType
 from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
@@ -26,10 +25,7 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.ma
 @pytest.fixture
 def sample_get_repo_id_request() -> GetRepoIdRequest:
     """Create a sample GetRepoIdRequest for testing."""
-    return GetRepoIdRequest(
-        repo_name="test-repo",
-        origin_url="https://github.com/test-org/test-repo.git"
-    )
+    return GetRepoIdRequest(repo_name="test-repo", origin_url="https://github.com/test-org/test-repo.git")
 
 
 @pytest.fixture
@@ -51,7 +47,7 @@ def sample_file_wise_changes() -> List[FileWiseChanges]:
 +    
 +    def generate_id(self):
 +        return os.urandom(16).hex()
-"""
+""",
         ),
         FileWiseChanges(
             file_path="src/utils/helper.py",
@@ -74,8 +70,8 @@ def sample_file_wise_changes() -> List[FileWiseChanges]:
 +
 +def get_file_extension(filename: str) -> str:
 +    return filename.split('.')[-1] if '.' in filename else ''
-"""
-        )
+""",
+        ),
     ]
 
 
@@ -91,7 +87,7 @@ def sample_review_request(sample_file_wise_changes: List[FileWiseChanges]) -> Re
         target_commit="def456ghi789",
         diff_attachment_id=None,
         file_wise_diff=sample_file_wise_changes,
-        review_type=ReviewType.ALL
+        review_type=ReviewType.ALL,
     )
 
 
@@ -99,18 +95,24 @@ def sample_review_request(sample_file_wise_changes: List[FileWiseChanges]) -> Re
 def sample_large_review_request() -> ReviewRequest:
     """Create a large ReviewRequest that exceeds token limits."""
     large_diff = """@@ -1,100 +1,200 @@
-""" + "\n".join([f"+    line_{i} = 'This is a very long line of code that adds complexity to the codebase and might exceed token limits when combined with other similar lines'" for i in range(1000)])
-    
+""" + "\n".join(
+        [
+            f"+    line_{i} = 'This is a very long line of code that adds complexity to the codebase and might exceed token limits when combined with other similar lines'"
+            for i in range(1000)
+        ]
+    )
+
     large_changes = [
         FileWiseChanges(
             file_path=f"src/large_file_{i}.py",
             file_name=f"large_file_{i}.py",
             status="created",
             line_changes={"added": 1000, "removed": 0},
-            diff=large_diff
-        ) for i in range(10)
+            diff=large_diff,
+        )
+        for i in range(10)
     ]
-    
+
     return ReviewRequest(
         repo_name="large-repo",
         origin_url="https://github.com/test-org/large-repo.git",
@@ -120,7 +122,7 @@ def sample_large_review_request() -> ReviewRequest:
         target_commit="target789commit012",
         diff_attachment_id=None,
         file_wise_diff=large_changes,
-        review_type=ReviewType.ALL
+        review_type=ReviewType.ALL,
     )
 
 
@@ -130,13 +132,13 @@ def sample_empty_diff_request() -> ReviewRequest:
     empty_changes = [
         FileWiseChanges(
             file_path="src/empty.py",
-            file_name="empty.py", 
+            file_name="empty.py",
             status="modified",
             line_changes={"added": 0, "removed": 0},
-            diff=""
+            diff="",
         )
     ]
-    
+
     return ReviewRequest(
         repo_name="empty-repo",
         origin_url="https://github.com/test-org/empty-repo.git",
@@ -146,7 +148,7 @@ def sample_empty_diff_request() -> ReviewRequest:
         target_commit="target456",
         diff_attachment_id=None,
         file_wise_diff=empty_changes,
-        review_type=ReviewType.ALL
+        review_type=ReviewType.ALL,
     )
 
 
@@ -167,10 +169,11 @@ def sample_pre_process_data(sample_file_wise_changes: List[FileWiseChanges]) -> 
                 "file_name": change.file_name,
                 "status": change.status,
                 "line_changes": change.line_changes,
-                "diff": change.diff
-            } for change in sample_file_wise_changes
+                "diff": change.diff,
+            }
+            for change in sample_file_wise_changes
         ],
-        "review_type": ReviewType.ALL.value
+        "review_type": ReviewType.ALL.value,
     }
 
 
@@ -179,17 +182,18 @@ def sample_large_pre_process_data() -> Dict[str, Any]:
     """Create large sample data that exceeds token limits."""
     large_diff = """@@ -1,100 +1,200 @@
 """ + "\n".join([f"+    line_{i} = 'This is a very long line of code that adds complexity'" for i in range(2000)])
-    
+
     large_file_changes = [
         {
             "file_path": f"src/large_file_{i}.py",
             "file_name": f"large_file_{i}.py",
             "status": "created",
             "line_changes": {"added": 2000, "removed": 0},
-            "diff": large_diff
-        } for i in range(10)
+            "diff": large_diff,
+        }
+        for i in range(10)
     ]
-    
+
     return {
         "repo_name": "large-repo",
         "origin_url": "https://github.com/test-org/large-repo.git",
@@ -199,7 +203,7 @@ def sample_large_pre_process_data() -> Dict[str, Any]:
         "target_commit": "target789commit012",
         "diff_attachment_id": None,
         "file_wise_diff": large_file_changes,
-        "review_type": ReviewType.ALL.value
+        "review_type": ReviewType.ALL.value,
     }
 
 
@@ -220,10 +224,10 @@ def sample_empty_diff_data() -> Dict[str, Any]:
                 "file_name": "empty.py",
                 "status": "modified",
                 "line_changes": {"added": 0, "removed": 0},
-                "diff": ""
+                "diff": "",
             }
         ],
-        "review_type": ReviewType.ALL.value
+        "review_type": ReviewType.ALL.value,
     }
 
 
@@ -290,7 +294,7 @@ def sample_ide_review_dto() -> IdeReviewDTO:
         session_id=987,
         created_at=datetime.now(),
         updated_at=datetime.now(),
-        review_type=ReviewType.ALL.value
+        review_type=ReviewType.ALL.value,
     )
 
 
@@ -298,7 +302,7 @@ def sample_ide_review_dto() -> IdeReviewDTO:
 def sample_attachment_data() -> Mock:
     """Create sample attachment data."""
     from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
-    
+
     attachment = ChatAttachmentsDTO(
         id=1,
         s3_key="attachments/test_diff.txt",
@@ -306,7 +310,7 @@ def sample_attachment_data() -> Mock:
         file_type="text/plain",
         status="uploaded",
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
     return attachment
 
@@ -315,10 +319,7 @@ def sample_attachment_data() -> Mock:
 def sample_attachment_with_object_bytes(sample_attachment_data: Mock) -> ChatAttachmentDataWithObjectBytes:
     """Create sample attachment data with object bytes."""
     object_bytes = b"sample diff content here"
-    return ChatAttachmentDataWithObjectBytes(
-        attachment_metadata=sample_attachment_data,
-        object_bytes=object_bytes
-    )
+    return ChatAttachmentDataWithObjectBytes(attachment_metadata=sample_attachment_data, object_bytes=object_bytes)
 
 
 @pytest.fixture
@@ -353,7 +354,7 @@ def mock_extension_reviews_repository() -> MagicMock:
     return repository
 
 
-@pytest.fixture  
+@pytest.fixture
 def mock_chat_attachments_repository() -> MagicMock:
     """Create mock ChatAttachmentsRepository."""
     repository = MagicMock()
@@ -422,7 +423,7 @@ def uncommitted_review_request(sample_file_wise_changes: List[FileWiseChanges]) 
         target_commit="target456",
         diff_attachment_id=None,
         file_wise_diff=sample_file_wise_changes,
-        review_type=ReviewType.UNCOMMITTED
+        review_type=ReviewType.UNCOMMITTED,
     )
 
 
@@ -438,7 +439,7 @@ def committed_review_request(sample_file_wise_changes: List[FileWiseChanges]) ->
         target_commit="target456",
         diff_attachment_id=None,
         file_wise_diff=sample_file_wise_changes,
-        review_type=ReviewType.COMMITTED
+        review_type=ReviewType.COMMITTED,
     )
 
 
@@ -454,7 +455,7 @@ def review_request_with_attachment_id(sample_file_wise_changes: List[FileWiseCha
         target_commit="target456",
         diff_attachment_id="1",
         file_wise_diff=sample_file_wise_changes,
-        review_type=ReviewType.ALL
+        review_type=ReviewType.ALL,
     )
 
 
@@ -467,37 +468,33 @@ def sample_validation_scenarios() -> List[Dict[str, Any]]:
             "diff": "small diff content",
             "token_count": 100,
             "expected_valid": True,
-            "expected_status": IdeReviewStatusTypes.IN_PROGRESS.value
+            "expected_status": IdeReviewStatusTypes.IN_PROGRESS.value,
         },
         {
             "name": "empty_diff",
             "diff": "",
             "token_count": 0,
             "expected_valid": False,
-            "expected_status": IdeReviewStatusTypes.REJECTED_NO_DIFF.value
+            "expected_status": IdeReviewStatusTypes.REJECTED_NO_DIFF.value,
         },
         {
             "name": "large_diff_exceeds_limit",
             "diff": "large diff content" * 1000,
             "token_count": 200000,  # This exceeds MAX_PR_DIFF_TOKEN_LIMIT (150000)
             "expected_valid": False,
-            "expected_status": IdeReviewStatusTypes.REJECTED_LARGE_SIZE.value
+            "expected_status": IdeReviewStatusTypes.REJECTED_LARGE_SIZE.value,
         },
         {
             "name": "none_diff",
             "diff": None,
             "token_count": 0,
             "expected_valid": False,
-            "expected_status": IdeReviewStatusTypes.REJECTED_NO_DIFF.value
-        }
+            "expected_status": IdeReviewStatusTypes.REJECTED_NO_DIFF.value,
+        },
     ]
 
 
 @pytest.fixture
 def expected_pre_process_result() -> Dict[str, Any]:
     """Expected result from successful pre_process_pr method."""
-    return {
-        "review_id": 201,
-        "session_id": 987,
-        "repo_id": 101
-    }
+    return {"review_id": 201, "session_id": 987, "repo_id": 101}

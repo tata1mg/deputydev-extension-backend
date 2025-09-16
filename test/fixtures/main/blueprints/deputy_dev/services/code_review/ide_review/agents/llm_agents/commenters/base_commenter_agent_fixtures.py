@@ -6,20 +6,32 @@ of the BaseCommenterAgent class including different input combinations,
 mock data, and edge cases.
 """
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels, ContentBlockCategory, ToolUseRequestData
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
+    ConversationTool,
     LLMCallResponseTypes,
     NonStreamingParsedLLMCallResponse,
     UserAndSystemMessages,
-    ConversationTool,
 )
-from app.backend_common.models.dto.message_thread_dto import LLMUsage
+from deputydev_core.services.chunking.chunk_info import ChunkInfo
+
+from app.backend_common.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    LLModels,
+    LLMUsage,
+)
+from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
+    ActorType,
+    MessageType,
+    ReviewAgentChatDTO,
+    TextMessageData,
+    ToolStatus,
+    ToolUseMessageData,
+)
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
@@ -31,15 +43,6 @@ from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclas
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
-    ActorType,
-    MessageType,
-    ReviewAgentChatDTO,
-    TextMessageData,
-    ToolUseMessageData,
-    ToolStatus,
-)
-from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 
 # Mock context service fixtures
@@ -68,9 +71,7 @@ def mock_prompt_handler() -> MagicMock:
     """Create a mock prompt handler."""
     handler = MagicMock()
     handler.get_prompt.return_value = UserAndSystemMessages(
-        system_message="Test system message",
-        user_message="Test user message",
-        cached_message="Test cached message"
+        system_message="Test system message", user_message="Test user message", cached_message="Test cached message"
     )
     handler.disable_tools = False
     return handler
@@ -109,7 +110,7 @@ def sample_user_agent_dto() -> UserAgentDTO:
         is_custom_agent=False,
         is_deleted=False,
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
 
 
@@ -127,7 +128,7 @@ def user_agent_dto_no_display_name() -> UserAgentDTO:
         confidence_score=0.8,
         objective="Test objective",
         is_custom_agent=False,
-        is_deleted=False
+        is_deleted=False,
     )
 
 
@@ -145,7 +146,7 @@ def user_agent_dto_minimal() -> UserAgentDTO:
         confidence_score=0.9,
         objective=None,
         is_custom_agent=False,
-        is_deleted=False
+        is_deleted=False,
     )
 
 
@@ -159,11 +160,7 @@ def sample_relevant_chunks() -> Dict[str, Any]:
         start_line=1,
         end_line=2,
         chunk_id="chunk_1",
-        source_details={
-            "file_path": "/test/file1.py",
-            "start_line": 1,
-            "end_line": 2
-        }
+        source_details={"file_path": "/test/file1.py", "start_line": 1, "end_line": 2},
     )
     chunk2 = ChunkInfo(
         content="class TestClass:\n    pass",
@@ -171,18 +168,14 @@ def sample_relevant_chunks() -> Dict[str, Any]:
         start_line=1,
         end_line=2,
         chunk_id="chunk_2",
-        source_details={
-            "file_path": "/test/file2.py",
-            "start_line": 1,
-            "end_line": 2
-        }
+        source_details={"file_path": "/test/file2.py", "start_line": 1, "end_line": 2},
     )
-    
+
     return {
         "relevant_chunks": [chunk1, chunk2],
         "relevant_chunks_mapping": {
             1: [0, 1]  # agent_id 1 maps to chunk indices 0 and 1
-        }
+        },
     }
 
 
@@ -193,7 +186,7 @@ def empty_relevant_chunks() -> Dict[str, Any]:
         "relevant_chunks": [],
         "relevant_chunks_mapping": {
             1: []  # agent_id 1 maps to empty list
-        }
+        },
     }
 
 
@@ -209,7 +202,7 @@ def sample_llm_response() -> NonStreamingParsedLLMCallResponse:
         prompt_vars={},
         prompt_id="test_prompt",
         model_used=LLModels.GPT_4O,
-        query_id=123
+        query_id=123,
     )
 
 
@@ -222,7 +215,7 @@ def sample_llm_response_final() -> NonStreamingParsedLLMCallResponse:
     mock_content_block.content.tool_name = "parse_final_response"
     mock_content_block.content.tool_use_id = "final_response_123"
     mock_content_block.content.tool_input = {"comments": []}
-    
+
     return NonStreamingParsedLLMCallResponse(
         type=LLMCallResponseTypes.NON_STREAMING,
         parsed_content=[mock_content_block],
@@ -231,7 +224,7 @@ def sample_llm_response_final() -> NonStreamingParsedLLMCallResponse:
         prompt_vars={},
         prompt_id="test_prompt_final",
         model_used=LLModels.GPT_4O,
-        query_id=124
+        query_id=124,
     )
 
 
@@ -254,7 +247,7 @@ def sample_review_agent_chat_text() -> List[ReviewAgentChatDTO]:
         message_data=TextMessageData(text="Sample text message"),
         metadata={"cache_breakpoint": True},
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
     return [chat]
 
@@ -273,11 +266,11 @@ def sample_review_agent_chat_tool() -> List[ReviewAgentChatDTO]:
             tool_name="test_tool",
             tool_input={"param": "value"},
             tool_response={"result": "success"},
-            tool_status=ToolStatus.COMPLETED
+            tool_status=ToolStatus.COMPLETED,
         ),
         metadata={},
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
     return [chat]
 
@@ -286,10 +279,7 @@ def sample_review_agent_chat_tool() -> List[ReviewAgentChatDTO]:
 @pytest.fixture
 def query_payload() -> Dict[str, Any]:
     """Create a query payload."""
-    return {
-        "type": "query",
-        "message": "Review this code for security issues"
-    }
+    return {"type": "query", "message": "Review this code for security issues"}
 
 
 @pytest.fixture
@@ -305,18 +295,14 @@ def tool_use_response_payload() -> Dict[str, Any]:
                     "chunk": {
                         "content": "file content",
                         "file_path": "/test/file.py",
-                        "source_details": {
-                            "file_path": "/test/file.py",
-                            "start_line": 1,
-                            "end_line": 10
-                        }
+                        "source_details": {"file_path": "/test/file.py", "start_line": 1, "end_line": 10},
                     },
                     "eof_reached": True,
                     "was_summary": False,
-                    "total_lines": 10
+                    "total_lines": 10,
                 }
-            }
-        }
+            },
+        },
     }
 
 
@@ -329,19 +315,16 @@ def tool_use_failed_payload() -> Dict[str, Any]:
             "tool_name": "iterative_file_reader",
             "tool_use_id": "test_tool_use_id",
             "error_type": "TimeoutError",
-            "error_message": "Tool execution timed out"
+            "error_message": "Tool execution timed out",
         },
-        "tool_use_failed": True
+        "tool_use_failed": True,
     }
 
 
 @pytest.fixture
 def invalid_payload() -> Dict[str, Any]:
     """Create an invalid payload."""
-    return {
-        "type": "invalid_type",
-        "message": "This should cause an error"
-    }
+    return {"type": "invalid_type", "message": "This should cause an error"}
 
 
 # Tool request fixtures
@@ -351,10 +334,7 @@ def sample_tool_request() -> Dict[str, Any]:
     return {
         "tool_name": "grep_search",
         "tool_use_id": "search_123",
-        "tool_input": {
-            "query": "security vulnerability",
-            "path": "/src"
-        }
+        "tool_input": {"query": "security vulnerability", "path": "/src"},
     }
 
 
@@ -362,10 +342,7 @@ def sample_tool_request() -> Dict[str, Any]:
 @pytest.fixture
 def sample_final_response() -> Dict[str, Any]:
     """Create a sample final response."""
-    return {
-        "status": "completed",
-        "comments": []
-    }
+    return {"status": "completed", "comments": []}
 
 
 @pytest.fixture
@@ -381,7 +358,7 @@ def sample_final_response_with_comments() -> Dict[str, Any]:
     comment1.line_number = 15
     comment1.tag = "security"
     comment1.buckets = None
-    
+
     comment2 = MagicMock()
     comment2.title = "Security Issue 2"
     comment2.comment = "Another security concern"
@@ -392,11 +369,8 @@ def sample_final_response_with_comments() -> Dict[str, Any]:
     comment2.line_number = 25
     comment2.tag = "security"
     comment2.buckets = None
-    
-    return {
-        "status": "completed",
-        "comments": [comment1, comment2]
-    }
+
+    return {"status": "completed", "comments": [comment1, comment2]}
 
 
 # Session ID fixtures
@@ -452,10 +426,10 @@ def sample_agent_run_result_success() -> AgentRunResult:
                 "system_prompt": 100,
                 "user_prompt": 50,
                 "input_tokens": 150,
-                "output_tokens": 75
+                "output_tokens": 75,
             }
         },
-        display_name="Test Security Agent"
+        display_name="Test Security Agent",
     )
 
 
@@ -468,13 +442,8 @@ def sample_agent_run_result_token_exceeded() -> AgentRunResult:
         agent_name="test_security_agent",
         agent_type=AgentTypes.SECURITY,
         model=LLModels.GPT_4O,
-        tokens_data={
-            "test_security_agent_QUERY": {
-                "system_prompt": 50000,
-                "user_prompt": 50000
-            }
-        },
-        display_name="Test Security Agent"
+        tokens_data={"test_security_agent_QUERY": {"system_prompt": 50000, "user_prompt": 50000}},
+        display_name="Test Security Agent",
     )
 
 
@@ -482,31 +451,13 @@ def sample_agent_run_result_token_exceeded() -> AgentRunResult:
 @pytest.fixture
 def mock_config() -> Dict[str, Any]:
     """Create mock configuration for testing."""
-    return {
-        "LLM_MODELS": {
-            "GPT_4O": {
-                "INPUT_TOKENS_LIMIT": 128000
-            },
-            "GPT_40_MINI": {
-                "INPUT_TOKENS_LIMIT": 64000
-            }
-        }
-    }
+    return {"LLM_MODELS": {"GPT_4O": {"INPUT_TOKENS_LIMIT": 128000}, "GPT_40_MINI": {"INPUT_TOKENS_LIMIT": 64000}}}
 
 
 @pytest.fixture
 def mock_config_low_token_limit() -> Dict[str, Any]:
     """Create mock configuration with low token limits for testing."""
-    return {
-        "LLM_MODELS": {
-            "GPT_4O": {
-                "INPUT_TOKENS_LIMIT": 100
-            },
-            "GPT_40_MINI": {
-                "INPUT_TOKENS_LIMIT": 50
-            }
-        }
-    }
+    return {"LLM_MODELS": {"GPT_4O": {"INPUT_TOKENS_LIMIT": 100}, "GPT_40_MINI": {"INPUT_TOKENS_LIMIT": 50}}}
 
 
 # Tool fixtures
@@ -515,10 +466,10 @@ def sample_conversation_tools() -> List[ConversationTool]:
     """Create sample conversation tools."""
     tool1 = MagicMock(spec=ConversationTool)
     tool1.name = "grep_search"
-    
+
     tool2 = MagicMock(spec=ConversationTool)
     tool2.name = "iterative_file_reader"
-    
+
     return [tool1, tool2]
 
 
@@ -548,7 +499,7 @@ def sample_user_and_system_messages() -> UserAndSystemMessages:
     return UserAndSystemMessages(
         system_message="You are a helpful code review assistant.",
         user_message="Please review this code for security vulnerabilities.",
-        cached_message="Cached system prompt"
+        cached_message="Cached system prompt",
     )
 
 
@@ -559,18 +510,14 @@ def large_user_and_system_messages() -> UserAndSystemMessages:
     return UserAndSystemMessages(
         system_message=f"System: {large_content}",
         user_message=f"User: {large_content}",
-        cached_message=f"Cached: {large_content}"
+        cached_message=f"Cached: {large_content}",
     )
 
 
 @pytest.fixture
 def empty_user_and_system_messages() -> UserAndSystemMessages:
     """Create empty user and system messages."""
-    return UserAndSystemMessages(
-        system_message="",
-        user_message="",
-        cached_message=""
-    )
+    return UserAndSystemMessages(system_message="", user_message="", cached_message="")
 
 
 # Performance testing fixtures
@@ -582,7 +529,7 @@ def large_tokens_data() -> Dict[str, Dict[str, Any]]:
             "system_prompt": 1000 + i,
             "user_prompt": 500 + i,
             "input_tokens": 1500 + i,
-            "output_tokens": 750 + i
+            "output_tokens": 750 + i,
         }
         for i in range(100)
     }
@@ -603,7 +550,7 @@ def sample_prompt_variables() -> Dict[str, Optional[str]]:
         "PR_DIFF_WITHOUT_LINE_NUMBER": "diff content without line numbers",
         "AGENT_OBJECTIVE": "Review code for security issues",
         "CUSTOM_PROMPT": "Focus on authentication vulnerabilities",
-        "AGENT_NAME": "security"
+        "AGENT_NAME": "security",
     }
 
 
@@ -615,5 +562,5 @@ def prompt_variables_with_none_values() -> Dict[str, Optional[str]]:
         "PR_DIFF_WITHOUT_LINE_NUMBER": "diff content",
         "AGENT_OBJECTIVE": None,
         "CUSTOM_PROMPT": None,
-        "AGENT_NAME": "security"
+        "AGENT_NAME": "security",
     }

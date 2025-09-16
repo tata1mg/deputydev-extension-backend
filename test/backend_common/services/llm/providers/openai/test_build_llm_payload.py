@@ -22,24 +22,22 @@ Test Categories:
 import asyncio
 import json
 from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-# Import the provider fixture
-from test.fixtures.openai.provider_fixtures import openai_provider
-
-# Import all build_llm_payload specific fixtures
-from test.fixtures.openai.build_llm_payload_fixtures import *
-
-# Import necessary DTOs and classes
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     ConversationTool,
     PromptCacheConfig,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+
+# Import necessary DTOs and classes
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
+
+# Import all build_llm_payload specific fixtures
+from test.fixtures.openai.build_llm_payload_fixtures import *
+
+# Import the provider fixture
 
 
 class TestOpenAIBuildLLMPayload:
@@ -51,9 +49,7 @@ class TestOpenAIBuildLLMPayload:
 
     @pytest.mark.asyncio
     async def test_minimal_input_build_payload(
-        self,
-        openai_provider: OpenAI,
-        minimal_build_payload_args: Dict[str, Any]
+        self, openai_provider: OpenAI, minimal_build_payload_args: Dict[str, Any]
     ) -> None:
         """Test build_llm_payload with minimal required inputs."""
         result = await openai_provider.build_llm_payload(**minimal_build_payload_args)
@@ -76,20 +72,17 @@ class TestOpenAIBuildLLMPayload:
 
     @pytest.mark.asyncio
     async def test_model_config_integration(
-        self,
-        openai_provider: OpenAI,
-        empty_attachment_data_task_map: Dict
+        self, openai_provider: OpenAI, empty_attachment_data_task_map: Dict
     ) -> None:
         """Test that model configuration is properly applied."""
         # Test with different models
         test_models = [LLModels.GPT_4O, LLModels.GPT_4_POINT_1_MINI]
-        
+
         for model in test_models:
             result = await openai_provider.build_llm_payload(
-                llm_model=model,
-                attachment_data_task_map=empty_attachment_data_task_map
+                llm_model=model, attachment_data_task_map=empty_attachment_data_task_map
             )
-            
+
             # Each model should have appropriate max_tokens
             assert "max_tokens" in result
             assert isinstance(result["max_tokens"], int)
@@ -105,13 +98,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        basic_user_system_messages: UserAndSystemMessages
+        basic_user_system_messages: UserAndSystemMessages,
     ) -> None:
         """Test build_llm_payload with both user and system messages."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            prompt=basic_user_system_messages
+            prompt=basic_user_system_messages,
         )
 
         # Verify system message
@@ -132,13 +125,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        user_only_messages: UserAndSystemMessages
+        user_only_messages: UserAndSystemMessages,
     ) -> None:
         """Test build_llm_payload with user message but no system message."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            prompt=user_only_messages
+            prompt=user_only_messages,
         )
 
         # System message should be empty
@@ -154,13 +147,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        complex_user_system_messages: UserAndSystemMessages
+        complex_user_system_messages: UserAndSystemMessages,
     ) -> None:
         """Test build_llm_payload with complex messages containing special characters."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            prompt=complex_user_system_messages
+            prompt=complex_user_system_messages,
         )
 
         # Verify special characters are preserved
@@ -175,13 +168,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        empty_user_system_messages: UserAndSystemMessages
+        empty_user_system_messages: UserAndSystemMessages,
     ) -> None:
         """Test build_llm_payload with empty prompt messages."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            prompt=empty_user_system_messages
+            prompt=empty_user_system_messages,
         )
 
         # Should handle empty messages gracefully
@@ -202,22 +195,21 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         basic_user_system_messages: UserAndSystemMessages,
         sample_image_attachment: Attachment,
-        sample_image_attachment_data: ChatAttachmentDataWithObjectBytes
+        sample_image_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> None:
         """Test build_llm_payload with single image attachment."""
+
         # Create the attachment task map in the test context where event loop exists
         async def get_attachment_data():
             return sample_image_attachment_data
-        
-        attachment_task_map = {
-            sample_image_attachment.attachment_id: asyncio.create_task(get_attachment_data())
-        }
-        
+
+        attachment_task_map = {sample_image_attachment.attachment_id: asyncio.create_task(get_attachment_data())}
+
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=attachment_task_map,
             prompt=basic_user_system_messages,
-            attachments=[sample_image_attachment]
+            attachments=[sample_image_attachment],
         )
 
         # Verify user message contains both text and image
@@ -243,37 +235,38 @@ class TestOpenAIBuildLLMPayload:
         basic_user_system_messages: UserAndSystemMessages,
         multiple_attachments: List[Attachment],
         sample_image_attachment_data: ChatAttachmentDataWithObjectBytes,
-        sample_document_attachment_data: ChatAttachmentDataWithObjectBytes
+        sample_document_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> None:
         """Test build_llm_payload with multiple attachments."""
+
         # Create the attachment task map in the test context where event loop exists
         async def get_image_data():
             return sample_image_attachment_data
-        
+
         async def get_doc_data():
             return sample_document_attachment_data
-        
+
         attachment_task_map = {
             1: asyncio.create_task(get_image_data()),
             2: asyncio.create_task(get_image_data()),  # Second image
-            3: asyncio.create_task(get_doc_data())     # Document
+            3: asyncio.create_task(get_doc_data()),  # Document
         }
-        
+
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=attachment_task_map,
             prompt=basic_user_system_messages,
-            attachments=multiple_attachments
+            attachments=multiple_attachments,
         )
 
         user_msg = result["conversation_messages"][0]
-        
+
         # Should have text + 2 images (document should be ignored for non-image types)
         assert len(user_msg["content"]) == 3
-        
+
         # First should be text
         assert user_msg["content"][0]["type"] == "input_text"
-        
+
         # Next two should be images
         for i in [1, 2]:
             assert user_msg["content"][i]["type"] == "input_image"
@@ -286,14 +279,14 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
         basic_user_system_messages: UserAndSystemMessages,
-        sample_image_attachment: Attachment
+        sample_image_attachment: Attachment,
     ) -> None:
         """Test build_llm_payload when attachment is not in task map."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
             prompt=basic_user_system_messages,
-            attachments=[sample_image_attachment]
+            attachments=[sample_image_attachment],
         )
 
         # Should only contain text content, image should be skipped
@@ -311,24 +304,22 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        simple_tool: ConversationTool
+        simple_tool: ConversationTool,
     ) -> None:
         """Test build_llm_payload with single tool."""
         result = await openai_provider.build_llm_payload(
-            llm_model=sample_llm_model,
-            attachment_data_task_map=empty_attachment_data_task_map,
-            tools=[simple_tool]
+            llm_model=sample_llm_model, attachment_data_task_map=empty_attachment_data_task_map, tools=[simple_tool]
         )
 
         # Verify tools are properly formatted
         assert len(result["tools"]) == 1
         tool = result["tools"][0]
-        
+
         assert tool["name"] == "get_weather"
         assert tool["description"] == "Get weather information for a location"
         assert tool["type"] == "function"
         assert tool["strict"] is False
-        
+
         # Verify parameters structure
         assert "parameters" in tool
         params = tool["parameters"]
@@ -342,13 +333,11 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        multiple_tools: List[ConversationTool]
+        multiple_tools: List[ConversationTool],
     ) -> None:
         """Test build_llm_payload with multiple tools (should be sorted)."""
         result = await openai_provider.build_llm_payload(
-            llm_model=sample_llm_model,
-            attachment_data_task_map=empty_attachment_data_task_map,
-            tools=multiple_tools
+            llm_model=sample_llm_model, attachment_data_task_map=empty_attachment_data_task_map, tools=multiple_tools
         )
 
         # Verify tools are sorted by name
@@ -364,13 +353,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        tool_with_no_schema: ConversationTool
+        tool_with_no_schema: ConversationTool,
     ) -> None:
         """Test build_llm_payload with tool that has no input schema properties."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            tools=[tool_with_no_schema]
+            tools=[tool_with_no_schema],
         )
 
         # Should handle tools with no properties
@@ -387,14 +376,14 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
         simple_tool: ConversationTool,
-        tool_choice: str
+        tool_choice: str,
     ) -> None:
         """Test build_llm_payload with different tool_choice options."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
             tools=[simple_tool],
-            tool_choice=tool_choice
+            tool_choice=tool_choice,
         )
 
         assert result["tool_choice"] == tool_choice
@@ -409,22 +398,22 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        simple_tool_use_response: ToolUseResponseData
+        simple_tool_use_response: ToolUseResponseData,
     ) -> None:
         """Test build_llm_payload with tool use response containing dict."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            tool_use_response=simple_tool_use_response
+            tool_use_response=simple_tool_use_response,
         )
 
         # Verify tool response is properly formatted
         assert len(result["conversation_messages"]) == 1
         tool_response = result["conversation_messages"][0]
-        
+
         assert tool_response["type"] == "function_call_output"
         assert tool_response["call_id"] == "tool_123456"
-        
+
         # Response should be JSON stringified
         response_data = json.loads(tool_response["output"])
         assert response_data["temperature"] == "25°C"
@@ -436,19 +425,19 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        string_tool_use_response: ToolUseResponseData
+        string_tool_use_response: ToolUseResponseData,
     ) -> None:
         """Test build_llm_payload with tool use response containing string."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            tool_use_response=string_tool_use_response
+            tool_use_response=string_tool_use_response,
         )
 
         # Verify string response is properly formatted
         tool_response = result["conversation_messages"][0]
         assert tool_response["call_id"] == "tool_789"
-        
+
         # String should be JSON encoded
         response_data = json.loads(tool_response["output"])
         assert response_data == "Action completed successfully"
@@ -459,18 +448,18 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        complex_tool_use_response: ToolUseResponseData
+        complex_tool_use_response: ToolUseResponseData,
     ) -> None:
         """Test build_llm_payload with complex tool use response."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            tool_use_response=complex_tool_use_response
+            tool_use_response=complex_tool_use_response,
         )
 
         tool_response = result["conversation_messages"][0]
         response_data = json.loads(tool_response["output"])
-        
+
         # Verify complex nested structure is preserved
         assert response_data["result"] == 42.5
         assert response_data["metadata"]["precision"] == 1
@@ -486,18 +475,18 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        conversation_history: List[MessageThreadDTO]
+        conversation_history: List[MessageThreadDTO],
     ) -> None:
         """Test build_llm_payload with conversation history."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            previous_responses=conversation_history
+            previous_responses=conversation_history,
         )
 
         # Should process conversation history
         assert len(result["conversation_messages"]) > 0
-        
+
         # First message should be user message
         first_msg = result["conversation_messages"][0]
         assert first_msg["role"] == "user"
@@ -509,21 +498,20 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         mixed_conversation_history: List[MessageThreadDTO],
-        sample_image_attachment_data: ChatAttachmentDataWithObjectBytes
+        sample_image_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> None:
         """Test build_llm_payload with conversation containing various content types."""
+
         # Create the attachment task map in the test context where event loop exists
         async def get_attachment_data():
             return sample_image_attachment_data
-        
-        attachment_task_map = {
-            1: asyncio.create_task(get_attachment_data())
-        }
-        
+
+        attachment_task_map = {1: asyncio.create_task(get_attachment_data())}
+
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=attachment_task_map,
-            previous_responses=mixed_conversation_history
+            previous_responses=mixed_conversation_history,
         )
 
         # Should handle mixed content types
@@ -537,28 +525,28 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
         tool_request_message: MessageThreadDTO,
-        tool_response_message: MessageThreadDTO
+        tool_response_message: MessageThreadDTO,
     ) -> None:
         """Test build_llm_payload with tool requests and responses in conversation."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            previous_responses=[tool_request_message, tool_response_message]
+            previous_responses=[tool_request_message, tool_response_message],
         )
 
         # Should contain both tool request and response
         messages = result["conversation_messages"]
-        
+
         # Find tool call and response
         tool_call = None
         tool_response = None
-        
+
         for msg in messages:
             if msg.get("type") == "function_call":
                 tool_call = msg
             elif msg.get("type") == "function_call_output":
                 tool_response = msg
-        
+
         # Both should be present
         assert tool_call is not None
         assert tool_response is not None
@@ -574,19 +562,19 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        user_text_conversation_turn: UserConversationTurn
+        user_text_conversation_turn: UserConversationTurn,
     ) -> None:
         """Test build_llm_payload with basic unified conversation turns."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            conversation_turns=[user_text_conversation_turn]
+            conversation_turns=[user_text_conversation_turn],
         )
 
         # Should process unified conversation turns
         assert len(result["conversation_messages"]) == 1
         msg = result["conversation_messages"][0]
-        
+
         assert msg["role"] == "user"
         assert len(msg["content"]) == 1
         assert msg["content"][0]["type"] == "input_text"
@@ -598,17 +586,17 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        user_multimodal_conversation_turn: UserConversationTurn
+        user_multimodal_conversation_turn: UserConversationTurn,
     ) -> None:
         """Test build_llm_payload with multimodal unified conversation turns."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            conversation_turns=[user_multimodal_conversation_turn]
+            conversation_turns=[user_multimodal_conversation_turn],
         )
 
         msg = result["conversation_messages"][0]
-        
+
         # Should contain both text and image
         assert len(msg["content"]) == 2
         assert msg["content"][0]["type"] == "input_text"
@@ -621,13 +609,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        unified_conversation_turns: List
+        unified_conversation_turns: List,
     ) -> None:
         """Test build_llm_payload with unified conversation turns including tools."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            conversation_turns=unified_conversation_turns
+            conversation_turns=unified_conversation_turns,
         )
 
         # Should process all conversation turns
@@ -637,7 +625,7 @@ class TestOpenAIBuildLLMPayload:
         # Verify tool call structure
         tool_calls = [msg for msg in messages if msg.get("type") == "function_call"]
         assert len(tool_calls) == 1
-        
+
         tool_call = tool_calls[0]
         assert tool_call["name"] == "get_weather"
         assert tool_call["call_id"] == "call_weather_123"
@@ -649,14 +637,14 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
         conversation_history: List[MessageThreadDTO],
-        user_text_conversation_turn: UserConversationTurn
+        user_text_conversation_turn: UserConversationTurn,
     ) -> None:
         """Test that conversation_turns override previous_responses when both provided."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
             previous_responses=conversation_history,
-            conversation_turns=[user_text_conversation_turn]
+            conversation_turns=[user_text_conversation_turn],
         )
 
         # Should use conversation_turns, not previous_responses
@@ -675,14 +663,14 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
         basic_user_system_messages: UserAndSystemMessages,
-        user_text_conversation_turn: UserConversationTurn
+        user_text_conversation_turn: UserConversationTurn,
     ) -> None:
         """Test that prompt is ignored when conversation_turns are provided."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
             prompt=basic_user_system_messages,
-            conversation_turns=[user_text_conversation_turn]
+            conversation_turns=[user_text_conversation_turn],
         )
 
         # Should use conversation_turns, prompt should be ignored for messages
@@ -698,14 +686,14 @@ class TestOpenAIBuildLLMPayload:
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
         simple_tool_use_response: ToolUseResponseData,
-        user_text_conversation_turn: UserConversationTurn
+        user_text_conversation_turn: UserConversationTurn,
     ) -> None:
         """Test that tool_use_response is ignored when conversation_turns are provided."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
             tool_use_response=simple_tool_use_response,
-            conversation_turns=[user_text_conversation_turn]
+            conversation_turns=[user_text_conversation_turn],
         )
 
         # Should use conversation_turns, tool_use_response should be ignored
@@ -723,19 +711,20 @@ class TestOpenAIBuildLLMPayload:
         conversation_history: List[MessageThreadDTO],
         multiple_tools: List[ConversationTool],
         enabled_cache_config: PromptCacheConfig,
-        sample_image_attachment_data: ChatAttachmentDataWithObjectBytes
+        sample_image_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> None:
         """Test build_llm_payload with all parameters provided."""
+
         # Create the attachment task map in the test context where event loop exists
         async def get_attachment_data():
             return sample_image_attachment_data
-        
+
         attachment_task_map = {
             1: asyncio.create_task(get_attachment_data()),
             2: asyncio.create_task(get_attachment_data()),  # Second attachment
-            3: asyncio.create_task(get_attachment_data())   # Third attachment
+            3: asyncio.create_task(get_attachment_data()),  # Third attachment
         }
-        
+
         full_args = {
             "llm_model": sample_llm_model,
             "attachment_data_task_map": attachment_task_map,
@@ -749,9 +738,9 @@ class TestOpenAIBuildLLMPayload:
             "cache_config": enabled_cache_config,
             "search_web": True,
             "disable_caching": False,
-            "conversation_turns": []
+            "conversation_turns": [],
         }
-        
+
         result = await openai_provider.build_llm_payload(**full_args)
 
         # Verify all components are present
@@ -771,13 +760,13 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        large_conversation_history: List[MessageThreadDTO]
+        large_conversation_history: List[MessageThreadDTO],
     ) -> None:
         """Test build_llm_payload with large conversation history."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            previous_responses=large_conversation_history
+            previous_responses=large_conversation_history,
         )
 
         # Should handle large conversations
@@ -789,18 +778,18 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        tools_with_edge_cases: List[ConversationTool]
+        tools_with_edge_cases: List[ConversationTool],
     ) -> None:
         """Test build_llm_payload with tools having edge case schemas."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            tools=tools_with_edge_cases
+            tools=tools_with_edge_cases,
         )
 
         # Should handle edge case tool schemas
         assert len(result["tools"]) == 2
-        
+
         # Verify tools are properly formatted despite edge cases
         for tool in result["tools"]:
             assert "name" in tool
@@ -814,16 +803,15 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         basic_user_system_messages: UserAndSystemMessages,
-        sample_image_attachment: Attachment
+        sample_image_attachment: Attachment,
     ) -> None:
         """Test build_llm_payload when attachment task fails."""
+
         # Create a failing task
         async def failing_task():
             raise Exception("Failed to load attachment")
-        
-        attachment_task_map = {
-            sample_image_attachment.attachment_id: asyncio.create_task(failing_task())
-        }
+
+        attachment_task_map = {sample_image_attachment.attachment_id: asyncio.create_task(failing_task())}
 
         # Should handle task failure gracefully
         with pytest.raises(Exception):
@@ -831,7 +819,7 @@ class TestOpenAIBuildLLMPayload:
                 llm_model=sample_llm_model,
                 attachment_data_task_map=attachment_task_map,
                 prompt=basic_user_system_messages,
-                attachments=[sample_image_attachment]
+                attachments=[sample_image_attachment],
             )
 
     # ===============================
@@ -840,9 +828,7 @@ class TestOpenAIBuildLLMPayload:
 
     @pytest.mark.asyncio
     async def test_return_type_structure(
-        self,
-        openai_provider: OpenAI,
-        minimal_build_payload_args: Dict[str, Any]
+        self, openai_provider: OpenAI, minimal_build_payload_args: Dict[str, Any]
     ) -> None:
         """Test that return type always has expected structure."""
         result = await openai_provider.build_llm_payload(**minimal_build_payload_args)
@@ -864,20 +850,20 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        basic_user_system_messages: UserAndSystemMessages
+        basic_user_system_messages: UserAndSystemMessages,
     ) -> None:
         """Test that conversation messages always have proper structure."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            prompt=basic_user_system_messages
+            prompt=basic_user_system_messages,
         )
 
         for msg in result["conversation_messages"]:
             assert isinstance(msg, dict)
             assert "role" in msg
             assert isinstance(msg["role"], str)
-            
+
             if "content" in msg:
                 if isinstance(msg["content"], list):
                     for content_item in msg["content"]:
@@ -892,13 +878,11 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        simple_tool: ConversationTool
+        simple_tool: ConversationTool,
     ) -> None:
         """Test that tools always have proper OpenAI structure."""
         result = await openai_provider.build_llm_payload(
-            llm_model=sample_llm_model,
-            attachment_data_task_map=empty_attachment_data_task_map,
-            tools=[simple_tool]
+            llm_model=sample_llm_model, attachment_data_task_map=empty_attachment_data_task_map, tools=[simple_tool]
         )
 
         for tool in result["tools"]:
@@ -906,7 +890,7 @@ class TestOpenAIBuildLLMPayload:
             required_fields = ["name", "description", "type", "strict"]
             for field in required_fields:
                 assert field in tool
-            
+
             assert tool["type"] == "function"
             assert isinstance(tool["strict"], bool)
             assert isinstance(tool["name"], str)
@@ -924,27 +908,28 @@ class TestOpenAIBuildLLMPayload:
         basic_user_system_messages: UserAndSystemMessages,
         multiple_attachments: List[Attachment],
         sample_image_attachment_data: ChatAttachmentDataWithObjectBytes,
-        sample_document_attachment_data: ChatAttachmentDataWithObjectBytes
+        sample_document_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> None:
         """Test that concurrent attachment processing works correctly."""
+
         # Create the attachment task map in the test context where event loop exists
         async def get_image_data():
             return sample_image_attachment_data
-        
+
         async def get_doc_data():
             return sample_document_attachment_data
-        
+
         attachment_task_map = {
             1: asyncio.create_task(get_image_data()),
             2: asyncio.create_task(get_image_data()),  # Second image
-            3: asyncio.create_task(get_doc_data())     # Document
+            3: asyncio.create_task(get_doc_data()),  # Document
         }
-        
+
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=attachment_task_map,
             prompt=basic_user_system_messages,
-            attachments=multiple_attachments
+            attachments=multiple_attachments,
         )
 
         # Should handle concurrent attachment processing
@@ -958,7 +943,7 @@ class TestOpenAIBuildLLMPayload:
         openai_provider: OpenAI,
         sample_llm_model: LLModels,
         empty_attachment_data_task_map: Dict,
-        enabled_cache_config: PromptCacheConfig
+        enabled_cache_config: PromptCacheConfig,
     ) -> None:
         """Test that cache configuration is properly handled (parameter preservation)."""
         # Cache config should be accepted without error but may not affect output structure
@@ -966,25 +951,22 @@ class TestOpenAIBuildLLMPayload:
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            cache_config=enabled_cache_config
+            cache_config=enabled_cache_config,
         )
 
         # Should not affect basic structure
         assert isinstance(result, dict)
         assert "max_tokens" in result
 
-    @pytest.mark.asyncio  
+    @pytest.mark.asyncio
     async def test_feedback_parameter_preservation(
-        self,
-        openai_provider: OpenAI,
-        sample_llm_model: LLModels,
-        empty_attachment_data_task_map: Dict
+        self, openai_provider: OpenAI, sample_llm_model: LLModels, empty_attachment_data_task_map: Dict
     ) -> None:
         """Test that feedback parameter is accepted without affecting output."""
         result = await openai_provider.build_llm_payload(
             llm_model=sample_llm_model,
             attachment_data_task_map=empty_attachment_data_task_map,
-            feedback="Please provide more detailed explanations"
+            feedback="Please provide more detailed explanations",
         )
 
         # Feedback should be accepted but not affect payload structure
@@ -993,16 +975,11 @@ class TestOpenAIBuildLLMPayload:
 
     @pytest.mark.asyncio
     async def test_search_web_parameter_preservation(
-        self,
-        openai_provider: OpenAI,
-        sample_llm_model: LLModels,
-        empty_attachment_data_task_map: Dict
+        self, openai_provider: OpenAI, sample_llm_model: LLModels, empty_attachment_data_task_map: Dict
     ) -> None:
-        """Test that search_web parameter is accepted without affecting output.""" 
+        """Test that search_web parameter is accepted without affecting output."""
         result = await openai_provider.build_llm_payload(
-            llm_model=sample_llm_model,
-            attachment_data_task_map=empty_attachment_data_task_map,
-            search_web=True
+            llm_model=sample_llm_model, attachment_data_task_map=empty_attachment_data_task_map, search_web=True
         )
 
         # Should be accepted but not affect payload structure
@@ -1011,16 +988,11 @@ class TestOpenAIBuildLLMPayload:
 
     @pytest.mark.asyncio
     async def test_disable_caching_parameter_preservation(
-        self,
-        openai_provider: OpenAI,
-        sample_llm_model: LLModels,
-        empty_attachment_data_task_map: Dict
+        self, openai_provider: OpenAI, sample_llm_model: LLModels, empty_attachment_data_task_map: Dict
     ) -> None:
         """Test that disable_caching parameter is accepted without affecting output."""
         result = await openai_provider.build_llm_payload(
-            llm_model=sample_llm_model,
-            attachment_data_task_map=empty_attachment_data_task_map,
-            disable_caching=True
+            llm_model=sample_llm_model, attachment_data_task_map=empty_attachment_data_task_map, disable_caching=True
         )
 
         # Should be accepted but not affect payload structure

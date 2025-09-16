@@ -5,8 +5,9 @@ This module provides mock events for testing error handling
 and unknown event types.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture

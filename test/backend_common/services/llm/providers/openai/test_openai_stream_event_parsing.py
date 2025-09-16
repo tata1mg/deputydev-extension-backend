@@ -15,14 +15,11 @@ Test Categories:
 - Type safety validation
 """
 
-import pytest
 from typing import Optional, Tuple
 from unittest.mock import MagicMock
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
 
-# ConfigManager is automatically initialized by conftest.py fixture
-from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
-from app.backend_common.services.llm.dataclasses.main import (
+import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
     LLMUsage,
     StreamingEvent,
     StreamingEventType,
@@ -34,26 +31,19 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestStart,
 )
 
+# ConfigManager is automatically initialized by conftest.py fixture
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
+
 # Import fixtures from organized fixture modules
 from test.fixtures.openai import (
-    mock_response_completed_event,
-    mock_response_completed_without_usage,
-    mock_response_completed_incomplete_usage,
-    mock_function_call_added_event,
-    mock_function_arguments_delta_event,
-    mock_function_arguments_done_event,
-    mock_message_added_event,
-    mock_output_text_delta_event,
-    mock_output_text_done_event,
-    mock_unknown_event,
-    mock_output_item_added_unknown_type,
-    create_function_call_added_event,
     create_function_arguments_delta_event,
+    create_function_call_added_event,
     create_text_delta_event,
     create_usage_event,
 )
+
 # Use provider fixture that handles import properly
-from test.fixtures.openai.provider_fixtures import openai_provider
 
 
 class TestOpenAIStreamEventParsing:
@@ -65,15 +55,11 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_response_completed_with_usage(
-        self,
-        openai_provider,
-        mock_response_completed_event: MagicMock
+        self, openai_provider, mock_response_completed_event: MagicMock
     ) -> None:
         """Test parsing response.completed event with usage information."""
         result: Tuple[
-            Optional[StreamingEvent],
-            Optional[ContentBlockCategory],
-            Optional[LLMUsage]
+            Optional[StreamingEvent], Optional[ContentBlockCategory], Optional[LLMUsage]
         ] = await openai_provider._get_parsed_stream_event(mock_response_completed_event)
 
         streaming_event, content_category, usage = result
@@ -92,9 +78,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_response_completed_without_usage(
-        self,
-            openai_provider,
-        mock_response_completed_without_usage: MagicMock
+        self, openai_provider, mock_response_completed_without_usage: MagicMock
     ) -> None:
         """Test parsing response.completed event without usage information."""
         result = await openai_provider._get_parsed_stream_event(mock_response_completed_without_usage)
@@ -107,9 +91,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_response_completed_with_missing_usage_fields(
-        self,
-        openai_provider: OpenAI,
-        mock_response_completed_incomplete_usage: MagicMock
+        self, openai_provider: OpenAI, mock_response_completed_incomplete_usage: MagicMock
     ) -> None:
         """Test parsing response.completed with incomplete usage data."""
         # This should raise an AttributeError
@@ -122,9 +104,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_function_call_added_event(
-        self,
-        openai_provider: OpenAI,
-        mock_function_call_added_event: MagicMock
+        self, openai_provider: OpenAI, mock_function_call_added_event: MagicMock
     ) -> None:
         """Test parsing response.output_item.added event for function calls."""
         result = await openai_provider._get_parsed_stream_event(mock_function_call_added_event)
@@ -145,9 +125,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_function_arguments_delta_event(
-        self,
-        openai_provider: OpenAI,
-        mock_function_arguments_delta_event: MagicMock
+        self, openai_provider: OpenAI, mock_function_arguments_delta_event: MagicMock
     ) -> None:
         """Test parsing response.function_call_arguments.delta event."""
         result = await openai_provider._get_parsed_stream_event(mock_function_arguments_delta_event)
@@ -167,9 +145,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_function_arguments_done_event(
-        self,
-        openai_provider: OpenAI,
-        mock_function_arguments_done_event: MagicMock
+        self, openai_provider: OpenAI, mock_function_arguments_done_event: MagicMock
     ) -> None:
         """Test parsing response.function_call_arguments.done event."""
         result = await openai_provider._get_parsed_stream_event(mock_function_arguments_done_event)
@@ -191,11 +167,7 @@ class TestOpenAIStreamEventParsing:
     # ===============================
 
     @pytest.mark.asyncio
-    async def test_message_added_event(
-        self,
-        openai_provider: OpenAI,
-        mock_message_added_event: MagicMock
-    ) -> None:
+    async def test_message_added_event(self, openai_provider: OpenAI, mock_message_added_event: MagicMock) -> None:
         """Test parsing response.output_item.added event for messages."""
         result = await openai_provider._get_parsed_stream_event(mock_message_added_event)
         streaming_event, content_category, usage = result
@@ -213,9 +185,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_output_text_delta_event(
-        self,
-        openai_provider: OpenAI,
-        mock_output_text_delta_event: MagicMock
+        self, openai_provider: OpenAI, mock_output_text_delta_event: MagicMock
     ) -> None:
         """Test parsing response.output_text.delta event."""
         result = await openai_provider._get_parsed_stream_event(mock_output_text_delta_event)
@@ -235,9 +205,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_output_text_done_event(
-        self,
-        openai_provider: OpenAI,
-        mock_output_text_done_event: MagicMock
+        self, openai_provider: OpenAI, mock_output_text_done_event: MagicMock
     ) -> None:
         """Test parsing response.output_text.done event."""
         result = await openai_provider._get_parsed_stream_event(mock_output_text_done_event)
@@ -259,11 +227,7 @@ class TestOpenAIStreamEventParsing:
     # ===============================
 
     @pytest.mark.asyncio
-    async def test_unknown_event_type(
-        self,
-        openai_provider: OpenAI,
-        mock_unknown_event: MagicMock
-    ) -> None:
+    async def test_unknown_event_type(self, openai_provider: OpenAI, mock_unknown_event: MagicMock) -> None:
         """Test parsing unknown/unhandled event types."""
         result = await openai_provider._get_parsed_stream_event(mock_unknown_event)
         streaming_event, content_category, usage = result
@@ -275,9 +239,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_output_item_added_with_unknown_item_type(
-        self,
-        openai_provider: OpenAI,
-        mock_output_item_added_unknown_type: MagicMock
+        self, openai_provider: OpenAI, mock_output_item_added_unknown_type: MagicMock
     ) -> None:
         """Test parsing output_item.added with unknown item type."""
         result = await openai_provider._get_parsed_stream_event(mock_output_item_added_unknown_type)
@@ -293,19 +255,17 @@ class TestOpenAIStreamEventParsing:
     # ===============================
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("input_tokens,output_tokens,cached_tokens,expected_input", [
-        (100, 50, 20, 80),  # Normal case
-        (50, 25, 0, 50),    # No cached tokens
-        (200, 100, 200, 0), # All tokens cached
-        (150, 75, 50, 100), # Partial caching
-    ])
+    @pytest.mark.parametrize(
+        "input_tokens,output_tokens,cached_tokens,expected_input",
+        [
+            (100, 50, 20, 80),  # Normal case
+            (50, 25, 0, 50),  # No cached tokens
+            (200, 100, 200, 0),  # All tokens cached
+            (150, 75, 50, 100),  # Partial caching
+        ],
+    )
     async def test_usage_calculation_variations(
-        self,
-        openai_provider: OpenAI,
-        input_tokens: int,
-        output_tokens: int,
-        cached_tokens: int,
-        expected_input: int
+        self, openai_provider: OpenAI, input_tokens: int, output_tokens: int, cached_tokens: int, expected_input: int
     ) -> None:
         """Test usage calculation with various token combinations."""
         event = create_usage_event(input_tokens, output_tokens, cached_tokens)
@@ -319,17 +279,17 @@ class TestOpenAIStreamEventParsing:
         assert usage.cache_read == cached_tokens
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("tool_name,call_id", [
-        ("get_weather", "call_abc123"),
-        ("calculate_sum", "call_xyz789"),
-        ("search_database", "call_def456"),
-        ("format_text", "call_ghi012"),
-    ])
+    @pytest.mark.parametrize(
+        "tool_name,call_id",
+        [
+            ("get_weather", "call_abc123"),
+            ("calculate_sum", "call_xyz789"),
+            ("search_database", "call_def456"),
+            ("format_text", "call_ghi012"),
+        ],
+    )
     async def test_function_call_with_different_names_and_ids(
-        self,
-        openai_provider: OpenAI,
-        tool_name: str,
-        call_id: str
+        self, openai_provider: OpenAI, tool_name: str, call_id: str
     ) -> None:
         """Test function call parsing with various tool names and call IDs."""
         event = create_function_call_added_event(tool_name, call_id)
@@ -343,19 +303,18 @@ class TestOpenAIStreamEventParsing:
         assert content_category == ContentBlockCategory.TOOL_USE_REQUEST
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("delta_text", [
-        "Simple text",
-        "Text with\nnewlines",
-        "Text with special chars: !@#$%^&*()",
-        '{"json": "data"}',
-        "",  # Empty delta
-        "Unicode: 🚀 ✨ 🎉",
-    ])
-    async def test_text_delta_with_various_content(
-        self,
-        openai_provider: OpenAI,
-        delta_text: str
-    ) -> None:
+    @pytest.mark.parametrize(
+        "delta_text",
+        [
+            "Simple text",
+            "Text with\nnewlines",
+            "Text with special chars: !@#$%^&*()",
+            '{"json": "data"}',
+            "",  # Empty delta
+            "Unicode: 🚀 ✨ 🎉",
+        ],
+    )
+    async def test_text_delta_with_various_content(self, openai_provider: OpenAI, delta_text: str) -> None:
         """Test text delta parsing with various content types."""
         event = create_text_delta_event(delta_text)
 
@@ -367,17 +326,18 @@ class TestOpenAIStreamEventParsing:
         assert content_category == ContentBlockCategory.TEXT_BLOCK
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("function_args_delta", [
-        '{"param1": "value1"',
-        '"param2": 123',
-        ', "param3": true}',
-        "",  # Empty delta
-        '{"complex": {"nested": {"object": "value"}}}',
-    ])
+    @pytest.mark.parametrize(
+        "function_args_delta",
+        [
+            '{"param1": "value1"',
+            '"param2": 123',
+            ', "param3": true}',
+            "",  # Empty delta
+            '{"complex": {"nested": {"object": "value"}}}',
+        ],
+    )
     async def test_function_arguments_delta_with_various_json(
-        self,
-        openai_provider: OpenAI,
-        function_args_delta: str
+        self, openai_provider: OpenAI, function_args_delta: str
     ) -> None:
         """Test function arguments delta with various JSON fragments."""
         event = create_function_arguments_delta_event(function_args_delta)
@@ -394,10 +354,7 @@ class TestOpenAIStreamEventParsing:
     # ===============================
 
     @pytest.mark.asyncio
-    async def test_complete_text_block_sequence(
-        self,
-        openai_provider: OpenAI
-    ) -> None:
+    async def test_complete_text_block_sequence(self, openai_provider: OpenAI) -> None:
         """Test a complete sequence of text block events."""
         # Message added event
         message_event = MagicMock()
@@ -428,10 +385,7 @@ class TestOpenAIStreamEventParsing:
         assert isinstance(result4[0], TextBlockEnd)
 
     @pytest.mark.asyncio
-    async def test_complete_function_call_sequence(
-        self,
-        openai_provider: OpenAI
-    ) -> None:
+    async def test_complete_function_call_sequence(self, openai_provider: OpenAI) -> None:
         """Test a complete sequence of function call events."""
         # Function call added
         call_added = create_function_call_added_event("test_func", "call_123")
@@ -455,9 +409,7 @@ class TestOpenAIStreamEventParsing:
 
     @pytest.mark.asyncio
     async def test_return_type_consistency(
-        self,
-        openai_provider: OpenAI,
-        mock_response_completed_event: MagicMock
+        self, openai_provider: OpenAI, mock_response_completed_event: MagicMock
     ) -> None:
         """Test that return types are always consistent with the function signature."""
         result = await openai_provider._get_parsed_stream_event(mock_response_completed_event)
@@ -474,70 +426,74 @@ class TestOpenAIStreamEventParsing:
         assert usage is None or isinstance(usage, LLMUsage)
 
     @pytest.mark.asyncio
-    async def test_all_streaming_event_types_are_properly_typed(
-        self,
-        openai_provider: OpenAI
-    ) -> None:
+    async def test_all_streaming_event_types_are_properly_typed(self, openai_provider: OpenAI) -> None:
         """Test that all returned StreamingEvent objects have proper types."""
         # Test each event type that returns a StreamingEvent
         test_cases = [
             # Text block start
-            (lambda: (
-                event := MagicMock(),
-                setattr(event, 'type', 'response.output_item.added'),
-                setattr(event, 'item', MagicMock()),
-                setattr(event.item, 'type', 'message'),
-                event
-            )[-1], TextBlockStart),
-            
+            (
+                lambda: (
+                    event := MagicMock(),
+                    setattr(event, "type", "response.output_item.added"),
+                    setattr(event, "item", MagicMock()),
+                    setattr(event.item, "type", "message"),
+                    event,
+                )[-1],
+                TextBlockStart,
+            ),
             # Text block delta
-            (lambda: (
-                event := MagicMock(),
-                setattr(event, 'type', 'response.output_text.delta'),
-                setattr(event, 'delta', 'test'),
-                event
-            )[-1], TextBlockDelta),
-            
+            (
+                lambda: (
+                    event := MagicMock(),
+                    setattr(event, "type", "response.output_text.delta"),
+                    setattr(event, "delta", "test"),
+                    event,
+                )[-1],
+                TextBlockDelta,
+            ),
             # Text block end
-            (lambda: (
-                event := MagicMock(),
-                setattr(event, 'type', 'response.output_text.done'),
-                event
-            )[-1], TextBlockEnd),
-            
+            (
+                lambda: (event := MagicMock(), setattr(event, "type", "response.output_text.done"), event)[-1],
+                TextBlockEnd,
+            ),
             # Tool use start
-            (lambda: (
-                event := MagicMock(),
-                setattr(event, 'type', 'response.output_item.added'),
-                setattr(event, 'item', MagicMock()),
-                setattr(event.item, 'type', 'function_call'),
-                setattr(event.item, 'name', 'test'),
-                setattr(event.item, 'call_id', 'call_123'),
-                event
-            )[-1], ToolUseRequestStart),
-            
+            (
+                lambda: (
+                    event := MagicMock(),
+                    setattr(event, "type", "response.output_item.added"),
+                    setattr(event, "item", MagicMock()),
+                    setattr(event.item, "type", "function_call"),
+                    setattr(event.item, "name", "test"),
+                    setattr(event.item, "call_id", "call_123"),
+                    event,
+                )[-1],
+                ToolUseRequestStart,
+            ),
             # Tool use delta
-            (lambda: (
-                event := MagicMock(),
-                setattr(event, 'type', 'response.function_call_arguments.delta'),
-                setattr(event, 'delta', '{}'),
-                event
-            )[-1], ToolUseRequestDelta),
-            
+            (
+                lambda: (
+                    event := MagicMock(),
+                    setattr(event, "type", "response.function_call_arguments.delta"),
+                    setattr(event, "delta", "{}"),
+                    event,
+                )[-1],
+                ToolUseRequestDelta,
+            ),
             # Tool use end
-            (lambda: (
-                event := MagicMock(),
-                setattr(event, 'type', 'response.function_call_arguments.done'),
-                event
-            )[-1], ToolUseRequestEnd),
+            (
+                lambda: (event := MagicMock(), setattr(event, "type", "response.function_call_arguments.done"), event)[
+                    -1
+                ],
+                ToolUseRequestEnd,
+            ),
         ]
 
         for event_factory, expected_type in test_cases:
             event = event_factory()
             result = await openai_provider._get_parsed_stream_event(event)
             streaming_event = result[0]
-            
+
             assert streaming_event is not None
             assert isinstance(streaming_event, expected_type)
-            assert hasattr(streaming_event, 'type')
+            assert hasattr(streaming_event, "type")
             assert isinstance(streaming_event.type, StreamingEventType)

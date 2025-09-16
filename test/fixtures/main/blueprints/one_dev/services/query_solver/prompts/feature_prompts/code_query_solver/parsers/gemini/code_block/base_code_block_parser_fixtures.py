@@ -49,7 +49,7 @@ console.log(message);"""
             "const PORT = process.env.PORT || 3000;\n",
             "app.listen(PORT, () => {\n",
             "    console.log(`Server running on port ${PORT}`);\n",
-            "});"
+            "});",
         ]
 
     @staticmethod
@@ -130,7 +130,7 @@ console.log(message);"""
 +    print("new version")
      return 0""",
                 "expected_added": 4,  # +import sys, +import json, +import logging, +print("new version")
-                "expected_removed": 2  # -import sys, -print("old version")
+                "expected_removed": 2,  # -import sys, -print("old version")
             },
             {
                 "diff": """<programming_language>javascript</programming_language><file_path>config.js</file_path><is_diff>true</is_diff>
@@ -146,7 +146,7 @@ console.log(message);"""
      }
  };""",
                 "expected_added": 4,  # 4 new lines added
-                "expected_removed": 2   # 2 lines removed
+                "expected_removed": 2,  # 2 lines removed
             },
             {
                 "diff": """<programming_language>sql</programming_language><file_path>schema.sql</file_path><is_diff>true</is_diff>
@@ -162,8 +162,8 @@ console.log(message);"""
 +    is_active BOOLEAN DEFAULT TRUE
  );""",
                 "expected_added": 5,  # 5 new lines added (1 modified + 4 new)
-                "expected_removed": 1   # 1 line modified (email line)
-            }
+                "expected_removed": 1,  # 1 line modified (email line)
+            },
         ]
 
     @staticmethod
@@ -178,30 +178,24 @@ console.log(message);"""
             # Missing is_diff tag
             """<programming_language>python</programming_language><file_path>test.py</file_path>
 print("incomplete header")""",
-            
             # Missing file_path tag
             """<programming_language>javascript</programming_language><is_diff>false</is_diff>
 console.log("missing file path");""",
-            
             # Missing programming_language tag
             """<file_path>test.sql</file_path><is_diff>false</is_diff>
 SELECT * FROM users;""",
-            
             # Empty tags
             """<programming_language></programming_language><file_path></file_path><is_diff></is_diff>
 // empty tags""",
-            
             # Invalid is_diff value
             """<programming_language>python</programming_language><file_path>test.py</file_path><is_diff>maybe</is_diff>
 print("invalid is_diff value")""",
-            
             # No XML tags at all
             """def function_without_header():
     return "no header at all\"""",
-            
             # Malformed XML
             """<programming_language>python<file_path>broken.py</file_path><is_diff>false</is_diff>
-print("malformed XML")"""
+print("malformed XML")""",
         ]
 
     @staticmethod
@@ -214,7 +208,7 @@ print("malformed XML")"""
 def process_unicode():
     text = "Hello 世界! 🌍 Testing éñçødīñg"
     return text""",
-                "expected_path": "src/utils/special-chars.py"
+                "expected_path": "src/utils/special-chars.py",
             },
             {
                 "content": """<programming_language>javascript</programming_language><file_path>tests/unit/test_file_parser.js</file_path><is_diff>false</is_diff>
@@ -224,7 +218,7 @@ describe('File Parser', () => {
         expect(true).toBe(true);
     });
 });""",
-                "expected_path": "tests/unit/test_file_parser.js"
+                "expected_path": "tests/unit/test_file_parser.js",
             },
             {
                 "content": """<programming_language>sql</programming_language><file_path>migrations/001_create_users_table.sql</file_path><is_diff>false</is_diff>
@@ -234,14 +228,14 @@ CREATE TABLE users (
     name VARCHAR(255) CHECK (name ~ '^[A-Za-z\\s\\-\\']+$'),
     email VARCHAR(255) UNIQUE NOT NULL
 );""",
-                "expected_path": "migrations/001_create_users_table.sql"
-            }
+                "expected_path": "migrations/001_create_users_table.sql",
+            },
         ]
 
     @staticmethod
     def get_large_code_example() -> str:
         """Get a large code example for performance testing."""
-        return f"""<programming_language>python</programming_language><file_path>large_file.py</file_path><is_diff>false</is_diff>
+        return """<programming_language>python</programming_language><file_path>large_file.py</file_path><is_diff>false</is_diff>
 \"\"\"
 Large code file for performance testing.
 This file contains multiple classes and functions to test parser performance.
@@ -261,7 +255,7 @@ class ConfigurationManager:
     
     def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path or os.getenv('CONFIG_PATH', 'config.json')
-        self.config_data = {{}}
+        self.config_data = {}
         self.logger = logging.getLogger(__name__)
         self.load_configuration()
     
@@ -271,26 +265,26 @@ class ConfigurationManager:
             if os.path.exists(self.config_path):
                 with open(self.config_path, 'r') as f:
                     self.config_data = json.load(f)
-                self.logger.info(f"Loaded configuration from {{self.config_path}}")
+                self.logger.info(f"Loaded configuration from {self.config_path}")
             else:
-                self.logger.warning(f"Configuration file not found: {{self.config_path}}")
+                self.logger.warning(f"Configuration file not found: {self.config_path}")
                 
             # Override with environment variables
             self._load_env_overrides()
             
         except Exception as e:
-            self.logger.error(f"Failed to load configuration: {{e}}")
+            self.logger.error(f"Failed to load configuration: {e}")
             raise
     
     def _load_env_overrides(self) -> None:
         \"\"\"Load environment variable overrides.\"\"\"
-        env_mappings = {{
+        env_mappings = {
             'DATABASE_URL': 'database.url',
             'REDIS_URL': 'redis.url',
             'LOG_LEVEL': 'logging.level',
             'DEBUG': 'debug',
             'SECRET_KEY': 'security.secret_key'
-        }}
+        }
         
         for env_var, config_key in env_mappings.items():
             env_value = os.getenv(env_var)
@@ -304,7 +298,7 @@ class ConfigurationManager:
         
         for key in keys[:-1]:
             if key not in current:
-                current[key] = {{}}
+                current[key] = {}
             current = current[key]
         
         current[keys[-1]] = value
@@ -340,12 +334,12 @@ class DatabaseManager:
                 raise ValueError("Database URL not configured")
             
             # Simulate database connection
-            self.connection = f"Connected to {{db_url}}"
+            self.connection = f"Connected to {db_url}"
             self.logger.info("Database connection established")
             return True
             
         except Exception as e:
-            self.logger.error(f"Database connection failed: {{e}}")
+            self.logger.error(f"Database connection failed: {e}")
             return False
     
     def execute_query(self, query: str, params: Optional[Dict] = None) -> List[Dict]:
@@ -354,12 +348,12 @@ class DatabaseManager:
             raise RuntimeError("Database not connected")
         
         # Simulate query execution
-        self.logger.debug(f"Executing query: {{query[:100]}}...")
+        self.logger.debug(f"Executing query: {query[:100]}...")
         
         # Mock result
         return [
-            {{"id": 1, "name": "Test User", "created_at": datetime.now().isoformat()}},
-            {{"id": 2, "name": "Another User", "created_at": datetime.now().isoformat()}}
+            {"id": 1, "name": "Test User", "created_at": datetime.now().isoformat()},
+            {"id": 2, "name": "Another User", "created_at": datetime.now().isoformat()}
         ]
     
     def close(self) -> None:
@@ -373,8 +367,8 @@ class CacheManager:
     \"\"\"In-memory cache with TTL support.\"\"\"
     
     def __init__(self, default_ttl: int = 3600):
-        self.cache = {{}}
-        self.ttl_data = {{}}
+        self.cache = {}
+        self.ttl_data = {}
         self.default_ttl = default_ttl
         self.logger = logging.getLogger(__name__)
     
@@ -386,7 +380,7 @@ class CacheManager:
         self.cache[key] = value
         self.ttl_data[key] = expiry_time
         
-        self.logger.debug(f"Cache set: {{key}} (expires: {{expiry_time}})")
+        self.logger.debug(f"Cache set: {key} (expires: {expiry_time})")
     
     def get(self, key: str) -> Optional[Any]:
         \"\"\"Get a cache value, checking TTL.\"\"\"
@@ -397,10 +391,10 @@ class CacheManager:
             # Expired
             del self.cache[key]
             del self.ttl_data[key]
-            self.logger.debug(f"Cache expired: {{key}}")
+            self.logger.debug(f"Cache expired: {key}")
             return None
         
-        self.logger.debug(f"Cache hit: {{key}}")
+        self.logger.debug(f"Cache hit: {key}")
         return self.cache[key]
     
     def delete(self, key: str) -> bool:
@@ -408,7 +402,7 @@ class CacheManager:
         if key in self.cache:
             del self.cache[key]
             del self.ttl_data[key]
-            self.logger.debug(f"Cache deleted: {{key}}")
+            self.logger.debug(f"Cache deleted: {key}")
             return True
         return False
     
@@ -444,7 +438,7 @@ class ApplicationService:
             return True
             
         except Exception as e:
-            self.logger.error(f"Application initialization failed: {{e}}")
+            self.logger.error(f"Application initialization failed: {e}")
             return False
     
     def start(self) -> None:
@@ -464,15 +458,15 @@ class ApplicationService:
     
     def health_check(self) -> Dict[str, Any]:
         \"\"\"Perform application health check.\"\"\"
-        return {{
+        return {
             "status": "healthy" if self.is_running else "stopped",
             "timestamp": datetime.now().isoformat(),
-            "components": {{
+            "components": {
                 "database": bool(self.database_manager.connection),
                 "cache": len(self.cache_manager.cache),
                 "config": bool(self.config_manager.config_data)
-            }}
-        }}
+            }
+        }
 
 
 def main():
@@ -484,19 +478,19 @@ def main():
         
         # Example operations
         health = app_service.health_check()
-        print(f"Health check: {{health}}")
+        print(f"Health check: {health}")
         
         # Cache some data
-        app_service.cache_manager.set("test_key", {{"message": "Hello, World!"}})
+        app_service.cache_manager.set("test_key", {"message": "Hello, World!"})
         cached_data = app_service.cache_manager.get("test_key")
-        print(f"Cached data: {{cached_data}}")
+        print(f"Cached data: {cached_data}")
         
         # Execute a query
         results = app_service.database_manager.execute_query("SELECT * FROM users")
-        print(f"Query results: {{results}}")
+        print(f"Query results: {results}")
         
     except Exception as e:
-        print(f"Application error: {{e}}")
+        print(f"Application error: {e}")
     finally:
         app_service.stop()
 
@@ -515,7 +509,6 @@ def mixed_function():
 
 # Some comment with special chars: àáâãäå
 print(mixed_function())""",
-            
             # Valid diff
             """<programming_language>javascript</programming_language><file_path>app.js</file_path><is_diff>true</is_diff>
 @@ -1,3 +1,5 @@
@@ -525,7 +518,6 @@ print(mixed_function())""",
 
 +app.use(cors());
  app.listen(3000);""",
-            
             # Mixed with unusual formatting
             """<programming_language>css</programming_language><file_path>styles.css</file_path><is_diff>false</is_diff>
 /* CSS with various selectors and properties */
@@ -540,7 +532,6 @@ print(mixed_function())""",
         flex-direction: column;
     }
 }""",
-            
             # TypeScript with generics
             """<programming_language>typescript</programming_language><file_path>utils.ts</file_path><is_diff>false</is_diff>
 interface ApiResponse<T> {
@@ -555,7 +546,6 @@ function processResponse<T>(response: ApiResponse<T>): T {
     }
     throw new Error(response.message);
 }""",
-            
             # Complex diff with multiple file types
             """<programming_language>yaml</programming_language><file_path>docker-compose.yml</file_path><is_diff>true</is_diff>
 @@ -1,8 +1,12 @@
@@ -572,5 +562,5 @@ function processResponse<T>(response: ApiResponse<T>): T {
 +  db:
 +    image: postgres:13
 +    environment:
-+      - POSTGRES_DB=myapp"""
++      - POSTGRES_DB=myapp""",
         ]

@@ -12,5 +12,6 @@ import pytest
 def openai_provider():
     """Create a fresh OpenAI provider instance for each test."""
     # Import here to avoid module-level import issues
-    from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+    from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
+
     return OpenAI()

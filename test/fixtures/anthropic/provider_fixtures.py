@@ -12,5 +12,6 @@ import pytest
 def anthropic_provider():
     """Create a fresh Anthropic provider instance for each test."""
     # Import here to avoid module-level import issues
-    from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
+    from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
+
     return Anthropic()

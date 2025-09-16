@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     MessageData,
@@ -26,22 +27,22 @@ class Gpt5CustomHandlerFixtures:
                 "authorization": "RBAC (Role-Based Access Control)",
                 "caching": "Redis with intelligent cache invalidation",
                 "monitoring": "Prometheus metrics + structured logging",
-                "testing": "100% code coverage with integration tests"
+                "testing": "100% code coverage with integration tests",
             },
             "technical_constraints": {
                 "framework": "FastAPI",
                 "database": "PostgreSQL with async SQLAlchemy",
                 "deployment": "Docker + Kubernetes",
                 "performance": "< 100ms response time",
-                "security": "OWASP compliance"
+                "security": "OWASP compliance",
             },
             "custom_instructions": [
                 "Follow clean architecture principles",
                 "Implement comprehensive error handling",
                 "Use dependency injection pattern",
                 "Include API versioning strategy",
-                "Add comprehensive documentation"
-            ]
+                "Add comprehensive documentation",
+            ],
         }
 
     @staticmethod
@@ -52,7 +53,7 @@ class Gpt5CustomHandlerFixtures:
                 type=ContentBlockCategory.TEXT_BLOCK,
                 content=TextBlockContent(
                     text="I'll help you create a custom REST API with advanced features. Let me design a comprehensive solution."
-                )
+                ),
             ),
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
@@ -431,8 +432,8 @@ I've created a comprehensive custom REST API with advanced features including:
 
 The implementation follows OWASP security guidelines and includes proper error handling, health checks, and monitoring capabilities for production deployment.
 </summary>"""
-                )
-            )
+                ),
+            ),
         ]
 
     @staticmethod
@@ -446,15 +447,14 @@ The implementation follows OWASP security guidelines and includes proper error h
                 "performance_requirements": {
                     "time_complexity": "O(n) best case, O(n log n) worst case",
                     "space_complexity": "O(1) auxiliary space",
-                    "optimize_for": "nearly_sorted_data"
+                    "optimize_for": "nearly_sorted_data",
                 },
                 "custom_features": [
                     "Adaptive behavior based on input characteristics",
                     "Fallback to quicksort for random data",
-                    "Insertion sort for small subarrays"
-                ]
+                    "Insertion sort for small subarrays",
+                ],
             },
-            
             # Data structure design query
             {
                 "query": "Design a custom cache with intelligent eviction policies",
@@ -463,34 +463,22 @@ The implementation follows OWASP security guidelines and includes proper error h
                     "eviction_policies": ["LRU", "LFU", "TTL-based"],
                     "adaptive_policy_selection": True,
                     "memory_efficiency": "high",
-                    "thread_safety": True
+                    "thread_safety": True,
                 },
-                "performance_goals": {
-                    "hit_ratio": "> 85%",
-                    "latency": "< 1ms average",
-                    "memory_overhead": "< 20%"
-                }
+                "performance_goals": {"hit_ratio": "> 85%", "latency": "< 1ms average", "memory_overhead": "< 20%"},
             },
-            
             # System architecture query
             {
                 "query": "Create a custom event-driven microservices architecture",
                 "architecture_style": "event_sourcing + CQRS",
-                "components": [
-                    "Event Store",
-                    "Command Handlers",
-                    "Query Handlers", 
-                    "Event Bus",
-                    "Projection Handlers"
-                ],
+                "components": ["Event Store", "Command Handlers", "Query Handlers", "Event Bus", "Projection Handlers"],
                 "quality_attributes": {
                     "scalability": "horizontal",
                     "consistency": "eventual",
                     "availability": "99.9%",
-                    "fault_tolerance": "high"
-                }
+                    "fault_tolerance": "high",
+                },
             },
-            
             # Machine learning pipeline query
             {
                 "query": "Build a custom ML pipeline for real-time recommendation system",
@@ -498,16 +486,15 @@ The implementation follows OWASP security guidelines and includes proper error h
                     "feature_engineering": "real_time_streaming",
                     "model_serving": "ensemble_approach",
                     "feedback_loop": "online_learning",
-                    "personalization": "context_aware"
+                    "personalization": "context_aware",
                 },
                 "technical_requirements": {
                     "latency": "< 50ms",
                     "throughput": "> 10000 RPS",
                     "model_update_frequency": "hourly",
-                    "a_b_testing": "integrated"
-                }
+                    "a_b_testing": "integrated",
+                },
             },
-            
             # Security framework query
             {
                 "query": "Implement a custom security framework with advanced threat detection",
@@ -515,15 +502,11 @@ The implementation follows OWASP security guidelines and includes proper error h
                     "authentication": "multi_factor",
                     "authorization": "attribute_based",
                     "threat_detection": "ml_powered",
-                    "incident_response": "automated"
+                    "incident_response": "automated",
                 },
                 "compliance": ["SOC2", "GDPR", "HIPAA"],
-                "threat_models": [
-                    "OWASP Top 10",
-                    "STRIDE methodology",
-                    "Custom threat intelligence"
-                ]
-            }
+                "threat_models": ["OWASP Top 10", "STRIDE methodology", "Custom threat intelligence"],
+            },
         ]
 
     @staticmethod
@@ -537,59 +520,53 @@ The implementation follows OWASP security guidelines and includes proper error h
                 "custom_domains": {
                     "ssl_management": "automated",
                     "dns_configuration": "api_driven",
-                    "subdomain_routing": "dynamic"
+                    "subdomain_routing": "dynamic",
                 },
                 "billing_integration": {
                     "usage_metering": "real_time",
                     "pricing_models": ["freemium", "usage_based", "tiered"],
-                    "payment_processing": "stripe_integration"
+                    "payment_processing": "stripe_integration",
                 },
                 "customization": {
                     "white_labeling": True,
                     "custom_themes": True,
-                    "api_extensions": "plugin_architecture"
-                }
+                    "api_extensions": "plugin_architecture",
+                },
             },
-            
             # IoT data processing platform
             {
                 "query": "Create an IoT data processing platform with edge computing support",
                 "data_ingestion": {
                     "protocols": ["MQTT", "CoAP", "HTTP", "WebSocket"],
                     "throughput": "1M messages/second",
-                    "edge_processing": "intelligent_filtering"
+                    "edge_processing": "intelligent_filtering",
                 },
                 "stream_processing": {
                     "engine": "Apache Kafka + Flink",
                     "windowing": "custom_time_windows",
-                    "anomaly_detection": "ml_based"
+                    "anomaly_detection": "ml_based",
                 },
                 "device_management": {
                     "provisioning": "zero_touch",
                     "ota_updates": "delta_updates",
-                    "fleet_management": "hierarchical"
-                }
+                    "fleet_management": "hierarchical",
+                },
             },
-            
             # Distributed game engine
             {
                 "query": "Develop a distributed game engine for massively multiplayer games",
                 "networking": {
                     "architecture": "hybrid_p2p_server",
                     "latency_compensation": "client_side_prediction",
-                    "anti_cheat": "server_authoritative"
+                    "anti_cheat": "server_authoritative",
                 },
                 "scalability": {
                     "world_partitioning": "spatial_hashing",
                     "load_balancing": "interest_management",
-                    "horizontal_scaling": "microservices"
+                    "horizontal_scaling": "microservices",
                 },
-                "performance": {
-                    "target_fps": 60,
-                    "network_latency": "< 100ms",
-                    "concurrent_players": "10000+"
-                }
-            }
+                "performance": {"target_fps": 60, "network_latency": "< 100ms", "concurrent_players": "10000+"},
+            },
         ]
 
     @staticmethod
@@ -643,7 +620,6 @@ I've implemented an adaptive sorting algorithm that:
 - Falls back to quicksort for random data
 - Achieves O(n) performance for nearly sorted inputs
 </summary>""",
-
             """<custom_instruction>
 Focus on creating a production-ready implementation with:
 - Comprehensive error handling
@@ -675,7 +651,6 @@ Focus on creating a production-ready implementation with:
 - Scalability: Horizontal auto-scaling
 - Security: Zero-trust architecture
 </performance_requirements>""",
-
             """<implementation_phases>
 Phase 1: Core Infrastructure
 - Set up containerized services
@@ -710,7 +685,7 @@ Monitoring: Prometheus + Grafana
 Logging: ELK Stack (Elasticsearch, Logstash, Kibana)
 Deployment: Docker + Kubernetes
 CI/CD: GitHub Actions + ArgoCD
-</technology_stack>"""
+</technology_stack>""",
         ]
 
     @staticmethod
@@ -804,7 +779,6 @@ class CustomHashTable:
                 key, value = item
                 self.put(key, value)
 </code_block>""",
-
             """<code_block>
 <programming_language>rust</programming_language>
 <file_path>src/custom_allocator.rs</file_path>
@@ -885,7 +859,6 @@ pub struct AllocatorStats {
 #[global_allocator]
 static ALLOCATOR: CustomAllocator = CustomAllocator::new();
 </code_block>""",
-
             """<code_block>
 <programming_language>go</programming_language>
 <file_path>pkg/custom/ratelimiter.go</file_path>
@@ -1024,7 +997,7 @@ func max(a, b float64) float64 {
     }
     return b
 }
-</code_block>"""
+</code_block>""",
         ]
 
     @staticmethod
@@ -1056,24 +1029,29 @@ print("malformed metadata")
             "description": "Build a complete enterprise solution with all modern features and best practices. " * 50,
             "requirements": {
                 "functional": [f"Requirement {i}: " + "Detailed requirement description. " * 20 for i in range(50)],
-                "non_functional": [f"Performance requirement {i}: " + "Detailed performance specification. " * 15 for i in range(30)],
-                "security": [f"Security requirement {i}: " + "Detailed security specification. " * 10 for i in range(20)]
+                "non_functional": [
+                    f"Performance requirement {i}: " + "Detailed performance specification. " * 15 for i in range(30)
+                ],
+                "security": [
+                    f"Security requirement {i}: " + "Detailed security specification. " * 10 for i in range(20)
+                ],
             },
             "technical_constraints": {
                 "frameworks": ["FastAPI", "React", "PostgreSQL", "Redis", "Kubernetes"],
                 "languages": ["Python", "TypeScript", "SQL", "YAML"],
                 "patterns": ["CQRS", "Event Sourcing", "Microservices", "Clean Architecture"],
-                "deployment": "Cloud-native with auto-scaling and disaster recovery"
+                "deployment": "Cloud-native with auto-scaling and disaster recovery",
             },
             "files": [
                 {
                     "path": f"src/services/service_{i}/main.py",
-                    "content": f"# Service {i} implementation\n" + "# Detailed implementation code\n" * 100
-                } for i in range(20)
+                    "content": f"# Service {i} implementation\n" + "# Detailed implementation code\n" * 100,
+                }
+                for i in range(20)
             ],
             "documentation": {
                 "api_specs": "Comprehensive API documentation with examples. " * 100,
                 "architecture_docs": "Detailed architecture documentation with diagrams. " * 100,
-                "deployment_guide": "Step-by-step deployment instructions. " * 100
-            }
+                "deployment_guide": "Step-by-step deployment instructions. " * 100,
+            },
         }

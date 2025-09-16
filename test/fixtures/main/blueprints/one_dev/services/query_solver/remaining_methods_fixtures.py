@@ -5,14 +5,14 @@ This module provides comprehensive fixtures for testing various scenarios
 of the remaining QuerySolver methods that don't have test coverage yet.
 """
 
-import asyncio
-import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from typing import List
+from unittest.mock import MagicMock
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
 from app.backend_common.models.dto.message_thread_dto import (
@@ -20,48 +20,29 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageCallChainCategory,
     MessageThreadDTO,
     MessageType,
-    TextBlockData,
     TextBlockContent,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
-    StreamingParsedLLMCallResponse,
-)
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedConversationTurn,
-    UnifiedTextConversationTurnContent,
-    UnifiedToolRequestConversationTurnContent,
-    UnifiedToolResponseConversationTurnContent,
-    UserConversationTurn,
+    TextBlockData,
 )
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
     CodeBlockData,
-    InfoMessageData,
     TextMessageData,
     ThinkingInfoData,
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
+from app.main.blueprints.one_dev.models.dto.query_solver_agents_dto import QuerySolverAgentsDTO
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
-    CustomQuerySolverAgent,
-)
-from app.main.blueprints.one_dev.services.query_solver.agents.default_query_solver_agent import (
-    DefaultQuerySolverAgentInstance,
+from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import (
+    QuerySolverAgent,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
-    QuerySolverInput,
-    Reasoning,
     RetryReasons,
     ToolUseResponseInput,
 )
-from app.main.blueprints.one_dev.models.dto.query_solver_agents_dto import QuerySolverAgentsDTO
 
 
 @pytest.fixture
@@ -180,18 +161,14 @@ def mock_multiple_query_solver_agents() -> List[QuerySolverAgentsDTO]:
 def mock_message_thread_dto() -> MessageThreadDTO:
     """Create mock message thread DTO."""
     from app.backend_common.models.dto.message_thread_dto import MessageThreadActor
-    
+
     return MessageThreadDTO(
         id=1,
         session_id=123,
         actor=MessageThreadActor.USER,
         message_type=MessageType.QUERY,
         data_hash="test_hash",
-        message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="test query")
-            )
-        ],
+        message_data=[TextBlockData(content=TextBlockContent(text="test query"))],
         prompt_type="CODE_QUERY_SOLVER",
         prompt_category="query_solver",
         llm_model=LLModels.GPT_4_POINT_1,
@@ -204,8 +181,8 @@ def mock_message_thread_dto() -> MessageThreadDTO:
 @pytest.fixture
 def mock_multiple_message_threads() -> List[MessageThreadDTO]:
     """Create multiple mock message thread DTOs."""
-    from app.backend_common.models.dto.message_thread_dto import MessageThreadActor, TextBlockData, TextBlockContent
-    
+    from app.backend_common.models.dto.message_thread_dto import MessageThreadActor, TextBlockContent, TextBlockData
+
     return [
         MessageThreadDTO(
             id=1,
@@ -213,11 +190,7 @@ def mock_multiple_message_threads() -> List[MessageThreadDTO]:
             actor=MessageThreadActor.ASSISTANT,
             message_type=MessageType.RESPONSE,
             data_hash="hash1",
-            message_data=[
-                TextBlockData(
-                    content=TextBlockContent(text="response")
-                )
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="response"))],
             prompt_type="OTHER",
             prompt_category="other",
             llm_model=LLModels.GPT_4_POINT_1,
@@ -231,11 +204,7 @@ def mock_multiple_message_threads() -> List[MessageThreadDTO]:
             actor=MessageThreadActor.USER,
             message_type=MessageType.QUERY,
             data_hash="hash2",
-            message_data=[
-                TextBlockData(
-                    content=TextBlockContent(text="first query")
-                )
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="first query"))],
             prompt_type="CODE_QUERY_SOLVER",
             prompt_category="query_solver",
             llm_model=LLModels.GPT_4_POINT_1,
@@ -249,11 +218,7 @@ def mock_multiple_message_threads() -> List[MessageThreadDTO]:
             actor=MessageThreadActor.USER,
             message_type=MessageType.QUERY,
             data_hash="hash3",
-            message_data=[
-                TextBlockData(
-                    content=TextBlockContent(text="second query")
-                )
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="second query"))],
             prompt_type="CUSTOM_CODE_QUERY_SOLVER",
             prompt_category="query_solver",
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -284,7 +249,9 @@ def mock_agent_chat_list_for_summary() -> List[AgentChatDTO]:
             id=2,
             session_id=123,
             actor=ActorType.ASSISTANT,
-            message_data=TextMessageData(text="I'll help you create a new file. Let me check the current directory structure."),
+            message_data=TextMessageData(
+                text="I'll help you create a new file. Let me check the current directory structure."
+            ),
             message_type=ChatMessageType.TEXT,
             metadata={"llm_model": "gpt-4", "agent_name": "test_agent"},
             query_id="test-query-id",
@@ -313,12 +280,12 @@ def mock_agent_chat_list_for_summary() -> List[AgentChatDTO]:
             id=4,
             session_id=123,
             actor=ActorType.ASSISTANT,
-                message_data=CodeBlockData(
-                    language="python",
-                    file_path="/new_file.py",
-                    code="# New Python file\nprint('Hello, World!')",
-                    diff="# New Python file\nprint('Hello, World!')",
-                ),
+            message_data=CodeBlockData(
+                language="python",
+                file_path="/new_file.py",
+                code="# New Python file\nprint('Hello, World!')",
+                diff="# New Python file\nprint('Hello, World!')",
+            ),
             message_type=ChatMessageType.CODE_BLOCK,
             metadata={"llm_model": "gpt-4", "agent_name": "test_agent"},
             query_id="test-query-id",
@@ -445,12 +412,12 @@ def mock_complex_agent_chat_list() -> List[AgentChatDTO]:
             id=5,
             session_id=123,
             actor=ActorType.ASSISTANT,
-                message_data=CodeBlockData(
-                    language="python",
-                    file_path="/src/refactored_code.py",
-                    code="class RefactoredClass:\n    def improved_method(self):\n        return 'improved'",
-                    diff="class RefactoredClass:\n    def improved_method(self):\n        return 'improved'",
-                ),
+            message_data=CodeBlockData(
+                language="python",
+                file_path="/src/refactored_code.py",
+                code="class RefactoredClass:\n    def improved_method(self):\n        return 'improved'",
+                diff="class RefactoredClass:\n    def improved_method(self):\n        return 'improved'",
+            ),
             message_type=ChatMessageType.CODE_BLOCK,
             metadata={"llm_model": "gpt-4", "agent_name": "code_refactor_agent"},
             query_id="refactor-query-id",
@@ -518,7 +485,7 @@ def mock_focus_items() -> List[FocusItem]:
         FileFocusItem,
         FocusItemTypes,
     )
-    
+
     return [
         FileFocusItem(
             type=FocusItemTypes.FILE,
@@ -534,16 +501,16 @@ def mock_focus_items() -> List[FocusItem]:
 
 
 @pytest.fixture
-def mock_multiple_custom_agents() -> List[CustomQuerySolverAgent]:
+def mock_multiple_custom_agents() -> List[QuerySolverAgent]:
     """Create multiple mock custom query solver agents."""
     return [
-        CustomQuerySolverAgent(
+        QuerySolverAgent(
             agent_name="file_manager_agent",
             agent_description="Agent for file management tasks",
             allowed_tools=["file_reader", "write_to_file"],
             prompt_intent="Handle file operations and management",
         ),
-        CustomQuerySolverAgent(
+        QuerySolverAgent(
             agent_name="code_analyzer_agent",
             agent_description="Agent for code analysis tasks",
             allowed_tools=["focused_snippets_searcher", "grep_search"],

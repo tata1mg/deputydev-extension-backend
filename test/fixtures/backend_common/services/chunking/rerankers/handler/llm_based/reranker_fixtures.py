@@ -5,20 +5,22 @@ This module provides comprehensive fixtures for testing various scenarios
 of the LLMBasedChunkReranker methods.
 """
 
-import pytest
-from typing import Any, Dict, List, Optional
+from typing import List
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 
 # Create mock ChunkInfo class since deputydev_core is external
 class MockChunkInfo:
     """Mock ChunkInfo for testing purposes."""
-    
+
     def __init__(self, denotation: str, content: str = "", file_path: str = "", line_number: int = 1):
         self.denotation = denotation
         self.content = content
         self.file_path = file_path
         self.line_number = line_number
-    
+
     def __eq__(self, other):
         if not isinstance(other, MockChunkInfo):
             return False
@@ -39,14 +41,14 @@ def sample_focus_chunks() -> List[MockChunkInfo]:
             denotation="focus_1",
             content="def calculate_sum(a, b):\n    return a + b",
             file_path="src/calculator.py",
-            line_number=10
+            line_number=10,
         ),
         MockChunkInfo(
-            denotation="focus_2", 
+            denotation="focus_2",
             content="class Calculator:\n    def __init__(self):\n        pass",
             file_path="src/calculator.py",
-            line_number=1
-        )
+            line_number=1,
+        ),
     ]
 
 
@@ -58,20 +60,20 @@ def sample_related_chunks() -> List[MockChunkInfo]:
             denotation="related_1",
             content="def multiply(x, y):\n    return x * y",
             file_path="src/math_utils.py",
-            line_number=5
+            line_number=5,
         ),
         MockChunkInfo(
             denotation="related_2",
             content="def divide(x, y):\n    if y == 0:\n        raise ValueError('Division by zero')\n    return x / y",
-            file_path="src/math_utils.py", 
-            line_number=15
+            file_path="src/math_utils.py",
+            line_number=15,
         ),
         MockChunkInfo(
             denotation="related_3",
             content="# Helper function for logging\ndef log_operation(op, result):\n    print(f'{op} result: {result}')",
             file_path="src/logger.py",
-            line_number=1
-        )
+            line_number=1,
+        ),
     ]
 
 
@@ -89,7 +91,7 @@ def single_chunk() -> List[MockChunkInfo]:
             denotation="single_chunk",
             content="def hello_world():\n    print('Hello, World!')",
             file_path="src/hello.py",
-            line_number=1
+            line_number=1,
         )
     ]
 
@@ -104,7 +106,7 @@ def large_chunk_list() -> List[MockChunkInfo]:
                 denotation=f"chunk_{i}",
                 content=f"def function_{i}():\n    return {i}",
                 file_path=f"src/module_{i // 10}.py",
-                line_number=(i % 10) + 1
+                line_number=(i % 10) + 1,
             )
         )
     return chunks
@@ -145,59 +147,48 @@ def mock_llm_handler():
 @pytest.fixture
 def successful_llm_response():
     """Mock successful LLM response."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
-    response.parsed_content = [
-        {
-            "chunks_source": ["focus_1", "related_2", "related_1"]
-        }
-    ]
+    response.parsed_content = [{"chunks_source": ["focus_1", "related_2", "related_1"]}]
     return response
 
 
 @pytest.fixture
 def successful_llm_response_partial():
-    """Mock LLM response with partial chunk matches.""" 
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    """Mock LLM response with partial chunk matches."""
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
-    response.parsed_content = [
-        {
-            "chunks_source": ["focus_1", "non_existent_chunk", "related_1"]
-        }
-    ]
+    response.parsed_content = [{"chunks_source": ["focus_1", "non_existent_chunk", "related_1"]}]
     return response
 
 
 @pytest.fixture
 def successful_llm_response_empty_chunks():
     """Mock LLM response with empty chunks list."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
-    response.parsed_content = [
-        {
-            "chunks_source": []
-        }
-    ]
+    response.parsed_content = [{"chunks_source": []}]
     return response
 
 
 @pytest.fixture
 def malformed_llm_response_missing_key():
     """Mock malformed LLM response missing chunks_source key."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
-    response.parsed_content = [
-        {
-            "invalid_key": ["focus_1", "related_1"]
-        }
-    ]
+    response.parsed_content = [{"invalid_key": ["focus_1", "related_1"]}]
     return response
 
 
 @pytest.fixture
 def malformed_llm_response_wrong_type():
     """Mock malformed LLM response with wrong type."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = [
         {
@@ -210,7 +201,8 @@ def malformed_llm_response_wrong_type():
 @pytest.fixture
 def malformed_llm_response_empty_list():
     """Mock malformed LLM response with empty parsed_content."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = []
     return response
@@ -219,7 +211,8 @@ def malformed_llm_response_empty_list():
 @pytest.fixture
 def malformed_llm_response_none():
     """Mock malformed LLM response with None parsed_content."""
-    from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+
     response = MagicMock(spec=NonStreamingParsedLLMCallResponse)
     response.parsed_content = None
     return response
@@ -243,7 +236,7 @@ def denotation_list_empty() -> List[str]:
     return []
 
 
-@pytest.fixture 
+@pytest.fixture
 def denotation_list_non_existent() -> List[str]:
     """List of non-existent denotations."""
     return ["non_existent_1", "non_existent_2"]
@@ -258,8 +251,10 @@ def denotation_list_mixed() -> List[str]:
 @pytest.fixture
 def mock_render_snippet_array():
     """Mock render_snippet_array function."""
+
     def mock_render(chunks):
         return f"Rendered {len(chunks)} chunks"
+
     return mock_render
 
 
@@ -303,6 +298,7 @@ def mock_time_perf_counter():
 def llm_based_chunk_reranker():
     """Create a fresh LLMBasedChunkReranker instance for each test."""
     from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import LLMBasedChunkReranker
+
     return LLMBasedChunkReranker(session_id=12345)
 
 
@@ -312,7 +308,7 @@ def combined_chunks_basic(sample_focus_chunks, sample_related_chunks) -> List[Mo
     return sample_focus_chunks + sample_related_chunks
 
 
-@pytest.fixture 
+@pytest.fixture
 def combined_chunks_large(sample_focus_chunks, sample_related_chunks, large_chunk_list) -> List[MockChunkInfo]:
     """Large combined chunks list for performance testing."""
     return sample_focus_chunks + sample_related_chunks + large_chunk_list
