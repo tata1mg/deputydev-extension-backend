@@ -48,5 +48,22 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
     "ruff==0.12.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]        # only measure your app code, not tests
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+omit = [
+    "test/*",
 ]
