@@ -17,8 +17,8 @@ from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
 )
-from app.backend_common.services.llm.dataclasses.agent import LLMHandlerInputs
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.agent import LLMHandlerInputs
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
     UnifiedConversationRole,
@@ -658,10 +658,10 @@ class TestQuerySolverAgent:
         # Mock the prompt factory with a proper BasePrompt subclass
         from typing import List
 
+        from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
         from pydantic import BaseModel
 
-        from app.backend_common.services.llm.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
-        from app.backend_common.services.llm.prompts.base_prompt import BasePrompt
+        from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
 
         class MockPrompt(BasePrompt):
             model_name = LLModels.CLAUDE_3_POINT_7_SONNET

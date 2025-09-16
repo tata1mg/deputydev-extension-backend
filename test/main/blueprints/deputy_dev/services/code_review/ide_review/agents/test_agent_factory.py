@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.core.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,

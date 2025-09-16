@@ -11,8 +11,8 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool
 
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
     LLMCommentData,
 )

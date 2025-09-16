@@ -10,6 +10,9 @@ from typing import List
 from unittest.mock import MagicMock
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    NonStreamingParsedLLMCallResponse,
+)
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
 from app.backend_common.models.dto.message_thread_dto import (
@@ -19,9 +22,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     MessageType,
     TextBlockContent,
     TextBlockData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    NonStreamingParsedLLMCallResponse,
 )
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -35,8 +35,8 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.models.dto.query_solver_agents_dto import QuerySolverAgentsDTO
 from app.main.blueprints.one_dev.models.dto.query_summaries import QuerySummaryData
-from app.main.blueprints.one_dev.services.query_solver.agents.custom_query_solver_agent import (
-    CustomQuerySolverAgent,
+from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import (
+    QuerySolverAgent,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
@@ -501,16 +501,16 @@ def mock_focus_items() -> List[FocusItem]:
 
 
 @pytest.fixture
-def mock_multiple_custom_agents() -> List[CustomQuerySolverAgent]:
+def mock_multiple_custom_agents() -> List[QuerySolverAgent]:
     """Create multiple mock custom query solver agents."""
     return [
-        CustomQuerySolverAgent(
+        QuerySolverAgent(
             agent_name="file_manager_agent",
             agent_description="Agent for file management tasks",
             allowed_tools=["file_reader", "write_to_file"],
             prompt_intent="Handle file operations and management",
         ),
-        CustomQuerySolverAgent(
+        QuerySolverAgent(
             agent_name="code_analyzer_agent",
             agent_description="Agent for code analysis tasks",
             allowed_tools=["focused_snippets_searcher", "grep_search"],

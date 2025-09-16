@@ -13,6 +13,12 @@ from typing import Any, Dict, List
 from unittest.mock import MagicMock
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    ConversationTool,
+    JSONSchema,
+    PromptCacheConfig,
+    UserAndSystemMessages,
+)
 
 from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
@@ -36,13 +42,7 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
     Attachment,
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTool,
-    JSONSchema,
-    PromptCacheConfig,
-    UserAndSystemMessages,
-)
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
     UnifiedImageConversationTurnContent,

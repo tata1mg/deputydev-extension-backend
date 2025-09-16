@@ -1,4 +1,5 @@
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
+
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )

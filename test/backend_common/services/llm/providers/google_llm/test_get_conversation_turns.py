@@ -165,7 +165,7 @@ def setup_comprehensive_mocks():
         patch("app.backend_common.utils.sanic_wrapper.CONFIG", mock_config_obj),
         # Mock the service client directly at the module level
         patch(
-            "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
+            "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
         ),
         # Also mock the config import in gemini service client
         patch("app.backend_common.service_clients.gemini.gemini.config", mock_config_obj.config["VERTEX"]),
@@ -186,7 +186,7 @@ class TestGoogleGetConversationTurns:
     @pytest.fixture
     def google_provider(self):
         """Create a Google provider instance for testing."""
-        from app.backend_common.services.llm.providers.google.llm_provider import Google
+        from deputydev_core.llm_handler.providers.google.llm_provider import Google
 
         return Google()
 

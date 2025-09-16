@@ -19,10 +19,7 @@ Test Categories:
 from typing import List, Optional, Tuple
 
 import pytest
-
-# Import required classes from message thread DTO and streaming dataclasses
-from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory, LLMUsage
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     ExtendedThinkingBlockDelta,
     ExtendedThinkingBlockEnd,
     ExtendedThinkingBlockStart,
@@ -36,7 +33,10 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
-from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
+
+# Import required classes from message thread DTO and streaming dataclasses
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory, LLMUsage
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 # Import fixtures from organized fixture modules
 from test.fixtures.anthropic import (

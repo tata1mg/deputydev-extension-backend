@@ -26,15 +26,15 @@ import asyncio
 from typing import Any, Dict, List
 
 import pytest
-
-# Import necessary DTOs and classes
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     ConversationTool,
     PromptCacheConfig,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
+
+# Import necessary DTOs and classes
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 # Import all build_llm_payload specific fixtures
 from test.fixtures.anthropic.build_llm_payload_fixtures import *

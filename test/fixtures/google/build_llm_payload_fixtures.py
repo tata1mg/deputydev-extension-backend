@@ -9,6 +9,11 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    ConversationTool,
+    PromptCacheConfig,
+    UserAndSystemMessages,
+)
 
 from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
@@ -27,11 +32,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
     ChatAttachmentDataWithObjectBytes,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTool,
-    PromptCacheConfig,
-    UserAndSystemMessages,
 )
 
 
@@ -77,7 +77,7 @@ def empty_user_and_system_messages() -> UserAndSystemMessages:
 @pytest.fixture
 def simple_conversation_tool() -> ConversationTool:
     """Simple conversation tool for testing."""
-    from app.backend_common.services.llm.dataclasses.main import JSONSchema
+    from deputydev_core.llm_handler.dataclasses.main import JSONSchema
 
     return ConversationTool(
         name="search_web",
@@ -96,7 +96,7 @@ def simple_conversation_tool() -> ConversationTool:
 @pytest.fixture
 def complex_conversation_tools() -> List[ConversationTool]:
     """Multiple complex conversation tools."""
-    from app.backend_common.services.llm.dataclasses.main import JSONSchema
+    from deputydev_core.llm_handler.dataclasses.main import JSONSchema
 
     return [
         ConversationTool(

@@ -10,8 +10,6 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
 from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
@@ -19,6 +17,8 @@ from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     UnifiedConversationTurnContentType,
     UserConversationTurn,
 )
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,

@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.core.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
