@@ -1,8 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
-
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     TextBlockDelta,
     TextBlockEnd,
     TextBlockStart,
@@ -10,6 +9,7 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockEnd,
     CodeBlockStart,

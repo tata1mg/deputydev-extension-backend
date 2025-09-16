@@ -143,7 +143,7 @@ def setup_comprehensive_mocks():
         patch("app.backend_common.utils.sanic_wrapper.CONFIG", mock_config_obj),
         # Mock the service client directly at the module level
         patch(
-            "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
+            "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
         ),
         # Also mock the config import in gemini service client
         patch("app.backend_common.service_clients.gemini.gemini.config", mock_config_obj.config["VERTEX"]),
@@ -158,8 +158,7 @@ def setup_comprehensive_mocks():
         p.stop()
 
 
-from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     LLMCallResponseTypes,
     MalformedToolUseRequest,
     StreamingResponse,
@@ -170,6 +169,8 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
+
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
 
 # Import fixtures
 
@@ -507,7 +508,7 @@ class TestGoogleStreamingResponseParsing:
 
         google_provider.checker = mock_checker
 
-        with patch("app.backend_common.services.llm.providers.google.llm_provider.CodeGenTasksCache") as mock_cache:
+        with patch("deputydev_core.llm_handler.providers.google.llm_provider.CodeGenTasksCache") as mock_cache:
             mock_cache.cleanup_session_data = AsyncMock()
 
             result = await google_provider._parse_streaming_response(cancellable_stream(), session_id=789)

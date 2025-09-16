@@ -1,6 +1,6 @@
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import TextBlockDelta, TextBlockDeltaContent
 
-from app.backend_common.services.llm.dataclasses.main import TextBlockDelta, TextBlockDeltaContent
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockEnd,

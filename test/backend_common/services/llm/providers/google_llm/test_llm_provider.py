@@ -21,19 +21,19 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import (
-    LLModels,
-    TextBlockData,
-    ToolUseRequestData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     LLMCallResponseTypes,
     MalformedToolUseRequest,
     NonStreamingResponse,
     StreamingResponse,
     ToolUseRequestEnd,
     ToolUseRequestStart,
+)
+
+from app.backend_common.models.dto.message_thread_dto import (
+    LLModels,
+    TextBlockData,
+    ToolUseRequestData,
 )
 
 
@@ -158,7 +158,7 @@ def setup_comprehensive_mocks():
         patch("app.backend_common.utils.sanic_wrapper.CONFIG", mock_config_obj),
         # Mock the service client directly at the module level
         patch(
-            "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
+            "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
         ),
         # Also mock the config import in gemini service client
         patch("app.backend_common.service_clients.gemini.gemini.config", mock_config_obj.config["VERTEX"]),
@@ -732,7 +732,7 @@ class TestGoogleServiceClientCalls:
             return_value={"NAME": "gemini-pro", "MAX_TOKENS": 4096, "TEMPERATURE": 0.7},
         ):
             with patch(
-                "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient"
+                "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient"
             ) as mock_client_class:
                 mock_client_class.return_value = mock_google_service_client
 
@@ -763,7 +763,7 @@ class TestGoogleServiceClientCalls:
             return_value={"NAME": "gemini-pro", "MAX_TOKENS": 4096, "TEMPERATURE": 0.7, "THINKING_BUDGET_TOKENS": 2048},
         ):
             with patch(
-                "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient"
+                "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient"
             ) as mock_client_class:
                 mock_client_class.return_value = mock_google_service_client
 
@@ -794,7 +794,7 @@ class TestGoogleTokenCounting:
         """Test basic token counting."""
         with patch.object(google_provider, "_get_model_config", return_value={"NAME": "gemini-pro"}):
             with patch(
-                "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient"
+                "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient"
             ) as mock_client_class:
                 mock_client_class.return_value = mock_google_service_client
 
