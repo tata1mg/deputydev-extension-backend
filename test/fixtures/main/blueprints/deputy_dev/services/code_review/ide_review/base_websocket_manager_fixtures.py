@@ -19,11 +19,11 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.ma
 # Test implementation of abstract BaseWebSocketManager
 class TestWebSocketManager(BaseWebSocketManager):
     """Concrete implementation of BaseWebSocketManager for testing."""
-    
+
     def __init__(self, connection_id: str, is_local: bool = False) -> None:
         super().__init__(connection_id, is_local)
         self.test_requests: List[Dict[str, Any]] = []
-    
+
     async def process_request(
         self, request_data: Dict[str, Any], local_testing_stream_buffer: Dict[str, List[str]]
     ) -> None:
@@ -52,22 +52,15 @@ def sample_websocket_message() -> WebSocketMessage:
         data={
             "content": "This is a test message",
             "status": "success",
-            "details": {
-                "processed_at": "2024-01-15T10:30:00Z",
-                "version": "1.0"
-            }
-        }
+            "details": {"processed_at": "2024-01-15T10:30:00Z", "version": "1.0"},
+        },
     )
 
 
 @pytest.fixture
 def sample_websocket_message_with_none_data() -> WebSocketMessage:
     """Create a sample WebSocket message with None data."""
-    return WebSocketMessage(
-        type="NULL_DATA_MESSAGE",
-        agent_id=None,
-        data=None
-    )
+    return WebSocketMessage(type="NULL_DATA_MESSAGE", agent_id=None, data=None)
 
 
 @pytest.fixture
@@ -76,11 +69,7 @@ def sample_websocket_message_error() -> WebSocketMessage:
     return WebSocketMessage(
         type="ERROR_MESSAGE",
         agent_id=67890,
-        data={
-            "error": "Something went wrong",
-            "error_code": "ERR_001",
-            "stack_trace": "Error occurred at line 42"
-        }
+        data={"error": "Something went wrong", "error_code": "ERR_001", "stack_trace": "Error occurred at line 42"},
     )
 
 
@@ -92,23 +81,16 @@ def sample_websocket_message_tool_use() -> WebSocketMessage:
         agent_id=11111,
         data={
             "tool_name": "file_reader",
-            "tool_input": {
-                "file_path": "src/main.py",
-                "start_line": 1,
-                "end_line": 50
-            },
-            "tool_use_id": "tool-use-123"
-        }
+            "tool_input": {"file_path": "src/main.py", "start_line": 1, "end_line": 50},
+            "tool_use_id": "tool-use-123",
+        },
     )
 
 
 @pytest.fixture
 def sample_local_stream_buffer() -> Dict[str, List[str]]:
     """Create a sample local stream buffer."""
-    return {
-        "local-test-conn-123": [],
-        "aws-test-conn-456": []
-    }
+    return {"local-test-conn-123": [], "aws-test-conn-456": []}
 
 
 @pytest.fixture
@@ -150,11 +132,7 @@ def sample_progress_short_interval() -> float:
 @pytest.fixture
 def sample_aws_config() -> Dict[str, Any]:
     """Create sample AWS configuration."""
-    return {
-        'AWS_API_GATEWAY': {
-            'CODE_REVIEW_WEBSOCKET_WEBHOOK_ENDPOINT': 'wss://test-api.amazonaws.com/dev/websocket'
-        }
-    }
+    return {"AWS_API_GATEWAY": {"CODE_REVIEW_WEBSOCKET_WEBHOOK_ENDPOINT": "wss://test-api.amazonaws.com/dev/websocket"}}
 
 
 @pytest.fixture
@@ -164,11 +142,7 @@ def sample_websocket_messages_bulk() -> List[WebSocketMessage]:
         WebSocketMessage(
             type="BULK_MESSAGE",
             agent_id=i,
-            data={
-                "message_id": i,
-                "content": f"Bulk message {i}",
-                "batch": "test_batch_001"
-            }
+            data={"message_id": i, "content": f"Bulk message {i}", "batch": "test_batch_001"},
         )
         for i in range(1, 21)  # 20 messages
     ]
@@ -181,11 +155,7 @@ def sample_concurrent_messages() -> List[WebSocketMessage]:
         WebSocketMessage(
             type="CONCURRENT_MESSAGE",
             agent_id=1000 + i,
-            data={
-                "thread_id": i,
-                "concurrent_test": True,
-                "timestamp": f"2024-01-15T10:30:{str(i).zfill(2)}Z"
-            }
+            data={"thread_id": i, "concurrent_test": True, "timestamp": f"2024-01-15T10:30:{str(i).zfill(2)}Z"},
         )
         for i in range(10)
     ]
@@ -197,26 +167,14 @@ def sample_large_message_data() -> Dict[str, Any]:
     return {
         "large_content": "x" * 10000,  # 10KB of data
         "repeated_data": ["item"] * 1000,
-        "nested_structure": {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "data": list(range(1000))
-                    }
-                }
-            }
-        }
+        "nested_structure": {"level1": {"level2": {"level3": {"data": list(range(1000))}}}},
     }
 
 
 @pytest.fixture
 def sample_websocket_message_large(sample_large_message_data: Dict[str, Any]) -> WebSocketMessage:
     """Create a WebSocket message with large data payload."""
-    return WebSocketMessage(
-        type="LARGE_MESSAGE",
-        agent_id=99999,
-        data=sample_large_message_data
-    )
+    return WebSocketMessage(type="LARGE_MESSAGE", agent_id=99999, data=sample_large_message_data)
 
 
 @pytest.fixture
@@ -227,18 +185,14 @@ def sample_special_characters_data() -> Dict[str, Any]:
         "special_chars": "!@#$%^&*()_+-=[]{}|;:'\",.<>?/~`",
         "escape_sequences": "Line1\nLine2\tTabbed\r\nWindows",
         "json_breaking": '{"nested": "value with \\"quotes\\""}',
-        "emojis": "🚀🔥💡⚡🎉🎯📊🔍"
+        "emojis": "🚀🔥💡⚡🎉🎯📊🔍",
     }
 
 
 @pytest.fixture
 def sample_websocket_message_special_chars(sample_special_characters_data: Dict[str, Any]) -> WebSocketMessage:
     """Create a WebSocket message with special characters."""
-    return WebSocketMessage(
-        type="SPECIAL_CHARS_MESSAGE",
-        agent_id=55555,
-        data=sample_special_characters_data
-    )
+    return WebSocketMessage(type="SPECIAL_CHARS_MESSAGE", agent_id=55555, data=sample_special_characters_data)
 
 
 @pytest.fixture
@@ -254,10 +208,7 @@ def sample_mock_aws_client() -> MagicMock:
 @pytest.fixture
 def sample_websocket_managers_multiple() -> List[TestWebSocketManager]:
     """Create multiple WebSocket managers for concurrent testing."""
-    return [
-        TestWebSocketManager(f"conn-{i}", is_local=(i % 2 == 0))
-        for i in range(5)
-    ]
+    return [TestWebSocketManager(f"conn-{i}", is_local=(i % 2 == 0)) for i in range(5)]
 
 
 @pytest.fixture
@@ -266,10 +217,10 @@ def sample_progress_test_data() -> Dict[str, Any]:
     return {
         "short_interval": 0.01,  # 10ms
         "medium_interval": 0.05,  # 50ms
-        "long_interval": 0.1,    # 100ms
-        "test_duration": 0.2,    # 200ms total test time
+        "long_interval": 0.1,  # 100ms
+        "test_duration": 0.2,  # 200ms total test time
         "expected_min_messages": 1,
-        "expected_max_messages": 25
+        "expected_max_messages": 25,
     }
 
 
@@ -281,26 +232,26 @@ def sample_error_scenarios() -> List[Dict[str, Any]]:
             "error_type": "socket_closed",
             "exception_class": "SocketClosedError",
             "message": "WebSocket connection closed by client",
-            "should_mark_gone": True
+            "should_mark_gone": True,
         },
         {
             "error_type": "network_error",
             "exception_class": "Exception",
             "message": "Network timeout occurred",
-            "should_mark_gone": False
+            "should_mark_gone": False,
         },
         {
             "error_type": "permission_error",
             "exception_class": "PermissionError",
             "message": "Access denied to WebSocket endpoint",
-            "should_mark_gone": False
+            "should_mark_gone": False,
         },
         {
             "error_type": "json_error",
             "exception_class": "ValueError",
             "message": "Invalid JSON format in message",
-            "should_mark_gone": False
-        }
+            "should_mark_gone": False,
+        },
     ]
 
 
@@ -308,21 +259,9 @@ def sample_error_scenarios() -> List[Dict[str, Any]]:
 def sample_cleanup_scenarios() -> List[Dict[str, Any]]:
     """Create cleanup test scenarios."""
     return [
-        {
-            "has_aws_client": True,
-            "client_raises_error": False,
-            "expected_calls": 1
-        },
-        {
-            "has_aws_client": True,
-            "client_raises_error": True,
-            "expected_calls": 1
-        },
-        {
-            "has_aws_client": False,
-            "client_raises_error": False,
-            "expected_calls": 0
-        }
+        {"has_aws_client": True, "client_raises_error": False, "expected_calls": 1},
+        {"has_aws_client": True, "client_raises_error": True, "expected_calls": 1},
+        {"has_aws_client": False, "client_raises_error": False, "expected_calls": 0},
     ]
 
 
@@ -334,7 +273,7 @@ def sample_message_timestamps() -> List[str]:
         "2024-01-15T10:00:01.123Z",
         "2024-01-15T10:00:02.456Z",
         "2024-01-15T10:00:03.789Z",
-        "2024-01-15T10:00:04.999Z"
+        "2024-01-15T10:00:04.999Z",
     ]
 
 
@@ -348,8 +287,8 @@ def sample_context_manager_test_data() -> Dict[str, Any]:
             None,  # No exception
             ValueError("Test exception"),
             RuntimeError("Runtime error"),
-            KeyboardInterrupt()
-        ]
+            KeyboardInterrupt(),
+        ],
     }
 
 
@@ -361,7 +300,7 @@ def sample_performance_test_config() -> Dict[str, Any]:
         "interval_ranges": [0.001, 0.01, 0.1],
         "max_execution_time": 5.0,  # seconds
         "memory_threshold": 100 * 1024 * 1024,  # 100MB
-        "concurrent_connections": [1, 5, 10]
+        "concurrent_connections": [1, 5, 10],
     }
 
 
@@ -369,34 +308,10 @@ def sample_performance_test_config() -> Dict[str, Any]:
 def sample_integration_test_flow() -> List[Dict[str, Any]]:
     """Create integration test flow steps."""
     return [
-        {
-            "step": "initialize",
-            "action": "initialize_aws_client",
-            "expected_result": "client_set" 
-        },
-        {
-            "step": "start_progress",
-            "action": "start_progress_context",
-            "expected_result": "progress_started"
-        },
-        {
-            "step": "send_messages",
-            "action": "send_multiple_messages",
-            "expected_result": "messages_sent"
-        },
-        {
-            "step": "send_error",
-            "action": "send_error_message",
-            "expected_result": "error_sent"
-        },
-        {
-            "step": "stop_progress",
-            "action": "stop_progress_context",
-            "expected_result": "progress_stopped"
-        },
-        {
-            "step": "cleanup",
-            "action": "cleanup_resources",
-            "expected_result": "resources_cleaned"
-        }
+        {"step": "initialize", "action": "initialize_aws_client", "expected_result": "client_set"},
+        {"step": "start_progress", "action": "start_progress_context", "expected_result": "progress_started"},
+        {"step": "send_messages", "action": "send_multiple_messages", "expected_result": "messages_sent"},
+        {"step": "send_error", "action": "send_error_message", "expected_result": "error_sent"},
+        {"step": "stop_progress", "action": "stop_progress_context", "expected_result": "progress_stopped"},
+        {"step": "cleanup", "action": "cleanup_resources", "expected_result": "resources_cleaned"},
     ]

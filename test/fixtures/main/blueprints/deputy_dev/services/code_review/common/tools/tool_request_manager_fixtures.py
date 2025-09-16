@@ -1,12 +1,13 @@
+from typing import Any, Dict, List
 from unittest.mock import Mock
-from typing import Dict, Any, List
+
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
-    ToolUseRequestData,
     ToolUseRequestContent,
+    ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 
 
 class ToolRequestManagerFixtures:
@@ -19,11 +20,11 @@ class ToolRequestManagerFixtures:
             content=ToolUseRequestContent(
                 tool_name="grep_search",
                 tool_use_id="tool_123",
-                tool_input={"query": "test query", "file_pattern": "*.py"}
+                tool_input={"query": "test query", "file_pattern": "*.py"},
             )
         )
         tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock(spec=NonStreamingParsedLLMCallResponse)
         response.parsed_content = [tool_request]
         return response
@@ -40,13 +41,11 @@ class ToolRequestManagerFixtures:
         """Return mock LLM response with grep search tool."""
         tool_request = ToolUseRequestData(
             content=ToolUseRequestContent(
-                tool_name="grep_search",
-                tool_use_id="grep_456",
-                tool_input={"query": "function", "path": "src/"}
+                tool_name="grep_search", tool_use_id="grep_456", tool_input={"query": "function", "path": "src/"}
             )
         )
         tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock(spec=NonStreamingParsedLLMCallResponse)
         response.parsed_content = [tool_request]
         return response
@@ -58,11 +57,11 @@ class ToolRequestManagerFixtures:
             content=ToolUseRequestContent(
                 tool_name="parse_final_response",
                 tool_use_id="final_789",
-                tool_input={"comments": [], "summary": "Review complete"}
+                tool_input={"comments": [], "summary": "Review complete"},
             )
         )
         tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock()
         response.parsed_content = [tool_request]
         return response
@@ -71,23 +70,17 @@ class ToolRequestManagerFixtures:
     def get_mock_llm_response_with_multiple_tools() -> NonStreamingParsedLLMCallResponse:
         """Return mock LLM response with multiple tool requests."""
         tool_request1 = ToolUseRequestData(
-            content=ToolUseRequestContent(
-                tool_name="grep_search",
-                tool_use_id="tool_1",
-                tool_input={"query": "test"}
-            )
+            content=ToolUseRequestContent(tool_name="grep_search", tool_use_id="tool_1", tool_input={"query": "test"})
         )
         tool_request1.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         tool_request2 = ToolUseRequestData(
             content=ToolUseRequestContent(
-                tool_name="file_path_searcher",
-                tool_use_id="tool_2",
-                tool_input={"pattern": "*.py"}
+                tool_name="file_path_searcher", tool_use_id="tool_2", tool_input={"pattern": "*.py"}
             )
         )
         tool_request2.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock(spec=NonStreamingParsedLLMCallResponse)
         response.parsed_content = [tool_request1, tool_request2]
         return response
@@ -98,9 +91,9 @@ class ToolRequestManagerFixtures:
         return {
             "results": [
                 {"file": "test.py", "line": 10, "content": "def test_function():"},
-                {"file": "main.py", "line": 5, "content": "import os"}
+                {"file": "main.py", "line": 5, "content": "import os"},
             ],
-            "total_matches": 2
+            "total_matches": 2,
         }
 
     @staticmethod
@@ -119,15 +112,15 @@ class ToolRequestManagerFixtures:
                             "line_number": "10",
                             "confidence_score": 0.8,
                             "bucket": "security",
-                            "rationale": "Security issue found"
+                            "rationale": "Security issue found",
                         }
                     ],
-                    "summary": "Review completed"
-                }
+                    "summary": "Review completed",
+                },
             )
         )
         tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock(spec=NonStreamingParsedLLMCallResponse)
         response.parsed_content = [tool_request]
         return response
@@ -139,11 +132,11 @@ class ToolRequestManagerFixtures:
             content=ToolUseRequestContent(
                 tool_name="parse_final_response",
                 tool_use_id="final_no_comments",
-                tool_input={"summary": "Review completed"}
+                tool_input={"summary": "Review completed"},
             )
         )
         tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock(spec=NonStreamingParsedLLMCallResponse)
         response.parsed_content = [tool_request]
         return response
@@ -162,12 +155,12 @@ class ToolRequestManagerFixtures:
                             # Missing required fields
                         }
                     ],
-                    "summary": "Review completed"
-                }
+                    "summary": "Review completed",
+                },
             )
         )
         tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
-        
+
         response = Mock(spec=NonStreamingParsedLLMCallResponse)
         response.parsed_content = [tool_request]
         return response
@@ -182,7 +175,7 @@ class ToolRequestManagerFixtures:
             "line_number": 25,
             "confidence_score": 0.9,
             "bucket": "error_handling",
-            "rationale": "Function lacks proper exception handling for potential failures"
+            "rationale": "Function lacks proper exception handling for potential failures",
         }
 
     @staticmethod
@@ -195,7 +188,7 @@ class ToolRequestManagerFixtures:
             "line_number": 1,
             "confidence_score": 0.5,
             "bucket": "style",
-            "rationale": "Minor style issue"
+            "rationale": "Minor style issue",
         }
 
     @staticmethod
@@ -206,7 +199,7 @@ class ToolRequestManagerFixtures:
             {"pattern": "*.py", "exclude": ["__pycache__"]},
             {"file_path": "main.py", "start_line": 1, "end_line": 50},
             {"search_term": "class", "case_sensitive": True},
-            {"comments": [], "summary": "No issues found"}
+            {"comments": [], "summary": "No issues found"},
         ]
 
     @staticmethod
@@ -219,7 +212,7 @@ class ToolRequestManagerFixtures:
             "focused_snippets_searcher",
             "file_path_searcher",
             "parse_final_response",
-            "pr_review_planner"
+            "pr_review_planner",
         ]
 
     @staticmethod

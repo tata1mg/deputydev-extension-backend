@@ -6,18 +6,17 @@ of the InlineEditGenerator class including different input combinations,
 mock data, and edge cases.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
+from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
+from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
-    AgentChatCreateRequest,
     AgentChatDTO,
     CodeBlockData,
     MessageType,
@@ -32,8 +31,6 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     LLMModel,
     ToolUseResponseInput,
 )
-from app.main.blueprints.one_dev.constants.tools import ToolStatus
-from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 
 
 @pytest.fixture
@@ -41,6 +38,7 @@ def inline_edit_generator() -> Any:
     """Create an InlineEditGenerator instance for testing."""
     # Import here to avoid module-level import issues
     from app.main.blueprints.one_dev.services.query_solver.inline_editor import InlineEditGenerator
+
     return InlineEditGenerator()
 
 
@@ -48,6 +46,7 @@ def inline_edit_generator() -> Any:
 def mock_client_data() -> ClientData:
     """Create mock client data."""
     from deputydev_core.utils.constants.enums import Clients
+
     return ClientData(
         client=Clients.BACKEND,
         client_version="1.0.0",
@@ -69,8 +68,7 @@ def mock_auth_data() -> AuthData:
 def basic_code_selection() -> CodeSelectionInput:
     """Create a basic code selection input."""
     return CodeSelectionInput(
-        selected_text="def hello_world():\n    print('Hello, World!')",
-        file_path="/path/to/test_file.py"
+        selected_text="def hello_world():\n    print('Hello, World!')", file_path="/path/to/test_file.py"
     )
 
 
@@ -100,8 +98,7 @@ def tool_use_response_input() -> ToolUseResponseInput:
 
 @pytest.fixture
 def inline_edit_input_with_tool_response(
-    mock_auth_data: AuthData,
-    tool_use_response_input: ToolUseResponseInput
+    mock_auth_data: AuthData, tool_use_response_input: ToolUseResponseInput
 ) -> InlineEditInput:
     """Create InlineEditInput with tool use response."""
     return InlineEditInput(
@@ -129,7 +126,7 @@ def mock_agent_chat_user(basic_code_selection: CodeSelectionInput) -> AgentChatD
         path=basic_code_selection.file_path,
         value="test_file.py",
     )
-    
+
     return AgentChatDTO(
         id=1,
         session_id=123,
@@ -179,7 +176,10 @@ def mock_agent_chat_assistant_tool() -> AgentChatDTO:
         message_data=ToolUseMessageData(
             tool_name="replace_in_file",
             tool_use_id="tool_12345",
-            tool_input={"path": "/path/to/test_file.py", "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE"},
+            tool_input={
+                "path": "/path/to/test_file.py",
+                "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE",
+            },
             tool_response=None,
         ),
         query_id="test_query_123",
@@ -201,7 +201,10 @@ def mock_agent_chat_assistant_tool_with_response() -> AgentChatDTO:
         message_data=ToolUseMessageData(
             tool_name="replace_in_file",
             tool_use_id="tool_12345",
-            tool_input={"path": "/path/to/test_file.py", "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE"},
+            tool_input={
+                "path": "/path/to/test_file.py",
+                "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE",
+            },
             tool_response={"success": True, "changes": "Applied diff successfully"},
         ),
         query_id="test_query_123",
@@ -242,9 +245,9 @@ def mock_llm_response_with_tool_use() -> Any:
                 "tool_use_id": "tool_12345",
                 "tool_input": {
                     "path": "/path/to/test_file.py",
-                    "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE"
+                    "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE",
                 },
-            }
+            },
         }
     ]
     return response
@@ -271,10 +274,10 @@ def mock_llm_response_mixed() -> Any:
                 "tool_use_id": "tool_67890",
                 "tool_input": {
                     "path": "/path/to/test_file.py",
-                    "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE"
+                    "diff": "------- SEARCH\ndef hello_world():\n    print('Hello, World!')\n=======\ndef hello_world():\n    try:\n        print('Hello, World!')\n    except Exception as e:\n        print(f'Error: {e}')\n+++++++ REPLACE",
                 },
-            }
-        }
+            },
+        },
     ]
     return response
 

@@ -9,12 +9,11 @@ extended thinking content specific to Anthropic provider.
 import asyncio
 from datetime import datetime
 from typing import Any, Dict, List
-from unittest.mock import MagicMock
 
 import pytest
 
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
     ExtendedThinkingContent,
     ExtendedThinkingData,
     FileBlockData,
@@ -35,7 +34,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 
 
 @pytest.fixture
@@ -49,11 +47,7 @@ def anthropic_simple_text_message() -> MessageThreadDTO:
         message_type=MessageType.QUERY,
         conversation_chain=[1],
         data_hash="test_hash_1",
-        message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="Hello, how can you help me today?")
-            )
-        ],
+        message_data=[TextBlockData(content=TextBlockContent(text="Hello, how can you help me today?"))],
         prompt_type="user_query",
         prompt_category="general",
         llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -75,11 +69,7 @@ def anthropic_assistant_text_message() -> MessageThreadDTO:
         message_type=MessageType.RESPONSE,
         conversation_chain=[1, 2],
         data_hash="test_hash_2",
-        message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="I'd be happy to help you with anything you need!")
-            )
-        ],
+        message_data=[TextBlockData(content=TextBlockContent(text="I'd be happy to help you with anything you need!"))],
         prompt_type="assistant_response",
         prompt_category="general",
         llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -106,7 +96,7 @@ def anthropic_tool_use_request_message() -> MessageThreadDTO:
                 content=ToolUseRequestContent(
                     tool_input={"search_query": "Python code examples"},
                     tool_name="web_search",
-                    tool_use_id="call_anthropic_123"
+                    tool_use_id="call_anthropic_123",
                 )
             )
         ],
@@ -136,7 +126,7 @@ def anthropic_tool_use_response_message() -> MessageThreadDTO:
                 content=ToolUseResponseContent(
                     tool_name="web_search",
                     tool_use_id="call_anthropic_123",
-                    response={"results": ["Example 1: Hello World", "Example 2: Functions", "Example 3: Classes"]}
+                    response={"results": ["Example 1: Hello World", "Example 2: Functions", "Example 3: Classes"]},
                 )
             )
         ],
@@ -161,11 +151,7 @@ def anthropic_message_with_file_attachment() -> MessageThreadDTO:
         message_type=MessageType.QUERY,
         conversation_chain=[1, 2, 3, 4, 5],
         data_hash="test_hash_5",
-        message_data=[
-            FileBlockData(
-                content=FileContent(attachment_id=50)
-            )
-        ],
+        message_data=[FileBlockData(content=FileContent(attachment_id=50))],
         prompt_type="user_query",
         prompt_category="file_upload",
         llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -190,9 +176,7 @@ def anthropic_message_with_thinking_content() -> MessageThreadDTO:
         message_data=[
             ExtendedThinkingData(
                 content=ExtendedThinkingContent(
-                    type="thinking",
-                    thinking="Let me analyze this problem step by step...",
-                    signature="claude_thinking"
+                    type="thinking", thinking="Let me analyze this problem step by step...", signature="claude_thinking"
                 )
             )
         ],
@@ -220,9 +204,7 @@ def anthropic_message_with_redacted_thinking() -> MessageThreadDTO:
         message_data=[
             ExtendedThinkingData(
                 content=ExtendedThinkingContent(
-                    type="redacted_thinking",
-                    thinking="This content has been redacted",
-                    signature="claude_redacted"
+                    type="redacted_thinking", thinking="This content has been redacted", signature="claude_redacted"
                 )
             )
         ],
@@ -248,16 +230,14 @@ def anthropic_mixed_content_message() -> MessageThreadDTO:
         conversation_chain=[1, 2, 3, 4, 5, 6, 7, 8],
         data_hash="test_hash_8",
         message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="Let me search for that information:")
-            ),
+            TextBlockData(content=TextBlockContent(text="Let me search for that information:")),
             ToolUseRequestData(
                 content=ToolUseRequestContent(
                     tool_input={"filename": "/home/user/data.json"},
                     tool_name="read_file_tool",
-                    tool_use_id="call_anthropic_456"
+                    tool_use_id="call_anthropic_456",
                 )
-            )
+            ),
         ],
         prompt_type="assistant_response",
         prompt_category="mixed",
@@ -306,9 +286,7 @@ def anthropic_conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
             message_type=MessageType.QUERY,
             conversation_chain=[1],
             data_hash="hash_1",
-            message_data=[
-                TextBlockData(content=TextBlockContent(text="Can you analyze both Python and Ruby code?"))
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="Can you analyze both Python and Ruby code?"))],
             prompt_type="user_query",
             prompt_category="general",
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -329,16 +307,16 @@ def anthropic_conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
                     content=ToolUseRequestContent(
                         tool_input={"language": "python", "action": "analyze"},
                         tool_name="code_analyzer",
-                        tool_use_id="call_py_123"
+                        tool_use_id="call_py_123",
                     )
                 ),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
                         tool_input={"language": "ruby", "action": "analyze"},
                         tool_name="code_analyzer",
-                        tool_use_id="call_rb_456"
+                        tool_use_id="call_rb_456",
                     )
-                )
+                ),
             ],
             prompt_type="assistant_response",
             prompt_category="tool_use",
@@ -360,7 +338,7 @@ def anthropic_conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
                     content=ToolUseResponseContent(
                         tool_name="code_analyzer",
                         tool_use_id="call_py_123",
-                        response={"analysis": "Python code is well-structured", "score": 85}
+                        response={"analysis": "Python code is well-structured", "score": 85},
                     )
                 )
             ],
@@ -384,7 +362,7 @@ def anthropic_conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
                     content=ToolUseResponseContent(
                         tool_name="code_analyzer",
                         tool_use_id="call_rb_456",
-                        response={"analysis": "Ruby code follows conventions", "score": 92}
+                        response={"analysis": "Ruby code follows conventions", "score": 92},
                     )
                 )
             ],
@@ -394,7 +372,7 @@ def anthropic_conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-        )
+        ),
     ]
 
 
@@ -409,9 +387,9 @@ def anthropic_mock_image_attachment_data() -> ChatAttachmentDataWithObjectBytes:
             s3_key="test-bucket/claude_test_image.jpg",
             status="uploaded",
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         ),
-        object_bytes=b"fake_jpeg_image_data_for_claude"
+        object_bytes=b"fake_jpeg_image_data_for_claude",
     )
 
 
@@ -426,9 +404,9 @@ def anthropic_mock_document_attachment_data() -> ChatAttachmentDataWithObjectByt
             s3_key="test-bucket/claude_test_document.txt",
             status="uploaded",
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         ),
-        object_bytes=b"fake_text_document_data_for_claude"
+        object_bytes=b"fake_text_document_data_for_claude",
     )
 
 
@@ -443,9 +421,10 @@ def anthropic_attachment_data_task_map_with_image(
     anthropic_mock_image_attachment_data: ChatAttachmentDataWithObjectBytes,
 ) -> Dict[int, Any]:
     """Create attachment data task map with image for Anthropic provider."""
+
     async def get_image_data() -> ChatAttachmentDataWithObjectBytes:
         return anthropic_mock_image_attachment_data
-    
+
     return {50: get_image_data}
 
 
@@ -454,9 +433,10 @@ def anthropic_attachment_data_task_map_with_document(
     anthropic_mock_document_attachment_data: ChatAttachmentDataWithObjectBytes,
 ) -> Dict[int, Any]:
     """Create attachment data task map with document for Anthropic provider."""
+
     async def get_document_data() -> ChatAttachmentDataWithObjectBytes:
         return anthropic_mock_document_attachment_data
-    
+
     return {200: get_document_data}
 
 
@@ -473,9 +453,7 @@ def anthropic_out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_type=MessageType.QUERY,
             conversation_chain=[1],
             data_hash="hash_1",
-            message_data=[
-                TextBlockData(content=TextBlockContent(text="Run these analysis tools"))
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="Run these analysis tools"))],
             prompt_type="user_query",
             prompt_category="general",
             llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -495,25 +473,19 @@ def anthropic_out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"task": "first_analysis"},
-                        tool_name="analyzer_alpha",
-                        tool_use_id="call_alpha_111"
+                        tool_input={"task": "first_analysis"}, tool_name="analyzer_alpha", tool_use_id="call_alpha_111"
                     )
                 ),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"task": "second_analysis"},
-                        tool_name="analyzer_beta", 
-                        tool_use_id="call_beta_222"
+                        tool_input={"task": "second_analysis"}, tool_name="analyzer_beta", tool_use_id="call_beta_222"
                     )
                 ),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"task": "third_analysis"},
-                        tool_name="analyzer_gamma",
-                        tool_use_id="call_gamma_333"
+                        tool_input={"task": "third_analysis"}, tool_name="analyzer_gamma", tool_use_id="call_gamma_333"
                     )
-                )
+                ),
             ],
             prompt_type="assistant_response",
             prompt_category="tool_use",
@@ -534,9 +506,7 @@ def anthropic_out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseResponseData(
                     content=ToolUseResponseContent(
-                        tool_name="analyzer_beta",
-                        tool_use_id="call_beta_222", 
-                        response="Second analysis complete"
+                        tool_name="analyzer_beta", tool_use_id="call_beta_222", response="Second analysis complete"
                     )
                 )
             ],
@@ -558,9 +528,7 @@ def anthropic_out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseResponseData(
                     content=ToolUseResponseContent(
-                        tool_name="analyzer_alpha",
-                        tool_use_id="call_alpha_111",
-                        response="First analysis complete"
+                        tool_name="analyzer_alpha", tool_use_id="call_alpha_111", response="First analysis complete"
                     )
                 )
             ],
@@ -582,9 +550,7 @@ def anthropic_out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseResponseData(
                     content=ToolUseResponseContent(
-                        tool_name="analyzer_gamma",
-                        tool_use_id="call_gamma_333",
-                        response="Third analysis complete"
+                        tool_name="analyzer_gamma", tool_use_id="call_gamma_333", response="Third analysis complete"
                     )
                 )
             ],
@@ -594,7 +560,7 @@ def anthropic_out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-        )
+        ),
     ]
 
 
@@ -636,15 +602,9 @@ def anthropic_message_with_multiple_text_blocks() -> MessageThreadDTO:
         conversation_chain=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         data_hash="test_hash_10",
         message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="First response part")
-            ),
-            TextBlockData(
-                content=TextBlockContent(text="Second response part")
-            ),
-            TextBlockData(
-                content=TextBlockContent(text="Third response part")
-            )
+            TextBlockData(content=TextBlockContent(text="First response part")),
+            TextBlockData(content=TextBlockContent(text="Second response part")),
+            TextBlockData(content=TextBlockContent(text="Third response part")),
         ],
         prompt_type="assistant_response",
         prompt_category="general",

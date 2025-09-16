@@ -1,4 +1,5 @@
 """Fixture data for Claude 4 Sonnet handler tests."""
+
 from typing import Any, Dict, List
 
 from app.backend_common.models.dto.message_thread_dto import (
@@ -21,7 +22,7 @@ class Claude4SonnetHandlerFixtures:
             "file_context": "# Existing singleton implementation",
             "conversation_turns": [],
             "attachments": [],
-            "previous_queries": []
+            "previous_queries": [],
         }
 
     @staticmethod
@@ -33,7 +34,7 @@ class Claude4SonnetHandlerFixtures:
             "file_context": "",
             "conversation_turns": [],
             "attachments": [],
-            "previous_queries": []
+            "previous_queries": [],
         }
 
     @staticmethod
@@ -44,22 +45,11 @@ class Claude4SonnetHandlerFixtures:
             "repositories_context": "class UserService: pass\nclass AuthService: pass",
             "file_context": "# Complex system architecture",
             "conversation_turns": [
-                {
-                    "role": "user",
-                    "content": "Can you help me design a system?"
-                },
-                {
-                    "role": "assistant", 
-                    "content": "I'll help you design a robust system."
-                }
+                {"role": "user", "content": "Can you help me design a system?"},
+                {"role": "assistant", "content": "I'll help you design a robust system."},
             ],
-            "attachments": [
-                {"name": "architecture.md", "content": "# System Architecture\n..."}
-            ],
-            "previous_queries": [
-                "Design a database schema",
-                "Implement caching layer"
-            ]
+            "attachments": [{"name": "architecture.md", "content": "# System Architecture\n..."}],
+            "previous_queries": ["Design a database schema", "Implement caching layer"],
         }
 
     @staticmethod
@@ -70,14 +60,14 @@ class Claude4SonnetHandlerFixtures:
                 type=ContentBlockCategory.TEXT_BLOCK,
                 content=TextBlockContent(
                     text="I'll help you implement a thread-safe singleton pattern with lazy initialization."
-                )
+                ),
             ),
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
                 content=TextBlockContent(
                     text="<thinking>Simple thinking content</thinking><code_block><programming_language>python</programming_language><file_path>test.py</file_path><is_diff>false</is_diff>print('hello')</code_block>"
-                )
-            )
+                ),
+            ),
         ]
 
     @staticmethod
@@ -90,13 +80,13 @@ class Claude4SonnetHandlerFixtures:
             "<code_block></code_block>",  # Empty code block
         ]
 
-    @staticmethod  
+    @staticmethod
     def get_thinking_examples() -> List[str]:
         """Get thinking block examples for testing Claude responses."""
         return [
             "<thinking>The user is asking for a thread-safe singleton pattern.</thinking>",
             "<thinking>For this microservices architecture, I need to consider various approaches.</thinking>",
-            "<thinking>The user wants to refactor a class to use composition instead of inheritance.</thinking>"
+            "<thinking>The user wants to refactor a class to use composition instead of inheritance.</thinking>",
         ]
 
     @staticmethod
@@ -105,7 +95,7 @@ class Claude4SonnetHandlerFixtures:
         return [
             "<summary>Implemented a thread-safe singleton pattern using double-checked locking.</summary>",
             "<summary>Created a microservices architecture with proper service discovery.</summary>",
-            "<summary>Refactored the class to use composition pattern instead of inheritance.</summary>"
+            "<summary>Refactored the class to use composition pattern instead of inheritance.</summary>",
         ]
 
     @staticmethod
@@ -113,7 +103,7 @@ class Claude4SonnetHandlerFixtures:
         """Get code block examples for testing Claude responses."""
         return [
             "<code_block><programming_language>python</programming_language><file_path>src/utils/retry.py</file_path><is_diff>false</is_diff>def retry_function(): pass</code_block>",
-            "<code_block><programming_language>typescript</programming_language><file_path>src/types/api.ts</file_path><is_diff>true</is_diff>interface ApiResponse { data: any; }</code_block>"
+            "<code_block><programming_language>typescript</programming_language><file_path>src/types/api.ts</file_path><is_diff>true</is_diff>interface ApiResponse { data: any; }</code_block>",
         ]
 
     @staticmethod
@@ -132,5 +122,5 @@ class Claude4SonnetHandlerFixtures:
         """Get examples with mixed content types for comprehensive testing."""
         return [
             "<thinking>I need to implement the algorithm.</thinking><code_block><programming_language>python</programming_language><file_path>src/algorithms/sorting.py</file_path><is_diff>false</is_diff>def quick_sort(arr): return arr</code_block>",
-            "Here's my approach: <thinking>The user needs a complete solution.</thinking><code_block><programming_language>python</programming_language><file_path>src/models.py</file_path><is_diff>false</is_diff>class Product: pass</code_block>"
+            "Here's my approach: <thinking>The user needs a complete solution.</thinking><code_block><programming_language>python</programming_language><file_path>src/models.py</file_path><is_diff>false</is_diff>class Product: pass</code_block>",
         ]

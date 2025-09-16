@@ -6,9 +6,8 @@ of the ToolRequestManager methods including different input combinations,
 mock data, and edge cases.
 """
 
-import json
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -19,7 +18,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
     LLMCommentData,
 )
@@ -40,15 +38,12 @@ def mock_llm_response_with_tool_use() -> MagicMock:
             "search_path": ".",
             "case_insensitive": False,
             "use_regex": False,
-            "repo_path": "/test/repo"
-        }
+            "repo_path": "/test/repo",
+        },
     )
-    
-    tool_request = ToolUseRequestData(
-        type=ContentBlockCategory.TOOL_USE_REQUEST,
-        content=tool_content
-    )
-    
+
+    tool_request = ToolUseRequestData(type=ContentBlockCategory.TOOL_USE_REQUEST, content=tool_content)
+
     response = MagicMock()
     response.parsed_content = [tool_request]
     return response
@@ -71,17 +66,14 @@ def mock_llm_response_with_parse_final_response() -> MagicMock:
                     "line_number": 42,
                     "confidence_score": 0.9,
                     "bucket": "logic_errors",
-                    "rationale": "This is the rationale for the comment"
+                    "rationale": "This is the rationale for the comment",
                 }
             ]
-        }
+        },
     )
-    
-    tool_request = ToolUseRequestData(
-        type=ContentBlockCategory.TOOL_USE_REQUEST,
-        content=tool_content
-    )
-    
+
+    tool_request = ToolUseRequestData(type=ContentBlockCategory.TOOL_USE_REQUEST, content=tool_content)
+
     response = MagicMock()
     response.parsed_content = [tool_request]
     return response
@@ -93,17 +85,11 @@ def mock_llm_response_with_pr_review_planner() -> MagicMock:
     tool_content = ToolUseRequestContent(
         tool_name="pr_review_planner",
         tool_use_id="planner_id_789",
-        tool_input={
-            "files_to_review": ["file1.py", "file2.py"],
-            "review_strategy": "comprehensive"
-        }
+        tool_input={"files_to_review": ["file1.py", "file2.py"], "review_strategy": "comprehensive"},
     )
-    
-    tool_request = ToolUseRequestData(
-        type=ContentBlockCategory.TOOL_USE_REQUEST,
-        content=tool_content
-    )
-    
+
+    tool_request = ToolUseRequestData(type=ContentBlockCategory.TOOL_USE_REQUEST, content=tool_content)
+
     response = MagicMock()
     response.parsed_content = [tool_request]
     return response
@@ -113,12 +99,9 @@ def mock_llm_response_with_pr_review_planner() -> MagicMock:
 def mock_llm_response_with_text_only() -> MagicMock:
     """Create a mock LLM response with only text content."""
     text_content = TextBlockContent(text="This is just a text response")
-    
-    text_block = TextBlockData(
-        type=ContentBlockCategory.TEXT_BLOCK,
-        content=text_content
-    )
-    
+
+    text_block = TextBlockData(type=ContentBlockCategory.TEXT_BLOCK, content=text_content)
+
     response = MagicMock()
     response.parsed_content = [text_block]
     return response
@@ -144,8 +127,8 @@ def mock_llm_response_empty_parsed_content() -> MagicMock:
 def mock_llm_response_without_parsed_content_attr() -> MagicMock:
     """Create a mock LLM response without parsed_content attribute."""
     response = MagicMock()
-    if hasattr(response, 'parsed_content'):
-        delattr(response, 'parsed_content')
+    if hasattr(response, "parsed_content"):
+        delattr(response, "parsed_content")
     return response
 
 
@@ -172,7 +155,7 @@ def valid_comments_tool_input() -> Dict[str, Any]:
                 "line_number": 15,
                 "confidence_score": 0.85,
                 "bucket": "error_handling",
-                "rationale": "Function could fail with invalid input"
+                "rationale": "Function could fail with invalid input",
             },
             {
                 "title": "Performance Issue",
@@ -183,8 +166,8 @@ def valid_comments_tool_input() -> Dict[str, Any]:
                 "line_number": 25,
                 "confidence_score": 0.75,
                 "bucket": "performance",
-                "rationale": "Current implementation is inefficient"
-            }
+                "rationale": "Current implementation is inefficient",
+            },
         ]
     }
 
@@ -201,7 +184,7 @@ def invalid_comments_tool_input_missing_field() -> Dict[str, Any]:
                 # Missing required fields like file_path, line_number, etc.
                 "confidence_score": 0.8,
                 "bucket": "test_bucket",
-                "rationale": "Test rationale"
+                "rationale": "Test rationale",
             }
         ]
     }
@@ -210,9 +193,7 @@ def invalid_comments_tool_input_missing_field() -> Dict[str, Any]:
 @pytest.fixture
 def invalid_comments_tool_input_no_comments_array() -> Dict[str, Any]:
     """Create invalid tool input without comments array."""
-    return {
-        "no_comments": "This doesn't have comments array"
-    }
+    return {"no_comments": "This doesn't have comments array"}
 
 
 @pytest.fixture
@@ -228,7 +209,7 @@ def comments_tool_input_with_invalid_confidence_score() -> Dict[str, Any]:
                 "line_number": 10,
                 "confidence_score": "invalid_score",  # Should be float
                 "bucket": "test_bucket",
-                "rationale": "Test rationale"
+                "rationale": "Test rationale",
             }
         ]
     }
@@ -238,27 +219,17 @@ def comments_tool_input_with_invalid_confidence_score() -> Dict[str, Any]:
 def multiple_tool_requests_response() -> MagicMock:
     """Create a mock LLM response with multiple tool requests."""
     tool_content_1 = ToolUseRequestContent(
-        tool_name="grep_search",
-        tool_use_id="tool_1",
-        tool_input={"query": "search_term"}
+        tool_name="grep_search", tool_use_id="tool_1", tool_input={"query": "search_term"}
     )
-    
+
     tool_content_2 = ToolUseRequestContent(
-        tool_name="file_path_searcher",
-        tool_use_id="tool_2",
-        tool_input={"search_terms": ["file.py"]}
+        tool_name="file_path_searcher", tool_use_id="tool_2", tool_input={"search_terms": ["file.py"]}
     )
-    
-    tool_request_1 = ToolUseRequestData(
-        type=ContentBlockCategory.TOOL_USE_REQUEST,
-        content=tool_content_1
-    )
-    
-    tool_request_2 = ToolUseRequestData(
-        type=ContentBlockCategory.TOOL_USE_REQUEST,
-        content=tool_content_2
-    )
-    
+
+    tool_request_1 = ToolUseRequestData(type=ContentBlockCategory.TOOL_USE_REQUEST, content=tool_content_1)
+
+    tool_request_2 = ToolUseRequestData(type=ContentBlockCategory.TOOL_USE_REQUEST, content=tool_content_2)
+
     response = MagicMock()
     response.parsed_content = [tool_request_1, tool_request_2]
     return response
@@ -268,22 +239,14 @@ def multiple_tool_requests_response() -> MagicMock:
 def mixed_content_response() -> MagicMock:
     """Create a mock LLM response with mixed content types."""
     text_content = TextBlockContent(text="Some text content")
-    text_block = TextBlockData(
-        type=ContentBlockCategory.TEXT_BLOCK,
-        content=text_content
-    )
-    
+    text_block = TextBlockData(type=ContentBlockCategory.TEXT_BLOCK, content=text_content)
+
     tool_content = ToolUseRequestContent(
-        tool_name="iterative_file_reader",
-        tool_use_id="tool_mixed",
-        tool_input={"file_path": "test.py"}
+        tool_name="iterative_file_reader", tool_use_id="tool_mixed", tool_input={"file_path": "test.py"}
     )
-    
-    tool_request = ToolUseRequestData(
-        type=ContentBlockCategory.TOOL_USE_REQUEST,
-        content=tool_content
-    )
-    
+
+    tool_request = ToolUseRequestData(type=ContentBlockCategory.TOOL_USE_REQUEST, content=tool_content)
+
     response = MagicMock()
     response.parsed_content = [text_block, tool_request]
     return response
@@ -301,7 +264,7 @@ def expected_tool_request_dict() -> Dict[str, Any]:
             "search_path": ".",
             "case_insensitive": False,
             "use_regex": False,
-            "repo_path": "/test/repo"
+            "repo_path": "/test/repo",
         },
         "tool_use_id": "test_tool_use_id_123",
     }
@@ -320,7 +283,7 @@ def expected_parsed_comments() -> List[LLMCommentData]:
             line_number=15,
             confidence_score=0.85,
             bucket="ERROR_HANDLING",  # Formatted bucket name
-            rationale="Function could fail with invalid input"
+            rationale="Function could fail with invalid input",
         ),
         LLMCommentData(
             title="Performance Issue",
@@ -331,8 +294,8 @@ def expected_parsed_comments() -> List[LLMCommentData]:
             line_number=25,
             confidence_score=0.75,
             bucket="PERFORMANCE",  # Formatted bucket name
-            rationale="Current implementation is inefficient"
-        )
+            rationale="Current implementation is inefficient",
+        ),
     ]
 
 
@@ -347,21 +310,18 @@ def mock_extension_tool_handlers() -> MagicMock:
 @pytest.fixture
 def expected_review_plan_response() -> Dict[str, Any]:
     """Expected response from review planner."""
-    return {
-        "status": "success",
-        "plan": "review_plan"
-    }
+    return {"status": "success", "plan": "review_plan"}
 
 
 # Invalid content block fixtures
-@pytest.fixture 
+@pytest.fixture
 def mock_llm_response_with_invalid_tool_request() -> MagicMock:
     """Create a mock LLM response with invalid tool request (not ToolUseRequestData)."""
     # Create a mock object that looks like a tool request but isn't ToolUseRequestData
     invalid_tool_request = MagicMock()
     invalid_tool_request.type = ContentBlockCategory.TOOL_USE_REQUEST
     # This will fail isinstance(content_block, ToolUseRequestData) check
-    
+
     response = MagicMock()
     response.parsed_content = [invalid_tool_request]
     return response

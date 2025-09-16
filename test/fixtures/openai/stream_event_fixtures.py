@@ -5,8 +5,9 @@ This module provides mock OpenAI stream events for testing the
 OpenAI LLM provider's stream parsing functionality.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture

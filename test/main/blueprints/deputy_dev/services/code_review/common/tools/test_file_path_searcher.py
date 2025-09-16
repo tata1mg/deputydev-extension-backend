@@ -1,5 +1,5 @@
-import pytest
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
+
 from app.main.blueprints.deputy_dev.services.code_review.common.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
@@ -25,11 +25,11 @@ class TestFilePathSearcher:
         """Test FILE_PATH_SEARCHER has proper description."""
         # Arrange
         expected_keywords = FilePathSearcherFixtures.get_expected_description_keywords()
-        
+
         # Assert
         assert isinstance(FILE_PATH_SEARCHER.description, str)
         assert len(FILE_PATH_SEARCHER.description) > 0
-        
+
         # Check for key functionality descriptions
         for keyword in expected_keywords:
             assert keyword in FILE_PATH_SEARCHER.description
@@ -38,7 +38,7 @@ class TestFilePathSearcher:
         """Test FILE_PATH_SEARCHER has correct input schema."""
         # Arrange
         schema = FILE_PATH_SEARCHER.input_schema
-        
+
         # Assert
         assert isinstance(schema, JSONSchema)
         assert schema.type == "object"
@@ -49,16 +49,16 @@ class TestFilePathSearcher:
         """Test FILE_PATH_SEARCHER schema has correct properties."""
         # Arrange
         properties = FILE_PATH_SEARCHER.input_schema.properties
-        
+
         # Assert
         assert "directory" in properties
         assert "search_terms" in properties
-        
+
         # Test directory property
         directory_prop = properties["directory"]
         assert directory_prop.type == "string"
         assert directory_prop.description is not None
-        
+
         # Test search_terms property
         search_terms_prop = properties["search_terms"]
         assert isinstance(search_terms_prop, JSONSchema)
@@ -68,7 +68,7 @@ class TestFilePathSearcher:
         """Test FILE_PATH_SEARCHER schema has correct required fields."""
         # Arrange
         required_fields = FILE_PATH_SEARCHER.input_schema.required
-        
+
         # Assert
         assert isinstance(required_fields, list)
         assert "directory" in required_fields
@@ -78,7 +78,7 @@ class TestFilePathSearcher:
         """Test FILE_PATH_SEARCHER search_terms has correct schema."""
         # Arrange
         search_terms_schema = FILE_PATH_SEARCHER.input_schema.properties["search_terms"]
-        
+
         # Assert
         assert isinstance(search_terms_schema, JSONSchema)
         assert search_terms_schema.type == "array"
@@ -92,7 +92,7 @@ class TestFilePathSearcher:
         # Arrange
         description = FILE_PATH_SEARCHER.description
         key_features = FilePathSearcherFixtures.get_key_features()
-        
+
         # Assert
         for feature in key_features:
             assert feature in description
@@ -102,7 +102,7 @@ class TestFilePathSearcher:
         # Arrange
         description = FILE_PATH_SEARCHER.description
         limitations = FilePathSearcherFixtures.get_limitations()
-        
+
         # Assert
         for limitation in limitations:
             assert limitation in description
@@ -111,7 +111,7 @@ class TestFilePathSearcher:
         """Test directory property has meaningful description."""
         # Arrange
         directory_prop = FILE_PATH_SEARCHER.input_schema.properties["directory"]
-        
+
         # Assert
         assert directory_prop.description is not None
         assert isinstance(directory_prop.description, str)
@@ -122,7 +122,7 @@ class TestFilePathSearcher:
         """Test search_terms property has meaningful description."""
         # Arrange
         search_terms_prop = FILE_PATH_SEARCHER.input_schema.properties["search_terms"]
-        
+
         # Assert
         assert hasattr(search_terms_prop, "description")
         assert isinstance(search_terms_prop.description, str)
@@ -133,17 +133,17 @@ class TestFilePathSearcher:
         """Test FILE_PATH_SEARCHER schema structure is complete."""
         # Arrange
         schema = FILE_PATH_SEARCHER.input_schema
-        
+
         # Assert - Check all required schema components exist
         assert hasattr(schema, "type")
         assert hasattr(schema, "properties")
         assert hasattr(schema, "required")
-        
+
         # Check properties structure
         properties = schema.properties
         assert isinstance(properties, dict)
         assert len(properties) == 2  # directory and search_terms
-        
+
         # Check required fields structure
         required = schema.required
         assert isinstance(required, list)
@@ -154,7 +154,7 @@ class TestFilePathSearcher:
         # Assert - Tool should have consistent properties
         original_name = FILE_PATH_SEARCHER.name
         original_description = FILE_PATH_SEARCHER.description
-        
+
         # These should remain constant
         assert FILE_PATH_SEARCHER.name == original_name
         assert FILE_PATH_SEARCHER.description == original_description
@@ -165,6 +165,6 @@ class TestFilePathSearcher:
         # Arrange
         search_terms_schema = FILE_PATH_SEARCHER.input_schema.properties["search_terms"]
         items_schema = search_terms_schema.items
-        
+
         # Assert
         assert items_schema.type == "string"

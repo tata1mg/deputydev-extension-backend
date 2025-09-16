@@ -4,7 +4,7 @@ Comprehensive unit tests for Google/Gemini get_conversation_turns function.
 This module tests the get_conversation_turns method of the Google provider,
 covering various conversation scenarios including:
 - Simple text messages
-- Tool use requests and responses  
+- Tool use requests and responses
 - File attachments
 - Extended thinking content
 - Mixed content types
@@ -14,16 +14,14 @@ The tests follow the .deputydevrules guidelines and include fixtures directly wi
 """
 
 import asyncio
-import sys
 from datetime import datetime
 from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
-from app.backend_common.constants.constants import LLMProviders
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
     ExtendedThinkingContent,
     ExtendedThinkingData,
     FileBlockData,
@@ -44,7 +42,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 
 
 # Mock Google types for testing - comprehensive
@@ -52,27 +49,28 @@ class MockPart:
     def __init__(self, text: str = None, function_call=None, function_response=None, inline_data=None):
         self.text = text
         self.function_call = function_call
-        self.function_response = function_response  
+        self.function_response = function_response
         self.inline_data = inline_data
-    
+
     @classmethod
     def from_text(cls, text: str):
         return cls(text=text)
-    
+
     @classmethod
     def from_function_call(cls, name: str, args: dict):
-        function_call = type('FunctionCall', (), {'name': name, 'args': args})()
+        function_call = type("FunctionCall", (), {"name": name, "args": args})()
         return cls(function_call=function_call)
-    
+
     @classmethod
     def from_function_response(cls, name: str, response: Any):
-        function_response = type('FunctionResponse', (), {'name': name, 'response': response})()
+        function_response = type("FunctionResponse", (), {"name": name, "response": response})()
         return cls(function_response=function_response)
-    
-    @classmethod 
+
+    @classmethod
     def from_bytes(cls, data: bytes, mime_type: str):
-        inline_data = type('InlineData', (), {'data': data, 'mime_type': mime_type})()
+        inline_data = type("InlineData", (), {"data": data, "mime_type": mime_type})()
         return cls(inline_data=inline_data)
+
 
 class MockContent:
     def __init__(self, role: str, parts: List[MockPart]):
@@ -83,47 +81,47 @@ class MockContent:
 @pytest.fixture(autouse=True)
 def setup_comprehensive_mocks():
     """Set up comprehensive mocks for all Google and configuration dependencies."""
-    
+
     # Mock all Google types
     mock_types = Mock()
     mock_types.Part = MockPart
     mock_types.Content = MockContent
     mock_types.Tool = Mock
-    mock_types.ToolConfig = Mock  
+    mock_types.ToolConfig = Mock
     mock_types.HttpOptions = Mock
     mock_types.GenerateContentResponse = Mock
     mock_types.Schema = Mock
     mock_types.FunctionDeclaration = Mock
     mock_types.GoogleSearch = Mock
-    
+
     # Mock genai module
     mock_genai = Mock()
     mock_genai.types = mock_types
     mock_genai.Client = Mock
     mock_genai.errors = Mock()
-    
+
     # Mock google module
     mock_google = Mock()
     mock_google.genai = mock_genai
-    
+
     # Mock oauth2
     mock_oauth2 = Mock()
     mock_oauth2.service_account = Mock()
     mock_oauth2.service_account.Credentials = Mock()
     mock_oauth2.service_account.Credentials.from_service_account_info = Mock(return_value=Mock())
-    
+
     # Mock service account
     mock_service_account = Mock()
     mock_service_account.Credentials = Mock()
     mock_service_account.Credentials.from_service_account_info = Mock(return_value=Mock())
-    
+
     # Mock CONFIG with comprehensive configuration
     mock_config_obj = Mock()
     mock_config_obj.config = {
         "VERTEX": {
             "type": "service_account",
             "project_id": "test-project",
-            "private_key_id": "test-key-id", 
+            "private_key_id": "test-key-id",
             "private_key": "-----BEGIN PRIVATE KEY-----\ntest-key\n-----END PRIVATE KEY-----\n",
             "client_email": "test@test-project.iam.gserviceaccount.com",
             "client_id": "12345",
@@ -132,53 +130,52 @@ def setup_comprehensive_mocks():
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/test%40test-project.iam.gserviceaccount.com",
             "universe_domain": "googleapis.com",
-            "location": "us-central1"
+            "location": "us-central1",
         },
-        "REDIS_CACHE_HOSTS": {
-            "genai": {
-                "LABEL": "test-genai",
-                "HOST": "localhost",
-                "PORT": 6379
-            }
-        },
-        "INTERSERVICE_TIMEOUT": 30
+        "REDIS_CACHE_HOSTS": {"genai": {"LABEL": "test-genai", "HOST": "localhost", "PORT": 6379}},
+        "INTERSERVICE_TIMEOUT": 30,
     }
-    
+
     # Mock GeminiServiceClient
     class MockGeminiServiceClient:
         def __init__(self):
             pass
-        
+
         async def get_llm_stream_response(self, *args, **kwargs):
             return Mock()
-        
+
         async def get_llm_non_stream_response(self, *args, **kwargs):
             return Mock()
-        
+
         async def get_tokens(self, *args, **kwargs):
             return 100
-    
+
     patches = [
         # Mock sys.modules for Google packages
-        patch.dict('sys.modules', {
-            'google': mock_google,
-            'google.genai': mock_genai,
-            'google.oauth2': mock_oauth2,
-            'google.oauth2.service_account': mock_service_account,
-        }),
+        patch.dict(
+            "sys.modules",
+            {
+                "google": mock_google,
+                "google.genai": mock_genai,
+                "google.oauth2": mock_oauth2,
+                "google.oauth2.service_account": mock_service_account,
+            },
+        ),
         # Mock CONFIG
-        patch('app.backend_common.utils.sanic_wrapper.CONFIG', mock_config_obj),
+        patch("app.backend_common.utils.sanic_wrapper.CONFIG", mock_config_obj),
         # Mock the service client directly at the module level
-        patch('app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient', MockGeminiServiceClient),
+        patch(
+            "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
+        ),
         # Also mock the config import in gemini service client
-        patch('app.backend_common.service_clients.gemini.gemini.config', mock_config_obj.config["VERTEX"]),
+        patch("app.backend_common.service_clients.gemini.gemini.config", mock_config_obj.config["VERTEX"]),
     ]
-    
+
     for p in patches:
         p.start()
-    
+
     yield
-    
+
     for p in patches:
         p.stop()
 
@@ -189,7 +186,8 @@ class TestGoogleGetConversationTurns:
     @pytest.fixture
     def google_provider(self):
         """Create a Google provider instance for testing."""
-        from app.backend_common.services.llm.providers.google.llm_provider import Google
+        from deputydev_core.llm_handler.providers.google.llm_provider import Google
+
         return Google()
 
     @pytest.fixture
@@ -203,11 +201,7 @@ class TestGoogleGetConversationTurns:
             message_type=MessageType.QUERY,
             conversation_chain=[1],
             data_hash="test_hash_1",
-            message_data=[
-                TextBlockData(
-                    content=TextBlockContent(text="Hello, how are you?")
-                )
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="Hello, how are you?"))],
             prompt_type="user_query",
             prompt_category="general",
             llm_model=LLModels.GEMINI_2_POINT_5_PRO,
@@ -228,11 +222,7 @@ class TestGoogleGetConversationTurns:
             message_type=MessageType.RESPONSE,
             conversation_chain=[1, 2],
             data_hash="test_hash_2",
-            message_data=[
-                TextBlockData(
-                    content=TextBlockContent(text="I'm doing well, thank you for asking!")
-                )
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="I'm doing well, thank you for asking!"))],
             prompt_type="assistant_response",
             prompt_category="general",
             llm_model=LLModels.GEMINI_2_POINT_5_PRO,
@@ -256,9 +246,7 @@ class TestGoogleGetConversationTurns:
             message_data=[
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"query": "Python best practices"},
-                        tool_name="search_tool",
-                        tool_use_id="tool_123"
+                        tool_input={"query": "Python best practices"}, tool_name="search_tool", tool_use_id="tool_123"
                     )
                 )
             ],
@@ -287,7 +275,7 @@ class TestGoogleGetConversationTurns:
                     content=ToolUseResponseContent(
                         tool_name="search_tool",
                         tool_use_id="tool_123",
-                        response={"results": ["Follow PEP 8", "Use type hints", "Write tests"]}
+                        response={"results": ["Follow PEP 8", "Use type hints", "Write tests"]},
                     )
                 )
             ],
@@ -311,11 +299,7 @@ class TestGoogleGetConversationTurns:
             message_type=MessageType.QUERY,
             conversation_chain=[1, 2, 3, 4, 5],
             data_hash="test_hash_5",
-            message_data=[
-                FileBlockData(
-                    content=FileContent(attachment_id=42)
-                )
-            ],
+            message_data=[FileBlockData(content=FileContent(attachment_id=42))],
             prompt_type="user_query",
             prompt_category="file_upload",
             llm_model=LLModels.GEMINI_2_POINT_5_PRO,
@@ -339,9 +323,7 @@ class TestGoogleGetConversationTurns:
             message_data=[
                 ExtendedThinkingData(
                     content=ExtendedThinkingContent(
-                        type="thinking",
-                        thinking="Let me think about this carefully...",
-                        signature="assistant_thinking"
+                        type="thinking", thinking="Let me think about this carefully...", signature="assistant_thinking"
                     )
                 )
             ],
@@ -366,16 +348,12 @@ class TestGoogleGetConversationTurns:
             conversation_chain=[1, 2, 3, 4, 5, 6, 7],
             data_hash="test_hash_7",
             message_data=[
-                TextBlockData(
-                    content=TextBlockContent(text="Here's what I found:")
-                ),
+                TextBlockData(content=TextBlockContent(text="Here's what I found:")),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"file_path": "/path/to/file.py"},
-                        tool_name="read_file",
-                        tool_use_id="tool_456"
+                        tool_input={"file_path": "/path/to/file.py"}, tool_name="read_file", tool_use_id="tool_456"
                     )
-                )
+                ),
             ],
             prompt_type="assistant_response",
             prompt_category="mixed",
@@ -406,9 +384,9 @@ class TestGoogleGetConversationTurns:
                 s3_key="test-bucket/test_image.png",
                 status="uploaded",
                 created_at=datetime.now(),
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
             ),
-            object_bytes=b"fake_image_data"
+            object_bytes=b"fake_image_data",
         )
 
     @pytest.fixture
@@ -422,9 +400,10 @@ class TestGoogleGetConversationTurns:
         mock_image_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> Dict[int, Any]:
         """Create attachment data task map with image."""
+
         async def get_image_data() -> ChatAttachmentDataWithObjectBytes:
             return mock_image_attachment_data
-        
+
         return {42: get_image_data}
 
     # ================== TEST METHODS ==================
@@ -440,7 +419,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert result == []
         assert isinstance(result, list)
 
@@ -456,7 +435,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[simple_text_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         assert result[0].role == "user"
         assert len(result[0].parts) == 1
@@ -474,7 +453,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[assistant_text_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         assert result[0].role == "model"
         assert len(result[0].parts) == 1
@@ -492,7 +471,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=simple_conversation_history,
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 2
         assert result[0].role == "user"
         assert result[0].parts[0].text == "Hello, how are you?"
@@ -511,7 +490,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[tool_use_request_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Tool requests should not appear in result until matched with responses
         assert len(result) == 0
 
@@ -528,22 +507,22 @@ class TestGoogleGetConversationTurns:
             previous_responses=[tool_use_request_message, tool_use_response_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 2
-        
+
         # First should be the model's function call
         function_call_content = result[0]
         assert function_call_content.role == "model"
         assert len(function_call_content.parts) == 1
-        assert hasattr(function_call_content.parts[0], 'function_call')
+        assert hasattr(function_call_content.parts[0], "function_call")
         assert function_call_content.parts[0].function_call.name == "search_tool"
         assert function_call_content.parts[0].function_call.args == {"query": "Python best practices"}
-        
+
         # Second should be the user's function response
         function_response_content = result[1]
         assert function_response_content.role == "user"
         assert len(function_response_content.parts) == 1
-        assert hasattr(function_response_content.parts[0], 'function_response')
+        assert hasattr(function_response_content.parts[0], "function_response")
         assert function_response_content.parts[0].function_response.name == "search_tool"
         expected_response = {"results": ["Follow PEP 8", "Use type hints", "Write tests"]}
         assert function_response_content.parts[0].function_response.response == expected_response
@@ -560,7 +539,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[message_with_extended_thinking],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Extended thinking should be skipped
         assert len(result) == 0
 
@@ -574,19 +553,19 @@ class TestGoogleGetConversationTurns:
         """Test processing message with image file attachment."""
         # Create the actual asyncio task
         task_map = {42: asyncio.create_task(attachment_data_task_map_with_image[42]())}
-        
+
         result = await google_provider.get_conversation_turns(
             previous_responses=[message_with_file_attachment],
             attachment_data_task_map=task_map,
         )
-        
+
         assert len(result) == 1
         assert result[0].role == "user"
         assert len(result[0].parts) == 1
-        
+
         # Google Gemini uses bytes data with mime_type
         part = result[0].parts[0]
-        assert hasattr(part, 'inline_data')
+        assert hasattr(part, "inline_data")
         assert part.inline_data.mime_type == "image/png"
         assert part.inline_data.data == b"fake_image_data"
 
@@ -602,7 +581,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[message_with_file_attachment],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Missing attachments should be ignored
         assert len(result) == 0
 
@@ -618,7 +597,7 @@ class TestGoogleGetConversationTurns:
             previous_responses=[mixed_content_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Should have text message only (tool request will be stored for later matching)
         assert len(result) == 1
         assert result[0].role == "model"
@@ -637,11 +616,11 @@ class TestGoogleGetConversationTurns:
             previous_responses=simple_conversation_history,
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Verify role mapping
         user_content = [content for content in result if content.role == "user"][0]
         model_content = [content for content in result if content.role == "model"][0]
-        
+
         assert user_content.parts[0].text == "Hello, how are you?"
         assert model_content.parts[0].text == "I'm doing well, thank you for asking!"
 
@@ -667,12 +646,12 @@ class TestGoogleGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         result = await google_provider.get_conversation_turns(
             previous_responses=[empty_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 0
 
     @pytest.mark.asyncio
@@ -687,12 +666,12 @@ class TestGoogleGetConversationTurns:
             previous_responses=simple_conversation_history,
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert isinstance(result, list)
         for content in result:
             # Content will be a mock of google_genai_types.Content
-            assert hasattr(content, 'role')
-            assert hasattr(content, 'parts')
+            assert hasattr(content, "role")
+            assert hasattr(content, "parts")
             assert content.role in ["user", "model"]
             assert isinstance(content.parts, list)
             assert len(content.parts) > 0
@@ -715,14 +694,10 @@ class TestGoogleGetConversationTurns:
             message_data=[
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"query": "test"},
-                        tool_name="test_tool",
-                        tool_use_id="tool_123"
+                        tool_input={"query": "test"}, tool_name="test_tool", tool_use_id="tool_123"
                     )
                 ),
-                TextBlockData(
-                    content=TextBlockContent(text="This text should come first")
-                ),
+                TextBlockData(content=TextBlockContent(text="This text should come first")),
             ],
             prompt_type="assistant_response",
             prompt_category="mixed",
@@ -731,12 +706,12 @@ class TestGoogleGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         result = await google_provider.get_conversation_turns(
             previous_responses=[mixed_order_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Should have text part only (tool request stored for later matching)
         assert len(result) == 1
         assert result[0].role == "model"
@@ -770,18 +745,18 @@ class TestGoogleGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         result = await google_provider.get_conversation_turns(
             previous_responses=[multi_content_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         # Should create a single conversation turn with multiple parts
         assert len(result) == 1
         assert result[0].role == "user"
         assert len(result[0].parts) == 3
         assert result[0].parts[0].text == "First part"
-        assert result[0].parts[1].text == "Second part"  
+        assert result[0].parts[1].text == "Second part"
         assert result[0].parts[2].text == "Third part"
 
     @pytest.mark.asyncio
@@ -796,17 +771,17 @@ class TestGoogleGetConversationTurns:
             previous_responses=[simple_text_message],
             attachment_data_task_map=attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         content = result[0]
-        
+
         # Verify it's a proper Google Content object (or our mock version)
         # Content will be a mock of google_genai_types.Content
         assert content.role == "user"
         assert isinstance(content.parts, list)
         assert len(content.parts) == 1
-        
+
         part = content.parts[0]
         # Part will be a mock of google_genai_types.Part
-        assert hasattr(part, 'text') or hasattr(part, 'function_call') or hasattr(part, 'function_response')
+        assert hasattr(part, "text") or hasattr(part, "function_call") or hasattr(part, "function_response")
         assert part.text == "Hello, how are you?"

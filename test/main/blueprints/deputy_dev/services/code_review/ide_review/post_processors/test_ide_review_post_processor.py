@@ -14,7 +14,9 @@ import pytest
 from app.main.blueprints.deputy_dev.models.dto.ide_reviews_comment_dto import IdeReviewsCommentDTO
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import LLMCommentData
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor import IdeReviewPostProcessor
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor import (
+    IdeReviewPostProcessor,
+)
 from test.fixtures.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor_fixtures import *
 
 
@@ -35,38 +37,57 @@ class TestIdeReviewPostProcessorPostProcessPr:
     ) -> None:
         """Test successful post processing of a PR review."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository') as mock_ext_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository') as mock_comment_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository') as mock_user_agent_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService') as mock_context_service, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler') as mock_llm_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine') as mock_blending_engine:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository"
+            ) as mock_ext_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository"
+            ) as mock_comment_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository"
+            ) as mock_user_agent_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
+            ) as mock_context_service,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
+            ) as mock_llm_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
+            ) as mock_blending_engine,
+        ):
             # Setup mocks
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review)
-            mock_comment_repo.get_review_comments = AsyncMock(return_value=[sample_ide_reviews_comment_dto, sample_ide_reviews_comment_dto_2])
+            mock_comment_repo.get_review_comments = AsyncMock(
+                return_value=[sample_ide_reviews_comment_dto, sample_ide_reviews_comment_dto_2]
+            )
             mock_user_agent_repo.db_get = AsyncMock(return_value=[sample_user_agent_dto])
-            
+
             # Mock the blending engine
             blending_instance = MagicMock()
-            blending_instance.blend_comments = AsyncMock(return_value=(sample_filtered_comments, sample_agent_results, sample_review_title))
+            blending_instance.blend_comments = AsyncMock(
+                return_value=(sample_filtered_comments, sample_agent_results, sample_review_title)
+            )
             mock_blending_engine.return_value = blending_instance
-            
+
             mock_comment_repo.update_comments = AsyncMock(return_value=None)
             mock_comment_repo.insert_comments = AsyncMock(return_value=None)
             mock_ext_repo.update_review = AsyncMock(return_value=None)
-            
+
             # Execute
             result = await IdeReviewPostProcessor.post_process_pr(sample_post_process_data, user_team_id)
-            
+
             # Verify
             assert result == {"status": "Completed"}
             mock_ext_repo.db_get.assert_called_once_with(filters={"id": 101}, fetch_one=True)
             mock_comment_repo.get_review_comments.assert_called_once_with(101)
             mock_user_agent_repo.db_get.assert_called_once_with({"user_team_id": user_team_id})
             blending_instance.blend_comments.assert_called_once()
-            mock_ext_repo.update_review.assert_called_once_with(101, {"review_status": "Completed", "title": sample_review_title})
+            mock_ext_repo.update_review.assert_called_once_with(
+                101, {"review_status": "Completed", "title": sample_review_title}
+            )
 
     @pytest.mark.asyncio
     async def test_post_process_pr_with_no_comments(
@@ -79,31 +100,44 @@ class TestIdeReviewPostProcessorPostProcessPr:
     ) -> None:
         """Test post processing when there are no comments."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository') as mock_ext_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository') as mock_comment_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository') as mock_user_agent_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService') as mock_context_service, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler') as mock_llm_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine') as mock_blending_engine:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository"
+            ) as mock_ext_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository"
+            ) as mock_comment_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository"
+            ) as mock_user_agent_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
+            ) as mock_context_service,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
+            ) as mock_llm_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
+            ) as mock_blending_engine,
+        ):
             # Setup mocks
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review)
             mock_comment_repo.get_review_comments = AsyncMock(return_value=empty_comments_list)
             mock_user_agent_repo.db_get = AsyncMock(return_value=[sample_user_agent_dto])
-            
+
             # Mock the blending engine with empty results
             blending_instance = MagicMock()
             blending_instance.blend_comments = AsyncMock(return_value=([], [], sample_review_title))
             mock_blending_engine.return_value = blending_instance
-            
+
             mock_comment_repo.update_comments = AsyncMock(return_value=None)
             mock_comment_repo.insert_comments = AsyncMock(return_value=None)
             mock_ext_repo.update_review = AsyncMock(return_value=None)
-            
+
             # Execute
             result = await IdeReviewPostProcessor.post_process_pr(sample_post_process_data, user_team_id)
-            
+
             # Verify
             assert result == {"status": "Completed"}
             mock_comment_repo.update_comments.assert_called_once_with([], {"is_valid": False})
@@ -121,31 +155,46 @@ class TestIdeReviewPostProcessorPostProcessPr:
     ) -> None:
         """Test post processing with only blended comments (no original comments)."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository') as mock_ext_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository') as mock_comment_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository') as mock_user_agent_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService') as mock_context_service, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler') as mock_llm_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine') as mock_blending_engine:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository"
+            ) as mock_ext_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository"
+            ) as mock_comment_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository"
+            ) as mock_user_agent_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
+            ) as mock_context_service,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
+            ) as mock_llm_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
+            ) as mock_blending_engine,
+        ):
             # Setup mocks
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review)
             mock_comment_repo.get_review_comments = AsyncMock(return_value=empty_comments_list)
             mock_user_agent_repo.db_get = AsyncMock(return_value=[sample_user_agent_dto])
-            
+
             # Mock the blending engine with only blended comments
             blending_instance = MagicMock()
-            blending_instance.blend_comments = AsyncMock(return_value=([sample_llm_comment_data_without_id], [], sample_review_title))
+            blending_instance.blend_comments = AsyncMock(
+                return_value=([sample_llm_comment_data_without_id], [], sample_review_title)
+            )
             mock_blending_engine.return_value = blending_instance
-            
+
             mock_comment_repo.update_comments = AsyncMock(return_value=None)
             mock_comment_repo.insert_comments = AsyncMock(return_value=None)
             mock_ext_repo.update_review = AsyncMock(return_value=None)
-            
+
             # Execute
             result = await IdeReviewPostProcessor.post_process_pr(sample_post_process_data, user_team_id)
-            
+
             # Verify
             assert result == {"status": "Completed"}
             # Verify that one blended comment was inserted
@@ -161,15 +210,22 @@ class TestIdeReviewPostProcessorPostProcessPr:
     ) -> None:
         """Test post processing with missing review_id."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository') as mock_ext_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository') as mock_comment_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository') as mock_user_agent_repo:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository"
+            ) as mock_ext_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository"
+            ) as mock_comment_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository"
+            ) as mock_user_agent_repo,
+        ):
             mock_ext_repo.db_get = AsyncMock(return_value=None)
             mock_comment_repo.get_review_comments = AsyncMock(return_value=[])
             mock_user_agent_repo.db_get = AsyncMock(return_value=[])
-            
+
             # Execute - this will fail due to review_id being None
             # The method currently doesn't handle this gracefully, so this will raise an error
             try:
@@ -181,7 +237,7 @@ class TestIdeReviewPostProcessorPostProcessPr:
                 # This is expected behavior, so we assert that an exception is raised
                 assert e is not None
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_post_process_pr_with_large_dataset(
         self,
         sample_post_process_data: Dict[str, Any],
@@ -192,31 +248,44 @@ class TestIdeReviewPostProcessorPostProcessPr:
     ) -> None:
         """Test post processing with a large dataset of comments."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository') as mock_ext_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository') as mock_comment_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository') as mock_user_agent_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService') as mock_context_service, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler') as mock_llm_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine') as mock_blending_engine:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.ExtensionReviewsRepository"
+            ) as mock_ext_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeCommentRepository"
+            ) as mock_comment_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.UserAgentRepository"
+            ) as mock_user_agent_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
+            ) as mock_context_service,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
+            ) as mock_llm_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
+            ) as mock_blending_engine,
+        ):
             # Setup mocks
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review)
             mock_comment_repo.get_review_comments = AsyncMock(return_value=large_comments_dataset)
             mock_user_agent_repo.db_get = AsyncMock(return_value=[sample_user_agent_dto])
-            
+
             # Mock the blending engine
             blending_instance = MagicMock()
             blending_instance.blend_comments = AsyncMock(return_value=([], [], sample_review_title))
             mock_blending_engine.return_value = blending_instance
-            
+
             mock_comment_repo.update_comments = AsyncMock(return_value=None)
             mock_comment_repo.insert_comments = AsyncMock(return_value=None)
             mock_ext_repo.update_review = AsyncMock(return_value=None)
-            
+
             # Execute
             result = await IdeReviewPostProcessor.post_process_pr(sample_post_process_data, user_team_id)
-            
+
             # Verify
             assert result == {"status": "Completed"}
             mock_comment_repo.get_review_comments.assert_called_once_with(101)
@@ -235,13 +304,13 @@ class TestIdeReviewPostProcessorFormatComments:
     ) -> None:
         """Test formatting comments with a single agent."""
         comments = [sample_ide_reviews_comment_dto]
-        
+
         result = IdeReviewPostProcessor.format_comments(comments)
-        
+
         assert isinstance(result, dict)
         assert "security_agent" in result
         assert len(result["security_agent"]) == 1
-        
+
         formatted_comment = result["security_agent"][0]
         assert formatted_comment.id == sample_ide_reviews_comment_dto.id
         assert formatted_comment.title == sample_ide_reviews_comment_dto.title
@@ -254,17 +323,17 @@ class TestIdeReviewPostProcessorFormatComments:
     ) -> None:
         """Test formatting comments with multiple agents."""
         result = IdeReviewPostProcessor.format_comments(comments_with_multiple_agents)
-        
+
         assert isinstance(result, dict)
         assert "security_agent" in result
         assert "performance_agent" in result
         assert len(result["security_agent"]) == 1
         assert len(result["performance_agent"]) == 1
-        
+
         # Both should reference the same comment but from different agent perspectives
         security_comment = result["security_agent"][0]
         performance_comment = result["performance_agent"][0]
-        
+
         assert security_comment.id == performance_comment.id
         assert security_comment.comment == performance_comment.comment
         assert security_comment.bucket == "Security Agent"
@@ -276,7 +345,7 @@ class TestIdeReviewPostProcessorFormatComments:
     ) -> None:
         """Test formatting comments with no agents."""
         result = IdeReviewPostProcessor.format_comments(comments_with_no_agents)
-        
+
         assert isinstance(result, dict)
         assert len(result) == 0
 
@@ -286,7 +355,7 @@ class TestIdeReviewPostProcessorFormatComments:
     ) -> None:
         """Test formatting an empty list of comments."""
         result = IdeReviewPostProcessor.format_comments(empty_comments_list)
-        
+
         assert isinstance(result, dict)
         assert len(result) == 0
 
@@ -296,7 +365,7 @@ class TestIdeReviewPostProcessorFormatComments:
     ) -> None:
         """Test formatting a large dataset of comments."""
         result = IdeReviewPostProcessor.format_comments(large_comments_dataset)
-        
+
         assert isinstance(result, dict)
         # Should have comments for both agents (even/odd split)
         assert "security_agent" in result
@@ -326,9 +395,9 @@ class TestIdeReviewPostProcessorFormatComments:
             is_valid=True,
             agents=[sample_user_agent_dto],
             created_at=None,
-            updated_at=None
+            updated_at=None,
         )
-        
+
         comment_2 = IdeReviewsCommentDTO(
             id=2,
             title="Issue 2",
@@ -345,16 +414,16 @@ class TestIdeReviewPostProcessorFormatComments:
             is_valid=True,
             agents=[sample_user_agent_dto],
             created_at=None,
-            updated_at=None
+            updated_at=None,
         )
-        
+
         comments = [comment_1, comment_2]
         result = IdeReviewPostProcessor.format_comments(comments)
-        
+
         assert isinstance(result, dict)
         assert "security_agent" in result
         assert len(result["security_agent"]) == 2
-        
+
         # Verify both comments are present
         comment_ids = [c.id for c in result["security_agent"]]
         assert 1 in comment_ids
@@ -366,10 +435,10 @@ class TestIdeReviewPostProcessorFormatComments:
     ) -> None:
         """Test that all comment fields are preserved during formatting."""
         comments = [sample_ide_reviews_comment_dto]
-        
+
         result = IdeReviewPostProcessor.format_comments(comments)
         formatted_comment = result["security_agent"][0]
-        
+
         # Verify all fields are preserved
         assert formatted_comment.id == sample_ide_reviews_comment_dto.id
         assert formatted_comment.title == sample_ide_reviews_comment_dto.title
@@ -404,16 +473,16 @@ class TestIdeReviewPostProcessorFormatComments:
             is_valid=True,
             agents=[sample_user_agent_dto],
             created_at=None,
-            updated_at=None
+            updated_at=None,
         )
-        
+
         comments = [comment]
         result = IdeReviewPostProcessor.format_comments(comments)
-        
+
         assert isinstance(result, dict)
         assert "security_agent" in result
         formatted_comment = result["security_agent"][0]
-        
+
         # Should handle None values gracefully
         assert formatted_comment.rationale is None
         assert formatted_comment.corrective_code is None
