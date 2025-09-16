@@ -26,9 +26,7 @@ class ConfigFetcher:
                 "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
-            "BROWSER_HOST": ConfigManager.configs["FAKE_AUTH"]["FAKE_BROWSER_HOST"]
-            if ConfigManager.configs["FAKE_AUTH"]["ENABLED"]
-            else ConfigManager.configs["BROWSER_HOST"],
+            "BROWSER_HOST": ConfigManager.configs["BROWSER_HOST"],
             "BINARY": {},
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "DD_HOST_WS_NON_GATEWAY": ConfigManager.configs["DD_HOST_WS_NON_GATEWAY"],
