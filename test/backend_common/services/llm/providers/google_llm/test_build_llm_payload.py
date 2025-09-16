@@ -141,7 +141,7 @@ def setup_comprehensive_mocks():
         patch("app.backend_common.utils.sanic_wrapper.CONFIG", mock_config_obj),
         # Mock the service client directly at the module level
         patch(
-            "app.backend_common.services.llm.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
+            "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
         ),
         # Also mock the config import in gemini service client
         patch("app.backend_common.service_clients.gemini.gemini.config", mock_config_obj.config["VERTEX"]),
@@ -156,8 +156,9 @@ def setup_comprehensive_mocks():
         p.stop()
 
 
+from deputydev_core.llm_handler.dataclasses.main import PromptCacheConfig
+
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import PromptCacheConfig
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 
 # Import fixtures

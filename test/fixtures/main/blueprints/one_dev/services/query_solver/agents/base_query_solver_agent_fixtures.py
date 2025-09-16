@@ -12,13 +12,13 @@ from typing import Dict, List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool
 
 from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,

@@ -22,18 +22,18 @@ from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    LLMCallResponseTypes,
+    NonStreamingResponse,
+    StreamingResponse,
+)
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     TextBlockData,
     ToolUseRequestData,
 )
-from app.backend_common.services.llm.dataclasses.main import (
-    LLMCallResponseTypes,
-    NonStreamingResponse,
-    StreamingResponse,
-)
-from app.backend_common.services.llm.providers.openai.llm_provider import OpenAI
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import fixtures
 
@@ -460,7 +460,7 @@ class TestOpenAIServiceClientCalls:
         mock_llm_payload: Dict[str, Any],
     ) -> None:
         """Test service client call for non-streaming text response."""
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
             # Mock the service client response
             mock_response = MagicMock()
             mock_response.output = [MagicMock(type="message")]
@@ -494,7 +494,7 @@ class TestOpenAIServiceClientCalls:
         mock_llm_payload: Dict[str, Any],
     ) -> None:
         """Test service client call for non-streaming JSON response."""
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
             # Mock the service client response
             mock_response = MagicMock()
             mock_response.output = [MagicMock(type="message")]
@@ -529,7 +529,7 @@ class TestOpenAIServiceClientCalls:
         mock_streaming_response,
     ) -> None:
         """Test service client call for streaming response."""
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
             mock_client_instance = mock_client.return_value
             mock_client_instance.get_llm_stream_response = AsyncMock(return_value=mock_streaming_response)
 
@@ -551,7 +551,7 @@ class TestOpenAIServiceClientCalls:
         mock_llm_payload: Dict[str, Any],
     ) -> None:
         """Test service client call with default response type."""
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.OpenAIServiceClient") as mock_client:
             mock_response = MagicMock()
             mock_response.output = [MagicMock(type="message")]
             mock_response.output[0].content = [MagicMock(type="output_text", text="Default response")]
@@ -587,7 +587,7 @@ class TestOpenAITokenCounting:
         sample_content_for_token_counting: str,
     ) -> None:
         """Test token counting for simple text content."""
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.TikToken") as mock_tiktoken:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.TikToken") as mock_tiktoken:
             mock_instance = mock_tiktoken.return_value
             mock_instance.count.return_value = 42
 
@@ -602,7 +602,7 @@ class TestOpenAITokenCounting:
         openai_provider: OpenAI,
     ) -> None:
         """Test token counting for empty content."""
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.TikToken") as mock_tiktoken:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.TikToken") as mock_tiktoken:
             mock_instance = mock_tiktoken.return_value
             mock_instance.count.return_value = 0
 
@@ -778,7 +778,7 @@ class TestOpenAIStreamingResponseParsing:
             yield event
 
         # Mock the entire cache to avoid Redis issues
-        with patch("app.backend_common.services.llm.providers.openai.llm_provider.CodeGenTasksCache") as mock_cache:
+        with patch("deputydev_core.llm_handler.providers.openai.llm_provider.CodeGenTasksCache") as mock_cache:
             mock_cache.cleanup_session_data = AsyncMock()
 
             result = await openai_provider._parse_streaming_response(cancelled_stream(), session_id=789)

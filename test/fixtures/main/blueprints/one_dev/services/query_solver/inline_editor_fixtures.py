@@ -10,9 +10,9 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
 
-from app.backend_common.services.llm.dataclasses.main import NonStreamingParsedLLMCallResponse
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (

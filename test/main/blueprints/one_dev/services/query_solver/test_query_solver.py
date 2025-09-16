@@ -11,8 +11,6 @@ from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     StreamingParsedLLMCallResponse,
@@ -28,6 +26,8 @@ from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     UnifiedTextConversationTurnContent,
     UserConversationTurn,
 )
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
@@ -98,11 +98,11 @@ class TestQuerySolverSolveQuery:
                 new_callable=AsyncMock,
             ) as mock_stream_iterator,
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.__init__",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
                 return_value=None,
             ),
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
                 new_callable=AsyncMock,
                 return_value=mock_streaming_response,
             ),
@@ -3200,11 +3200,11 @@ class TestOriginalQuerySolverMethods:
                 return_value={"result": "success"},
             ),
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.__init__",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
                 return_value=None,
             ),
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
                 new_callable=AsyncMock,
                 return_value=mock_streaming_response,
             ),
@@ -3312,11 +3312,11 @@ class TestOriginalQuerySolverMethods:
                 new_callable=AsyncMock,
             ) as mock_stream_iterator,
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.__init__",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
                 return_value=None,
             ),
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
                 new_callable=AsyncMock,
                 return_value=mock_streaming_response,
             ),
@@ -3386,11 +3386,11 @@ class TestOriginalQuerySolverMethods:
                 new_callable=AsyncMock,
             ) as mock_stream_iterator,
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.__init__",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
                 return_value=None,
             ),
             patch(
-                "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
                 new_callable=AsyncMock,
                 return_value=mock_streaming_response,
             ),

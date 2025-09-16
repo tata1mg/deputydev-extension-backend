@@ -11,18 +11,18 @@ from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    ConversationTool,
+    LLMCallResponseTypes,
+    NonStreamingParsedLLMCallResponse,
+    UserAndSystemMessages,
+)
 from deputydev_core.services.chunking.chunk_info import ChunkInfo
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     LLModels,
     LLMUsage,
-)
-from app.backend_common.services.llm.dataclasses.main import (
-    ConversationTool,
-    LLMCallResponseTypes,
-    NonStreamingParsedLLMCallResponse,
-    UserAndSystemMessages,
 )
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
     ActorType,

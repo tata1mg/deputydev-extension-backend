@@ -9,12 +9,12 @@ mock data, and edge cases.
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     StreamingParsedLLMCallResponse,
 )
+
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 
@@ -45,7 +45,7 @@ def mock_client_data():
 def mock_llm_handler() -> MagicMock:
     """Create a mock LLM handler."""
     # Import here to avoid module-level import issues with Google dependencies
-    from app.backend_common.services.llm.handler import LLMHandler
+    from deputydev_core.llm_handler.core.handler import LLMHandler
 
     handler = MagicMock(spec=LLMHandler)
     handler.start_llm_query = AsyncMock()
