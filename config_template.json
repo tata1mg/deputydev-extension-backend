@@ -962,7 +962,7 @@
     "ALLOWED_PR_REVIEW_RETRIES": 3,
     "AUTO_REVIEW_ENABLED": true,
     "DEPUTYDEV_AUTH": {
-        "HOST": "http://localhost:8085",
+        "HOST": "http://localhost:9355",
         "TIMEOUT": 10
     }
 }
