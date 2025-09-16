@@ -16,13 +16,14 @@ Test Categories:
 - Type safety validation
 """
 
-import pytest
 from typing import List, Optional, Tuple
-from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
 
-# Import required classes from message thread DTO and streaming dataclasses
-from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory, LLMUsage
-from app.backend_common.services.llm.dataclasses.main import (
+import pytest
+from deputydev_core.llm_handler.dataclasses.main import (
+    ExtendedThinkingBlockDelta,
+    ExtendedThinkingBlockEnd,
+    ExtendedThinkingBlockStart,
+    RedactedThinking,
     StreamingEvent,
     StreamingEventType,
     TextBlockDelta,
@@ -31,37 +32,22 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestDelta,
     ToolUseRequestEnd,
     ToolUseRequestStart,
-    ExtendedThinkingBlockStart,
-    ExtendedThinkingBlockDelta,
-    ExtendedThinkingBlockEnd,
-    RedactedThinking,
 )
+
+# Import required classes from message thread DTO and streaming dataclasses
+from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory, LLMUsage
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 # Import fixtures from organized fixture modules
 from test.fixtures.anthropic import (
-    mock_message_stop_event,
-    mock_message_stop_without_usage,
-    mock_message_stop_incomplete_usage,
-    mock_thinking_block_start_event,
-    mock_redacted_thinking_block_start_event,
-    mock_thinking_delta_event,
-    mock_signature_delta_event,
-    mock_tool_use_block_start_event,
-    mock_input_json_delta_event,
-    mock_tool_use_block_stop_event,
-    mock_text_block_start_event,
-    mock_text_delta_event,
-    mock_text_block_stop_event,
-    mock_unknown_event,
-    create_message_stop_event,
-    create_tool_use_start_event,
     create_input_json_delta_event,
+    create_message_stop_event,
     create_text_delta_event,
     create_thinking_delta_event,
+    create_tool_use_start_event,
 )
 
 # Use provider fixture that handles import properly
-from test.fixtures.anthropic.provider_fixtures import anthropic_provider
 
 
 class TestAnthropicStreamEventParsing:
@@ -71,21 +57,12 @@ class TestAnthropicStreamEventParsing:
     # MESSAGE COMPLETION TESTS
     # ===============================
 
-    def test_message_stop_with_usage(
-        self,
-        anthropic_provider: Anthropic,
-        mock_message_stop_event: dict
-    ) -> None:
+    def test_message_stop_with_usage(self, anthropic_provider: Anthropic, mock_message_stop_event: dict) -> None:
         """Test parsing message_stop event with usage information."""
-        result: Tuple[
-            List[StreamingEvent],
-            Optional[ContentBlockCategory],
-            Optional[str],
-            Optional[LLMUsage]
-        ] = anthropic_provider._get_parsed_stream_event(
-            mock_message_stop_event, 
-            current_content_block_delta="",
-            current_running_block_type=None
+        result: Tuple[List[StreamingEvent], Optional[ContentBlockCategory], Optional[str], Optional[LLMUsage]] = (
+            anthropic_provider._get_parsed_stream_event(
+                mock_message_stop_event, current_content_block_delta="", current_running_block_type=None
+            )
         )
 
         streaming_events, content_category, delta, usage = result
@@ -104,15 +81,11 @@ class TestAnthropicStreamEventParsing:
         assert usage.cache_write == 10
 
     def test_message_stop_without_usage(
-        self,
-        anthropic_provider: Anthropic,
-        mock_message_stop_without_usage: dict
+        self, anthropic_provider: Anthropic, mock_message_stop_without_usage: dict
     ) -> None:
         """Test parsing message_stop event without usage information."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_message_stop_without_usage,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_message_stop_without_usage, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -127,15 +100,11 @@ class TestAnthropicStreamEventParsing:
         assert usage.cache_write == 0
 
     def test_message_stop_with_incomplete_usage(
-        self,
-        anthropic_provider: Anthropic,
-        mock_message_stop_incomplete_usage: dict
+        self, anthropic_provider: Anthropic, mock_message_stop_incomplete_usage: dict
     ) -> None:
         """Test parsing message_stop with incomplete usage data."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_message_stop_incomplete_usage,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_message_stop_incomplete_usage, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -145,7 +114,7 @@ class TestAnthropicStreamEventParsing:
         assert delta is None
         assert usage is not None
         assert usage.input == 50  # Available field
-        assert usage.output == 0   # Missing field defaults to 0
+        assert usage.output == 0  # Missing field defaults to 0
         assert usage.cache_read == 0  # Missing field defaults to 0
         assert usage.cache_write == 0  # Missing field defaults to 0
 
@@ -154,15 +123,11 @@ class TestAnthropicStreamEventParsing:
     # ===============================
 
     def test_thinking_block_start_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_thinking_block_start_event: dict
+        self, anthropic_provider: Anthropic, mock_thinking_block_start_event: dict
     ) -> None:
         """Test parsing content_block_start event for thinking blocks."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_thinking_block_start_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_thinking_block_start_event, current_content_block_delta="", current_running_block_type=None
         )
         # Note: thinking block start returns a 3-tuple instead of 4-tuple
         streaming_event, content_category, delta = result
@@ -173,15 +138,11 @@ class TestAnthropicStreamEventParsing:
         assert delta is None
 
     def test_redacted_thinking_block_start_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_redacted_thinking_block_start_event: dict
+        self, anthropic_provider: Anthropic, mock_redacted_thinking_block_start_event: dict
     ) -> None:
         """Test parsing content_block_start event for redacted thinking blocks."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_redacted_thinking_block_start_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_redacted_thinking_block_start_event, current_content_block_delta="", current_running_block_type=None
         )
         # Note: redacted thinking block start returns a 3-tuple instead of 4-tuple
         streaming_event, content_category, delta = result
@@ -192,16 +153,10 @@ class TestAnthropicStreamEventParsing:
         assert content_category == ContentBlockCategory.EXTENDED_THINKING
         assert delta is None
 
-    def test_thinking_delta_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_thinking_delta_event: dict
-    ) -> None:
+    def test_thinking_delta_event(self, anthropic_provider: Anthropic, mock_thinking_delta_event: dict) -> None:
         """Test parsing content_block_delta event for thinking delta."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_thinking_delta_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_thinking_delta_event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -213,16 +168,10 @@ class TestAnthropicStreamEventParsing:
         assert delta is None
         assert usage is None
 
-    def test_signature_delta_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_signature_delta_event: dict
-    ) -> None:
+    def test_signature_delta_event(self, anthropic_provider: Anthropic, mock_signature_delta_event: dict) -> None:
         """Test parsing content_block_delta event for signature delta."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_signature_delta_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_signature_delta_event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -239,15 +188,11 @@ class TestAnthropicStreamEventParsing:
     # ===============================
 
     def test_tool_use_block_start_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_tool_use_block_start_event: dict
+        self, anthropic_provider: Anthropic, mock_tool_use_block_start_event: dict
     ) -> None:
         """Test parsing content_block_start event for tool use blocks."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_tool_use_block_start_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_tool_use_block_start_event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -263,17 +208,11 @@ class TestAnthropicStreamEventParsing:
         assert delta is None
         assert usage is None
 
-    def test_input_json_delta_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_input_json_delta_event: dict
-    ) -> None:
+    def test_input_json_delta_event(self, anthropic_provider: Anthropic, mock_input_json_delta_event: dict) -> None:
         """Test parsing content_block_delta event for input JSON delta."""
         current_delta = ""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_input_json_delta_event,
-            current_content_block_delta=current_delta,
-            current_running_block_type=None
+            mock_input_json_delta_event, current_content_block_delta=current_delta, current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -289,16 +228,14 @@ class TestAnthropicStreamEventParsing:
         assert usage is None
 
     def test_tool_use_block_stop_event_with_delta(
-        self,
-        anthropic_provider: Anthropic,
-        mock_tool_use_block_stop_event: dict
+        self, anthropic_provider: Anthropic, mock_tool_use_block_stop_event: dict
     ) -> None:
         """Test parsing content_block_stop event for tool use blocks with existing delta."""
         current_delta = '{"param": "value"}'
         result = anthropic_provider._get_parsed_stream_event(
             mock_tool_use_block_stop_event,
             current_content_block_delta=current_delta,
-            current_running_block_type=ContentBlockCategory.TOOL_USE_REQUEST
+            current_running_block_type=ContentBlockCategory.TOOL_USE_REQUEST,
         )
         streaming_events, content_category, delta, usage = result
 
@@ -313,16 +250,14 @@ class TestAnthropicStreamEventParsing:
         assert usage is None
 
     def test_tool_use_block_stop_event_without_delta(
-        self,
-        anthropic_provider: Anthropic,
-        mock_tool_use_block_stop_event: dict
+        self, anthropic_provider: Anthropic, mock_tool_use_block_stop_event: dict
     ) -> None:
         """Test parsing content_block_stop event for tool use blocks without existing delta."""
         current_delta = ""
         result = anthropic_provider._get_parsed_stream_event(
             mock_tool_use_block_stop_event,
             current_content_block_delta=current_delta,
-            current_running_block_type=ContentBlockCategory.TOOL_USE_REQUEST
+            current_running_block_type=ContentBlockCategory.TOOL_USE_REQUEST,
         )
         streaming_events, content_category, delta, usage = result
 
@@ -342,16 +277,10 @@ class TestAnthropicStreamEventParsing:
     # TEXT BLOCK TESTS
     # ===============================
 
-    def test_text_block_start_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_text_block_start_event: dict
-    ) -> None:
+    def test_text_block_start_event(self, anthropic_provider: Anthropic, mock_text_block_start_event: dict) -> None:
         """Test parsing content_block_start event for text blocks."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_text_block_start_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_text_block_start_event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -365,16 +294,10 @@ class TestAnthropicStreamEventParsing:
         assert delta is None
         assert usage is None
 
-    def test_text_delta_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_text_delta_event: dict
-    ) -> None:
+    def test_text_delta_event(self, anthropic_provider: Anthropic, mock_text_delta_event: dict) -> None:
         """Test parsing content_block_delta event for text delta."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_text_delta_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_text_delta_event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -389,16 +312,12 @@ class TestAnthropicStreamEventParsing:
         assert delta is None
         assert usage is None
 
-    def test_text_block_stop_event(
-        self,
-        anthropic_provider: Anthropic,
-        mock_text_block_stop_event: dict
-    ) -> None:
+    def test_text_block_stop_event(self, anthropic_provider: Anthropic, mock_text_block_stop_event: dict) -> None:
         """Test parsing content_block_stop event for text blocks."""
         result = anthropic_provider._get_parsed_stream_event(
             mock_text_block_stop_event,
             current_content_block_delta="",
-            current_running_block_type=ContentBlockCategory.TEXT_BLOCK
+            current_running_block_type=ContentBlockCategory.TEXT_BLOCK,
         )
         streaming_events, content_category, delta, usage = result
 
@@ -416,16 +335,10 @@ class TestAnthropicStreamEventParsing:
     # EDGE CASES AND ERROR HANDLING
     # ===============================
 
-    def test_unknown_event_type(
-        self,
-        anthropic_provider: Anthropic,
-        mock_unknown_event: dict
-    ) -> None:
+    def test_unknown_event_type(self, anthropic_provider: Anthropic, mock_unknown_event: dict) -> None:
         """Test parsing unknown/unhandled event types."""
         result = anthropic_provider._get_parsed_stream_event(
-            mock_unknown_event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            mock_unknown_event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, usage = result
 
@@ -436,15 +349,13 @@ class TestAnthropicStreamEventParsing:
         assert usage is None
 
     def test_content_block_stop_with_wrong_running_type(
-        self,
-        anthropic_provider: Anthropic,
-        mock_text_block_stop_event: dict
+        self, anthropic_provider: Anthropic, mock_text_block_stop_event: dict
     ) -> None:
         """Test parsing content_block_stop with mismatched running block type."""
         result = anthropic_provider._get_parsed_stream_event(
             mock_text_block_stop_event,
             current_content_block_delta="",
-            current_running_block_type=ContentBlockCategory.TOOL_USE_REQUEST  # Wrong type
+            current_running_block_type=ContentBlockCategory.TOOL_USE_REQUEST,  # Wrong type
         )
         streaming_events, content_category, delta, usage = result
 
@@ -461,27 +372,28 @@ class TestAnthropicStreamEventParsing:
     # PARAMETRIZED TESTS FOR COMPREHENSIVE COVERAGE
     # ===============================
 
-    @pytest.mark.parametrize("input_tokens,output_tokens,cache_read_tokens,cache_write_tokens", [
-        (100, 50, 20, 10),  # Normal case
-        (50, 25, 0, 0),     # No cached tokens
-        (200, 100, 50, 25), # Mixed caching
-        (0, 0, 0, 0),       # Zero tokens
-    ])
+    @pytest.mark.parametrize(
+        "input_tokens,output_tokens,cache_read_tokens,cache_write_tokens",
+        [
+            (100, 50, 20, 10),  # Normal case
+            (50, 25, 0, 0),  # No cached tokens
+            (200, 100, 50, 25),  # Mixed caching
+            (0, 0, 0, 0),  # Zero tokens
+        ],
+    )
     def test_usage_calculation_variations(
         self,
         anthropic_provider: Anthropic,
         input_tokens: int,
         output_tokens: int,
         cache_read_tokens: int,
-        cache_write_tokens: int
+        cache_write_tokens: int,
     ) -> None:
         """Test usage calculation with various token combinations."""
         event = create_message_stop_event(input_tokens, output_tokens, cache_read_tokens, cache_write_tokens)
 
         result = anthropic_provider._get_parsed_stream_event(
-            event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            event, current_content_block_delta="", current_running_block_type=None
         )
         _, _, _, usage = result
 
@@ -491,25 +403,23 @@ class TestAnthropicStreamEventParsing:
         assert usage.cache_read == cache_read_tokens
         assert usage.cache_write == cache_write_tokens
 
-    @pytest.mark.parametrize("tool_name,tool_id", [
-        ("get_weather", "tool_abc123"),
-        ("calculate_sum", "tool_xyz789"),
-        ("search_database", "tool_def456"),
-        ("format_text", "tool_ghi012"),
-    ])
+    @pytest.mark.parametrize(
+        "tool_name,tool_id",
+        [
+            ("get_weather", "tool_abc123"),
+            ("calculate_sum", "tool_xyz789"),
+            ("search_database", "tool_def456"),
+            ("format_text", "tool_ghi012"),
+        ],
+    )
     def test_tool_use_with_different_names_and_ids(
-        self,
-        anthropic_provider: Anthropic,
-        tool_name: str,
-        tool_id: str
+        self, anthropic_provider: Anthropic, tool_name: str, tool_id: str
     ) -> None:
         """Test tool use parsing with various tool names and IDs."""
         event = create_tool_use_start_event(tool_name, tool_id)
 
         result = anthropic_provider._get_parsed_stream_event(
-            event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, _, _ = result
 
@@ -519,26 +429,23 @@ class TestAnthropicStreamEventParsing:
         assert streaming_events[0].content.tool_use_id == tool_id
         assert content_category == ContentBlockCategory.TOOL_USE_REQUEST
 
-    @pytest.mark.parametrize("delta_text", [
-        "Simple text",
-        "Text with\nnewlines",
-        "Text with special chars: !@#$%^&*()",
-        '{"json": "data"}',
-        "",  # Empty delta
-        "Unicode: 🚀 ✨ 🎉",
-    ])
-    def test_text_delta_with_various_content(
-        self,
-        anthropic_provider: Anthropic,
-        delta_text: str
-    ) -> None:
+    @pytest.mark.parametrize(
+        "delta_text",
+        [
+            "Simple text",
+            "Text with\nnewlines",
+            "Text with special chars: !@#$%^&*()",
+            '{"json": "data"}',
+            "",  # Empty delta
+            "Unicode: 🚀 ✨ 🎉",
+        ],
+    )
+    def test_text_delta_with_various_content(self, anthropic_provider: Anthropic, delta_text: str) -> None:
         """Test text delta parsing with various content types."""
         event = create_text_delta_event(delta_text)
 
         result = anthropic_provider._get_parsed_stream_event(
-            event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, _, _ = result
 
@@ -547,25 +454,22 @@ class TestAnthropicStreamEventParsing:
         assert streaming_events[0].content.text == delta_text
         assert content_category == ContentBlockCategory.TEXT_BLOCK
 
-    @pytest.mark.parametrize("json_delta", [
-        '{"param1": "value1"',
-        '"param2": 123',
-        ', "param3": true}',
-        "",  # Empty delta
-        '{"complex": {"nested": {"object": "value"}}}',
-    ])
-    def test_input_json_delta_with_various_content(
-        self,
-        anthropic_provider: Anthropic,
-        json_delta: str
-    ) -> None:
+    @pytest.mark.parametrize(
+        "json_delta",
+        [
+            '{"param1": "value1"',
+            '"param2": 123',
+            ', "param3": true}',
+            "",  # Empty delta
+            '{"complex": {"nested": {"object": "value"}}}',
+        ],
+    )
+    def test_input_json_delta_with_various_content(self, anthropic_provider: Anthropic, json_delta: str) -> None:
         """Test input JSON delta with various JSON fragments."""
         event = create_input_json_delta_event(json_delta)
 
         result = anthropic_provider._get_parsed_stream_event(
-            event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, delta, _ = result
 
@@ -575,24 +479,21 @@ class TestAnthropicStreamEventParsing:
         assert content_category == ContentBlockCategory.TOOL_USE_REQUEST
         assert delta == json_delta
 
-    @pytest.mark.parametrize("thinking_text", [
-        "I need to analyze this problem step by step...",
-        "Let me think about the user's request...",
-        "",  # Empty thinking
-        "Complex thinking with\nmultiple lines\nand details",
-    ])
-    def test_thinking_delta_with_various_content(
-        self,
-        anthropic_provider: Anthropic,
-        thinking_text: str
-    ) -> None:
+    @pytest.mark.parametrize(
+        "thinking_text",
+        [
+            "I need to analyze this problem step by step...",
+            "Let me think about the user's request...",
+            "",  # Empty thinking
+            "Complex thinking with\nmultiple lines\nand details",
+        ],
+    )
+    def test_thinking_delta_with_various_content(self, anthropic_provider: Anthropic, thinking_text: str) -> None:
         """Test thinking delta parsing with various content types."""
         event = create_thinking_delta_event(thinking_text)
 
         result = anthropic_provider._get_parsed_stream_event(
-            event,
-            current_content_block_delta="",
-            current_running_block_type=None
+            event, current_content_block_delta="", current_running_block_type=None
         )
         streaming_events, content_category, _, _ = result
 
@@ -605,31 +506,19 @@ class TestAnthropicStreamEventParsing:
     # SEQUENCE TESTING
     # ===============================
 
-    def test_complete_text_block_sequence(
-        self,
-        anthropic_provider: Anthropic
-    ) -> None:
+    def test_complete_text_block_sequence(self, anthropic_provider: Anthropic) -> None:
         """Test a complete sequence of text block events."""
         # Text block start event
-        start_event = {
-            "type": "content_block_start",
-            "content_block": {"type": "text"}
-        }
-        result1 = anthropic_provider._get_parsed_stream_event(
-            start_event, "", None
-        )
+        start_event = {"type": "content_block_start", "content_block": {"type": "text"}}
+        result1 = anthropic_provider._get_parsed_stream_event(start_event, "", None)
         assert isinstance(result1[0][0], TextBlockStart)
 
         # Text delta events
         delta_event1 = create_text_delta_event("Hello, ")
         delta_event2 = create_text_delta_event("world!")
 
-        result2 = anthropic_provider._get_parsed_stream_event(
-            delta_event1, "", None
-        )
-        result3 = anthropic_provider._get_parsed_stream_event(
-            delta_event2, "", None
-        )
+        result2 = anthropic_provider._get_parsed_stream_event(delta_event1, "", None)
+        result3 = anthropic_provider._get_parsed_stream_event(delta_event2, "", None)
 
         assert isinstance(result2[0][0], TextBlockDelta)
         assert isinstance(result3[0][0], TextBlockDelta)
@@ -637,91 +526,54 @@ class TestAnthropicStreamEventParsing:
         assert result3[0][0].content.text == "world!"
 
         # Text block stop event
-        stop_event = {
-            "type": "content_block_stop"
-        }
-        result4 = anthropic_provider._get_parsed_stream_event(
-            stop_event, "", ContentBlockCategory.TEXT_BLOCK
-        )
+        stop_event = {"type": "content_block_stop"}
+        result4 = anthropic_provider._get_parsed_stream_event(stop_event, "", ContentBlockCategory.TEXT_BLOCK)
         assert isinstance(result4[0][0], TextBlockEnd)
 
-    def test_complete_tool_use_sequence(
-        self,
-        anthropic_provider: Anthropic
-    ) -> None:
+    def test_complete_tool_use_sequence(self, anthropic_provider: Anthropic) -> None:
         """Test a complete sequence of tool use events."""
         # Tool use start
         start_event = create_tool_use_start_event("test_func", "tool_123")
-        result1 = anthropic_provider._get_parsed_stream_event(
-            start_event, "", None
-        )
+        result1 = anthropic_provider._get_parsed_stream_event(start_event, "", None)
         assert isinstance(result1[0][0], ToolUseRequestStart)
 
         # JSON input delta
         delta_event = create_input_json_delta_event('{"param": "value"}')
-        result2 = anthropic_provider._get_parsed_stream_event(
-            delta_event, "", None
-        )
+        result2 = anthropic_provider._get_parsed_stream_event(delta_event, "", None)
         assert isinstance(result2[0][0], ToolUseRequestDelta)
 
         # Tool use stop
-        stop_event = {
-            "type": "content_block_stop"
-        }
+        stop_event = {"type": "content_block_stop"}
         result3 = anthropic_provider._get_parsed_stream_event(
             stop_event, '{"param": "value"}', ContentBlockCategory.TOOL_USE_REQUEST
         )
         assert isinstance(result3[0][0], ToolUseRequestEnd)
 
-    def test_complete_thinking_sequence(
-        self,
-        anthropic_provider: Anthropic
-    ) -> None:
+    def test_complete_thinking_sequence(self, anthropic_provider: Anthropic) -> None:
         """Test a complete sequence of thinking events."""
         # Thinking start
-        start_event = {
-            "type": "content_block_start",
-            "content_block": {"type": "thinking"}
-        }
-        result1 = anthropic_provider._get_parsed_stream_event(
-            start_event, "", None
-        )
+        start_event = {"type": "content_block_start", "content_block": {"type": "thinking"}}
+        result1 = anthropic_provider._get_parsed_stream_event(start_event, "", None)
         # Thinking start returns single object in 3-tuple
         assert isinstance(result1[0], ExtendedThinkingBlockStart)
 
         # Thinking delta
         delta_event = create_thinking_delta_event("Let me think...")
-        result2 = anthropic_provider._get_parsed_stream_event(
-            delta_event, "", None
-        )
+        result2 = anthropic_provider._get_parsed_stream_event(delta_event, "", None)
         assert isinstance(result2[0][0], ExtendedThinkingBlockDelta)
 
         # Signature (end of thinking)
-        signature_event = {
-            "type": "content_block_delta",
-            "delta": {
-                "type": "signature_delta",
-                "signature": "sig_123"
-            }
-        }
-        result3 = anthropic_provider._get_parsed_stream_event(
-            signature_event, "", None
-        )
+        signature_event = {"type": "content_block_delta", "delta": {"type": "signature_delta", "signature": "sig_123"}}
+        result3 = anthropic_provider._get_parsed_stream_event(signature_event, "", None)
         assert isinstance(result3[0][0], ExtendedThinkingBlockEnd)
 
     # ===============================
     # TYPE SAFETY TESTS
     # ===============================
 
-    def test_return_type_consistency(
-        self,
-        anthropic_provider: Anthropic,
-        mock_message_stop_event: dict
-    ) -> None:
+    def test_return_type_consistency(self, anthropic_provider: Anthropic, mock_message_stop_event: dict) -> None:
         """Test that return types are always consistent with the function signature."""
-        result = anthropic_provider._get_parsed_stream_event(
-            mock_message_stop_event, "", None
-        )
+        result = anthropic_provider._get_parsed_stream_event(mock_message_stop_event, "", None)
 
         # Should always return a 4-tuple
         assert isinstance(result, tuple)
@@ -736,58 +588,35 @@ class TestAnthropicStreamEventParsing:
         assert delta is None or isinstance(delta, str)
         assert usage is None or isinstance(usage, LLMUsage)
 
-    def test_all_streaming_event_types_are_properly_typed(
-        self,
-        anthropic_provider: Anthropic
-    ) -> None:
+    def test_all_streaming_event_types_are_properly_typed(self, anthropic_provider: Anthropic) -> None:
         """Test that all returned StreamingEvent objects have proper types."""
         # Test each event type that returns a StreamingEvent
         test_cases = [
             # Text block start
-            ({
-                "type": "content_block_start",
-                "content_block": {"type": "text"}
-            }, TextBlockStart),
-            
+            ({"type": "content_block_start", "content_block": {"type": "text"}}, TextBlockStart),
             # Text block delta
-            ({
-                "type": "content_block_delta",
-                "delta": {"type": "text_delta", "text": "test"}
-            }, TextBlockDelta),
-            
+            ({"type": "content_block_delta", "delta": {"type": "text_delta", "text": "test"}}, TextBlockDelta),
             # Text block end
-            ({
-                "type": "content_block_stop"
-            }, TextBlockEnd),
-            
+            ({"type": "content_block_stop"}, TextBlockEnd),
             # Tool use start
-            ({
-                "type": "content_block_start",
-                "content_block": {"type": "tool_use", "name": "test", "id": "123"}
-            }, ToolUseRequestStart),
-            
+            (
+                {"type": "content_block_start", "content_block": {"type": "tool_use", "name": "test", "id": "123"}},
+                ToolUseRequestStart,
+            ),
             # Tool use delta
-            ({
-                "type": "content_block_delta",
-                "delta": {"type": "input_json_delta", "partial_json": "{}"}
-            }, ToolUseRequestDelta),
-            
+            (
+                {"type": "content_block_delta", "delta": {"type": "input_json_delta", "partial_json": "{}"}},
+                ToolUseRequestDelta,
+            ),
             # Tool use end
-            ({
-                "type": "content_block_stop"
-            }, ToolUseRequestEnd),
-            
+            ({"type": "content_block_stop"}, ToolUseRequestEnd),
             # Thinking start
-            ({
-                "type": "content_block_start",
-                "content_block": {"type": "thinking"}
-            }, ExtendedThinkingBlockStart),
-            
+            ({"type": "content_block_start", "content_block": {"type": "thinking"}}, ExtendedThinkingBlockStart),
             # Thinking delta
-            ({
-                "type": "content_block_delta",
-                "delta": {"type": "thinking_delta", "thinking": "test"}
-            }, ExtendedThinkingBlockDelta),
+            (
+                {"type": "content_block_delta", "delta": {"type": "thinking_delta", "thinking": "test"}},
+                ExtendedThinkingBlockDelta,
+            ),
         ]
 
         for event_data, expected_type in test_cases:
@@ -798,12 +627,10 @@ class TestAnthropicStreamEventParsing:
                     running_type = ContentBlockCategory.TEXT_BLOCK
                 elif expected_type == ToolUseRequestEnd:
                     running_type = ContentBlockCategory.TOOL_USE_REQUEST
-                    
-            result = anthropic_provider._get_parsed_stream_event(
-                event_data, "", running_type
-            )
+
+            result = anthropic_provider._get_parsed_stream_event(event_data, "", running_type)
             streaming_events = result[0]
-            
+
             # Handle different return patterns
             if expected_type == ExtendedThinkingBlockStart:
                 # Special case: thinking start returns single object in 3-tuple
@@ -815,5 +642,5 @@ class TestAnthropicStreamEventParsing:
                 else:
                     assert len(streaming_events) >= 1
                     assert isinstance(streaming_events[0], expected_type)
-                    assert hasattr(streaming_events[0], 'type')
+                    assert hasattr(streaming_events[0], "type")
                     assert isinstance(streaming_events[0].type, StreamingEventType)

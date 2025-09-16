@@ -1,4 +1,5 @@
 """Fixture data for base thinking parser tests."""
+
 from typing import List
 
 
@@ -12,7 +13,7 @@ class BaseThinkingParserFixtures:
             "This is a simple thought process.",
             "Let me analyze this step by step.",
             "I need to consider the user requirements carefully.",
-            "The solution should be efficient and maintainable."
+            "The solution should be efficient and maintainable.",
         ]
 
     @staticmethod
@@ -28,7 +29,6 @@ class BaseThinkingParserFixtures:
 5. Maintenance and future updates
 
 Let me start with the security aspects first, then move to implementation details.""",
-
             """This is a complex architectural decision. I need to weigh the pros and cons of different approaches:
 
 Microservices approach:
@@ -40,7 +40,6 @@ Monolithic approach:
 - Cons: Scaling challenges, technology lock-in, deployment coupling
 
 Given the requirements, I think a hybrid approach might be best.""",
-
             """The user's code has several potential issues that I need to address:
 
 1. Memory leaks in the event listeners
@@ -49,7 +48,7 @@ Given the requirements, I think a hybrid approach might be best.""",
 4. Missing error handling for edge cases
 5. Security vulnerabilities in user input handling
 
-I'll provide solutions for each of these issues with code examples and explanations."""
+I'll provide solutions for each of these issues with code examples and explanations.""",
         ]
 
     @staticmethod
@@ -72,7 +71,6 @@ I'll provide solutions for each of these issues with code examples and explanati
    - Core logic
    - Error handling
    - Testing strategy""",
-
             """Breaking down this algorithm:
 
 Step 1: Input validation
@@ -89,7 +87,6 @@ Step 3: Output formatting
   • Format results according to specification
   • Add metadata if needed
   • Prepare for serialization""",
-
             """Analysis framework:
 
 A) Problem Definition
@@ -102,7 +99,7 @@ B) Solution Design
    -> What tools and technologies to use?
    -> How to break down the work?
    -> What are the dependencies?
-   -> How to validate the solution?"""
+   -> How to validate the solution?""",
         ]
 
     @staticmethod
@@ -128,7 +125,6 @@ But I also need to consider:
 - How to make the delay configurable
 - Whether to add jitter to prevent thundering herd
 - Logging for debugging purposes""",
-
             """The user's current code has an issue:
 
 ```javascript
@@ -152,7 +148,7 @@ function processData(data) {
         .filter(item => item && typeof item.value === 'number')
         .map(item => item.value * 2);
 }
-```"""
+```""",
         ]
 
     @staticmethod
@@ -166,14 +162,13 @@ function processData(data) {
 3. Conformite RGPD - protection des donnees
 
 I'll implement this with a focus on security and user experience.""",
-
             """El usuario esta pidiendo ayuda con un sistema de autenticacion. Necesito pensar en:
 
 - Seguridad: usar HTTPS, tokens seguros
 - Usabilidad: interfaz intuitiva
 - Mantenimiento: codigo limpio y documentado
 
-I'll provide a solution that covers all these aspects."""
+I'll provide a solution that covers all these aspects.""",
         ]
 
     @staticmethod
@@ -191,7 +186,6 @@ Let's define:
 - Output formatting = O(1)
 
 So: final result = process(core(input)) where process has O(n log n) complexity.""",
-
             """Code symbols and operators:
 
 && (logical AND)
@@ -203,7 +197,6 @@ Important considerations:
 - Triple equals (===) vs double equals (==)
 - Truthiness: 0, "", null, undefined are falsy
 - Type coercion issues""",
-
             """Special formatting characters:
 
 Tabs: \\t
@@ -213,7 +206,6 @@ Backslashes: \\\\
 HTML entities: &lt; &gt; &amp; &quot; &#39;
 
 All these need proper handling in the parser.""",
-
             """Database query with special characters:
 
 SELECT * FROM users
@@ -224,7 +216,7 @@ Need to handle:
 - SQL injection prevention
 - Proper escaping of quotes
 - International characters (UTF-8)
-- Special regex metacharacters: . * + ? ^ $ { } [ ] | ( ) \\"""
+- Special regex metacharacters: . * + ? ^ $ { } [ ] | ( ) \\""",
         ]
 
     @staticmethod
@@ -325,7 +317,6 @@ This migration will require significant investment in tooling, monitoring, and t
    - Cons: Cost, complexity for dynamic content
 
 For their specific use case with frequently changing data, I think a combination of Redis for session data and application-level caching would work best.""",
-
             """Looking at this React performance issue, I need to identify the root cause:
 
 The component is re-rendering unnecessarily on every state change in the parent. This could be due to:
@@ -335,7 +326,6 @@ The component is re-rendering unnecessarily on every state change in the parent.
 4. Context value changes triggering all consumers
 
 I should suggest using React DevTools profiler to identify the exact cause, then provide specific optimizations like useMemo, useCallback, and proper memoization strategies.""",
-
             """This SQL query performance problem requires careful analysis:
 
 The query is doing a full table scan because:
@@ -348,5 +338,5 @@ Solutions would include:
 - Adding appropriate indexes
 - Rewriting the query to avoid functions in WHERE clause
 - Using full-text search for LIKE patterns
-- Considering query restructuring with UNION for OR conditions"""
+- Considering query restructuring with UNION for OR conditions""",
         ]

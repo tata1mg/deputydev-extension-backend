@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 
 class PostProcessWebSocketManagerFixtures:
@@ -11,36 +11,23 @@ class PostProcessWebSocketManagerFixtures:
             "review_id": 123,
             "user_team_id": "team_456",
             "project_id": "project_789",
-            "additional_data": {
-                "config": "test_config",
-                "options": ["option1", "option2"]
-            }
+            "additional_data": {"config": "test_config", "options": ["option1", "option2"]},
         }
 
     @staticmethod
     def get_request_data_without_review_id() -> Dict[str, Any]:
         """Return request data missing review_id."""
-        return {
-            "user_team_id": "team_456",
-            "project_id": "project_789"
-        }
+        return {"user_team_id": "team_456", "project_id": "project_789"}
 
     @staticmethod
     def get_request_data_with_user_team_id() -> Dict[str, Any]:
         """Return request data with user_team_id."""
-        return {
-            "review_id": 456,
-            "user_team_id": "team_123",
-            "project_name": "test_project"
-        }
+        return {"review_id": 456, "user_team_id": "team_123", "project_name": "test_project"}
 
     @staticmethod
     def get_request_data_without_user_team_id() -> Dict[str, Any]:
         """Return request data without user_team_id."""
-        return {
-            "review_id": 789,
-            "project_id": "project_999"
-        }
+        return {"review_id": 789, "project_id": "project_999"}
 
     @staticmethod
     def get_empty_stream_buffer() -> Dict[str, List[str]]:
@@ -50,12 +37,7 @@ class PostProcessWebSocketManagerFixtures:
     @staticmethod
     def get_stream_buffer_with_messages() -> Dict[str, List[str]]:
         """Return stream buffer with existing messages."""
-        return {
-            "messages": [
-                "Previous message 1",
-                "Previous message 2"
-            ]
-        }
+        return {"messages": ["Previous message 1", "Previous message 2"]}
 
     @staticmethod
     def get_sample_post_process_result() -> Dict[str, Any]:
@@ -66,7 +48,7 @@ class PostProcessWebSocketManagerFixtures:
             "issues_found": 3,
             "issues_fixed": 2,
             "processing_time": 15.5,
-            "summary": "Post-processing completed successfully with 2 fixes applied"
+            "summary": "Post-processing completed successfully with 2 fixes applied",
         }
 
     @staticmethod
@@ -75,38 +57,24 @@ class PostProcessWebSocketManagerFixtures:
         return {
             "status": "PARTIAL_SUCCESS",
             "results": {
-                "analysis": {
-                    "total_lines": 1500,
-                    "code_coverage": 85.2,
-                    "complexity_score": 3.4
-                },
+                "analysis": {"total_lines": 1500, "code_coverage": 85.2, "complexity_score": 3.4},
                 "fixes": [
                     {
                         "file": "main.py",
                         "line": 45,
                         "type": "security",
-                        "description": "Fixed SQL injection vulnerability"
+                        "description": "Fixed SQL injection vulnerability",
                     },
                     {
                         "file": "utils.py",
                         "line": 12,
                         "type": "performance",
-                        "description": "Optimized loop performance"
-                    }
+                        "description": "Optimized loop performance",
+                    },
                 ],
-                "warnings": [
-                    {
-                        "file": "config.py",
-                        "line": 8,
-                        "message": "Deprecated function usage"
-                    }
-                ]
+                "warnings": [{"file": "config.py", "line": 8, "message": "Deprecated function usage"}],
             },
-            "metadata": {
-                "processor_version": "1.2.3",
-                "timestamp": "2023-01-01T12:00:00Z",
-                "execution_time": 32.1
-            }
+            "metadata": {"processor_version": "1.2.3", "timestamp": "2023-01-01T12:00:00Z", "execution_time": 32.1},
         }
 
     @staticmethod
@@ -118,7 +86,7 @@ class PostProcessWebSocketManagerFixtures:
             "websocket_789",
             "local_test_999",
             "",
-            "very_long_connection_id_with_special_chars_@#$%"
+            "very_long_connection_id_with_special_chars_@#$%",
         ]
 
     @staticmethod
@@ -133,29 +101,20 @@ class PostProcessWebSocketManagerFixtures:
             {
                 "name": "missing_review_id",
                 "request_data": {"user_team_id": "team_123"},
-                "expected_error": "review_id is required"
+                "expected_error": "review_id is required",
             },
             {
                 "name": "invalid_review_id",
                 "request_data": {"review_id": "invalid", "user_team_id": "team_123"},
-                "expected_error": "Invalid review_id format"
+                "expected_error": "Invalid review_id format",
             },
-            {
-                "name": "empty_request",
-                "request_data": {},
-                "expected_error": "review_id is required"
-            }
+            {"name": "empty_request", "request_data": {}, "expected_error": "review_id is required"},
         ]
 
     @staticmethod
     def get_websocket_message_types() -> List[str]:
         """Return expected WebSocket message types."""
-        return [
-            "POST_PROCESS_START",
-            "POST_PROCESS_COMPLETE",
-            "POST_PROCESS_ERROR",
-            "STREAM_END"
-        ]
+        return ["POST_PROCESS_START", "POST_PROCESS_COMPLETE", "POST_PROCESS_ERROR", "STREAM_END"]
 
     @staticmethod
     def get_start_message_data() -> Dict[str, Any]:
@@ -165,11 +124,7 @@ class PostProcessWebSocketManagerFixtures:
     @staticmethod
     def get_complete_message_data() -> Dict[str, Any]:
         """Return expected complete message data."""
-        return {
-            "message": "Post-processing completed successfully",
-            "result": {"status": "SUCCESS"},
-            "progress": 100
-        }
+        return {"message": "Post-processing completed successfully", "result": {"status": "SUCCESS"}, "progress": 100}
 
     @staticmethod
     def get_error_message_data() -> Dict[str, Any]:

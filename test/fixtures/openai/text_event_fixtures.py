@@ -5,8 +5,9 @@ This module provides mock OpenAI text and message events for testing
 text block streaming functionality.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture

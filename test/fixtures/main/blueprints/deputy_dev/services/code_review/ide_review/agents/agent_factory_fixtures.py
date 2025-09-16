@@ -1,5 +1,5 @@
+from typing import Any, Dict, List
 from unittest.mock import Mock
-from typing import List, Dict, Any
 
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
@@ -16,27 +16,15 @@ class AgentFactoryFixtures:
     @staticmethod
     def get_valid_agent_and_init_params() -> AgentAndInitParams:
         """Return a valid AgentAndInitParams instance."""
-        return AgentAndInitParams(
-            agent_type=AgentTypes.CODE_MAINTAINABILITY,
-            init_params={"test_param": "test_value"}
-        )
+        return AgentAndInitParams(agent_type=AgentTypes.CODE_MAINTAINABILITY, init_params={"test_param": "test_value"})
 
     @staticmethod
     def get_multiple_agent_and_init_params() -> List[AgentAndInitParams]:
         """Return multiple AgentAndInitParams instances."""
         return [
-            AgentAndInitParams(
-                agent_type=AgentTypes.CODE_MAINTAINABILITY,
-                init_params={"param1": "value1"}
-            ),
-            AgentAndInitParams(
-                agent_type=AgentTypes.CODE_COMMUNICATION,
-                init_params={"param2": "value2"}
-            ),
-            AgentAndInitParams(
-                agent_type=AgentTypes.ERROR,
-                init_params={"param3": "value3"}
-            )
+            AgentAndInitParams(agent_type=AgentTypes.CODE_MAINTAINABILITY, init_params={"param1": "value1"}),
+            AgentAndInitParams(agent_type=AgentTypes.CODE_COMMUNICATION, init_params={"param2": "value2"}),
+            AgentAndInitParams(agent_type=AgentTypes.ERROR, init_params={"param3": "value3"}),
         ]
 
     @staticmethod
@@ -52,10 +40,7 @@ class AgentFactoryFixtures:
     @staticmethod
     def get_mock_parsed_comments() -> List[ParsedCommentData]:
         """Return mock parsed comments."""
-        return [
-            Mock(spec=ParsedCommentData),
-            Mock(spec=ParsedCommentData)
-        ]
+        return [Mock(spec=ParsedCommentData), Mock(spec=ParsedCommentData)]
 
     @staticmethod
     def get_agent_type_mappings() -> Dict[AgentTypes, Any]:
@@ -70,7 +55,7 @@ class AgentFactoryFixtures:
             AgentTypes.PR_SUMMARY: "summary_agent",
             AgentTypes.COMMENT_VALIDATION: "validation_agent",
             AgentTypes.COMMENT_SUMMARIZATION: "summarization_agent",
-            AgentTypes.CUSTOM_COMMENTER_AGENT: "custom_agent"
+            AgentTypes.CUSTOM_COMMENTER_AGENT: "custom_agent",
         }
 
     @staticmethod
@@ -97,5 +82,5 @@ class AgentFactoryFixtures:
             AgentTypes.ERROR,
             AgentTypes.PERFORMANCE_OPTIMIZATION,
             AgentTypes.SECURITY,
-            AgentTypes.CUSTOM_COMMENTER_AGENT
+            AgentTypes.CUSTOM_COMMENTER_AGENT,
         ]

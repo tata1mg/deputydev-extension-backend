@@ -1,5 +1,4 @@
-from typing import Dict, Any, List
-from unittest.mock import Mock
+from typing import Any, Dict, List
 
 from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
@@ -8,8 +7,8 @@ from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclass
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
     CommentBuckets,
-    ParsedCommentData,
     ParsedAggregatedCommentData,
+    ParsedCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.base_prompts.dataclasses.main import (
     LLMCommentData,
@@ -27,7 +26,7 @@ class CommentBlendingEngineFixtures:
                 "agents": {
                     "security_agent": {"confidence_score": 0.7},
                     "error_agent": {"confidence_score": 0.8},
-                    "performance_agent": {"confidence_score": 0.6}
+                    "performance_agent": {"confidence_score": 0.6},
                 }
             }
         }
@@ -38,7 +37,7 @@ class CommentBlendingEngineFixtures:
         return {
             "security_agent": {"agent_id": "security_001"},
             "error_agent": {"agent_id": "error_001"},
-            "performance_agent": {"agent_id": "performance_001"}
+            "performance_agent": {"agent_id": "performance_001"},
         }
 
     @staticmethod
@@ -58,11 +57,11 @@ class CommentBlendingEngineFixtures:
                             confidence_score=0.8,
                             bucket="security",
                             corrective_code="# Use secure authentication",
-                            rationale="Insecure authentication method"
+                            rationale="Insecure authentication method",
                         )
                     ]
                 },
-                prompt_tokens_exceeded=False
+                prompt_tokens_exceeded=False,
             )
         }
 
@@ -79,24 +78,24 @@ class CommentBlendingEngineFixtures:
                         LLMCommentData(
                             comment="High confidence comment",
                             file_path="src/main.py",
-                                line_number="10",
+                            line_number="10",
                             confidence_score=0.9,
                             bucket="security",
                             corrective_code="# Secure code",
-                            rationale="Clear security issue"
+                            rationale="Clear security issue",
                         ),
                         LLMCommentData(
                             comment="Low confidence comment",
                             file_path="src/util.py",
-                                line_number="5",
+                            line_number="5",
                             confidence_score=0.5,
                             bucket="security",
                             corrective_code="# Maybe secure",
-                            rationale="Possible security issue"
-                        )
+                            rationale="Possible security issue",
+                        ),
                     ]
                 },
-                prompt_tokens_exceeded=False
+                prompt_tokens_exceeded=False,
             )
         }
 
@@ -113,7 +112,7 @@ class CommentBlendingEngineFixtures:
                 corrective_code="# Fixed code",
                 model="claude-3-sonnet",
                 rationale="Test rationale",
-                is_valid=None
+                is_valid=None,
             ),
             ParsedCommentData(
                 file_path="src/util.py",
@@ -124,8 +123,8 @@ class CommentBlendingEngineFixtures:
                 corrective_code="# Another fix",
                 model="claude-3-sonnet",
                 rationale="Another rationale",
-                is_valid=None
-            )
+                is_valid=None,
+            ),
         ]
 
     @staticmethod
@@ -140,7 +139,7 @@ class CommentBlendingEngineFixtures:
                 confidence_score=0.8,
                 corrective_code="# Fix 1",
                 model="claude-3-sonnet",
-                rationale="Rationale 1"
+                rationale="Rationale 1",
             ),
             ParsedCommentData(
                 file_path="src/main.py",
@@ -150,7 +149,7 @@ class CommentBlendingEngineFixtures:
                 confidence_score=0.7,
                 corrective_code="# Fix 2",
                 model="claude-3-sonnet",
-                rationale="Rationale 2"
+                rationale="Rationale 2",
             ),
             ParsedCommentData(
                 file_path="src/util.py",
@@ -160,19 +159,14 @@ class CommentBlendingEngineFixtures:
                 confidence_score=0.9,
                 corrective_code="# Fix 3",
                 model="claude-3-sonnet",
-                rationale="Rationale 3"
-            )
+                rationale="Rationale 3",
+            ),
         ]
 
     @staticmethod
     def get_validation_response() -> Dict[str, Any]:
         """Return validation response from LLM."""
-        return {
-            "comments": [
-                {"is_valid": True},
-                {"is_valid": False}
-            ]
-        }
+        return {"comments": [{"is_valid": True}, {"is_valid": False}]}
 
     @staticmethod
     def get_mock_agent_result() -> AgentRunResult:
@@ -181,13 +175,8 @@ class CommentBlendingEngineFixtures:
             agent_name="comment_validator",
             agent_type=AgentTypes.COMMENT_VALIDATION,
             model=LLModels.GPT_4_POINT_1,
-            agent_result={
-                "comments": [
-                    {"is_valid": True},
-                    {"is_valid": False}
-                ]
-            },
-            prompt_tokens_exceeded=False
+            agent_result={"comments": [{"is_valid": True}, {"is_valid": False}]},
+            prompt_tokens_exceeded=False,
         )
 
     @staticmethod
@@ -201,7 +190,7 @@ class CommentBlendingEngineFixtures:
                     comments=["Comment 1", "Comment 2"],
                     buckets=[
                         CommentBuckets(name="security", agent_id="sec_001"),
-                        CommentBuckets(name="performance", agent_id="perf_001")
+                        CommentBuckets(name="performance", agent_id="perf_001"),
                     ],
                     agent_ids=["sec_001", "perf_001"],
                     corrective_code=["# Fix 1", "# Fix 2"],
@@ -209,7 +198,7 @@ class CommentBlendingEngineFixtures:
                     model="claude-3-sonnet",
                     is_valid=True,
                     confidence_score=0.75,
-                    rationales=["Rationale 1", "Rationale 2"]
+                    rationales=["Rationale 1", "Rationale 2"],
                 )
             },
             "src/util.py": {
@@ -224,9 +213,9 @@ class CommentBlendingEngineFixtures:
                     model="claude-3-sonnet",
                     is_valid=True,
                     confidence_score=0.9,
-                    rationales=["Rationale 3"]
+                    rationales=["Rationale 3"],
                 )
-            }
+            },
         }
 
     @staticmethod
@@ -246,11 +235,11 @@ class CommentBlendingEngineFixtures:
                         "corrective_code": "# Summarized fix",
                         "model": "gpt-4",
                         "is_valid": True,
-                        "rationale": "Combined rationale"
+                        "rationale": "Combined rationale",
                     }
                 ]
             },
-            prompt_tokens_exceeded=False
+            prompt_tokens_exceeded=False,
         )
 
     @staticmethod
@@ -266,19 +255,14 @@ class CommentBlendingEngineFixtures:
                 agent_name="security_agent",
                 model=LLModels.CLAUDE_3_POINT_7_SONNET,
                 agent_result=None,
-                prompt_tokens_exceeded=False
+                prompt_tokens_exceeded=False,
             )
         }
 
     @staticmethod
     def get_confidence_score_thresholds() -> Dict[str, float]:
         """Return confidence score thresholds for different agents."""
-        return {
-            "security_agent": 0.7,
-            "error_agent": 0.8,
-            "performance_agent": 0.6,
-            "maintainability_agent": 0.5
-        }
+        return {"security_agent": 0.7, "error_agent": 0.8, "performance_agent": 0.6, "maintainability_agent": 0.5}
 
     @staticmethod
     def get_various_session_ids() -> List[int]:

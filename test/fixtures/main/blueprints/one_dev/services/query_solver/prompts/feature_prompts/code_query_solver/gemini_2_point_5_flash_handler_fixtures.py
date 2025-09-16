@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     MessageData,
@@ -21,15 +22,15 @@ class Gemini2Point5FlashHandlerFixtures:
                     "content": "# Main application file\nprint('Hello World')",
                 },
                 {
-                    "path": "src/utils.py", 
+                    "path": "src/utils.py",
                     "content": "# Utility functions\ndef helper():\n    pass",
-                }
+                },
             ],
             "additional_context": "Use recursive approach and include error handling",
             "repository_structure": {
                 "src": ["main.py", "utils.py", "models.py"],
                 "tests": ["test_main.py", "test_utils.py"],
-                "docs": ["README.md", "API.md"]
+                "docs": ["README.md", "API.md"],
             },
             "session_context": "Previous conversation about implementing mathematical functions",
         }
@@ -59,7 +60,7 @@ class Gemini2Point5FlashHandlerFixtures:
                 {
                     "path": "tests/test_auth.py",
                     "content": "import pytest\n\ndef test_login():\n    pass",
-                }
+                },
             ],
             "additional_context": "Use Flask framework with SQLAlchemy ORM. Follow RESTful conventions.",
             "repository_structure": {
@@ -69,15 +70,15 @@ class Gemini2Point5FlashHandlerFixtures:
                 "app/services": ["auth_service.py", "user_service.py"],
                 "tests": ["test_auth.py", "test_users.py", "conftest.py"],
                 "config": ["settings.py", "database.py"],
-                "requirements": ["requirements.txt", "requirements-dev.txt"]
+                "requirements": ["requirements.txt", "requirements-dev.txt"],
             },
             "session_context": "Building a microservice for user management with JWT authentication",
             "technical_requirements": {
                 "framework": "Flask",
                 "database": "PostgreSQL",
                 "authentication": "JWT",
-                "testing": "pytest"
-            }
+                "testing": "pytest",
+            },
         }
 
     @staticmethod
@@ -86,9 +87,7 @@ class Gemini2Point5FlashHandlerFixtures:
         return [
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
-                content=TextBlockContent(
-                    text="I'll help you create a factorial function. Here's the implementation:"
-                )
+                content=TextBlockContent(text="I'll help you create a factorial function. Here's the implementation:"),
             ),
             TextBlockData(
                 type=ContentBlockCategory.TEXT_BLOCK,
@@ -135,8 +134,8 @@ I've implemented a recursive factorial function with proper error handling. The 
 4. Recursive calculation for other values
 5. Comprehensive docstring with examples
 </summary>"""
-                )
-            )
+                ),
+            ),
         ]
 
     @staticmethod
@@ -152,7 +151,6 @@ class Calculator:
     def add(self, a, b):
         return a + b
 </code_block>""",
-            
             # JavaScript code block with diff
             """<code_block>
 <programming_language>javascript</programming_language>
@@ -171,7 +169,6 @@ class Calculator:
    );
  }
 </code_block>""",
-            
             # TypeScript code block
             """<code_block>
 <programming_language>typescript</programming_language>
@@ -186,8 +183,7 @@ interface User {
 
 export default User;
 </code_block>""",
-            
-            # SQL code block  
+            # SQL code block
             """<code_block>
 <programming_language>sql</programming_language>
 <file_path>migrations/001_create_users.sql</file_path>
@@ -198,7 +194,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-</code_block>"""
+</code_block>""",
         ]
 
     @staticmethod
@@ -212,7 +208,6 @@ The user is asking for a factorial function. I need to consider:
 3. Proper documentation
 4. Performance considerations for large numbers
 </thinking>""",
-            
             """<thinking>
 For this REST API implementation, I should:
 1. Set up proper project structure
@@ -222,12 +217,11 @@ For this REST API implementation, I should:
 5. Include unit tests with good coverage
 6. Follow REST conventions for endpoints
 </thinking>""",
-            
             """<thinking>
 The diff shows we're adding onClick and disabled props to the Button component.
 This is a common pattern in React for making components more reusable.
 I should ensure proper TypeScript types if this were a .tsx file.
-</thinking>"""
+</thinking>""",
         ]
 
     @staticmethod
@@ -242,7 +236,6 @@ I've implemented a recursive factorial function with comprehensive error handlin
 - Clear documentation with examples
 - Follows Python best practices
 </summary>""",
-            
             """<summary>
 I've created a complete REST API structure with:
 - User authentication using JWT tokens
@@ -252,14 +245,13 @@ I've created a complete REST API structure with:
 - Proper error handling and validation
 - Configuration management for different environments
 </summary>""",
-            
             """<summary>
 Updated the Button component to be more flexible:
 - Added onClick handler prop
 - Added disabled state with default value
 - Maintained backward compatibility
 - Component is now more reusable across the application
-</summary>"""
+</summary>""",
         ]
 
     @staticmethod
@@ -319,7 +311,6 @@ I've added an email validation utility function and updated the main application
 2. Updated main.py to import and use the validation
 3. Added user input handling with validation feedback
 </summary>""",
-            
             """Some introductory text before the blocks.
 
 <thinking>
@@ -362,5 +353,5 @@ Additional explanatory text between blocks.
 
 <summary>
 Created basic HTML template with accompanying CSS styles for a clean, centered layout.
-</summary>"""
+</summary>""",
         ]

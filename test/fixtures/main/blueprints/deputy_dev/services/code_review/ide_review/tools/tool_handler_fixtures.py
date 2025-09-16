@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 
 class ExtensionToolHandlersFixtures:
@@ -9,18 +9,10 @@ class ExtensionToolHandlersFixtures:
         """Return tool input with comments and summary."""
         return {
             "comments": [
-                {
-                    "line": 1,
-                    "message": "Consider using a more descriptive variable name",
-                    "severity": "medium"
-                },
-                {
-                    "line": 5,
-                    "message": "This function could be optimized",
-                    "severity": "low"
-                }
+                {"line": 1, "message": "Consider using a more descriptive variable name", "severity": "medium"},
+                {"line": 5, "message": "This function could be optimized", "severity": "low"},
             ],
-            "summary": "Overall code quality is good with minor improvements needed"
+            "summary": "Overall code quality is good with minor improvements needed",
         }
 
     @staticmethod
@@ -31,9 +23,7 @@ class ExtensionToolHandlersFixtures:
     @staticmethod
     def get_tool_input_missing_keys() -> Dict[str, Any]:
         """Return tool input with missing required keys."""
-        return {
-            "other_key": "other_value"
-        }
+        return {"other_key": "other_value"}
 
     @staticmethod
     def get_parse_final_response_with_complex_data() -> Dict[str, Any]:
@@ -47,11 +37,11 @@ class ExtensionToolHandlersFixtures:
                     "metadata": {
                         "author": "test_user",
                         "timestamp": "2023-01-01T00:00:00Z",
-                        "tags": ["security", "performance"]
-                    }
+                        "tags": ["security", "performance"],
+                    },
                 }
             ],
-            "summary": "Detailed summary with multiple sentences. This includes various aspects of the code review."
+            "summary": "Detailed summary with multiple sentences. This includes various aspects of the code review.",
         }
 
     @staticmethod
@@ -59,15 +49,13 @@ class ExtensionToolHandlersFixtures:
         """Return tool input for pr_review_planner."""
         return {
             "review_focus": "security and performance",
-            "additional_context": "Focus on authentication and database queries"
+            "additional_context": "Focus on authentication and database queries",
         }
 
     @staticmethod
     def get_tool_input_without_review_focus() -> Dict[str, Any]:
         """Return tool input without review_focus key."""
-        return {
-            "additional_context": "Some other context"
-        }
+        return {"additional_context": "Some other context"}
 
     @staticmethod
     def get_sample_pr_diff() -> str:
@@ -95,13 +83,13 @@ index 1234567..abcdefg 100644
                 "focus_areas": ["security", "performance"],
                 "files_to_review": ["example.py", "config.py"],
                 "estimated_time": "30 minutes",
-                "priority": "high"
+                "priority": "high",
             },
             "suggestions": [
                 "Review authentication logic",
                 "Check for SQL injection vulnerabilities",
-                "Analyze performance bottlenecks"
-            ]
+                "Analyze performance bottlenecks",
+            ],
         }
 
     @staticmethod
@@ -112,12 +100,7 @@ index 1234567..abcdefg 100644
     @staticmethod
     def get_prompt_vars_template() -> Dict[str, str]:
         """Return template for prompt variables."""
-        return {
-            "PULL_REQUEST_TITLE": "NA",
-            "PULL_REQUEST_DESCRIPTION": "NA",
-            "PULL_REQUEST_DIFF": "",
-            "FOCUS_AREA": ""
-        }
+        return {"PULL_REQUEST_TITLE": "NA", "PULL_REQUEST_DESCRIPTION": "NA", "PULL_REQUEST_DIFF": "", "FOCUS_AREA": ""}
 
     @staticmethod
     def get_comments_with_various_types() -> List[Dict[str, Any]]:
@@ -130,7 +113,7 @@ index 1234567..abcdefg 100644
                 "is_blocking": True,
                 "score": 8.5,
                 "tags": ["bug", "critical"],
-                "metadata": None
+                "metadata": None,
             },
             {
                 "line": 15,
@@ -139,11 +122,8 @@ index 1234567..abcdefg 100644
                 "is_blocking": False,
                 "score": 3.2,
                 "tags": [],
-                "metadata": {
-                    "category": "style",
-                    "auto_fixable": True
-                }
-            }
+                "metadata": {"category": "style", "auto_fixable": True},
+            },
         ]
 
     @staticmethod
@@ -153,5 +133,5 @@ index 1234567..abcdefg 100644
             "",
             "Short summary",
             "This is a longer summary with multiple sentences. It contains detailed information about the code review.",
-            "Summary with special characters: @#$%^&*()_+{}|:<>?[]\\;'\",./"
+            "Summary with special characters: @#$%^&*()_+{}|:<>?[]\\;'\",./",
         ]

@@ -50,16 +50,16 @@ def main():
 
 
 if __name__ == "__main__":
-    main()"""
+    main()""",
         }
 
     @staticmethod
     def get_diff_code_block() -> Dict[str, Any]:
-            """Get a diff code block for testing."""
-            return {
-                "language": "javascript",
-                "file_path": "src/components/UserProfile.jsx",
-                "is_diff": True,
+        """Get a diff code block for testing."""
+        return {
+            "language": "javascript",
+            "file_path": "src/components/UserProfile.jsx",
+            "is_diff": True,
             "code": """@@ -1,15 +1,25 @@
  import React from 'react';
 +import PropTypes from 'prop-types';
@@ -100,16 +100,16 @@ if __name__ == "__main__":
 +    showEditButton: PropTypes.bool,
 +};
 +
- export default UserProfile;"""
+ export default UserProfile;""",
         }
 
     @staticmethod
     def get_complex_diff_code_block() -> Dict[str, Any]:
-            """Get a complex diff code block with multiple hunks."""
-            return {
-                "language": "python",
-                "file_path": "src/services/auth_service.py",
-                "is_diff": True,
+        """Get a complex diff code block with multiple hunks."""
+        return {
+            "language": "python",
+            "file_path": "src/services/auth_service.py",
+            "is_diff": True,
             "code": """@@ -1,8 +1,15 @@
 +import logging
 +from datetime import datetime, timedelta
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 +            return None
 +        except jwt.InvalidTokenError as e:
 +            self.logger.error(f"Invalid token: {e}")
-             return None"""
+             return None""",
         }
 
     @staticmethod
@@ -205,7 +205,6 @@ if __name__ == "__main__":
 6. Documentation with proper docstrings
 
 I'll implement this with proper type hints and include a main function for testing.""",
-
             """This React component update requires several improvements:
 
 1. Add PropTypes for better type checking
@@ -220,7 +219,6 @@ The diff shows we're adding:
 - showEditButton prop with default value
 - Proper date formatting
 - Event handler for edit functionality""",
-
             """For this authentication service refactor, I need to address:
 
 1. **Type Safety**: Add proper type hints for all methods
@@ -233,7 +231,7 @@ The diff shows we're adding:
 5. **Error Handling**: More granular error handling with specific error types
 6. **Additional Claims**: Support for custom claims in tokens
 
-The implementation follows JWT best practices and improves the overall security posture."""
+The implementation follows JWT best practices and improves the overall security posture.""",
         ]
 
     @staticmethod
@@ -256,7 +254,6 @@ The implementation follows JWT best practices and improves the overall security 
 - Graceful handling in the main function
 
 The implementation follows Python best practices and provides clear feedback for invalid inputs.""",
-
             """I've enhanced the UserProfile React component with the following improvements:
 
 **New Features:**
@@ -275,7 +272,6 @@ The implementation follows Python best practices and provides clear feedback for
 - Added comprehensive PropTypes validation
 - Improved user experience with better date display
 - Clean, maintainable code structure""",
-
             """I've significantly improved the authentication service with enhanced security and functionality:
 
 **Security Enhancements:**
@@ -296,18 +292,18 @@ The implementation follows Python best practices and provides clear feedback for
 - Detailed logging for authentication events
 - More flexible token generation with custom claims
 
-This implementation follows JWT security best practices and provides a robust foundation for authentication systems."""
+This implementation follows JWT security best practices and provides a robust foundation for authentication systems.""",
         ]
 
     @staticmethod
     def get_code_block_examples() -> List[Dict[str, Any]]:
         """Get various code block examples for testing."""
         return [
-                # Python class example
-                {
-                    "language": "python",
-                    "file_path": "src/models/user.py",
-                    "is_diff": False,
+            # Python class example
+            {
+                "language": "python",
+                "file_path": "src/models/user.py",
+                "is_diff": False,
                 "code": """from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
@@ -335,14 +331,13 @@ class User:
         self.last_login = datetime.now()
     
     def __str__(self) -> str:
-        return f"User(id={self.id}, username='{self.username}', active={self.is_active})\""""
+        return f"User(id={self.id}, username='{self.username}', active={self.is_active})\"""",
             },
-            
-                # TypeScript interface
-                {
-                    "language": "typescript",
-                    "file_path": "src/types/api.ts",
-                    "is_diff": False,
+            # TypeScript interface
+            {
+                "language": "typescript",
+                "file_path": "src/types/api.ts",
+                "is_diff": False,
                 "code": """export interface ApiResponse<T> {
   data: T;
   status: number;
@@ -375,14 +370,13 @@ export interface RequestConfig {
   params?: Record<string, any>;
   data?: any;
   timeout?: number;
-}"""
+}""",
             },
-            
-                # SQL schema
-                {
-                    "language": "sql",
-                    "file_path": "migrations/003_create_orders_table.sql",
-                    "is_diff": False,
+            # SQL schema
+            {
+                "language": "sql",
+                "file_path": "migrations/003_create_orders_table.sql",
+                "is_diff": False,
                 "code": """-- Create orders table with proper constraints and indexes
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
@@ -416,45 +410,32 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_orders_updated_at 
     BEFORE UPDATE ON orders 
     FOR EACH ROW 
-    EXECUTE PROCEDURE update_updated_at_column();"""
-            }
+    EXECUTE PROCEDURE update_updated_at_column();""",
+            },
         ]
 
     @staticmethod
     def get_malformed_examples() -> List[Dict[str, Any]]:
         """Get malformed examples for error handling tests."""
         return [
-                # Missing required fields
-                {
-                    "language": "python",
-                    # Missing file_path
-                    "is_diff": False,
-                "code": "print('missing file path')"
+            # Missing required fields
+            {
+                "language": "python",
+                # Missing file_path
+                "is_diff": False,
+                "code": "print('missing file path')",
             },
-            
-                # Invalid data types
-                {
-                    "language": 123,  # Should be string
-                    "file_path": "test.py",
-                    "is_diff": "maybe",  # Should be boolean
-                "code": "print('invalid types')"
+            # Invalid data types
+            {
+                "language": 123,  # Should be string
+                "file_path": "test.py",
+                "is_diff": "maybe",  # Should be boolean
+                "code": "print('invalid types')",
             },
-            
-                # Empty required fields
-                {
-                    "language": "",
-                    "file_path": "",
-                    "is_diff": False,
-                "code": ""
-            },
-            
-                # None values
-                {
-                    "language": None,
-                    "file_path": None,
-                    "is_diff": None,
-                "code": None
-            }
+            # Empty required fields
+            {"language": "", "file_path": "", "is_diff": False, "code": ""},
+            # None values
+            {"language": None, "file_path": None, "is_diff": None, "code": None},
         ]
 
     @staticmethod
@@ -462,22 +443,18 @@ CREATE TRIGGER update_orders_updated_at
         """Get text content examples for TextBlockParser testing."""
         return [
             "Simple text content for testing",
-            
             """Multi-line text content
 with line breaks and
 various formatting elements.""",
-            
             """Text with special characters: áéíóú, ñ, ü, ç
 And symbols: @#$%^&*()_+-=[]{}|;':\",./<>?
 Unicode: 🚀 💡 ⚡ 🔥 ✨""",
-            
             """Code-like text that's not in a code block:
 def function():
     return "This is just text, not code"
     
 if condition:
     do_something()""",
-            
             """JSON-like text content:
 {
     "name": "Test User",
@@ -487,54 +464,31 @@ if condition:
         "notifications": true
     }
 }""",
-            
             # Very long text
-            "This is a very long text content that should test the parser's ability to handle large amounts of text data. " * 100,
-            
+            "This is a very long text content that should test the parser's ability to handle large amounts of text data. "
+            * 100,
             # Text with tabs and special whitespace
             "\t\tIndented text with tabs\n\r\nWindows line endings\n\nMultiple newlines",
-            
             # Empty and whitespace-only content
             "",
             "   ",
             "\n\n\n",
-            "\t\t\t"
+            "\t\t\t",
         ]
 
     @staticmethod
     def get_streaming_event_examples() -> List[Dict[str, Any]]:
         """Get examples for streaming event testing."""
         return [
-            {
-                "event_type": "text_block_start",
-                "content": None
-            },
-            {
-                "event_type": "text_block_delta",
-                "content": "This is streaming text content"
-            },
-            {
-                "event_type": "text_block_end",
-                "content": None
-            },
+            {"event_type": "text_block_start", "content": None},
+            {"event_type": "text_block_delta", "content": "This is streaming text content"},
+            {"event_type": "text_block_end", "content": None},
             {
                 "event_type": "tool_use_start",
-                "content": {
-                    "tool_name": "file_searcher",
-                    "tool_input": {"query": "search term"}
-                }
+                "content": {"tool_name": "file_searcher", "tool_input": {"query": "search term"}},
             },
-            {
-                "event_type": "tool_use_delta",
-                "content": "Tool execution in progress..."
-            },
-            {
-                "event_type": "tool_use_end",
-                "content": {
-                    "result": "Tool execution completed",
-                    "status": "success"
-                }
-            }
+            {"event_type": "tool_use_delta", "content": "Tool execution in progress..."},
+            {"event_type": "tool_use_end", "content": {"result": "Tool execution completed", "status": "success"}},
         ]
 
     @staticmethod
@@ -543,15 +497,12 @@ if condition:
         return [
             # Small content
             "Small test content",
-            
             # Medium content
             "Medium sized content that should test parser performance with moderate amounts of data. " * 50,
-            
             # Large content
             "Large content block for performance testing with substantial amounts of text data. " * 1000,
-            
             # Very large content
-            "Very large content block designed to stress test the parser with massive amounts of text. " * 5000
+            "Very large content block designed to stress test the parser with massive amounts of text. " * 5000,
         ]
 
     @staticmethod
@@ -559,14 +510,14 @@ if condition:
         """Get edge case examples for robust testing."""
         return [
             None,  # None input
-            "",    # Empty string
-            " ",   # Single space
+            "",  # Empty string
+            " ",  # Single space
             "\n",  # Single newline
             "\t",  # Single tab
-            "\r\n", # Windows line ending
-            0,     # Zero
-            [],    # Empty list
-            {},    # Empty dict
-            False, # Boolean false
+            "\r\n",  # Windows line ending
+            0,  # Zero
+            [],  # Empty list
+            {},  # Empty dict
+            False,  # Boolean false
             True,  # Boolean true
         ]

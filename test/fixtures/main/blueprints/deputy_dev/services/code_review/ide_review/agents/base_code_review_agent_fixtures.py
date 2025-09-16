@@ -7,17 +7,16 @@ mock data, and edge cases.
 """
 
 from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     LLMCallResponseTypes,
     NonStreamingParsedLLMCallResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.models.dto.message_thread_dto import LLMUsage
+
+from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,
@@ -56,8 +55,7 @@ def mock_prompt_handler() -> MagicMock:
     """Create a mock prompt handler."""
     handler = MagicMock()
     handler.get_prompt.return_value = UserAndSystemMessages(
-        system_message="Test system message",
-        user_message="Test user message"
+        system_message="Test system message", user_message="Test user message"
     )
     return handler
 
@@ -68,7 +66,7 @@ def sample_user_and_system_messages() -> UserAndSystemMessages:
     """Create sample user and system messages."""
     return UserAndSystemMessages(
         system_message="You are a helpful code review assistant.",
-        user_message="Please review this code for security vulnerabilities."
+        user_message="Please review this code for security vulnerabilities.",
     )
 
 
@@ -76,19 +74,13 @@ def sample_user_and_system_messages() -> UserAndSystemMessages:
 def large_user_and_system_messages() -> UserAndSystemMessages:
     """Create large user and system messages for token limit testing."""
     large_content = "x" * 100000  # 100k characters
-    return UserAndSystemMessages(
-        system_message=f"System: {large_content}",
-        user_message=f"User: {large_content}"
-    )
+    return UserAndSystemMessages(system_message=f"System: {large_content}", user_message=f"User: {large_content}")
 
 
 @pytest.fixture
 def empty_user_and_system_messages() -> UserAndSystemMessages:
     """Create empty user and system messages."""
-    return UserAndSystemMessages(
-        system_message="",
-        user_message=""
-    )
+    return UserAndSystemMessages(system_message="", user_message="")
 
 
 # LLM response fixtures
@@ -103,7 +95,7 @@ def sample_llm_response() -> NonStreamingParsedLLMCallResponse:
         prompt_vars={},
         prompt_id="test_prompt",
         model_used=LLModels.GPT_4O,
-        query_id=123
+        query_id=123,
     )
 
 
@@ -119,7 +111,7 @@ def sample_llm_response_dual_pass() -> List[NonStreamingParsedLLMCallResponse]:
             prompt_vars={},
             prompt_id="test_prompt_1",
             model_used=LLModels.GPT_4O,
-            query_id=123
+            query_id=123,
         ),
         NonStreamingParsedLLMCallResponse(
             type=LLMCallResponseTypes.NON_STREAMING,
@@ -129,8 +121,8 @@ def sample_llm_response_dual_pass() -> List[NonStreamingParsedLLMCallResponse]:
             prompt_vars={},
             prompt_id="test_prompt_2",
             model_used=LLModels.GPT_4O,
-            query_id=124
-        )
+            query_id=124,
+        ),
     ]
 
 
@@ -145,7 +137,7 @@ def sample_llm_response_multiple_content() -> NonStreamingParsedLLMCallResponse:
         prompt_vars={},
         prompt_id="test_prompt",
         model_used=LLModels.GPT_4O,
-        query_id=125
+        query_id=125,
     )
 
 
@@ -160,14 +152,9 @@ def sample_agent_run_result_success() -> AgentRunResult:
         agent_type=AgentTypes.SECURITY,
         model=LLModels.GPT_4O,
         tokens_data={
-            "securityPASS_1": {
-                "system_prompt": 100,
-                "user_prompt": 50,
-                "input_tokens": 150,
-                "output_tokens": 75
-            }
+            "securityPASS_1": {"system_prompt": 100, "user_prompt": 50, "input_tokens": 150, "output_tokens": 75}
         },
-        display_name="Security Agent"
+        display_name="Security Agent",
     )
 
 
@@ -180,12 +167,7 @@ def sample_agent_run_result_token_exceeded() -> AgentRunResult:
         agent_name="security",
         agent_type=AgentTypes.SECURITY,
         model=LLModels.GPT_4O,
-        tokens_data={
-            "securityPASS_1": {
-                "system_prompt": 50000,
-                "user_prompt": 50000
-            }
-        }
+        tokens_data={"securityPASS_1": {"system_prompt": 50000, "user_prompt": 50000}},
     )
 
 
@@ -199,20 +181,10 @@ def sample_agent_run_result_dual_pass() -> AgentRunResult:
         agent_type=AgentTypes.SECURITY,
         model=LLModels.GPT_4O,
         tokens_data={
-            "securityPASS_1": {
-                "system_prompt": 100,
-                "user_prompt": 50,
-                "input_tokens": 150,
-                "output_tokens": 75
-            },
-            "securityPASS_2": {
-                "system_prompt": 120,
-                "user_prompt": 60,
-                "input_tokens": 180,
-                "output_tokens": 90
-            }
+            "securityPASS_1": {"system_prompt": 100, "user_prompt": 50, "input_tokens": 150, "output_tokens": 75},
+            "securityPASS_2": {"system_prompt": 120, "user_prompt": 60, "input_tokens": 180, "output_tokens": 90},
         },
-        display_name="Security Agent"
+        display_name="Security Agent",
     )
 
 
@@ -220,31 +192,13 @@ def sample_agent_run_result_dual_pass() -> AgentRunResult:
 @pytest.fixture
 def mock_config() -> Dict[str, Any]:
     """Create mock configuration for testing."""
-    return {
-        "LLM_MODELS": {
-            "GPT_4O": {
-                "INPUT_TOKENS_LIMIT": 128000
-            },
-            "GPT_40_MINI": {
-                "INPUT_TOKENS_LIMIT": 64000
-            }
-        }
-    }
+    return {"LLM_MODELS": {"GPT_4O": {"INPUT_TOKENS_LIMIT": 128000}, "GPT_40_MINI": {"INPUT_TOKENS_LIMIT": 64000}}}
 
 
 @pytest.fixture
 def mock_config_low_token_limit() -> Dict[str, Any]:
     """Create mock configuration with low token limits for testing."""
-    return {
-        "LLM_MODELS": {
-            "GPT_4O": {
-                "INPUT_TOKENS_LIMIT": 100
-            },
-            "GPT_40_MINI": {
-                "INPUT_TOKENS_LIMIT": 50
-            }
-        }
-    }
+    return {"LLM_MODELS": {"GPT_4O": {"INPUT_TOKENS_LIMIT": 100}, "GPT_40_MINI": {"INPUT_TOKENS_LIMIT": 50}}}
 
 
 # Edge case fixtures
@@ -263,21 +217,13 @@ def empty_prompt_variables() -> Dict[str, Optional[str]]:
 @pytest.fixture
 def sample_prompt_variables() -> Dict[str, Optional[str]]:
     """Create sample prompt variables."""
-    return {
-        "code_content": "def test(): pass",
-        "file_path": "/path/to/file.py",
-        "context": "Testing context"
-    }
+    return {"code_content": "def test(): pass", "file_path": "/path/to/file.py", "context": "Testing context"}
 
 
 @pytest.fixture
 def prompt_variables_with_none_values() -> Dict[str, Optional[str]]:
     """Create prompt variables with None values."""
-    return {
-        "code_content": "def test(): pass",
-        "file_path": None,
-        "context": None
-    }
+    return {"code_content": "def test(): pass", "file_path": None, "context": None}
 
 
 # Test agent type scenarios
@@ -327,7 +273,7 @@ def large_tokens_data() -> Dict[str, Dict[str, Any]]:
             "system_prompt": 1000 + i,
             "user_prompt": 500 + i,
             "input_tokens": 1500 + i,
-            "output_tokens": 750 + i
+            "output_tokens": 750 + i,
         }
         for i in range(100)
     }

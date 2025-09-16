@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import Mock
-from typing import Dict
 
+import pytest
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.core.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )
@@ -14,8 +16,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_a
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.models.dto.message_thread_dto import LLModels
 from test.fixtures.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_agents.commenters.commenter_agents.security_agent_fixtures import (
     SecurityAgentFixtures,
 )
@@ -44,15 +44,15 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         # Act
         agent = SecurityAgent(
             context_service=mock_context_service,
             llm_handler=mock_llm_handler,
             model=model,
-            user_agent_dto=mock_user_agent_dto
+            user_agent_dto=mock_user_agent_dto,
         )
-        
+
         # Assert
         assert agent.context_service == mock_context_service
         assert agent.llm_handler == mock_llm_handler
@@ -71,17 +71,17 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         agent = SecurityAgent(
             context_service=mock_context_service,
             llm_handler=mock_llm_handler,
             model=model,
-            user_agent_dto=mock_user_agent_dto
+            user_agent_dto=mock_user_agent_dto,
         )
-        
+
         # Act
         result = agent.get_agent_specific_tokens_data()
-        
+
         # Assert
         assert isinstance(result, dict)
         assert result == {}
@@ -99,14 +99,14 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         agent = SecurityAgent(
             context_service=mock_context_service,
             llm_handler=mock_llm_handler,
             model=model,
-            user_agent_dto=mock_user_agent_dto
+            user_agent_dto=mock_user_agent_dto,
         )
-        
+
         # Act & Assert
         assert agent.agent_type == AgentTypes.SECURITY
 
@@ -123,14 +123,14 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         agent = SecurityAgent(
             context_service=mock_context_service,
             llm_handler=mock_llm_handler,
             model=model,
-            user_agent_dto=mock_user_agent_dto
+            user_agent_dto=mock_user_agent_dto,
         )
-        
+
         # Act & Assert
         assert PromptFeatures.SECURITY_COMMENTS_GENERATION in agent.prompt_features
         assert len(agent.prompt_features) == 1
@@ -148,14 +148,14 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         agent = SecurityAgent(
             context_service=mock_context_service,
             llm_handler=mock_llm_handler,
             model=model,
-            user_agent_dto=mock_user_agent_dto
+            user_agent_dto=mock_user_agent_dto,
         )
-        
+
         # Act & Assert
         assert agent.is_dual_pass is False
 
@@ -172,16 +172,16 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         for model in models:
             # Act
             agent = SecurityAgent(
                 context_service=mock_context_service,
                 llm_handler=mock_llm_handler,
                 model=model,
-                user_agent_dto=mock_user_agent_dto
+                user_agent_dto=mock_user_agent_dto,
             )
-            
+
             # Assert
             assert agent.model == model
             assert agent.agent_type == AgentTypes.SECURITY
@@ -199,7 +199,7 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         # Act - Test that base constructor doesn't accept additional kwargs
         with pytest.raises(TypeError):
             agent = SecurityAgent(
@@ -207,7 +207,7 @@ class TestSecurityAgent:
                 llm_handler=mock_llm_handler,
                 model=model,
                 user_agent_dto=mock_user_agent_dto,
-                custom_param="test_value"  # This should fail
+                custom_param="test_value",  # This should fail
             )
 
     def test_get_agent_specific_tokens_data_return_type(self) -> None:
@@ -223,17 +223,17 @@ class TestSecurityAgent:
         mock_user_agent_dto.objective = "Test objective"
         mock_user_agent_dto.custom_prompt = "Test prompt"
         mock_user_agent_dto.confidence_score = 0.8
-        
+
         agent = SecurityAgent(
             context_service=mock_context_service,
             llm_handler=mock_llm_handler,
             model=model,
-            user_agent_dto=mock_user_agent_dto
+            user_agent_dto=mock_user_agent_dto,
         )
-        
+
         # Act
         result = agent.get_agent_specific_tokens_data()
-        
+
         # Assert
         assert isinstance(result, dict)
         for key, value in result.items():

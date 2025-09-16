@@ -6,8 +6,6 @@ of the _set_required_model method including different model changes,
 session states, and retry reasons.
 """
 
-from typing import Optional
-from unittest.mock import MagicMock
 from datetime import datetime
 
 import pytest
@@ -198,25 +196,19 @@ def advanced_model_change_params() -> dict:
 @pytest.fixture
 def expected_info_message_data_no_retry() -> InfoMessageData:
     """Expected info message data for model change without retry reason."""
-    return InfoMessageData(
-        info="LLM model changed from GPT_4_POINT_1_NANO to CLAUDE_3_POINT_5_SONNET by the user."
-    )
+    return InfoMessageData(info="LLM model changed from GPT_4_POINT_1_NANO to CLAUDE_3_POINT_5_SONNET by the user.")
 
 
 @pytest.fixture
 def expected_info_message_data_tool_failed() -> InfoMessageData:
     """Expected info message data for tool use failed retry."""
-    return InfoMessageData(
-        info="LLM model changed from CLAUDE_4_SONNET to GPT_4_POINT_1 due to tool use failure."
-    )
+    return InfoMessageData(info="LLM model changed from CLAUDE_4_SONNET to GPT_4_POINT_1 due to tool use failure.")
 
 
 @pytest.fixture
 def expected_info_message_data_throttled() -> InfoMessageData:
     """Expected info message data for throttled retry."""
-    return InfoMessageData(
-        info="LLM model changed from CLAUDE_4_SONNET to GEMINI_2_POINT_5_FLASH due to throttling."
-    )
+    return InfoMessageData(info="LLM model changed from CLAUDE_4_SONNET to GEMINI_2_POINT_5_FLASH due to throttling.")
 
 
 @pytest.fixture
@@ -252,9 +244,7 @@ def expected_agent_chat_create_request_with_reasoning() -> AgentChatCreateReques
     return AgentChatCreateRequest(
         session_id=123,
         actor=ActorType.SYSTEM,
-        message_data=InfoMessageData(
-            info="LLM model changed from GPT_4_POINT_1_NANO to CLAUDE_4_SONNET by the user."
-        ),
+        message_data=InfoMessageData(info="LLM model changed from GPT_4_POINT_1_NANO to CLAUDE_4_SONNET by the user."),
         message_type=ChatMessageType.INFO,
         metadata={
             "llm_model": LLModels.CLAUDE_4_SONNET.value,
@@ -398,7 +388,7 @@ def multiple_retry_reasons_params() -> list:
         "session_type": "retry_test_session",
         "reasoning": Reasoning.MEDIUM,
     }
-    
+
     return [
         {**base_params, "retry_reason": RetryReasons.TOOL_USE_FAILED},
         {**base_params, "retry_reason": RetryReasons.THROTTLED},
