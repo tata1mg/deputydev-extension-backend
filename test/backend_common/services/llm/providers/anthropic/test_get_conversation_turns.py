@@ -17,42 +17,18 @@ The tests follow the .deputydevrules guidelines and use proper fixtures.
 import asyncio
 import json
 from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from test.fixtures.anthropic import (
-    anthropic_provider,
-    anthropic_simple_text_message,
-    anthropic_assistant_text_message,
-    anthropic_tool_use_request_message,
-    anthropic_tool_use_response_message,
-    anthropic_message_with_file_attachment,
-    anthropic_message_with_thinking_content,
-    anthropic_message_with_redacted_thinking,
-    anthropic_mixed_content_message,
-    anthropic_simple_conversation_history,
-    anthropic_complex_conversation_history,
-    anthropic_conversation_with_multiple_tool_calls,
-    anthropic_mock_image_attachment_data,
-    anthropic_mock_document_attachment_data,
-    anthropic_attachment_data_task_map_empty,
-    anthropic_attachment_data_task_map_with_image,
-    anthropic_attachment_data_task_map_with_document,
-    anthropic_out_of_order_tool_conversation,
-    anthropic_message_with_empty_text,
-    anthropic_message_with_multiple_text_blocks,
-)
+from deputydev_core.llm_handler.dataclasses.main import ConversationRole, ConversationTurn
 
 from app.backend_common.models.dto.message_thread_dto import (
-    MessageThreadDTO,
     MessageThreadActor,
+    MessageThreadDTO,
 )
-from app.backend_common.services.llm.providers.anthropic.llm_provider import Anthropic
-from app.backend_common.services.llm.dataclasses.main import ConversationTurn, ConversationRole
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     ChatAttachmentDataWithObjectBytes,
 )
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 
 class TestAnthropicGetConversationTurns:
@@ -69,7 +45,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert result == []
         assert isinstance(result, list)
 
@@ -85,7 +61,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_simple_text_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         assert isinstance(result[0], ConversationTurn)
         assert result[0].role == ConversationRole.USER
@@ -105,7 +81,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_assistant_text_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         assert isinstance(result[0], ConversationTurn)
         assert result[0].role == ConversationRole.ASSISTANT
@@ -125,14 +101,14 @@ class TestAnthropicGetConversationTurns:
             previous_responses=anthropic_simple_conversation_history,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 2
-        
+
         # User message
         assert result[0].role == ConversationRole.USER
         assert result[0].content[0]["type"] == "text"
         assert result[0].content[0]["text"] == "Hello, how can you help me today?"
-        
+
         # Assistant message
         assert result[1].role == ConversationRole.ASSISTANT
         assert result[1].content[0]["type"] == "text"
@@ -150,7 +126,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_tool_use_request_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Tool requests without responses should not appear in result
         assert len(result) == 0
 
@@ -167,9 +143,9 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_tool_use_request_message, anthropic_tool_use_response_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 2
-        
+
         # First should be the assistant with tool use
         tool_call_turn = result[0]
         assert tool_call_turn.role == ConversationRole.ASSISTANT
@@ -178,7 +154,7 @@ class TestAnthropicGetConversationTurns:
         assert tool_call_turn.content[0]["name"] == "web_search"
         assert tool_call_turn.content[0]["id"] == "call_anthropic_123"
         assert tool_call_turn.content[0]["input"] == {"search_query": "Python code examples"}
-        
+
         # Second should be the user with tool result
         tool_result_turn = result[1]
         assert tool_result_turn.role == ConversationRole.USER
@@ -200,31 +176,31 @@ class TestAnthropicGetConversationTurns:
             previous_responses=anthropic_conversation_with_multiple_tool_calls,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Should have user message + 2 assistant tool turns + 2 user result turns = 5 total
         assert len(result) == 5
-        
+
         # User message
         assert result[0].role == ConversationRole.USER
         assert result[0].content[0]["text"] == "Can you analyze both Python and Ruby code?"
-        
+
         # First tool use (Python)
         assert result[1].role == ConversationRole.ASSISTANT
         assert result[1].content[0]["type"] == "tool_use"
         assert result[1].content[0]["id"] == "call_py_123"
         assert result[1].content[0]["name"] == "code_analyzer"
-        
+
         # First tool result (Python)
         assert result[2].role == ConversationRole.USER
         assert result[2].content[0]["type"] == "tool_result"
         assert result[2].content[0]["tool_use_id"] == "call_py_123"
-        
+
         # Second tool use (Ruby)
         assert result[3].role == ConversationRole.ASSISTANT
         assert result[3].content[0]["type"] == "tool_use"
         assert result[3].content[0]["id"] == "call_rb_456"
         assert result[3].content[0]["name"] == "code_analyzer"
-        
+
         # Second tool result (Ruby)
         assert result[4].role == ConversationRole.USER
         assert result[4].content[0]["type"] == "tool_result"
@@ -242,20 +218,20 @@ class TestAnthropicGetConversationTurns:
             previous_responses=anthropic_out_of_order_tool_conversation,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Should process based on the order they appear in the response queue
         # The algorithm processes in order, so only the first matching response is processed
         assert len(result) == 3  # 1 user msg + 1 assistant tool + 1 user result (only first match)
-        
+
         # User message first
         assert result[0].role == ConversationRole.USER
         assert result[0].content[0]["text"] == "Run these analysis tools"
-        
+
         # Only first matched tool (call_beta_222) should be processed
         assert result[1].role == ConversationRole.ASSISTANT
         assert result[1].content[0]["type"] == "tool_use"
         assert result[1].content[0]["id"] == "call_beta_222"  # First matching response
-        
+
         assert result[2].role == ConversationRole.USER
         assert result[2].content[0]["type"] == "tool_result"
         assert result[2].content[0]["tool_use_id"] == "call_beta_222"  # First in response order
@@ -272,7 +248,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_message_with_thinking_content],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         assert result[0].role == ConversationRole.ASSISTANT
         assert len(result[0].content) == 1
@@ -292,7 +268,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_message_with_redacted_thinking],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 1
         assert result[0].role == ConversationRole.ASSISTANT
         assert len(result[0].content) == 1
@@ -309,16 +285,16 @@ class TestAnthropicGetConversationTurns:
         """Test processing message with image file attachment."""
         # Create the actual asyncio task
         task_map = {50: asyncio.create_task(anthropic_attachment_data_task_map_with_image[50]())}
-        
+
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=[anthropic_message_with_file_attachment],
             attachment_data_task_map=task_map,
         )
-        
+
         assert len(result) == 1
         assert result[0].role == ConversationRole.USER
         assert len(result[0].content) == 1
-        
+
         content_item = result[0].content[0]
         assert content_item["type"] == "image"
         assert "source" in content_item
@@ -336,15 +312,15 @@ class TestAnthropicGetConversationTurns:
         """Test processing message with non-image file attachment."""
         # Update the attachment ID to match the document fixture
         anthropic_message_with_file_attachment.message_data[0].content.attachment_id = 200
-        
+
         # Create the actual asyncio task
         task_map = {200: asyncio.create_task(anthropic_attachment_data_task_map_with_document[200]())}
-        
+
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=[anthropic_message_with_file_attachment],
             attachment_data_task_map=task_map,
         )
-        
+
         # Non-image files should be ignored
         assert len(result) == 0
 
@@ -360,7 +336,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_message_with_file_attachment],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Missing attachments should be ignored
         assert len(result) == 0
 
@@ -376,7 +352,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_mixed_content_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Should have text message only (tool request will be stored for later matching)
         assert len(result) == 1
         assert result[0].role == ConversationRole.ASSISTANT
@@ -396,24 +372,24 @@ class TestAnthropicGetConversationTurns:
             previous_responses=anthropic_complex_conversation_history,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Should process user message, tool call/response pair, and text from mixed content
         assert len(result) == 4
-        
+
         # User message
         assert result[0].role == ConversationRole.USER
         assert result[0].content[0]["text"] == "Hello, how can you help me today?"
-        
+
         # Tool use
         assert result[1].role == ConversationRole.ASSISTANT
         assert result[1].content[0]["type"] == "tool_use"
         assert result[1].content[0]["id"] == "call_anthropic_123"
-        
+
         # Tool response
         assert result[2].role == ConversationRole.USER
         assert result[2].content[0]["type"] == "tool_result"
         assert result[2].content[0]["tool_use_id"] == "call_anthropic_123"
-        
+
         # Text from mixed content message
         assert result[3].role == ConversationRole.ASSISTANT
         assert result[3].content[0]["text"] == "Let me search for that information:"
@@ -430,11 +406,11 @@ class TestAnthropicGetConversationTurns:
             previous_responses=anthropic_simple_conversation_history,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Verify role mapping
         user_turn = [turn for turn in result if turn.role == ConversationRole.USER][0]
         assistant_turn = [turn for turn in result if turn.role == ConversationRole.ASSISTANT][0]
-        
+
         assert user_turn.content[0]["text"] == "Hello, how can you help me today?"
         assert assistant_turn.content[0]["text"] == "I'd be happy to help you with anything you need!"
 
@@ -451,13 +427,13 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_tool_use_request_message, anthropic_tool_use_response_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         tool_use_turn = result[0]
         tool_result_turn = result[1]
-        
+
         # Test that input is preserved as-is and output is JSON string
         assert tool_use_turn.content[0]["input"] == {"search_query": "Python code examples"}
-        
+
         # Tool result should be JSON serialized
         parsed_output = json.loads(tool_result_turn.content[0]["content"])
         expected_output = {"results": ["Example 1: Hello World", "Example 2: Functions", "Example 3: Classes"]}
@@ -475,7 +451,7 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_message_with_empty_text],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Empty/whitespace-only text should be filtered out
         assert len(result) == 0
 
@@ -491,18 +467,18 @@ class TestAnthropicGetConversationTurns:
             previous_responses=[anthropic_message_with_multiple_text_blocks],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Should create one conversation turn with multiple text content blocks
         assert len(result) == 1
         assert result[0].role == ConversationRole.ASSISTANT
         assert len(result[0].content) == 3
-        
+
         assert result[0].content[0]["type"] == "text"
         assert result[0].content[0]["text"] == "First response part"
-        
+
         assert result[0].content[1]["type"] == "text"
         assert result[0].content[1]["text"] == "Second response part"
-        
+
         assert result[0].content[2]["type"] == "text"
         assert result[0].content[2]["text"] == "Third response part"
 
@@ -513,15 +489,15 @@ class TestAnthropicGetConversationTurns:
         anthropic_attachment_data_task_map_empty: Dict[int, asyncio.Task],
     ) -> None:
         """Test handling messages with empty message_data."""
-        from app.backend_common.models.dto.message_thread_dto import (
-            MessageThreadDTO,
-            MessageThreadActor,
-            MessageType,
-            MessageCallChainCategory,
-            LLModels,
-        )
         from datetime import datetime
-        
+
+        from app.backend_common.models.dto.message_thread_dto import (
+            LLModels,
+            MessageCallChainCategory,
+            MessageThreadDTO,
+            MessageType,
+        )
+
         empty_message = MessageThreadDTO(
             id=1,
             session_id=123,
@@ -538,12 +514,12 @@ class TestAnthropicGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=[empty_message],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 0
 
     @pytest.mark.asyncio
@@ -553,25 +529,25 @@ class TestAnthropicGetConversationTurns:
         anthropic_mock_image_attachment_data: ChatAttachmentDataWithObjectBytes,
     ) -> None:
         """Test concurrent processing of multiple attachments."""
+        from datetime import datetime
+
         from app.backend_common.models.dto.message_thread_dto import (
-            MessageThreadDTO,
-            MessageThreadActor,
-            MessageType,
-            MessageCallChainCategory,
             FileBlockData,
             FileContent,
             LLModels,
+            MessageCallChainCategory,
+            MessageThreadDTO,
+            MessageType,
         )
-        from datetime import datetime
-        
+
         async def get_image_data_1() -> ChatAttachmentDataWithObjectBytes:
             await asyncio.sleep(0.1)  # Simulate async delay
             return anthropic_mock_image_attachment_data
-        
+
         async def get_image_data_2() -> ChatAttachmentDataWithObjectBytes:
             await asyncio.sleep(0.05)  # Different delay
             return anthropic_mock_image_attachment_data
-        
+
         # Create messages with multiple attachments
         message1 = MessageThreadDTO(
             id=1,
@@ -589,7 +565,7 @@ class TestAnthropicGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         message2 = MessageThreadDTO(
             id=2,
             session_id=123,
@@ -606,17 +582,17 @@ class TestAnthropicGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         attachment_task_map = {
             1: asyncio.create_task(get_image_data_1()),
             2: asyncio.create_task(get_image_data_2()),
         }
-        
+
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=[message1, message2],
             attachment_data_task_map=attachment_task_map,
         )
-        
+
         assert len(result) == 2
         # Both should be processed as image attachments
         assert all(turn.role == ConversationRole.USER for turn in result)
@@ -635,12 +611,12 @@ class TestAnthropicGetConversationTurns:
             previous_responses=anthropic_simple_conversation_history,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert isinstance(result, list)
         for turn in result:
             assert isinstance(turn, ConversationTurn)
-            assert hasattr(turn, 'role')
-            assert hasattr(turn, 'content')
+            assert hasattr(turn, "role")
+            assert hasattr(turn, "content")
             assert isinstance(turn.role, ConversationRole)
             assert isinstance(turn.content, list)
             # Each content item should be a dict
@@ -655,18 +631,18 @@ class TestAnthropicGetConversationTurns:
         anthropic_attachment_data_task_map_empty: Dict[int, asyncio.Task],
     ) -> None:
         """Test processing performance with large conversation history."""
-        from app.backend_common.models.dto.message_thread_dto import (
-            MessageThreadDTO,
-            MessageThreadActor,
-            MessageType,
-            MessageCallChainCategory,
-            TextBlockData,
-            TextBlockContent,
-            LLModels,
-        )
-        from datetime import datetime
         import time
-        
+        from datetime import datetime
+
+        from app.backend_common.models.dto.message_thread_dto import (
+            LLModels,
+            MessageCallChainCategory,
+            MessageThreadDTO,
+            MessageType,
+            TextBlockContent,
+            TextBlockData,
+        )
+
         # Create a large conversation (100 messages)
         large_conversation = []
         for i in range(100):
@@ -678,9 +654,7 @@ class TestAnthropicGetConversationTurns:
                 message_type=MessageType.QUERY if i % 2 == 0 else MessageType.RESPONSE,
                 conversation_chain=list(range(1, i + 2)),
                 data_hash=f"hash_{i}",
-                message_data=[
-                    TextBlockData(content=TextBlockContent(text=f"Claude message {i + 1}"))
-                ],
+                message_data=[TextBlockData(content=TextBlockContent(text=f"Claude message {i + 1}"))],
                 prompt_type="user_query" if i % 2 == 0 else "assistant_response",
                 prompt_category="general",
                 llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -689,14 +663,14 @@ class TestAnthropicGetConversationTurns:
                 updated_at=datetime.now(),
             )
             large_conversation.append(message)
-        
+
         start_time = time.time()
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=large_conversation,
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
         end_time = time.time()
-        
+
         assert len(result) == 100
         # Should process reasonably quickly (under 1 second for 100 messages)
         assert end_time - start_time < 1.0
@@ -708,17 +682,17 @@ class TestAnthropicGetConversationTurns:
         anthropic_attachment_data_task_map_empty: Dict[int, asyncio.Task],
     ) -> None:
         """Test handling tool response that comes without a prior request."""
-        from app.backend_common.models.dto.message_thread_dto import (
-            MessageThreadDTO,
-            MessageThreadActor,
-            MessageType,
-            MessageCallChainCategory,
-            ToolUseResponseData,
-            ToolUseResponseContent,
-            LLModels,
-        )
         from datetime import datetime
-        
+
+        from app.backend_common.models.dto.message_thread_dto import (
+            LLModels,
+            MessageCallChainCategory,
+            MessageThreadDTO,
+            MessageType,
+            ToolUseResponseContent,
+            ToolUseResponseData,
+        )
+
         # Create a tool response without any prior request
         orphan_response = MessageThreadDTO(
             id=1,
@@ -733,7 +707,7 @@ class TestAnthropicGetConversationTurns:
                     content=ToolUseResponseContent(
                         tool_name="orphan_claude_tool",
                         tool_use_id="call_orphan_claude_999",
-                        response="Orphaned Claude response"
+                        response="Orphaned Claude response",
                     )
                 )
             ],
@@ -744,12 +718,12 @@ class TestAnthropicGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=[orphan_response],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         # Orphaned tool response should be ignored (no matching request)
         assert len(result) == 0
 
@@ -760,17 +734,17 @@ class TestAnthropicGetConversationTurns:
         anthropic_attachment_data_task_map_empty: Dict[int, asyncio.Task],
     ) -> None:
         """Test the internal storage and retrieval of tool requests."""
-        from app.backend_common.models.dto.message_thread_dto import (
-            MessageThreadDTO,
-            MessageThreadActor,
-            MessageType,
-            MessageCallChainCategory,
-            ToolUseRequestData,
-            ToolUseRequestContent,
-            LLModels,
-        )
         from datetime import datetime
-        
+
+        from app.backend_common.models.dto.message_thread_dto import (
+            LLModels,
+            MessageCallChainCategory,
+            MessageThreadDTO,
+            MessageType,
+            ToolUseRequestContent,
+            ToolUseRequestData,
+        )
+
         # Create a tool request followed by response with different tool_use_id
         tool_request = MessageThreadDTO(
             id=1,
@@ -785,7 +759,7 @@ class TestAnthropicGetConversationTurns:
                     content=ToolUseRequestContent(
                         tool_input={"test": "claude_data"},
                         tool_name="claude_test_tool",
-                        tool_use_id="unique_claude_id_999"
+                        tool_use_id="unique_claude_id_999",
                     )
                 )
             ],
@@ -796,11 +770,11 @@ class TestAnthropicGetConversationTurns:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        
+
         # Process only the request - should store it but not output anything
         result = await anthropic_provider.get_conversation_turns(
             previous_responses=[tool_request],
             attachment_data_task_map=anthropic_attachment_data_task_map_empty,
         )
-        
+
         assert len(result) == 0  # No output until response is matched

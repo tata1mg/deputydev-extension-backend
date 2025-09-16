@@ -12,5 +12,6 @@ import pytest
 def google_provider():
     """Create a fresh Google provider instance for each test."""
     # Import here to avoid module-level import issues
-    from app.backend_common.services.llm.providers.google.llm_provider import Google
+    from deputydev_core.llm_handler.providers.google.llm_provider import Google
+
     return Google()

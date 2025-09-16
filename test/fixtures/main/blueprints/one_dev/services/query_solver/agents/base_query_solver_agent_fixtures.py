@@ -8,31 +8,16 @@ mock data, and edge cases.
 
 import asyncio
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
 
 import pytest
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import LLMModel
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
     ChatAttachmentDataWithObjectBytes,
-)
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
-from app.backend_common.services.llm.dataclasses.main import ConversationTool
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedConversationRole,
-    UnifiedConversationTurn,
-    UnifiedConversationTurnContentType,
-    UnifiedImageConversationTurnContent,
-    UnifiedTextConversationTurnContent,
-    UnifiedToolRequestConversationTurnContent,
-    UnifiedToolResponseConversationTurnContent,
-    UserConversationTurn,
 )
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -46,7 +31,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
-    DirectoryEntry,
+    LLMModel,
     MCPToolMetadata,
     QuerySolverInput,
     Repository,
@@ -55,17 +40,17 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 
 class TestableQuerySolverAgent:
     """Testable implementation of QuerySolverAgent for testing purposes."""
-    
+
     def __init__(self, agent_name: str = "test_agent", agent_description: str = "Test agent"):
         """Initialize the testable agent."""
         # Import here to avoid circular imports
         from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
-        
+
         # Create a testable subclass
         class ConcreteTestAgent(QuerySolverAgent):
             prompt_factory = MagicMock()
             all_tools = []
-        
+
         self.agent = ConcreteTestAgent(agent_name, agent_description)
 
 
@@ -73,6 +58,7 @@ class TestableQuerySolverAgent:
 def mock_client_data() -> ClientData:
     """Create mock client data."""
     from deputydev_core.utils.constants.enums import Clients
+
     return ClientData(
         client=Clients.BACKEND,
         client_version="1.0.0",
@@ -104,9 +90,9 @@ def query_solver_input_with_tools() -> QuerySolverInput:
         name="test_tool",
         description="Test tool description",
         input_schema={"type": "object", "properties": {}},
-        tool_metadata=mcp_tool_metadata
+        tool_metadata=mcp_tool_metadata,
     )
-    
+
     return QuerySolverInput(
         query="Test query with tools",
         session_id=1,
@@ -147,14 +133,14 @@ def sample_repositories() -> List[Repository]:
         root_directory_context="src/\ntest/\nREADME.md",
         is_working_repository=True,
     )
-    
+
     context_repo = Repository(
         repo_path="/path/to/context/repo",
         repo_name="context_repo",
         root_directory_context="lib/\ndocs/\npackage.json",
         is_working_repository=False,
     )
-    
+
     return [working_repo, context_repo]
 
 
@@ -322,10 +308,7 @@ def agent_chat_code_block() -> AgentChatDTO:
         query_id="test_query_id",
         actor=ActorType.ASSISTANT,
         message_type=ChatMessageType.CODE_BLOCK,
-        message_data=CodeBlockData(
-            code="def test_function():\n    return True",
-            language="python"
-        ),
+        message_data=CodeBlockData(code="def test_function():\n    return True", language="python"),
         metadata={},
         previous_queries=[],
         created_at=datetime.now(),
@@ -337,6 +320,7 @@ def agent_chat_code_block() -> AgentChatDTO:
 def mock_chat_attachment_data() -> ChatAttachmentDataWithObjectBytes:
     """Create mock chat attachment data."""
     from datetime import datetime
+
     metadata = ChatAttachmentsDTO(
         id=123,
         file_name="test_image.png",
@@ -368,14 +352,9 @@ def conversation_tool_sample() -> ConversationTool:
         description="A sample tool for testing",
         input_schema={
             "type": "object",
-            "properties": {
-                "input": {
-                    "type": "string",
-                    "description": "Input parameter"
-                }
-            },
-            "required": ["input"]
-        }
+            "properties": {"input": {"type": "string", "description": "Input parameter"}},
+            "required": ["input"],
+        },
     )
 
 
@@ -383,18 +362,17 @@ def conversation_tool_sample() -> ConversationTool:
 def unsupported_client_tool() -> ClientTool:
     """Create a ClientTool with unsupported metadata for testing error cases."""
     # We'll create a ClientTool that we'll manually modify to have unsupported metadata
-    from typing import Any
-    
+
     class UnsupportedMetadata:
         def __init__(self) -> None:
             self.type = "UNSUPPORTED"
-    
+
     # Create a valid tool first, then change the metadata
     tool = ClientTool(
         name="unsupported_tool",
         description="Tool with unsupported metadata",
         input_schema={"type": "object"},
-        tool_metadata=MCPToolMetadata(server_id="test", tool_name="test")
+        tool_metadata=MCPToolMetadata(server_id="test", tool_name="test"),
     )
     # Override with unsupported metadata
     tool.tool_metadata = UnsupportedMetadata()  # type: ignore

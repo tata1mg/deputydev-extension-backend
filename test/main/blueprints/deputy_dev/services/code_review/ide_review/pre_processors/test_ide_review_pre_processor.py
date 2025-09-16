@@ -2,8 +2,8 @@
 Unit tests for IdeReviewPreProcessor.
 
 This module provides comprehensive unit tests for the IdeReviewPreProcessor class,
-covering all methods including pre_process_pr, get_repo_id, run_validation, and 
-_get_attachment_data_and_metadata with various scenarios including edge cases 
+covering all methods including pre_process_pr, get_repo_id, run_validation, and
+_get_attachment_data_and_metadata with various scenarios including edge cases
 and error handling.
 """
 
@@ -17,11 +17,12 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
 from app.main.blueprints.deputy_dev.constants.constants import IdeReviewStatusTypes, ReviewType
 from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
-    FileWiseChanges,
     GetRepoIdRequest,
     ReviewRequest,
 )
-from app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor import IdeReviewPreProcessor
+from app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor import (
+    IdeReviewPreProcessor,
+)
 from test.fixtures.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor_fixtures import *
 
 
@@ -31,7 +32,7 @@ class TestIdeReviewPreProcessorInitialization:
     def test_initialization_default_values(self) -> None:
         """Test that IdeReviewPreProcessor initializes with correct default values."""
         processor = IdeReviewPreProcessor()
-        
+
         assert processor.extension_repo_dto is None
         assert processor.session_id is None
         assert processor.review_dto is None
@@ -50,18 +51,25 @@ class TestIdeReviewPreProcessorGetAttachmentDataAndMetadata:
     ) -> None:
         """Test successful retrieval of attachment data and metadata."""
         attachment_id = 1
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatAttachmentsRepository') as mock_attachments_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatFileUpload') as mock_file_upload:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatAttachmentsRepository"
+            ) as mock_attachments_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatFileUpload"
+            ) as mock_file_upload,
+        ):
             # Setup mocks
             mock_attachments_repo.get_attachment_by_id = AsyncMock(return_value=sample_attachment_data)
-            mock_file_upload.get_file_data_by_s3_key = AsyncMock(return_value=sample_attachment_with_object_bytes.object_bytes)
-            
+            mock_file_upload.get_file_data_by_s3_key = AsyncMock(
+                return_value=sample_attachment_with_object_bytes.object_bytes
+            )
+
             # Execute
             processor = IdeReviewPreProcessor()
             result = await processor._get_attachment_data_and_metadata(attachment_id)
-            
+
             # Verify
             assert isinstance(result, ChatAttachmentDataWithObjectBytes)
             assert result.attachment_metadata == sample_attachment_data
@@ -75,16 +83,17 @@ class TestIdeReviewPreProcessorGetAttachmentDataAndMetadata:
         invalid_attachment_id: int,
     ) -> None:
         """Test error handling when attachment is not found."""
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatAttachmentsRepository') as mock_attachments_repo:
-            
+        with patch(
+            "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatAttachmentsRepository"
+        ) as mock_attachments_repo:
             # Setup mocks
             mock_attachments_repo.get_attachment_by_id = AsyncMock(return_value=None)
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
             with pytest.raises(ValueError, match=f"Attachment with id {invalid_attachment_id} not found"):
                 await processor._get_attachment_data_and_metadata(invalid_attachment_id)
-            
+
             mock_attachments_repo.get_attachment_by_id.assert_called_once_with(attachment_id=invalid_attachment_id)
 
     @pytest.mark.asyncio
@@ -94,19 +103,24 @@ class TestIdeReviewPreProcessorGetAttachmentDataAndMetadata:
     ) -> None:
         """Test error handling when S3 retrieval fails."""
         attachment_id = 1
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatAttachmentsRepository') as mock_attachments_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatFileUpload') as mock_file_upload:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatAttachmentsRepository"
+            ) as mock_attachments_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ChatFileUpload"
+            ) as mock_file_upload,
+        ):
             # Setup mocks
             mock_attachments_repo.get_attachment_by_id = AsyncMock(return_value=sample_attachment_data)
             mock_file_upload.get_file_data_by_s3_key = AsyncMock(side_effect=Exception("S3 error"))
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
             with pytest.raises(Exception, match="S3 error"):
                 await processor._get_attachment_data_and_metadata(attachment_id)
-            
+
             mock_attachments_repo.get_attachment_by_id.assert_called_once_with(attachment_id=attachment_id)
             mock_file_upload.get_file_data_by_s3_key.assert_called_once_with(s3_key=sample_attachment_data.s3_key)
 
@@ -123,25 +137,30 @@ class TestIdeReviewPreProcessorGetRepoId:
     ) -> None:
         """Test successful retrieval of repo ID."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
-            
+
             # Execute
             processor = IdeReviewPreProcessor()
             result = await processor.get_repo_id(sample_get_repo_id_request, user_team_id)
-            
+
             # Verify
             assert result == sample_repo_dto
             mock_user_team_repo.db_get.assert_called_once_with(filters={"id": user_team_id}, fetch_one=True)
             mock_repo_repo.find_or_create_extension_repo.assert_called_once_with(
                 repo_name=sample_get_repo_id_request.repo_name,
                 repo_origin=sample_get_repo_id_request.origin_url,
-                team_id=sample_user_team.team_id
+                team_id=sample_user_team.team_id,
             )
 
     @pytest.mark.asyncio
@@ -151,16 +170,17 @@ class TestIdeReviewPreProcessorGetRepoId:
         invalid_user_team_id: int,
     ) -> None:
         """Test error handling when user team is not found."""
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo:
-            
+        with patch(
+            "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+        ) as mock_user_team_repo:
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=None)
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
             with pytest.raises(ValueError, match=f"User team with id {invalid_user_team_id} not found"):
                 await processor.get_repo_id(sample_get_repo_id_request, invalid_user_team_id)
-            
+
             mock_user_team_repo.db_get.assert_called_once_with(filters={"id": invalid_user_team_id}, fetch_one=True)
 
     @pytest.mark.asyncio
@@ -171,24 +191,29 @@ class TestIdeReviewPreProcessorGetRepoId:
     ) -> None:
         """Test error handling when repo creation fails."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(side_effect=Exception("Database error"))
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
             with pytest.raises(Exception, match="Database error"):
                 await processor.get_repo_id(sample_get_repo_id_request, user_team_id)
-            
+
             mock_user_team_repo.db_get.assert_called_once_with(filters={"id": user_team_id}, fetch_one=True)
             mock_repo_repo.find_or_create_extension_repo.assert_called_once_with(
                 repo_name=sample_get_repo_id_request.repo_name,
                 repo_origin=sample_get_repo_id_request.origin_url,
-                team_id=sample_user_team.team_id
+                team_id=sample_user_team.team_id,
             )
 
 
@@ -201,9 +226,9 @@ class TestIdeReviewPreProcessorRunValidation:
         processor = IdeReviewPreProcessor()
         review_diff = "valid diff content"
         token_count = 100
-        
+
         await processor.run_validation(review_diff, token_count)
-        
+
         assert processor.is_valid is True
         assert processor.review_status == IdeReviewStatusTypes.IN_PROGRESS.value
 
@@ -213,9 +238,9 @@ class TestIdeReviewPreProcessorRunValidation:
         processor = IdeReviewPreProcessor()
         review_diff = ""
         token_count = 0
-        
+
         await processor.run_validation(review_diff, token_count)
-        
+
         assert processor.is_valid is False
         assert processor.review_status == IdeReviewStatusTypes.REJECTED_NO_DIFF.value
 
@@ -225,9 +250,9 @@ class TestIdeReviewPreProcessorRunValidation:
         processor = IdeReviewPreProcessor()
         review_diff = None
         token_count = 0
-        
+
         await processor.run_validation(review_diff, token_count)
-        
+
         assert processor.is_valid is False
         assert processor.review_status == IdeReviewStatusTypes.REJECTED_NO_DIFF.value
 
@@ -237,9 +262,9 @@ class TestIdeReviewPreProcessorRunValidation:
         processor = IdeReviewPreProcessor()
         review_diff = "valid diff content"
         token_count = 200000  # This exceeds MAX_PR_DIFF_TOKEN_LIMIT (150000)
-        
+
         await processor.run_validation(review_diff, token_count)
-        
+
         assert processor.is_valid is False
         assert processor.review_status == IdeReviewStatusTypes.REJECTED_LARGE_SIZE.value
 
@@ -249,9 +274,9 @@ class TestIdeReviewPreProcessorRunValidation:
         processor = IdeReviewPreProcessor()
         review_diff = ""
         token_count = 50000
-        
+
         await processor.run_validation(review_diff, token_count)
-        
+
         assert processor.is_valid is False
         assert processor.review_status == IdeReviewStatusTypes.REJECTED_NO_DIFF.value
 
@@ -263,9 +288,9 @@ class TestIdeReviewPreProcessorRunValidation:
         """Test various validation scenarios."""
         for scenario in sample_validation_scenarios:
             processor = IdeReviewPreProcessor()
-            
+
             await processor.run_validation(scenario["diff"], scenario["token_count"])
-            
+
             assert processor.is_valid == scenario["expected_valid"], f"Failed for scenario: {scenario['name']}"
             assert processor.review_status == scenario["expected_status"], f"Failed for scenario: {scenario['name']}"
 
@@ -287,31 +312,44 @@ class TestIdeReviewPreProcessorPreProcessPr:
     ) -> None:
         """Test successful pre-processing of PR."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository') as mock_ext_reviews_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache') as mock_cache:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+            ) as mock_session_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository"
+            ) as mock_ext_reviews_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache"
+            ) as mock_cache,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
             mock_session_repo.create_message_session = AsyncMock(return_value=sample_message_session)
             mock_ext_reviews_repo.db_insert = AsyncMock(return_value=sample_ide_review_dto)
             mock_cache.set = AsyncMock()
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 25
             diff_handler_instance.get_diff_token_count.return_value = 150
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute
             processor = IdeReviewPreProcessor()
             result = await processor.pre_process_pr(sample_pre_process_data, user_team_id)
-            
+
             # Verify
             assert result == expected_pre_process_result
             assert processor.extension_repo_dto == sample_repo_dto
@@ -319,7 +357,7 @@ class TestIdeReviewPreProcessorPreProcessPr:
             assert processor.review_dto == sample_ide_review_dto
             assert processor.is_valid is True
             assert processor.review_status == IdeReviewStatusTypes.IN_PROGRESS.value
-            
+
             # Verify repository calls
             mock_user_team_repo.db_get.assert_called_once_with(filters={"id": user_team_id}, fetch_one=True)
             mock_repo_repo.find_or_create_extension_repo.assert_called_once()
@@ -337,19 +375,32 @@ class TestIdeReviewPreProcessorPreProcessPr:
     ) -> None:
         """Test pre-processing with empty diff."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository') as mock_ext_reviews_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache') as mock_cache:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+            ) as mock_session_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository"
+            ) as mock_ext_reviews_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache"
+            ) as mock_cache,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
             mock_session_repo.create_message_session = AsyncMock(return_value=sample_message_session)
-            
+
             # Create rejected review DTO
             rejected_review_dto = IdeReviewDTO(
                 id=202,
@@ -365,28 +416,28 @@ class TestIdeReviewPreProcessorPreProcessPr:
                 meta_info={"tokens": 0},
                 diff_s3_url="testing",
                 session_id=sample_message_session.id,
-                review_type=ReviewType.ALL.value
+                review_type=ReviewType.ALL.value,
             )
             mock_ext_reviews_repo.db_insert = AsyncMock(return_value=rejected_review_dto)
             mock_cache.set = AsyncMock()
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 0
             diff_handler_instance.get_diff_token_count.return_value = 0
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute
             processor = IdeReviewPreProcessor()
             result = await processor.pre_process_pr(sample_empty_diff_data, user_team_id)
-            
+
             # Verify
             assert result["review_id"] == rejected_review_dto.id
             assert result["session_id"] == sample_message_session.id
             assert result["repo_id"] == sample_repo_dto.id
             assert processor.is_valid is False
             assert processor.review_status == IdeReviewStatusTypes.REJECTED_NO_DIFF.value
-            
+
             # Cache should not be set for invalid reviews
             mock_cache.set.assert_not_called()
 
@@ -400,19 +451,32 @@ class TestIdeReviewPreProcessorPreProcessPr:
     ) -> None:
         """Test pre-processing with large diff exceeding token limits."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository') as mock_ext_reviews_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache') as mock_cache:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+            ) as mock_session_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository"
+            ) as mock_ext_reviews_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache"
+            ) as mock_cache,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
             mock_session_repo.create_message_session = AsyncMock(return_value=sample_message_session)
-            
+
             # Create large size rejected review DTO
             large_rejected_review_dto = IdeReviewDTO(
                 id=203,
@@ -428,26 +492,26 @@ class TestIdeReviewPreProcessorPreProcessPr:
                 meta_info={"tokens": 200000},
                 diff_s3_url="testing",
                 session_id=sample_message_session.id,
-                review_type=ReviewType.ALL.value
+                review_type=ReviewType.ALL.value,
             )
             mock_ext_reviews_repo.db_insert = AsyncMock(return_value=large_rejected_review_dto)
             mock_cache.set = AsyncMock()
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 10000
             diff_handler_instance.get_diff_token_count.return_value = 200000  # Exceeds MAX_PR_DIFF_TOKEN_LIMIT
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute
             processor = IdeReviewPreProcessor()
             result = await processor.pre_process_pr(sample_large_pre_process_data, user_team_id)
-            
+
             # Verify
             assert result["review_id"] == large_rejected_review_dto.id
             assert processor.is_valid is False
             assert processor.review_status == IdeReviewStatusTypes.REJECTED_LARGE_SIZE.value
-            
+
             # Cache should not be set for invalid reviews
             mock_cache.set.assert_not_called()
 
@@ -458,21 +522,28 @@ class TestIdeReviewPreProcessorPreProcessPr:
         invalid_user_team_id: int,
     ) -> None:
         """Test pre-processing when user team is not found."""
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler:
-            
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=None)
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 25
             diff_handler_instance.get_diff_token_count.return_value = 150
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
-            with pytest.raises(AttributeError):  # The actual error is AttributeError when trying to access team_id on None
+            with pytest.raises(
+                AttributeError
+            ):  # The actual error is AttributeError when trying to access team_id on None
                 await processor.pre_process_pr(sample_pre_process_data, invalid_user_team_id)
 
     @pytest.mark.asyncio
@@ -486,31 +557,38 @@ class TestIdeReviewPreProcessorPreProcessPr:
     ) -> None:
         """Test pre-processing with different review types."""
         user_team_id = 123
-        
+
         test_cases = [
-            {
-                "request": uncommitted_review_request,
-                "expected_type": ReviewType.UNCOMMITTED.value
-            },
-            {
-                "request": committed_review_request,
-                "expected_type": ReviewType.COMMITTED.value
-            }
+            {"request": uncommitted_review_request, "expected_type": ReviewType.UNCOMMITTED.value},
+            {"request": committed_review_request, "expected_type": ReviewType.COMMITTED.value},
         ]
-        
+
         for test_case in test_cases:
-            with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-                 patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-                 patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-                 patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository') as mock_ext_reviews_repo, \
-                 patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler, \
-                 patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache') as mock_cache:
-                
+            with (
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+                ) as mock_user_team_repo,
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+                ) as mock_repo_repo,
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+                ) as mock_session_repo,
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository"
+                ) as mock_ext_reviews_repo,
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+                ) as mock_diff_handler,
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache"
+                ) as mock_cache,
+            ):
                 # Setup mocks
                 mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
                 mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
                 mock_session_repo.create_message_session = AsyncMock(return_value=sample_message_session)
-                
+
                 review_dto = IdeReviewDTO(
                     id=204,
                     review_status=IdeReviewStatusTypes.IN_PROGRESS.value,
@@ -525,17 +603,17 @@ class TestIdeReviewPreProcessorPreProcessPr:
                     meta_info={"tokens": 150},
                     diff_s3_url="testing",
                     session_id=sample_message_session.id,
-                    review_type=test_case["expected_type"]
+                    review_type=test_case["expected_type"],
                 )
                 mock_ext_reviews_repo.db_insert = AsyncMock(return_value=review_dto)
                 mock_cache.set = AsyncMock()
-                
+
                 # Setup diff handler
                 diff_handler_instance = MagicMock()
                 diff_handler_instance.get_diff_loc.return_value = 25
                 diff_handler_instance.get_diff_token_count.return_value = 150
                 mock_diff_handler.return_value = diff_handler_instance
-                
+
                 # Convert request to dict format
                 request_data = {
                     "repo_name": test_case["request"].repo_name,
@@ -551,16 +629,17 @@ class TestIdeReviewPreProcessorPreProcessPr:
                             "file_name": change.file_name,
                             "status": change.status,
                             "line_changes": change.line_changes,
-                            "diff": change.diff
-                        } for change in test_case["request"].file_wise_diff
+                            "diff": change.diff,
+                        }
+                        for change in test_case["request"].file_wise_diff
                     ],
-                    "review_type": test_case["request"].review_type.value
+                    "review_type": test_case["request"].review_type.value,
                 }
-                
+
                 # Execute
                 processor = IdeReviewPreProcessor()
                 result = await processor.pre_process_pr(request_data, user_team_id)
-                
+
                 # Verify
                 assert result["review_id"] == review_dto.id
                 assert processor.review_dto.review_type == test_case["expected_type"]
@@ -574,23 +653,32 @@ class TestIdeReviewPreProcessorPreProcessPr:
     ) -> None:
         """Test pre-processing when session creation fails."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+            ) as mock_session_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
             mock_session_repo.create_message_session = AsyncMock(side_effect=Exception("Database error"))
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 25
             diff_handler_instance.get_diff_token_count.return_value = 150
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
             with pytest.raises(Exception, match="Database error"):
@@ -606,25 +694,36 @@ class TestIdeReviewPreProcessorPreProcessPr:
     ) -> None:
         """Test pre-processing when review insertion fails."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository') as mock_ext_reviews_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+            ) as mock_session_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository"
+            ) as mock_ext_reviews_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+        ):
             # Setup mocks
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
             mock_session_repo.create_message_session = AsyncMock(return_value=sample_message_session)
             mock_ext_reviews_repo.db_insert = AsyncMock(side_effect=Exception("Database insert error"))
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 25
             diff_handler_instance.get_diff_token_count.return_value = 150
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute and verify
             processor = IdeReviewPreProcessor()
             with pytest.raises(Exception, match="Database insert error"):
@@ -645,47 +744,60 @@ class TestIdeReviewPreProcessorIntegration:
     ) -> None:
         """Test complete end-to-end flow of pre_process_pr method."""
         user_team_id = 123
-        
-        with patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository') as mock_user_team_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository') as mock_repo_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository') as mock_session_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository') as mock_ext_reviews_repo, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler') as mock_diff_handler, \
-             patch('app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache') as mock_cache:
-            
+
+        with (
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.UserTeamRepository"
+            ) as mock_user_team_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.RepoRepository"
+            ) as mock_repo_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.MessageSessionsRepository"
+            ) as mock_session_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.ExtensionReviewsRepository"
+            ) as mock_ext_reviews_repo,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeDiffHandler"
+            ) as mock_diff_handler,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.pre_processors.ide_review_pre_processor.IdeReviewCache"
+            ) as mock_cache,
+        ):
             # Setup complete mock chain
             mock_user_team_repo.db_get = AsyncMock(return_value=sample_user_team)
             mock_repo_repo.find_or_create_extension_repo = AsyncMock(return_value=sample_repo_dto)
             mock_session_repo.create_message_session = AsyncMock(return_value=sample_message_session)
             mock_ext_reviews_repo.db_insert = AsyncMock(return_value=sample_ide_review_dto)
             mock_cache.set = AsyncMock()
-            
+
             # Setup diff handler
             diff_handler_instance = MagicMock()
             diff_handler_instance.get_diff_loc.return_value = 25
             diff_handler_instance.get_diff_token_count.return_value = 150
             mock_diff_handler.return_value = diff_handler_instance
-            
+
             # Execute
             processor = IdeReviewPreProcessor()
-            
+
             # Verify initial state
             assert processor.extension_repo_dto is None
             assert processor.session_id is None
             assert processor.review_dto is None
             assert processor.review_status == IdeReviewStatusTypes.IN_PROGRESS.value
             assert processor.is_valid is True
-            
+
             # Execute pre-processing
             result = await processor.pre_process_pr(sample_pre_process_data, user_team_id)
-            
+
             # Verify final state
             assert processor.extension_repo_dto == sample_repo_dto
             assert processor.session_id == sample_message_session.id
             assert processor.review_dto == sample_ide_review_dto
             assert processor.is_valid is True
             assert processor.review_status == IdeReviewStatusTypes.IN_PROGRESS.value
-            
+
             # Verify result
             expected_result = {
                 "review_id": sample_ide_review_dto.id,
@@ -693,7 +805,7 @@ class TestIdeReviewPreProcessorIntegration:
                 "repo_id": sample_repo_dto.id,
             }
             assert result == expected_result
-            
+
             # Verify all components were called in correct order
             mock_user_team_repo.db_get.assert_called_once()
             mock_repo_repo.find_or_create_extension_repo.assert_called_once()
@@ -701,7 +813,7 @@ class TestIdeReviewPreProcessorIntegration:
             mock_diff_handler.assert_called_once()
             mock_ext_reviews_repo.db_insert.assert_called_once()
             mock_cache.set.assert_called_once()
-            
+
             # Verify message session data structure
             session_call_args = mock_session_repo.create_message_session.call_args[1]
             session_data = session_call_args["message_session_data"]

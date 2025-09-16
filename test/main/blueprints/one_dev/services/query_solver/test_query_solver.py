@@ -6,19 +6,13 @@ including various input combinations, streaming responses, tool handling,
 and edge cases.
 """
 
-import asyncio
 import json
-from typing import Any, Dict, List, Optional
+from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
 
 import pytest
-from pydantic import BaseModel
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
-    StreamingEventType,
     StreamingParsedLLMCallResponse,
     TextBlockDelta,
     TextBlockEnd,
@@ -27,16 +21,15 @@ from app.backend_common.services.llm.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
-from app.backend_common.services.llm.dataclasses.unified_conversation_turn import (
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     UnifiedTextConversationTurnContent,
     UserConversationTurn,
 )
-from app.backend_common.services.llm.handler import LLMHandler
-from app.backend_common.utils.dataclasses.main import ClientData
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
-    AgentChatCreateRequest,
     AgentChatDTO,
     TextMessageData,
 )
@@ -46,28 +39,23 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     QuerySolverInput,
     Reasoning,
     ResponseMetadataBlock,
-    ResponseMetadataContent,
     RetryReasons,
     TaskCompletionBlock,
-    TaskCompletionContent,
     ToolUseResponseInput,
-)
-from app.main.blueprints.one_dev.utils.cancellation_checker import (
-    CancellationChecker,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
-    CodeBlockEnd, 
+    CodeBlockEnd,
     CodeBlockStart,
     ThinkingBlockDelta,
     ThinkingBlockEnd,
     ThinkingBlockStart,
 )
-from test.fixtures.main.blueprints.one_dev.services.query_solver.query_solver_fixtures import *
 from test.fixtures.main.blueprints.one_dev.services.query_solver.format_tool_response_fixtures import *
-from test.fixtures.main.blueprints.one_dev.services.query_solver.set_required_model_fixtures import *
 from test.fixtures.main.blueprints.one_dev.services.query_solver.get_final_stream_iterator_fixtures import *
+from test.fixtures.main.blueprints.one_dev.services.query_solver.query_solver_fixtures import *
 from test.fixtures.main.blueprints.one_dev.services.query_solver.remaining_methods_fixtures import *
+from test.fixtures.main.blueprints.one_dev.services.query_solver.set_required_model_fixtures import *
 
 
 class TestQuerySolverSolveQuery:
@@ -77,42 +65,48 @@ class TestQuerySolverSolveQuery:
     async def test_solve_query_with_new_query_basic(
         self,
         query_solver,
-            basic_query_solver_input,
-            mock_client_data,
-            mock_agent_chat_dto,
-            mock_llm_handler,
-            mock_streaming_response,
+        basic_query_solver_input,
+        mock_client_data,
+        mock_agent_chat_dto,
+        mock_llm_handler,
+        mock_streaming_response,
     ) -> None:
         """Test solve_query with a basic new query input."""
         # Setup mocks
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            get_chats_by_session_id=AsyncMock(return_value=[]),
-            create_chat=AsyncMock(return_value=mock_agent_chat_dto),
-        ), patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            find_or_create=AsyncMock(return_value=None),
-            update_session_summary=AsyncMock(),
-            get_by_id=AsyncMock(return_value=None),
-            create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
-            update_session_llm_model=AsyncMock(),
-        ), patch.object(
-            query_solver,
-            "_get_query_solver_agent_instance",
-            new_callable=AsyncMock,
-        ) as mock_get_agent, patch.object(
-            query_solver,
-            "get_final_stream_iterator",
-            new_callable=AsyncMock,
-        ) as mock_stream_iterator, patch(
-            "app.backend_common.services.llm.handler.LLMHandler.__init__",
-            return_value=None,
-        ), patch(
-            "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
-            new_callable=AsyncMock,
-            return_value=mock_streaming_response,
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                get_chats_by_session_id=AsyncMock(return_value=[]),
+                create_chat=AsyncMock(return_value=mock_agent_chat_dto),
+            ),
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                find_or_create=AsyncMock(return_value=None),
+                update_session_summary=AsyncMock(),
+                get_by_id=AsyncMock(return_value=None),
+                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.object(
+                query_solver,
+                "_get_query_solver_agent_instance",
+                new_callable=AsyncMock,
+            ) as mock_get_agent,
+            patch.object(
+                query_solver,
+                "get_final_stream_iterator",
+                new_callable=AsyncMock,
+            ) as mock_stream_iterator,
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
+                return_value=None,
+            ),
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
+                new_callable=AsyncMock,
+                return_value=mock_streaming_response,
+            ),
         ):
-
             # Setup agent mock
             mock_agent = MagicMock()
             mock_agent.agent_name = "test_agent"
@@ -160,7 +154,7 @@ class TestQuerySolverGenerateSessionSummary:
         """Test that session summary generation is skipped when summary already exists."""
         from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 
-        with patch.object(ExtensionSessionsRepository, 'find_or_create', new_callable=AsyncMock) as mock_find_or_create:
+        with patch.object(ExtensionSessionsRepository, "find_or_create", new_callable=AsyncMock) as mock_find_or_create:
             mock_find_or_create.return_value = mock_existing_extension_session
 
             await query_solver._generate_session_summary(
@@ -190,9 +184,12 @@ class TestQuerySolverGenerateSessionSummary:
 
         mock_llm_handler.start_llm_query.return_value = mock_session_summary_llm_response
 
-        with patch.object(ExtensionSessionsRepository, 'find_or_create', new_callable=AsyncMock) as mock_find_or_create, \
-             patch.object(ExtensionSessionsRepository, 'update_session_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(ExtensionSessionsRepository, "find_or_create", new_callable=AsyncMock) as mock_find_or_create,
+            patch.object(
+                ExtensionSessionsRepository, "update_session_summary", new_callable=AsyncMock
+            ) as mock_update_summary,
+        ):
             mock_find_or_create.return_value = mock_extension_session_without_summary
 
             await query_solver._generate_session_summary(
@@ -205,24 +202,18 @@ class TestQuerySolverGenerateSessionSummary:
             )
 
             # Verify brief summary was set first
-            mock_update_summary.assert_any_call(
-                session_id=123,
-                summary="Test query for generating new summary..."
-            )
+            mock_update_summary.assert_any_call(session_id=123, summary="Test query for generating new summary...")
 
             # Verify LLM was called for detailed summary
             mock_llm_handler.start_llm_query.assert_called_once()
             call_args = mock_llm_handler.start_llm_query.call_args
-            assert call_args[1]['prompt_feature'] == PromptFeatures.SESSION_SUMMARY_GENERATOR
-            assert call_args[1]['llm_model'] == LLModels.GEMINI_2_POINT_5_FLASH
-            assert call_args[1]['prompt_vars']['query'] == "Test query for generating new summary"
-            assert call_args[1]['stream'] is False
+            assert call_args[1]["prompt_feature"] == PromptFeatures.SESSION_SUMMARY_GENERATOR
+            assert call_args[1]["llm_model"] == LLModels.GEMINI_2_POINT_5_FLASH
+            assert call_args[1]["prompt_vars"]["query"] == "Test query for generating new summary"
+            assert call_args[1]["stream"] is False
 
             # Verify detailed summary was updated
-            mock_update_summary.assert_any_call(
-                session_id=123,
-                summary="Generated session summary from LLM"
-            )
+            mock_update_summary.assert_any_call(session_id=123, summary="Generated session summary from LLM")
 
     @pytest.mark.asyncio
     async def test_generate_session_summary_no_existing_session(
@@ -237,9 +228,12 @@ class TestQuerySolverGenerateSessionSummary:
 
         mock_llm_handler.start_llm_query.return_value = mock_session_summary_llm_response
 
-        with patch.object(ExtensionSessionsRepository, 'find_or_create', new_callable=AsyncMock) as mock_find_or_create, \
-             patch.object(ExtensionSessionsRepository, 'update_session_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(ExtensionSessionsRepository, "find_or_create", new_callable=AsyncMock) as mock_find_or_create,
+            patch.object(
+                ExtensionSessionsRepository, "update_session_summary", new_callable=AsyncMock
+            ) as mock_update_summary,
+        ):
             mock_find_or_create.return_value = None
 
             await query_solver._generate_session_summary(
@@ -269,9 +263,12 @@ class TestQuerySolverGenerateSessionSummary:
         long_query = "a" * 150  # 150 characters
         mock_llm_handler.start_llm_query.return_value = mock_session_summary_llm_response
 
-        with patch.object(ExtensionSessionsRepository, 'find_or_create', new_callable=AsyncMock) as mock_find_or_create, \
-             patch.object(ExtensionSessionsRepository, 'update_session_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(ExtensionSessionsRepository, "find_or_create", new_callable=AsyncMock) as mock_find_or_create,
+            patch.object(
+                ExtensionSessionsRepository, "update_session_summary", new_callable=AsyncMock
+            ) as mock_update_summary,
+        ):
             mock_find_or_create.return_value = mock_extension_session_without_summary
 
             await query_solver._generate_session_summary(
@@ -285,10 +282,7 @@ class TestQuerySolverGenerateSessionSummary:
 
             # Verify brief summary is truncated to 100 characters + "..."
             expected_brief = long_query[:100] + "..."
-            mock_update_summary.assert_any_call(
-                session_id=123,
-                summary=expected_brief
-            )
+            mock_update_summary.assert_any_call(session_id=123, summary=expected_brief)
 
     @pytest.mark.asyncio
     async def test_generate_session_summary_llm_error_handling(
@@ -305,9 +299,12 @@ class TestQuerySolverGenerateSessionSummary:
         mock_invalid_response = MagicMock(spec=StreamingParsedLLMCallResponse)
         mock_llm_handler.start_llm_query.return_value = mock_invalid_response
 
-        with patch.object(ExtensionSessionsRepository, 'find_or_create', new_callable=AsyncMock) as mock_find_or_create, \
-             patch.object(ExtensionSessionsRepository, 'update_session_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(ExtensionSessionsRepository, "find_or_create", new_callable=AsyncMock) as mock_find_or_create,
+            patch.object(
+                ExtensionSessionsRepository, "update_session_summary", new_callable=AsyncMock
+            ) as mock_update_summary,
+        ):
             mock_find_or_create.return_value = mock_extension_session_without_summary
 
             with pytest.raises(ValueError, match="Expected NonStreamingParsedLLMCallResponse"):
@@ -355,9 +352,12 @@ class TestQuerySolverStoreToolResponseInChatChain:
             updated_at=datetime.now(),
         )
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_message_type_and_session', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(AgentChatsRepository, 'update_chat', new_callable=AsyncMock) as mock_update_chat:
-            
+        with (
+            patch.object(
+                AgentChatsRepository, "get_chats_by_message_type_and_session", new_callable=AsyncMock
+            ) as mock_get_chats,
+            patch.object(AgentChatsRepository, "update_chat", new_callable=AsyncMock) as mock_update_chat,
+        ):
             mock_get_chats.return_value = [mock_tool_use_agent_chat]
             mock_update_chat.return_value = updated_chat
 
@@ -369,10 +369,7 @@ class TestQuerySolverStoreToolResponseInChatChain:
             )
 
             assert result == updated_chat
-            mock_get_chats.assert_called_once_with(
-                message_type=ChatMessageType.TOOL_USE,
-                session_id=123
-            )
+            mock_get_chats.assert_called_once_with(message_type=ChatMessageType.TOOL_USE, session_id=123)
             mock_update_chat.assert_called_once()
 
     @pytest.mark.asyncio
@@ -385,7 +382,9 @@ class TestQuerySolverStoreToolResponseInChatChain:
         """Test error when tool use request not found."""
         from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_message_type_and_session', new_callable=AsyncMock) as mock_get_chats:
+        with patch.object(
+            AgentChatsRepository, "get_chats_by_message_type_and_session", new_callable=AsyncMock
+        ) as mock_get_chats:
             mock_get_chats.return_value = []  # No matching tool use chats
 
             with pytest.raises(Exception, match="tool use request not found"):
@@ -420,7 +419,9 @@ class TestQuerySolverStoreToolResponseInChatChain:
             updated_at=datetime.now(),
         )
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_message_type_and_session', new_callable=AsyncMock) as mock_get_chats:
+        with patch.object(
+            AgentChatsRepository, "get_chats_by_message_type_and_session", new_callable=AsyncMock
+        ) as mock_get_chats:
             mock_get_chats.return_value = [invalid_chat]
 
             with pytest.raises(Exception, match="tool use request not found"):
@@ -442,9 +443,12 @@ class TestQuerySolverStoreToolResponseInChatChain:
         """Test error when chat update fails."""
         from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_message_type_and_session', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(AgentChatsRepository, 'update_chat', new_callable=AsyncMock) as mock_update_chat:
-            
+        with (
+            patch.object(
+                AgentChatsRepository, "get_chats_by_message_type_and_session", new_callable=AsyncMock
+            ) as mock_get_chats,
+            patch.object(AgentChatsRepository, "update_chat", new_callable=AsyncMock) as mock_update_chat,
+        ):
             mock_get_chats.return_value = [mock_tool_use_agent_chat]
             mock_update_chat.return_value = None  # Update failed
 
@@ -489,9 +493,12 @@ class TestQuerySolverStoreToolResponseInChatChain:
             updated_at=datetime.now(),
         )
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_message_type_and_session', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(AgentChatsRepository, 'update_chat', new_callable=AsyncMock) as mock_update_chat:
-            
+        with (
+            patch.object(
+                AgentChatsRepository, "get_chats_by_message_type_and_session", new_callable=AsyncMock
+            ) as mock_get_chats,
+            patch.object(AgentChatsRepository, "update_chat", new_callable=AsyncMock) as mock_update_chat,
+        ):
             mock_get_chats.return_value = [mock_tool_use_agent_chat]
             mock_update_chat.return_value = updated_chat
 
@@ -504,7 +511,7 @@ class TestQuerySolverStoreToolResponseInChatChain:
 
             assert result == updated_chat
             # Verify the status was correctly set to FAILED
-            update_call_args = mock_update_chat.call_args[1]['update_data']
+            update_call_args = mock_update_chat.call_args[1]["update_data"]
             assert update_call_args.message_data.tool_status == ToolStatus.FAILED
 
 
@@ -518,29 +525,29 @@ class TestQuerySolverGetConversationTurnsForSummary:
         mock_agent_chat_list_for_summary,
     ):
         """Test basic conversation turns generation."""
-        
+
         result = await query_solver._get_conversation_turns_for_summary(mock_agent_chat_list_for_summary)
 
         assert len(result) == 6  # 4 agent chats + 1 user turn from prompt + 1 assistant turn
-        
+
         # Check user turn
         assert isinstance(result[0], UserConversationTurn)
         assert result[0].content[0].text == "How do I create a new file?"
-        
+
         # Check assistant text turn
         assert isinstance(result[1], AssistantConversationTurn)
         assert "I'll help you create a new file" in result[1].content[0].text
-        
+
         # Check assistant tool request turn
         assert isinstance(result[2], AssistantConversationTurn)
         assert isinstance(result[2].content[0], UnifiedToolRequestConversationTurnContent)
         assert result[2].content[0].tool_name == "file_path_searcher"
-        
+
         # Check tool response turn
         assert isinstance(result[3], ToolConversationTurn)
         assert isinstance(result[3].content[0], UnifiedToolResponseConversationTurnContent)
         assert result[3].content[0].tool_name == "file_path_searcher"
-        
+
         # Check code block turn
         assert isinstance(result[4], AssistantConversationTurn)
         assert "```python" in result[4].content[0].text
@@ -553,23 +560,23 @@ class TestQuerySolverGetConversationTurnsForSummary:
         mock_complex_agent_chat_list,
     ):
         """Test conversation turns generation with thinking blocks."""
-        
+
         result = await query_solver._get_conversation_turns_for_summary(mock_complex_agent_chat_list)
 
         # Note: Currently the implementation doesn't handle THINKING message types
         # so they are skipped. This test verifies the current behavior.
         # The result should contain user turn, assistant text turns, tool turns, code block turns, and the prompt turn
-        
+
         # Count different types of turns
         user_turns = [turn for turn in result if isinstance(turn, UserConversationTurn)]
         assistant_turns = [turn for turn in result if isinstance(turn, AssistantConversationTurn)]
         tool_turns = [turn for turn in result if isinstance(turn, ToolConversationTurn)]
-        
+
         # Should have: 1 user turn, 3 assistant turns (text + tool request + code block), 1 tool response turn, 1 prompt turn
         assert len(user_turns) == 2  # original user + prompt user turn
         assert len(assistant_turns) == 3  # text + tool request + code block
         assert len(tool_turns) == 1  # tool response
-        
+
         # Verify the thinking turn is NOT processed (current behavior)
         thinking_content_found = False
         for turn in result:
@@ -579,7 +586,7 @@ class TestQuerySolverGetConversationTurnsForSummary:
                         if "analyze the code structure" in content.text:
                             thinking_content_found = True
                             break
-        
+
         # Since thinking blocks are not processed, this should be False
         assert not thinking_content_found
 
@@ -590,15 +597,15 @@ class TestQuerySolverGetConversationTurnsForSummary:
         mock_agent_with_no_tool_response,
     ):
         """Test conversation turns generation when tool has no response."""
-        
+
         result = await query_solver._get_conversation_turns_for_summary([mock_agent_with_no_tool_response])
 
         assert len(result) == 3  # tool request + tool response (NO RESULT) + user turn from prompt
-        
+
         # Check tool request turn
         assert isinstance(result[0], AssistantConversationTurn)
         assert result[0].content[0].tool_name == "no_response_tool"
-        
+
         # Check tool response turn with NO RESULT
         assert isinstance(result[1], ToolConversationTurn)
         assert result[1].content[0].tool_use_response == {"result": "NO RESULT"}
@@ -609,7 +616,7 @@ class TestQuerySolverGetConversationTurnsForSummary:
         query_solver,
     ):
         """Test conversation turns generation with empty agent chat list."""
-        
+
         result = await query_solver._get_conversation_turns_for_summary([])
 
         # Should still have one user turn from the prompt
@@ -661,7 +668,7 @@ class TestQuerySolverGetConversationTurnsForSummary:
                 updated_at=datetime.now(),
             ),
         ]
-        
+
         result = await query_solver._get_conversation_turns_for_summary(mixed_chats)
 
         # Should have: user turn + assistant turn + user turn from prompt
@@ -687,9 +694,10 @@ class TestQuerySolverGenerateQuerySummary:
 
         mock_llm_handler.start_llm_query.return_value = mock_query_summary_llm_response
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_session_id', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(query_solver, '_update_query_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(AgentChatsRepository, "get_chats_by_session_id", new_callable=AsyncMock) as mock_get_chats,
+            patch.object(query_solver, "_update_query_summary", new_callable=AsyncMock) as mock_update_summary,
+        ):
             mock_get_chats.return_value = mock_agent_chat_list_for_summary
 
             summary, status = await query_solver._generate_query_summary(
@@ -700,13 +708,13 @@ class TestQuerySolverGenerateQuerySummary:
 
             assert summary == "Generated query summary"
             assert status is True
-            
+
             # Verify LLM was called correctly
             mock_llm_handler.start_llm_query.assert_called_once()
             call_args = mock_llm_handler.start_llm_query.call_args
-            assert call_args[1]['prompt_feature'] == PromptFeatures.QUERY_SUMMARY_GENERATOR
-            assert call_args[1]['llm_model'] == LLModels.GPT_4_POINT_1_NANO
-            assert call_args[1]['stream'] is False
+            assert call_args[1]["prompt_feature"] == PromptFeatures.QUERY_SUMMARY_GENERATOR
+            assert call_args[1]["llm_model"] == LLModels.GPT_4_POINT_1_NANO
+            assert call_args[1]["stream"] is False
 
     @pytest.mark.asyncio
     async def test_generate_query_summary_without_success_attribute(
@@ -721,9 +729,10 @@ class TestQuerySolverGenerateQuerySummary:
 
         mock_llm_handler.start_llm_query.return_value = mock_query_summary_llm_response_without_success
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_session_id', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(query_solver, '_update_query_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(AgentChatsRepository, "get_chats_by_session_id", new_callable=AsyncMock) as mock_get_chats,
+            patch.object(query_solver, "_update_query_summary", new_callable=AsyncMock) as mock_update_summary,
+        ):
             mock_get_chats.return_value = mock_agent_chat_list_for_summary
 
             summary, status = await query_solver._generate_query_summary(
@@ -775,9 +784,10 @@ class TestQuerySolverGenerateQuerySummary:
 
         mock_llm_handler.start_llm_query.return_value = mock_query_summary_llm_response
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_session_id', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(query_solver, '_update_query_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(AgentChatsRepository, "get_chats_by_session_id", new_callable=AsyncMock) as mock_get_chats,
+            patch.object(query_solver, "_update_query_summary", new_callable=AsyncMock) as mock_update_summary,
+        ):
             mock_get_chats.return_value = all_chats
 
             await query_solver._generate_query_summary(
@@ -788,8 +798,8 @@ class TestQuerySolverGenerateQuerySummary:
 
             # Verify that conversation turns only included query-1 messages
             call_args = mock_llm_handler.start_llm_query.call_args
-            conversation_turns = call_args[1]['conversation_turns']
-            
+            conversation_turns = call_args[1]["conversation_turns"]
+
             # Should have filtered chat + user turn from prompt
             assert len(conversation_turns) == 2
 
@@ -807,7 +817,7 @@ class TestQuerySolverGenerateQuerySummary:
         mock_streaming_response = MagicMock(spec=StreamingParsedLLMCallResponse)
         mock_llm_handler.start_llm_query.return_value = mock_streaming_response
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_session_id', new_callable=AsyncMock) as mock_get_chats:
+        with patch.object(AgentChatsRepository, "get_chats_by_session_id", new_callable=AsyncMock) as mock_get_chats:
             mock_get_chats.return_value = mock_agent_chat_list_for_summary
 
             with pytest.raises(ValueError, match="Expected NonStreamingParsedLLMCallResponse"):
@@ -832,9 +842,10 @@ class TestQuerySolverGenerateQuerySummary:
         mock_response.parsed_content = [MagicMock(summary=None, success=True)]
         mock_llm_handler.start_llm_query.return_value = mock_response
 
-        with patch.object(AgentChatsRepository, 'get_chats_by_session_id', new_callable=AsyncMock) as mock_get_chats, \
-             patch.object(query_solver, '_update_query_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(AgentChatsRepository, "get_chats_by_session_id", new_callable=AsyncMock) as mock_get_chats,
+            patch.object(query_solver, "_update_query_summary", new_callable=AsyncMock) as mock_update_summary,
+        ):
             mock_get_chats.return_value = mock_agent_chat_list_for_summary
 
             summary, status = await query_solver._generate_query_summary(
@@ -857,11 +868,16 @@ class TestQuerySolverUpdateQuerySummary:
         mock_existing_query_summary,
     ):
         """Test updating existing query summary."""
-        from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import QuerySummarysRepository
+        from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+            QuerySummarysRepository,
+        )
 
-        with patch.object(QuerySummarysRepository, 'get_query_summary', new_callable=AsyncMock) as mock_get_summary, \
-             patch.object(QuerySummarysRepository, 'update_query_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(QuerySummarysRepository, "get_query_summary", new_callable=AsyncMock) as mock_get_summary,
+            patch.object(
+                QuerySummarysRepository, "update_query_summary", new_callable=AsyncMock
+            ) as mock_update_summary,
+        ):
             mock_get_summary.return_value = mock_existing_query_summary
 
             await query_solver._update_query_summary(
@@ -872,9 +888,7 @@ class TestQuerySolverUpdateQuerySummary:
 
             mock_get_summary.assert_called_once_with(session_id=123, query_id="test-query-id")
             mock_update_summary.assert_called_once_with(
-                session_id=123,
-                query_id="test-query-id",
-                summary="Existing query summary\nNew summary part"
+                session_id=123, query_id="test-query-id", summary="Existing query summary\nNew summary part"
             )
 
     @pytest.mark.asyncio
@@ -883,11 +897,16 @@ class TestQuerySolverUpdateQuerySummary:
         query_solver,
     ):
         """Test creating new query summary when none exists."""
-        from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import QuerySummarysRepository
+        from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+            QuerySummarysRepository,
+        )
 
-        with patch.object(QuerySummarysRepository, 'get_query_summary', new_callable=AsyncMock) as mock_get_summary, \
-             patch.object(QuerySummarysRepository, 'create_query_summary', new_callable=AsyncMock) as mock_create_summary:
-            
+        with (
+            patch.object(QuerySummarysRepository, "get_query_summary", new_callable=AsyncMock) as mock_get_summary,
+            patch.object(
+                QuerySummarysRepository, "create_query_summary", new_callable=AsyncMock
+            ) as mock_create_summary,
+        ):
             mock_get_summary.return_value = None
 
             await query_solver._update_query_summary(
@@ -898,7 +917,7 @@ class TestQuerySolverUpdateQuerySummary:
 
             mock_get_summary.assert_called_once_with(session_id=456, query_id="new-query-id")
             mock_create_summary.assert_called_once()
-            
+
             # Verify the created summary data
             create_call_args = mock_create_summary.call_args[0][0]
             assert create_call_args.session_id == 456
@@ -911,7 +930,9 @@ class TestQuerySolverUpdateQuerySummary:
         query_solver,
     ):
         """Test updating when existing summary is empty."""
-        from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import QuerySummarysRepository
+        from app.main.blueprints.one_dev.services.repository.query_summaries.query_summary_dto import (
+            QuerySummarysRepository,
+        )
 
         existing_empty_summary = QuerySummaryData(
             session_id=123,
@@ -919,9 +940,12 @@ class TestQuerySolverUpdateQuerySummary:
             summary="",
         )
 
-        with patch.object(QuerySummarysRepository, 'get_query_summary', new_callable=AsyncMock) as mock_get_summary, \
-             patch.object(QuerySummarysRepository, 'update_query_summary', new_callable=AsyncMock) as mock_update_summary:
-            
+        with (
+            patch.object(QuerySummarysRepository, "get_query_summary", new_callable=AsyncMock) as mock_get_summary,
+            patch.object(
+                QuerySummarysRepository, "update_query_summary", new_callable=AsyncMock
+            ) as mock_update_summary,
+        ):
             mock_get_summary.return_value = existing_empty_summary
 
             await query_solver._update_query_summary(
@@ -933,7 +957,7 @@ class TestQuerySolverUpdateQuerySummary:
             mock_update_summary.assert_called_once_with(
                 session_id=123,
                 query_id="test-query-id",
-                summary="\nNew content"  # Empty string + newline + new content
+                summary="\nNew content",  # Empty string + newline + new content
             )
 
 
@@ -947,26 +971,30 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
         mock_multiple_query_solver_agents,
     ):
         """Test successful generation of dynamic query solver agents."""
-        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
+        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import (
+            QuerySolverAgentsRepository,
+        )
 
-        with patch.object(QuerySolverAgentsRepository, 'get_query_solver_agents', new_callable=AsyncMock) as mock_get_agents:
+        with patch.object(
+            QuerySolverAgentsRepository, "get_query_solver_agents", new_callable=AsyncMock
+        ) as mock_get_agents:
             mock_get_agents.return_value = mock_multiple_query_solver_agents
 
             result = await query_solver._generate_dynamic_query_solver_agents()
 
             assert len(result) == 3
-            
+
             # Verify first agent
             assert result[0].agent_name == "file_manager_agent"
             assert result[0].agent_description == "Agent for file management tasks"
             assert result[0].allowed_tools == ["file_reader", "write_to_file"]
             assert result[0].prompt_intent == "Handle file operations and management"
-            
+
             # Verify second agent
             assert result[1].agent_name == "code_analyzer_agent"
             assert result[1].agent_description == "Agent for code analysis tasks"
             assert result[1].allowed_tools == ["focused_snippets_searcher", "grep_search"]
-            
+
             # Verify third agent
             assert result[2].agent_name == "terminal_agent"
             assert result[2].allowed_tools == ["execute_command"]
@@ -977,9 +1005,13 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
         query_solver,
     ):
         """Test generation when no agents exist in database."""
-        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
+        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import (
+            QuerySolverAgentsRepository,
+        )
 
-        with patch.object(QuerySolverAgentsRepository, 'get_query_solver_agents', new_callable=AsyncMock) as mock_get_agents:
+        with patch.object(
+            QuerySolverAgentsRepository, "get_query_solver_agents", new_callable=AsyncMock
+        ) as mock_get_agents:
             mock_get_agents.return_value = []
 
             result = await query_solver._generate_dynamic_query_solver_agents()
@@ -992,9 +1024,13 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
         query_solver,
     ):
         """Test generation when repository returns None."""
-        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
+        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import (
+            QuerySolverAgentsRepository,
+        )
 
-        with patch.object(QuerySolverAgentsRepository, 'get_query_solver_agents', new_callable=AsyncMock) as mock_get_agents:
+        with patch.object(
+            QuerySolverAgentsRepository, "get_query_solver_agents", new_callable=AsyncMock
+        ) as mock_get_agents:
             mock_get_agents.return_value = None
 
             result = await query_solver._generate_dynamic_query_solver_agents()
@@ -1008,9 +1044,13 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
         mock_query_solver_agent_dto,
     ):
         """Test generation with single agent."""
-        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import QuerySolverAgentsRepository
+        from app.main.blueprints.one_dev.services.repository.query_solver_agents.repository import (
+            QuerySolverAgentsRepository,
+        )
 
-        with patch.object(QuerySolverAgentsRepository, 'get_query_solver_agents', new_callable=AsyncMock) as mock_get_agents:
+        with patch.object(
+            QuerySolverAgentsRepository, "get_query_solver_agents", new_callable=AsyncMock
+        ) as mock_get_agents:
             mock_get_agents.return_value = [mock_query_solver_agent_dto]
 
             result = await query_solver._generate_dynamic_query_solver_agents()
@@ -1034,7 +1074,9 @@ class TestQuerySolverGetLastQueryMessageForSession:
         """Test successful retrieval of last query message."""
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
-        with patch.object(MessageThreadsRepository, 'get_message_threads_for_session', new_callable=AsyncMock) as mock_get_messages:
+        with patch.object(
+            MessageThreadsRepository, "get_message_threads_for_session", new_callable=AsyncMock
+        ) as mock_get_messages:
             mock_get_messages.return_value = mock_multiple_message_threads
 
             result = await query_solver._get_last_query_message_for_session(session_id=123)
@@ -1051,11 +1093,10 @@ class TestQuerySolverGetLastQueryMessageForSession:
         query_solver,
     ):
         """Test when no query messages exist."""
+        # Create message threads without QUERY type or correct prompt_type
+        from app.backend_common.models.dto.message_thread_dto import MessageThreadActor, TextBlockContent, TextBlockData
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
-        # Create message threads without QUERY type or correct prompt_type
-        from app.backend_common.models.dto.message_thread_dto import MessageThreadActor, TextBlockData, TextBlockContent
-        
         non_query_messages = [
             MessageThreadDTO(
                 id=1,
@@ -1063,11 +1104,7 @@ class TestQuerySolverGetLastQueryMessageForSession:
                 actor=MessageThreadActor.ASSISTANT,
                 message_type=MessageType.RESPONSE,
                 data_hash="hash1",
-                message_data=[
-                    TextBlockData(
-                        content=TextBlockContent(text="response")
-                    )
-                ],
+                message_data=[TextBlockData(content=TextBlockContent(text="response"))],
                 prompt_type="CODE_QUERY_SOLVER",
                 prompt_category="query_solver",
                 llm_model=LLModels.GPT_4_POINT_1,
@@ -1081,11 +1118,7 @@ class TestQuerySolverGetLastQueryMessageForSession:
                 actor=MessageThreadActor.USER,
                 message_type=MessageType.QUERY,
                 data_hash="hash2",
-                message_data=[
-                    TextBlockData(
-                        content=TextBlockContent(text="other query")
-                    )
-                ],
+                message_data=[TextBlockData(content=TextBlockContent(text="other query"))],
                 prompt_type="OTHER_PROMPT_TYPE",
                 prompt_category="other",
                 llm_model=LLModels.GPT_4_POINT_1,
@@ -1095,7 +1128,9 @@ class TestQuerySolverGetLastQueryMessageForSession:
             ),
         ]
 
-        with patch.object(MessageThreadsRepository, 'get_message_threads_for_session', new_callable=AsyncMock) as mock_get_messages:
+        with patch.object(
+            MessageThreadsRepository, "get_message_threads_for_session", new_callable=AsyncMock
+        ) as mock_get_messages:
             mock_get_messages.return_value = non_query_messages
 
             result = await query_solver._get_last_query_message_for_session(session_id=123)
@@ -1110,7 +1145,9 @@ class TestQuerySolverGetLastQueryMessageForSession:
         """Test when no messages exist for session."""
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
-        with patch.object(MessageThreadsRepository, 'get_message_threads_for_session', new_callable=AsyncMock) as mock_get_messages:
+        with patch.object(
+            MessageThreadsRepository, "get_message_threads_for_session", new_callable=AsyncMock
+        ) as mock_get_messages:
             mock_get_messages.return_value = []
 
             result = await query_solver._get_last_query_message_for_session(session_id=123)
@@ -1125,7 +1162,9 @@ class TestQuerySolverGetLastQueryMessageForSession:
         """Test exception handling in get_last_query_message_for_session."""
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
-        with patch.object(MessageThreadsRepository, 'get_message_threads_for_session', new_callable=AsyncMock) as mock_get_messages:
+        with patch.object(
+            MessageThreadsRepository, "get_message_threads_for_session", new_callable=AsyncMock
+        ) as mock_get_messages:
             mock_get_messages.side_effect = Exception("Database error")
 
             result = await query_solver._get_last_query_message_for_session(session_id=123)
@@ -1141,15 +1180,14 @@ class TestQuerySolverGetLastQueryMessageForSession:
         """Test that correct call chain category is used."""
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
-        with patch.object(MessageThreadsRepository, 'get_message_threads_for_session', new_callable=AsyncMock) as mock_get_messages:
+        with patch.object(
+            MessageThreadsRepository, "get_message_threads_for_session", new_callable=AsyncMock
+        ) as mock_get_messages:
             mock_get_messages.return_value = [mock_message_thread_dto]
 
             await query_solver._get_last_query_message_for_session(session_id=123)
 
-            mock_get_messages.assert_called_once_with(
-                123,
-                call_chain_category=MessageCallChainCategory.CLIENT_CHAIN
-            )
+            mock_get_messages.assert_called_once_with(123, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN)
 
 
 class TestQuerySolverGetAgentInstanceByName:
@@ -1161,7 +1199,7 @@ class TestQuerySolverGetAgentInstanceByName:
         mock_multiple_custom_agents,
     ):
         """Test finding agent instance by name."""
-        
+
         result = query_solver._get_agent_instance_by_name(
             agent_name="file_manager_agent",
             all_agents=mock_multiple_custom_agents,
@@ -1176,7 +1214,7 @@ class TestQuerySolverGetAgentInstanceByName:
         mock_multiple_custom_agents,
     ):
         """Test fallback to default agent when name not found."""
-        
+
         result = query_solver._get_agent_instance_by_name(
             agent_name="non_existent_agent",
             all_agents=mock_multiple_custom_agents,
@@ -1189,7 +1227,7 @@ class TestQuerySolverGetAgentInstanceByName:
         query_solver,
     ):
         """Test with empty agent list."""
-        
+
         result = query_solver._get_agent_instance_by_name(
             agent_name="any_agent",
             all_agents=[],
@@ -1203,7 +1241,7 @@ class TestQuerySolverGetAgentInstanceByName:
         mock_multiple_custom_agents,
     ):
         """Test that agent name matching is case sensitive."""
-        
+
         result = query_solver._get_agent_instance_by_name(
             agent_name="FILE_MANAGER_AGENT",  # Different case
             all_agents=mock_multiple_custom_agents,
@@ -1217,7 +1255,7 @@ class TestQuerySolverGetAgentInstanceByName:
         mock_multiple_custom_agents,
     ):
         """Test exact name match."""
-        
+
         result = query_solver._get_agent_instance_by_name(
             agent_name="code_analyzer_agent",
             all_agents=mock_multiple_custom_agents,
@@ -1237,7 +1275,7 @@ class TestQuerySolverGetModelChangeText:
     ):
         """Test model change text for tool use failure."""
         scenario = mock_model_change_scenarios["tool_use_failed"]
-        
+
         result = query_solver._get_model_change_text(
             current_model=scenario["current_model"],
             new_model=scenario["new_model"],
@@ -1256,7 +1294,7 @@ class TestQuerySolverGetModelChangeText:
     ):
         """Test model change text for throttling."""
         scenario = mock_model_change_scenarios["throttled"]
-        
+
         result = query_solver._get_model_change_text(
             current_model=scenario["current_model"],
             new_model=scenario["new_model"],
@@ -1272,7 +1310,7 @@ class TestQuerySolverGetModelChangeText:
     ):
         """Test model change text for token limit exceeded."""
         scenario = mock_model_change_scenarios["token_limit_exceeded"]
-        
+
         result = query_solver._get_model_change_text(
             current_model=scenario["current_model"],
             new_model=scenario["new_model"],
@@ -1288,7 +1326,7 @@ class TestQuerySolverGetModelChangeText:
     ):
         """Test model change text for user-initiated change."""
         scenario = mock_model_change_scenarios["user_changed"]
-        
+
         result = query_solver._get_model_change_text(
             current_model=scenario["current_model"],
             new_model=scenario["new_model"],
@@ -1302,7 +1340,7 @@ class TestQuerySolverGetModelChangeText:
         query_solver,
     ):
         """Test model change text when no configuration is available."""
-        with patch('deputydev_core.utils.config_manager.ConfigManager.configs', new={}):
+        with patch("deputydev_core.utils.config_manager.ConfigManager.configs", new={}):
             result = query_solver._get_model_change_text(
                 current_model=LLModels.GPT_4_POINT_1,
                 new_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -1327,8 +1365,8 @@ class TestQuerySolverGetModelChangeText:
                 # Missing claude configuration
             ]
         }
-        
-        with patch('deputydev_core.utils.config_manager.ConfigManager.configs', new=partial_config):
+
+        with patch("deputydev_core.utils.config_manager.ConfigManager.configs", new=partial_config):
             result = query_solver._get_model_change_text(
                 current_model=LLModels.GPT_4_POINT_1,
                 new_model=LLModels.CLAUDE_3_POINT_5_SONNET,
@@ -1368,11 +1406,16 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         mock_multiple_custom_agents,
     ):
         """Test getting agent instance for new query."""
-        from app.main.blueprints.one_dev.services.query_solver.agent_selector.agent_selector import QuerySolverAgentSelector
+        from app.main.blueprints.one_dev.services.query_solver.agent_selector.agent_selector import (
+            QuerySolverAgentSelector,
+        )
 
-        with patch.object(query_solver, '_generate_dynamic_query_solver_agents', new_callable=AsyncMock) as mock_generate_agents, \
-             patch.object(QuerySolverAgentSelector, 'select_agent', new_callable=AsyncMock) as mock_select_agent:
-            
+        with (
+            patch.object(
+                query_solver, "_generate_dynamic_query_solver_agents", new_callable=AsyncMock
+            ) as mock_generate_agents,
+            patch.object(QuerySolverAgentSelector, "select_agent", new_callable=AsyncMock) as mock_select_agent,
+        ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
             mock_select_agent.return_value = mock_multiple_custom_agents[0]
 
@@ -1394,8 +1437,10 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         mock_llm_handler,
     ):
         """Test getting agent instance when no custom agents exist."""
-        
-        with patch.object(query_solver, '_generate_dynamic_query_solver_agents', new_callable=AsyncMock) as mock_generate_agents:
+
+        with patch.object(
+            query_solver, "_generate_dynamic_query_solver_agents", new_callable=AsyncMock
+        ) as mock_generate_agents:
             mock_generate_agents.return_value = []
 
             result = await query_solver._get_query_solver_agent_instance(
@@ -1415,7 +1460,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         mock_multiple_custom_agents,
     ):
         """Test getting agent instance without new query (tool response scenario)."""
-        
+
         # Create payload without query
         payload_without_query = QuerySolverInput(
             session_id=123,
@@ -1423,9 +1468,12 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             session_type="test_session",
         )
 
-        with patch.object(query_solver, '_generate_dynamic_query_solver_agents', new_callable=AsyncMock) as mock_generate_agents, \
-             patch.object(query_solver, '_get_agent_instance_by_name') as mock_get_agent_by_name:
-            
+        with (
+            patch.object(
+                query_solver, "_generate_dynamic_query_solver_agents", new_callable=AsyncMock
+            ) as mock_generate_agents,
+            patch.object(query_solver, "_get_agent_instance_by_name") as mock_get_agent_by_name,
+        ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
             mock_get_agent_by_name.return_value = mock_multiple_custom_agents[0]
 
@@ -1438,7 +1486,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             # Should get agent by name from previous chat metadata
             mock_get_agent_by_name.assert_called_once_with(
                 agent_name="test_agent",  # From mock_agent_chat_dto metadata
-                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance]
+                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance],
             )
 
     @pytest.mark.asyncio
@@ -1449,16 +1497,19 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         mock_multiple_custom_agents,
     ):
         """Test getting agent instance without query and no previous chats."""
-        
+
         payload_without_query = QuerySolverInput(
             session_id=123,
             user_team_id=1,
             session_type="test_session",
         )
 
-        with patch.object(query_solver, '_generate_dynamic_query_solver_agents', new_callable=AsyncMock) as mock_generate_agents, \
-             patch.object(query_solver, '_get_agent_instance_by_name') as mock_get_agent_by_name:
-            
+        with (
+            patch.object(
+                query_solver, "_generate_dynamic_query_solver_agents", new_callable=AsyncMock
+            ) as mock_generate_agents,
+            patch.object(query_solver, "_get_agent_instance_by_name") as mock_get_agent_by_name,
+        ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
             mock_get_agent_by_name.return_value = DefaultQuerySolverAgentInstance
 
@@ -1471,7 +1522,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             # Should use default agent name
             mock_get_agent_by_name.assert_called_once_with(
                 agent_name=DefaultQuerySolverAgentInstance.agent_name,
-                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance]
+                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance],
             )
 
     @pytest.mark.asyncio
@@ -1483,11 +1534,16 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         mock_multiple_custom_agents,
     ):
         """Test when agent selector returns None."""
-        from app.main.blueprints.one_dev.services.query_solver.agent_selector.agent_selector import QuerySolverAgentSelector
+        from app.main.blueprints.one_dev.services.query_solver.agent_selector.agent_selector import (
+            QuerySolverAgentSelector,
+        )
 
-        with patch.object(query_solver, '_generate_dynamic_query_solver_agents', new_callable=AsyncMock) as mock_generate_agents, \
-             patch.object(QuerySolverAgentSelector, 'select_agent', new_callable=AsyncMock) as mock_select_agent:
-            
+        with (
+            patch.object(
+                query_solver, "_generate_dynamic_query_solver_agents", new_callable=AsyncMock
+            ) as mock_generate_agents,
+            patch.object(QuerySolverAgentSelector, "select_agent", new_callable=AsyncMock) as mock_select_agent,
+        ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
             mock_select_agent.return_value = None
 
@@ -1507,7 +1563,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         mock_multiple_custom_agents,
     ):
         """Test getting agent instance when previous chat has no metadata."""
-        
+
         # Create chat without metadata
         chat_without_metadata = AgentChatDTO(
             id=1,
@@ -1528,9 +1584,12 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             session_type="test_session",
         )
 
-        with patch.object(query_solver, '_generate_dynamic_query_solver_agents', new_callable=AsyncMock) as mock_generate_agents, \
-             patch.object(query_solver, '_get_agent_instance_by_name') as mock_get_agent_by_name:
-            
+        with (
+            patch.object(
+                query_solver, "_generate_dynamic_query_solver_agents", new_callable=AsyncMock
+            ) as mock_generate_agents,
+            patch.object(query_solver, "_get_agent_instance_by_name") as mock_get_agent_by_name,
+        ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
             mock_get_agent_by_name.return_value = DefaultQuerySolverAgentInstance
 
@@ -1543,7 +1602,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             # Should use default agent name when no metadata
             mock_get_agent_by_name.assert_called_once_with(
                 agent_name=DefaultQuerySolverAgentInstance.agent_name,
-                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance]
+                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance],
             )
 
 
@@ -1559,12 +1618,12 @@ class TestQuerySolverGetFinalStreamIterator:
         stream_iterator_params,
     ) -> None:
         """Test basic text streaming functionality."""
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch.object(
-            query_solver, "_generate_query_summary",
-            return_value=("Test summary", True)
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch.object(query_solver, "_generate_query_summary", return_value=("Test summary", True)),
         ):
             result = await query_solver.get_final_stream_iterator(
                 llm_response=basic_streaming_response,
@@ -1584,7 +1643,9 @@ class TestQuerySolverGetFinalStreamIterator:
             assert streamed_items[0].content.session_id == 123
 
             # Verify text blocks are streamed
-            text_blocks = [item for item in streamed_items if isinstance(item, (TextBlockStart, TextBlockDelta, TextBlockEnd))]
+            text_blocks = [
+                item for item in streamed_items if isinstance(item, (TextBlockStart, TextBlockDelta, TextBlockEnd))
+            ]
             assert len(text_blocks) >= 3  # Start, Delta(s), End
 
             # Verify task completion block (no tool use detected)
@@ -1601,12 +1662,12 @@ class TestQuerySolverGetFinalStreamIterator:
         stream_iterator_params,
     ) -> None:
         """Test tool use streaming functionality."""
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch.object(
-            query_solver, "_generate_query_summary",
-            return_value=("Test summary", True)
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch.object(query_solver, "_generate_query_summary", return_value=("Test summary", True)),
         ):
             result = await query_solver.get_final_stream_iterator(
                 llm_response=tool_use_streaming_response,
@@ -1623,7 +1684,11 @@ class TestQuerySolverGetFinalStreamIterator:
             assert streamed_items[0].content.query_id == 456
 
             # Verify tool use blocks are streamed
-            tool_blocks = [item for item in streamed_items if isinstance(item, (ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd))]
+            tool_blocks = [
+                item
+                for item in streamed_items
+                if isinstance(item, (ToolUseRequestStart, ToolUseRequestDelta, ToolUseRequestEnd))
+            ]
             assert len(tool_blocks) >= 3
 
             # Verify NO task completion block when tool use is detected
@@ -1654,7 +1719,11 @@ class TestQuerySolverGetFinalStreamIterator:
                 streamed_items.append(item)
 
             # Verify thinking blocks are streamed
-            thinking_blocks = [item for item in streamed_items if isinstance(item, (ThinkingBlockStart, ThinkingBlockDelta, ThinkingBlockEnd))]
+            thinking_blocks = [
+                item
+                for item in streamed_items
+                if isinstance(item, (ThinkingBlockStart, ThinkingBlockDelta, ThinkingBlockEnd))
+            ]
             assert len(thinking_blocks) >= 3
 
             # Verify task completion block is present (no tool use)
@@ -1685,7 +1754,9 @@ class TestQuerySolverGetFinalStreamIterator:
                 streamed_items.append(item)
 
             # Verify code blocks are streamed
-            code_blocks = [item for item in streamed_items if isinstance(item, (CodeBlockStart, CodeBlockDelta, CodeBlockEnd))]
+            code_blocks = [
+                item for item in streamed_items if isinstance(item, (CodeBlockStart, CodeBlockDelta, CodeBlockEnd))
+            ]
             assert len(code_blocks) >= 3
 
             # Verify task completion block is present
@@ -1716,9 +1787,17 @@ class TestQuerySolverGetFinalStreamIterator:
                 streamed_items.append(item)
 
             # Verify all types of blocks are present
-            text_blocks = [item for item in streamed_items if isinstance(item, (TextBlockStart, TextBlockDelta, TextBlockEnd))]
-            thinking_blocks = [item for item in streamed_items if isinstance(item, (ThinkingBlockStart, ThinkingBlockDelta, ThinkingBlockEnd))]
-            code_blocks = [item for item in streamed_items if isinstance(item, (CodeBlockStart, CodeBlockDelta, CodeBlockEnd))]
+            text_blocks = [
+                item for item in streamed_items if isinstance(item, (TextBlockStart, TextBlockDelta, TextBlockEnd))
+            ]
+            thinking_blocks = [
+                item
+                for item in streamed_items
+                if isinstance(item, (ThinkingBlockStart, ThinkingBlockDelta, ThinkingBlockEnd))
+            ]
+            code_blocks = [
+                item for item in streamed_items if isinstance(item, (CodeBlockStart, CodeBlockDelta, CodeBlockEnd))
+            ]
 
             assert len(text_blocks) >= 2
             assert len(thinking_blocks) >= 2
@@ -1735,7 +1814,7 @@ class TestQuerySolverGetFinalStreamIterator:
         """Test streaming with reasoning parameter."""
         with patch(
             "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository.create_chat",
-            new_callable=AsyncMock
+            new_callable=AsyncMock,
         ) as mock_create_chat:
             result = await query_solver.get_final_stream_iterator(
                 llm_response=basic_streaming_response,
@@ -1840,13 +1919,15 @@ class TestQuerySolverGetFinalStreamIterator:
         """Test query summary generation without tool use."""
         mock_summary_result = ("Generated summary", True)
 
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch.object(
-            query_solver, "_generate_query_summary",
-            return_value=mock_summary_result
-        ) as mock_generate_summary:
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch.object(
+                query_solver, "_generate_query_summary", return_value=mock_summary_result
+            ) as mock_generate_summary,
+        ):
             result = await query_solver.get_final_stream_iterator(
                 llm_response=basic_streaming_response,
                 llm_handler=mock_llm_handler_for_stream,
@@ -1870,7 +1951,6 @@ class TestQuerySolverGetFinalStreamIterator:
             assert task_completion_blocks[0].content.summary == "Generated summary"
             assert task_completion_blocks[0].content.success is True
 
-
     @pytest.mark.asyncio
     async def test_get_final_stream_iterator_large_previous_queries(
         self,
@@ -1891,7 +1971,7 @@ class TestQuerySolverGetFinalStreamIterator:
 
         with patch(
             "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository.create_chat",
-            new_callable=AsyncMock
+            new_callable=AsyncMock,
         ) as mock_create_chat:
             result = await query_solver.get_final_stream_iterator(
                 llm_response=basic_streaming_response,
@@ -1947,7 +2027,7 @@ class TestQuerySolverGetFinalStreamIterator:
         """Test complex tool use scenarios with multiple tools."""
         with patch(
             "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository.create_chat",
-            new_callable=AsyncMock
+            new_callable=AsyncMock,
         ) as mock_create_chat:
             result = await query_solver.get_final_stream_iterator(
                 llm_response=complex_tool_use_streaming_response,
@@ -2059,12 +2139,12 @@ class TestQuerySolverGetFinalStreamIterator:
         stream_iterator_params,
     ) -> None:
         """Test the structure of TaskCompletionBlock."""
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch.object(
-            query_solver, "_generate_query_summary",
-            return_value=("Test summary", True)
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch.object(query_solver, "_generate_query_summary", return_value=("Test summary", True)),
         ):
             result = await query_solver.get_final_stream_iterator(
                 llm_response=basic_streaming_response,
@@ -2100,7 +2180,7 @@ class TestQuerySolverGetFinalStreamIterator:
         """Test that chat creation receives correct parameters."""
         with patch(
             "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository.create_chat",
-            new_callable=AsyncMock
+            new_callable=AsyncMock,
         ) as mock_create_chat:
             result = await query_solver.get_final_stream_iterator(
                 llm_response=basic_streaming_response,
@@ -2136,10 +2216,8 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with a basic completed tool response."""
-        result = query_solver._format_tool_response(
-            completed_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(completed_tool_response, sample_vscode_env, sample_focus_items)
+
         expected = {"result": "success", "data": "test data"}
         assert result == expected
 
@@ -2151,10 +2229,8 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with a failed tool that has error response."""
-        result = query_solver._format_tool_response(
-            failed_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(failed_tool_response, sample_vscode_env, sample_focus_items)
+
         expected = {"error": "Tool execution failed", "code": 500}
         assert result == expected
 
@@ -2168,11 +2244,9 @@ class TestQuerySolverFormatToolResponse:
         """Test _format_tool_response with a tool that has no response data."""
         # Set status to failed
         empty_response_tool.status = ToolStatus.FAILED
-        
-        result = query_solver._format_tool_response(
-            empty_response_tool, sample_vscode_env, sample_focus_items
-        )
-        
+
+        result = query_solver._format_tool_response(empty_response_tool, sample_vscode_env, sample_focus_items)
+
         assert result == {}
 
     def test_format_tool_response_aborted_status(
@@ -2183,10 +2257,8 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with ABORTED status."""
-        result = query_solver._format_tool_response(
-            partial_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(partial_tool_response, sample_vscode_env, sample_focus_items)
+
         expected = {"progress": 50, "partial_result": "halfway done"}
         assert result == expected
 
@@ -2198,10 +2270,8 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with ABORTED status (cancelled operation)."""
-        result = query_solver._format_tool_response(
-            cancelled_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(cancelled_tool_response, sample_vscode_env, sample_focus_items)
+
         expected = {"reason": "User cancelled operation"}
         assert result == expected
 
@@ -2216,7 +2286,7 @@ class TestQuerySolverFormatToolResponse:
         result = query_solver._format_tool_response(
             focused_snippets_tool_response, sample_vscode_env, sample_focus_items
         )
-        
+
         # Verify the result structure
         assert "chunks" in result
         assert len(result["chunks"]) == 2
@@ -2236,7 +2306,7 @@ class TestQuerySolverFormatToolResponse:
         result = query_solver._format_tool_response(
             large_focused_snippets_response, sample_vscode_env, sample_focus_items
         )
-        
+
         # Verify the result structure
         assert "chunks" in result
         assert len(result["chunks"]) == 10
@@ -2256,7 +2326,7 @@ class TestQuerySolverFormatToolResponse:
         result = query_solver._format_tool_response(
             iterative_file_reader_tool_response, sample_vscode_env, sample_focus_items
         )
-        
+
         # Verify the result structure
         assert "Tool Response" in result
         assert isinstance(result["Tool Response"], str)
@@ -2272,10 +2342,8 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with grep_search tool."""
-        result = query_solver._format_tool_response(
-            grep_search_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(grep_search_tool_response, sample_vscode_env, sample_focus_items)
+
         # Verify the result structure
         assert "Tool Response" in result
         assert isinstance(result["Tool Response"], str)
@@ -2291,21 +2359,19 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with ask_user_input tool."""
-        result = query_solver._format_tool_response(
-            ask_user_input_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(ask_user_input_tool_response, sample_vscode_env, sample_focus_items)
+
         # Verify the result structure
         assert "user_response" in result
         assert "focus_items" in result
         assert "vscode_env" in result
-        
+
         # Verify the user response
         assert result["user_response"] == "Yes, please proceed with the changes"
-        
+
         # Verify vscode_env is formatted
         assert "Below is the information about the current vscode environment:" in result["vscode_env"]
-        
+
         # Verify focus_items contains the expected format
         assert "The user has asked to focus on the following:" in result["focus_items"]
 
@@ -2320,17 +2386,17 @@ class TestQuerySolverFormatToolResponse:
         result = query_solver._format_tool_response(
             complex_ask_user_input_response, sample_vscode_env, sample_focus_items
         )
-        
+
         # Verify the result structure
         assert "user_response" in result
         assert "focus_items" in result
         assert "vscode_env" in result
-        
+
         # Verify the complex user response is handled properly
         expected_user_response = {
             "action": "approve",
             "modifications": ["add tests", "update docs"],
-            "priority": "high"
+            "priority": "high",
         }
         assert result["user_response"] == expected_user_response
 
@@ -2341,15 +2407,13 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with ask_user_input tool without vscode_env."""
-        result = query_solver._format_tool_response(
-            ask_user_input_tool_response, None, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(ask_user_input_tool_response, None, sample_focus_items)
+
         # Verify the result structure
         assert "user_response" in result
         assert "focus_items" in result
         assert "vscode_env" in result
-        
+
         # Verify vscode_env is empty when None is passed
         assert result["vscode_env"] == ""
 
@@ -2360,18 +2424,16 @@ class TestQuerySolverFormatToolResponse:
         sample_vscode_env: str,
     ) -> None:
         """Test _format_tool_response with ask_user_input tool without focus_items."""
-        result = query_solver._format_tool_response(
-            ask_user_input_tool_response, sample_vscode_env, None
-        )
-        
+        result = query_solver._format_tool_response(ask_user_input_tool_response, sample_vscode_env, None)
+
         # Verify the result structure
         assert "user_response" in result
         assert "focus_items" in result
         assert "vscode_env" in result
-        
+
         # Verify focus_items is empty when None is passed
         assert result["focus_items"] == ""
-        
+
         # Verify vscode_env is still formatted
         assert "Below is the information about the current vscode environment:" in result["vscode_env"]
 
@@ -2383,15 +2445,13 @@ class TestQuerySolverFormatToolResponse:
         empty_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with ask_user_input tool with empty focus_items."""
-        result = query_solver._format_tool_response(
-            ask_user_input_tool_response, sample_vscode_env, empty_focus_items
-        )
-        
+        result = query_solver._format_tool_response(ask_user_input_tool_response, sample_vscode_env, empty_focus_items)
+
         # Verify the result structure
         assert "user_response" in result
         assert "focus_items" in result
         assert "vscode_env" in result
-        
+
         # Verify focus_items is empty when empty list is passed
         assert result["focus_items"] == ""
 
@@ -2403,10 +2463,8 @@ class TestQuerySolverFormatToolResponse:
         sample_focus_items: List[FocusItem],
     ) -> None:
         """Test _format_tool_response with an unknown/unhandled tool type."""
-        result = query_solver._format_tool_response(
-            unknown_tool_response, sample_vscode_env, sample_focus_items
-        )
-        
+        result = query_solver._format_tool_response(unknown_tool_response, sample_vscode_env, sample_focus_items)
+
         # Should return the raw response for unknown tools
         expected = {"custom_data": "some custom response", "result": "success"}
         assert result == expected
@@ -2424,11 +2482,9 @@ class TestQuerySolverFormatToolResponse:
             response={},
             status=ToolStatus.COMPLETED,
         )
-        
-        result = query_solver._format_tool_response(
-            empty_unknown_response, sample_vscode_env, sample_focus_items
-        )
-        
+
+        result = query_solver._format_tool_response(empty_unknown_response, sample_vscode_env, sample_focus_items)
+
         # Should return empty dict for unknown tools with no response
         assert result == {}
 
@@ -2438,10 +2494,8 @@ class TestQuerySolverFormatToolResponse:
         completed_tool_response: ToolUseResponseInput,
     ) -> None:
         """Test _format_tool_response with all optional parameters as None."""
-        result = query_solver._format_tool_response(
-            completed_tool_response, None, None
-        )
-        
+        result = query_solver._format_tool_response(completed_tool_response, None, None)
+
         expected = {"result": "success", "data": "test data"}
         assert result == expected
 
@@ -2479,11 +2533,9 @@ class TestQuerySolverFormatToolResponse:
             },
             status=ToolStatus.COMPLETED,
         )
-        
-        result = query_solver._format_tool_response(
-            empty_chunks_response, sample_vscode_env, sample_focus_items
-        )
-        
+
+        result = query_solver._format_tool_response(empty_chunks_response, sample_vscode_env, sample_focus_items)
+
         # Should return empty chunks list
         assert result == {"chunks": []}
 
@@ -2497,18 +2549,12 @@ class TestQuerySolverFormatToolResponse:
         no_sections_response = ToolUseResponseInput(
             tool_name="focused_snippets_searcher",
             tool_use_id="no-sections-id",
-            response={
-                "batch_chunks_search": {
-                    "response": []
-                }
-            },
+            response={"batch_chunks_search": {"response": []}},
             status=ToolStatus.COMPLETED,
         )
-        
-        result = query_solver._format_tool_response(
-            no_sections_response, sample_vscode_env, sample_focus_items
-        )
-        
+
+        result = query_solver._format_tool_response(no_sections_response, sample_vscode_env, sample_focus_items)
+
         # Should return empty chunks list
         assert result == {"chunks": []}
 
@@ -2526,11 +2572,9 @@ class TestQuerySolverFormatToolResponse:
             response={"test": "data"},
             status=ToolStatus.COMPLETED,
         )
-        
-        result = query_solver._format_tool_response(
-            case_sensitive_response, sample_vscode_env, sample_focus_items
-        )
-        
+
+        result = query_solver._format_tool_response(case_sensitive_response, sample_vscode_env, sample_focus_items)
+
         # Should treat as unknown tool since names are case-sensitive
         assert result == {"test": "data"}
 
@@ -2545,32 +2589,18 @@ class TestQuerySolverFormatToolResponse:
             tool_name="complex_unknown_tool",
             tool_use_id="complex-id",
             response={
-                "nested": {
-                    "data": ["item1", "item2"],
-                    "metadata": {
-                        "count": 2,
-                        "type": "list"
-                    }
-                },
-                "top_level": "value"
+                "nested": {"data": ["item1", "item2"], "metadata": {"count": 2, "type": "list"}},
+                "top_level": "value",
             },
             status=ToolStatus.COMPLETED,
         )
-        
-        result = query_solver._format_tool_response(
-            complex_response, sample_vscode_env, sample_focus_items
-        )
-        
+
+        result = query_solver._format_tool_response(complex_response, sample_vscode_env, sample_focus_items)
+
         # Should preserve the entire structure
         expected = {
-            "nested": {
-                "data": ["item1", "item2"],
-                "metadata": {
-                    "count": 2,
-                    "type": "list"
-                }
-            },
-            "top_level": "value"
+            "nested": {"data": ["item1", "item2"], "metadata": {"count": 2, "type": "list"}},
+            "top_level": "value",
         }
         assert result == expected
 
@@ -2586,22 +2616,27 @@ class TestQuerySolverSetRequiredModel:
         basic_set_model_params,
     ) -> None:
         """Test _set_required_model with existing session and same model (no changes)."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_same_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_same_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**basic_set_model_params)
 
             # Verify no update operations were called since model is the same
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+
             ExtensionSessionsRepository.update_session_llm_model.assert_not_called()
-            
+
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             AgentChatsRepository.create_chat.assert_not_called()
 
     @pytest.mark.asyncio
@@ -2614,30 +2649,35 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model with existing session and different model."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**model_change_params)
 
             # Verify update operations were called
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+
             ExtensionSessionsRepository.update_session_llm_model.assert_called_once_with(
-                session_id=model_change_params["session_id"],
-                llm_model=model_change_params["llm_model"]
+                session_id=model_change_params["session_id"], llm_model=model_change_params["llm_model"]
             )
-            
+
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             AgentChatsRepository.create_chat.assert_called_once()
-            
+
             # Get the actual call arguments and verify the message content
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             expected_info = "LLM model changed from GPT-4.1 Nano to Claude 4 Sonnet by the user."
@@ -2655,22 +2695,26 @@ class TestQuerySolverSetRequiredModel:
         mock_new_session_data,
     ) -> None:
         """Test _set_required_model with non-existing session (creates new session)."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=None),
-            create_extension_session=AsyncMock(return_value=mock_new_session_data),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=None),
+                create_extension_session=AsyncMock(return_value=mock_new_session_data),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**new_session_params)
 
             # Verify session creation was called
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+
             ExtensionSessionsRepository.create_extension_session.assert_called_once()
-            
+
             # Verify the created session data
             call_args = ExtensionSessionsRepository.create_extension_session.call_args[1]["extension_session_data"]
             assert call_args.session_id == new_session_params["session_id"]
@@ -2680,8 +2724,9 @@ class TestQuerySolverSetRequiredModel:
 
             # Since the new session has the same model as requested, no update should occur
             ExtensionSessionsRepository.update_session_llm_model.assert_not_called()
-            
+
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             AgentChatsRepository.create_chat.assert_not_called()
 
     @pytest.mark.asyncio
@@ -2693,27 +2738,33 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model with TOOL_USE_FAILED retry reason."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**tool_use_failed_retry_params)
 
             # Verify update operations were called
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+
             ExtensionSessionsRepository.update_session_llm_model.assert_called_once()
-            
+
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             AgentChatsRepository.create_chat.assert_called_once()
-            
+
             # Verify the message content contains retry reason
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             expected_info = "LLM model changed from Claude 4 Sonnet to GPT-4.1 due to tool use failure."
@@ -2728,27 +2779,33 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model with THROTTLED retry reason."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**throttled_retry_params)
 
             # Verify update operations were called
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+
             ExtensionSessionsRepository.update_session_llm_model.assert_called_once()
-            
+
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             AgentChatsRepository.create_chat.assert_called_once()
-            
+
             # Verify the message content contains retry reason
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             expected_info = "LLM model changed from Claude 4 Sonnet to Gemini 2.5 Flash due to throttling."
@@ -2763,27 +2820,33 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model with TOKEN_LIMIT_EXCEEDED retry reason."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**token_limit_exceeded_retry_params)
 
             # Verify update operations were called
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
+
             ExtensionSessionsRepository.update_session_llm_model.assert_called_once()
-            
+
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             AgentChatsRepository.create_chat.assert_called_once()
-            
+
             # Verify the message content contains retry reason
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             expected_info = "LLM model changed from Claude 4 Sonnet to GPT-4.1 Mini due to token limit exceeded."
@@ -2808,22 +2871,27 @@ class TestQuerySolverSetRequiredModel:
             "reasoning": None,
         }
 
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**params)
 
             # Verify the metadata does not contain reasoning
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             assert "reasoning" not in call_args.metadata
             assert call_args.metadata["llm_model"] == LLModels.CLAUDE_3_POINT_5_SONNET.value
@@ -2848,22 +2916,27 @@ class TestQuerySolverSetRequiredModel:
             "reasoning": None,
         }
 
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_empty_config_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_empty_config_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**params)
 
             # Verify the message uses raw model names as fallback
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             expected_info = "LLM model changed from GPT_4_POINT_1_NANO to CLAUDE_3_POINT_5_SONNET by the user."
             assert call_args.message_data.info == expected_info
@@ -2887,22 +2960,27 @@ class TestQuerySolverSetRequiredModel:
             "reasoning": None,
         }
 
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_partial_config_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_partial_config_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**params)
 
             # Verify mixed display names (some from config, some fallback)
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             expected_info = "LLM model changed from GPT_4_POINT_1_NANO to Claude 3.5 Sonnet by the user."
             assert call_args.message_data.info == expected_info
@@ -2916,24 +2994,29 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model with very long names and IDs."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
         ):
             # Execute
             await query_solver._set_required_model(**edge_case_long_names_params)
 
             # Verify all long parameters were handled correctly
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
-            
+
             assert call_args.session_id == edge_case_long_names_params["session_id"]
             assert call_args.query_id == edge_case_long_names_params["query_id"]
             assert call_args.metadata["agent_name"] == edge_case_long_names_params["agent_name"]
@@ -2957,22 +3040,27 @@ class TestQuerySolverSetRequiredModel:
         ]
 
         for i, params in enumerate(multiple_retry_reasons_params):
-            with patch.multiple(
-                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-                get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
-                update_session_llm_model=AsyncMock(),
-            ), patch.multiple(
-                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-                create_chat=AsyncMock(),
-            ), patch(
-                "deputydev_core.utils.config_manager.ConfigManager.configs",
-                {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
+            with (
+                patch.multiple(
+                    "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                    get_by_id=AsyncMock(return_value=mock_existing_session_premium_model),
+                    update_session_llm_model=AsyncMock(),
+                ),
+                patch.multiple(
+                    "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                    create_chat=AsyncMock(),
+                ),
+                patch(
+                    "deputydev_core.utils.config_manager.ConfigManager.configs",
+                    {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+                ),
             ):
                 # Execute
                 await query_solver._set_required_model(**params)
 
                 # Verify the correct retry reason message
                 from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
                 call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
                 assert expected_messages[i] in call_args.message_data.info
 
@@ -2985,23 +3073,28 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model ensures both operations run concurrently with asyncio.gather."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
-        ), patch("asyncio.gather", new_callable=AsyncMock) as mock_gather:
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
+            patch("asyncio.gather", new_callable=AsyncMock) as mock_gather,
+        ):
             # Execute
             await query_solver._set_required_model(**model_change_params)
 
             # Verify asyncio.gather was called for concurrent execution
             mock_gather.assert_called_once()
-            
+
             # Verify both operations were passed to gather
             call_args = mock_gather.call_args[0]
             assert len(call_args) == 2
@@ -3015,21 +3108,26 @@ class TestQuerySolverSetRequiredModel:
         mock_config_manager_models,
     ) -> None:
         """Test _set_required_model integrates correctly with _get_model_change_text."""
-        with patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
-            update_session_llm_model=AsyncMock(),
-        ), patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            create_chat=AsyncMock(),
-        ), patch(
-            "deputydev_core.utils.config_manager.ConfigManager.configs",
-            {"CODE_GEN_LLM_MODELS": mock_config_manager_models}
-        ), patch.object(
-            query_solver,
-            "_get_model_change_text",
-            return_value="Custom model change message",
-        ) as mock_get_model_change_text:
+        with (
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=mock_existing_session_different_model),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                create_chat=AsyncMock(),
+            ),
+            patch(
+                "deputydev_core.utils.config_manager.ConfigManager.configs",
+                {"CODE_GEN_LLM_MODELS": mock_config_manager_models},
+            ),
+            patch.object(
+                query_solver,
+                "_get_model_change_text",
+                return_value="Custom model change message",
+            ) as mock_get_model_change_text,
+        ):
             # Execute
             await query_solver._set_required_model(**model_change_params)
 
@@ -3039,9 +3137,10 @@ class TestQuerySolverSetRequiredModel:
                 new_model=model_change_params["llm_model"],
                 retry_reason=model_change_params["retry_reason"],
             )
-            
+
             # Verify the custom message was used
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
+
             call_args = AgentChatsRepository.create_chat.call_args[1]["chat_data"]
             assert call_args.message_data.info == "Custom model change message"
 
@@ -3074,35 +3173,42 @@ class TestOriginalQuerySolverMethods:
             updated_at=mock_agent_chat_dto.updated_at,
         )
 
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            get_chats_by_message_type_and_session=AsyncMock(return_value=[tool_chat]),
-            update_chat=AsyncMock(return_value=tool_chat),
-        ), patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            get_by_id=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
-            update_session_llm_model=AsyncMock(),
-        ), patch.object(
-            query_solver,
-            "_get_query_solver_agent_instance",
-            new_callable=AsyncMock,
-        ) as mock_get_agent, patch.object(
-            query_solver,
-            "get_final_stream_iterator",
-            new_callable=AsyncMock,
-        ) as mock_stream_iterator, patch.object(
-            query_solver,
-            "_format_tool_response",
-            return_value={"result": "success"},
-        ), patch(
-            "app.backend_common.services.llm.handler.LLMHandler.__init__",
-            return_value=None,
-        ), patch(
-            "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
-            new_callable=AsyncMock,
-            return_value=mock_streaming_response,
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                get_chats_by_message_type_and_session=AsyncMock(return_value=[tool_chat]),
+                update_chat=AsyncMock(return_value=tool_chat),
+            ),
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                get_by_id=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.object(
+                query_solver,
+                "_get_query_solver_agent_instance",
+                new_callable=AsyncMock,
+            ) as mock_get_agent,
+            patch.object(
+                query_solver,
+                "get_final_stream_iterator",
+                new_callable=AsyncMock,
+            ) as mock_stream_iterator,
+            patch.object(
+                query_solver,
+                "_format_tool_response",
+                return_value={"result": "success"},
+            ),
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
+                return_value=None,
+            ),
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
+                new_callable=AsyncMock,
+                return_value=mock_streaming_response,
+            ),
         ):
-
             # Setup agent mock
             mock_agent = MagicMock()
             mock_agent.agent_name = "test_agent"
@@ -3141,8 +3247,8 @@ class TestOriginalQuerySolverMethods:
     async def test_solve_query_invalid_input_no_query_no_tool_responses(
         self,
         query_solver,
-            empty_query_solver_input,
-            mock_client_data,
+        empty_query_solver_input,
+        mock_client_data,
     ) -> None:
         """Test solve_query with invalid input (no query and no tool responses)."""
         with pytest.raises(ValueError, match="Invalid input"):
@@ -3158,8 +3264,8 @@ class TestOriginalQuerySolverMethods:
     async def test_solve_query_missing_llm_model_for_new_query(
         self,
         query_solver,
-            no_llm_model_query_solver_input,
-            mock_client_data,
+        no_llm_model_query_solver_input,
+        mock_client_data,
     ) -> None:
         """Test solve_query with missing LLM model for new query."""
         with pytest.raises(ValueError, match="LLM model is required for query solving"):
@@ -3175,40 +3281,46 @@ class TestOriginalQuerySolverMethods:
     async def test_solve_query_with_reasoning(
         self,
         query_solver,
-            reasoning_query_solver_input,
-            mock_client_data,
-            mock_agent_chat_dto,
-            mock_streaming_response,
+        reasoning_query_solver_input,
+        mock_client_data,
+        mock_agent_chat_dto,
+        mock_streaming_response,
     ) -> None:
         """Test solve_query with reasoning parameter."""
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            get_chats_by_session_id=AsyncMock(return_value=[]),
-            create_chat=AsyncMock(return_value=mock_agent_chat_dto),
-        ), patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            find_or_create=AsyncMock(return_value=None),
-            update_session_summary=AsyncMock(),
-            get_by_id=AsyncMock(return_value=None),
-            create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
-            update_session_llm_model=AsyncMock(),
-        ), patch.object(
-            query_solver,
-            "_get_query_solver_agent_instance",
-            new_callable=AsyncMock,
-        ) as mock_get_agent, patch.object(
-            query_solver,
-            "get_final_stream_iterator",
-            new_callable=AsyncMock,
-        ) as mock_stream_iterator, patch(
-            "app.backend_common.services.llm.handler.LLMHandler.__init__",
-            return_value=None,
-        ), patch(
-            "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
-            new_callable=AsyncMock,
-            return_value=mock_streaming_response,
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                get_chats_by_session_id=AsyncMock(return_value=[]),
+                create_chat=AsyncMock(return_value=mock_agent_chat_dto),
+            ),
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                find_or_create=AsyncMock(return_value=None),
+                update_session_summary=AsyncMock(),
+                get_by_id=AsyncMock(return_value=None),
+                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.object(
+                query_solver,
+                "_get_query_solver_agent_instance",
+                new_callable=AsyncMock,
+            ) as mock_get_agent,
+            patch.object(
+                query_solver,
+                "get_final_stream_iterator",
+                new_callable=AsyncMock,
+            ) as mock_stream_iterator,
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
+                return_value=None,
+            ),
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
+                new_callable=AsyncMock,
+                return_value=mock_streaming_response,
+            ),
         ):
-
             # Setup agent mock
             mock_agent = MagicMock()
             mock_agent.agent_name = "test_agent"
@@ -3243,40 +3355,46 @@ class TestOriginalQuerySolverMethods:
     async def test_solve_query_with_save_to_redis_enabled(
         self,
         query_solver,
-            basic_query_solver_input,
-            mock_client_data,
-            mock_agent_chat_dto,
-            mock_streaming_response,
+        basic_query_solver_input,
+        mock_client_data,
+        mock_agent_chat_dto,
+        mock_streaming_response,
     ) -> None:
         """Test solve_query with save_to_redis enabled."""
-        with patch.multiple(
-            "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
-            get_chats_by_session_id=AsyncMock(return_value=[]),
-            create_chat=AsyncMock(return_value=mock_agent_chat_dto),
-        ), patch.multiple(
-            "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-            find_or_create=AsyncMock(return_value=None),
-            update_session_summary=AsyncMock(),
-            get_by_id=AsyncMock(return_value=None),
-            create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
-            update_session_llm_model=AsyncMock(),
-        ), patch.object(
-            query_solver,
-            "_get_query_solver_agent_instance",
-            new_callable=AsyncMock,
-        ) as mock_get_agent, patch.object(
-            query_solver,
-            "get_final_stream_iterator",
-            new_callable=AsyncMock,
-        ) as mock_stream_iterator, patch(
-            "app.backend_common.services.llm.handler.LLMHandler.__init__",
-            return_value=None,
-        ), patch(
-            "app.backend_common.services.llm.handler.LLMHandler.start_llm_query",
-            new_callable=AsyncMock,
-            return_value=mock_streaming_response,
+        with (
+            patch.multiple(
+                "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
+                get_chats_by_session_id=AsyncMock(return_value=[]),
+                create_chat=AsyncMock(return_value=mock_agent_chat_dto),
+            ),
+            patch.multiple(
+                "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
+                find_or_create=AsyncMock(return_value=None),
+                update_session_summary=AsyncMock(),
+                get_by_id=AsyncMock(return_value=None),
+                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                update_session_llm_model=AsyncMock(),
+            ),
+            patch.object(
+                query_solver,
+                "_get_query_solver_agent_instance",
+                new_callable=AsyncMock,
+            ) as mock_get_agent,
+            patch.object(
+                query_solver,
+                "get_final_stream_iterator",
+                new_callable=AsyncMock,
+            ) as mock_stream_iterator,
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.__init__",
+                return_value=None,
+            ),
+            patch(
+                "deputydev_core.llm_handler.core.handler.LLMHandler.start_llm_query",
+                new_callable=AsyncMock,
+                return_value=mock_streaming_response,
+            ),
         ):
-
             # Setup agent mock
             mock_agent = MagicMock()
             mock_agent.agent_name = "test_agent"

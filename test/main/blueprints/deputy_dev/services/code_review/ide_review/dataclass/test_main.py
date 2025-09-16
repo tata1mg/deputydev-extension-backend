@@ -1,20 +1,19 @@
 import pytest
-from typing import Dict, Any, List, Optional
 from pydantic import ValidationError
 
+from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main import (
-    RequestType,
-    ToolUseResponseData,
     AgentRequestItem,
-    MultiAgentReviewRequest,
     AgentTaskResult,
-    WebSocketMessage,
-    FileWiseChanges,
-    ReviewRequest,
     CommentUpdateRequest,
+    FileWiseChanges,
     GetRepoIdRequest,
+    MultiAgentReviewRequest,
+    RequestType,
+    ReviewRequest,
+    ToolUseResponseData,
+    WebSocketMessage,
 )
-from app.main.blueprints.deputy_dev.constants.constants import IdeReviewCommentStatus, ReviewType
 from test.fixtures.main.blueprints.deputy_dev.services.code_review.ide_review.dataclass.main_fixtures import (
     IdeReviewDataclassFixtures,
 )
@@ -36,7 +35,7 @@ class TestRequestType:
         assert RequestType.QUERY in RequestType
         assert RequestType.TOOL_USE_RESPONSE in RequestType
         assert RequestType.TOOL_USE_FAILED in RequestType
-        
+
         # Test with values
         request_type_values = [member.value for member in RequestType]
         assert "query" in request_type_values
@@ -52,10 +51,10 @@ class TestToolUseResponseData:
         """Test ToolUseResponseData creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_tool_use_response_data()
-        
+
         # Act
         tool_response = ToolUseResponseData(**data)
-        
+
         # Assert
         assert tool_response.tool_name == data["tool_name"]
         assert tool_response.tool_use_id == data["tool_use_id"]
@@ -65,7 +64,7 @@ class TestToolUseResponseData:
         """Test ToolUseResponseData raises error with missing required fields."""
         # Arrange
         incomplete_data = {"tool_name": "test_tool"}
-        
+
         # Act & Assert
         with pytest.raises(ValidationError):
             ToolUseResponseData(**incomplete_data)
@@ -74,10 +73,10 @@ class TestToolUseResponseData:
         """Test ToolUseResponseData with complex response data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_tool_use_response_with_complex_data()
-        
+
         # Act
         tool_response = ToolUseResponseData(**data)
-        
+
         # Assert
         assert tool_response.tool_name == data["tool_name"]
         assert tool_response.response == data["response"]
@@ -91,10 +90,10 @@ class TestAgentRequestItem:
         """Test AgentRequestItem creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_agent_request_item_data()
-        
+
         # Act
         agent_request = AgentRequestItem(**data)
-        
+
         # Assert
         assert agent_request.agent_id == data["agent_id"]
         assert agent_request.review_id == data["review_id"]
@@ -106,13 +105,13 @@ class TestAgentRequestItem:
         # Arrange
         tool_response_data = IdeReviewDataclassFixtures.get_tool_use_response_data()
         tool_response = ToolUseResponseData(**tool_response_data)
-        
+
         data = IdeReviewDataclassFixtures.get_agent_request_item_data()
         data["tool_use_response"] = tool_response
-        
+
         # Act
         agent_request = AgentRequestItem(**data)
-        
+
         # Assert
         assert agent_request.tool_use_response == tool_response
 
@@ -121,7 +120,7 @@ class TestAgentRequestItem:
         # Arrange
         data = IdeReviewDataclassFixtures.get_agent_request_item_data()
         data["type"] = "invalid_type"
-        
+
         # Act & Assert
         with pytest.raises(ValidationError):
             AgentRequestItem(**data)
@@ -134,10 +133,10 @@ class TestMultiAgentReviewRequest:
         """Test MultiAgentReviewRequest creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_multi_agent_review_request_data()
-        
+
         # Act
         request = MultiAgentReviewRequest(**data)
-        
+
         # Assert
         assert len(request.agents) == len(data["agents"])
         assert request.review_id == data["review_id"]
@@ -149,10 +148,10 @@ class TestMultiAgentReviewRequest:
         # Arrange
         data = IdeReviewDataclassFixtures.get_multi_agent_review_request_data()
         data.pop("user_team_id", None)
-        
+
         # Act
         request = MultiAgentReviewRequest(**data)
-        
+
         # Assert
         assert request.user_team_id is None
 
@@ -161,10 +160,10 @@ class TestMultiAgentReviewRequest:
         # Arrange
         data = IdeReviewDataclassFixtures.get_multi_agent_review_request_data()
         data["agents"] = []
-        
+
         # Act
         request = MultiAgentReviewRequest(**data)
-        
+
         # Assert
         assert len(request.agents) == 0
 
@@ -176,10 +175,10 @@ class TestAgentTaskResult:
         """Test AgentTaskResult creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_agent_task_result_data()
-        
+
         # Act
         result = AgentTaskResult(**data)
-        
+
         # Assert
         assert result.agent_id == data["agent_id"]
         assert result.agent_name == data["agent_name"]
@@ -191,10 +190,10 @@ class TestAgentTaskResult:
         """Test AgentTaskResult with optional fields."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_agent_task_result_with_optional_fields()
-        
+
         # Act
         result = AgentTaskResult(**data)
-        
+
         # Assert
         assert result.tokens_data == data["tokens_data"]
         assert result.model == data["model"]
@@ -205,10 +204,10 @@ class TestAgentTaskResult:
         """Test AgentTaskResult default values for optional fields."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_minimal_agent_task_result_data()
-        
+
         # Act
         result = AgentTaskResult(**data)
-        
+
         # Assert
         assert result.tokens_data == {}
         assert result.model == ""
@@ -223,10 +222,10 @@ class TestWebSocketMessage:
         """Test WebSocketMessage creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_websocket_message_data()
-        
+
         # Act
         message = WebSocketMessage(**data)
-        
+
         # Assert
         assert message.type == data["type"]
         assert message.agent_id == data.get("agent_id")
@@ -236,10 +235,10 @@ class TestWebSocketMessage:
         """Test WebSocketMessage with minimal data."""
         # Arrange
         data = {"type": "test_message"}
-        
+
         # Act
         message = WebSocketMessage(**data)
-        
+
         # Assert
         assert message.type == "test_message"
         assert message.agent_id is None
@@ -254,10 +253,10 @@ class TestFileWiseChanges:
         """Test FileWiseChanges creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_file_wise_changes_data()
-        
+
         # Act
         changes = FileWiseChanges(**data)
-        
+
         # Assert
         assert changes.file_path == data["file_path"]
         assert changes.file_name == data["file_name"]
@@ -273,10 +272,10 @@ class TestReviewRequest:
         """Test ReviewRequest creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_review_request_data()
-        
+
         # Act
         request = ReviewRequest(**data)
-        
+
         # Assert
         assert request.repo_name == data["repo_name"]
         assert request.origin_url == data["origin_url"]
@@ -288,10 +287,10 @@ class TestReviewRequest:
         """Test ReviewRequest with optional diff_attachment_id."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_review_request_with_attachment()
-        
+
         # Act
         request = ReviewRequest(**data)
-        
+
         # Assert
         assert request.diff_attachment_id == data["diff_attachment_id"]
 
@@ -299,10 +298,10 @@ class TestReviewRequest:
         """Test ReviewRequest without diff_attachment_id."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_review_request_data()
-        
+
         # Act
         request = ReviewRequest(**data)
-        
+
         # Assert
         assert request.diff_attachment_id is None
 
@@ -314,10 +313,10 @@ class TestCommentUpdateRequest:
         """Test CommentUpdateRequest creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_comment_update_request_data()
-        
+
         # Act
         request = CommentUpdateRequest(**data)
-        
+
         # Assert
         assert request.id == data["id"]
         assert request.comment_status == data["comment_status"]
@@ -328,15 +327,15 @@ class TestCommentUpdateRequest:
         statuses = [
             IdeReviewCommentStatus.NOT_REVIEWED,
             IdeReviewCommentStatus.ACCEPTED,
-            IdeReviewCommentStatus.REJECTED
+            IdeReviewCommentStatus.REJECTED,
         ]
-        
+
         for status in statuses:
             data = {"id": 123, "comment_status": status}
-            
+
             # Act
             request = CommentUpdateRequest(**data)
-            
+
             # Assert
             assert request.comment_status == status
 
@@ -348,10 +347,10 @@ class TestGetRepoIdRequest:
         """Test GetRepoIdRequest creation with valid data."""
         # Arrange
         data = IdeReviewDataclassFixtures.get_repo_id_request_data()
-        
+
         # Act
         request = GetRepoIdRequest(**data)
-        
+
         # Assert
         assert request.repo_name == data["repo_name"]
         assert request.origin_url == data["origin_url"]
@@ -360,7 +359,7 @@ class TestGetRepoIdRequest:
         """Test GetRepoIdRequest with missing required fields."""
         # Arrange
         incomplete_data = {"repo_name": "test_repo"}
-        
+
         # Act & Assert
         with pytest.raises(ValidationError):
             GetRepoIdRequest(**incomplete_data)
@@ -369,12 +368,12 @@ class TestGetRepoIdRequest:
         """Test GetRepoIdRequest with various URL formats."""
         # Arrange
         url_variations = IdeReviewDataclassFixtures.get_various_origin_urls()
-        
+
         for url in url_variations:
             data = {"repo_name": "test_repo", "origin_url": url}
-            
+
             # Act
             request = GetRepoIdRequest(**data)
-            
+
             # Assert
             assert request.origin_url == url

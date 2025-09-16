@@ -6,21 +6,21 @@ of the _format_tool_response method including different tool types,
 response structures, and edge cases.
 """
 
-from typing import Any, Dict, List
+from typing import List
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-    FocusItem,
-    ToolUseResponseInput,
-    FileFocusItem,
     ClassFocusItem,
-    DirectoryFocusItem,
-    UrlFocusItem,
-    FocusItemTypes,
     DirectoryEntry,
+    DirectoryFocusItem,
+    FileFocusItem,
+    FocusItem,
+    FocusItemTypes,
+    ToolUseResponseInput,
+    UrlFocusItem,
 )
 
 
@@ -38,12 +38,14 @@ def mock_chunk_info() -> MagicMock:
 def mock_llm_response_formatter() -> MagicMock:
     """Create a mock LLMResponseFormatter."""
     with patch("app.backend_common.utils.tool_response_parser.LLMResponseFormatter") as mock:
-        mock.format_iterative_file_reader_response.return_value = "### File: `/test/file.py`\n- Lines: 1-10\n- Content: test content"
+        mock.format_iterative_file_reader_response.return_value = (
+            "### File: `/test/file.py`\n- Lines: 1-10\n- Content: test content"
+        )
         mock.format_grep_tool_response.return_value = "### Grep Results\nFound 2 matches in test.py"
         mock.format_ask_user_input_response.return_value = {
             "user_response": "Yes, proceed",
             "focus_items": "Focus on test.py",
-            "vscode_env": "development"
+            "vscode_env": "development",
         }
         return mock
 
@@ -99,7 +101,7 @@ def focused_snippets_tool_response() -> ToolUseResponseInput:
                                     "file_path": "/test/file.py",
                                     "start_line": 1,
                                     "end_line": 2,
-                                }
+                                },
                             }
                         ]
                     },
@@ -112,10 +114,10 @@ def focused_snippets_tool_response() -> ToolUseResponseInput:
                                     "file_path": "/test/class.py",
                                     "start_line": 5,
                                     "end_line": 6,
-                                }
+                                },
                             }
                         ]
-                    }
+                    },
                 ]
             }
         },
@@ -137,7 +139,7 @@ def iterative_file_reader_tool_response() -> ToolUseResponseInput:
                         "file_path": "/test/main.py",
                         "start_line": 1,
                         "end_line": 5,
-                    }
+                    },
                 },
                 "eof_reached": True,
                 "was_summary": False,
@@ -163,9 +165,9 @@ def grep_search_tool_response() -> ToolUseResponseInput:
                             "file_path": "/test/file.py",
                             "start_line": 1,
                             "end_line": 2,
-                        }
+                        },
                     },
-                    "matched_lines": [1]
+                    "matched_lines": [1],
                 }
             ],
             "search_term": "test_function",
@@ -290,16 +292,18 @@ def large_focused_snippets_response() -> ToolUseResponseInput:
     """Create a large focused_snippets_searcher response with multiple chunks."""
     chunks = []
     for i in range(10):
-        chunks.append({
-            "chunk_id": f"chunk{i}",
-            "content": f"def function_{i}():\n    return {i}",
-            "source_details": {
-                "file_path": f"/test/file_{i}.py",
-                "start_line": i * 10 + 1,
-                "end_line": i * 10 + 2,
+        chunks.append(
+            {
+                "chunk_id": f"chunk{i}",
+                "content": f"def function_{i}():\n    return {i}",
+                "source_details": {
+                    "file_path": f"/test/file_{i}.py",
+                    "start_line": i * 10 + 1,
+                    "end_line": i * 10 + 2,
+                },
             }
-        })
-    
+        )
+
     return ToolUseResponseInput(
         tool_name="focused_snippets_searcher",
         tool_use_id="large-snippets-id",
@@ -322,15 +326,8 @@ def complex_ask_user_input_response() -> ToolUseResponseInput:
         tool_name="ask_user_input",
         tool_use_id="complex-user-input-id",
         response={
-            "user_response": {
-                "action": "approve",
-                "modifications": ["add tests", "update docs"],
-                "priority": "high"
-            },
-            "metadata": {
-                "timestamp": "2023-01-01T12:00:00Z",
-                "session_id": "test-session-123"
-            }
+            "user_response": {"action": "approve", "modifications": ["add tests", "update docs"], "priority": "high"},
+            "metadata": {"timestamp": "2023-01-01T12:00:00Z", "session_id": "test-session-123"},
         },
         status=ToolStatus.COMPLETED,
     )

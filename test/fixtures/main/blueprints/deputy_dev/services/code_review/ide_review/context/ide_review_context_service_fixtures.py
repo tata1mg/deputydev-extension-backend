@@ -73,14 +73,7 @@ index 0000000..3333333
     @staticmethod
     def get_cache_keys() -> dict[int, str]:
         """Return mapping of review IDs to cache keys."""
-        return {
-            123: "123",
-            456: "456",
-            789: "789",
-            999: "999",
-            111: "111",
-            222: "222"
-        }
+        return {123: "123", 456: "456", 789: "789", 999: "999", 111: "111", 222: "222"}
 
     @staticmethod
     def get_review_ids() -> list[int]:

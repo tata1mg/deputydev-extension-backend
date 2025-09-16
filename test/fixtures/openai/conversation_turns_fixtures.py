@@ -9,12 +9,11 @@ extended thinking content.
 import asyncio
 from datetime import datetime
 from typing import Any, Dict, List
-from unittest.mock import MagicMock
 
 import pytest
 
+from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
     ExtendedThinkingContent,
     ExtendedThinkingData,
     FileBlockData,
@@ -35,7 +34,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     ChatAttachmentDataWithObjectBytes,
 )
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 
 
 @pytest.fixture
@@ -49,11 +47,7 @@ def simple_text_message() -> MessageThreadDTO:
         message_type=MessageType.QUERY,
         conversation_chain=[1],
         data_hash="test_hash_1",
-        message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="Hello, how are you?")
-            )
-        ],
+        message_data=[TextBlockData(content=TextBlockContent(text="Hello, how are you?"))],
         prompt_type="user_query",
         prompt_category="general",
         llm_model=LLModels.GPT_4O,
@@ -75,11 +69,7 @@ def assistant_text_message() -> MessageThreadDTO:
         message_type=MessageType.RESPONSE,
         conversation_chain=[1, 2],
         data_hash="test_hash_2",
-        message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="I'm doing well, thank you for asking!")
-            )
-        ],
+        message_data=[TextBlockData(content=TextBlockContent(text="I'm doing well, thank you for asking!"))],
         prompt_type="assistant_response",
         prompt_category="general",
         llm_model=LLModels.GPT_4O,
@@ -104,9 +94,7 @@ def tool_use_request_message() -> MessageThreadDTO:
         message_data=[
             ToolUseRequestData(
                 content=ToolUseRequestContent(
-                    tool_input={"query": "Python best practices"},
-                    tool_name="search_tool",
-                    tool_use_id="tool_123"
+                    tool_input={"query": "Python best practices"}, tool_name="search_tool", tool_use_id="tool_123"
                 )
             )
         ],
@@ -136,7 +124,7 @@ def tool_use_response_message() -> MessageThreadDTO:
                 content=ToolUseResponseContent(
                     tool_name="search_tool",
                     tool_use_id="tool_123",
-                    response={"results": ["Follow PEP 8", "Use type hints", "Write tests"]}
+                    response={"results": ["Follow PEP 8", "Use type hints", "Write tests"]},
                 )
             )
         ],
@@ -161,11 +149,7 @@ def message_with_file_attachment() -> MessageThreadDTO:
         message_type=MessageType.QUERY,
         conversation_chain=[1, 2, 3, 4, 5],
         data_hash="test_hash_5",
-        message_data=[
-            FileBlockData(
-                content=FileContent(attachment_id=42)
-            )
-        ],
+        message_data=[FileBlockData(content=FileContent(attachment_id=42))],
         prompt_type="user_query",
         prompt_category="file_upload",
         llm_model=LLModels.GPT_4O,
@@ -190,9 +174,7 @@ def message_with_extended_thinking() -> MessageThreadDTO:
         message_data=[
             ExtendedThinkingData(
                 content=ExtendedThinkingContent(
-                    type="thinking",
-                    thinking="Let me think about this carefully...",
-                    signature="assistant_thinking"
+                    type="thinking", thinking="Let me think about this carefully...", signature="assistant_thinking"
                 )
             )
         ],
@@ -218,16 +200,12 @@ def mixed_content_message() -> MessageThreadDTO:
         conversation_chain=[1, 2, 3, 4, 5, 6, 7],
         data_hash="test_hash_7",
         message_data=[
-            TextBlockData(
-                content=TextBlockContent(text="Here's what I found:")
-            ),
+            TextBlockData(content=TextBlockContent(text="Here's what I found:")),
             ToolUseRequestData(
                 content=ToolUseRequestContent(
-                    tool_input={"file_path": "/path/to/file.py"},
-                    tool_name="read_file",
-                    tool_use_id="tool_456"
+                    tool_input={"file_path": "/path/to/file.py"}, tool_name="read_file", tool_use_id="tool_456"
                 )
-            )
+            ),
         ],
         prompt_type="assistant_response",
         prompt_category="mixed",
@@ -276,9 +254,7 @@ def conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
             message_type=MessageType.QUERY,
             conversation_chain=[1],
             data_hash="hash_1",
-            message_data=[
-                TextBlockData(content=TextBlockContent(text="Can you help me with Python and JavaScript?"))
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="Can you help me with Python and JavaScript?"))],
             prompt_type="user_query",
             prompt_category="general",
             llm_model=LLModels.GPT_4O,
@@ -297,18 +273,14 @@ def conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"language": "python"},
-                        tool_name="get_language_info",
-                        tool_use_id="tool_python_123"
+                        tool_input={"language": "python"}, tool_name="get_language_info", tool_use_id="tool_python_123"
                     )
                 ),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"language": "javascript"},
-                        tool_name="get_language_info",
-                        tool_use_id="tool_js_456"
+                        tool_input={"language": "javascript"}, tool_name="get_language_info", tool_use_id="tool_js_456"
                     )
-                )
+                ),
             ],
             prompt_type="assistant_response",
             prompt_category="tool_use",
@@ -330,7 +302,7 @@ def conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
                     content=ToolUseResponseContent(
                         tool_name="get_language_info",
                         tool_use_id="tool_python_123",
-                        response={"type": "interpreted", "typing": "dynamic"}
+                        response={"type": "interpreted", "typing": "dynamic"},
                     )
                 )
             ],
@@ -354,7 +326,7 @@ def conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
                     content=ToolUseResponseContent(
                         tool_name="get_language_info",
                         tool_use_id="tool_js_456",
-                        response={"type": "interpreted", "typing": "dynamic"}
+                        response={"type": "interpreted", "typing": "dynamic"},
                     )
                 )
             ],
@@ -364,7 +336,7 @@ def conversation_with_multiple_tool_calls() -> List[MessageThreadDTO]:
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-        )
+        ),
     ]
 
 
@@ -379,9 +351,9 @@ def mock_image_attachment_data() -> ChatAttachmentDataWithObjectBytes:
             s3_key="test-bucket/test_image.png",
             status="uploaded",
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         ),
-        object_bytes=b"fake_image_data"
+        object_bytes=b"fake_image_data",
     )
 
 
@@ -396,9 +368,9 @@ def mock_document_attachment_data() -> ChatAttachmentDataWithObjectBytes:
             s3_key="test-bucket/test_document.pdf",
             status="uploaded",
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         ),
-        object_bytes=b"fake_pdf_data"
+        object_bytes=b"fake_pdf_data",
     )
 
 
@@ -413,9 +385,10 @@ def attachment_data_task_map_with_image(
     mock_image_attachment_data: ChatAttachmentDataWithObjectBytes,
 ) -> Dict[int, Any]:
     """Create attachment data task map with image."""
+
     async def get_image_data() -> ChatAttachmentDataWithObjectBytes:
         return mock_image_attachment_data
-    
+
     return {42: get_image_data}
 
 
@@ -424,9 +397,10 @@ def attachment_data_task_map_with_document(
     mock_document_attachment_data: ChatAttachmentDataWithObjectBytes,
 ) -> Dict[int, Any]:
     """Create attachment data task map with document."""
+
     async def get_document_data() -> ChatAttachmentDataWithObjectBytes:
         return mock_document_attachment_data
-    
+
     return {100: get_document_data}
 
 
@@ -443,9 +417,7 @@ def out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_type=MessageType.QUERY,
             conversation_chain=[1],
             data_hash="hash_1",
-            message_data=[
-                TextBlockData(content=TextBlockContent(text="Execute these tools"))
-            ],
+            message_data=[TextBlockData(content=TextBlockContent(text="Execute these tools"))],
             prompt_type="user_query",
             prompt_category="general",
             llm_model=LLModels.GPT_4O,
@@ -465,25 +437,19 @@ def out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"action": "first"},
-                        tool_name="tool_a",
-                        tool_use_id="tool_a_123"
+                        tool_input={"action": "first"}, tool_name="tool_a", tool_use_id="tool_a_123"
                     )
                 ),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"action": "second"},
-                        tool_name="tool_b", 
-                        tool_use_id="tool_b_456"
+                        tool_input={"action": "second"}, tool_name="tool_b", tool_use_id="tool_b_456"
                     )
                 ),
                 ToolUseRequestData(
                     content=ToolUseRequestContent(
-                        tool_input={"action": "third"},
-                        tool_name="tool_c",
-                        tool_use_id="tool_c_789"
+                        tool_input={"action": "third"}, tool_name="tool_c", tool_use_id="tool_c_789"
                     )
-                )
+                ),
             ],
             prompt_type="assistant_response",
             prompt_category="tool_use",
@@ -504,9 +470,7 @@ def out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseResponseData(
                     content=ToolUseResponseContent(
-                        tool_name="tool_b",
-                        tool_use_id="tool_b_456", 
-                        response="Second tool result"
+                        tool_name="tool_b", tool_use_id="tool_b_456", response="Second tool result"
                     )
                 )
             ],
@@ -528,9 +492,7 @@ def out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseResponseData(
                     content=ToolUseResponseContent(
-                        tool_name="tool_a",
-                        tool_use_id="tool_a_123",
-                        response="First tool result"
+                        tool_name="tool_a", tool_use_id="tool_a_123", response="First tool result"
                     )
                 )
             ],
@@ -552,9 +514,7 @@ def out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             message_data=[
                 ToolUseResponseData(
                     content=ToolUseResponseContent(
-                        tool_name="tool_c",
-                        tool_use_id="tool_c_789",
-                        response="Third tool result"
+                        tool_name="tool_c", tool_use_id="tool_c_789", response="Third tool result"
                     )
                 )
             ],
@@ -564,5 +524,5 @@ def out_of_order_tool_conversation() -> List[MessageThreadDTO]:
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-        )
+        ),
     ]

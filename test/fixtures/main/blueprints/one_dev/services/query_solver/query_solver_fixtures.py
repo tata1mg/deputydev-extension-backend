@@ -6,21 +6,18 @@ of the solve_query method including different input combinations,
 mock data, and edge cases.
 """
 
-import json
-from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     StreamingParsedLLMCallResponse,
 )
+
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
+
 # Import these inside fixtures to avoid configuration issues
 
 
@@ -29,6 +26,7 @@ def query_solver():
     """Create a QuerySolver instance for testing."""
     # Import here to avoid module-level import issues with Google dependencies
     from app.main.blueprints.one_dev.services.query_solver.query_solver import QuerySolver
+
     return QuerySolver()
 
 
@@ -36,7 +34,7 @@ def query_solver():
 def mock_client_data():
     """Create mock client data."""
     from deputydev_core.utils.constants.enums import Clients
-    from app.backend_common.utils.dataclasses.main import ClientData
+
     return ClientData(
         client=Clients.BACKEND,
         client_version="1.0.0",
@@ -47,7 +45,8 @@ def mock_client_data():
 def mock_llm_handler() -> MagicMock:
     """Create a mock LLM handler."""
     # Import here to avoid module-level import issues with Google dependencies
-    from app.backend_common.services.llm.handler import LLMHandler
+    from deputydev_core.llm_handler.core.handler import LLMHandler
+
     handler = MagicMock(spec=LLMHandler)
     handler.start_llm_query = AsyncMock()
     return handler
@@ -75,13 +74,14 @@ def mock_non_streaming_response() -> NonStreamingParsedLLMCallResponse:
 def mock_agent_chat_dto():
     """Create a mock AgentChatDTO."""
     from datetime import datetime
+
     from app.main.blueprints.one_dev.models.dto.agent_chats import (
         ActorType,
         AgentChatDTO,
         TextMessageData,
     )
     from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
-    
+
     return AgentChatDTO(
         id=1,
         session_id=123,
@@ -100,6 +100,7 @@ def mock_agent_chat_dto():
 def mock_tool_use_message_data():
     """Create mock tool use message data."""
     from app.main.blueprints.one_dev.models.dto.agent_chats import ToolUseMessageData
+
     return ToolUseMessageData(
         tool_use_id="test-tool-use-id",
         tool_name="test_tool",
@@ -112,6 +113,7 @@ def mock_tool_use_message_data():
 def mock_cancellation_checker():
     """Create a mock cancellation checker."""
     from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
+
     checker = MagicMock(spec=CancellationChecker)
     checker.is_cancelled = MagicMock(return_value=False)
     return checker
@@ -120,15 +122,15 @@ def mock_cancellation_checker():
 @pytest.fixture
 def basic_query_solver_input():
     """Create a basic QuerySolverInput for testing."""
+    from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
     from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
-        QuerySolverInput,
-        LLMModel,
-        Repository,
         FileFocusItem,
         FocusItemTypes,
+        LLMModel,
+        QuerySolverInput,
+        Repository,
     )
-    from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
-    
+
     return QuerySolverInput(
         query="Test query for basic functionality",
         write_mode=False,
@@ -166,12 +168,12 @@ def basic_query_solver_input():
 @pytest.fixture
 def tool_response_query_solver_input():
     """Create QuerySolverInput with tool responses."""
+    from app.main.blueprints.one_dev.constants.tools import ToolStatus
     from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
         QuerySolverInput,
         ToolUseResponseInput,
     )
-    from app.main.blueprints.one_dev.constants.tools import ToolStatus
-    
+
     return QuerySolverInput(
         session_id=123,
         user_team_id=1,
@@ -194,7 +196,8 @@ def tool_response_query_solver_input():
 @pytest.fixture
 def reasoning_query_solver_input():
     """Create QuerySolverInput with reasoning parameter."""
-    from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput, LLMModel
+    from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import LLMModel, QuerySolverInput
+
     return QuerySolverInput(
         query="Test query with reasoning",
         write_mode=False,
@@ -270,6 +273,7 @@ def attachments_focus_query_solver_input():
 def empty_query_solver_input():
     """Create empty QuerySolverInput for testing invalid input."""
     from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
+
     return QuerySolverInput(
         session_id=123,
         user_team_id=1,
@@ -281,6 +285,7 @@ def empty_query_solver_input():
 def no_llm_model_query_solver_input():
     """Create QuerySolverInput without LLM model for testing validation."""
     from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import QuerySolverInput
+
     return QuerySolverInput(
         query="Test query without LLM model",
         session_id=123,

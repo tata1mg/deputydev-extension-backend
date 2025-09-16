@@ -7,7 +7,7 @@ mock data, and edge cases.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
@@ -32,7 +32,7 @@ def sample_user_agent_dto() -> UserAgentDTO:
         is_custom_agent=False,
         is_deleted=False,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
 
 
@@ -50,7 +50,7 @@ def sample_user_agent_dto_2() -> UserAgentDTO:
         is_custom_agent=True,
         is_deleted=False,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
 
 
@@ -74,7 +74,7 @@ def sample_ide_reviews_comment_dto(sample_user_agent_dto: UserAgentDTO) -> IdeRe
         agents=[sample_user_agent_dto],
         comment_status=IdeReviewCommentStatus.NOT_REVIEWED.value,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
 
 
@@ -98,13 +98,13 @@ def sample_ide_reviews_comment_dto_2(sample_user_agent_dto_2: UserAgentDTO) -> I
         agents=[sample_user_agent_dto_2],
         comment_status=IdeReviewCommentStatus.NOT_REVIEWED.value,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
 
 
 @pytest.fixture
 def sample_llm_comment_data() -> LLMCommentData:
-    """Create a sample LLMCommentData for testing.""" 
+    """Create a sample LLMCommentData for testing."""
     return LLMCommentData(
         id=1,
         comment="This code is vulnerable to SQL injection",
@@ -116,7 +116,7 @@ def sample_llm_comment_data() -> LLMCommentData:
         tag="security",
         confidence_score=0.8,
         rationale="User input is not properly sanitized",
-        bucket="Security Agent"
+        bucket="Security Agent",
     )
 
 
@@ -124,7 +124,7 @@ def sample_llm_comment_data() -> LLMCommentData:
 def sample_llm_comment_data_without_id():
     """Create a sample LLMCommentData without ID for testing blended comments."""
     from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import CommentBuckets
-    
+
     # Create a mock object that behaves like LLMCommentData but allows dynamic attributes
     comment = Mock()
     comment.id = None
@@ -140,7 +140,7 @@ def sample_llm_comment_data_without_id():
     comment.bucket = "Combined Agent"
     comment.is_valid = True
     comment.buckets = [CommentBuckets(name="Combined Agent", agent_id="3")]
-    
+
     return comment
 
 
@@ -158,11 +158,7 @@ def sample_extension_review() -> Mock:
 @pytest.fixture
 def sample_post_process_data() -> Dict[str, Any]:
     """Create sample data for post_process_pr method."""
-    return {
-        "review_id": 101,
-        "user_team_id": 123,
-        "additional_metadata": {"source": "IDE"}
-    }
+    return {"review_id": 101, "user_team_id": 123, "additional_metadata": {"source": "IDE"}}
 
 
 @pytest.fixture
@@ -220,20 +216,14 @@ def sample_formatted_comments(
     sample_llm_comment_data: LLMCommentData,
 ) -> Dict[str, List[LLMCommentData]]:
     """Create sample formatted comments dictionary."""
-    return {
-        "security_agent": [sample_llm_comment_data],
-        "performance_agent": [sample_llm_comment_data]
-    }
+    return {"security_agent": [sample_llm_comment_data], "performance_agent": [sample_llm_comment_data]}
 
 
 @pytest.fixture
-def sample_filtered_comments(
-    sample_llm_comment_data: LLMCommentData,
-    sample_llm_comment_data_without_id
-):
+def sample_filtered_comments(sample_llm_comment_data: LLMCommentData, sample_llm_comment_data_without_id):
     """Create sample filtered comments list."""
     from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import CommentBuckets
-    
+
     # Create a mock object for existing comment with id
     existing_comment = Mock()
     existing_comment.id = sample_llm_comment_data.id
@@ -249,19 +239,16 @@ def sample_filtered_comments(
     existing_comment.bucket = sample_llm_comment_data.bucket
     existing_comment.is_valid = True
     existing_comment.buckets = [CommentBuckets(name="Security Agent", agent_id="1")]
-    
+
     # sample_llm_comment_data_without_id is already a Mock
-    
+
     return [existing_comment, sample_llm_comment_data_without_id]
 
 
 @pytest.fixture
 def sample_agent_results() -> List[Any]:
     """Create sample agent results."""
-    return [
-        {"agent_name": "security_agent", "score": 0.8},
-        {"agent_name": "performance_agent", "score": 0.9}
-    ]
+    return [{"agent_name": "security_agent", "score": 0.8}, {"agent_name": "performance_agent", "score": 0.9}]
 
 
 @pytest.fixture
@@ -279,15 +266,12 @@ def empty_comments_list() -> List[IdeReviewsCommentDTO]:
 @pytest.fixture
 def invalid_post_process_data() -> Dict[str, Any]:
     """Create invalid data for testing error cases."""
-    return {
-        "invalid_key": "invalid_value"
-    }
+    return {"invalid_key": "invalid_value"}
 
 
 @pytest.fixture
 def comments_with_multiple_agents(
-    sample_user_agent_dto: UserAgentDTO,
-    sample_user_agent_dto_2: UserAgentDTO
+    sample_user_agent_dto: UserAgentDTO, sample_user_agent_dto_2: UserAgentDTO
 ) -> List[IdeReviewsCommentDTO]:
     """Create comments with multiple agents for testing."""
     comment = IdeReviewsCommentDTO(
@@ -307,7 +291,7 @@ def comments_with_multiple_agents(
         agents=[sample_user_agent_dto, sample_user_agent_dto_2],
         comment_status=IdeReviewCommentStatus.NOT_REVIEWED.value,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
     return [comment]
 
@@ -325,22 +309,21 @@ def comments_with_no_agents() -> List[IdeReviewsCommentDTO]:
         corrective_code="Generic fix",
         is_deleted=False,
         file_path="src/models/user.py",
-        line_hash="abc123def456", 
+        line_hash="abc123def456",
         line_number=25,
         tag="generic",
         is_valid=True,
         agents=[],
         comment_status=IdeReviewCommentStatus.NOT_REVIEWED.value,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
     return [comment]
 
 
 @pytest.fixture
 def large_comments_dataset(
-    sample_user_agent_dto: UserAgentDTO,
-    sample_user_agent_dto_2: UserAgentDTO
+    sample_user_agent_dto: UserAgentDTO, sample_user_agent_dto_2: UserAgentDTO
 ) -> List[IdeReviewsCommentDTO]:
     """Create a large dataset of comments for performance testing."""
     comments = []
@@ -362,7 +345,7 @@ def large_comments_dataset(
             agents=[sample_user_agent_dto if i % 2 == 0 else sample_user_agent_dto_2],
             comment_status=IdeReviewCommentStatus.NOT_REVIEWED.value,
             created_at=datetime(2023, 1, 1, 12, 0, 0),
-            updated_at=datetime(2023, 1, 1, 12, 0, 0)
+            updated_at=datetime(2023, 1, 1, 12, 0, 0),
         )
         comments.append(comment)
     return comments

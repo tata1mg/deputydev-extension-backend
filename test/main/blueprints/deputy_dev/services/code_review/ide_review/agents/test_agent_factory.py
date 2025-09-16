@@ -1,10 +1,6 @@
-import pytest
 from unittest.mock import Mock, patch
-from typing import List
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.handler import LLMHandler
-from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
+from deputydev_core.llm_handler.core.handler import LLMHandler
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,
@@ -17,9 +13,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent
 )
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
-)
-from test.fixtures.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory_fixtures import (
-    AgentFactoryFixtures,
 )
 
 
@@ -40,7 +33,7 @@ class TestAgentFactory:
             AgentTypes.COMMENT_SUMMARIZATION,
             AgentTypes.CUSTOM_COMMENTER_AGENT,
         }
-        
+
         actual_agent_types = set(AgentFactory.agent_type_to_model_map.keys())
         assert actual_agent_types == expected_agent_types
 
@@ -54,7 +47,7 @@ class TestAgentFactory:
             AgentTypes.SECURITY,
             AgentTypes.CUSTOM_COMMENTER_AGENT,
         }
-        
+
         actual_agent_types = set(AgentFactory.code_review_agents.keys())
         assert actual_agent_types == expected_agent_types
 
@@ -64,7 +57,7 @@ class TestAgentFactory:
             AgentTypes.COMMENT_VALIDATION,
             AgentTypes.COMMENT_SUMMARIZATION,
         }
-        
+
         actual_agent_types = set(AgentFactory.review_finalization_agents.keys())
         assert actual_agent_types == expected_agent_types
 
@@ -73,27 +66,27 @@ class TestAgentFactory:
         # Arrange
         valid_agents_and_init_params = [
             AgentAndInitParams(agent_type=AgentTypes.CODE_MAINTAINABILITY, init_params={}),
-            AgentAndInitParams(agent_type=AgentTypes.CODE_COMMUNICATION, init_params={})
+            AgentAndInitParams(agent_type=AgentTypes.CODE_COMMUNICATION, init_params={}),
         ]
         mock_context_service = Mock()
         mock_llm_handler = Mock()
         include_agent_types = [AgentTypes.CODE_MAINTAINABILITY]
-        
+
         with patch.multiple(
-            'app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory.AgentFactory',
+            "app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory.AgentFactory",
             code_review_agents={
                 AgentTypes.CODE_MAINTAINABILITY: Mock(return_value=Mock()),
-                AgentTypes.CODE_COMMUNICATION: Mock(return_value=Mock())
-            }
+                AgentTypes.CODE_COMMUNICATION: Mock(return_value=Mock()),
+            },
         ):
             # Act
             result = AgentFactory.get_code_review_agents(
                 valid_agents_and_init_params=valid_agents_and_init_params,
                 context_service=mock_context_service,
                 llm_handler=mock_llm_handler,
-                include_agent_types=include_agent_types
+                include_agent_types=include_agent_types,
             )
-            
+
             # Assert
             assert len(result) == 1
 
@@ -102,27 +95,27 @@ class TestAgentFactory:
         # Arrange
         valid_agents_and_init_params = [
             AgentAndInitParams(agent_type=AgentTypes.CODE_MAINTAINABILITY, init_params={}),
-            AgentAndInitParams(agent_type=AgentTypes.CODE_COMMUNICATION, init_params={})
+            AgentAndInitParams(agent_type=AgentTypes.CODE_COMMUNICATION, init_params={}),
         ]
         mock_context_service = Mock()
         mock_llm_handler = Mock()
         exclude_agent_types = [AgentTypes.CODE_COMMUNICATION]
-        
+
         with patch.multiple(
-            'app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory.AgentFactory',
+            "app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory.AgentFactory",
             code_review_agents={
                 AgentTypes.CODE_MAINTAINABILITY: Mock(return_value=Mock()),
-                AgentTypes.CODE_COMMUNICATION: Mock(return_value=Mock())
-            }
+                AgentTypes.CODE_COMMUNICATION: Mock(return_value=Mock()),
+            },
         ):
             # Act
             result = AgentFactory.get_code_review_agents(
                 valid_agents_and_init_params=valid_agents_and_init_params,
                 context_service=mock_context_service,
                 llm_handler=mock_llm_handler,
-                exclude_agent_types=exclude_agent_types
+                exclude_agent_types=exclude_agent_types,
             )
-            
+
             # Assert
             assert len(result) == 1
 
@@ -132,17 +125,15 @@ class TestAgentFactory:
         mock_context_service = Mock(spec=IdeReviewContextService)
         mock_comments = [Mock(spec=ParsedCommentData)]
         mock_llm_handler = Mock(spec=LLMHandler)
-        
+
         # Act
         result = AgentFactory.comment_validation_agent(
-            context_service=mock_context_service,
-            comments=mock_comments,
-            llm_handler=mock_llm_handler
+            context_service=mock_context_service, comments=mock_comments, llm_handler=mock_llm_handler
         )
-        
+
         # Assert
         assert result is not None  # Just verify that an instance was created
-        assert hasattr(result, 'agent_type')
+        assert hasattr(result, "agent_type")
         assert result.agent_type == AgentTypes.COMMENT_VALIDATION
 
     def test_comment_summarization_agent(self) -> None:
@@ -151,17 +142,15 @@ class TestAgentFactory:
         mock_context_service = Mock(spec=IdeReviewContextService)
         mock_comments = [Mock(spec=ParsedCommentData)]
         mock_llm_handler = Mock(spec=LLMHandler)
-        
+
         # Act
         result = AgentFactory.comment_summarization_agent(
-            context_service=mock_context_service,
-            comments=mock_comments,
-            llm_handler=mock_llm_handler
+            context_service=mock_context_service, comments=mock_comments, llm_handler=mock_llm_handler
         )
-        
+
         # Assert
         assert result is not None  # Just verify that an instance was created
-        assert hasattr(result, 'agent_type')
+        assert hasattr(result, "agent_type")
         assert result.agent_type == AgentTypes.COMMENT_SUMMARIZATION
 
     def test_get_code_review_agents_empty_list(self) -> None:
@@ -169,14 +158,12 @@ class TestAgentFactory:
         # Arrange
         mock_context_service = Mock()
         mock_llm_handler = Mock()
-        
+
         # Act
         result = AgentFactory.get_code_review_agents(
-            valid_agents_and_init_params=[],
-            context_service=mock_context_service,
-            llm_handler=mock_llm_handler
+            valid_agents_and_init_params=[], context_service=mock_context_service, llm_handler=mock_llm_handler
         )
-        
+
         # Assert
         assert result == []
 
@@ -186,28 +173,28 @@ class TestAgentFactory:
         mock_context_service = Mock()
         mock_comments = [Mock(spec=ParsedCommentData)]
         mock_llm_handler = Mock()
-        
+
         with patch.multiple(
-            'app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory.AgentFactory',
+            "app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.agent_factory.AgentFactory",
             review_finalization_agents={
                 AgentTypes.COMMENT_VALIDATION: Mock(return_value=Mock()),
-                AgentTypes.COMMENT_SUMMARIZATION: Mock(return_value=Mock())
-            }
+                AgentTypes.COMMENT_SUMMARIZATION: Mock(return_value=Mock()),
+            },
         ):
             # Test with include filter
             result_include = AgentFactory.get_review_finalization_agents(
                 context_service=mock_context_service,
                 comments=mock_comments,
                 llm_handler=mock_llm_handler,
-                include_agent_types=[AgentTypes.COMMENT_VALIDATION]
+                include_agent_types=[AgentTypes.COMMENT_VALIDATION],
             )
             assert len(result_include) == 1
-            
+
             # Test with exclude filter
             result_exclude = AgentFactory.get_review_finalization_agents(
                 context_service=mock_context_service,
                 comments=mock_comments,
                 llm_handler=mock_llm_handler,
-                exclude_agent_types=[AgentTypes.COMMENT_SUMMARIZATION]
+                exclude_agent_types=[AgentTypes.COMMENT_SUMMARIZATION],
             )
             assert len(result_exclude) == 1

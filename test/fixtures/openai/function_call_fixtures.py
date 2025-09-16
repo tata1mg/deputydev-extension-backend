@@ -5,8 +5,9 @@ This module provides mock OpenAI function call events for testing
 tool use request streaming functionality.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture
