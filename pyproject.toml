@@ -1,6 +1,6 @@
 [project]
 name = "deputydev"
-version = "14.0.6"
+version = "15.0.0"
 description = ""
 authors = [{ name = "Deputy Dev", email = "deputydev@1mg.com" }]
 readme = "README.md"
@@ -21,7 +21,7 @@ dependencies = [
   "python-json-logger==3.3.0",
   "rich==14.0.0",
   "setuptools>=78.1.1,<79.0.0",
-  "deputydev-core @ git+ssh://git@github.com/DeputyDev-1mg/deputydev-core.git@8.0.0",
+  "deputydev-core @ git+ssh://git@github.com/tata1mg/deputydev-core.git@8.0.1",
   "psycopg2-binary==2.9.9",
   "pgvector==0.2.4",
   "pandas==2.1.3",
@@ -30,7 +30,6 @@ dependencies = [
   "pillow>=10.3.0,<11.0.0",
   "websockets==14.0",
   "pyjwt==2.9.0",
-  "supabase==2.11.0",
   "types-aiobotocore-apigatewaymanagementapi==2.11.2",
   "types-aiobotocore-s3==2.11.2",
   "fuzzywuzzy",
@@ -49,5 +48,22 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
     "ruff==0.12.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]        # only measure your app code, not tests
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+omit = [
+    "test/*",
 ]
