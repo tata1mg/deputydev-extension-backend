@@ -76,11 +76,13 @@ services:
       timeout: 5s
       retries: 10
 
-  genai:
+  deputydev-extension-backend:
     build:
       context: .
       dockerfile: Dockerfile
       target: runtime
+      args:
+        SERVICE_NAME: deputydev-extension-backend
     # image: genai:local
     platform: linux/amd64
     container_name: genai-backend
@@ -88,6 +90,7 @@ services:
       - "8084:8084"
     environment:
       - AWS_ENDPOINT_URL=http://localstack:4566
+    command: ["python3", "-m", "app.service"]
     depends_on:
       postgres:
         condition: service_healthy
