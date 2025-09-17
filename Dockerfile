@@ -50,17 +50,21 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Minimal runtime tools
+# Minimal runtime tools and ensure git is properly configured
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      curl \
       git \
-    && rm -rf /var/lib/apt/lists/*
+      curl \
+    && rm -rf /var/lib/apt/lists/* \
 
 # Create home ubuntu service hydra
 RUN mkdir -p /home/ubuntu/1mg/$SERVICE_NAME/logs
 
 # switch to code folder
 WORKDIR /home/ubuntu/1mg/$SERVICE_NAME
+
+# Set git configuration for GitPython
+ENV GIT_PYTHON_REFRESH=quiet
+ENV GIT_PYTHON_GIT_EXECUTABLE="/usr/bin/git"
 
 # Copy and install requirements
 ENV VIRTUAL_ENV="/home/ubuntu/1mg/$SERVICE_NAME/.venv"
