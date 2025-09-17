@@ -14,7 +14,6 @@ from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestExceptio
 from app.backend_common.constants.constants import VCSTypes
 from app.backend_common.models.dao.postgres.workspaces import Workspaces
 from app.backend_common.repository.db import DB
-from app.backend_common.services.credentials import AuthHandler, AuthHandlerFactory
 from app.main.blueprints.deputy_dev.constants.constants import (
     COMBINED_TAGS_LIST,
     BitbucketBots,
@@ -205,68 +204,6 @@ def extract_line_number_from_llm_response(line_number: str):
 async def get_workspace(scm, scm_workspace_id) -> Workspaces:
     workspace = await Workspaces.get(scm=scm, scm_workspace_id=scm_workspace_id)
     return workspace
-
-
-async def get_workspace_by_team_id(team_id, scm) -> Workspaces:
-    workspace = await Workspaces.get(team_id=team_id, scm=scm)
-    return workspace
-
-
-async def get_vcs_auth_handler(scm_workspace_id, vcs_type) -> AuthHandler:
-    workspace = await get_workspace(scm_workspace_id=scm_workspace_id, scm=vcs_type)
-    set_context_values(dd_workspace_id=workspace.id)
-    if vcs_type == "github":
-        # tokenable_type = "workspace"
-        workspace_id = workspace.id
-        tokenable_id = workspace_id
-
-    else:
-        # tokenable_type = "integration"
-        integration_id = workspace.integration_id
-        tokenable_id = integration_id
-
-    auth_handler = AuthHandlerFactory.create_auth_handler(integration=vcs_type, tokenable_id=tokenable_id)
-    return auth_handler
-
-
-async def get_auth_handler(client: str, team_id: str | None = None, workspace_id: str | None = None):
-    integration_info = await DB.by_filters(
-        model_name=Integrations,
-        where_clause={"team_id": team_id, "client": client, "is_connected": True},
-        limit=1,
-        fetch_one=True,
-    )
-    if not integration_info:
-        return None, None
-    if client == "github":
-        # tokenable_type = "workspace"
-        tokenable_id = workspace_id
-
-    else:
-        # tokenable_type = "integration"
-        tokenable_id = integration_info["id"]
-
-    auth_handler = AuthHandlerFactory.create_auth_handler(integration=client, tokenable_id=int(tokenable_id))
-    return auth_handler, integration_info
-
-
-def get_bitbucket_repo_name_slug(value: str) -> str:
-    """
-    extracts repo slug from the full name passed to it
-
-    Args:
-        value (str): string from which the value needs to be extracted.
-
-    Returns:
-        datetime: The corresponding datetime object.
-    """
-    parts = value.split("/")
-    return parts[-1]
-
-
-def is_request_from_blocked_repo(repo_name):
-    config = CONFIG.config
-    return repo_name in config.get("BLOCKED_REPOS")
 
 
 def update_payload_with_jwt_data(query_params: dict, payload: dict) -> dict:

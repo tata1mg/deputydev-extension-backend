@@ -1,21 +1,21 @@
 import textwrap
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import (
-    ContentBlockCategory,
-    TextBlockData,
-)
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+    ContentBlockCategory,
+    TextBlockData,
+)
+from deputydev_core.llm_handler.providers.anthropic.prompts.base_prompts.base_claude_4_sonnet_prompt_handler import (
     BaseClaude4SonnetPromptHandler,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
 class Claude4InlineEditorPrompt(BaseClaude4SonnetPromptHandler):
