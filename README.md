@@ -30,7 +30,7 @@
 - **SCM Clients:** Custom clients for GitHub, GitLab, Bitbucket
 - **Issue Tracker Clients:** Custom client for Jira
 - **Messaging/Queueing:** Azure Service Bus, AioKafka (potentially)
-- **Cloud Services:** AWS (Bedrock, SQS, API Gateway), Supabase
+- **Cloud Services:** AWS (Bedrock, SQS, API Gateway)
 - **Containerization:** Docker
 - **Package Management:** [`uv`](https://github.com/astral-sh/uv) (via `uv.lock`)
 - **Linting/Formatting:** Ruff, Flake8, Pylint
@@ -93,7 +93,7 @@
     uv sync
     ```
 
-4**Configure Environment Variables:**
+4. **Configure Environment Variables:**
 
     - Copy `config_template.json` to `config.json`.
     - Populate `config.json` with credentials/configs:
@@ -103,10 +103,9 @@
       - AI service keys (OpenAI, Google Gemini, etc.)
       - Azure Service Bus connection string
       - AWS credentials (for Bedrock, SQS, API Gateway)
-      - Supabase URL and key
     - Refer to `config_template.json` and `settings.toml` for required keys.
 
-5**Database Setup:**
+5. **Database Setup:**
 
     - Ensure PostgreSQL is running.
     - If using `dbmate`:
@@ -161,3 +160,18 @@ source .venv/bin/activate
 uv sync
 python -m app.service
 ```
+
+## Local checks
+
+- pre-commit install
+- pre-commit run --all-files
+- ruff format .
+- ruff check .
+
+## Contributing
+
+Please read CONTRIBUTING.md for contribution guidelines (project layout, code style, workflows, and PR process).
+
+## Code of Conduct
+
+By participating, you agree to follow our Code of Conduct (CODE_OF_CONDUCT.md).

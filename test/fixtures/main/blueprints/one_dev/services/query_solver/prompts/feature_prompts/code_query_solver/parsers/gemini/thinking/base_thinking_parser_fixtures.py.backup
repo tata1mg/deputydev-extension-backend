@@ -1,0 +1,460 @@
+from typing import List
+
+
+class BaseThinkingParserFixtures:
+    """Fixture data for base thinking parser tests."""
+
+    @staticmethod
+    def get_simple_thinking_examples() -> List[str]:
+        """Get simple thinking examples for basic testing."""
+        return [
+            "This is a simple thought process.",
+            "I need to analyze this problem step by step.",
+            "Let me think about the best approach here.",
+            "The user is asking for a specific solution.",
+            "I should consider multiple alternatives.",
+        ]
+
+    @staticmethod
+    def get_complex_thinking_examples() -> List[str]:
+        """Get complex thinking examples with detailed reasoning."""
+        return [
+            """The user is asking for a comprehensive solution to implement authentication in their web application. I need to consider several aspects:
+
+1. Security best practices
+2. User experience considerations
+3. Scalability requirements
+4. Integration with existing systems
+5. Maintenance and future updates
+
+Let me start with the security aspects first, then move to implementation details.""",
+
+            """This is a complex architectural decision. I need to weigh the pros and cons of different approaches:
+
+Microservices approach:
+- Pros: Better scalability, independent deployments, technology diversity
+- Cons: Increased complexity, network overhead, distributed system challenges
+
+Monolithic approach:
+- Pros: Simpler development, easier testing, better performance
+- Cons: Scaling challenges, technology lock-in, deployment coupling
+
+Given the requirements, I think a hybrid approach might be best.""",
+
+            """The user's code has several potential issues that I need to address:
+
+1. Memory leaks in the event listeners
+2. Race conditions in async operations
+3. Error handling is insufficient
+4. Performance bottlenecks in the data processing loop
+5. Security vulnerabilities in user input handling
+
+I'll provide solutions for each of these issues with code examples and explanations."""
+        ]
+
+    @staticmethod
+    def get_structured_thinking_examples() -> List[str]:
+        """Get thinking examples with structured formatting."""
+        return [
+            """My approach to this problem:
+
+1. First, I'll analyze the requirements
+   - Functional requirements
+   - Non-functional requirements
+   - Constraints and assumptions
+
+2. Then, I'll design the solution
+   - High-level architecture
+   - Component interactions
+   - Data flow
+
+3. Finally, I'll implement the code
+   - Core logic
+   - Error handling
+   - Testing strategy""",
+
+            """Breaking down this algorithm:
+
+Step 1: Input validation
+  • Check for null/undefined values
+  • Validate data types
+  • Ensure constraints are met
+
+Step 2: Data preprocessing
+  • Normalize input format
+  • Handle edge cases
+  • Optimize for performance
+
+Step 3: Core processing
+  • Apply main algorithm logic
+  • Handle intermediate results
+  • Maintain state consistency
+
+Step 4: Output formatting
+  • Format results according to specification
+  • Add metadata if needed
+  • Prepare for serialization""",
+
+            """Analysis framework:
+
+A) Problem Definition
+   → What exactly needs to be solved?
+   → What are the success criteria?
+   → What are the constraints?
+
+B) Solution Space
+   → What are possible approaches?
+   → What are the trade-offs?
+   → Which approach fits best?
+
+C) Implementation Strategy
+   → How to break down the work?
+   → What are the dependencies?
+   → How to validate the solution?"""
+        ]
+
+    @staticmethod
+    def get_thinking_with_code_examples() -> List[str]:
+        """Get thinking examples that include code snippets."""
+        return [
+            """I need to implement a retry mechanism. Here's my thinking:
+
+The basic structure should be:
+```python
+def retry_operation(func, max_attempts=3, delay=1):
+    for attempt in range(max_attempts):
+        try:
+            return func()
+        except Exception as e:
+            if attempt == max_attempts - 1:
+                raise e
+            time.sleep(delay * (2 ** attempt))  # exponential backoff
+```
+
+But I also need to consider:
+- Which exceptions should trigger retries
+- How to make the delay configurable
+- Whether to add jitter to prevent thundering herd
+- Logging for debugging purposes""",
+
+            """The user's current code has an issue:
+
+```javascript
+async function fetchData() {
+    const response = await fetch('/api/data');
+    return response.json();  // This can fail if response is not JSON
+}
+```
+
+The problem is that there's no error handling. If the server returns a 404 or 500, 
+or if the response isn't valid JSON, this will throw an unhandled exception.
+
+Better approach:
+```javascript
+async function fetchData() {
+    try {
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch failed:', error);
+        throw error; // Re-throw or handle appropriately
+    }
+}
+```""",
+
+            """For this database schema design, I'm thinking:
+
+Current structure:
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    preferences TEXT  -- This is the problem
+);
+```
+
+The `preferences` column as TEXT is not optimal because:
+1. No structure validation
+2. Difficult to query specific preferences
+3. No indexing on preference values
+
+Better approach would be:
+```sql
+CREATE TABLE user_preferences (
+    id INT PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    preference_key VARCHAR(100),
+    preference_value TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, preference_key)
+);
+```
+
+This allows for:
+- Structured data
+- Easy querying: WHERE preference_key = 'theme'
+- Individual preference updates
+- Indexing on keys for performance"""
+        ]
+
+    @staticmethod
+    def get_multilingual_examples() -> List[str]:
+        """Get thinking examples with multilingual content."""
+        return [
+            """Le utilisateur demande une solution pour gérer l'authentification. Je dois considérer les aspects suivants:
+
+1. Sécurité - utiliser des tokens JWT
+2. Expérience utilisateur - login simple
+3. Conformité RGPD - protection des données
+
+I'll implement this with a focus on security and user experience.""",
+
+            """このユーザーは認証システムについて質問している。以下の点を考慮する必要がある：
+
+- セキュリティのベストプラクティス
+- ユーザビリティ
+- スケーラビリティ
+- メンテナンス性
+
+Let me provide a comprehensive solution that addresses these concerns.""",
+
+            """El usuario está pidiendo ayuda con un sistema de autenticación. Necesito pensar en:
+
+• Seguridad: usar HTTPS, tokens seguros
+• Usabilidad: proceso de login simple
+• Escalabilidad: manejar muchos usuarios
+• Mantenimiento: código limpio y documentado
+
+I'll provide a solution that covers all these aspects.""",
+
+            """Пользователь спрашивает о системе аутентификации. Нужно учесть:
+
+1. Безопасность - защита от атак
+2. Производительность - быстрая авторизация  
+3. Масштабируемость - поддержка множества пользователей
+4. Совместимость - работа с разными браузерами
+
+I'll design a robust authentication system addressing these requirements."""
+        ]
+
+    @staticmethod
+    def get_special_characters_examples() -> List[str]:
+        """Get thinking examples with special characters and symbols."""
+        return [
+            """Mathematical thinking: Let me calculate the complexity.
+
+For algorithm A: O(n²) where n is input size
+For algorithm B: O(n log n) which is better for large datasets
+
+The trade-off is: A → simpler implementation, B → better performance
+
+Using symbols: α, β, γ for variables makes the math clearer:
+α = initial state
+β = transformation function  
+γ = final result
+
+So: γ = β(α) where β has O(n log n) complexity.""",
+
+            """Code symbols and operators:
+
+&& (logical AND)
+|| (logical OR)  
+!= (not equal)
+<= (less than or equal)
+=> (arrow function)
+
+These are common in JavaScript:
+const isValid = (x) => x !== null && x !== undefined;
+
+I need to be careful with:
+- Triple equals (===) vs double equals (==)
+- Truthiness: 0, "", null, undefined are falsy
+- Type coercion issues""",
+
+            """Special formatting characters:
+
+Tabs: \\t
+Newlines: \\n  
+Carriage returns: \\r
+Unicode characters: émojis like 🚀, 💡, ⚡
+
+JSON escaping: "text with \\"quotes\\" inside"
+Regex patterns: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/
+
+HTML entities: &lt; &gt; &amp; &quot; &#39;
+
+All these need proper handling in the parser.""",
+
+            """Database query with special characters:
+
+SELECT * FROM users 
+WHERE name LIKE '%O\\'Reilly%'  -- Single quote in name
+   OR email LIKE '%@company.co.uk'  -- Special domain
+   OR phone ~ '^\\\\+?1?-?[0-9]{3}-?[0-9]{3}-?[0-9]{4}$'  -- Regex pattern
+
+Need to handle:
+- SQL injection prevention
+- Proper escaping of quotes
+- International characters (UTF-8)
+- Special regex metacharacters: . * + ? ^ $ { } [ ] | ( ) \"""
+        ]
+
+    @staticmethod
+    def get_large_thinking_content() -> str:
+        """Get large thinking content for performance testing."""
+        return """This is a comprehensive analysis of the software architecture problem presented. I need to consider multiple dimensions and provide a thorough solution.
+
+First, let me analyze the current system architecture. The existing monolithic application has served well for the initial product development phase, but as the user base grows and feature requirements become more complex, we're encountering several limitations:
+
+1. Scalability Issues:
+   - The entire application must be scaled as a unit, even if only specific components experience high load
+   - Database bottlenecks occur when multiple features compete for the same resources
+   - Memory usage grows linearly with user sessions, creating resource constraints
+
+2. Development Complexity:
+   - Large codebase becomes difficult to navigate and understand for new team members
+   - Feature development cycles are slowed by the need to understand the entire system
+   - Testing becomes more complex as changes in one area can affect seemingly unrelated features
+   - Deployment risks increase as any change requires deploying the entire application
+
+3. Technology Limitations:
+   - Stuck with initial technology choices, making it difficult to adopt new tools or frameworks
+   - Performance optimizations are global rather than component-specific
+   - Different components have different performance characteristics and optimization needs
+
+Now, considering the migration to a microservices architecture, I need to evaluate the benefits and challenges:
+
+Benefits of Microservices:
+- Independent scaling of individual services based on their specific load patterns
+- Technology diversity allowing teams to choose the best tools for each service
+- Fault isolation where failure in one service doesn't bring down the entire system
+- Independent deployment cycles enabling faster feature delivery
+- Team autonomy with clear service boundaries and ownership
+- Better alignment with business capabilities and domain-driven design principles
+
+Challenges and Considerations:
+- Increased operational complexity with multiple services to deploy, monitor, and maintain
+- Network latency and reliability concerns for inter-service communication
+- Data consistency challenges in distributed systems
+- Debugging and tracing across service boundaries becomes more complex
+- Initial development overhead for setting up infrastructure and tooling
+
+For the specific implementation approach, I recommend a gradual migration strategy rather than a big-bang rewrite:
+
+Phase 1: Identify Service Boundaries
+- Analyze the current codebase to identify natural service boundaries
+- Look for areas with high cohesion and low coupling
+- Consider data ownership and business capabilities
+- Start with services that have clear interfaces and minimal dependencies
+
+Phase 2: Extract Non-Critical Services First
+- Begin with peripheral services like notifications, reporting, or user preferences
+- These services typically have fewer dependencies and lower risk if issues occur
+- Use this phase to establish patterns and tooling for microservices
+
+Phase 3: Core Service Extraction
+- Move to more critical services like user management, payment processing
+- Implement proper monitoring, logging, and circuit breaker patterns
+- Establish data synchronization strategies for services that need shared data
+
+Phase 4: Legacy System Integration
+- Maintain the core monolith while gradually extracting services
+- Use the Strangler Fig pattern to gradually replace monolith functionality
+- Implement API gateways for unified client interfaces
+
+Technical Implementation Considerations:
+
+Communication Patterns:
+- Use HTTP/REST for synchronous communication where real-time response is needed
+- Implement message queues (RabbitMQ, Apache Kafka) for asynchronous communication
+- Consider GraphQL federation for complex data aggregation scenarios
+- Implement circuit breaker patterns to handle service failures gracefully
+
+Data Management:
+- Follow the database-per-service pattern to maintain data independence
+- Implement event sourcing for audit trails and complex business processes
+- Use eventual consistency patterns where strict consistency isn't required
+- Consider CQRS (Command Query Responsibility Segregation) for complex read/write scenarios
+
+Infrastructure and DevOps:
+- Containerization with Docker for consistent deployment environments
+- Kubernetes for orchestration, scaling, and service discovery
+- Implement comprehensive monitoring with Prometheus and Grafana
+- Use distributed tracing with tools like Jaeger or Zipkin
+- Establish centralized logging with ELK stack (Elasticsearch, Logstash, Kibana)
+
+Security Considerations:
+- Implement service-to-service authentication with mutual TLS
+- Use API gateways for centralized authentication and authorization
+- Implement proper secrets management with tools like HashiCorp Vault
+- Consider zero-trust security principles for inter-service communication
+
+Performance Optimization:
+- Implement caching strategies at multiple levels (service-level, API gateway, CDN)
+- Use connection pooling for database connections
+- Implement proper load balancing strategies
+- Consider service mesh technologies like Istio for traffic management
+
+This migration will require significant investment in tooling, monitoring, and team training. However, the long-term benefits in terms of scalability, maintainability, and development velocity make it a worthwhile investment for a growing application."""
+
+    @staticmethod
+    def get_edge_case_examples() -> List[str]:
+        """Get edge case examples for robust testing."""
+        return [
+            "",  # Empty string
+            " ",  # Single space
+            "\n",  # Single newline
+            "\t",  # Single tab
+            "\r\n",  # Windows line ending
+            "   \n\t  \n  ",  # Mixed whitespace
+            "A" * 10000,  # Very long single word
+            "\n".join(["Line " + str(i) for i in range(1000)]),  # Many lines
+        ]
+
+    @staticmethod
+    def get_realistic_thinking_scenarios() -> List[str]:
+        """Get realistic thinking scenarios that might occur in actual usage."""
+        return [
+            """The user is asking about implementing caching in their application. Let me think through the different caching strategies:
+
+1. Client-side caching (browser cache, localStorage)
+   - Pros: Reduces server load, faster response times
+   - Cons: Cache invalidation challenges, limited storage
+
+2. Server-side caching (Redis, Memcached)
+   - Pros: Shared across users, more control over invalidation
+   - Cons: Additional infrastructure, memory usage
+
+3. CDN caching for static assets
+   - Pros: Global distribution, excellent performance
+   - Cons: Cost, complexity for dynamic content
+
+For their specific use case with frequently changing data, I think a combination of Redis for session data and application-level caching would work best.""",
+
+            """Looking at this React performance issue, I need to identify the root cause:
+
+The component is re-rendering unnecessarily on every state change in the parent. This could be due to:
+1. Props being passed as new objects every render
+2. Missing React.memo() optimization
+3. Callbacks not being memoized with useCallback()
+4. Context value changes triggering all consumers
+
+I should suggest using React DevTools profiler to identify the exact cause, then provide specific optimizations like useMemo, useCallback, and proper memoization strategies.""",
+
+            """This SQL query performance problem requires careful analysis:
+
+The query is doing a full table scan because:
+1. The WHERE clause uses a function on the indexed column
+2. OR conditions prevent index usage
+3. LIKE with leading wildcard can't use index
+
+I need to suggest:
+- Adding composite indexes for the filter conditions
+- Rewriting the query to avoid functions in WHERE clause
+- Using full-text search for LIKE patterns
+- Considering query restructuring with UNION for OR conditions"""
+        ]

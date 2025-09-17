@@ -1,32 +1,32 @@
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.openrouter_models.prompts.base_prompts.base_kimi_k2 import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
+from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_kimi_k2 import (
     BaseKimiK2Prompt,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.kimi_k2_code_block_parser import (
     KimiK2CodeBlockParser,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
     KimiK2ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_code_query_solver_prompt import (
-    KimiK2QuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_custom_code_query_solver_prompt import (
+    KimiK2CustomQuerySolverPrompt,
 )
 
 
-class KimiK2QuerySolverPromptHandler(BaseKimiK2Prompt):
+class KimiK2CustomCodeQuerySolverPromptHandler(BaseKimiK2Prompt):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = KimiK2QuerySolverPrompt
+    prompt_class = KimiK2CustomQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
