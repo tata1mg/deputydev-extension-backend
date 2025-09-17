@@ -598,7 +598,7 @@ requires-dist = [
     { name = "rich", specifier = "==14.0.0" },
     { name = "sanic", specifier = "==23.12.2" },
     { name = "sanic-ext", specifier = "==23.12.0" },
-    { name = "sentry-sdk", specifier = "==1.45.0" },
+    { name = "sentry-sdk", specifier = "==1.45.1" },
     { name = "setuptools", specifier = ">=78.1.1,<79.0.0" },
     { name = "toml", specifier = "==0.10.2" },
     { name = "tortoise-orm", specifier = ">=0.19,<0.22.0" },
@@ -1998,15 +1998,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "1.45.0"
+version = "1.45.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/b5/e28f5037f2cc66a2235780410583c71871a39aaf8dc3f96decd6426af5d4/sentry-sdk-1.45.0.tar.gz", hash = "sha256:509aa9678c0512344ca886281766c2e538682f8acfa50fd8d405f8c417ad0625", size = 244740, upload-time = "2024-04-10T13:38:45.891Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/28/02c0cd9184f9108e3c52519f9628b215077a3854240e0b17ae845e664855/sentry_sdk-1.45.1.tar.gz", hash = "sha256:a16c997c0f4e3df63c0fc5e4207ccb1ab37900433e0f72fef88315d317829a26", size = 244774, upload-time = "2024-07-26T13:48:32.375Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/26/cf87e98fb7fa5781c40474970a76d40b04289b949c0a327b719336aa5bca/sentry_sdk-1.45.0-py2.py3-none-any.whl", hash = "sha256:1ce29e30240cc289a027011103a8c83885b15ef2f316a60bcc7c5300afa144f1", size = 267149, upload-time = "2024-04-10T13:38:42.972Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/9f/105366a122efa93f0cb1914f841747d160788e4d022d0488d2d44c2ba26c/sentry_sdk-1.45.1-py2.py3-none-any.whl", hash = "sha256:608887855ccfe39032bfd03936e3a1c4f4fc99b3a4ac49ced54a4220de61c9c1", size = 267163, upload-time = "2024-07-26T13:48:29.38Z" },
 ]
 
 [[package]]
