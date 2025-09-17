@@ -1,0 +1,1234 @@
+from typing import Any, Dict, List
+from app.backend_common.models.dto.message_thread_dto import MessageData
+
+
+class Claude4SonnetHandlerFixtures:
+    """Fixture data for Claude 4 Sonnet Handler tests."""
+
+    @staticmethod
+    def get_sample_params() -> Dict[str, Any]:
+        """Get sample parameters for Claude handler initialization."""
+        return {
+            "query": "Implement a thread-safe singleton pattern in Python with lazy initialization",
+            "files": [
+                {
+                    "path": "src/patterns/singleton.py",
+                    "content": "# Singleton implementation placeholder\nclass Singleton:\n    pass",
+                },
+            ],
+            "additional_context": "The singleton should be thread-safe and support lazy initialization for better performance",
+            "repository_structure": {
+                "src": ["patterns", "utils", "main.py"],
+                "src/patterns": ["singleton.py", "factory.py", "observer.py"],
+                "tests": ["test_singleton.py", "test_patterns.py"],
+                "docs": ["patterns.md", "architecture.md"]
+            },
+            "design_requirements": {
+                "thread_safety": True,
+                "lazy_initialization": True,
+                "memory_efficiency": True,
+                "testability": True
+            }
+        }
+
+    @staticmethod
+    def get_minimal_params() -> Dict[str, Any]:
+        """Get minimal parameters for Claude handler."""
+        return {
+            "query": "Write a simple hello world function",
+            "files": [],
+        }
+
+    @staticmethod
+    def get_complex_params() -> Dict[str, Any]:
+        """Get complex parameters for comprehensive testing."""
+        return {
+            "query": "Design and implement a microservices architecture with API gateway, service discovery, and distributed tracing",
+            "files": [
+                {
+                    "path": "gateway/src/main.py",
+                    "content": "# API Gateway implementation\nfrom flask import Flask\n\napp = Flask(__name__)",
+                },
+                {
+                    "path": "services/user-service/app.py", 
+                    "content": "# User service implementation\nfrom fastapi import FastAPI\n\napp = FastAPI()",
+                },
+                {
+                    "path": "services/auth-service/main.py",
+                    "content": "# Authentication service\nimport jwt\nfrom flask import Flask",
+                },
+                {
+                    "path": "docker-compose.yml",
+                    "content": "version: '3.8'\nservices:\n  gateway:\n    build: ./gateway",
+                },
+            ],
+            "additional_context": "Use containerization with Docker, implement circuit breaker pattern, add health checks and monitoring",
+            "repository_structure": {
+                "gateway": ["Dockerfile", "requirements.txt", "src/main.py", "config/settings.py"],
+                "services": ["user-service", "auth-service", "notification-service"],
+                "services/user-service": ["app.py", "models.py", "routes.py", "Dockerfile"],
+                "services/auth-service": ["main.py", "auth.py", "middleware.py", "Dockerfile"],
+                "infrastructure": ["k8s", "terraform", "monitoring"],
+                "infrastructure/k8s": ["gateway.yaml", "user-service.yaml", "auth-service.yaml"],
+                "infrastructure/monitoring": ["prometheus.yml", "grafana", "alerts"],
+                "tests": ["integration", "unit", "load"],
+                "docs": ["api", "architecture", "deployment"]
+            },
+            "technical_requirements": {
+                "containerization": "Docker + Kubernetes",
+                "api_gateway": "Kong or Nginx",
+                "service_discovery": "Consul or Eureka",
+                "monitoring": "Prometheus + Grafana",
+                "tracing": "Jaeger or Zipkin",
+                "databases": ["PostgreSQL", "Redis", "MongoDB"],
+                "message_queue": "RabbitMQ or Kafka"
+            },
+            "performance_requirements": {
+                "response_time": "< 100ms",
+                "throughput": "> 1000 RPS",
+                "availability": "99.9%",
+                "scalability": "horizontal"
+            }
+        }
+
+    @staticmethod
+    def get_sample_message_data() -> List[MessageData]:
+        """Get sample message data for testing Claude response parsing."""
+        return [
+            MessageData(
+                role="assistant",
+                content="I'll help you implement a thread-safe singleton pattern with lazy initialization."
+            ),
+            MessageData(
+                role="assistant",
+                content="""<thinking>
+The user wants a thread-safe singleton pattern with lazy initialization. I need to consider:
+
+1. Thread safety: Use double-checked locking or metaclass approach
+2. Lazy initialization: Don't create instance until first access
+3. Python-specific considerations: GIL, import behavior, memory model
+4. Testing considerations: How to reset for unit tests
+
+I'll implement using the metaclass approach as it's cleaner and more Pythonic than double-checked locking.
+</thinking>
+
+<code_block>
+<programming_language>python</programming_language>
+<file_path>src/patterns/singleton.py</file_path>
+<is_diff>false</is_diff>
+import threading
+from typing import Any, Dict, Optional
+
+
+class SingletonMeta(type):
+    \\\"\\\"\\\"
+    Thread-safe Singleton metaclass implementation.
+    
+    This metaclass ensures that only one instance of a class can exist,
+    and provides thread-safe lazy initialization.
+    \\\"\\\"\\\"
+    _instances: Dict[type, Any] = {}
+    _lock: threading.Lock = threading.Lock()
+
+    def __call__(cls, *args, **kwargs) -> Any:
+        """
+        Control instance creation with thread-safe double-checked locking.
+        """
+        # First check without lock for performance
+        if cls not in cls._instances:
+            with cls._lock:
+                # Second check with lock to ensure thread safety
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
+        
+        return cls._instances[cls]
+
+    def reset_instance(cls) -> None:
+        """
+        Reset the singleton instance. Useful for testing.
+        """
+        with cls._lock:
+            if cls in cls._instances:
+                del cls._instances[cls]
+
+
+class Singleton(metaclass=SingletonMeta):
+    """
+    Thread-safe Singleton base class with lazy initialization.
+    
+    Usage:
+        class MyService(Singleton):
+            def __init__(self):
+                if hasattr(self, '_initialized'):
+                    return
+                # Initialization code here
+                self._initialized = True
+    """
+    
+    def __init__(self) -> None:
+        """
+        Initialize the singleton instance.
+        Uses _initialized flag to prevent double initialization.
+        """
+        if hasattr(self, '_initialized'):
+            return
+        
+        self._initialized = True
+        self._setup()
+    
+    def _setup(self) -> None:
+        """
+        Override this method in subclasses for custom initialization.
+        """
+        pass
+
+
+# Example concrete singleton implementation
+class DatabaseConnection(Singleton):
+    """
+    Example singleton for database connection management.
+    """
+    
+    def _setup(self) -> None:
+        """Setup database connection."""
+        self.connection_string = "postgresql://localhost:5432/mydb"
+        self.connection_pool = None
+        self._connect()
+    
+    def _connect(self) -> None:
+        """Establish database connection."""
+        # Simulate database connection setup
+        print(f"Connecting to database: {self.connection_string}")
+        self.connection_pool = {"max_connections": 10, "active": 0}
+    
+    def get_connection(self) -> Dict[str, Any]:
+        """Get a database connection from the pool."""
+        if self.connection_pool:
+            self.connection_pool["active"] += 1
+            return {"id": self.connection_pool["active"], "status": "active"}
+        return {}
+    
+    def close_connection(self, connection_id: int) -> None:
+        """Close a database connection."""
+        if self.connection_pool and self.connection_pool["active"] > 0:
+            self.connection_pool["active"] -= 1
+            print(f"Closed connection {connection_id}")
+
+
+# Utility functions for singleton management
+def get_singleton_instance(singleton_class: type) -> Any:
+    """Get or create singleton instance."""
+    return singleton_class()
+
+
+def reset_all_singletons() -> None:
+    """Reset all singleton instances. Useful for testing."""
+    for cls in SingletonMeta._instances.copy():
+        cls.reset_instance()
+</code_block>
+
+<code_block>
+<programming_language>python</programming_language>
+<file_path>tests/test_singleton.py</file_path>
+<is_diff>false</is_diff>
+import pytest
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
+
+from src.patterns.singleton import Singleton, SingletonMeta, DatabaseConnection, reset_all_singletons
+
+
+class TestSingleton:
+    """Test suite for Singleton pattern implementation."""
+    
+    def setup_method(self) -> None:
+        """Reset singletons before each test."""
+        reset_all_singletons()
+    
+    def test_singleton_same_instance(self) -> None:
+        """Test that multiple calls return the same instance."""
+        class TestService(Singleton):
+            pass
+        
+        instance1 = TestService()
+        instance2 = TestService()
+        
+        assert instance1 is instance2
+        assert id(instance1) == id(instance2)
+    
+    def test_singleton_thread_safety(self) -> None:
+        """Test singleton thread safety with concurrent access."""
+        class ThreadTestService(Singleton):
+            def __init__(self):
+                super().__init__()
+                self.creation_time = time.time()
+        
+        instances = []
+        
+        def create_instance() -> ThreadTestService:
+            return ThreadTestService()
+        
+        # Create instances concurrently from multiple threads
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(create_instance) for _ in range(20)]
+            
+            for future in as_completed(futures):
+                instances.append(future.result())
+        
+        # All instances should be the same
+        first_instance = instances[0]
+        for instance in instances[1:]:
+            assert instance is first_instance
+        
+        # All should have same creation time (created only once)
+        creation_times = [instance.creation_time for instance in instances]
+        assert len(set(creation_times)) == 1
+    
+    def test_singleton_inheritance(self) -> None:
+        """Test that different singleton classes have different instances."""
+        class ServiceA(Singleton):
+            pass
+        
+        class ServiceB(Singleton):
+            pass
+        
+        instance_a1 = ServiceA()
+        instance_a2 = ServiceA()
+        instance_b1 = ServiceB()
+        instance_b2 = ServiceB()
+        
+        # Same class instances should be identical
+        assert instance_a1 is instance_a2
+        assert instance_b1 is instance_b2
+        
+        # Different class instances should be different
+        assert instance_a1 is not instance_b1
+        assert type(instance_a1) != type(instance_b1)
+    
+    def test_database_connection_singleton(self) -> None:
+        """Test the concrete DatabaseConnection singleton."""
+        db1 = DatabaseConnection()
+        db2 = DatabaseConnection()
+        
+        assert db1 is db2
+        assert db1.connection_string == db2.connection_string
+        
+        # Test connection functionality
+        conn = db1.get_connection()
+        assert conn["id"] == 1
+        assert conn["status"] == "active"
+        
+        db1.close_connection(conn["id"])
+    
+    def test_singleton_reset(self) -> None:
+        """Test singleton instance reset functionality."""
+        class ResettableService(Singleton):
+            def __init__(self):
+                super().__init__()
+                self.value = "original"
+        
+        # Create instance
+        instance1 = ResettableService()
+        assert instance1.value == "original"
+        
+        # Reset and create new instance
+        ResettableService.reset_instance()
+        instance2 = ResettableService()
+        
+        # Should be a new instance
+        assert instance1 is not instance2
+        assert instance2.value == "original"
+    
+    def test_initialization_only_once(self) -> None:
+        """Test that initialization code runs only once."""
+        initialization_count = 0
+        
+        class CountingService(Singleton):
+            def _setup(self):
+                nonlocal initialization_count
+                initialization_count += 1
+                self.count = initialization_count
+        
+        # Create multiple instances
+        instance1 = CountingService()
+        instance2 = CountingService()
+        instance3 = CountingService()
+        
+        # Initialization should have run only once
+        assert initialization_count == 1
+        assert instance1.count == 1
+        assert instance2.count == 1
+        assert instance3.count == 1
+        assert instance1 is instance2 is instance3
+</code_block>
+
+<summary>
+I've implemented a robust thread-safe singleton pattern with the following features:
+
+**Core Implementation:**
+- Uses metaclass approach for clean, Pythonic implementation
+- Thread-safe double-checked locking pattern
+- Lazy initialization - instances created only when first accessed
+- Memory efficient - single instance per class type
+
+**Key Features:**
+1. **Thread Safety**: Uses `threading.Lock` with double-checked locking
+2. **Lazy Initialization**: Instances created on first access, not import
+3. **Inheritance Support**: Different singleton classes maintain separate instances
+4. **Testing Support**: Reset functionality for unit testing
+5. **Prevention of Double Initialization**: Uses `_initialized` flag
+
+**Example Usage:**
+- `DatabaseConnection` class demonstrates practical singleton usage
+- Comprehensive test suite covering thread safety, inheritance, and edge cases
+- Utility functions for instance management and testing
+
+**Benefits:**
+- Thread-safe across multiple threads
+- Memory efficient with lazy loading
+- Easy to test with reset functionality
+- Supports inheritance hierarchy
+- Clean, readable implementation using metaclass pattern
+
+This implementation handles Python-specific considerations like the GIL and provides a solid foundation for singleton patterns in concurrent applications.
+</summary>"""
+            )
+        ]
+
+    @staticmethod
+    def get_code_block_examples() -> List[str]:
+        """Get various code block examples for testing Claude responses."""
+        return [
+            # Python class with methods
+            """<code_block>
+<programming_language>python</programming_language>
+<file_path>src/models/user.py</file_path>
+<is_diff>false</is_diff>
+from dataclasses import dataclass
+from typing import Optional
+from datetime import datetime
+
+
+@dataclass
+class User:
+    id: int
+    username: str
+    email: str
+    created_at: datetime
+    is_active: bool = True
+    last_login: Optional[datetime] = None
+    
+    def activate(self) -> None:
+        \"\"\"Activate the user account.\"\"\"
+        self.is_active = True
+    
+    def deactivate(self) -> None:
+        \"\"\"Deactivate the user account.\"\"\"
+        self.is_active = False
+        
+    def update_last_login(self) -> None:
+        \"\"\"Update the last login timestamp.\"\"\"
+        self.last_login = datetime.now()
+</code_block>""",
+
+            # TypeScript interface with diff
+            """<code_block>
+<programming_language>typescript</programming_language>
+<file_path>src/types/api.ts</file_path>
+<is_diff>true</is_diff>
+@@ -1,8 +1,12 @@
+ interface ApiResponse<T> {
+   data: T;
+   status: number;
+   message: string;
++  timestamp: string;
++  requestId: string;
+ }
+ 
+-export { ApiResponse };
++interface ErrorResponse extends ApiResponse<null> {
++  error: string;
++}
++
++export { ApiResponse, ErrorResponse };
+</code_block>""",
+
+            # SQL schema
+            """<code_block>
+<programming_language>sql</programming_language>
+<file_path>migrations/002_create_orders_table.sql</file_path>
+<is_diff>false</is_diff>
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' 
+        CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+);
+
+-- Trigger to update updated_at timestamp
+CREATE TRIGGER update_orders_updated_at
+    BEFORE UPDATE ON orders
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+</code_block>""",
+
+            # Docker configuration
+            """<code_block>
+<programming_language>dockerfile</programming_language>
+<file_path>Dockerfile</file_path>
+<is_diff>false</is_diff>
+FROM python:3.11-slim as base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Start command
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "app:app"]
+</code_block>""",
+
+            # React component with hooks
+            """<code_block>
+<programming_language>jsx</programming_language>
+<file_path>src/components/UserProfile.jsx</file_path>
+<is_diff>false</is_diff>
+import React, { useState, useEffect, useCallback } from 'react';
+import { useUser } from '../hooks/useUser';
+import { Button, Avatar, LoadingSpinner } from './ui';
+
+const UserProfile = ({ userId }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({});
+    const { user, loading, error, updateUser } = useUser(userId);
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name,
+                email: user.email,
+                bio: user.bio || ''
+            });
+        }
+    }, [user]);
+
+    const handleSave = useCallback(async () => {
+        try {
+            await updateUser(formData);
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Failed to update user:', err);
+        }
+    }, [formData, updateUser]);
+
+    if (loading) return <LoadingSpinner />;
+    if (error) return <div className="error">Error: {error.message}</div>;
+    if (!user) return <div>User not found</div>;
+
+    return (
+        <div className="user-profile">
+            <div className="profile-header">
+                <Avatar src={user.avatar} alt={user.name} size="large" />
+                <h1>{user.name}</h1>
+            </div>
+            
+            {isEditing ? (
+                <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+                    <input
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        placeholder="Name"
+                    />
+                    <input
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        placeholder="Email"
+                        type="email"
+                    />
+                    <textarea
+                        value={formData.bio || ''}
+                        onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                        placeholder="Bio"
+                    />
+                    <div className="form-actions">
+                        <Button type="submit" variant="primary">Save</Button>
+                        <Button 
+                            type="button" 
+                            variant="secondary"
+                            onClick={() => setIsEditing(false)}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </form>
+            ) : (
+                <div className="profile-content">
+                    <p><strong>Email:</strong> {user.email}</p>
+                    <p><strong>Bio:</strong> {user.bio || 'No bio available'}</p>
+                    <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default UserProfile;
+</code_block>"""
+        ]
+
+    @staticmethod
+    def get_thinking_examples() -> List[str]:
+        """Get thinking block examples for testing Claude responses."""
+        return [
+            """<thinking>
+The user is asking for a thread-safe singleton pattern. I need to consider several approaches:
+
+1. **Double-checked locking**: Classic approach but can be tricky in Python due to GIL
+2. **Metaclass approach**: More Pythonic and cleaner implementation
+3. **Module-level singleton**: Simple but not always suitable
+4. **Decorator approach**: Alternative but less flexible
+
+For thread safety, I need to consider:
+- Python's GIL provides some protection but not complete thread safety
+- Need explicit locking for singleton creation
+- Double-checked locking pattern to minimize lock overhead
+- Memory barriers and initialization ordering
+
+For lazy initialization:
+- Don't create instance at import time
+- Create only when first accessed
+- Ensure initialization happens only once
+
+I'll go with the metaclass approach as it's:
+- Clean and Pythonic
+- Handles inheritance well
+- Easy to test and debug
+- Provides good separation of concerns
+
+I should also include:
+- Reset functionality for testing
+- Proper error handling
+- Documentation and examples
+- Unit tests to demonstrate thread safety
+</thinking>""",
+
+            """<thinking>
+For this microservices architecture, I need to consider:
+
+**Architecture Components:**
+1. API Gateway - Single entry point, routing, rate limiting, authentication
+2. Service Discovery - Dynamic service registration and lookup
+3. Load Balancing - Distribute requests across service instances
+4. Circuit Breaker - Prevent cascade failures
+5. Distributed Tracing - Monitor requests across services
+6. Configuration Management - Centralized config with environment-specific settings
+
+**Technology Choices:**
+- Gateway: Kong, Nginx, or custom with Flask/FastAPI
+- Service Discovery: Consul, Eureka, or Kubernetes native
+- Containerization: Docker + Kubernetes for orchestration
+- Monitoring: Prometheus + Grafana for metrics, Jaeger for tracing
+- Message Queue: RabbitMQ or Kafka for async communication
+
+**Key Patterns:**
+- Database per Service: Each service owns its data
+- Saga Pattern: Distributed transactions
+- CQRS: Command Query Responsibility Segregation
+- Event Sourcing: For audit trails and complex business logic
+
+**Infrastructure Considerations:**
+- Health checks for all services
+- Graceful shutdown handling
+- Resource limits and auto-scaling
+- Security: mTLS, service mesh like Istio
+- Observability: Logging, metrics, tracing
+
+I'll provide a complete example with:
+- API Gateway implementation
+- Sample microservices (User, Auth)
+- Docker configuration
+- Kubernetes manifests
+- Monitoring setup
+- Circuit breaker implementation
+</thinking>""",
+
+            """<thinking>
+The user wants to refactor a class to use composition instead of inheritance. This is about moving from "is-a" relationships to "has-a" relationships.
+
+Key considerations:
+1. **Identify inheritance chains** that should become composition
+2. **Extract interfaces** for shared behavior
+3. **Inject dependencies** rather than extending classes
+4. **Favor composition over inheritance** for better flexibility and testability
+
+Benefits of composition:
+- More flexible - can change behavior at runtime
+- Better testability - easier to mock dependencies
+- Avoids complex inheritance hierarchies
+- Follows SOLID principles better
+- Easier to understand and maintain
+
+I should:
+1. Show the original inheritance-based design
+2. Identify the problems with inheritance in this context
+3. Refactor to use composition
+4. Demonstrate dependency injection
+5. Show how this improves testability
+6. Provide examples of runtime behavior changes
+</thinking>"""
+        ]
+
+    @staticmethod
+    def get_summary_examples() -> List[str]:
+        """Get summary block examples for testing Claude responses."""
+        return [
+            """<summary>
+I've implemented a robust thread-safe singleton pattern with the following key features:
+
+**Core Implementation:**
+- Uses metaclass approach for clean, Pythonic design
+- Thread-safe double-checked locking with `threading.Lock`
+- Lazy initialization - instances created only on first access
+- Memory efficient - single instance per class type
+
+**Key Benefits:**
+1. **Thread Safety**: Handles concurrent access safely across multiple threads
+2. **Lazy Loading**: Better performance by creating instances only when needed  
+3. **Inheritance Support**: Different singleton classes maintain separate instances
+4. **Testing Support**: Reset functionality for unit testing isolation
+5. **Double Initialization Prevention**: Uses `_initialized` flag
+
+**Practical Example:**
+- `DatabaseConnection` singleton for connection pool management
+- Comprehensive test suite covering thread safety and edge cases
+- Utility functions for instance management
+
+This implementation handles Python-specific considerations and provides a solid foundation for singleton patterns in concurrent applications.
+</summary>""",
+
+            """<summary>
+I've designed a comprehensive microservices architecture with the following components:
+
+**Core Services:**
+- **API Gateway**: Single entry point with routing, rate limiting, and authentication
+- **User Service**: FastAPI-based service for user management
+- **Auth Service**: JWT-based authentication and authorization
+- **Service Discovery**: Dynamic service registration and health checking
+
+**Infrastructure:**
+- **Containerization**: Docker containers with Kubernetes orchestration
+- **Monitoring**: Prometheus metrics with Grafana dashboards
+- **Distributed Tracing**: Jaeger for request flow visualization
+- **Circuit Breaker**: Prevents cascade failures between services
+- **Load Balancing**: Distributes traffic across service instances
+
+**Key Patterns Implemented:**
+- Database per Service for data isolation
+- Saga pattern for distributed transactions  
+- CQRS for command/query separation
+- Event-driven architecture with message queues
+
+**Operational Features:**
+- Health checks and graceful shutdown
+- Auto-scaling based on metrics
+- Centralized logging and configuration
+- Security with mTLS and service mesh
+
+This architecture provides high availability, scalability, and maintainability for complex distributed systems.
+</summary>""",
+
+            """<summary>
+I've refactored the code from inheritance to composition with these improvements:
+
+**Refactoring Changes:**
+- Replaced inheritance hierarchies with composition relationships
+- Extracted interfaces for shared behavior contracts
+- Implemented dependency injection for better flexibility
+- Created strategy patterns for varying algorithms
+
+**Key Benefits:**
+1. **Flexibility**: Can change behavior at runtime by swapping components
+2. **Testability**: Easy to mock dependencies and test in isolation
+3. **Maintainability**: Simpler, more focused classes with single responsibilities
+4. **Extensibility**: Add new behaviors without modifying existing code
+
+**Design Patterns Used:**
+- Strategy Pattern for algorithm selection
+- Dependency Injection for loose coupling
+- Factory Pattern for object creation
+- Observer Pattern for event handling
+
+**Testing Improvements:**
+- Mock dependencies easily in unit tests
+- Test components in isolation
+- Better code coverage with focused tests
+- Integration tests verify component interactions
+
+This refactoring follows SOLID principles and creates a more flexible, maintainable codebase that's easier to extend and test.
+</summary>"""
+        ]
+
+    @staticmethod
+    def get_malformed_examples() -> List[str]:
+        """Get malformed input examples for error handling tests."""
+        return [
+            "",  # Empty string
+            "<thinking>Incomplete thinking block without closing tag",
+            "<code_block>\n<programming_language>python</programming_language>\n# Missing closing tags",
+            "Plain text without any XML structure",
+            "<invalid_tag>Unknown XML tag</invalid_tag>",
+            "<thinking></thinking>",  # Empty thinking block
+            "<code_block></code_block>",  # Empty code block
+            """<code_block>
+<programming_language></programming_language>
+<file_path></file_path>
+<is_diff>not_boolean</is_diff>
+print("hello")
+</code_block>""",  # Invalid metadata
+            "<thinking>Nested <thinking>blocks are not valid</thinking></thinking>",
+            "< >Malformed XML syntax< >",
+        ]
+
+    @staticmethod 
+    def get_mixed_content_examples() -> List[str]:
+        """Get examples with mixed content types for comprehensive testing."""
+        return [
+            """<thinking>
+I need to implement both the main algorithm and supporting utility functions.
+The approach will be:
+1. Create the core algorithm class
+2. Add utility functions for data processing
+3. Include comprehensive error handling
+4. Add unit tests with good coverage
+</thinking>
+
+<code_block>
+<programming_language>python</programming_language>
+<file_path>src/algorithms/search.py</file_path>
+<is_diff>false</is_diff>
+from typing import List, Optional, TypeVar, Generic
+import bisect
+
+T = TypeVar('T')
+
+class BinarySearch(Generic[T]):
+    \"\"\"
+    Generic binary search implementation with various search modes.
+    \"\"\"
+    
+    def __init__(self, data: List[T], key_func=None):
+        self.data = sorted(data, key=key_func) if key_func else sorted(data)
+        self.key_func = key_func or (lambda x: x)
+    
+    def find(self, target: T) -> int:
+        \"\"\"Find exact match, return index or -1 if not found.\"\"\"
+        left, right = 0, len(self.data) - 1
+        
+        while left <= right:
+            mid = (left + right) // 2
+            mid_val = self.key_func(self.data[mid])
+            target_val = self.key_func(target)
+            
+            if mid_val == target_val:
+                return mid
+            elif mid_val < target_val:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return -1
+    
+    def find_range(self, target: T) -> tuple[int, int]:
+        \"\"\"Find range of indices for all occurrences of target.\"\"\"
+        target_val = self.key_func(target)
+        
+        # Find leftmost occurrence
+        left_idx = bisect.bisect_left([self.key_func(x) for x in self.data], target_val)
+        if left_idx >= len(self.data) or self.key_func(self.data[left_idx]) != target_val:
+            return (-1, -1)
+        
+        # Find rightmost occurrence
+        right_idx = bisect.bisect_right([self.key_func(x) for x in self.data], target_val) - 1
+        
+        return (left_idx, right_idx)
+</code_block>
+
+<code_block>
+<programming_language>python</programming_language>
+<file_path>tests/test_search.py</file_path>
+<is_diff>false</is_diff>
+import pytest
+from src.algorithms.search import BinarySearch
+
+
+class TestBinarySearch:
+    
+    def test_find_existing_element(self):
+        searcher = BinarySearch([1, 3, 5, 7, 9])
+        assert searcher.find(5) == 2
+        assert searcher.find(1) == 0
+        assert searcher.find(9) == 4
+    
+    def test_find_non_existing_element(self):
+        searcher = BinarySearch([1, 3, 5, 7, 9])
+        assert searcher.find(2) == -1
+        assert searcher.find(10) == -1
+        assert searcher.find(0) == -1
+    
+    def test_find_with_custom_key(self):
+        data = [("a", 1), ("b", 3), ("c", 5)]
+        searcher = BinarySearch(data, key_func=lambda x: x[1])
+        
+        assert searcher.find(("", 3)) == 1
+        assert searcher.find(("", 2)) == -1
+    
+    def test_find_range_single_occurrence(self):
+        searcher = BinarySearch([1, 2, 3, 4, 5])
+        assert searcher.find_range(3) == (2, 2)
+    
+    def test_find_range_multiple_occurrences(self):
+        searcher = BinarySearch([1, 2, 2, 2, 5])
+        assert searcher.find_range(2) == (1, 3)
+    
+    def test_find_range_not_found(self):
+        searcher = BinarySearch([1, 3, 5, 7, 9])
+        assert searcher.find_range(4) == (-1, -1)
+</code_block>
+
+<summary>
+I've implemented a generic binary search class with the following features:
+
+**Core Functionality:**
+- Generic type support for any comparable data type
+- Custom key function support for complex objects
+- Exact match finding with index return
+- Range finding for multiple occurrences
+
+**Key Features:**
+1. **Type Safety**: Uses Python generics for type hints
+2. **Flexibility**: Custom key functions for sorting and searching
+3. **Performance**: O(log n) search complexity
+4. **Comprehensive**: Handles edge cases and multiple occurrences
+
+**Testing Coverage:**
+- Basic functionality tests for existing/non-existing elements
+- Custom key function testing with tuple data
+- Range finding for single and multiple occurrences
+- Edge case handling for empty results
+
+The implementation is efficient, well-tested, and suitable for production use with any comparable data types.
+</summary>""",
+
+            """Here's my approach to solving this architectural challenge:
+
+<thinking>
+The user needs a complete e-commerce platform architecture. Key considerations:
+
+1. **Scalability**: Handle high traffic during peak times
+2. **Reliability**: 99.9% uptime requirement
+3. **Security**: Payment processing and user data protection
+4. **Performance**: Fast page loads and search
+5. **Maintainability**: Clean architecture for team development
+
+I'll design with:
+- Microservices for different domains (user, product, order, payment)
+- Event-driven architecture for loose coupling
+- CQRS for read/write optimization
+- Redis for caching and sessions
+- Elasticsearch for product search
+- Message queues for async processing
+</thinking>
+
+<code_block>
+<programming_language>python</programming_language>
+<file_path>services/product-service/app.py</file_path>
+<is_diff>false</is_diff>
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import Session
+from typing import List, Optional
+import redis
+import json
+from elasticsearch import Elasticsearch
+
+from .database import get_db
+from .models import Product, Category
+from .schemas import ProductCreate, ProductResponse, ProductSearchQuery
+from .cache import get_redis_client
+from .search import get_elasticsearch_client
+
+app = FastAPI(title="Product Service", version="1.0.0")
+
+# Dependency injection
+def get_cache() -> redis.Redis:
+    return get_redis_client()
+
+def get_search() -> Elasticsearch:
+    return get_elasticsearch_client()
+
+@app.post("/products", response_model=ProductResponse)
+async def create_product(
+    product: ProductCreate,
+    db: Session = Depends(get_db),
+    cache: redis.Redis = Depends(get_cache)
+):
+    # Create product in database
+    db_product = Product(**product.dict())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    
+    # Invalidate related cache entries
+    cache.delete(f"category:{db_product.category_id}:products")
+    cache.delete("products:featured")
+    
+    # Index in Elasticsearch for search
+    search_client = get_search()
+    search_client.index(
+        index="products",
+        id=db_product.id,
+        body={
+            "name": db_product.name,
+            "description": db_product.description,
+            "price": db_product.price,
+            "category_id": db_product.category_id,
+            "tags": db_product.tags
+        }
+    )
+    
+    return ProductResponse.from_orm(db_product)
+
+@app.get("/products/{product_id}", response_model=ProductResponse)
+async def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    cache: redis.Redis = Depends(get_cache)
+):
+    # Try cache first
+    cached = cache.get(f"product:{product_id}")
+    if cached:
+        return ProductResponse.parse_raw(cached)
+    
+    # Get from database
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Cache for 1 hour
+    response = ProductResponse.from_orm(product)
+    cache.setex(f"product:{product_id}", 3600, response.json())
+    
+    return response
+
+@app.get("/products/search", response_model=List[ProductResponse])
+async def search_products(
+    query: ProductSearchQuery = Depends(),
+    search: Elasticsearch = Depends(get_search)
+):
+    # Build Elasticsearch query
+    es_query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": query.q,
+                            "fields": ["name^2", "description", "tags"]
+                        }
+                    }
+                ],
+                "filter": []
+            }
+        },
+        "sort": [{"_score": {"order": "desc"}}],
+        "from": query.offset,
+        "size": query.limit
+    }
+    
+    # Add filters
+    if query.category_id:
+        es_query["query"]["bool"]["filter"].append(
+            {"term": {"category_id": query.category_id}}
+        )
+    
+    if query.min_price or query.max_price:
+        price_range = {"range": {"price": {}}}
+        if query.min_price:
+            price_range["range"]["price"]["gte"] = query.min_price
+        if query.max_price:
+            price_range["range"]["price"]["lte"] = query.max_price
+        es_query["query"]["bool"]["filter"].append(price_range)
+    
+    # Execute search
+    result = search.search(index="products", body=es_query)
+    
+    # Return results
+    products = []
+    for hit in result["hits"]["hits"]:
+        products.append(ProductResponse(**hit["_source"]))
+    
+    return products
+</code_block>
+
+<code_block>
+<programming_language>yaml</programming_language>
+<file_path>k8s/product-service.yaml</file_path>
+<is_diff>false</is_diff>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  labels:
+    app: product-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+      - name: product-service
+        image: ecommerce/product-service:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: url
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"
+        - name: ELASTICSEARCH_URL
+          value: "http://elasticsearch-service:9200"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+spec:
+  selector:
+    app: product-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: product-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: product-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+</code_block>
+
+<summary>
+I've designed a scalable e-commerce product service with the following architecture:
+
+**Service Features:**
+- **FastAPI**: High-performance async web framework
+- **Database**: PostgreSQL with SQLAlchemy ORM for data persistence
+- **Caching**: Redis for performance optimization and session management
+- **Search**: Elasticsearch for fast, full-text product search
+- **API Design**: RESTful endpoints with proper HTTP status codes
+
+**Performance Optimizations:**
+1. **Multi-level Caching**: Redis for frequently accessed products
+2. **Search Engine**: Elasticsearch for complex product queries
+3. **Database Indexing**: Optimized queries with proper indexes
+4. **Async Processing**: Non-blocking I/O for better throughput
+
+**Kubernetes Deployment:**
+- **Horizontal Auto-scaling**: Based on CPU and memory usage
+- **Health Checks**: Liveness and readiness probes
+- **Resource Management**: CPU and memory limits/requests
+- **Service Discovery**: ClusterIP for internal communication
+
+**Scalability Features:**
+- **Stateless Design**: Easy horizontal scaling
+- **Cache Invalidation**: Smart cache management for data consistency
+- **Search Optimization**: Efficient Elasticsearch queries with filters
+- **Resource Limits**: Proper resource allocation for cost efficiency
+
+This architecture supports high-traffic scenarios while maintaining fast response times and data consistency.
+</summary>"""
+        ]

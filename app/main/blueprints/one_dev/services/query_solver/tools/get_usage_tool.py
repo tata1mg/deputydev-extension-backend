@@ -1,6 +1,6 @@
 import textwrap
 
-from app.backend_common.services.llm.dataclasses.main import ConversationTool, JSONSchema
+from deputydev_core.llm_handler.dataclasses.main import ConversationTool, JSONSchema
 
 GET_USAGE_TOOL = ConversationTool(
     name="get_usage_tool",

@@ -1,14 +1,14 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.handler import LLMHandler
+from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.main.blueprints.deputy_dev.models.dto.user_agent_dto import UserAgentDTO
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentAndInitParams,
     AgentTypes,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.comments.dataclasses.main import (
-    ParsedAggregatedCommentData,
     ParsedCommentData,
 )
 from app.main.blueprints.deputy_dev.services.code_review.common.prompts.dataclasses.main import (
@@ -44,12 +44,6 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.agents.llm_a
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_review_context_service import (
     IdeReviewContextService,
 )
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.agents.base_code_review_agent import (
-    BaseCodeReviewAgent,
-)
-from app.main.blueprints.deputy_dev.services.code_review.vcs_review.context.context_service import (
-    ContextService,
-)
 
 
 class AgentFactory:
@@ -82,35 +76,6 @@ class AgentFactory:
     }
 
     @classmethod
-    def get_code_review_agents(
-        cls,
-        valid_agents_and_init_params: List[AgentAndInitParams],
-        context_service: ContextService,
-        llm_handler: LLMHandler[PromptFeatures],
-        is_reflection_enabled: bool = True,
-        include_agent_types: List[AgentTypes] = [],
-        exclude_agent_types: List[AgentTypes] = [],
-    ) -> List[BaseCodeReviewAgent]:
-        initialized_agents: List[BaseCodeReviewAgent] = []
-
-        for agent_type_and_init_params in valid_agents_and_init_params:
-            if not include_agent_types or agent_type_and_init_params.agent_type in include_agent_types:
-                if cls.code_review_agents.get(agent_type_and_init_params.agent_type) and (
-                    not exclude_agent_types or agent_type_and_init_params.agent_type not in exclude_agent_types
-                ):
-                    initialized_agents.append(
-                        cls.code_review_agents[agent_type_and_init_params.agent_type](
-                            context_service=context_service,
-                            is_reflection_enabled=is_reflection_enabled,
-                            llm_handler=llm_handler,
-                            model=cls.agent_type_to_model_map[agent_type_and_init_params.agent_type],
-                            **agent_type_and_init_params.init_params,
-                        )
-                    )
-
-        return initialized_agents
-
-    @classmethod
     def get_code_review_agent(
         cls,
         agent_and_init_params: AgentAndInitParams,
@@ -140,33 +105,6 @@ class AgentFactory:
         )
 
         return agent
-
-    @classmethod
-    def get_review_finalization_agents(
-        cls,
-        context_service: ContextService,
-        comments: Union[List[ParsedCommentData], List[ParsedAggregatedCommentData]],
-        llm_handler: LLMHandler[PromptFeatures],
-        is_reflection_enabled: bool = True,
-        include_agent_types: List[AgentTypes] = [],
-        exclude_agent_types: List[AgentTypes] = [],
-    ) -> List[BaseCodeReviewAgent]:
-        initialized_agents: List[BaseCodeReviewAgent] = []
-        for agent_type, agent_class in cls.review_finalization_agents.items():
-            if not include_agent_types or agent_type in include_agent_types:
-                if not exclude_agent_types or agent_type not in exclude_agent_types:
-                    initialized_agents.append(
-                        agent_class(
-                            context_service=context_service,
-                            is_reflection_enabled=is_reflection_enabled,
-                            llm_handler=llm_handler,
-                            model=cls.agent_type_to_model_map[agent_type],
-                            agent_setting={},
-                            comments=comments,
-                        )
-                    )
-
-        return initialized_agents
 
     @classmethod
     def comment_validation_agent(
