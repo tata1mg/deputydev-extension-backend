@@ -1,4 +1,4 @@
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 from .claude_3_point_5_sonnet import (
     Claude3Point5CodeCommunicationCommentsGenerationPass1Prompt,

@@ -9,7 +9,6 @@ from .extension_settings.extension_settings import extension_settings_v1_bp
 from .feedbacks.feedbacks_blueprint import feedbacks_v1_bp
 from .file_upload.file_upload_blueprint import file_upload_v1_bp
 from .history.history_blueprint import history_v1_bp
-from .repos.repos_blueprint import repos_v1_bp
 from .ui_data.ui_data_blueprint import ui_data_v1_bp
 from .urls.urls_blueprint import urls_v1_bp
 from .web_search.web_search import websearch_v1_bp
@@ -21,7 +20,6 @@ from .websocket_test.websocket_test_blueprint import websocket_test_v1_bp
 blueprints = [
     auth_v1_bp,
     config_v1_bp,
-    repos_v1_bp,
     code_gen_v1_bp,
     chunks_v1_bp,
     ui_data_v1_bp,

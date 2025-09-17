@@ -1,12 +1,12 @@
 import re
 from typing import List, Optional, Tuple
 
-from pydantic import BaseModel
-
-from app.backend_common.services.llm.dataclasses.main import TextBlockDelta
-from app.backend_common.services.llm.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
+from deputydev_core.llm_handler.dataclasses.main import TextBlockDelta
+from deputydev_core.llm_handler.providers.google.prompts.parsers.event_based.text_block_xml_parser import (
     BaseGoogleTextDeltaParser,
 )
+from pydantic import BaseModel
+
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockDeltaContent,

@@ -1,17 +1,17 @@
 from typing import Any, AsyncIterator, Dict, List, Tuple, Union
 
-from pydantic import BaseModel
-
-from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.backend_common.models.dto.message_thread_dto import MessageData
-from app.backend_common.services.llm.dataclasses.main import (
+from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
     UserAndSystemMessages,
 )
-from app.backend_common.services.llm.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
+from deputydev_core.llm_handler.providers.google.prompts.base_prompts.base_gemini_2_point_5_flash_prompt_handler import (
     BaseGemini2Point5FlashPromptHandler,
 )
+from pydantic import BaseModel
+
+from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.code_block.gemini_2_point_5_pro_code_block_parser import (
     Gemini2Point5ProCodeBlockParser,
 )
@@ -21,15 +21,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.thinking.gemini_2_point_5_pro_thinking_parser import (
     Gemini2Point5ProThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_2_point_5_flash_code_query_solver_prompt import (
-    Gemini2Point5FlashCodeQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_2_point_5_flash_custom_code_query_solver_prompt import (
+    Gemini2Point5FlashCustomCodeQuerySolverPrompt,
 )
 
 
-class Gemini2Point5FlashCodeQuerySolverPromptHandler(BaseGemini2Point5FlashPromptHandler):
+class Gemini2Point5FlashCustomCodeQuerySolverPromptHandler(BaseGemini2Point5FlashPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Gemini2Point5FlashCodeQuerySolverPrompt
+    prompt_class = Gemini2Point5FlashCustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
