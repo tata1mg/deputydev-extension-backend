@@ -16,8 +16,8 @@ from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload i
 
 class ChatFileUpload:
     s3_client = AWSS3ServiceClient(
-        bucket_name=ConfigManager.configs["AWS_S3_BUCKET"]["AWS_BUCKET_NAME"],
-        region_name=ConfigManager.configs["AWS_S3_BUCKET"]["AWS_REGION"],
+        bucket_name=ConfigManager.configs["AWS_S3"]["AWS_BUCKET_NAME"],
+        region_name=ConfigManager.configs["AWS_S3"]["AWS_REGION"],
     )
 
     @classmethod

@@ -1,5 +1,5 @@
 services:
-  postgres:
+  deputydev-postgres:
     image: postgres:16
     container_name: deputydev-postgres
     restart: unless-stopped
@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
+  deputydev-redis:
     image: redis/redis-stack:latest
     container_name: deputydev-redis
     restart: unless-stopped
@@ -31,10 +31,18 @@ services:
       timeout: 5s
       retries: 5
 
-  localstack:
+  deputydev-localstack:
     image: localstack/localstack:latest
     container_name: deputydev-localstack
     restart: unless-stopped
+    command: >
+      sh -c "
+        docker-entrypoint.sh &
+        while ! curl -fsS http://localhost:4566/_localstack/health >/dev/null 2>&1; do sleep 1; done;
+        awslocal s3 mb s3://deputydev --region ap-south-1 || echo 'Bucket already exists';
+        echo 'S3 bucket setup complete';
+        wait
+      "
     ports:
       - "4566:4566"
     environment:
@@ -53,25 +61,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # Setup S3 bucket in LocalStack
-  localstack-init:
-    image: amazon/aws-cli:latest
-    container_name: localstack-init
-    environment:
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=ap-south-1
-      - AWS_ENDPOINT_URL=http://localstack:4566
-    depends_on:
-      localstack:
-        condition: service_healthy
-    command: >
-      sh -c "
-        aws --endpoint-url=http://localstack:4566 s3 mb s3://deputydev --region ap-south-1 || echo 'Bucket already exists';
-        echo 'S3 bucket setup complete'
-      "
-    restart: "no"
-
   # If you want to run deputydev-binary inside Compose, enable this service.
   # If you already run it on your host at port 8001, you can comment this out.
   deputydev-binary:
@@ -84,6 +73,8 @@ services:
     container_name: deputydev-binary
     ports:
       - "8001:8001"
+    volumes:
+      - "/home/satyam-kumar/projects:/home/satyam-kumar/projects"
     depends_on:
       deputydev-extension-backend:
         condition: service_healthy  
@@ -103,10 +94,9 @@ services:
     platform: linux/amd64
     container_name: deputydev-auth
     ports:
-      - "8085:8085"
+      - "9355:9355"
     environment:
-      - AWS_ENDPOINT_URL=http://localstack:4566
-      - DATABASE_URL=postgres://postgres:password@postgres:5432/deputydev-postgres?sslmode=disable
+      - DATABASE_URL=postgres://postgres:password@deputydev-postgres:5432/deputydev-postgres?sslmode=disable
     command: >
       sh -c "
         dbmate up &&
@@ -115,12 +105,12 @@ services:
     volumes:
       - ../deputydev-auth/db:/db
     depends_on:
-      postgres:
+      deputydev-postgres:
         condition: service_healthy
-      redis:
+      deputydev-redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8085/ping >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9355/ping >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -137,8 +127,7 @@ services:
     ports:
       - "8084:8084"
     environment:
-      - AWS_ENDPOINT_URL=http://localstack:4566
-      - DATABASE_URL=postgres://postgres:password@postgres:5432/deputydev-postgres?sslmode=disable
+      - DATABASE_URL=postgres://postgres:password@deputydev-postgres:5432/deputydev-postgres?sslmode=disable
     command: >
       sh -c "
         dbmate up &&
@@ -147,14 +136,19 @@ services:
     volumes:
       - ./db:/db
     depends_on:
-      postgres:
+      deputydev-postgres:
         condition: service_healthy
-      redis:
+      deputydev-redis:
         condition: service_healthy
-      localstack:
+      deputydev-localstack:
         condition: service_healthy
       deputydev-auth:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8084/ping >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pg_data:

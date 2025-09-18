@@ -26,9 +26,9 @@ class AWSClientManager:
         self.region_name = region_name
 
         # set AWS connection params and override with provided params if any
-        self.aws_access_key_id = ConfigManager.configs["AWS"]["ACCESS_KEY_ID"]
-        self.aws_secret_access_key = ConfigManager.configs["AWS"]["SECRET_ACCESS_KEY"]
-        self.endpoint_url = ConfigManager.configs["AWS"]["ENDPOINT_URL"]
+        self.aws_access_key_id = ConfigManager.configs["AWS"]["GLOBAL"]["ACCESS_KEY_ID"]
+        self.aws_secret_access_key = ConfigManager.configs["AWS"]["GLOBAL"]["SECRET_ACCESS_KEY"]
+        self.endpoint_url = ConfigManager.configs["AWS"]["GLOBAL"]["ENDPOINT_URL"]
         if aws_connection_params:
             self.aws_access_key_id = aws_connection_params.aws_access_key_id
             self.aws_secret_access_key = aws_connection_params.aws_secret_access_key
@@ -38,12 +38,12 @@ class AWSClientManager:
         aws_config_to_use: AWSConfig = aws_config if aws_config else AWSConfig()
 
         # determine default values for connect_timeout, read_timeout, and max_pool_connections and signature_version
-        connect_timeout: int = ConfigManager.configs["AWS"].get("CONNECT_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS)
-        read_timeout: int = ConfigManager.configs["AWS"].get("READ_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS)
-        max_pool_connections: int = ConfigManager.configs["AWS"].get(
+        connect_timeout: int = ConfigManager.configs["AWS"]["GLOBAL"].get("CONNECT_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS)
+        read_timeout: int = ConfigManager.configs["AWS"]["GLOBAL"].get("READ_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS)
+        max_pool_connections: int = ConfigManager.configs["AWS"]["GLOBAL"].get(
             "MAX_POOL_CONNECTIONS", self.DEFAULT_MAX_POOL_CONNECTIONS
         )
-        signature_version: Optional[str] = ConfigManager.configs["AWS"].get("SIGNATURE_VERSION", None)
+        signature_version: Optional[str] = ConfigManager.configs["AWS"]["GLOBAL"].get("SIGNATURE_VERSION", None)
 
         # now, if these values are not set in the config, we can set them to the default values
         if aws_config_to_use.connect_timeout is None:

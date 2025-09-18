@@ -4,9 +4,8 @@ from types_aiobotocore_s3.client import S3Client
 
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
 
-# from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams  # noqa: ERA001
-
-
+from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams  # noqa: ERA001
+from deputydev_core.utils.config_manager import ConfigManager  # type: ignore
 class AWSS3ServiceClient:
     _client_managers: ClassVar[Dict[str, AWSClientManager]] = {}
 
@@ -20,14 +19,21 @@ class AWSS3ServiceClient:
 
         # Check if we already have a client manager for this configuration
         if client_key not in self._client_managers:
+            # check for override configs
+            override_connection_params: Optional[AWSConnectionParams] = None
+            aws_overrides = ConfigManager.configs["AWS"]["OVERRIDES"]
+            for override in aws_overrides:
+                if override["AWS_SERVICE_NAME"] == self.aws_service_name:
+                    override_connection_params = AWSConnectionParams(
+                        aws_access_key_id=override["CREDENTIALS"]["ACCESS_KEY_ID"],
+                        aws_secret_access_key=override["CREDENTIALS"]["SECRET_ACCESS_KEY"],
+                        endpoint_url=override["CREDENTIALS"]["ENDPOINT_URL"],
+                    )
+
             self._client_managers[client_key] = AWSClientManager(
                 aws_service_name=self.aws_service_name,
                 region_name=self.region_name,
-                # aws_connection_params=AWSConnectionParams(  # noqa: ERA001
-                #     aws_access_key_id="test",  # noqa: ERA001
-                #     aws_secret_access_key="test",  # noqa: ERA001
-                #     endpoint_url="http://localhost:4566",  # LocalStack endpoint for testing  # noqa: ERA001
-                # ),
+                aws_connection_params=override_connection_params,
             )
 
         # Use the shared client manager
