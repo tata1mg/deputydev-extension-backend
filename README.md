@@ -69,6 +69,10 @@
 
 ### Local Development Setup
 
+If you're looking to setup DeputyDev end to end (auth, backend, binary and extension), and run the entire thing locally follow [this guide](QUICK_START_GUIDE.md). 
+
+The following are instructions if you want to setup this particular repository, in a customizable manner.
+
 1. **Prerequisites:**
     - Python >= 3.11, < 3.12
     - [`uv`](https://github.com/astral-sh/uv): `pip install uv`
