@@ -50,11 +50,31 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Minimal runtime tools and ensure git is properly configured
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
       curl \
+      wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install dbmate for database migrations
+# Automatically detects architecture and downloads the appropriate binary
+RUN echo "Installing dbmate for database migrations..." && \
+    ARCH=$(uname -m) && \
+    echo "Detected architecture: $ARCH" && \
+    case $ARCH in \
+        x86_64) \
+            DBMATE_ARCH="linux-amd64" ;; \
+        aarch64|arm64) \
+            DBMATE_ARCH="linux-arm64" ;; \
+        *) \
+            echo "ERROR: Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    echo "Downloading dbmate-${DBMATE_ARCH}..." && \
+    wget -q -O /usr/local/bin/dbmate "https://github.com/amacneil/dbmate/releases/latest/download/dbmate-${DBMATE_ARCH}" && \
+    chmod +x /usr/local/bin/dbmate && \
+    echo "dbmate installation complete:" && \
+    dbmate --version
 
 # Create home ubuntu service hydra
 RUN mkdir -p /home/ubuntu/1mg/$SERVICE_NAME/logs
