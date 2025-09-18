@@ -38,7 +38,9 @@ class AWSClientManager:
         aws_config_to_use: AWSConfig = aws_config if aws_config else AWSConfig()
 
         # determine default values for connect_timeout, read_timeout, and max_pool_connections and signature_version
-        connect_timeout: int = ConfigManager.configs["AWS"]["GLOBAL"].get("CONNECT_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS)
+        connect_timeout: int = ConfigManager.configs["AWS"]["GLOBAL"].get(
+            "CONNECT_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS
+        )
         read_timeout: int = ConfigManager.configs["AWS"]["GLOBAL"].get("READ_TIMEOUT", self.DEFAULT_TIMEOUT_IN_SECONDS)
         max_pool_connections: int = ConfigManager.configs["AWS"]["GLOBAL"].get(
             "MAX_POOL_CONNECTIONS", self.DEFAULT_MAX_POOL_CONNECTIONS
