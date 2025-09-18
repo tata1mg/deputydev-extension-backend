@@ -92,7 +92,7 @@
     "REDIS_CACHE_HOSTS": {
         "genai": {
             "LABEL": "",
-            "REDIS_HOST": "localhost",
+            "REDIS_HOST": "127.0.0.1",
             "REDIS_PORT": 6379
         }
     },
@@ -192,22 +192,22 @@
         "connections": {
             "deputy_dev_replica": {
                 "credentials": {
-                    "host": "localhost",
+                    "host": "127.0.0.1",
                     "port": 5432,
-                    "user": "",
-                    "password": "",
-                    "database": "deputy_dev1"
+                    "user": "postgres",
+                    "password": "password",
+                    "database": "deputydev-postgres"
                 },
                 "engine": "tortoise.backends.asyncpg"
             },
             "default": {
                 "engine": "tortoise.backends.asyncpg",
                 "credentials": {
-                    "host": "localhost",
+                    "host": "127.0.0.1",
                     "port": 5432,
-                    "user": "",
-                    "password": "",
-                    "database": "scrit"
+                    "user": "postgres",
+                    "password": "password",
+                    "database": "deputydev-postgres"
                 }
             }
         },
