@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: genai-postgres
+    container_name: deputydev-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: deputydev-postgres
@@ -19,7 +19,7 @@ services:
 
   redis:
     image: redis/redis-stack:latest
-    container_name: genai-redis
+    container_name: deputydev-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -33,7 +33,7 @@ services:
 
   localstack:
     image: localstack/localstack:latest
-    container_name: genai-localstack
+    container_name: deputydev-localstack
     restart: unless-stopped
     ports:
       - "4566:4566"
@@ -53,6 +53,25 @@ services:
       timeout: 5s
       retries: 10
 
+  # Setup S3 bucket in LocalStack
+  localstack-init:
+    image: amazon/aws-cli:latest
+    container_name: localstack-init
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=ap-south-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      localstack:
+        condition: service_healthy
+    command: >
+      sh -c "
+        aws --endpoint-url=http://localstack:4566 s3 mb s3://deputydev --region ap-south-1 || echo 'Bucket already exists';
+        echo 'S3 bucket setup complete'
+      "
+    restart: "no"
+
   # If you want to run deputydev-binary inside Compose, enable this service.
   # If you already run it on your host at port 8001, you can comment this out.
   deputydev-binary:
@@ -66,8 +85,8 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      localstack:
-        condition: service_healthy
+      deputydev-extension-backend:
+        condition: service_healthy  
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8001/ping >/dev/null || exit 1"]
       interval: 10s
@@ -81,20 +100,24 @@ services:
       target: runtime
       args:
         SERVICE_NAME: deputydev-auth
-    # image: deputydev-auth:local
     platform: linux/amd64
     container_name: deputydev-auth
     ports:
       - "8085:8085"
     environment:
       - AWS_ENDPOINT_URL=http://localstack:4566
-    command: ["python3", "-m", "app.service"]
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/deputydev-postgres?sslmode=disable
+    command: >
+      sh -c "
+        dbmate up &&
+        python3 -m app.service
+      "
+    volumes:
+      - ../deputydev-auth/db:/db
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      localstack:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8085/ping >/dev/null || exit 1"]
@@ -109,14 +132,20 @@ services:
       target: runtime
       args:
         SERVICE_NAME: deputydev-extension-backend
-    # image: genai:local
     platform: linux/amd64
-    container_name: genai-backend
+    container_name: deputydev-extension-backend
     ports:
       - "8084:8084"
     environment:
       - AWS_ENDPOINT_URL=http://localstack:4566
-    command: ["python3", "-m", "app.service"]
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/deputydev-postgres?sslmode=disable
+    command: >
+      sh -c "
+        dbmate up &&
+        python3 -m app.service
+      "
+    volumes:
+      - ./db:/db
     depends_on:
       postgres:
         condition: service_healthy
