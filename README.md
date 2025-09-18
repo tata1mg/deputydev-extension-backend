@@ -18,7 +18,7 @@
   - Bitbucket
 - **Issue Tracker Integration:** Seamlessly works with Jira for issue and project tracking.
 - **Real-time Communication:** Potentially supports real-time features via WebSockets.
-- **Database:** Uses PostgreSQL with the pgvector extension for vector similarity searches (likely for RAG capabilities).
+- **Database:** Uses PostgreSQL for data persistence and storage.
 - **Containerized:** Dockerfile provided for easy containerization and deployment.
 
 ## Tech Stack
@@ -26,7 +26,7 @@
 - **Programming Language:** Python (>=3.11)
 - **Framework:** Sanic
 - **AI/ML:** OpenAI API, Google Generative AI API, Anthropic API
-- **Database:** PostgreSQL, pgvector
+- **Database:** PostgreSQL
 - **SCM Clients:** Custom clients for GitHub, GitLab, Bitbucket
 - **Issue Tracker Clients:** Custom client for Jira
 - **Messaging/Queueing:** Azure Service Bus, AioKafka (potentially)

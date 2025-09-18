@@ -1,10 +1,10 @@
 services:
   postgres:
-    image: ankane/pgvector:latest
+    image: postgres:16
     container_name: genai-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: genai
+      POSTGRES_DB: deputydev-postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
@@ -12,7 +12,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d genai"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d deputydev-postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +38,7 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,sqs,apigateway
+      - SERVICES=s3
       - DEBUG=1
       - AWS_DEFAULT_REGION=ap-south-1
       - AWS_ACCESS_KEY_ID=test
