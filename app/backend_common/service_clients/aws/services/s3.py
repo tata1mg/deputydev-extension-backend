@@ -1,11 +1,12 @@
 from typing import Any, ClassVar, Dict, Optional
 
+from deputydev_core.utils.config_manager import ConfigManager  # type: ignore
 from types_aiobotocore_s3.client import S3Client
 
 from app.backend_common.service_clients.aws.aws_client_manager import AWSClientManager
-
 from app.backend_common.service_clients.aws.dataclasses.aws_client_manager import AWSConnectionParams  # noqa: ERA001
-from deputydev_core.utils.config_manager import ConfigManager  # type: ignore
+
+
 class AWSS3ServiceClient:
     _client_managers: ClassVar[Dict[str, AWSClientManager]] = {}
 
