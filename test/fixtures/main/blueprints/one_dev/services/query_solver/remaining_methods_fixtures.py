@@ -15,7 +15,7 @@ from deputydev_core.llm_handler.dataclasses.main import (
 )
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
     MessageThreadDTO,
@@ -52,7 +52,7 @@ def mock_extension_session_data() -> ExtensionSessionData:
         session_id=123,
         user_team_id=1,
         session_type="test_session",
-        current_model=LLModels.GPT_4_POINT_1,
+        current_model=LLModels.GPT_4_POINT_1.value,
         summary="Test session summary",
     )
 
@@ -64,7 +64,7 @@ def mock_existing_extension_session() -> ExtensionSessionData:
         session_id=123,
         user_team_id=1,
         session_type="test_session",
-        current_model=LLModels.GPT_4_POINT_1,
+        current_model=LLModels.GPT_4_POINT_1.value,
         summary="Existing session summary",
     )
 
@@ -76,7 +76,7 @@ def mock_extension_session_without_summary() -> ExtensionSessionData:
         session_id=123,
         user_team_id=1,
         session_type="test_session",
-        current_model=LLModels.GPT_4_POINT_1,
+        current_model=LLModels.GPT_4_POINT_1_NANO.value,
         summary=None,
     )
 
@@ -160,8 +160,8 @@ def mock_multiple_query_solver_agents() -> List[QuerySolverAgentsDTO]:
 @pytest.fixture
 def mock_message_thread_dto() -> MessageThreadDTO:
     """Create mock message thread DTO."""
-    from app.backend_common.models.dto.message_thread_dto import MessageThreadActor
-
+    from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageThreadActor
+    
     return MessageThreadDTO(
         id=1,
         session_id=123,
@@ -171,7 +171,7 @@ def mock_message_thread_dto() -> MessageThreadDTO:
         message_data=[TextBlockData(content=TextBlockContent(text="test query"))],
         prompt_type="CODE_QUERY_SOLVER",
         prompt_category="query_solver",
-        llm_model=LLModels.GPT_4_POINT_1,
+        llm_model=LLModels.GPT_4_POINT_1_NANO,
         call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
         created_at=datetime.now(),
         updated_at=datetime.now(),
@@ -181,8 +181,8 @@ def mock_message_thread_dto() -> MessageThreadDTO:
 @pytest.fixture
 def mock_multiple_message_threads() -> List[MessageThreadDTO]:
     """Create multiple mock message thread DTOs."""
-    from app.backend_common.models.dto.message_thread_dto import MessageThreadActor, TextBlockContent, TextBlockData
-
+    from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageThreadActor
+    
     return [
         MessageThreadDTO(
             id=1,
@@ -193,7 +193,7 @@ def mock_multiple_message_threads() -> List[MessageThreadDTO]:
             message_data=[TextBlockData(content=TextBlockContent(text="response"))],
             prompt_type="OTHER",
             prompt_category="other",
-            llm_model=LLModels.GPT_4_POINT_1,
+            llm_model=LLModels.GPT_4_POINT_1_NANO,
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.fromisoformat("2023-01-01T10:00:00"),
             updated_at=datetime.fromisoformat("2023-01-01T10:00:00"),
@@ -204,10 +204,10 @@ def mock_multiple_message_threads() -> List[MessageThreadDTO]:
             actor=MessageThreadActor.USER,
             message_type=MessageType.QUERY,
             data_hash="hash2",
-            message_data=[TextBlockData(content=TextBlockContent(text="first query"))],
+            message_data=[TextBlockData(content=TextBlockContent(text="query"))],
             prompt_type="CODE_QUERY_SOLVER",
             prompt_category="query_solver",
-            llm_model=LLModels.GPT_4_POINT_1,
+            llm_model=LLModels.GPT_4_POINT_1_NANO,
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.fromisoformat("2023-01-01T11:00:00"),
             updated_at=datetime.fromisoformat("2023-01-01T11:00:00"),
@@ -218,10 +218,10 @@ def mock_multiple_message_threads() -> List[MessageThreadDTO]:
             actor=MessageThreadActor.USER,
             message_type=MessageType.QUERY,
             data_hash="hash3",
-            message_data=[TextBlockData(content=TextBlockContent(text="second query"))],
-            prompt_type="CUSTOM_CODE_QUERY_SOLVER",
+            message_data=[TextBlockData(content=TextBlockContent(text="latest query"))],
+            prompt_type="CODE_QUERY_SOLVER",
             prompt_category="query_solver",
-            llm_model=LLModels.CLAUDE_3_POINT_5_SONNET,
+            llm_model=LLModels.GPT_4_POINT_1_NANO,
             call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
             created_at=datetime.fromisoformat("2023-01-01T12:00:00"),
             updated_at=datetime.fromisoformat("2023-01-01T12:00:00"),
@@ -515,6 +515,10 @@ def mock_multiple_custom_agents() -> List[QuerySolverAgent]:
             agent_description="Agent for code analysis tasks",
             allowed_tools=["focused_snippets_searcher", "grep_search"],
             prompt_intent="Analyze and search through code",
+        ),
+        QuerySolverAgent(
+            agent_name="DEFAULT_QUERY_SOLVER_AGENT",
+            agent_description="This is the default query solver agent that should used when no specific agent is solves the purpose",
         ),
     ]
 
