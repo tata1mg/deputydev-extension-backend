@@ -167,8 +167,8 @@ def setup_comprehensive_mocks():
         patch(
             "deputydev_core.llm_handler.providers.google.llm_provider.GeminiServiceClient", MockGeminiServiceClient
         ),
-        # Also mock the config import in gemini service client
-        patch("app.backend_common.service_clients.gemini.gemini.config", mock_config_obj.config["VERTEX"]),
+        # Note: gemini service client config is now handled through deputydev_core.clients
+        # The GeminiServiceClient mock above should handle the config requirements
     ]
 
     for p in patches:
@@ -183,12 +183,6 @@ def setup_comprehensive_mocks():
 class TestGoogleGetConversationTurns:
     """Test cases for Google get_conversation_turns method."""
 
-    @pytest.fixture
-    def google_provider(self):
-        """Create a Google provider instance for testing."""
-        from deputydev_core.llm_handler.providers.google.llm_provider import Google
-
-        return Google()
 
     @pytest.fixture
     def simple_text_message(self) -> MessageThreadDTO:

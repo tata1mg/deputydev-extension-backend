@@ -36,11 +36,13 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ToolUseMessageData,
 )
 from app.main.blueprints.one_dev.models.dto.agent_chats import MessageType as ChatMessageType
+from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import QuerySolverAgent
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     ClientTool,
     LLMModel,
     QuerySolverInput,
     Repository,
+    ToolUseResponseInput,
 )
 from test.fixtures.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent_fixtures import *
 
@@ -82,7 +84,7 @@ class TestQuerySolverAgent:
         with pytest.raises(ValueError, match="Unsupported tool metadata type"):
             agent.generate_conversation_tool_from_client_tool(unsupported_client_tool)
 
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ConfigManager")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ConfigManager")
     def test_get_all_first_party_tools_full_features(
         self, mock_config: MagicMock, base_query_solver_input: QuerySolverInput, mock_client_data: ClientData
     ) -> None:
@@ -111,7 +113,7 @@ class TestQuerySolverAgent:
         assert "replace_in_file" in tool_names  # write_mode=True
         assert "write_to_file" in tool_names  # write_mode=True
 
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ConfigManager")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ConfigManager")
     def test_get_all_first_party_tools_read_only(
         self, mock_config: MagicMock, query_solver_input_read_only: QuerySolverInput, mock_client_data: ClientData
     ) -> None:
@@ -164,7 +166,7 @@ class TestQuerySolverAgent:
 
         assert len(tools) == 0
 
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ConfigManager")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ConfigManager")
     def test_get_all_tools(
         self, mock_config: MagicMock, query_solver_input_with_tools: QuerySolverInput, mock_client_data: ClientData
     ) -> None:
@@ -502,7 +504,7 @@ class TestQuerySolverAgent:
         assert len(tool_turns) >= 1  # tool response
 
     @pytest.mark.asyncio
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ChatAttachmentsRepository")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ChatAttachmentsRepository")
     async def test_get_all_chat_attachments(self, mock_repo: MagicMock, agent_chat_user_text: AgentChatDTO) -> None:
         """Test get_all_chat_attachments method."""
         testable_agent = TestableQuerySolverAgent()
@@ -524,7 +526,7 @@ class TestQuerySolverAgent:
         mock_repo.get_attachments_by_ids.assert_called_once_with([123])
 
     @pytest.mark.asyncio
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ChatAttachmentsRepository")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ChatAttachmentsRepository")
     async def test_get_all_chat_attachments_filtered(
         self, mock_repo: MagicMock, agent_chat_user_text: AgentChatDTO
     ) -> None:
@@ -545,16 +547,14 @@ class TestQuerySolverAgent:
 
         assert len(attachments) == 0  # Deleted attachment should be filtered out
 
-    @pytest.mark.asyncio
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ChatHistoryHandler")
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ChatFileUpload")
-    async def test_get_conversation_turns_and_previous_queries_with_new_query(
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ChatHistoryHandler")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ChatFileUpload")
+    async def test_get_conversation_turns_and_previous_queries_tool_response(
         self,
         mock_chat_file_upload: MagicMock,
         mock_chat_history_handler: MagicMock,
-        base_query_solver_input: QuerySolverInput,
-        mock_client_data: ClientData,
-        agent_chat_user_text: AgentChatDTO,
+        agent_query_solver_agent: QuerySolverAgent,
+        mock_tool_response_input: ToolUseResponseInput,
     ) -> None:
         """Test _get_conversation_turns_and_previous_queries with new query."""
         testable_agent = TestableQuerySolverAgent()
@@ -583,8 +583,8 @@ class TestQuerySolverAgent:
             mock_get_attachments.assert_called_once_with([agent_chat_user_text])
 
     @pytest.mark.asyncio
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ChatHistoryHandler")
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ChatFileUpload")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ChatHistoryHandler")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ChatFileUpload")
     async def test_get_conversation_turns_and_previous_queries_tool_response(
         self,
         mock_chat_file_upload: MagicMock,
@@ -641,7 +641,7 @@ class TestQuerySolverAgent:
             await agent._get_conversation_turns_and_previous_queries(base_query_solver_input, mock_client_data, None)
 
     @pytest.mark.asyncio
-    @patch("app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent.ConfigManager")
+    @patch("app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent.ConfigManager")
     async def test_get_llm_inputs_and_previous_queries(
         self,
         mock_config: MagicMock,
@@ -698,5 +698,5 @@ class TestQuerySolverAgent:
             assert len(previous_queries) == 1
             assert previous_queries[0] == "previous query"
 
-            mock_get_turns.assert_called_once_with(base_query_solver_input, mock_client_data, agent_chat_user_text)
+            mock_get_turns.assert_called_once_with(base_query_solver_input, mock_client_data, agent_chat_user_text, None)
             agent.prompt_factory.get_prompt.assert_called_once_with(model_name=LLModels.CLAUDE_3_POINT_7_SONNET)

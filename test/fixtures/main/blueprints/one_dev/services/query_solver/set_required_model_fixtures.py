@@ -11,7 +11,7 @@ from datetime import datetime
 import pytest
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionDTO
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,
@@ -32,7 +32,7 @@ def mock_existing_session_different_model() -> ExtensionSessionDTO:
         session_id=123,
         user_team_id=1,
         session_type="test_session",
-        current_model=LLModels.GPT_4_POINT_1_NANO,
+        current_model=LLModels.GPT_4_POINT_1_NANO.value,
         summary="Test session",
         status="ACTIVE",
         created_at=datetime.fromisoformat("2023-01-01T00:00:00"),
@@ -64,7 +64,7 @@ def mock_existing_session_premium_model() -> ExtensionSessionDTO:
         session_id=456,
         user_team_id=2,
         session_type="premium_session",
-        current_model=LLModels.CLAUDE_4_SONNET,
+        current_model=LLModels.CLAUDE_4_SONNET.value,
         summary="Premium session",
         status="ACTIVE",
         created_at=datetime.fromisoformat("2023-01-01T00:00:00"),

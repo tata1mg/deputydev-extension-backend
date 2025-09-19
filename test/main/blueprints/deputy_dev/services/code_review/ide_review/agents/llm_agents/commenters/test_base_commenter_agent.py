@@ -15,7 +15,7 @@ from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
     ActorType,
     MessageType,
@@ -443,11 +443,11 @@ class TestBaseCommenterAgentRunAgent:
 
         # Mock the _handle_query_request method
         expected_result = AgentRunResult(
-            agent_result={"status": "success"},
-            prompt_tokens_exceeded=False,
+            agent_result=None,
+            prompt_tokens_exceeded=True,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )
@@ -490,7 +490,7 @@ class TestBaseCommenterAgentRunAgent:
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )
@@ -530,7 +530,7 @@ class TestBaseCommenterAgentRunAgent:
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )
@@ -620,7 +620,7 @@ class TestBaseCommenterAgentRunAgent:
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )
@@ -669,7 +669,7 @@ class TestBaseCommenterAgentHandleQueryRequest:
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )
@@ -823,7 +823,7 @@ class TestBaseCommenterAgentHandleToolUseResponse:
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )
@@ -887,13 +887,14 @@ class TestBaseCommenterAgentHandleToolUseResponse:
         mock_llm_handler.start_llm_query.return_value = sample_llm_response
 
         expected_result = AgentRunResult(
-            agent_result={"status": "error"},
+            agent_result=None,
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
+            is_finished=True,
         )
 
         with patch.object(agent, "_process_llm_response", return_value=expected_result):
@@ -1181,7 +1182,7 @@ class TestBaseCommenterAgentEdgeCases:
             prompt_tokens_exceeded=False,
             agent_name=agent.agent_name,
             agent_type=agent.agent_type,
-            model=agent.model,
+            model=agent.model.value,
             tokens_data={},
             display_name=agent.get_display_name(),
         )

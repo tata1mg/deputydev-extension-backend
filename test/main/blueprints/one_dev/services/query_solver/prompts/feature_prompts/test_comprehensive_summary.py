@@ -13,7 +13,7 @@ class TestSummaryAndValidation:
 
     def test_file_structure_exists(self) -> None:
         """Test that all test files and fixtures have been created with proper structure."""
-        base_path = "/Users/sachendra/Desktop/DD/DeputyDev/test"
+        base_path = "/Users/sachendra/Desktop/Code/deputydev-extension-backend/test"
 
         # Test files that should exist
         expected_test_files = [
@@ -22,7 +22,7 @@ class TestSummaryAndValidation:
             "main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/parsers/gemini/thinking/test_base_thinking_parser.py",
             "main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/parsers/gemini/code_block/test_base_code_block_parser.py",
             "main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/parsers/test_gpt_4_point_1.py",
-            "main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/custom_code_query_solver/test_gpt_5_handler.py",
+            "main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/test_gpt_5_handler.py",
         ]
 
         # Fixture files that should exist
@@ -32,7 +32,6 @@ class TestSummaryAndValidation:
             "fixtures/main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/parsers/gemini/thinking/base_thinking_parser_fixtures.py",
             "fixtures/main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/parsers/gemini/code_block/base_code_block_parser_fixtures.py",
             "fixtures/main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/code_query_solver/parsers/gpt_4_point_1_fixtures.py",
-            "fixtures/main/blueprints/one_dev/services/query_solver/prompts/feature_prompts/custom_code_query_solver/gpt_5_handler_fixtures.py",
         ]
 
         # Check test files exist

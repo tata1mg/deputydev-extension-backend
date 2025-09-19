@@ -16,14 +16,15 @@ import pytest
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
-
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
 )
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import LLMBasedChunkReranker
 
 # Import fixtures
+# ruff: noqa: F401
+from test.fixtures.backend_common.services.chunking.rerankers.handler.llm_based.reranker_fixtures import *
 
 
 class TestLLMBasedChunkRerankerInitialization:
@@ -181,8 +182,8 @@ class TestLLMBasedChunkRerankerRerank:
         """Test successful basic reranking."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
             ) as mock_render,
@@ -194,7 +195,9 @@ class TestLLMBasedChunkRerankerRerank:
             # Setup mocks
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.5]  # Start and end times
 
@@ -235,8 +238,8 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with partial chunk matches."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
             ) as mock_render,
@@ -247,7 +250,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response_partial)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 2.0]
 
@@ -274,8 +279,8 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking when LLM returns empty chunks list."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
             ) as mock_render,
@@ -286,7 +291,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response_empty_chunks)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -309,8 +316,8 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with malformed response missing chunks_source key."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
             ) as mock_render,
@@ -321,7 +328,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=malformed_llm_response_missing_key)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -348,8 +357,8 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with malformed response wrong data type."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
             ) as mock_render,
@@ -360,7 +369,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=malformed_llm_response_wrong_type)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -388,10 +399,10 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with malformed response empty parsed_content list."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
@@ -400,7 +411,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=malformed_llm_response_empty_list)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -427,19 +440,21 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with None parsed_content."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+                patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=malformed_llm_response_none)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -463,10 +478,10 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with None LLM response."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
@@ -475,7 +490,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=none_llm_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -498,19 +515,21 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with empty inputs."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+                patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response_empty_chunks)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = ""
             mock_time.side_effect = [0.0, 0.5]
 
@@ -536,10 +555,10 @@ class TestLLMBasedChunkRerankerRerank:
         """Test retry logic when first attempt fails but second succeeds."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
@@ -554,7 +573,9 @@ class TestLLMBasedChunkRerankerRerank:
             mock_handler.start_llm_query = AsyncMock(
                 side_effect=[Exception("First attempt failed"), successful_llm_response]
             )
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 2.0]
             mock_sleep.return_value = None
@@ -581,15 +602,15 @@ class TestLLMBasedChunkRerankerRerank:
         """Test retry logic when all attempts fail."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+                patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.asyncio.sleep"
             ) as mock_sleep,
@@ -597,7 +618,9 @@ class TestLLMBasedChunkRerankerRerank:
             mock_handler = MagicMock()
             # All attempts fail
             mock_handler.start_llm_query = AsyncMock(side_effect=Exception("All attempts failed"))
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 3.0]
             mock_sleep.return_value = None
@@ -625,10 +648,10 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking when LLM returns wrong response type."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
@@ -641,7 +664,9 @@ class TestLLMBasedChunkRerankerRerank:
 
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=wrong_response_type)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0]
 
@@ -665,10 +690,10 @@ class TestLLMBasedChunkRerankerRerank:
         """Test that performance logging works correctly."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
@@ -677,7 +702,9 @@ class TestLLMBasedChunkRerankerRerank:
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 2.35]  # 2.35 seconds duration
 
@@ -703,19 +730,21 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with complex query."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("deputydev_core.utils.app_logger.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.8]
 
@@ -741,19 +770,21 @@ class TestLLMBasedChunkRerankerRerank:
         """Test reranking with very long query."""
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("deputydev_core.utils.app_logger.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 2.1]
 
@@ -786,19 +817,21 @@ class TestLLMBasedChunkRerankerRerank:
 
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("deputydev_core.utils.app_logger.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=large_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "large rendered snippets"
             mock_time.side_effect = [0.0, 1.5]
 
@@ -868,19 +901,21 @@ class TestLLMBasedChunkRerankerIntegration:
 
         with (
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch(
-                "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.render_snippet_array"
+                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
             ) as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("deputydev_core.utils.app_logger.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response)
-            mock_llm_handler_class.return_value = mock_handler
+            mock_service_manager = MagicMock()
+            mock_service_manager.create_llm_handler.return_value = mock_handler
+            mock_llm_service_manager_class.return_value = mock_service_manager
             mock_render.return_value = "rendered snippets"
             mock_time.side_effect = [0.0, 1.0, 1.0, 2.0]  # Two calls
 

@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
+from deputydev_core.llm_handler.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import ChatAttachmentDataWithObjectBytes
 from app.main.blueprints.deputy_dev.constants.constants import IdeReviewStatusTypes, ReviewType
 from app.main.blueprints.deputy_dev.models.dto.ide_review_dto import IdeReviewDTO
@@ -299,10 +300,8 @@ def sample_ide_review_dto() -> IdeReviewDTO:
 
 
 @pytest.fixture
-def sample_attachment_data() -> Mock:
+def sample_attachment_data() -> ChatAttachmentsDTO:
     """Create sample attachment data."""
-    from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
-
     attachment = ChatAttachmentsDTO(
         id=1,
         s3_key="attachments/test_diff.txt",
@@ -316,10 +315,13 @@ def sample_attachment_data() -> Mock:
 
 
 @pytest.fixture
-def sample_attachment_with_object_bytes(sample_attachment_data: Mock) -> ChatAttachmentDataWithObjectBytes:
+def sample_attachment_with_object_bytes(sample_attachment_data: ChatAttachmentsDTO) -> ChatAttachmentDataWithObjectBytes:
     """Create sample attachment data with object bytes."""
     object_bytes = b"sample diff content here"
-    return ChatAttachmentDataWithObjectBytes(attachment_metadata=sample_attachment_data, object_bytes=object_bytes)
+    return ChatAttachmentDataWithObjectBytes(
+        attachment_metadata=sample_attachment_data.model_dump(), 
+        object_bytes=object_bytes
+    )
 
 
 @pytest.fixture
