@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from deputydev_core.llm_handler.dataclasses.main import ConversationTool
 
-from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
+from deputydev_core.llm_handler.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
     ChatAttachmentDataWithObjectBytes,
@@ -44,7 +44,7 @@ class TestableQuerySolverAgent:
     def __init__(self, agent_name: str = "test_agent", agent_description: str = "Test agent"):
         """Initialize the testable agent."""
         # Import here to avoid circular imports
-        from app.main.blueprints.one_dev.services.query_solver.agents.base_query_solver_agent import QuerySolverAgent
+        from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import QuerySolverAgent
 
         # Create a testable subclass
         class ConcreteTestAgent(QuerySolverAgent):
