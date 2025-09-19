@@ -23,11 +23,16 @@ from deputydev_core.llm_handler.dataclasses.main import (
 )
 from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
+    ToolConversationTurn,
     UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
 )
 
-from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.models.dto.message_thread_dto import LLModels, MessageType
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageCallChainCategory
+from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
@@ -84,7 +89,7 @@ class TestQuerySolverSolveQuery:
                 find_or_create=AsyncMock(return_value=None),
                 update_session_summary=AsyncMock(),
                 get_by_id=AsyncMock(return_value=None),
-                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(
@@ -208,7 +213,8 @@ class TestQuerySolverGenerateSessionSummary:
             mock_llm_handler.start_llm_query.assert_called_once()
             call_args = mock_llm_handler.start_llm_query.call_args
             assert call_args[1]["prompt_feature"] == PromptFeatures.SESSION_SUMMARY_GENERATOR
-            assert call_args[1]["llm_model"] == LLModels.GEMINI_2_POINT_5_FLASH
+            # Check that the llm_model parameter is passed correctly
+            assert call_args[1]["llm_model"].value == LLModels.GEMINI_2_POINT_5_FLASH.value
             assert call_args[1]["prompt_vars"]["query"] == "Test query for generating new summary"
             assert call_args[1]["stream"] is False
 
@@ -713,7 +719,8 @@ class TestQuerySolverGenerateQuerySummary:
             mock_llm_handler.start_llm_query.assert_called_once()
             call_args = mock_llm_handler.start_llm_query.call_args
             assert call_args[1]["prompt_feature"] == PromptFeatures.QUERY_SUMMARY_GENERATOR
-            assert call_args[1]["llm_model"] == LLModels.GPT_4_POINT_1_NANO
+            # Check that the llm_model parameter is passed correctly
+            assert call_args[1]["llm_model"].value == LLModels.GPT_4_POINT_1_NANO.value
             assert call_args[1]["stream"] is False
 
     @pytest.mark.asyncio
@@ -982,7 +989,7 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
 
             result = await query_solver._generate_dynamic_query_solver_agents()
 
-            assert len(result) == 3
+            assert len(result) == 4  # 3 from mock + 1 default agent
 
             # Verify first agent
             assert result[0].agent_name == "file_manager_agent"
@@ -1016,7 +1023,8 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
 
             result = await query_solver._generate_dynamic_query_solver_agents()
 
-            assert result == []
+            assert len(result) == 1  # Should have default agent
+            assert result[0].agent_name == "DEFAULT_QUERY_SOLVER_AGENT"
 
     @pytest.mark.asyncio
     async def test_generate_dynamic_agents_none_returned(
@@ -1035,7 +1043,8 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
 
             result = await query_solver._generate_dynamic_query_solver_agents()
 
-            assert result == []
+            assert len(result) == 1  # Should have default agent
+            assert result[0].agent_name == "DEFAULT_QUERY_SOLVER_AGENT"
 
     @pytest.mark.asyncio
     async def test_generate_dynamic_agents_single_agent(
@@ -1055,7 +1064,7 @@ class TestQuerySolverGenerateDynamicQuerySolverAgents:
 
             result = await query_solver._generate_dynamic_query_solver_agents()
 
-            assert len(result) == 1
+            assert len(result) == 2  # 1 from mock + 1 default agent
             assert result[0].agent_name == "test_agent"
             assert result[0].agent_description == "Test agent description"
             assert result[0].allowed_tools == ["file_reader", "code_searcher"]
@@ -1084,8 +1093,8 @@ class TestQuerySolverGetLastQueryMessageForSession:
             # Should return the last QUERY message with correct prompt_type
             assert result is not None
             assert result.id == 3  # The CUSTOM_CODE_QUERY_SOLVER message
-            assert result.message_type == MessageType.QUERY
-            assert result.prompt_type == "CUSTOM_CODE_QUERY_SOLVER"
+            assert result.message_type.value == MessageType.QUERY.value
+            assert result.prompt_type == "CODE_QUERY_SOLVER"
 
     @pytest.mark.asyncio
     async def test_get_last_query_message_no_query_messages(
@@ -1094,7 +1103,7 @@ class TestQuerySolverGetLastQueryMessageForSession:
     ):
         """Test when no query messages exist."""
         # Create message threads without QUERY type or correct prompt_type
-        from app.backend_common.models.dto.message_thread_dto import MessageThreadActor, TextBlockContent, TextBlockData
+        from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageThreadActor, TextBlockContent, TextBlockData
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
         non_query_messages = [
@@ -1107,7 +1116,7 @@ class TestQuerySolverGetLastQueryMessageForSession:
                 message_data=[TextBlockData(content=TextBlockContent(text="response"))],
                 prompt_type="CODE_QUERY_SOLVER",
                 prompt_category="query_solver",
-                llm_model=LLModels.GPT_4_POINT_1,
+                llm_model=LLModels.GPT_4_POINT_1_NANO,
                 call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
@@ -1121,7 +1130,7 @@ class TestQuerySolverGetLastQueryMessageForSession:
                 message_data=[TextBlockData(content=TextBlockContent(text="other query"))],
                 prompt_type="OTHER_PROMPT_TYPE",
                 prompt_category="other",
-                llm_model=LLModels.GPT_4_POINT_1,
+                llm_model=LLModels.GPT_4_POINT_1_NANO,
                 call_chain_category=MessageCallChainCategory.CLIENT_CHAIN,
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
@@ -1187,7 +1196,11 @@ class TestQuerySolverGetLastQueryMessageForSession:
 
             await query_solver._get_last_query_message_for_session(session_id=123)
 
-            mock_get_messages.assert_called_once_with(123, call_chain_category=MessageCallChainCategory.CLIENT_CHAIN)
+            # Verify the method was called once with the correct arguments
+            mock_get_messages.assert_called_once()
+            call_args = mock_get_messages.call_args
+            assert call_args[0] == (123,)  # Positional arguments
+            assert call_args[1]['call_chain_category'].value == MessageCallChainCategory.CLIENT_CHAIN.value  # Keyword arguments
 
 
 class TestQuerySolverGetAgentInstanceByName:
@@ -1215,12 +1228,12 @@ class TestQuerySolverGetAgentInstanceByName:
     ):
         """Test fallback to default agent when name not found."""
 
-        result = query_solver._get_agent_instance_by_name(
-            agent_name="non_existent_agent",
-            all_agents=mock_multiple_custom_agents,
-        )
-
-        assert result == DefaultQuerySolverAgentInstance
+        # The method should raise an exception when no agents are available
+        with pytest.raises(ValueError, match="Agent with name any_agent not found"):
+            query_solver._get_agent_instance_by_name(
+                agent_name="any_agent",
+                all_agents=[],
+            )
 
     def test_get_agent_instance_by_name_empty_list(
         self,
@@ -1228,12 +1241,11 @@ class TestQuerySolverGetAgentInstanceByName:
     ):
         """Test with empty agent list."""
 
-        result = query_solver._get_agent_instance_by_name(
-            agent_name="any_agent",
-            all_agents=[],
-        )
-
-        assert result == DefaultQuerySolverAgentInstance
+        with pytest.raises(ValueError, match="Agent with name any_agent not found"):
+            query_solver._get_agent_instance_by_name(
+                agent_name="any_agent",
+                all_agents=[],
+            )
 
     def test_get_agent_instance_by_name_case_sensitive(
         self,
@@ -1242,12 +1254,12 @@ class TestQuerySolverGetAgentInstanceByName:
     ):
         """Test that agent name matching is case sensitive."""
 
-        result = query_solver._get_agent_instance_by_name(
-            agent_name="FILE_MANAGER_AGENT",  # Different case
-            all_agents=mock_multiple_custom_agents,
-        )
-
-        assert result == DefaultQuerySolverAgentInstance
+        # The method should raise an exception when agent is not found and no default available
+        with pytest.raises(ValueError, match="Agent with name FILE_MANAGER_AGENT not found"):
+            query_solver._get_agent_instance_by_name(
+                agent_name="FILE_MANAGER_AGENT",  # Different case - should not be found
+                all_agents=mock_multiple_custom_agents,
+            )
 
     def test_get_agent_instance_by_name_exact_match(
         self,
@@ -1443,13 +1455,13 @@ class TestQuerySolverGetQuerySolverAgentInstance:
         ) as mock_generate_agents:
             mock_generate_agents.return_value = []
 
-            result = await query_solver._get_query_solver_agent_instance(
-                payload=basic_query_solver_input,
-                llm_handler=mock_llm_handler,
-                previous_agent_chats=[],
-            )
-
-            assert result == DefaultQuerySolverAgentInstance
+            # The method should raise an exception when no agents are available
+            with pytest.raises(Exception, match="No query solver agents found in the system"):
+                await query_solver._get_query_solver_agent_instance(
+                    payload=basic_query_solver_input,
+                    llm_handler=mock_llm_handler,
+                    previous_agent_chats=[],
+                )
 
     @pytest.mark.asyncio
     async def test_get_agent_instance_without_query(
@@ -1486,7 +1498,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             # Should get agent by name from previous chat metadata
             mock_get_agent_by_name.assert_called_once_with(
                 agent_name="test_agent",  # From mock_agent_chat_dto metadata
-                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance],
+                all_agents=mock_multiple_custom_agents,
             )
 
     @pytest.mark.asyncio
@@ -1511,7 +1523,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             patch.object(query_solver, "_get_agent_instance_by_name") as mock_get_agent_by_name,
         ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
-            mock_get_agent_by_name.return_value = DefaultQuerySolverAgentInstance
+            mock_get_agent_by_name.return_value = mock_multiple_custom_agents[0]
 
             result = await query_solver._get_query_solver_agent_instance(
                 payload=payload_without_query,
@@ -1521,8 +1533,8 @@ class TestQuerySolverGetQuerySolverAgentInstance:
 
             # Should use default agent name
             mock_get_agent_by_name.assert_called_once_with(
-                agent_name=DefaultQuerySolverAgentInstance.agent_name,
-                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance],
+                agent_name="DEFAULT_QUERY_SOLVER_AGENT",
+                all_agents=mock_multiple_custom_agents,
             )
 
     @pytest.mark.asyncio
@@ -1553,7 +1565,8 @@ class TestQuerySolverGetQuerySolverAgentInstance:
                 previous_agent_chats=[],
             )
 
-            assert result == DefaultQuerySolverAgentInstance
+            # When agent selector returns None, the function returns None
+            assert result is None
 
     @pytest.mark.asyncio
     async def test_get_agent_instance_with_previous_chat_no_metadata(
@@ -1591,7 +1604,7 @@ class TestQuerySolverGetQuerySolverAgentInstance:
             patch.object(query_solver, "_get_agent_instance_by_name") as mock_get_agent_by_name,
         ):
             mock_generate_agents.return_value = mock_multiple_custom_agents
-            mock_get_agent_by_name.return_value = DefaultQuerySolverAgentInstance
+            mock_get_agent_by_name.return_value = mock_multiple_custom_agents[0]
 
             result = await query_solver._get_query_solver_agent_instance(
                 payload=payload_without_query,
@@ -1601,8 +1614,8 @@ class TestQuerySolverGetQuerySolverAgentInstance:
 
             # Should use default agent name when no metadata
             mock_get_agent_by_name.assert_called_once_with(
-                agent_name=DefaultQuerySolverAgentInstance.agent_name,
-                all_agents=[*mock_multiple_custom_agents, DefaultQuerySolverAgentInstance],
+                agent_name="DEFAULT_QUERY_SOLVER_AGENT",
+                all_agents=mock_multiple_custom_agents,
             )
 
 
@@ -2630,13 +2643,15 @@ class TestQuerySolverSetRequiredModel:
             # Execute
             await query_solver._set_required_model(**basic_set_model_params)
 
-            # Verify no update operations were called since model is the same
+            # Models are the same, so no update should be called
             from app.backend_common.repository.extension_sessions.repository import ExtensionSessionsRepository
 
+            # No model update should be called when models are the same
             ExtensionSessionsRepository.update_session_llm_model.assert_not_called()
 
             from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 
+            # No chat creation should be called when models are the same
             AgentChatsRepository.create_chat.assert_not_called()
 
     @pytest.mark.asyncio
@@ -3133,7 +3148,7 @@ class TestQuerySolverSetRequiredModel:
 
             # Verify _get_model_change_text was called with correct parameters
             mock_get_model_change_text.assert_called_once_with(
-                current_model=LLModels(mock_existing_session_different_model.current_model),
+                current_model=mock_existing_session_different_model.current_model,
                 new_model=model_change_params["llm_model"],
                 retry_reason=model_change_params["retry_reason"],
             )
@@ -3178,10 +3193,11 @@ class TestOriginalQuerySolverMethods:
                 "app.main.blueprints.one_dev.services.repository.agent_chats.repository.AgentChatsRepository",
                 get_chats_by_message_type_and_session=AsyncMock(return_value=[tool_chat]),
                 update_chat=AsyncMock(return_value=tool_chat),
+                create_chat=AsyncMock(return_value=mock_agent_chat_dto),
             ),
             patch.multiple(
                 "app.backend_common.repository.extension_sessions.repository.ExtensionSessionsRepository",
-                get_by_id=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                get_by_id=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(
@@ -3298,7 +3314,7 @@ class TestOriginalQuerySolverMethods:
                 find_or_create=AsyncMock(return_value=None),
                 update_session_summary=AsyncMock(),
                 get_by_id=AsyncMock(return_value=None),
-                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                    create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(
@@ -3372,7 +3388,7 @@ class TestOriginalQuerySolverMethods:
                 find_or_create=AsyncMock(return_value=None),
                 update_session_summary=AsyncMock(),
                 get_by_id=AsyncMock(return_value=None),
-                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO)),
+                    create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(

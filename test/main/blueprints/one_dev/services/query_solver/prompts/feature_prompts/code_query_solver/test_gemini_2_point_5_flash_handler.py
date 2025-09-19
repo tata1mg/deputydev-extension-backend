@@ -60,7 +60,7 @@ class TestGemini2Point5FlashCustomCodeQuerySolverPromptHandler:
 
     def test_get_parsed_response_blocks(self) -> None:
         """Test parsing of response blocks."""
-        from app.backend_common.models.dto.message_thread_dto import TextBlockContent, TextBlockData
+        from deputydev_core.llm_handler.models.dto.message_thread_dto import TextBlockContent, TextBlockData
 
         message_data = [
             TextBlockData(content=TextBlockContent(text="Test response with code blocks")),
@@ -78,9 +78,9 @@ class TestGemini2Point5FlashCustomCodeQuerySolverPromptHandler:
         assert isinstance(parsed_blocks, list)
         assert isinstance(metadata, dict)
 
-    def test_get_parsed_result_non_streaming(self) -> None:
-        """Test parsing of non-streaming LLM response."""
-        from app.backend_common.models.dto.message_thread_dto import TextBlockContent, TextBlockData
+        def test_get_parsed_result_non_streaming(self) -> None:
+            """Test parsing of non-streaming LLM response."""
+            from deputydev_core.llm_handler.models.dto.message_thread_dto import TextBlockContent, TextBlockData
 
         mock_response = Mock(spec=NonStreamingResponse)
         mock_response.content = [

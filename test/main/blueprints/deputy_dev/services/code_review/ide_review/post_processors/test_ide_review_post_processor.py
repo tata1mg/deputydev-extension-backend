@@ -52,8 +52,8 @@ class TestIdeReviewPostProcessorPostProcessPr:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
             ) as mock_blending_engine,
@@ -115,8 +115,8 @@ class TestIdeReviewPostProcessorPostProcessPr:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
             ) as mock_blending_engine,
@@ -170,8 +170,8 @@ class TestIdeReviewPostProcessorPostProcessPr:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
             ) as mock_blending_engine,
@@ -263,8 +263,8 @@ class TestIdeReviewPostProcessorPostProcessPr:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.post_processors.ide_review_post_processor.CommentBlendingEngine"
             ) as mock_blending_engine,
