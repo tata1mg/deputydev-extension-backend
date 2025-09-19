@@ -198,10 +198,10 @@ def sample_llm_response() -> NonStreamingParsedLLMCallResponse:
         type=LLMCallResponseTypes.NON_STREAMING,
         parsed_content=["Test response content"],
         content=[],
-        usage=LLMUsage(input=100, output=50),
+        usage={"input": 100, "output": 50},
         prompt_vars={},
         prompt_id="test_prompt",
-        model_used=LLModels.GPT_4O,
+        model_used=LLModels.GPT_4O.value,
         query_id=123,
     )
 
@@ -220,10 +220,10 @@ def sample_llm_response_final() -> NonStreamingParsedLLMCallResponse:
         type=LLMCallResponseTypes.NON_STREAMING,
         parsed_content=[mock_content_block],
         content=[],
-        usage=LLMUsage(input=150, output=75),
+        usage={"input": 150, "output": 75},
         prompt_vars={},
         prompt_id="test_prompt_final",
-        model_used=LLModels.GPT_4O,
+        model_used=LLModels.GPT_4O.value,
         query_id=124,
     )
 

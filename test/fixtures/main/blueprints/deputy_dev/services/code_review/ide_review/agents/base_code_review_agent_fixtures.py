@@ -16,7 +16,7 @@ from deputydev_core.llm_handler.dataclasses.main import (
     UserAndSystemMessages,
 )
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, LLMUsage
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,
@@ -91,10 +91,10 @@ def sample_llm_response() -> NonStreamingParsedLLMCallResponse:
         type=LLMCallResponseTypes.NON_STREAMING,
         parsed_content=["Test response content"],
         content=[],
-        usage=LLMUsage(input=100, output=50),
+        usage={"input": 100, "output": 50},
         prompt_vars={},
         prompt_id="test_prompt",
-        model_used=LLModels.GPT_4O,
+        model_used=LLModels.GPT_4O.value,
         query_id=123,
     )
 
@@ -107,20 +107,20 @@ def sample_llm_response_dual_pass() -> List[NonStreamingParsedLLMCallResponse]:
             type=LLMCallResponseTypes.NON_STREAMING,
             parsed_content=["First pass response"],
             content=[],
-            usage=LLMUsage(input=100, output=50),
+            usage={"input": 100, "output": 50},
             prompt_vars={},
             prompt_id="test_prompt_1",
-            model_used=LLModels.GPT_4O,
+            model_used=LLModels.GPT_4O.value,
             query_id=123,
         ),
         NonStreamingParsedLLMCallResponse(
             type=LLMCallResponseTypes.NON_STREAMING,
             parsed_content=["Second pass response"],
             content=[],
-            usage=LLMUsage(input=120, output=60),
+            usage={"input": 120, "output": 60},
             prompt_vars={},
             prompt_id="test_prompt_2",
-            model_used=LLModels.GPT_4O,
+            model_used=LLModels.GPT_4O.value,
             query_id=124,
         ),
     ]
@@ -133,10 +133,10 @@ def sample_llm_response_multiple_content() -> NonStreamingParsedLLMCallResponse:
         type=LLMCallResponseTypes.NON_STREAMING,
         parsed_content=["Content block 1", "Content block 2", "Content block 3"],
         content=[],
-        usage=LLMUsage(input=150, output=75),
+        usage={"input": 150, "output": 75},
         prompt_vars={},
         prompt_id="test_prompt",
-        model_used=LLModels.GPT_4O,
+        model_used=LLModels.GPT_4O.value,
         query_id=125,
     )
 
@@ -150,7 +150,7 @@ def sample_agent_run_result_success() -> AgentRunResult:
         prompt_tokens_exceeded=False,
         agent_name="security",
         agent_type=AgentTypes.SECURITY,
-        model=LLModels.GPT_4O,
+        model=LLModels.GPT_4O.value,
         tokens_data={
             "securityPASS_1": {"system_prompt": 100, "user_prompt": 50, "input_tokens": 150, "output_tokens": 75}
         },
