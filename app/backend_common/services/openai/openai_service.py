@@ -146,5 +146,5 @@ class OpenAIManager(BaseClient):
                 )
             embeddings = np.array(embeddings)
         except Exception:  # noqa: BLE001
-            logger.error("Failed to store embeddings in cache, returning without storing")
+            logger.exception("Failed to store embeddings in cache, returning without storing")
         return embeddings, input_tokens
