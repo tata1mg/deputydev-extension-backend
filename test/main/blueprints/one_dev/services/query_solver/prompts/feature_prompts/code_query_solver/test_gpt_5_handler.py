@@ -35,13 +35,13 @@ class TestGpt5CustomCodeQuerySolverPromptHandler:
         handler = Gpt5CustomCodeQuerySolverPromptHandler(sample_params)
 
         assert handler.params == sample_params
-        assert handler.prompt_type == "CUSTOM_CODE_QUERY_SOLVER"
+        assert handler.prompt_type == "CODE_QUERY_SOLVER"
         assert handler.prompt_category == PromptCategories.CODE_GENERATION.value
         assert handler.prompt is not None
 
     def test_prompt_type_and_category(self, handler: Gpt5CustomCodeQuerySolverPromptHandler) -> None:
         """Test that prompt type and category are correctly set."""
-        assert handler.prompt_type == "CUSTOM_CODE_QUERY_SOLVER"
+        assert handler.prompt_type == "CODE_QUERY_SOLVER"
         assert handler.prompt_category == PromptCategories.CODE_GENERATION.value
 
         # Test that these are class attributes, not instance-specific
@@ -234,7 +234,7 @@ class TestGpt5CustomCodeQuerySolverPromptHandler:
         handler = Gpt5CustomCodeQuerySolverPromptHandler(params)
 
         # Should have custom-specific prompt type
-        assert "CUSTOM" in handler.prompt_type
+        assert "CODE_QUERY_SOLVER" in handler.prompt_type
 
         # Should still have code generation category
         assert handler.prompt_category == PromptCategories.CODE_GENERATION.value
