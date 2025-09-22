@@ -18,7 +18,7 @@
   - Bitbucket
 - **Issue Tracker Integration:** Seamlessly works with Jira for issue and project tracking.
 - **Real-time Communication:** Potentially supports real-time features via WebSockets.
-- **Database:** Uses PostgreSQL with the pgvector extension for vector similarity searches (likely for RAG capabilities).
+- **Database:** Uses PostgreSQL for data persistence and storage.
 - **Containerized:** Dockerfile provided for easy containerization and deployment.
 
 ## Tech Stack
@@ -26,7 +26,7 @@
 - **Programming Language:** Python (>=3.11)
 - **Framework:** Sanic
 - **AI/ML:** OpenAI API, Google Generative AI API, Anthropic API
-- **Database:** PostgreSQL, pgvector
+- **Database:** PostgreSQL
 - **SCM Clients:** Custom clients for GitHub, GitLab, Bitbucket
 - **Issue Tracker Clients:** Custom client for Jira
 - **Messaging/Queueing:** Azure Service Bus, AioKafka (potentially)
@@ -68,6 +68,10 @@
 ## Setup and Installation
 
 ### Local Development Setup
+
+If you're looking to setup DeputyDev end to end (auth, backend, binary and extension), and run the entire thing locally follow [this guide](QUICK_START_GUIDE.md). 
+
+The following are instructions if you want to setup this particular repository, in a customizable manner.
 
 1. **Prerequisites:**
     - Python >= 3.11, < 3.12

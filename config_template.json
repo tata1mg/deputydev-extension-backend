@@ -17,7 +17,7 @@
     "HTTP_VERSION": "1.0.0",
     "INTERSERVICE_TIMEOUT": 50,
     "NAME": "genai",
-    "PORT": 8081,
+    "PORT": 8084,
     "SENTRY": {
         "DSN": "",
         "EM": ""
@@ -92,7 +92,7 @@
     "REDIS_CACHE_HOSTS": {
         "genai": {
             "LABEL": "",
-            "REDIS_HOST": "localhost",
+            "REDIS_HOST": "deputydev-redis",
             "REDIS_PORT": 6379
         }
     },
@@ -192,22 +192,22 @@
         "connections": {
             "deputy_dev_replica": {
                 "credentials": {
-                    "host": "localhost",
+                    "host": "deputydev-postgres",
                     "port": 5432,
-                    "user": "",
-                    "password": "",
-                    "database": "deputy_dev1"
+                    "user": "postgres",
+                    "password": "password",
+                    "database": "deputydev-postgres"
                 },
                 "engine": "tortoise.backends.asyncpg"
             },
             "default": {
                 "engine": "tortoise.backends.asyncpg",
                 "credentials": {
-                    "host": "localhost",
+                    "host": "deputydev-postgres",
                     "port": 5432,
-                    "user": "",
-                    "password": "",
-                    "database": "scrit"
+                    "user": "postgres",
+                    "password": "password",
+                    "database": "deputydev-postgres"
                 }
             }
         },
@@ -232,14 +232,27 @@
         "REFLECTION_ENABLED": true
     },
     "AWS": {
-        "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
-        "SECRET_ACCESS_KEY": "DUMMY_SECRET_ACCESS_KEY",
-        "SESSION_TOKEN": "",
-        "BEDROCK_SERVICE_NAME": "bedrock-runtime",
-        "BEDROCK_READ_TIMEOUT": 1000,
-        "ENDPOINT_URL": null
+        "GLOBAL": {
+            "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",
+            "SECRET_ACCESS_KEY": "DUMMY_SECRET_ACCESS_KEY",
+            "SESSION_TOKEN": "",
+            "BEDROCK_SERVICE_NAME": "bedrock-runtime",
+            "BEDROCK_READ_TIMEOUT": 1000,
+            "ENDPOINT_URL": null
+        },
+        "OVERRIDES": [
+            {
+                "AWS_SERVICE_NAME": "s3",
+                "CREDENTIALS": {
+                    "ACCESS_KEY_ID": "test",
+                    "SECRET_ACCESS_KEY": "test",
+                    "SESSION_TOKEN": "",
+                    "ENDPOINT_URL": "http://deputydev-localstack:4566"
+                }
+            }
+        ]
     },
-    "AWS_S3_BUCKET": {
+    "AWS_S3": {
         "AWS_BUCKET_NAME": "deputydev",
         "AWS_REGION": "ap-south-1"
     },
@@ -662,7 +675,7 @@
     },
     "BINARY": {
         "WEAVIATE": {
-            "VERSION": "v1.27.22",
+            "VERSION": "1.27.22",
             "HTTP_PORT": 8079,
             "GRPC_PORT": 50050,
             "EMBEDDED_DB_PATH": "~/.deputydev/indexes",
@@ -677,7 +690,7 @@
             },
             "ENV_VARIABLES": {
                 "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
-                "LIMIT_RESOURCES": true,
+                "LIMIT_RESOURCES": "true",
                 "LOG_LEVEL": "debug",
                 "PERSISTENCE_DATA_PATH": "~/.deputydev/indexes",
                 "DISK_USE_READONLY_PERCENTAGE": "99",
@@ -779,11 +792,11 @@
         "GROUP_ID": "",
         "SESSION_QUEUE": {
             "NAME": "",
-            "ENABLED": true
+            "ENABLED": false
         },
         "ERROR_QUEUE": {
             "NAME": "",
-            "ENABLED": true
+            "ENABLED": false
         }
     },
     "IS_RELATED_CODE_SEARCHER_ENABLED": true,
@@ -827,16 +840,8 @@
     "WEAVIATE_HTTP_PORT": 8079,
     "WEAVIATE_GRPC_PORT": 50050,
     "WEAVIATE_BASE_DIR": "~/.deputydev/weaviate",
-    "WEAVIATE_VERSION": "v1.27.22",
     "WEAVIATE_STARTUP_TIMEOUT": 30,
     "WEAVIATE_STARTUP_HEALTHCHECK_INTERVAL": 30,
-    "WEAVIATE_ENV_VARIABLES": {
-        "CLUSTER_ADVERTISE_ADDR": "127.0.0.1",
-        "LIMIT_RESOURCES": true,
-        "LOG_LEVEL": "debug",
-        "DISK_USE_READONLY_PERCENTAGE": "99",
-        "DISK_USE_WARNING_PERCENTAGE": "95"
-    },
     "WEAVIATE_CLIENT_TIMEOUTS": {
         "INIT": 30,
         "QUERY": 60,
@@ -1002,7 +1007,7 @@
     "ALLOWED_PR_REVIEW_RETRIES": 3,
     "AUTO_REVIEW_ENABLED": true,
     "DEPUTYDEV_AUTH": {
-        "HOST": "http://localhost:9355",
+        "HOST": "http://deputydev-auth:9355",
         "TIMEOUT": 10
     }
 }
