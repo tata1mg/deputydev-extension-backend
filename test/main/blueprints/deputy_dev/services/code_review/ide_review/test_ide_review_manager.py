@@ -49,9 +49,9 @@ class TestIdeReviewManagerReviewDiff:
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
-            patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                patch(
+                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+                ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -108,8 +108,8 @@ class TestIdeReviewManagerReviewDiff:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -202,8 +202,8 @@ class TestIdeReviewManagerReviewDiff:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -565,8 +565,8 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -613,8 +613,8 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -660,8 +660,8 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -745,14 +745,14 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
         ):
             # Setup mocks
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review_dto)
             mock_user_agent_repo.db_get = AsyncMock(return_value=sample_user_agent_dto)
             mock_context_service.return_value = MagicMock()
-            mock_llm_handler.side_effect = Exception("LLM handler initialization failed")
+            mock_llm_service_manager.return_value.create_llm_handler.side_effect = Exception("LLM handler initialization failed")
 
             # Execute and verify
             with patch.object(
@@ -781,8 +781,8 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -791,7 +791,7 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review_dto)
             mock_user_agent_repo.db_get = AsyncMock(return_value=sample_user_agent_dto)
             mock_context_service.return_value = MagicMock()
-            mock_llm_handler.return_value = MagicMock()
+            mock_llm_service_manager.return_value.create_llm_handler.return_value = MagicMock()
             mock_agent_factory.get_code_review_agent.side_effect = Exception("Agent factory failed")
 
             # Execute and verify
@@ -822,8 +822,8 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -1252,8 +1252,8 @@ class TestIdeReviewManagerIntegration:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -1276,9 +1276,11 @@ class TestIdeReviewManagerIntegration:
             mock_context_instance = MagicMock()
             mock_context_service.return_value = mock_context_instance
 
-            # Setup LLM handler
-            mock_llm_instance = MagicMock()
-            mock_llm_handler.return_value = mock_llm_instance
+            # Mock the LLM service manager
+            mock_llm_handler_instance = MagicMock()
+            mock_llm_service_manager_instance = MagicMock()
+            mock_llm_service_manager.return_value = mock_llm_service_manager_instance
+            mock_llm_service_manager_instance.create_llm_handler.return_value = mock_llm_handler_instance
 
             # Setup agent
             mock_agent = MagicMock()
@@ -1299,11 +1301,11 @@ class TestIdeReviewManagerIntegration:
 
             # Verify all components were initialized and called
             mock_context_service.assert_called_once_with(review_id=sample_agent_request_query.review_id)
-            mock_llm_handler.assert_called_once()
+            mock_llm_service_manager.assert_called_once()
             mock_agent_factory.get_code_review_agent.assert_called_once_with(
                 agent_and_init_params=sample_agent_and_init_params,
                 context_service=mock_context_instance,
-                llm_handler=mock_llm_instance,
+                llm_handler=mock_llm_handler_instance,
                 user_agent_dto=sample_user_agent_dto,
             )
 
@@ -1339,8 +1341,8 @@ class TestIdeReviewManagerIntegration:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -1400,8 +1402,8 @@ class TestIdeReviewManagerStressTests:
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
             patch(
-                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMHandler"
-            ) as mock_llm_handler,
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
