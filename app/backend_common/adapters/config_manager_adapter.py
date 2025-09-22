@@ -32,7 +32,7 @@ class ConfigManagerAdapter(ConfigInterface):
 
     def get_anthropic_config(self) -> Optional[Dict[str, Any]]:
         return {
-            "AWS": self.config_manager.configs.get("AWS", {}),
+            "AWS": self.config_manager.configs.get("AWS", {}).get("GLOBAL", {}),
             "LLM_MODELS": self.config_manager.configs["LLM_MODELS"],
         }
 
@@ -43,4 +43,4 @@ class ConfigManagerAdapter(ConfigInterface):
         }
 
     def get_aws_config(self) -> Optional[Dict[str, Any]]:
-        return self.config_manager.configs.get("AWS", {})
+        return self.config_manager.configs.get("AWS", {}).get("GLOBAL", {})
