@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from app.backend_common.models.dto.message_thread_dto import (
+from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     ContentBlockCategory,
     MessageData,
     TextBlockContent,
