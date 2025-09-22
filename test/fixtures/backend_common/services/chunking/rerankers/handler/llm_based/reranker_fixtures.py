@@ -26,6 +26,10 @@ class MockChunkInfo:
             return False
         return self.denotation == other.denotation
 
+    def get_xml(self) -> str:
+        """Mock implementation of get_xml method."""
+        return f"<chunk denotation=\"{self.denotation}\" file_path=\"{self.file_path}\" line_number=\"{self.line_number}\">{self.content}</chunk>"
+
 
 @pytest.fixture
 def mock_chunk_info_class():

@@ -16,7 +16,7 @@ from deputydev_core.llm_handler.dataclasses.main import (
     UserAndSystemMessages,
 )
 
-from app.backend_common.models.dto.message_thread_dto import LLModels, LLMUsage
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, LLMUsage
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,
@@ -593,10 +593,10 @@ class TestBaseCodeReviewAgentIntegration:
             type=LLMCallResponseTypes.NON_STREAMING,
             parsed_content=["Security review completed successfully"],
             content=[],
-            usage=LLMUsage(input=150, output=75),
+            usage={"input": 150, "output": 75},
             prompt_vars={},
             prompt_id="test_prompt",
-            model_used=LLModels.GPT_4O,
+            model_used=LLModels.GPT_4O.value,
             query_id=123,
         )
 
@@ -652,10 +652,10 @@ class TestBaseCodeReviewAgentIntegration:
             type=LLMCallResponseTypes.NON_STREAMING,
             parsed_content=["First pass analysis complete"],
             content=[],
-            usage=LLMUsage(input=100, output=50),
+            usage={"input": 100, "output": 50},
             prompt_vars={},
             prompt_id="test_prompt_1",
-            model_used=LLModels.GPT_4O,
+            model_used=LLModels.GPT_4O.value,
             query_id=123,
         )
 
@@ -663,10 +663,10 @@ class TestBaseCodeReviewAgentIntegration:
             type=LLMCallResponseTypes.NON_STREAMING,
             parsed_content=["Final analysis with improvements"],
             content=[],
-            usage=LLMUsage(input=120, output=60),
+            usage={"input": 120, "output": 60},
             prompt_vars={},
             prompt_id="test_prompt_2",
-            model_used=LLModels.GPT_4O,
+            model_used=LLModels.GPT_4O.value,
             query_id=124,
         )
 

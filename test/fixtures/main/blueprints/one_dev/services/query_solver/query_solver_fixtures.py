@@ -17,6 +17,7 @@ from deputydev_core.llm_handler.dataclasses.main import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import Attachment
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
+from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import ToolUseResponseInput
 
 # Import these inside fixtures to avoid configuration issues
 

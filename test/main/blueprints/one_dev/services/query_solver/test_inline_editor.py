@@ -266,8 +266,8 @@ class TestInlineEditGenerator:
         """Test getting inline edit diff suggestion for new query."""
         with (
             patch(
-                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.AgentChatsRepository") as mock_repo,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.ConfigManager") as mock_config,
         ):
@@ -275,7 +275,9 @@ class TestInlineEditGenerator:
             mock_config.configs = {"IS_RELATED_CODE_SEARCHER_ENABLED": False}
             mock_llm_handler = MagicMock()
             mock_llm_handler.start_llm_query = AsyncMock(return_value=mock_llm_response_with_code)
-            mock_llm_handler_class.return_value = mock_llm_handler
+            mock_llm_service_manager = MagicMock()
+            mock_llm_service_manager.create_llm_handler.return_value = mock_llm_handler
+            mock_llm_service_manager_class.return_value = mock_llm_service_manager
 
             mock_created_chat = MagicMock()
             mock_created_chat.query_id = "test_query_123"
@@ -313,8 +315,8 @@ class TestInlineEditGenerator:
         """Test getting inline edit diff suggestion with tool use response."""
         with (
             patch(
-                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.AgentChatsRepository") as mock_repo,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.ConfigManager") as mock_config,
         ):
@@ -322,7 +324,9 @@ class TestInlineEditGenerator:
             mock_config.configs = {"IS_RELATED_CODE_SEARCHER_ENABLED": False}
             mock_llm_handler = MagicMock()
             mock_llm_handler.start_llm_query = AsyncMock(return_value=mock_llm_response_with_code)
-            mock_llm_handler_class.return_value = mock_llm_handler
+            mock_llm_service_manager = MagicMock()
+            mock_llm_service_manager.create_llm_handler.return_value = mock_llm_handler
+            mock_llm_service_manager_class.return_value = mock_llm_service_manager
 
             mock_repo.get_chats_by_session_id = AsyncMock(return_value=[mock_agent_chat_assistant_tool])
             mock_repo.update_chat = AsyncMock()
@@ -368,8 +372,8 @@ class TestInlineEditGenerator:
         """Test getting inline edit diff suggestion with GPT-4 model (includes task completion tool)."""
         with (
             patch(
-                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.AgentChatsRepository") as mock_repo,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.ConfigManager") as mock_config,
         ):
@@ -377,7 +381,9 @@ class TestInlineEditGenerator:
             mock_config.configs = {"IS_RELATED_CODE_SEARCHER_ENABLED": False}
             mock_llm_handler = MagicMock()
             mock_llm_handler.start_llm_query = AsyncMock(return_value=mock_llm_response_with_code)
-            mock_llm_handler_class.return_value = mock_llm_handler
+            mock_llm_service_manager = MagicMock()
+            mock_llm_service_manager.create_llm_handler.return_value = mock_llm_handler
+            mock_llm_service_manager_class.return_value = mock_llm_service_manager
 
             mock_created_chat = MagicMock()
             mock_created_chat.query_id = "test_query_123"
@@ -420,8 +426,8 @@ class TestInlineEditGenerator:
         """Test error when LLM response is not NonStreamingParsedLLMCallResponse."""
         with (
             patch(
-                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.AgentChatsRepository") as mock_repo,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.ConfigManager") as mock_config,
         ):
@@ -429,7 +435,9 @@ class TestInlineEditGenerator:
             mock_config.configs = {"IS_RELATED_CODE_SEARCHER_ENABLED": False}
             mock_llm_handler = MagicMock()
             mock_llm_handler.start_llm_query = AsyncMock(return_value="invalid_response")
-            mock_llm_handler_class.return_value = mock_llm_handler
+            mock_llm_service_manager = MagicMock()
+            mock_llm_service_manager.create_llm_handler.return_value = mock_llm_handler
+            mock_llm_service_manager_class.return_value = mock_llm_service_manager
 
             mock_created_chat = MagicMock()
             mock_created_chat.query_id = "test_query_123"
@@ -614,8 +622,8 @@ class TestInlineEditGenerator:
         """Test getting inline edit diff suggestion with related code searcher enabled."""
         with (
             patch(
-                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMHandler"
-            ) as mock_llm_handler_class,
+                "app.main.blueprints.one_dev.services.query_solver.inline_editor.LLMServiceManager"
+            ) as mock_llm_service_manager_class,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.AgentChatsRepository") as mock_repo,
             patch("app.main.blueprints.one_dev.services.query_solver.inline_editor.ConfigManager") as mock_config,
         ):
@@ -623,7 +631,9 @@ class TestInlineEditGenerator:
             mock_config.configs = {"IS_RELATED_CODE_SEARCHER_ENABLED": True}
             mock_llm_handler = MagicMock()
             mock_llm_handler.start_llm_query = AsyncMock(return_value=mock_llm_response_with_code)
-            mock_llm_handler_class.return_value = mock_llm_handler
+            mock_llm_service_manager = MagicMock()
+            mock_llm_service_manager.create_llm_handler.return_value = mock_llm_handler
+            mock_llm_service_manager_class.return_value = mock_llm_service_manager
 
             mock_created_chat = MagicMock()
             mock_created_chat.query_id = "test_query_123"

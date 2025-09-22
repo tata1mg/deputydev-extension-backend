@@ -154,33 +154,35 @@ def simple_attachments() -> List[Attachment]:
 @pytest.fixture
 def mock_attachment_data() -> ChatAttachmentDataWithObjectBytes:
     """Mock attachment data with object bytes."""
+    attachment_dto = ChatAttachmentsDTO(
+        id=1,
+        file_name="test_document.pdf",
+        file_type="application/pdf",
+        s3_key="docs/test_document.pdf",
+        status="uploaded",
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
     return ChatAttachmentDataWithObjectBytes(
-        attachment_metadata=ChatAttachmentsDTO(
-            id=1,
-            file_name="test_document.pdf",
-            file_type="application/pdf",
-            s3_key="attachments/test_document.pdf",
-            status="uploaded",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        ),
-        object_bytes=b"mock_pdf_content_bytes",
+        attachment_metadata=attachment_dto.model_dump(),
+        object_bytes=b"mock_document_bytes",
     )
 
 
 @pytest.fixture
 def mock_image_attachment_data() -> ChatAttachmentDataWithObjectBytes:
     """Mock image attachment data."""
+    attachment_dto = ChatAttachmentsDTO(
+        id=2,
+        file_name="screenshot.png",
+        file_type="image/png",
+        s3_key="images/screenshot.png",
+        status="uploaded",
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
     return ChatAttachmentDataWithObjectBytes(
-        attachment_metadata=ChatAttachmentsDTO(
-            id=2,
-            file_name="screenshot.png",
-            file_type="image/png",
-            s3_key="attachments/screenshot.png",
-            status="uploaded",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        ),
+        attachment_metadata=attachment_dto.model_dump(),
         object_bytes=b"mock_image_bytes",
     )
 
@@ -190,31 +192,33 @@ def simple_attachment_data_task_map() -> Dict[int, Any]:
     """Simple attachment data task map."""
 
     async def get_attachment_1():
+        attachment_dto = ChatAttachmentsDTO(
+            id=1,
+            file_name="test.pdf",
+            file_type="application/pdf",
+            s3_key="test.pdf",
+            status="uploaded",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
         return ChatAttachmentDataWithObjectBytes(
-            attachment_metadata=ChatAttachmentsDTO(
-                id=1,
-                file_name="test.pdf",
-                file_type="application/pdf",
-                s3_key="test.pdf",
-                status="uploaded",
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
-            ),
-            object_bytes=b"test_content",
+            attachment_metadata=attachment_dto.model_dump(),
+            object_bytes=b"mock_pdf_bytes",
         )
 
     async def get_attachment_2():
+        attachment_dto = ChatAttachmentsDTO(
+            id=2,
+            file_name="image.png",
+            file_type="image/png",
+            s3_key="image.png",
+            status="uploaded",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
         return ChatAttachmentDataWithObjectBytes(
-            attachment_metadata=ChatAttachmentsDTO(
-                id=2,
-                file_name="image.png",
-                file_type="image/png",
-                s3_key="image.png",
-                status="uploaded",
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
-            ),
-            object_bytes=b"image_content",
+            attachment_metadata=attachment_dto.model_dump(),
+            object_bytes=b"mock_image_bytes",
         )
 
     # Return the coroutine functions, not tasks, since event loop might not be running yet
