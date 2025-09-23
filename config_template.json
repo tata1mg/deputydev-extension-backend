@@ -441,21 +441,8 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 20000
             }
         },
-        "OPENROUTER_SONOMA_DUSK_ALPHA": {
-            "NAME": "openrouter/sonoma-dusk-alpha",
-            "MAX_TOKENS": 15000,
-            "INPUT_TOKENS_LIMIT": 5000000,
-            "TEMPERATURE": 0.3,
-            "STREAM_BATCH_SIZE": 10,
-            "PROVIDER": {},
-            "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 20000
-            }
-        },
-        "OPENROUTER_SONOMA_SKY_ALPHA": {
-            "NAME": "openrouter/sonoma-sky-alpha",
+        "OPENROUTER_GROK_4_FAST": {
+            "NAME": "x-ai/grok-4-fast:free",
             "MAX_TOKENS": 15000,
             "INPUT_TOKENS_LIMIT": 5000000,
             "TEMPERATURE": 0.3,
@@ -964,15 +951,8 @@
         },
         {
             "id": 13,
-            "display_name": "Sonoma Sky Alpha",
-            "name": "OPENROUTER_SONOMA_SKY_ALPHA",
-            "provider": "xAI",
-            "multimodal": true
-        },
-        {
-            "id": 12,
-            "display_name": "Sonoma Dusk Alpha",
-            "name": "OPENROUTER_SONOMA_DUSK_ALPHA",
+            "display_name": "Grok 4 Fast",
+            "name": "OPENROUTER_GROK_4_FAST",
             "provider": "xAI",
             "multimodal": true
         }
