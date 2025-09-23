@@ -3,5 +3,5 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class Gpt5ReasoningThinkingParser(ReasoningThinkingParser):
+class Grok4FastReasoningThinkingParser(ReasoningThinkingParser):
     pass
