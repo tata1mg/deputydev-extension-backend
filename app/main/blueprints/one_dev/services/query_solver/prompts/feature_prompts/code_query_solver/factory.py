@@ -34,6 +34,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_nano_handler import (
     Gpt5NanoCustomCodeQuerySolverPromptHandler,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.grok_4_fast_handler import (
+    Grok4FastCustomCodeQuerySolverPromptHandler,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.grok_code_fast_1_handler import (
     GrokCodeFast1CustomCodeQuerySolverPromptHandler,
 )
@@ -42,12 +45,6 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.qwen_3_coder_handler import (
     Qwen3CoderCustomCodeQuerySolverPromptHandler,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.sonoma_dusk_alpha_handler import (
-    SonomaDuskAlphaCustomCodeQuerySolverPromptHandler,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.sonoma_sky_alpha_handler import (
-    SonomaSkyAlphaCustomCodeQuerySolverPromptHandler,
 )
 
 
@@ -66,8 +63,7 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.OPENROUTER_GPT_5_MINI: Gpt5MiniCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_NANO: Gpt5NanoCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_4_POINT_1: Gpt4Point1CustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_SONOMA_DUSK_ALPHA: SonomaDuskAlphaCustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_SONOMA_SKY_ALPHA: SonomaSkyAlphaCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_GROK_4_FAST: Grok4FastCustomCodeQuerySolverPromptHandler,
     }
 
     @classmethod
