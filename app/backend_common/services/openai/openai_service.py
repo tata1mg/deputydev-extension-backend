@@ -139,10 +139,7 @@ class OpenAIManager(BaseClient):
 
                 # Store the current batch in Redis
                 await CommonCache.mset_with_expire(
-                    {
-                        cache_key: json.dumps(embedding.tolist())
-                        for cache_key, embedding in zip(batch_keys, batch_embeddings)
-                    }
+                    {cache_key: embedding.tolist() for cache_key, embedding in zip(batch_keys, batch_embeddings)}
                 )
             embeddings = np.array(embeddings)
         except Exception:  # noqa: BLE001
