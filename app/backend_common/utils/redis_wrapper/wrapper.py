@@ -252,7 +252,7 @@ class RedisWrapper:
         return await self._redis.sismember(key, value)
 
     async def mset_with_expire(self, mapping: dict, ex=None):
-        pipeline = self._redis.pipeline()
+        pipeline = self._redis.pipeline(transaction=False)
         for key, value in mapping.items():
             pipeline.set(key, value, ex=ex)
         await pipeline.execute()
