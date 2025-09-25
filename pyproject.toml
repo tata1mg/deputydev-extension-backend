@@ -1,6 +1,6 @@
 [project]
 name = "deputydev"
-version = "16.0.0"
+version = "16.0.1"
 description = ""
 authors = [{ name = "Deputy Dev", email = "deputydev@1mg.com" }]
 readme = "README.md"
@@ -17,7 +17,7 @@ dependencies = [
   "ujson==5.9.0",
   "elastic-apm==6.22.3",
   "sentry-sdk==1.45.1", # WARNING: DO NOT UPGRADE!
-  "psutil==6.0.0",      # NOTE: required for elasticapm system metrics
+  "psutil==6.0.0", # NOTE: required for elasticapm system metrics
   "python-json-logger==3.3.0",
   "rich==14.0.0",
   "setuptools>=78.1.1,<79.0.0",
