@@ -722,23 +722,6 @@ class QuerySolver:
             )
 
         if current_session.current_model != llm_model:
-            # TODO: remove after v15 Force upgrade
-            if (
-                llm_model
-                in (
-                    LLModels.OPENROUTER_SONOMA_SKY_ALPHA,
-                    LLModels.OPENROUTER_SONOMA_DUSK_ALPHA,
-                )
-                and current_session.current_model == LLModels.OPENROUTER_GROK_4_FAST
-            ):
-                await asyncio.gather(
-                    ExtensionSessionsRepository.update_session_llm_model(
-                        session_id=session_id,
-                        llm_model=llm_model,
-                    ),
-                )
-                return  # models are equivalent, skip storing a message
-
             # update current model in session
             await asyncio.gather(
                 ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
