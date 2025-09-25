@@ -1,4 +1,3 @@
-import json
 from typing import List, Optional
 
 import numpy as np
@@ -115,7 +114,7 @@ class OpenAIManager(BaseClient):
         try:
             for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
                 if cache_value:
-                    embeddings[i] = np.array(json.loads(cache_value))
+                    embeddings[i] = np.array(cache_value)
         except Exception as e:  # noqa: BLE001
             logger.exception(e)
 
