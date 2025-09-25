@@ -132,9 +132,9 @@ class OpenAIManager(BaseClient):
             embeddings[index] = new_embeddings[i]
 
         try:
-            for i in range(0, len(cache_keys), 100):
-                batch_keys = cache_keys[i : i + 100]
-                batch_embeddings = embeddings[i : i + 100]
+            for i in range(0, len(cache_keys), 10):
+                batch_keys = cache_keys[i : i + 10]
+                batch_embeddings = embeddings[i : i + 10]
 
                 # Store the current batch in Redis
                 await CommonCache.mset_with_expire(
