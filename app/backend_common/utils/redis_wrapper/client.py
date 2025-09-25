@@ -423,12 +423,13 @@ class BaseServiceCache:
 
         serialized = {}
         for k, v in mapping.items():
-            if not v:
-                continue
             if isinstance(v, np.ndarray):
                 v = v.astype(np.float32).tobytes()
             else:
-                v = json.dumps(v)
+                if v is not None:
+                    v = json.dumps(v)
+                else:
+                    continue  # skip None values
             serialized[cls.prefixed_key(k)] = v
 
         await cache_registry[cls._host].mset_with_expire(serialized, expire)
