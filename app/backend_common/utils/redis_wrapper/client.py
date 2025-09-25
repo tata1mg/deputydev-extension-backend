@@ -255,7 +255,7 @@ class BaseServiceCache:
         keys = list(map(lambda key: cls.prefixed_key(key), keys))
         result = await cache_registry[cls._host].mget(keys)
         if result:
-            result = list(map(lambda value: json.loads(value) if value else None, result))
+            result = list(map(lambda value: value if value else None, result))
         return result
 
     ###############################
