@@ -252,6 +252,7 @@ class BaseServiceCache:
         :param keys: list of str
         :return: list of any
         """
+        print("inside mget")
         keys = list(map(lambda key: cls.prefixed_key(key), keys))
         result = await cache_registry[cls._host].mget(keys)
         if result:
