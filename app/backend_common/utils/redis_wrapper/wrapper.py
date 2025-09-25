@@ -161,7 +161,8 @@ class RedisWrapper:
         await self._redis.mset(mapping)
 
     async def mget(self, keys):
-        return await self._redis.mget(keys)
+        raw_values = await self._redis.execute_command("MGET", *keys, **{"NEVER_DECODE": True})
+        return [v if v is None else bytes(v) for v in raw_values]
 
     async def hset(self, key: str, mapping):
         await self._redis.hset(key, mapping=mapping)
