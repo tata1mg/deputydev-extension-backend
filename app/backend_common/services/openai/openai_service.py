@@ -114,7 +114,7 @@ class OpenAIManager(BaseClient):
         try:
             for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
                 if cache_value:
-                    embeddings[i] = np.array(cache_value)
+                    embeddings[i] = np.frombuffer(cache_value, dtype=np.float32)
         except Exception as e:  # noqa: BLE001
             logger.exception(e)
 
@@ -138,7 +138,7 @@ class OpenAIManager(BaseClient):
 
                 # Store the current batch in Redis
                 await CommonCache.mset_with_expire(
-                    {cache_key: embedding.tolist() for cache_key, embedding in zip(batch_keys, batch_embeddings)}
+                    {cache_key: embedding for cache_key, embedding in zip(batch_keys, batch_embeddings)}
                 )
             embeddings = np.array(embeddings)
         except Exception:  # noqa: BLE001
