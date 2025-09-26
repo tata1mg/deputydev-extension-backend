@@ -41,13 +41,6 @@ class VCSFailureMessages(Enum):
     GITHUB_INCORRECT_FILE_PATH = "pull_request_review_thread.path"
 
 
-class LLModels(Enum):
-    GPT_4O = "GPT_4O"
-    CLAUDE_3_POINT_5_SONNET = "CLAUDE_3_POINT_5_SONNET"
-    GPT_40_MINI = "GPT_40_MINI"
-    GPT_O1_MINI = "GPT_O1_MINI"
-
-
 class Connections(Enum):
     DEPUTY_DEV_REPLICA = "deputy_dev_replica"
 
